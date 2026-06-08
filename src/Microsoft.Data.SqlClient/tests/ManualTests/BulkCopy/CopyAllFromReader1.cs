@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class CopyAllFromReader1
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]

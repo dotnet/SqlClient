@@ -76,7 +76,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
@@ -99,7 +99,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />

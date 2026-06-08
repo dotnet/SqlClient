@@ -19,6 +19,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class JsonRecord
     {
         public int Id { get; set; }

@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class SqlCommandReliabilityTest : IDisposable
     {
         private const int ConcurrentParallelExecutions = 3;
