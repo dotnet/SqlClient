@@ -43,9 +43,9 @@ parameters:
 steps:
   # Show the files in the test results directory
   - ${{ if eq(parameters.debug, true) }}:
-      script: tree /a /f ${{ parameters.testResultsPath }}
-      displayName: Output Test Result Tree
-      condition: succeededOrFailed()
+      - script: tree /a /f ${{ parameters.testResultsPath }}
+        displayName: Output Test Result Tree
+        condition: succeededOrFailed()
 
   # Publish the test results (trx files) to the pipeline
   - task: PublishTestResults@2
