@@ -5,7 +5,9 @@
 using System;
 using System.Linq;
 using System.Text.Json;
+#if NET9_0_OR_GREATER
 using System.Text.Json.Nodes;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 {

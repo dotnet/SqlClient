@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                 });
             }
 
-            string json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
             File.WriteAllText(filename, json);
             Assert.True(File.Exists(filename));
             _output.WriteLine("Generated JSON file " + filename);
