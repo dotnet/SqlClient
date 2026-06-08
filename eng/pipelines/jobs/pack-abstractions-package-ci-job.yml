@@ -136,7 +136,7 @@ jobs:
             targetPath: $(Build.SourcesDirectory)/packages
 
       # Install the .NET SDK.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
 
