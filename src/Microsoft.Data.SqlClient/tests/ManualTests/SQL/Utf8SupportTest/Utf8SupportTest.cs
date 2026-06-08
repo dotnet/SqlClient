@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class Utf8SupportTest
     {
         // Synapse: 'CONNECTIONPROPERTY' is not a recognized built-in function name.

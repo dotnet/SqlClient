@@ -86,6 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class DataConversionErrorMessageTest : IClassFixture<InitialDatabase>
     {
         private readonly InitialDatabase _fixture;
