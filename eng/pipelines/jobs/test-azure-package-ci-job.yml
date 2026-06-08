@@ -261,7 +261,7 @@ jobs:
           debug: ${{ parameters.debug }}
           saPassword: ${{ parameters.saPassword }}
 
-          # The config.json file has many options, but only some of them are
+          # The config.jsonc file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are
           # necessary here.
 
