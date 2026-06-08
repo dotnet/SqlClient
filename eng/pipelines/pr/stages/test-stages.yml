@@ -182,6 +182,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -208,6 +209,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -234,6 +236,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}

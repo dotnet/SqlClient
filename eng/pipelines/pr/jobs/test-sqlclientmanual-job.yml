@@ -33,6 +33,10 @@ parameters:
   - name: stageNameSecrets
     type: string
 
+  # Name of the artifact to upload the test results (including code coverage) to.
+  - name: testResultsArtifactName
+    type: string
+
   # Platform Parameters ====================================================
 
   # Display name of the platform. This will be formatted into the job's official name as well as
@@ -201,4 +205,13 @@ jobs:
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
             -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestSet=${{ parameters.testSet }}
+
+      # Publish test results
+      - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          platformDisplayName: ${{ parameters.platformDisplayName }}
+          testDisplayName: ${{ parameters.testDisplayName }}
+          testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+          testResultsPath: ${{ variables.testResultsPath }}
 

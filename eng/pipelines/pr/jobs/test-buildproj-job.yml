@@ -18,10 +18,9 @@ parameters:
   - name: buildSuffix
     type: string
 
-  # True to emit debug information and steps.
-  - name: debug
-    type: boolean
-    default: false
+  # Name of the artifact to upload the test results (including code coverage) to.
+  - name: testResultsArtifactName
+    type: string
 
   # Dotnet CLI verbosity level.
   - name: dotnetVerbosity
@@ -79,10 +78,6 @@ parameters:
     type: string
     default: ''
 
-  # Name of the artifact to upload the test results (including code coverage) to.
-  - name: testResultsArtifactName
-    type: string
-
 jobs:
   - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
     displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
@@ -126,7 +121,6 @@ jobs:
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
           platformDisplayName: ${{ parameters.platformDisplayName }}
           testDisplayName: ${{ parameters.testDisplayName }}
           testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
