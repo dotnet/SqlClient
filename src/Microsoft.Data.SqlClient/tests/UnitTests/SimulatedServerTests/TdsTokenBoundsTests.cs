@@ -1022,16 +1022,30 @@ public class TdsTokenBoundsTests : IDisposable
         public DebugAssertSuppressor()
         {
             System.Threading.Monitor.Enter(s_listenerLock);
-            _listeners = new System.Diagnostics.TraceListener[System.Diagnostics.Trace.Listeners.Count];
-            System.Diagnostics.Trace.Listeners.CopyTo(_listeners, 0);
-            System.Diagnostics.Trace.Listeners.Clear();
+            try
+            {
+                _listeners = new System.Diagnostics.TraceListener[System.Diagnostics.Trace.Listeners.Count];
+                System.Diagnostics.Trace.Listeners.CopyTo(_listeners, 0);
+                System.Diagnostics.Trace.Listeners.Clear();
+            }
+            catch
+            {
+                System.Threading.Monitor.Exit(s_listenerLock);
+                throw;
+            }
         }
 
         public void Dispose()
         {
-            System.Diagnostics.Trace.Listeners.Clear();
-            System.Diagnostics.Trace.Listeners.AddRange(_listeners);
-            System.Threading.Monitor.Exit(s_listenerLock);
+            try
+            {
+                System.Diagnostics.Trace.Listeners.Clear();
+                System.Diagnostics.Trace.Listeners.AddRange(_listeners);
+            }
+            finally
+            {
+                System.Threading.Monitor.Exit(s_listenerLock);
+            }
         }
     }
 }
