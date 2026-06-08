@@ -1,0 +1,117 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+
+  # API token used to access the CodeCov API
+  - name: codeCovApiToken
+    type: string
+
+stages:
+  - stage: collect_code_coverage
+    displayName: "Collect code coverage"
+    dependsOn:
+      # @TODO:
+
+    jobs:
+      - job: collect_code_coverage
+        displayName: "Collect Code Coverage"
+
+        pool:
+          vmImage: ubuntu-latest
+
+        variables:
+
+          # Set up a temporary directory that is cleaned up after each job run. This helps avoid
+          # disk space issues on pooled agents that may run many jobs before being retired.
+          - name: workingDir
+            value: "$(Agent.TempDirectory)/coverage"
+
+        steps:
+
+          # Part 1) Merge coverage reports =================================
+
+          # Install .NET SDK
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          # Install additional dotnet tools
+          #
+          # We must work around a bug in the dotnet CLI that prevents tool installs when multiple
+          # project/solution files are present in the working directory. At various times, multiple
+          # project files have existed in the root of the repository. See SDK issue:
+          #   https://github.com/dotnet/sdk/issues/9623
+          #
+          # However, we must respect the nuget.config to only download packages from governed
+          # feeds. Thus, we copy the nuget.config from the root of the repo to a temp directory
+          # then run dotnet tool installation from that folder.
+          - task: CopyFiles@2
+            displayName: Copy nuget.config for tool installs
+            inputs:
+              contents: "$(REPO_ROOT)/nuget.config"
+              targetFolder: $(Agent.TempDirectory)
+
+          - task: DotNetCoreCLI@2
+            displayName: Install dotnet-coverage
+            inputs:
+              command: custom
+              custom: tool
+              workingDirectory: $(Agent.TempDirectory)
+              arguments: install --global dotnet-coverage --version 18.3.2
+
+          # Download coverage reports from the test jobs.
+          # NOTE: The artifact name is not specified, so *all* artifacts of the build will be
+          #    checked for the coverage reports.
+          - task: DownloadPipelineArtifact@2
+            displayName: Download coverage reports
+            inputs:
+              itemPattern: '**/*.coverage'
+              targetPath: "${{ variables.workingDir }}/originals"
+
+          # Merge original files into a single Cobertura XML file
+          - script: >-
+              dotnet-coverage merge "${{ variables.workingDir }}/originals/**/*.coverage"
+              --output "${{ variables.workingDir }}/merge/cobertura.xml"
+              --output-format cobertura
+              --log-file "${{ variables.workingDir }}/merge/merge.log"
+              --log-level Verbose
+            displayName: Merge coverage files
+
+          # Part 2) Publish merged results to the pipeline results/artifacts
+
+          # Publish the merged coverage file as a pipeline artifact
+          - task: PublishPipelineArtifact@1
+            displayName: Publish coverage artifact
+            inputs:
+              artifact: merged_coverage
+              targetPath: "${{ variables.workingDir }}/merge"
+
+          # Publish the merged coverage file as coverage results so they can be viewed in ADO UI.
+          - task: PublishCodeCoverageResults@2
+            displayName: Publish coverage results
+            inputs:
+              summaryFileLocation: "${{ variables.workingDir }}/merge/cobertura.xml"
+
+          # Part 3) Publish merged results to CodeCov
+
+          # Download the CodeCov CLI
+          # @TODO: should this be using something more governed?
+          - script: |
+              curl -o "${{ variables.workingDir }}/codecov" https://cli.codecov.io/latest/linux/codecov
+              chmod +x "${{ variables.workingDir }}/codecov"
+            displayName: Download CodeCov CLI
+
+          # Upload the report
+          # NOTE: pipeline name is used as "flag" (-F) to distinguish reports from other pipelines.
+          - script: >-
+              "${{ variables.workingDir }}/codecov"
+              upload-process
+              --verbose
+              --fail-on-error
+              -f "${{ variables.workingDir }}/merge/cobertura.xml"
+              -t ${{ parameters.codeCovApiToken }}
+              -F $(Build.DefinitionName)
+            displayName: Upload coverage to CodeCov
+

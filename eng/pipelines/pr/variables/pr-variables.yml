@@ -13,6 +13,7 @@ variables:
   #
   # AzureKeyVaultTenantId
   # AzureKeyVaultUrl
+  # CodeCovApiToken
   # ConnectionStringNp_Azure_ManagedIdentity
   # ConnectionStringNp_LocalhostDefault_UsernamePassword
   # ConnectionStringTcp_Azure_ManagedIdentity

@@ -214,4 +214,3 @@ jobs:
           testDisplayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}"
           testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
           testResultsPath: ${{ variables.testResultsPath }}
-
