@@ -10,11 +10,15 @@ parameters:
   - name: codeCovApiToken
     type: string
 
+  # Names of the test stages that must complete before collecting coverage.
+  - name: dependsOn
+    type: object
+    default: []
+
 stages:
   - stage: collect_code_coverage
     displayName: "Collect code coverage"
-    dependsOn:
-      # @TODO:
+    dependsOn: ${{ parameters.dependsOn }}
 
     jobs:
       - job: collect_code_coverage

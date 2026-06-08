@@ -4,6 +4,40 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+parameters:
+  - name: platforms
+    type: object
+    default:
+      - displayName: "windows_net462"
+        dotnet: "net462"
+        image: "ADO-MMS22-SQL22"
+        operatingSystem: "Windows"
+      - displayName: "windows_net8"
+        dotnet: "net8.0"
+        image: "ADO-MMS22-SQL22"
+        operatingSystem: "Windows"
+      - displayName: "windows_net9"
+        dotnet: "net9.0"
+        image: "ADO-MMS22-SQL22"
+        operatingSystem: "Windows"
+      - displayName: "windows_net10"
+        dotnet: "net10.0"
+        image: "ADO-MMS22-SQL22"
+        operatingSystem: "Windows"
+
+      - displayName: "linux_net8"
+        dotnet: "net8.0"
+        image: "ADO-UB22-SQL22"
+        operatingSystem: "Linux"
+      - displayName: "linux_net9"
+        dotnet: "net9.0"
+        image: "ADO-UB22-SQL22"
+        operatingSystem: "Linux"
+      - displayName: "linux_net10"
+        dotnet: "net10.0"
+        image: "ADO-UB22-SQL22"
+        operatingSystem: "Linux"
+
 name: $(DayOfYear)$(Rev:rr)
 
 parameters:
@@ -27,19 +61,19 @@ variables:
 
 stages:
   # Stage 1a: Build and pack all projects in the repository
-  - template: /eng/pipelines/pr/stages/pack-stage.yml
+  - template: /eng/pipelines/pr/stages/pack-stage.yml@self
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
       stageName: ${{ variables.stageNamePack }}
 
   # Stage 1b: Generate secrets
-  - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml
+  - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml@self
     parameters:
       stageName: ${{ variables.stageNameSecrets }}
 
   # Stage 2: Execute tests and collect code coverage
-  - template: /eng/pipelines/pr/stages/test-stages.yml
+  - template: /eng/pipelines/pr/stages/test-stages.yml@self
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
@@ -49,36 +83,7 @@ stages:
       stageNameSecrets: ${{ variables.stageNameSecrets }}
       testResultsArtifactName: ${{ variables.testResultsArtifactName }}
 
-      platforms:
-        - displayName: "windows_net462"
-          dotnet: "net462"
-          image: "ADO-MMS22-SQL22"
-          operatingSystem: "Windows"
-        - displayName: "windows_net8"
-          dotnet: "net8.0"
-          image: "ADO-MMS22-SQL22"
-          operatingSystem: "Windows"
-        - displayName: "windows_net9"
-          dotnet: "net9.0"
-          image: "ADO-MMS22-SQL22"
-          operatingSystem: "Windows"
-        - displayName: "windows_net10"
-          dotnet: "net10.0"
-          image: "ADO-MMS22-SQL22"
-          operatingSystem: "Windows"
-
-        - displayName: "linux_net8"
-          dotnet: "net8.0"
-          image: "ADO-UB22-SQL22"
-          operatingSystem: "Linux"
-        - displayName: "linux_net9"
-          dotnet: "net9.0"
-          image: "ADO-UB22-SQL22"
-          operatingSystem: "Linux"
-        - displayName: "linux_net10"
-          dotnet: "net10.0"
-          image: "ADO-UB22-SQL22"
-          operatingSystem: "Linux"
+      platforms: ${{ parameters.platforms }}
 
       manualTestAzureKeyVaultUrl: $(AzureKeyVaultUrl)
       manualTestAzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
@@ -92,4 +97,9 @@ stages:
       manualTestUserManagedIdentityClientId: $(UserManagedIdentityClientId)
 
   # Stage 3: Collect code coverage
-  # @TODO:
+  - template: /eng/pipelines/pr/stages/collect-coverage-stage.yml@self
+    parameters:
+      codeCovApiToken: $(CodeCovApiToken)
+      dependsOn:
+        - ${{ each platform in parameters.platforms }}:
+            - "test_${{ platform.displayName }}"
