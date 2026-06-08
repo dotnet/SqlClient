@@ -18,15 +18,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// with data lengths exceeding protocol-reasonable bounds. This prevents a
 /// malicious server from causing unbounded memory allocation on the client.
 /// </summary>
+// TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+// need since each test uses its own TDS Server with ephemeral listen port.
 [Collection("SimulatedServerTests")]
-public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
+public class FeatureExtAckBoundsTests : IDisposable
 {
+    private readonly TdsServerFixture _fixture;
     private readonly TdsServer _server;
     private readonly string _connectionString;
 
-    public FeatureExtAckBoundsTests(TdsServerFixture fixture)
+    public FeatureExtAckBoundsTests()
     {
-        _server = fixture.TdsServer;
+        _fixture = new TdsServerFixture();
+        _server = _fixture.TdsServer;
         SqlConnectionStringBuilder builder = new()
         {
             DataSource = $"localhost,{_server.EndPoint.Port}",
@@ -35,6 +39,8 @@ public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
         };
         _connectionString = builder.ConnectionString;
     }
+
+    public void Dispose() => _fixture.Dispose();
 
     /// <summary>
     /// Verifies that the TDS parser rejects a FeatureExtAck token whose data length
@@ -67,21 +73,14 @@ public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
                 claimedDataLen: (uint)(TdsEnums.MaxTokenDataLength + 1)));
         };
 
-        try
-        {
-            // Act & Assert: connection should fail with a parsing error, NOT an OutOfMemoryException
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        // Act & Assert: connection should fail with a parsing error, NOT an OutOfMemoryException
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
 
-            // The exception message should indicate a corrupted TDS stream (parsing error state 18)
-            // with the oversized length value, not an OOM from attempting the allocation.
-            Assert.Contains("18", ex.Message); // ParsingErrorState.CorruptedTdsStream = 18
-            Assert.Contains((TdsEnums.MaxTokenDataLength + 1).ToString(), ex.Message);
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        // The exception message should indicate a corrupted TDS stream
+        // with the oversized length value, not an OOM from attempting the allocation.
+        Assert.Contains("Error state: 18", ex.Message); // ParsingErrorState.CorruptedTdsStream = 18
+        Assert.Contains($"Length: {TdsEnums.MaxTokenDataLength + 1}", ex.Message);
     }
 
     /// <summary>
@@ -116,19 +115,11 @@ public class FeatureExtAckBoundsTests : IClassFixture<TdsServerFixture>
                 claimedDataLen: (uint)TdsEnums.MaxTokenDataLength));
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            // The connection will fail (insufficient data for the claimed length),
-            // but the failure must NOT be the bounds check (state 18 with MaxTokenDataLength+1).
-            Exception ex = Assert.ThrowsAny<Exception>(connection.Open);
-            // Confirm it's NOT the bounds-check error (which would report MaxTokenDataLength+1)
-            Assert.DoesNotContain((TdsEnums.MaxTokenDataLength + 1).ToString(), ex.Message);
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        using SqlConnection connection = new(_connectionString);
+        // The connection will fail (insufficient data for the claimed length),
+        // but the failure must NOT be the bounds-check error.
+        Exception ex = Assert.ThrowsAny<Exception>(connection.Open);
+        Assert.DoesNotContain("Error state: 18", ex.Message);
     }
 
     /// <summary>

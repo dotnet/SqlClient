@@ -20,15 +20,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// exceeding protocol-reasonable bounds, preventing unbounded memory allocation
 /// from a malicious server.
 /// </summary>
+// TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+// need since each test uses its own TDS Server with ephemeral listen port.
 [Collection("SimulatedServerTests")]
-public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
+public class TdsTokenBoundsTests : IDisposable
 {
+    private readonly TdsServerFixture _fixture;
     private readonly TdsServer _server;
     private readonly string _connectionString;
 
-    public TdsTokenBoundsTests(TdsServerFixture fixture)
+    public TdsTokenBoundsTests()
     {
-        _server = fixture.TdsServer;
+        _fixture = new TdsServerFixture();
+        _server = _fixture.TdsServer;
         SqlConnectionStringBuilder builder = new()
         {
             DataSource = $"localhost,{_server.EndPoint.Port}",
@@ -37,6 +41,8 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
         };
         _connectionString = builder.ConnectionString;
     }
+
+    public void Dispose() => _fixture.Dispose();
 
     // ──────────────────────────────────────────────────────────────────────────
     // Test 1: SessionState token with oversized total length
@@ -63,16 +69,10 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedTotalLength: (uint)(TdsEnums.MaxTokenDataLength + 1)));
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains($"Length: {TdsEnums.MaxTokenDataLength + 1}", ex.Message);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -101,16 +101,42 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 innerClaimedLength: TdsEnums.MaxTokenDataLength + 1));
         };
 
-        try
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains($"Length: {TdsEnums.MaxTokenDataLength + 1}", ex.Message);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 2b: SessionState token with negative inner option length
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryProcessSessionState</c> rejects an individual session state
+    /// option whose inner data length (encoded via the 0xFF + DWORD path) is negative,
+    /// which would be interpreted as a huge unsigned value if not bounds-checked.
+    /// </summary>
+    [Fact]
+    public void SessionState_NegativeInnerOptionLength_ThrowsParsingError()
+    {
+        _server.OnAuthenticationResponseCompleted = responseMessage =>
         {
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+            int doneIndex = responseMessage.FindIndex(t => t is TDSDoneToken);
+            if (doneIndex < 0)
+            {
+                doneIndex = responseMessage.Count;
+            }
+
+            // Inject a SessionState token with an inner state option claiming
+            // a negative data length (-1 = 0xFFFFFFFF as uint32)
+            responseMessage.Insert(doneIndex, new MaliciousSessionStateInnerLenToken(
+                innerClaimedLength: -1));
+        };
+
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains("Length: -1", ex.Message);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -146,16 +172,10 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Insert(doneIndex, new MaliciousSRecoveryFeatureExtAckToken());
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains("Length: 999", ex.Message);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -185,16 +205,10 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedLength: TdsEnums.MaxTokenDataLength + 1));
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains($"Length: {TdsEnums.MaxTokenDataLength + 1}", ex.Message);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -224,16 +238,10 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedNewLength: TdsEnums.MaxPromoteTransactionLength + 1));
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnAuthenticationResponseCompleted = null;
-        }
+        using SqlConnection connection = new(_connectionString);
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(connection.Open);
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains($"Length: {TdsEnums.MaxPromoteTransactionLength + 1}", ex.Message);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -481,22 +489,16 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
                 claimedNewLength: TdsEnums.MaxPromoteTransactionLength + 1));
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            connection.Open();
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
 
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT 1";
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
 
-            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
-                () => command.ExecuteNonQuery());
-            Assert.Contains("18", ex.Message); // CorruptedTdsStream
-        }
-        finally
-        {
-            _server.OnSQLBatchCompleted = null;
-        }
+        Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+            () => command.ExecuteNonQuery());
+        Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+        Assert.Contains($"Length: {TdsEnums.MaxPromoteTransactionLength + 1}", ex.Message);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -535,37 +537,32 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
         };
 
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
+
+        SqlDataReader reader = command.ExecuteReader();
         try
         {
-            using SqlConnection connection = new(_connectionString);
-            connection.Open();
-
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
-
-            SqlDataReader reader = command.ExecuteReader();
-            try
-            {
-                // Read() returns true (data is ready) but doesn't actually parse the
-                // column values — that happens on GetValue/GetTimeSpan. Force the read.
-                Assert.True(reader.Read());
-                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
-                    () => reader.GetValue(0));
-                Assert.Contains("18", ex.Message); // CorruptedTdsStream
-            }
-            finally
-            {
-                // After corrupting the stream, dispose may trigger additional
-                // parsing errors. Suppress them for test stability.
-                using (new DebugAssertSuppressor())
-                {
-                    try { reader.Dispose(); } catch { }
-                }
-            }
+            // Read() returns true (data is ready) but doesn't actually parse the
+            // column values — that happens on GetValue/GetTimeSpan. Force the read.
+            Assert.True(reader.Read());
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                () => reader.GetValue(0));
+            Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+            Assert.Contains("Length: 11", ex.Message);
         }
         finally
         {
-            _server.OnSQLBatchCompleted = null;
+            // Disposing the reader after a corrupted stream causes the driver to
+            // attempt further TDS parsing during teardown, which can trip unrelated
+            // Debug.Assert calls in TdsParser.
+            using (new DebugAssertSuppressor())
+            {
+                try { reader.Dispose(); } catch { }
+            }
         }
     }
 
@@ -615,24 +612,21 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Insert(doneIndex, new MaliciousReturnValueToken());
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            connection.Open();
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
 
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT 1";
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
 
-            using (new DebugAssertSuppressor())
-            {
-                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
-                    () => command.ExecuteNonQuery());
-                Assert.Contains("18", ex.Message); // CorruptedTdsStream
-            }
-        }
-        finally
+        // The malicious RETURNVALUE token corrupts parser state before the
+        // exception propagates. Suppress Debug.Assert calls that fire in
+        // TdsParser during error handling and connection teardown.
+        using (new DebugAssertSuppressor())
         {
-            _server.OnSQLBatchCompleted = null;
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                () => command.ExecuteNonQuery());
+            Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+            Assert.Contains("Length: -1", ex.Message);
         }
     }
 
@@ -734,21 +728,14 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Insert(doneIndex, new ValidPlpReturnValueToken());
         };
 
-        try
-        {
-            using SqlConnection connection = new(_connectionString);
-            connection.Open();
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
 
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT 1";
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
 
-            // Should NOT throw — PLP unknown-length sentinel is valid
-            command.ExecuteNonQuery();
-        }
-        finally
-        {
-            _server.OnSQLBatchCompleted = null;
-        }
+        // Should NOT throw — PLP unknown-length sentinel is valid
+        command.ExecuteNonQuery();
     }
 
     /// <summary>
@@ -855,33 +842,91 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
             responseMessage.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
         };
 
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
+
+        SqlDataReader reader = command.ExecuteReader();
         try
         {
-            using SqlConnection connection = new(_connectionString);
-            connection.Open();
-
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
-
-            SqlDataReader reader = command.ExecuteReader();
-            try
-            {
-                Assert.True(reader.Read());
-                Exception ex = Assert.ThrowsAny<InvalidOperationException>(
-                    () => reader.GetValue(0));
-                Assert.Contains("18", ex.Message); // CorruptedTdsStream
-            }
-            finally
-            {
-                using (new DebugAssertSuppressor())
-                {
-                    try { reader.Dispose(); } catch { }
-                }
-            }
+            Assert.True(reader.Read());
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                () => reader.GetValue(0));
+            Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+            Assert.Contains("Length: 8001", ex.Message);
         }
         finally
         {
-            _server.OnSQLBatchCompleted = null;
+            // Disposing the reader after a corrupted stream causes the driver to
+            // attempt further TDS parsing during teardown, which can trip unrelated
+            // Debug.Assert calls in TdsParser.
+            using (new DebugAssertSuppressor())
+            {
+                try { reader.Dispose(); } catch { }
+            }
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 11: Post-login batch response — sql_variant with negative inner length
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Verifies that <c>TryReadSqlValueInternal</c> rejects a sql_variant binary
+    /// value whose declared total length is too small for the type overhead,
+    /// causing the computed inner data length to be negative. The bounds check
+    /// <c>if (length &lt; 0 || length &gt; TdsEnums.MAXSIZE)</c> catches this.
+    /// </summary>
+    [Fact]
+    public void BatchResponse_SqlVariantBinary_NegativeLength_ThrowsParsingError()
+    {
+        _server.OnSQLBatchCompleted = responseMessage =>
+        {
+            responseMessage.Clear();
+
+            // COLMETADATA: one SSVariant column
+            var metadata = new TDSColMetadataToken();
+            var col = new TDSColumnData();
+            col.DataType = TDSDataType.SSVariant;
+            col.DataTypeSpecific = (uint)8009; // max length for SSVariant
+            col.Flags.IsNullable = true;
+            col.Name = string.Empty;
+            metadata.Columns.Add(col);
+            responseMessage.Add(metadata);
+
+            // ROW with a sql_variant claiming a total length too small for its overhead
+            responseMessage.Add(new NegativeLenSqlVariantBinaryRowToken());
+
+            // DONE
+            responseMessage.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+        };
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command = connection.CreateCommand();
+        command.CommandText = "MALICIOUS_QUERY_NOT_RECOGNIZED";
+
+        SqlDataReader reader = command.ExecuteReader();
+        try
+        {
+            Assert.True(reader.Read());
+            Exception ex = Assert.ThrowsAny<InvalidOperationException>(
+                () => reader.GetValue(0));
+            Assert.Contains("Error state: 18", ex.Message); // CorruptedTdsStream
+            Assert.Contains("Length: -1", ex.Message);
+        }
+        finally
+        {
+            // Disposing the reader after a corrupted stream causes the driver to
+            // attempt further TDS parsing during teardown, which can trip unrelated
+            // Debug.Assert calls in TdsParser.
+            using (new DebugAssertSuppressor())
+            {
+                try { reader.Dispose(); } catch { }
+            }
         }
     }
 
@@ -924,6 +969,42 @@ public class TdsTokenBoundsTests : IClassFixture<TdsServerFixture>
 
             // Write 4 bytes of dummy data (bounds check fires before trying to read 8001)
             destination.Write(new byte[4], 0, 4);
+        }
+    }
+
+    /// <summary>
+    /// Writes a ROW token (0xD1) with a single SSVariant column containing a
+    /// BigVarBinary variant whose total length (3) is too small to cover the
+    /// type overhead (SQLVARIANT_SIZE=2 + cbPropBytes=2 = 4), producing a
+    /// negative computed inner data length: lenData = 3 - 4 = -1.
+    /// </summary>
+    private sealed class NegativeLenSqlVariantBinaryRowToken : TDSPacketToken
+    {
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        public override void Deflate(Stream destination)
+        {
+            // ROW token type
+            destination.WriteByte(0xD1);
+
+            // SSVariant column data: total length (int32 LE)
+            // lenConsumed = SQLVARIANT_SIZE(2) + cbPropBytes(2) = 4
+            // lenData = totalLength - lenConsumed = 3 - 4 = -1 → triggers < 0 check
+            int totalLength = 3;
+            byte[] lenBytes = BitConverter.GetBytes(totalLength);
+            destination.Write(lenBytes, 0, 4);
+
+            // Inner type: BigVarBinary = 0xA5
+            destination.WriteByte(0xA5);
+
+            // cbPropBytes = 2
+            destination.WriteByte(0x02);
+
+            // Properties: maxLen (ushort) = 100 (arbitrary, just need 2 bytes)
+            destination.WriteByte(0x64); // 100 & 0xFF
+            destination.WriteByte(0x00); // 100 >> 8
+
+            // No data bytes — the bounds check fires before attempting to read
         }
     }
 

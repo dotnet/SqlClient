@@ -7138,6 +7138,10 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
+        // length originates as a single byte on the wire (nullable datetime length prefix),
+        // but is kept as int to match the TDS parsing API surface where all lengths are int.
+        // Using byte here would require casts at all call sites and silently truncate values
+        // from the sql_variant path where lenData is computed arithmetically.
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
             // DateTimeOffset is the largest datetime type at 10 bytes (5 time + 3 date + 2 offset).
