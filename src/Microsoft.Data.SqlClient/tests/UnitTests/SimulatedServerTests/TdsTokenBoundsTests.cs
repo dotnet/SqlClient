@@ -20,8 +20,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// exceeding protocol-reasonable bounds, preventing unbounded memory allocation
 /// from a malicious server.
 /// </summary>
-// TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
-// need since each test uses its own TDS Server with ephemeral listen port.
+// Serializes execution with other SimulatedServerTests classes.  Required here because
+// DebugAssertSuppressor mutates the global Trace.Listeners collection, which is not
+// safe to do concurrently with other tests that may trigger Debug.Assert.
 [Collection("SimulatedServerTests")]
 public class TdsTokenBoundsTests : IDisposable
 {
@@ -1009,15 +1010,18 @@ public class TdsTokenBoundsTests : IDisposable
     }
 
     /// <summary>
-    /// Temporarily suppresses Debug.Assert failures by clearing trace listeners.
-    /// Used when disposing resources after intentionally corrupting a TDS stream.
+    /// Temporarily suppresses Debug.Assert failures by clearing trace listeners.  Used when
+    /// disposing resources after intentionally corrupting a TDS stream.  A static lock serializes
+    /// access for the lifetime of the instance because Trace.Listeners is a global collection.
     /// </summary>
     private sealed class DebugAssertSuppressor : IDisposable
     {
+        private static readonly object s_listenerLock = new();
         private readonly System.Diagnostics.TraceListener[] _listeners;
 
         public DebugAssertSuppressor()
         {
+            System.Threading.Monitor.Enter(s_listenerLock);
             _listeners = new System.Diagnostics.TraceListener[System.Diagnostics.Trace.Listeners.Count];
             System.Diagnostics.Trace.Listeners.CopyTo(_listeners, 0);
             System.Diagnostics.Trace.Listeners.Clear();
@@ -1025,7 +1029,9 @@ public class TdsTokenBoundsTests : IDisposable
 
         public void Dispose()
         {
+            System.Diagnostics.Trace.Listeners.Clear();
             System.Diagnostics.Trace.Listeners.AddRange(_listeners);
+            System.Threading.Monitor.Exit(s_listenerLock);
         }
     }
 }

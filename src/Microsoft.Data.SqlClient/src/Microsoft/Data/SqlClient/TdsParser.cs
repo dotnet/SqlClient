@@ -3852,7 +3852,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (dataLen > (uint)TdsEnums.MaxTokenDataLength)
                     {
-                        throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, (int)dataLen);
+                        throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, dataLen);
                     }
                     int dataLength = (int)dataLen;
                     byte[] data = new byte[dataLength];
