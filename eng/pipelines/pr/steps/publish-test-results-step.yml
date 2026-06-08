@@ -61,7 +61,7 @@ steps:
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Test Artifacts'
     inputs:
-      artifact: ${{ parameters.testResultsArtifactName }}
+      artifact: ${{ parameters.testResultsArtifactName }}_$(System.JobId)
       targetPath: ${{ parameters.testResultsPath }}
     condition: succeededOrFailed()
 
