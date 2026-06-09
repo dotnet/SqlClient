@@ -56,13 +56,25 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-    public ActiveDirectoryAuthenticationProvider(string applicationClientId, bool useWamBroker = false)
+    public ActiveDirectoryAuthenticationProvider(string applicationClientId)
+        : this(DefaultDeviceFlowCallback, applicationClientId)
+    {
+    }
+
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2WithBroker/*'/>
+    public ActiveDirectoryAuthenticationProvider(string applicationClientId, bool useWamBroker)
         : this(DefaultDeviceFlowCallback, applicationClientId, useWamBroker)
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
-    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null, bool useWamBroker = false)
+    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
+        : this(deviceCodeFlowCallbackMethod, applicationClientId, useWamBroker: false)
+    {
+    }
+
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3WithBroker/*'/>
+    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId, bool useWamBroker)
     {
         _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
         if (applicationClientId is not null)
