@@ -1,10 +1,6 @@
 <linker>
   <assembly fullname="Microsoft.Data.SqlClient">
     <type fullname="Microsoft.Data.SqlClient.LocalAppContextSwitches">
-      <!-- Enable the unused SNI to be trimmed based upon the publish-time value of the Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows switch -->
-      <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="false" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="false" />
-      <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="true" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="true" />
-
       <!--
         When the consumer sets the feature switch to false at publish time:
 
@@ -27,7 +23,11 @@
         No "featurevalue=true" entry is needed because the property already
         defaults to true via AppContext.TryGetSwitch fallback.
       -->
-      <method signature="System.Boolean get_EnableReflectionBasedAuthenticationProviderDiscovery()" body="stub" value="false" feature="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery" featurevalue="false" />
+      <method signature="System.Boolean get_EnableReflectionBasedAuthenticationProviderDiscovery()"
+              body="stub"
+              value="false"
+              feature="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery"
+              featurevalue="false" />
     </type>
   </assembly>
 </linker>

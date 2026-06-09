@@ -223,14 +223,19 @@
 
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
-    <!-- Linker substitution directives for trimming. Includes feature switches for:               -->
-    <!--   - UseManagedNetworkingOnWindows (Windows-only, no-op on Unix)                           -->
-    <!--   - EnableReflectionBasedAuthenticationProviderDiscovery (cross-platform)                 -->
-    <!-- This file does not support pre-processor directives, so it must be conditionally          -->
-    <!-- included into the build. Excluded from net462 (no trimmer support).                       -->
+    <!-- Cross-platform linker substitution: auth provider feature switch.                         -->
+    <!-- Excluded from net462 (no trimmer support).                                               -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
                       LogicalName="ILLink.Substitutions.xml"
                       Condition="'$(TargetFramework)' != 'net462'" />
+
+    <!-- Windows-only linker substitution: UseManagedNetworkingOnWindows feature switch.           -->
+    <!-- Must NOT be embedded on Unix — a cross-platform consumer setting the switch to false      -->
+    <!-- would cause the trimmer to stub UseManagedNetworking to false on Unix, breaking           -->
+    <!-- managed SNI. See ILLink.Substitutions.Windows.xml comment for details.                    -->
+    <EmbeddedResource Include="Resources\ILLink.Substitutions.Windows.xml"
+                      LogicalName="ILLink.Substitutions.Windows.xml"
+                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
 
     <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
