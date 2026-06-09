@@ -27,14 +27,14 @@ dotnet run
 ### Publish as Native AOT
 
 ```bash
-dotnet publish -c Release
+dotnet publish -c Release -f net9.0 -r linux-x64
 ./bin/Release/net9.0/linux-x64/publish/AotCompatibility
 ```
 
 On Windows:
 
 ```cmd
-dotnet publish -c Release
+dotnet publish -c Release -f net9.0 -r win-x64
 bin\Release\net9.0\win-x64\publish\AotCompatibility.exe
 ```
 

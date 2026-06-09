@@ -700,7 +700,7 @@ internal static class LocalAppContextSwitches
     /// </code>
     /// At publish time, the trimmer substitutes this property with constant <c>false</c>
     /// (via <c>[FeatureSwitchDefinition]</c> on .NET 9+ and <c>ILLink.Substitutions.xml</c>
-    /// on all TFMs).  The dead <c>if (false)</c> branch is eliminated, and all unreachable
+    /// on .NET 8+).  The dead <c>if (false)</c> branch is eliminated, and all unreachable
     /// reflection code (<c>Assembly.Load</c>, <c>Activator.CreateInstance</c>, exception
     /// filters) is removed from the final binary.
     /// </para>

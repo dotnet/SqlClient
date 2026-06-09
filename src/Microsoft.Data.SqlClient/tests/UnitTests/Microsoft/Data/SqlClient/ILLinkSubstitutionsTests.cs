@@ -17,6 +17,27 @@ public class ILLinkSubstitutionsTests
     private static readonly string[] s_resourceNames =
         typeof(SqlConnection).Assembly.GetManifestResourceNames();
 
+#if NETFRAMEWORK
+    /// <summary>
+    /// On .NET Framework the trimmer is not supported, so the cross-platform
+    /// substitution file must NOT be embedded.
+    /// </summary>
+    [Fact]
+    public void Assembly_DoesNotContainCrossPlatformSubstitutions()
+    {
+        Assert.DoesNotContain("ILLink.Substitutions.xml", s_resourceNames);
+    }
+
+    /// <summary>
+    /// On .NET Framework the trimmer is not supported, so the Windows-only
+    /// substitution file must NOT be embedded.
+    /// </summary>
+    [Fact]
+    public void Assembly_DoesNotContainWindowsSubstitutions()
+    {
+        Assert.DoesNotContain("ILLink.Substitutions.Windows.xml", s_resourceNames);
+    }
+#else
     /// <summary>
     /// The cross-platform substitution file (auth provider feature switch) must
     /// always be present on .NET (non-Framework) builds.
@@ -44,4 +65,5 @@ public class ILLinkSubstitutionsTests
             Assert.DoesNotContain("ILLink.Substitutions.Windows.xml", s_resourceNames);
         }
     }
+#endif
 }
