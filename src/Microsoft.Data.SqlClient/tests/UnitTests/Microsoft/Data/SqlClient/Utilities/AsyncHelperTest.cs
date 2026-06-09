@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
+            // - taskCompletionSource should have faulted, regardless of mockOnFailure throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task ContinueTask_TaskFaultsNoHandler()
         {
             // Arrange
-            // - Task to continue that is cancelled
+            // - Task to continue that is faulted
             Task taskToContinue = Task.FromException(new Exception());
             TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
             Mock<Action> mockOnSuccess = new();
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled
+            // - taskCompletionSource should have faulted
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
@@ -390,7 +390,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
+            // - taskCompletionSource should have faulted, regardless of mockOnFailure throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled
+            // - taskCompletionSource should have faulted
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
             mockOnSuccess.VerifyNeverCalled();
             mockOnCancellation.VerifyNeverCalled();
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled, regardless of mockOnSuccess throwing
+            // - taskCompletionSource should have faulted, regardless of mockOnFailure throwing
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
 
             mockOnSuccess.VerifyNeverCalled();
@@ -645,7 +645,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
 
             // Assert
-            // - taskCompletionSource should have been cancelled
+            // - taskCompletionSource should have faulted
             Assert.Equal(TaskStatus.Faulted, taskCompletionSource.Task.Status);
             mockOnSuccess.VerifyNeverCalled();
             mockOnCancellation.VerifyNeverCalled();
@@ -768,7 +768,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         public async Task CreateContinuationTask_TaskCancelsNoHandler()
         {
             // Arrange
-            // - Task to continue completed successfully
+            // - Task to continue was cancelled
             Task taskToContinue = GetCancelledTask();
             Mock<Action<Exception>> mockOnFailure = new();
             Mock<Action> mockOnSuccess = new();
@@ -1297,7 +1297,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             {
                 // Act
                 // - Run task that will always time out
-                TaskCompletionSource<object?> tcs = new();
+                TaskCompletionSource<object?>? tcs = new();
                 AsyncHelper.WaitForCompletion(
                     tcs.Task,
                     timeoutInSeconds: 1,
@@ -1306,6 +1306,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 
                 // - Task has timed out, simulate faulting task completion source
                 tcs.SetException(new Exception("late failure"));
+
+                // - Drop the last strong reference so the faulted Task can be finalized
+                tcs = null;
 
                 // - Force collection of unobserved task
                 GC.Collect();
