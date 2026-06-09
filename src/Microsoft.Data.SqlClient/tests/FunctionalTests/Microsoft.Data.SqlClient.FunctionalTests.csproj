@@ -32,11 +32,6 @@
 
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
-    <!-- This file applies runtime configuration to .NET Framework that is used by the tests. -->
-    <None Update="app.config" Condition="'$(TargetFramework)' == 'net462'">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-
     <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>xunit.runner.json</Link>

@@ -2,6 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// NOTE: This ref assembly intentionally does not use #nullable annotations.
+// The implementation source uses nullable (e.g. string?, SqlAuthenticationProvider?)
+// but the ref/notsupported projects omit them for consistency with the existing
+// codebase convention and to avoid GenAPI nullable attribute complications.
+
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
