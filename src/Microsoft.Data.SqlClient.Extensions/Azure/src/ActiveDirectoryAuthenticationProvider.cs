@@ -31,9 +31,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
-    private readonly string _applicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-    private const string _wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
-    private const string _systemBrowserRedirectUri = "http://localhost";
+    private const string s_sqlclientapplicationid = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
+    private readonly string _applicationClientId = s_sqlclientapplicationid;
+    // Maintain a flag to disable WAM broker mode for backwards compatibility
+    // in applications using ActiveDirectoryAuthenticationProvider with custom Application Client ID.
+    private readonly bool _useWamBroker = false;
+    private const string s_wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
+    private const string s_windowsNativeRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+    private const string s_systemBrowserRedirectUri = "http://localhost";
     private const string s_defaultScopeSuffix = "/.default";
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
@@ -51,19 +56,22 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-    public ActiveDirectoryAuthenticationProvider(string applicationClientId)
-        : this(DefaultDeviceFlowCallback, applicationClientId)
+    public ActiveDirectoryAuthenticationProvider(string applicationClientId, bool useWamBroker = false)
+        : this(DefaultDeviceFlowCallback, applicationClientId, useWamBroker)
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
-    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
+    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null, bool useWamBroker = false)
     {
         _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
         if (applicationClientId is not null)
         {
             _applicationClientId = applicationClientId;
         }
+        // WAM broker mode is always enabled for the SQL Client application.
+        // If a custom application client ID is provided, WAM broker mode will be enabled only when customer specifies it.
+        _useWamBroker = _applicationClientId == s_sqlclientapplicationid || useWamBroker;
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
@@ -248,8 +256,9 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 * This means the Entra ID app registration for that client ID must include the above redirect URI to use WAM brokered authentication on Windows.
             */
             string redirectUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? _wamBrokerRedirectUriPrefix + _applicationClientId
-                : _systemBrowserRedirectUri;
+                ? (_useWamBroker ? s_wamBrokerRedirectUriPrefix + _applicationClientId
+                    : s_windowsNativeRedirectUri)
+                : s_systemBrowserRedirectUri;
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
@@ -744,12 +753,15 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
-        // Enable WAM broker on Windows for all supported authentication modes.
-        // The broker provides enhanced security by enabling device-based Conditional Access
-        // policies through the Windows Account Manager (WAM).
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            builder.WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows));
+            if (_useWamBroker)
+            {
+                // Enable WAM broker on Windows for all supported authentication modes.
+                // The broker provides enhanced security by enabling device-based Conditional Access
+                // policies through the Windows Account Manager (WAM).
+                builder.WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows));
+            }
 
             // Set the parent window handle for broker UI.
             // On .NET Framework, prefer the IWin32WindowFunc if provided by the caller.

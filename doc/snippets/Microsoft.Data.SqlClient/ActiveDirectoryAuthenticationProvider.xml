@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="ActiveDirectoryAuthenticationProvider">
     <ActiveDirectoryAuthenticationProvider>
       <summary>
@@ -13,6 +13,9 @@
     <ctor2>
       <param name="applicationClientId">
         Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
+      <param name="useWamBroker">
+        (Optional) Indicates whether to use the Windows Account Manager (WAM) broker for authentication.
       </param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id.
@@ -30,7 +33,7 @@
               public static void Main()
               {
                 // Supported for all authentication modes supported by ActiveDirectoryAuthenticationProvider
-                ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider("&lt;application_client_id&gt;");
+                ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider("&lt;application_client_id&gt;", useWamBroker: true);
                 if (provider.IsSupported(SqlAuthenticationMethod.ActiveDirectoryInteractive))
                 {
                   SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
@@ -53,6 +56,9 @@
       </param>
       <param name="applicationClientId">
         (Optional) Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
+      <param name="useWamBroker">
+        (Optional)Indicates whether to use the Windows Account Manager (WAM) broker for authentication.
       </param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
