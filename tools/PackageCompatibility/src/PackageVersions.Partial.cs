@@ -1,4 +1,4 @@
-namespace Microsoft.Data.SqlClient.Samples.AzureAuthentication;
+namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility;
 
 /// <summary>
 /// Hand-written companion to the auto-generated <c>PackageVersions.g.cs</c> file
@@ -14,7 +14,7 @@ internal static partial class PackageVersions
     /// <summary>
     /// Version of the Azure extensions package, or "N/A" when not referenced.
     /// </summary>
-    public const string AzureExtensionsVersion =
+    public const string MicrosoftDataSqlClientExtensionsAzureVersion =
         #if AZURE_EXTENSIONS
             MicrosoftDataSqlClientExtensionsAzure;
         #else

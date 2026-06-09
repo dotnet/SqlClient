@@ -15,6 +15,7 @@ using System.Collections;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 {
+    [Trait("Set", "3")]
     public class JsonBulkCopyTest
     {
         private readonly ITestOutputHelper _output;

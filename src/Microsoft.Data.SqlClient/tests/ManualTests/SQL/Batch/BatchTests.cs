@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class BatchTests
     {
 
@@ -379,8 +380,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string create =
                 @"
-CREATE PROCEDURE TestInAndOutParams 
-	@Input int, 
+CREATE PROCEDURE TestInAndOutParams
+	@Input int,
 	@InOut int OUTPUT,
 	@Output int = default OUTPUT
 AS

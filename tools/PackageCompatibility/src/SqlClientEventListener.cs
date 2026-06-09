@@ -1,6 +1,6 @@
 using System.Diagnostics.Tracing;
 
-namespace Microsoft.Data.SqlClient.Samples.AzureAuthentication;
+namespace Microsoft.Data.SqlClient.Tools.PackageCompatibility;
 
 /// <summary>
 /// Listens for events from <c>Microsoft.Data.SqlClient.EventSource</c> and emits them via the
