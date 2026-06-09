@@ -57,8 +57,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET && _WINDOWS
     private readonly bool? _useManagedNetworkingOriginal;
-    #endif    
+    #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
+    private readonly bool? _enableReflectionBasedAuthenticationProviderDiscoveryOriginal;
 
     #endregion
 
@@ -120,10 +121,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
             #if NET && _WINDOWS
             _useManagedNetworkingOriginal =
-                GetSwitchValue("s_useManagedNetworking");
+                GetSwitchValue("s_useManagedNetworkingOnWindows");
             #endif
             _useMinimumLoginTimeoutOriginal =
                 GetSwitchValue("s_useMinimumLoginTimeout");
+            _enableReflectionBasedAuthenticationProviderDiscoveryOriginal =
+                GetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery");
         }
         catch
         {
@@ -162,7 +165,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
             SetSwitchValue(
-                "s_legacyRowVersionNullBehavior", 
+                "s_legacyRowVersionNullBehavior",
                 _legacyRowVersionNullBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyVarTimeZeroScaleBehaviour",
@@ -190,12 +193,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 _useOverallConnectTimeoutForPoolWaitOriginal);
             #if NET && _WINDOWS
             SetSwitchValue(
-                "s_useManagedNetworking",
+                "s_useManagedNetworkingOnWindows",
                 _useManagedNetworkingOriginal);
             #endif
             SetSwitchValue(
                 "s_useMinimumLoginTimeout",
                 _useMinimumLoginTimeoutOriginal);
+            SetSwitchValue(
+                "s_enableReflectionBasedAuthenticationProviderDiscovery",
+                _enableReflectionBasedAuthenticationProviderDiscoveryOriginal);
         }
         finally
         {
@@ -344,12 +350,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
     #if NET && _WINDOWS
     /// <summary>
-    /// Get or set the UseManagedNetworking switch value.
+    /// Get or set the UseManagedNetworkingOnWindows switch value.
     /// </summary>
     public bool? UseManagedNetworking
     {
-        get => GetSwitchValue("s_useManagedNetworking");
-        set => SetSwitchValue("s_useManagedNetworking", value);
+        get => GetSwitchValue("s_useManagedNetworkingOnWindows");
+        set => SetSwitchValue("s_useManagedNetworkingOnWindows", value);
     }
     #endif
 
@@ -360,6 +366,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_useMinimumLoginTimeout");
         set => SetSwitchValue("s_useMinimumLoginTimeout", value);
+    }
+
+    /// <summary>
+    /// Get or set the EnableReflectionBasedAuthenticationProviderDiscovery switch value.
+    /// </summary>
+    public bool? EnableReflectionBasedAuthenticationProviderDiscovery
+    {
+        get => GetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery");
+        set => SetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery", value);
     }
 
     #endregion
@@ -377,7 +392,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {
@@ -424,7 +439,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {

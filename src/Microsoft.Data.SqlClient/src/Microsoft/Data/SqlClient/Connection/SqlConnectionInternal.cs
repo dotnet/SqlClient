@@ -2724,7 +2724,12 @@ namespace Microsoft.Data.SqlClient.Connection
             // Username to use in error messages.
             string? username = null;
 
-            SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
+            // Ensure config-driven and Azure extension providers have been discovered and
+            // registered before we look one up.  This is a one-time, lazy initialization that
+            // only runs the first time a federated/Active Directory connection authenticates.
+            AuthenticationBootstrapper.Bootstrap();
+
+            SqlAuthenticationProvider? authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);
