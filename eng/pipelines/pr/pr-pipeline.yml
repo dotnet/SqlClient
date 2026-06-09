@@ -4,7 +4,23 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+name: $(DayOfYear)$(Rev:rr)
+
 parameters:
+  # General Parameters =====================================================
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
   - name: platforms
     type: object
     default:
@@ -37,23 +53,6 @@ parameters:
         dotnet: "net10.0"
         image: "ADO-UB22-SQL22"
         operatingSystem: "Linux"
-
-name: $(DayOfYear)$(Rev:rr)
-
-parameters:
-  # General Parameters =====================================================
-
-  # Dotnet CLI verbosity level.
-  - name: dotnetVerbosity
-    displayName: dotnet CLI Verbosity
-    type: string
-    default: normal
-    values:
-      - quiet
-      - minimal
-      - normal
-      - detailed
-      - diagnostic
 
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
