@@ -4,6 +4,30 @@
       <!-- Enable the unused SNI to be trimmed based upon the publish-time value of the Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows switch -->
       <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="false" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="false" />
       <method signature="System.Boolean get_UseManagedNetworking()" body="stub" value="true" feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" featurevalue="true" />
+
+      <!--
+        When the consumer sets the feature switch to false at publish time:
+
+          <RuntimeHostConfigurationOption
+              Include="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery"
+              Value="false"
+              Trim="true" />
+
+        the trimmer replaces the property getter with a constant "return false".
+        This makes the `if (EnableReflectionBasedAuthenticationProviderDiscovery)` guard in
+        SqlAuthenticationProviderManager's static constructor a dead branch, allowing
+        the trimmer to remove LoadAzureExtensionProvider() and all reachable
+        reflection code (Assembly.Load, Activator.CreateInstance, public-key-token
+        verification, and associated exception filters).
+
+        On .NET 9+, [FeatureSwitchDefinition] on the property achieves the same
+        result; this XML entry provides the same behavior on .NET 8 where the
+        attribute is not available.
+
+        No "featurevalue=true" entry is needed because the property already
+        defaults to true via AppContext.TryGetSwitch fallback.
+      -->
+      <method signature="System.Boolean get_EnableReflectionBasedAuthenticationProviderDiscovery()" body="stub" value="false" feature="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery" featurevalue="false" />
     </type>
   </assembly>
 </linker>

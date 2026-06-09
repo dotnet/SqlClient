@@ -71,7 +71,7 @@ public abstract partial class SqlAuthenticationProvider
                 // Get handles to the get/set static methods.
                 _getProvider = manager.GetMethod(
                     "GetProvider",
-                    BindingFlags.NonPublic | BindingFlags.Static);
+                    BindingFlags.Public | BindingFlags.Static);
 
                 if (_getProvider is null)
                 {
@@ -81,7 +81,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 _setProvider = manager.GetMethod(
                     "SetProvider",
-                    BindingFlags.NonPublic | BindingFlags.Static);
+                    BindingFlags.Public | BindingFlags.Static);
 
                 if (_setProvider is null)
                 {

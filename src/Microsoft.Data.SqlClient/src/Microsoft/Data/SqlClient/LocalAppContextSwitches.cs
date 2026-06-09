@@ -148,6 +148,14 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseMinimumLoginTimeoutString =
         "Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether
+    /// SqlAuthenticationProviderManager uses reflection to discover and load
+    /// the Azure extension authentication provider at startup.
+    /// </summary>
+    internal const string EnableReflectionBasedAuthenticationProviderDiscoveryString =
+        "Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery";
     
     #endregion
 
@@ -257,6 +265,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseMinimumLoginTimeout switch.
     /// </summary>
     private static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the EnableReflectionBasedAuthenticationProviderDiscovery switch.
+    /// </summary>
+    private static SwitchValue s_enableReflectionBasedAuthenticationProviderDiscovery = SwitchValue.None;
 
     #endregion
 
@@ -654,6 +667,58 @@ internal static class LocalAppContextSwitches
             UseMinimumLoginTimeoutString,
             defaultValue: true,
             ref s_useMinimumLoginTimeout);
+
+    /// <summary>
+    /// When set to true (the default), SqlAuthenticationProviderManager will
+    /// use reflection (Assembly.Load + Activator.CreateInstance) to discover
+    /// and load the Azure extension authentication provider at startup.
+    ///
+    /// AOT applications should set this to false and register providers
+    /// explicitly via SqlAuthenticationProviderManager.SetProvider().
+    ///
+    /// The default value of this switch is true.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This switch can be consumed in two ways:
+    /// </para>
+    /// <para>
+    /// <b>1. Runtime AppContext switch (non-AOT apps):</b>
+    /// Set via <c>AppContext.SetSwitch("Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery", false)</c>
+    /// or in <c>runtimeconfig.json</c>.  Must be set before the first <c>SqlConnection</c> is opened
+    /// (i.e. before <c>SqlAuthenticationProviderManager</c>'s static constructor runs).
+    /// The reflection code remains present in the assembly but is not called.
+    /// </para>
+    /// <para>
+    /// <b>2. Trimmer/AOT feature switch (published AOT apps):</b>
+    /// Set in the consuming app's .csproj:
+    /// <code>
+    /// &lt;RuntimeHostConfigurationOption
+    ///     Include="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery"
+    ///     Value="false"
+    ///     Trim="true" /&gt;
+    /// </code>
+    /// At publish time, the trimmer substitutes this property with constant <c>false</c>
+    /// (via <c>[FeatureSwitchDefinition]</c> on .NET 9+ and <c>ILLink.Substitutions.xml</c>
+    /// on all TFMs).  The dead <c>if (false)</c> branch is eliminated, and all unreachable
+    /// reflection code (<c>Assembly.Load</c>, <c>Activator.CreateInstance</c>, exception
+    /// filters) is removed from the final binary.
+    /// </para>
+    /// <para>
+    /// The two approaches differ in that the runtime switch leaves reflection IL in the
+    /// binary (just skips calling it), while the trimmer switch physically removes the
+    /// code — eliminating AOT warnings and reducing binary size.
+    /// </para>
+    /// </remarks>
+#if NET9_0_OR_GREATER
+    [System.Diagnostics.CodeAnalysis.FeatureSwitchDefinition(
+        EnableReflectionBasedAuthenticationProviderDiscoveryString)]
+#endif
+    internal static bool EnableReflectionBasedAuthenticationProviderDiscovery =>
+        AcquireAndReturn(
+            EnableReflectionBasedAuthenticationProviderDiscoveryString,
+            defaultValue: true,
+            ref s_enableReflectionBasedAuthenticationProviderDiscovery);
 
     #endregion
 

@@ -65,7 +65,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
+            #pragma warning restore CS0618
 
             Assert.NotNull(provider);
             Assert.IsType<DummySqlAuthenticationProvider>(provider);

@@ -1,0 +1,90 @@
+<docs>
+  <members name="SqlAuthenticationProviderManager">
+    <SqlAuthenticationProviderManager>
+      <summary>
+        Manages authentication provider registration for SQL Server connections.
+        Provides methods to get and set <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> instances
+        for specific <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationMethod" /> values.
+      </summary>
+      <remarks>
+        <para>
+          This class is the primary mechanism for registering authentication providers.
+          It is AOT-safe because it does not use reflection — providers are registered via
+          direct static method calls.
+        </para>
+        <para>
+          For NativeAOT applications, disable the reflection-based provider discovery by setting the
+          <c>Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery</c> runtime configuration
+          option to <see langword="false" />, and register providers explicitly using
+          <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod,Microsoft.Data.SqlClient.SqlAuthenticationProvider)" />.
+        </para>
+      </remarks>
+    </SqlAuthenticationProviderManager>
+    <ApplicationClientId>
+      <summary>
+        Gets the application client ID configured via the
+        <c>SqlClientAuthenticationProviders</c> or <c>SqlAuthenticationProviders</c>
+        configuration section in app.config.
+      </summary>
+      <value>
+        The configured application client ID, or <see langword="null" /> if no client ID was configured.
+      </value>
+      <remarks>
+        This value can be passed to authentication provider constructors (such as
+        <c>ActiveDirectoryAuthenticationProvider</c>) when registering providers explicitly
+        in AOT applications.
+      </remarks>
+    </ApplicationClientId>
+    <GetProvider>
+      <summary>
+        Gets the authentication provider registered for the specified authentication method.
+      </summary>
+      <param name="authenticationMethod">The authentication method to look up.</param>
+      <returns>
+        The registered <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> for the
+        specified method, or <see langword="null" /> if no provider is registered.
+      </returns>
+    </GetProvider>
+    <SetProvider>
+      <summary>
+        Registers an authentication provider for the specified authentication method.
+      </summary>
+      <param name="authenticationMethod">The authentication method to register a provider for.</param>
+      <param name="provider">The authentication provider to register.</param>
+      <returns>
+        <see langword="true" /> if the provider was registered successfully;
+        <see langword="false" /> if the authentication method has already been claimed
+        via application configuration and cannot be overridden.
+      </returns>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        Thrown if the provider does not support the specified authentication method.
+      </exception>
+      <remarks>
+        <para>
+          Providers registered via application configuration (app.config) cannot be replaced
+          by calling this method. In that case, this method returns <see langword="false" />.
+        </para>
+        <para>
+          If a provider was previously registered for the same method (not via app.config),
+          it will be replaced and its <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProvider.BeforeUnload(Microsoft.Data.SqlClient.SqlAuthenticationMethod)" />
+          method will be called before the new provider's
+          <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProvider.BeforeLoad(Microsoft.Data.SqlClient.SqlAuthenticationMethod)" />
+          method is invoked.
+        </para>
+      </remarks>
+      <example>
+        The following example demonstrates registering a provider for AOT applications:
+        <code language="c#">
+          // At the top of Main(), before opening any connection:
+          var provider = new ActiveDirectoryAuthenticationProvider(
+              SqlAuthenticationProviderManager.ApplicationClientId);
+
+          SqlAuthenticationProviderManager.SetProvider(
+              SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, provider);
+          SqlAuthenticationProviderManager.SetProvider(
+              SqlAuthenticationMethod.ActiveDirectoryDefault, provider);
+        </code>
+      </example>
+    </SetProvider>
+  </members>
+</docs>

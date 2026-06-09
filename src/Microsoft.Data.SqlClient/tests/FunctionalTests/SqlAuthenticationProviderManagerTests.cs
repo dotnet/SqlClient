@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public void DefaultAuthenticationProviders_AppConfig()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             // The provider for ActiveDirectoryInteractive should be our dummy
             // provider.
             Assert.IsType<DummySqlAuthenticationProvider>(
@@ -26,18 +27,18 @@ namespace Microsoft.Data.SqlClient.Tests
 
             // There should be no provider for other methods.  Spot-check a few.
             Assert.Null(SqlAuthenticationProvider.GetProvider(
-                #pragma warning disable CS0618 // Type or member is obsolete
                 SqlAuthenticationMethod.ActiveDirectoryPassword));
-                #pragma warning restore CS0618 // Type or member is obsolete
 
             Assert.Null(SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity));
+            #pragma warning restore CS0618
         }
 
         // Verify that the dummy provider installed via app.config cannot be replaced.
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public void DefaultAuthenticationProviders_NoReplace()
         {
+            #pragma warning disable CS0618 // Type or member is obsolete
             // The provider for ActiveDirectoryInteractive should be our dummy
             // provider.
             Assert.IsType<DummySqlAuthenticationProvider>(
@@ -56,6 +57,17 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.IsType<DummySqlAuthenticationProvider>(
                 SqlAuthenticationProvider.GetProvider(
                     SqlAuthenticationMethod.ActiveDirectoryInteractive));
+            #pragma warning restore CS0618
+        }
+
+        // Verify that ApplicationClientId is read from the app.config section.
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
+        public void ApplicationClientId_ReadFromAppConfig()
+        {
+            // The app.config sets applicationClientId="f3e3a0a0-1234-5678-9abc-def012345678"
+            Assert.Equal(
+                "f3e3a0a0-1234-5678-9abc-def012345678",
+                SqlAuthenticationProviderManager.ApplicationClientId);
         }
 
         private class TestProvider : SqlAuthenticationProvider

@@ -2,6 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// NOTE: This ref assembly intentionally does not use #nullable annotations.
+// The implementation source uses nullable (e.g. string?, SqlAuthenticationProvider?)
+// but the ref/notsupported projects omit them for consistency with the existing
+// codebase convention and to avoid GenAPI nullable attribute complications.
+
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
@@ -45,6 +50,17 @@ public abstract class SqlAuthenticationInitializer
     protected SqlAuthenticationInitializer() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
     public abstract void Initialize();
+}
+
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SqlAuthenticationProviderManager/*'/>
+public sealed class SqlAuthenticationProviderManager
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/ApplicationClientId/*'/>
+    public static string ApplicationClientId { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/GetProvider/*'/>
+    public static Microsoft.Data.SqlClient.SqlAuthenticationProvider GetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod) { throw null; }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SetProvider/*'/>
+    public static bool SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod, Microsoft.Data.SqlClient.SqlAuthenticationProvider provider) { throw null; }
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
