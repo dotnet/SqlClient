@@ -41,9 +41,9 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
         ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
-        ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
-        ///     is to allow the task completion source to be continued even more after this current
-        ///     continuation.
+        ///   * <paramref name="taskCompletionSource"/> is *not* completed with result on success.
+        ///     This is to allow the task completion source to be continued even more after this
+        ///     current continuation.
         /// </remarks>
         /// <param name="taskToContinue">Task to continue with provided callbacks</param>
         /// <param name="taskCompletionSource">
@@ -133,9 +133,9 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
         ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
-        ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
-        ///     is to allow the task completion source to be continued even more after this current
-        ///     continuation.
+        ///   * <paramref name="taskCompletionSource"/> is *not* completed with result on success.
+        ///     This is to allow the task completion source to be continued even more after this
+        ///     current continuation.
         /// </remarks>
         /// <typeparam name="TState">
         /// Type of the state object to provide to the callbacks, constrained to class types to
@@ -233,8 +233,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * <paramref name="onSuccess"/> is called
         ///   * IF an exception is thrown during execution of <paramref name="onSuccess"/>, the
         ///     helper will try to set an exception on the <paramref name="taskCompletionSource"/>.
-        ///   * <paramref name="taskCompletionSource"/> is *not* with result on success. This
-        ///     is to allow the task completion source to be continued even more after this
+        ///   * <paramref name="taskCompletionSource"/> is *not* completed with result on success.
+        ///     This is to allow the task completion source to be continued even more after this
         ///     current continuation.
         /// </remarks>
         /// <param name="taskToContinue">Task to continue with provided callbacks</param>
@@ -652,7 +652,11 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// exception returned is set as the exception that completes the task completion source.
         /// </summary>
         /// <param name="taskCompletionSource">Task to execute with a timeout</param>
-        /// <param name="timeoutInSeconds">Number of seconds to wait until timing out the task</param>
+        /// <param name="timeoutInSeconds">
+        /// Number of seconds to wait until timing out the task. If set to &lt;=0, the method will
+        /// immediately return without calling <paramref name="onTimeout"/> or setting any state on
+        /// the <paramref name="taskCompletionSource"/>.
+        /// </param>
         /// <param name="onTimeout">
         /// Callback to execute when the task does not complete within the allotted time. The
         /// exception returned by the callback is set on the <paramref name="taskCompletionSource"/>.
@@ -695,7 +699,11 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// accidental modification of pass-by-value types.
         /// </typeparam>
         /// <param name="taskCompletionSource">Task to execute with a timeout</param>
-        /// <param name="timeoutInSeconds">Number of seconds to wait until timing out the task</param>
+        /// <param name="timeoutInSeconds">
+        /// Number of seconds to wait until timing out the task. If set to &lt;=0, the method will
+        /// immediately return without calling <paramref name="onTimeout"/> or setting any state on
+        /// the <paramref name="taskCompletionSource"/>.
+        /// </param>
         /// <param name="state">State object to pass to the callback</param>
         /// <param name="onTimeout">
         /// Callback to execute when the task does not complete within the allotted time. The
@@ -735,7 +743,10 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// the provided <paramref name="task"/>.
         /// </summary>
         /// <param name="task">Task to execute with a timeout</param>
-        /// <param name="timeoutInSeconds">Number of seconds to wait until timing out the task</param>
+        /// <param name="timeoutInSeconds">
+        /// Number of seconds to wait until timing out the task. If &lt;= 0, the timeout will be
+        /// infinite.
+        /// </param>
         /// <param name="onTimeout">
         /// Callback to execute when the task does not complete within the allotted time.
         /// </param>
@@ -768,9 +779,7 @@ namespace Microsoft.Data.SqlClient.Utilities
 
             if (!task.IsCompleted)
             {
-                // Ensure the task does not leave an unobserved exception
-                task.ContinueWith(static t => { _ = t.Exception; });
-                onTimeout?.Invoke();
+                ObserveContinuationException(task);
             }
         }
 

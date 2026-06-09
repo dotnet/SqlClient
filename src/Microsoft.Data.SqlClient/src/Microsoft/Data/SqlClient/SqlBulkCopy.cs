@@ -3211,9 +3211,9 @@ DROP TABLE #Column_Aliases
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: (regReconnectCancel2, exception) =>
+                            onFailure: (state, exception) =>
                             {
-                                regReconnectCancel2.Value.Dispose();
+                                state.Value.Dispose();
 
                                 // Convert exception and set it on the source
                                 // Note: This is safe because the helper will only try to set the
