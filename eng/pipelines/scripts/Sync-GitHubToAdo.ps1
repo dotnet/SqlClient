@@ -250,7 +250,7 @@ if ($activePr) {
     Write-Host "Active PR #$prId found. Updating description and posting comment..."
 
     # 1. PATCH the PR description with the refreshed commit summary.
-    $patchUri = "$apiBase/pullrequests/$prId?api-version=7.1"
+    $patchUri = "$apiBase/pullrequests/${prId}?api-version=7.1"
     $patchBody = @{
         description = "## Automated GitHub Sync`n`nThis PR was updated automatically by the GitHub sync pipeline.`n`nSource: [dotnet/SqlClient@$GitHubBranch](https://github.com/dotnet/SqlClient/tree/$GitHubBranch)`nSync branch: ``$SyncBranchName```n`n### Latest Commits`n`n$commitSummary`n`n---`n_This PR requires manual review and merge. Auto-complete is not enabled._"
     }
