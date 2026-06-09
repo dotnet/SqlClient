@@ -51,36 +51,34 @@ public class SqlAuthenticationProviderManagerTests
             SqlAuthenticationProviderManager.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
 
-        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Same(
             provider1,
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        #pragma warning restore CS0618
 
         // Set via Abstractions, get via both.
         Provider provider2 = new();
 
-        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.True(
             SqlAuthenticationProvider.SetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
                 provider2));
-        #pragma warning restore CS0618
 
         Assert.Same(
             provider2,
             SqlAuthenticationProviderManager.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
 
-        #pragma warning disable CS0618 // Type or member is obsolete
         Assert.Same(
             provider2,
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        #pragma warning restore CS0618
     }
 
+    /// <summary>
+    /// Verifies that GetProvider returns null when no provider has been registered
+    /// for the specified authentication method.
+    /// </summary>
     [Fact]
     public void GetProvider_ReturnsNull_WhenNoProviderRegistered()
     {
@@ -91,6 +89,10 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Null(result);
     }
 
+    /// <summary>
+    /// Verifies that SetProvider throws NotSupportedException when the provider
+    /// does not support the specified authentication method.
+    /// </summary>
     [Fact]
     public void SetProvider_ThrowsOnUnsupportedMethod()
     {
@@ -104,6 +106,10 @@ public class SqlAuthenticationProviderManagerTests
                 provider));
     }
 
+    /// <summary>
+    /// Verifies that ApplicationClientId is accessible and returns null when
+    /// no app.config section is present.
+    /// </summary>
     [Fact]
     public void ApplicationClientId_IsAccessible()
     {
@@ -116,6 +122,10 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Null(clientId);
     }
 
+    /// <summary>
+    /// Verifies that SetProvider replaces a previously registered provider for
+    /// the same authentication method.
+    /// </summary>
     [Fact]
     public void SetProvider_ReplacesExistingProvider()
     {
@@ -142,6 +152,10 @@ public class SqlAuthenticationProviderManagerTests
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
 
+    /// <summary>
+    /// Verifies that SetProvider throws NullReferenceException when a null
+    /// provider is passed (current behavior, not validated argument).
+    /// </summary>
     [Fact]
     public void SetProvider_ThrowsOnNullProvider()
     {
@@ -151,6 +165,10 @@ public class SqlAuthenticationProviderManagerTests
                 null!));
     }
 
+    /// <summary>
+    /// Verifies that GetProvider returns null for NotSpecified, which is never
+    /// a valid registration target.
+    /// </summary>
     [Fact]
     public void GetProvider_ReturnsNull_ForNotSpecified()
     {

@@ -69,6 +69,7 @@ try
 catch (Exception ex)
 {
     Console.WriteLine($"  Construction failed: {ex.Message}");
+    return 1;
 }
 
 Console.WriteLine();
@@ -96,10 +97,23 @@ if (exePath is not null)
         var projectDir = FindProjectDir(exeDir);
         if (projectDir is not null)
         {
-            var candidates = Directory.GetFiles(projectDir, $"{exeName}.map.xml", SearchOption.AllDirectories);
-            if (candidates.Length > 0)
+            try
             {
-                mapFile = candidates[0];
+                var candidates = new DirectoryInfo(projectDir)
+                    .EnumerateFiles($"{exeName}.map.xml", new EnumerationOptions
+                    {
+                        RecurseSubdirectories = true,
+                        IgnoreInaccessible = true
+                    });
+                var first = candidates.FirstOrDefault();
+                if (first is not null)
+                {
+                    mapFile = first.FullName;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  Warning: Could not search for map file: {ex.Message}");
             }
         }
     }
@@ -155,7 +169,9 @@ static string? FindProjectDir(string startDir)
     while (dir is not null)
     {
         if (Directory.GetFiles(dir, "*.csproj").Length > 0)
+        {
             return dir;
+        }
         dir = Path.GetDirectoryName(dir);
     }
     return null;

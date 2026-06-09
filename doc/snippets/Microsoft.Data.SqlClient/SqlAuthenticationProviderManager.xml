@@ -8,14 +8,18 @@
       </summary>
       <remarks>
         <para>
-          This class is the primary mechanism for registering authentication providers.
-          It is AOT-safe because it does not use reflection — providers are registered via
-          direct static method calls.
+          The <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.GetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod)" />
+          and <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod,Microsoft.Data.SqlClient.SqlAuthenticationProvider)" />
+          methods are AOT-safe because they do not use reflection — providers are registered
+          via direct static method calls.
         </para>
         <para>
-          For NativeAOT applications, disable the reflection-based provider discovery by setting the
-          <c>Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery</c> runtime configuration
-          option to <see langword="false" />, and register providers explicitly using
+          By default, the manager's static constructor performs reflection-based discovery of the
+          Azure authentication extension assembly. This is safe for JIT applications but incompatible
+          with NativeAOT trimming. To disable this discovery and make the manager fully AOT-compatible,
+          set the <c>Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery</c>
+          runtime configuration option to <see langword="false" /> at publish time, and register
+          providers explicitly using
           <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod,Microsoft.Data.SqlClient.SqlAuthenticationProvider)" />.
         </para>
       </remarks>
@@ -56,7 +60,7 @@
         <see langword="false" /> if the authentication method has already been claimed
         via application configuration and cannot be overridden.
       </returns>
-      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+      <exception cref="T:System.NotSupportedException">
         Thrown if the provider does not support the specified authentication method.
       </exception>
       <remarks>

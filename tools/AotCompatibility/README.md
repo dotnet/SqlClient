@@ -32,6 +32,7 @@ dotnet publish -c Release
 ```
 
 On Windows:
+
 ```cmd
 dotnet publish -c Release
 bin\Release\net9.0\win-x64\publish\AotCompatibility.exe
@@ -46,11 +47,13 @@ dotnet publish -c Release -p:EnableReflectionBasedAuthProviderDiscovery=true
 When `EnableReflectionBasedAuthProviderDiscovery=true`, the trimmer cannot
 eliminate the reflection code in `LoadAzureExtensionProvider()`, so you will see
 additional IL2075/IL2026 warnings from that method. This confirms the feature
-switch is working — setting it to `false` (the default) removes those warnings.
+switch is working — setting it to `false` (the test app's default, configured in
+the csproj) removes those warnings. Note that the *library's* default is `true`
+(reflection enabled); the test app overrides this to validate AOT trimming.
 
 ## Expected output
 
-```
+```text
 AOT Compatibility Test
 ======================
 
@@ -75,7 +78,7 @@ All AOT compatibility checks passed.
 Some trimmer warnings may appear during publish. These fall into categories:
 
 | Source | Description | Status |
-|--------|-------------|--------|
+| ------ | ----------- | ------ |
 | `SqlAuthenticationProviderManager` (config section) | `Type.GetType` in configuration-based provider loading | Pre-existing; future work to guard |
 | `SqlDiagnosticListener` | `DiagnosticSource.Write<T>` usage | Pre-existing; unrelated to auth |
 | `System.Configuration` | Reflection in `ConfigurationManager` | External dependency |
@@ -103,7 +106,7 @@ with `false` at compile time, enabling the trimmer to eliminate the entire
 ### How trimming works per TFM
 
 | TFM | Mechanism | How it works |
-|-----|-----------|--------------|
+| --- | --------- | ------------ |
 | **net9.0+** | `[FeatureSwitchDefinition]` attribute | The attribute on the property tells the trimmer directly that this property is a feature switch. When a `RuntimeHostConfigurationOption` sets it to `false`, the trimmer substitutes the property return value and eliminates guarded code. |
 | **net8.0** | `ILLink.Substitutions.xml` | The `[FeatureSwitchDefinition]` attribute does not exist on net8.0. Instead, the `ILLink.Substitutions.xml` file (embedded in the SqlClient assembly) declares the substitution. The trimmer reads this file and performs the same constant substitution, enabling dead-code elimination of the reflection path. |
 

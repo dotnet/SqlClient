@@ -21,7 +21,6 @@ public abstract partial class SqlAuthenticationProvider
 
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
-    [Obsolete("Use SqlAuthenticationProviderManager.GetProvider() instead. This method uses reflection and is not compatible with NativeAOT.")]
     public static SqlAuthenticationProvider? GetProvider(
         SqlAuthenticationMethod authenticationMethod)
     {
@@ -29,7 +28,6 @@ public abstract partial class SqlAuthenticationProvider
     }
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
-    [Obsolete("Use SqlAuthenticationProviderManager.SetProvider() instead. This method uses reflection and is not compatible with NativeAOT.")]
     public static bool SetProvider(
         SqlAuthenticationMethod authenticationMethod,
         SqlAuthenticationProvider provider)
