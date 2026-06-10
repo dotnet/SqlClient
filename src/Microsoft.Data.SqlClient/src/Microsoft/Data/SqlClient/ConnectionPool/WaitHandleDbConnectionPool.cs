@@ -387,6 +387,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     if (_stackOld.TryPop(out obj))
                     {
                         Debug.Assert(obj != null, "null connection is not expected");
+
+                        // When the new idle-timeout behaviour is enabled, the generational position
+                        // alone is not sufficient to decide eviction: with _cleanupWait = IdleTimeout/2
+                        // a worst-case return-just-before-a-tick connection would otherwise be destroyed
+                        // after only ~IdleTimeout/2. Honour the documented contract by consulting the
+                        // per-connection ReturnedTime; if it hasn't been idle long enough yet, push it
+                        // back and stop draining. _stackOld is age-ordered, so anything still on it is
+                        // younger and cannot be expired either.
+                        if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && !IsIdleExpired(obj))
+                        {
+                            _stackOld.Push(obj);
+                            _waitHandles.PoolSemaphore.Release(1);
+                            break;
+                        }
+
                         // If we obtained one from the old stack, destroy it.
 
                         SqlClientDiagnostics.Metrics.ExitFreeConnection();
