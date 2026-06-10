@@ -31,10 +31,11 @@ if: |
    && github.event.issue.pull_request == null
    && !endsWith(github.event.comment.user.login, '[bot]')
    && (
-     (startsWith(github.event.comment.body, '/triage')
+     ((github.event.comment.body == '/triage' || startsWith(github.event.comment.body, '/triage '))
       && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
      ||
-     (!startsWith(github.event.comment.body, '/triage')
+     (github.event.comment.body != '/triage'
+      && !startsWith(github.event.comment.body, '/triage ')
       && github.event.comment.user.login == github.event.issue.user.login
       && contains(github.event.issue.labels.*.name, 'Auto-Triage: Waiting for Author'))
    ))
