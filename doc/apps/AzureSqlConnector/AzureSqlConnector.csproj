@@ -33,7 +33,6 @@
   -->
   <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <NoBuild>true</NoBuild>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
