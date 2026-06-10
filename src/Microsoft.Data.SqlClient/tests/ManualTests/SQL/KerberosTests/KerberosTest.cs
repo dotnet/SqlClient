@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [PlatformSpecific(TestPlatforms.Linux)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        public void KerberosTest_ProtocolTcp_NamedInstanceWithExplicitPort()
+        public void KerberosTest_ProtocolTcp_NamedInstance()
         {
             string tcpConnStr = DataTestUtility.TCPConnectionString;
             if (string.IsNullOrEmpty(tcpConnStr) ||
@@ -210,12 +210,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
-            // Build the admin: data source from the base connection string to preserve environment
-            // settings. Do NOT fall back to port 1433 — the DAC port is separate from the regular
-            // SQL Server port and must be discovered via SSRP if not explicitly known.
-            string newDataSource = port > 0
-                ? $"admin:{hostname}\\{instanceName},{port}"
-                : $"admin:{hostname}\\{instanceName}";
+            // DAC can be unavailable in shared test environments. Skip this specific
+            // integration test when the target instance has remote admin connections disabled.
+            SqlConnectionStringBuilder preflightBuilder = new(tcpConnStr)
+            {
+                DataSource = $"{hostname}\\{instanceName}",
+                IntegratedSecurity = true
+            };
+
+            using (SqlConnection preflightConn = new(preflightBuilder.ConnectionString))
+            {
+                preflightConn.Open();
+                using SqlCommand preflightCommand = new("SELECT CAST(value_in_use AS bit) FROM sys.configurations WHERE name = 'remote admin connections'", preflightConn);
+                object preflightResult = preflightCommand.ExecuteScalar();
+                if (preflightResult is not bool remoteAdminEnabled || !remoteAdminEnabled)
+                {
+                    return; // Skip test; DAC is not enabled in this environment
+                }
+            }
+
+            // Build the admin: data source without appending the regular TCP port.
+            // The DAC port is separate from the regular SQL Server port and must be
+            // discovered via SSRP (GetDacPortByInstanceName). Appending the regular
+            // TCP port would bypass DAC port resolution and connect to the wrong endpoint.
+            string newDataSource = $"admin:{hostname}\\{instanceName}";
 
             SqlConnectionStringBuilder adminBuilder = new(tcpConnStr)
             {
@@ -224,9 +242,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             // Note: this test requires DAC to be enabled on the target instance
-            // (sp_configure 'remote admin connections', 1). If DAC is not enabled,
-            // the connection will fail with a SqlException and the test will report as failed,
-            // which is the desired behavior — the test environment should be fixed.
+            // (sp_configure 'remote admin connections', 1).
             using SqlConnection conn = new(adminBuilder.ConnectionString);
             conn.Open();
 
