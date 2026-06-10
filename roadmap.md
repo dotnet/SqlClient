@@ -16,7 +16,7 @@ For active release milestones, their target dates, and the changes included, see
 
 ## Current Focus Areas
 
-Our team is actively working on the following high-level themes:
+Our team is actively working on the following high-level themes. Features are tracked via [GitHub issues](https://github.com/dotnet/SqlClient/issues) where applicable — see the linked milestones for associated issue details.
 
 - **Active** — Currently in development
 - **Planned** — Committed for a future milestone with estimated delivery
@@ -84,48 +84,8 @@ Our team is actively working on the following high-level themes:
 
 ---
 
-## Community Contributions
+## Community Contributions & Feedback
 
-We welcome and value community contributions to Microsoft.Data.SqlClient! To ensure we can maintain quality and alignment with our roadmap, please follow these guidelines:
-
-### Submitting Pull Requests
-
-- **New features from community PRs must be driven by creating a GitHub issue first.** Discuss the proposal in the issue before starting implementation. This helps avoid wasted effort and ensures alignment with project goals.
-- **Community contributions must not derail the project roadmap.** We prioritize features and fixes according to our published milestones. PRs that conflict with or distract from active roadmap items may be deferred.
-- **Our maintainers reserve the right to reject PRs** that do not meet the required criteria to qualify for review. This includes PRs that:
-  - Lack a corresponding approved issue
-  - Introduce breaking changes without prior discussion
-  - Do not follow the project's coding standards and conventions
-  - Are missing adequate test coverage
-  - Conflict with work already in progress by the team
-- **Bug fixes and small improvements** are generally welcome without a prior issue, but a linked issue helps us triage and prioritize your contribution.
-
-### What Makes a Great Contribution
-
-1. **Start with an issue** — File a [feature request](https://github.com/dotnet/SqlClient/issues/new?template=feature_request.md) or [bug report](https://github.com/dotnet/SqlClient/issues/new?template=bug-report.md) and wait for maintainer feedback
-2. **Follow the conventions** — See [CONTRIBUTING.md](CONTRIBUTING.md) and [coding guidelines](policy/coding-style.md)
-3. **Include tests** — Both unit tests and integration tests where applicable
-4. **Keep scope focused** — One feature or fix per PR
-5. **Update documentation** — For any public API changes
-
-### Contribution Workflow
-
-See [contributing-workflow.md](contributing-workflow.md) for details on how PRs are tracked through our review process.
-
----
-
-## Feedback
+For information on how to contribute, see [CONTRIBUTING.md](CONTRIBUTING.md). For details on the PR tracking workflow, see [contributing-workflow.md](contributing-workflow.md).
 
 The best way to give feedback is to create issues in the [dotnet/SqlClient](https://github.com/dotnet/SqlClient) repo.
-
-Please give us feedback that will provide insight on the following:
-
-- Existing features that are missing some capability or otherwise don't work well enough.
-- Missing features that should be added to the product.
-- Design choices for a feature that is currently in-progress.
-
-Some important caveats:
-
-- It is best to give design feedback quickly for improvements that are in development. We're unlikely to hold a feature from a release on late feedback.
-- We are most likely to include improvements that either have a positive impact on a broad scenario or have very significant positive impact on a niche scenario. This means that we are unlikely to prioritize modest improvements to niche scenarios.
-- Compatibility will almost always be given a higher priority than improvements.

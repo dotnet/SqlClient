@@ -7,7 +7,8 @@ You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filin
 We use and recommend the following workflow:
 
 1. **Create an issue for your work.**
-    - You can skip this step for trivial changes.
+    - You can skip this step for trivial changes (e.g., typo fixes, minor documentation updates).
+    - **For new features, non-trivial bug fixes, or behavioral changes, an issue is required.** This gives maintainers a chance to review the proposal before implementation begins and prevents wasted effort.
     - Reuse an existing issue on the topic, if there is one.
     - Get agreement from the team and the community that your proposed change is a good one.
     - Suggest [Labels](CONTRIBUTING.md#using-labels) to add for your issue.
@@ -39,6 +40,7 @@ We use and recommend the following workflow:
 - It is OK to create your PR as Draft on the upstream repo before the implementation is done.
 - This can be useful if you'd like to start the feedback process concurrent with your implementation.
 - State that this is the case in the initial PR comment.
+- **Keep your PR in Draft until CI validation passes.** The PR pipeline runs without maintainer intervention, so contributors should ensure all checks are green before marking the PR as ready for review. PRs appearing ready for review with failing checks will not be picked up by reviewers.
 
 ### Commit Guidelines
 
@@ -114,22 +116,22 @@ PRs (and their linked issues) move through the **Status** field to communicate r
 When a reviewer leaves feedback that needs author action, they move the PR to `Waiting for customer` **and** apply the `Author Attention Needed` label. The author removes the label (and updates Status back to `In review`/`In progress`) once the feedback is addressed.
 
 ```
-┌────────────┐       ┌─────────────┐       ┌───────────────────────┐       ┌───────────────┐       ┌──────┐
-│  To triage │──────▶│ In progress │──────▶│       In review       │──────▶│ In validation │──────▶│ Done │
-└────────────┘       └─────────────┘       └───────────┬───────────┘       └───────────────┘       └──────┘
-                            ▲                     │          ▲
-                            │                     │ changes  │ author addresses
-                            │                     │ requested│ feedback (minor) +
-                            │                     │ + label  │ removes label
-                            │                     ▼          │
-                            │        ┌────────────────────────┐
-                            │        │ Waiting for customer   │
-                            │        │ + Author Attention     │
-                            │        │   Needed (label)       │
-                            │        └────────────────────────┘
-                            │                    │
-                            │                    │ major rework needed
-                            └────────────────────┘
++--------------+       +---------------+       +-------------------------+       +-----------------+       +--------+
+|  To triage   |------>|  In progress  |------>|        In review        |------>|  In validation  |------>|  Done  |
++--------------+       +---------------+       +------------+------------+       +-----------------+       +--------+
+                              ^                      |            ^
+                              |                      | changes    | author addresses
+                              |                      | requested  | feedback (minor) +
+                              |                      | + label    | removes label
+                              |                      v            |
+                              |          +------------------------+
+                              |          | Waiting for customer    |
+                              |          | + Author Attention      |
+                              |          |   Needed (label)        |
+                              |          +------------------------+
+                              |                      |
+                              |                      | major rework needed
+                              +----------------------+
 ```
 
 ### Additional Field Usage
@@ -140,6 +142,8 @@ When a reviewer leaves feedback that needs author action, they move the PR to `W
 - **PM Approved**: Set to `Pending` when a PR introduces API changes. Must reach `Approved` before the PR can be merged. `N/A` for internal or non-API changes.
 
 ### Guidelines for Contributors
+
+> **Note:** Setting labels and project board fields (Status, Priority, etc.) requires maintainer or triage access. External contributors cannot modify these directly. Instead, suggest labels in your PR description and the team will apply them. If review feedback asks you to "remove the label" or "update Status", a maintainer will handle it if you don't have access—just let the team know in a comment.
 
 1. **Link your PR to an issue** — This ensures the PR appears on the project board and is tracked through the workflow.
 2. **Keep Status current** — If you're the author, move your linked issue to `In review` when your PR is ready for feedback.
@@ -152,6 +156,7 @@ When a reviewer leaves feedback that needs author action, they move the PR to `W
 1. **Signal that author action is required** — When your review requests changes (whether via formal "Request changes" or a comment that requires author follow-up), apply the **`Author Attention Needed`** label to the PR and move its linked issue to `Waiting for customer`. This pair (label + status) is what the team uses to find PRs that are blocked on the author versus those still awaiting review.
 2. **Don't remove the label yourself** — Leave the `Author Attention Needed` label in place until the author pushes updates addressing the feedback; the author is responsible for removing it when they hand the PR back for review.
 3. **Re-review promptly** — Once the author removes the label and Status returns to `In review`, pick the PR back up so it doesn't stall.
+4. **Only reviewers resolve their own feedback threads** — A review comment thread should only be resolved by the reviewer who created it, once they are satisfied the feedback has been addressed. Authors should not resolve reviewer threads themselves.
 
 ## Stale PR Management
 
