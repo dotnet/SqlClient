@@ -224,24 +224,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             lock (s_random)
             {
                 TimeSpan idleTimeout = connectionPoolGroup.PoolGroupOptions.IdleTimeout;
-                if (LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior)
+                if (LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior || idleTimeout == TimeSpan.Zero)
                 {
-                    // Legacy: preserve the historical 2-4 minute random cleanup window.
+                    // Historical 2-4 minute random cleanup window. Used for the legacy switch and for
+                    // the "idle eviction disabled" state (IdleTimeout=0) where the timer still runs for
+                    // non-idle maintenance but CleanupCallback skips the generational sweep.
                     _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
-                }
-                else if (idleTimeout != TimeSpan.Zero)
-                {
-                    // New + idle-expiry enabled: the WaitHandle pool takes two pruning cycles to evict
-                    // an idle connection (new->old generation, then old->closed), so halve the configured
-                    // timeout to approximate the requested idle lifetime.
-                    long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds / 2;
-                    _cleanupWait = cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds;
                 }
                 else
                 {
-                    // New pool, idle-expiry disabled (IdleTimeout=0). The cleanup timer still runs for
-                    // non-idle maintenance, so reuse the historical 2-4 minute window.
-                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000;
+                    // New idle-timeout behavior with a configured value: the WaitHandle pool takes two
+                    // pruning cycles to evict an idle connection (new->old generation, then old->closed),
+                    // so halve the configured timeout to approximate the requested idle lifetime. Floor
+                    // the period at 1 second so small IdleTimeout values (e.g. 1s) don't schedule a
+                    // sub-second timer that wakes the threadpool just to walk empty stacks.
+                    long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds / 2;
+                    cleanupWaitMilliseconds = Math.Max(cleanupWaitMilliseconds, 1000);
+                    _cleanupWait = cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds;
                 }
             }
 
@@ -369,8 +368,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // at least one period but not more than two periods.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}", Id);
 
+            // When the new idle-timeout behaviour is enabled and IdleTimeout is 0, idle eviction is
+            // disabled entirely: skip the generational destroy/age-into-old-stack sweep and only run
+            // the MinPoolSize floor maintenance below.
+            bool idleEvictionDisabled =
+                !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                PoolGroupOptions.IdleTimeout == TimeSpan.Zero;
+
             // Destroy free objects that put us above MinPoolSize from old stack.
-            while (Count > MinPoolSize)
+            while (!idleEvictionDisabled && Count > MinPoolSize)
             {
                 // While above MinPoolSize...
                 if (_waitHandles.PoolSemaphore.WaitOne(0, false))
@@ -432,7 +438,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Push to the old-stack.  For each free object, move object from
             // new stack to old stack.
-            if (_waitHandles.PoolSemaphore.WaitOne(0, false))
+            if (!idleEvictionDisabled && _waitHandles.PoolSemaphore.WaitOne(0, false))
             {
                 for (; ; )
                 {
@@ -688,7 +694,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // Transacting connections are held in their own store and are never
                                 // proactively closed (doing so would abort the transaction, which can be
                                 // distributed). Idle-timeout enforcement does not apply here, so we do
-                                // not call ReturnedToPool when parking the connection in the transacted pool.
+                                // not call SetReturnedTime when parking the connection in the transacted pool.
                                 _transactedConnectionPool.PutTransactedObject(transaction, obj);
                                 rootTxn = true;
                             }
@@ -1395,7 +1401,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
-                obj.ReturnedToPool();
+                obj.SetReturnedTime();
             }
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);

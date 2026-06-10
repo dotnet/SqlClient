@@ -98,7 +98,7 @@ namespace Microsoft.Data.ProviderBase
 
         /// <summary>
         /// UTC timestamp of when this connection was last returned to the pool.
-        /// Stamped by <see cref="ReturnedToPool"/>. Initialized to <see cref="CreateTime"/> in the constructor
+        /// Stamped by <see cref="SetReturnedTime"/>. Initialized to <see cref="CreateTime"/> in the constructor
         /// so a freshly built connection is treated as "just used" until its first return.
         /// Internal setter exists to support deterministic unit tests without reflection.
         /// The pool reads this value to decide whether the connection has sat idle longer than the configured idle timeout.
@@ -741,12 +741,12 @@ namespace Microsoft.Data.ProviderBase
         }
 
         /// <summary>
-        /// Records that this connection was just returned to the pool by stamping <see cref="ReturnedTime"/>
-        /// with the current UTC time. Called from the pool's return-to-pool path after the connection has
-        /// been deactivated and is about to enter the idle pool. The pool alone decides what to do with the
-        /// resulting timestamp (e.g. discarding the connection once it has sat unused for too long).
+        /// Stamps <see cref="ReturnedTime"/> with the current UTC time. The pool calls this from its
+        /// return-to-pool path only when it intends the idle-timeout machinery to act on the value;
+        /// the connection owns the mechanism (recording the time) while the pool owns the policy
+        /// (deciding when a stamp is meaningful).
         /// </summary>
-        internal void ReturnedToPool()
+        internal void SetReturnedTime()
         {
             ReturnedTime = DateTime.UtcNow;
         }

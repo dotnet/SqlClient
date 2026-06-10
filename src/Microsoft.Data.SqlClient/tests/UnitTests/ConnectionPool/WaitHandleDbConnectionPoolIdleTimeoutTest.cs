@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -184,5 +185,50 @@ public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
 
         // Assert - with the legacy switch on, the stale connection is still reused.
         Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void IdleTimeout_LegacyOff_Zero_CleanupCallbackDoesNotEvict()
+    {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+        // Arrange - new idle-timeout behavior enabled with IdleTimeout=0 means "disabled entirely":
+        // the generational destroy/age-into-old-stack sweep in CleanupCallback must be a no-op so
+        // connections above MinPoolSize are not pruned on the cleanup tick.
+        _pool = CreatePool(idleTimeoutSeconds: 0);
+
+        // Vend, then return, several connections so they sit in _stackNew.
+        SqlConnection o1 = new();
+        SqlConnection o2 = new();
+        SqlConnection o3 = new();
+        DbConnectionInternal c1 = GetConnection(o1);
+        DbConnectionInternal c2 = GetConnection(o2);
+        DbConnectionInternal c3 = GetConnection(o3);
+        _pool.ReturnInternalConnection(c1, o1);
+        _pool.ReturnInternalConnection(c2, o2);
+        _pool.ReturnInternalConnection(c3, o3);
+
+        int countBefore = _pool.Count;
+        int idleBefore = _pool.IdleCount;
+        Assert.Equal(3, countBefore);
+        Assert.Equal(3, idleBefore);
+
+        // Act - two cleanup cycles. Pre-fix this would move new->old then destroy old above
+        // MinPoolSize (default 0), dropping Count and IdleCount to 0.
+        InvokeCleanupCallback(_pool);
+        InvokeCleanupCallback(_pool);
+
+        // Assert - cleanup loops short-circuited; all three connections still pooled.
+        Assert.Equal(countBefore, _pool.Count);
+        Assert.Equal(idleBefore, _pool.IdleCount);
+    }
+
+    private static void InvokeCleanupCallback(WaitHandleDbConnectionPool pool)
+    {
+        MethodInfo cleanup = typeof(WaitHandleDbConnectionPool).GetMethod(
+            "CleanupCallback",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        cleanup.Invoke(pool, new object?[] { null });
     }
 }

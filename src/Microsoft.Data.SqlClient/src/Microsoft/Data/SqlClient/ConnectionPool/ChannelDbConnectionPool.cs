@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                     PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
                 {
-                    connection.ReturnedToPool();
+                    connection.SetReturnedTime();
                 }
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
