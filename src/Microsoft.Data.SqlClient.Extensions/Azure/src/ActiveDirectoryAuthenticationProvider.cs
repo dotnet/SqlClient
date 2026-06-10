@@ -143,17 +143,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     private Func<object>? _parentActivityOrWindowFunc = null;
 
-    /// <summary>
-    /// Sets a function to return the parent activity or window handle to be used for
-    /// WAM (Windows Account Manager) broker authentication prompts.
-    /// </summary>
-    /// <param name="parentActivityOrWindowFunc">
-    /// A function that returns an <see cref="IntPtr"/> window handle on Windows.
-    /// </param>
-    /// <remarks>
-    /// On Windows, this handle is used to parent the WAM broker dialog.
-    /// If not set, the provider will attempt to automatically detect the console window handle.
-    /// </remarks>
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindow/*'/>
     public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc)
     {
         _parentActivityOrWindowFunc = parentActivityOrWindowFunc ?? throw new ArgumentNullException(nameof(parentActivityOrWindowFunc));
