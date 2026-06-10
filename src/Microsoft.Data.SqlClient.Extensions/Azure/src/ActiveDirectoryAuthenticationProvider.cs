@@ -269,7 +269,11 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             */
             string redirectUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? (_useWamBroker ? s_wamBrokerRedirectUriPrefix + _applicationClientId
+                #if NETFRAMEWORK
                     : s_windowsNativeRedirectUri)
+                #else
+                    : s_systemBrowserRedirectUri)
+                #endif
                 : s_systemBrowserRedirectUri;
 
             PublicClientAppKey pcaKey =
