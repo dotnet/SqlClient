@@ -96,11 +96,13 @@ public class SqlConnectionStateTransitionTests
         Assert.True(enteredConnecting);
 
         int initialCloseCount = connection.CloseCount;
+        int eventCount = 0;
         StateChangeEventArgs? stateChange = null;
-        connection.StateChange += (_, e) => stateChange = e;
+        connection.StateChange += (_, e) => { eventCount++; stateChange = e; };
 
         connection.SetInnerConnectionEvent(new TestOpenDbConnectionInternal());
 
+        Assert.Equal(1, eventCount);
         Assert.NotNull(stateChange);
         Assert.Equal(ConnectionState.Closed, stateChange!.OriginalState);
         Assert.Equal(ConnectionState.Open, stateChange.CurrentState);
@@ -122,11 +124,13 @@ public class SqlConnectionStateTransitionTests
         Assert.True(enteredOpenBusy);
 
         int initialCloseCount = connection.CloseCount;
+        int eventCount = 0;
         StateChangeEventArgs? stateChange = null;
-        connection.StateChange += (_, e) => stateChange = e;
+        connection.StateChange += (_, e) => { eventCount++; stateChange = e; };
 
         connection.SetInnerConnectionEvent(DbConnectionClosedPreviouslyOpened.SingletonInstance);
 
+        Assert.Equal(1, eventCount);
         Assert.NotNull(stateChange);
         Assert.Equal(ConnectionState.Open, stateChange!.OriginalState);
         Assert.Equal(ConnectionState.Closed, stateChange.CurrentState);
@@ -193,11 +197,13 @@ public class SqlConnectionStateTransitionTests
         /// <param name="outerConnection">Owning outer connection.</param>
         /// <param name="connectionFactory">Factory used to mutate inner state.</param>
         /// <param name="retry">Retry continuation.</param>
+        /// <param name="timeout">Timeout timer (unused in test).</param>
         /// <returns>Always <see langword="true"/>.</returns>
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
             // Mirror the real open path by committing through a valid transitional source state first.
             connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this);
@@ -211,11 +217,13 @@ public class SqlConnectionStateTransitionTests
         /// <param name="outerConnection">Owning outer connection.</param>
         /// <param name="connectionFactory">Factory used to mutate inner state.</param>
         /// <param name="retry">Retry continuation.</param>
+        /// <param name="timeout">Timeout timer (unused in test).</param>
         /// <returns>Always <see langword="true"/>.</returns>
         internal override bool TryReplaceConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry)
+            TaskCompletionSource<DbConnectionInternal> retry,
+            TimeoutTimer timeout)
         {
             // Mirror the real replace path by committing through a valid transitional source state first.
             connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedBusy.SingletonInstance, this);
