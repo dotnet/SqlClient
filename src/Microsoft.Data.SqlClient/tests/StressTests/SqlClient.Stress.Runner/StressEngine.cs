@@ -6,9 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
-using Monitoring;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class StressEngine
     {

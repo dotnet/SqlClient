@@ -24,7 +24,6 @@ parameters:
   # True to enable debugging steps.
   - name: debug
     type: boolean
-    default: false
 
   # The prefix to prepend to the job's display name:
   #
@@ -36,7 +35,6 @@ parameters:
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
-    default: normal
     values:
     - quiet
     - minimal
@@ -48,20 +46,18 @@ parameters:
   - name: jobNameSuffix
     type: string
 
-  # True to fail the job when stress tests fail.  When false, test failures produce warnings
-  # (SucceededWithIssues) but do not fail the job.
-  - name: failOnTestFailure
+  # When true, test failures produce warnings (SucceededWithIssues) but do not fail the job.
+  # When false, test failures fail the job.  All test steps always run regardless of this setting.
+  - name: warnOnTestFailure
     type: boolean
 
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
     type: object
-    default: []
 
   # The list of .NET runtimes to test against.
   - name: netTestRuntimes
     type: object
-    default: []
 
   # The name of the Azure Pipelines pool to use.
   - name: poolName
@@ -105,18 +101,6 @@ jobs:
       - name: project
         value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
 
-      # dotnet CLI arguments for build.
-      - name: buildArguments
-        value: >-
-          --verbosity ${{ parameters.dotnetVerbosity }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-
-      # dotnet CLI arguments for run.
-      - name: runArguments
-        value: >-
-          --verbosity ${{ parameters.dotnetVerbosity }}
-          --configuration ${{ parameters.buildConfiguration }}
-
       # The contents of the config file to use for all tests.  We will write this to a JSON file and
       # then point to it via the STRESS_CONFIG_FILE environment variable.
       - name: configContent
@@ -137,9 +121,29 @@ jobs:
             }
           ]
 
-      # Stress test command-line arguments.
-      - name: testArguments
-        value: -a SqlClient.Stress.Tests -console
+      # IMPORTANT: Do NOT name pipeline variables "runArguments", "buildArguments", or
+      # "testArguments".  ADO exposes all pipeline variables as environment variables (uppercased),
+      # and the dotnet CLI's System.CommandLine reads env vars matching {COMMAND}ARGUMENTS (e.g.
+      # RUNARGUMENTS, BUILDARGUMENTS) and silently injects their content into the parsed arguments —
+      # bypassing the "--" separator.  This causes app arguments to contain SDK options and triggers
+      # unintended behavior.
+
+      # dotnet CLI options for build.
+      - name: dotnetBuildOpts
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+
+      # dotnet run options shared by all test steps (framework is appended per-step).
+      - name: dotnetRunOpts
+        value: >-
+          --no-build
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # Stress test options passed after the "--" separator.
+      - name: stressTestOpts
+        value: --assembly SqlClient.Stress.Tests --console
 
     steps:
 
@@ -178,7 +182,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: ${{ variables.dotnetBuildOpts }}
 
       # Set a flag so test steps can distinguish a build failure from a test failure.
       - pwsh: Write-Host "##vso[task.setvariable variable=buildSucceeded]true"
@@ -194,29 +198,33 @@ jobs:
       #     - eq(variables['buildSucceeded'], 'true') gates on the flag set above, so tests are
       #       skipped entirely if the build or any setup step failed (since there's nothing to run).
       #
-      #   continueOnError: ${{ not(parameters.failOnTestFailure) }}
-      #     - When failOnTestFailure is false, continueOnError is true: a test failure marks the
+      #   continueOnError: ${{ parameters.warnOnTestFailure }}
+      #     - When warnOnTestFailure is true, continueOnError is true: a test failure marks the
       #       step and job as SucceededWithIssues (orange warning) rather than Failed.
-      #     - When failOnTestFailure is true, continueOnError is false: a test failure fails the
+      #     - When warnOnTestFailure is false, continueOnError is false: a test failure fails the
       #       job (red), though subsequent runtimes still run due to the condition above.
       #
       - ${{ each runtime in parameters.netTestRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
-          continueOnError: ${{ not(parameters.failOnTestFailure) }}
+          continueOnError: ${{ parameters.warnOnTestFailure }}
+          env:
+            STRESS_CONFIG_FILE: config.json
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.jsonc -- $(testArguments)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}
 
       # Run the stress tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
         - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
-          continueOnError: ${{ not(parameters.failOnTestFailure) }}
+          continueOnError: ${{ parameters.warnOnTestFailure }}
+          env:
+            STRESS_CONFIG_FILE: config.json
           inputs:
             command: run
             projects: $(project)
-            arguments: $(runArguments) --no-build -f ${{ runtime }} -e STRESS_CONFIG_FILE=config.jsonc -- $(testArguments)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}
