@@ -1999,7 +1999,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [Trait("Category", "flaky")]
+        // [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value)
