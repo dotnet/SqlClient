@@ -73,7 +73,7 @@ Our team is actively working on the following high-level themes. Features are tr
 | CI/CD pipeline redesign | Active | August 2026 |
 | Add SQL Server 2025 to test matrix | Planned | August 2026 |
 | Add .NET 10 to test matrix | Planned | August 2026 |
-| Converting existing traditional pipelines to Yaml | Active | August 2026 |
+| Converting existing traditional pipelines to YAML | Active | August 2026 |
 | Performance benchmarking pipeline (Internal) | Planned | September 2026 |
 
 ---

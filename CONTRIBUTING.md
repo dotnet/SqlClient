@@ -127,7 +127,7 @@ To prevent closure, simply add comments, push commits, or respond to feedback.
 
 ## Reporting security issues and vulnerabilities
 
-Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC) [secure@microsoft.com](mailto:secure@microsoft.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [MSRC FAQ](https://www.microsoft.com/en-us/msrc/faqs-report-an-issue?rtc=1&oneroute=true)
+Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC) [secure@microsoft.com](mailto:secure@microsoft.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [MSRC FAQ](https://www.microsoft.com/en-us/msrc/faqs-report-an-issue?rtc=1&oneroute=true).
 
 ## Submitting Pull Requests
 
