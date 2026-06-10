@@ -7,8 +7,7 @@ You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filin
 We use and recommend the following workflow:
 
 1. **Create an issue for your work.**
-    - You can skip this step for trivial changes (e.g., typo fixes, minor documentation updates).
-    - **For new features, non-trivial bug fixes, or behavioral changes, an issue is required.** This gives maintainers a chance to review the proposal before implementation begins and prevents wasted effort.
+    - **For all changes you intend to make in this repository, an issue is required.** This gives maintainers a chance to review the proposal before implementation begins and prevents wasted effort.
     - Reuse an existing issue on the topic, if there is one.
     - Get agreement from the team and the community that your proposed change is a good one.
     - Suggest [Labels](CONTRIBUTING.md#using-labels) to add for your issue.
