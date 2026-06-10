@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
     /// <summary>
     /// Test case for SqlBulkEdit raising exception on rows marked as deleted
     /// </summary>
+    [Trait("Set", "2")]
     public class ErrorOnRowsMarkedAsDeleted
     {
         // This char is used to mark the row as 'to be deleted'.

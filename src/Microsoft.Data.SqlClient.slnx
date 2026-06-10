@@ -10,9 +10,6 @@
       <Platform Solution="*|x86" Project="x86" />
     </Project>
   </Folder>
-  <Folder Name="/doc/apps/">
-    <Project Path="../doc/apps/AzureAuthentication/AzureAuthentication.csproj" />
-  </Folder>
   <Folder Name="/doc/snippets/" />
   <Folder Name="/doc/snippets/Microsoft.Data.Sql/">
     <File Path="../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml" />
@@ -170,7 +167,6 @@
   <Folder Name="/src/Microsoft.Data.SqlClient/src/">
     <Project Path="Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
   </Folder>
-  <Folder Name="/src/Microsoft.Data.SqlClient/tests/" />
   <Folder Name="/src/Microsoft.SqlServer.Server/">
     <Project Path="Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </Folder>
@@ -209,10 +205,12 @@
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Tests/SqlClient.Stress.Tests.csproj" />
   </Folder>
-  <Folder Name="/test/TestClr/">
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
-    <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
+  <Folder Name="/test/TestUdts/">
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Circle/Circle.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Utf8String/Utf8String.csproj" />
   </Folder>
+  <Project Path="../tools/PackageCompatibility/src/PackageCompatibility.csproj" />
+  <Project Path="../tools/PackageCompatibility/test/PackageCompatibility.Test.csproj" />
 </Solution>

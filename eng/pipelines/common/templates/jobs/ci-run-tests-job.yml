@@ -234,7 +234,7 @@ jobs:
         referenceType: Project
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
-    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
+    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.jsonc file
       parameters:
         debug: ${{ parameters.debug }}
         saPassword: ${{ parameters.saPassword }}
