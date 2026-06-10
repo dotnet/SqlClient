@@ -18,51 +18,35 @@ public class ILLinkSubstitutionsTests
 
 #if NETFRAMEWORK
     /// <summary>
-    /// On .NET Framework the trimmer is not supported, so the cross-platform
+    /// On .NET Framework the trimmer is not supported, so the
     /// substitution file must NOT be embedded.
     /// </summary>
     [Fact]
-    public void Assembly_DoesNotContainCrossPlatformSubstitutions()
+    public void Assembly_DoesNotContainSubstitutions()
     {
         Assert.DoesNotContain("ILLink.Substitutions.xml", s_resourceNames);
     }
-
-    /// <summary>
-    /// On .NET Framework the trimmer is not supported, so the Windows-only
-    /// substitution file must NOT be embedded.
-    /// </summary>
-    [Fact]
-    public void Assembly_DoesNotContainWindowsSubstitutions()
-    {
-        Assert.DoesNotContain("ILLink.Substitutions.Windows.xml", s_resourceNames);
-    }
 #else
     /// <summary>
-    /// The cross-platform substitution file (auth provider feature switch) must
-    /// always be present on .NET (non-Framework) builds.
+    /// The cross-platform substitution file (auth provider feature switch and
+    /// UseManagedNetworkingOnWindows) must always be present on .NET
+    /// (non-Framework) builds regardless of OS.
     /// </summary>
     [Fact]
-    public void Assembly_ContainsCrossPlatformSubstitutions()
+    public void Assembly_ContainsSubstitutions()
     {
         Assert.Contains("ILLink.Substitutions.xml", s_resourceNames);
     }
 
     /// <summary>
-    /// The Windows-only substitution file (UseManagedNetworkingOnWindows) must be
-    /// present on Windows and absent on Unix. Embedding it on Unix would be a
-    /// breaking change for cross-platform consumers who set the switch to false.
+    /// There should be no separate Windows-only substitution file. All entries
+    /// are now in the unified cross-platform ILLink.Substitutions.xml since the
+    /// UseManagedNetworking property includes a platform guard.
     /// </summary>
     [Fact]
-    public void Assembly_ContainsWindowsSubstitutionsOnlyOnWindows()
+    public void Assembly_DoesNotContainWindowsSubstitutions()
     {
-        if (System.OperatingSystem.IsWindows())
-        {
-            Assert.Contains("ILLink.Substitutions.Windows.xml", s_resourceNames);
-        }
-        else
-        {
-            Assert.DoesNotContain("ILLink.Substitutions.Windows.xml", s_resourceNames);
-        }
+        Assert.DoesNotContain("ILLink.Substitutions.Windows.xml", s_resourceNames);
     }
 #endif
 }

@@ -28,6 +28,30 @@
               value="false"
               feature="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery"
               featurevalue="false" />
+
+      <!--
+        Allow the unused managed SNI implementation to be trimmed based upon the publish-time value
+        of the UseManagedNetworkingOnWindows switch.
+
+        The public UseManagedNetworking property is defined as:
+
+          !OperatingSystem.IsWindows() || UseManagedNetworkingOnWindows
+
+        so the platform guard ensures that on non-Windows platforms, managed SNI is always used
+        regardless of the substituted value. This makes it safe to embed these entries in the
+        cross-platform assembly.
+      -->
+      <method signature="System.Boolean get_UseManagedNetworkingOnWindows()"
+              body="stub"
+              value="false"
+              feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"
+              featurevalue="false" />
+
+      <method signature="System.Boolean get_UseManagedNetworkingOnWindows()"
+              body="stub"
+              value="true"
+              feature="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"
+              featurevalue="true" />
     </type>
   </assembly>
 </linker>

@@ -132,7 +132,7 @@ internal static class LocalAppContextSwitches
     private const string UseOverallConnectTimeoutForPoolWaitString =
         "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
     /// managed SNI implementation instead of the native SNI implementation on
@@ -254,11 +254,11 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
-    /// The cached value of the UseManagedNetworking switch.
+    /// The cached value of the UseManagedNetworkingOnWindows switch.
     /// </summary>
-    private static SwitchValue s_useManagedNetworking = SwitchValue.None;
+    private static SwitchValue s_useManagedNetworkingOnWindows = SwitchValue.None;
     #endif
 
     /// <summary>
@@ -603,51 +603,47 @@ internal static class LocalAppContextSwitches
             defaultValue: false,
             ref s_useOverallConnectTimeoutForPoolWait);
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
-    /// When set to true, .NET on Windows will use the managed SNI
-    /// implementation instead of the native SNI implementation.
+    /// Returns whether to use the managed SNI implementation. On non-Windows
+    /// platforms this always returns <see langword="true"/> (native SNI is not
+    /// available). On Windows it delegates to the
+    /// <c>Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows</c>
+    /// AppContext switch (default <see langword="false"/>).
     ///
     /// ILLink.Substitutions.xml allows the unused SNI implementation to be
-    /// trimmed away when the corresponding AppContext switch is set at compile
-    /// time. In such cases, this property will return a constant value, even if
-    /// the AppContext switch is set or reset at runtime. See the
-    /// ILLink.Substitutions.Windows.xml and ILLink.Substitutions.Unix.xml
-    /// resource files for details.
-    ///
-    /// The default value of this switch is false.
+    /// trimmed away when the AppContext switch is set at publish time. The
+    /// trimmer substitutes <see cref="UseManagedNetworkingOnWindows"/> which is
+    /// guarded by the platform check here, so the substitution is safe on all
+    /// platforms.
     /// </summary>
-    public static bool UseManagedNetworking
+    public static bool UseManagedNetworking =>
+        !OperatingSystem.IsWindows() || UseManagedNetworkingOnWindows;
+
+    /// <summary>
+    /// Returns the value of the UseManagedNetworkingOnWindows AppContext switch.
+    /// This property is the trimmer substitution target — callers should use
+    /// <see cref="UseManagedNetworking"/> which includes the platform guard.
+    /// </summary>
+    private static bool UseManagedNetworkingOnWindows
     {
         get
         {
-            if (s_useManagedNetworking != SwitchValue.None)
+            if (s_useManagedNetworkingOnWindows != SwitchValue.None)
             {
-                return s_useManagedNetworking == SwitchValue.True;
-            }
-
-            if (!OperatingSystem.IsWindows())
-            {
-                s_useManagedNetworking = SwitchValue.True;
-                return true;
+                return s_useManagedNetworkingOnWindows == SwitchValue.True;
             }
 
             if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
             {
-                s_useManagedNetworking = SwitchValue.True;
+                s_useManagedNetworkingOnWindows = SwitchValue.True;
                 return true;
             }
 
-            s_useManagedNetworking = SwitchValue.False;
+            s_useManagedNetworkingOnWindows = SwitchValue.False;
             return false;
         }
     }
-    #elif NET
-    /// <summary>
-    /// .NET Core on Unix does not support native SNI, so this will always be
-    /// true.
-    /// </summary>
-    public static bool UseManagedNetworking => true;
     #else
     /// <summary>
     /// .NET Framework does not support the managed SNI, so this will always be
