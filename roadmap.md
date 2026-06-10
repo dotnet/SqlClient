@@ -24,57 +24,58 @@ Our team is actively working on the following high-level themes. Features are tr
 
 ### Performance & Reliability
 
-| Feature | Status | ETA |
-|---------|--------|-----|
-| Connection pool performance improvements | Active | June 2026 |
-| Performance benchmarking suite | Active | June 2026 |
-| Phase 1 - Unix async performance — thread starvation in parallel `ExecuteReaderAsync` | Active | September 2026 |
-| Phase 2 - Async usage analysis and optimization | Planned | — |
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#3356](https://github.com/dotnet/SqlClient/issues/3356) [#601](https://github.com/dotnet/SqlClient/issues/601) [#979](https://github.com/dotnet/SqlClient/issues/979) | Connection pool performance improvements | Active | July 2026 |
+| N/A | Performance benchmarking suite | Active | July 2026 |
+| [#422](https://github.com/dotnet/SqlClient/issues/422) [#2408](https://github.com/dotnet/SqlClient/issues/2408) [#593](https://github.com/dotnet/SqlClient/issues/593) | Phase 1 - Unix async performance — thread starvation in parallel `ExecuteReaderAsync` | Active | September 2026 |
+| TBD | Phase 2 - Async usage analysis and optimization | Planned | — |
 
 ### New Data Type Support
 
-| Feature | Status | ETA |
-|---------|--------|-----|
-| Vector subtype support — `float16` (`Half`) | Active | August 2026 |
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| TBD | Vector subtype support — `float16` (`Half`) | Active | August 2026 |
 
 ### Observability & Diagnostics
 
-| Feature | Status | ETA |
-|---------|--------|-----|
-| OpenTelemetry support | Planned | — |
-| Logging improvements | Planned | — |
-| Integrate with / expose MSAL logging | Planned | — |
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#2210](https://github.com/dotnet/SqlClient/issues/2210) [#2211](https://github.com/dotnet/SqlClient/issues/2211) | OpenTelemetry support | Planned | — |
+| N/A | Logging improvements | Planned | — |
+| TBD | Integrate with / expose MSAL logging | Planned | — |
 
 ### API Improvements
 
-| Feature | Status | ETA |
-|---------|--------|-----|
-| Expose connection encryption information to clients | Planned | September 2026 |
-| Throw `TaskCanceledException` instead of `SqlException` for cancellations | Planned | September 2026 |
-| `BeginTransactionAsync` API on `SqlConnection` | Planned | — |
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#2353](https://github.com/dotnet/SqlClient/issues/2353) | Expose connection encryption information to clients | Planned | September 2026 |
+| [#26](https://github.com/dotnet/SqlClient/issues/26) | Throw `TaskCanceledException` instead of `SqlException` for cancellations | Planned | September 2026 |
+| [#113](https://github.com/dotnet/SqlClient/issues/113) | `BeginTransactionAsync` API on `SqlConnection` | Planned | — |
 
 ### Security & Architecture
 
 | Feature | Status | ETA |
-|---------|--------|-----|
+| ------- | ------ | --- |
 | Security hardening activities | Active | Ongoing internally |
 
 ### AI & Developer Tooling
 
 | Feature | Status | ETA |
-|---------|--------|-----|
+| ------- | ------ | --- |
 | `System.Data.SqlClient` → `Microsoft.Data.SqlClient` migration via Modernize with Copilot | Active | September 2026 |
 | Modernize SqlClient repository with AI | Active | Ongoing |
 
 ### Engineering & Infrastructure
 
 | Feature | Status | ETA |
-|---------|--------|-----|
+| ------- | ------ | --- |
 | CI/CD pipeline redesign | Active | August 2026 |
 | Add SQL Server 2025 to test matrix | Planned | August 2026 |
 | Add .NET 10 to test matrix | Planned | August 2026 |
 | Converting existing traditional pipelines to Yaml | Active | August 2026 |
 | Performance benchmarking pipeline (Internal) | Planned | September 2026 |
+
 ---
 
 ## Released Versions
