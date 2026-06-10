@@ -27,13 +27,14 @@ jobs:
             const repo = context.repo.repo;
 
             // Check if the label exists on the PR
-            const labels = await github.rest.issues.listLabelsOnIssue({
+            const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, {
               owner,
               repo,
               issue_number,
+              per_page: 100,
             });
 
-            const hasLabel = labels.data.some(label => label.name === labelName);
+            const hasLabel = labels.some(label => label.name === labelName);
 
             if (hasLabel) {
               await github.rest.issues.removeLabel({
@@ -59,6 +60,7 @@ jobs:
             const author = context.payload.issue.user.login;
             const reviewers = [...new Set(
               reviews
+                .filter(r => r.user?.type === 'User')
                 .map(r => r.user?.login)
                 .filter(login => login && login !== author)
             )];
