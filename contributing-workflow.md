@@ -7,7 +7,7 @@ You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filin
 We use and recommend the following workflow:
 
 1. **Create an issue for your work.**
-    - **For all changes you intend to make in this repository, an issue is required.** This gives maintainers a chance to review the proposal before implementation begins and prevents wasted effort.
+    - **For all significant changes you intend to make in this repository, an issue is required.** This gives maintainers a chance to review the proposal before implementation begins and prevents wasted effort. Bug fixes and small improvements are generally welcome without a prior issue, but a linked issue helps us triage and prioritize your contribution.
     - Reuse an existing issue on the topic, if there is one.
     - Get agreement from the team and the community that your proposed change is a good one.
     - Suggest [Labels](CONTRIBUTING.md#using-labels) to add for your issue.
@@ -106,7 +106,7 @@ PRs (and their linked issues) move through the **Status** field to communicate r
 | **To triage** | PR just opened or linked issue is awaiting initial assessment. Maintainers will review scope, assign reviewers, and set priority. |
 | **In progress** | Author is actively developing the change. PR may be in Draft state. |
 | **In review** | PR is ready for code review. Reviewers are assigned and the author considers the implementation complete. |
-| **Waiting for customer** | Review feedback has been given; the PR author needs to respond or push changes. When a reviewer requests changes, they will also apply the **`Author attention needed`** label so the PR is easy to surface in queries and dashboards. Once the author addresses the feedback, they should remove the `Author attention needed` label and move the PR back to `In review`. |
+| **Waiting for customer** | Review feedback has been given; the PR author needs to respond or push changes. When a reviewer requests changes, they will also apply the **`Author Attention Needed`** label so the PR is easy to surface in queries and dashboards. Once the author addresses the feedback, they should remove the `Author Attention Needed` label and move the PR back to `In review`. |
 | **In validation** | PR is approved and being validated (CI, manual testing, integration checks) before merge. |
 | **Done** | PR has been merged and the associated work is complete. |
 

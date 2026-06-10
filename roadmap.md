@@ -81,7 +81,7 @@ Our team is actively working on the following high-level themes. Features are tr
 ## Released Versions
 
 - [Release Notes](release-notes/README.md) — Detailed release notes summarizing all changes and features released.
-- [GitHub Releases](https://github.com/dotnet/sqlclient/releases) — NuGet packages and changelog notes for each release.
+- [GitHub Releases](https://github.com/dotnet/SqlClient/releases) — NuGet packages and changelog notes for each release.
 
 ---
 

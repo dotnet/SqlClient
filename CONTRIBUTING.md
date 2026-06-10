@@ -167,7 +167,7 @@ Some important caveats:
 
 - It is best to give design feedback quickly for improvements that are in development. We're unlikely to hold a feature from a release on late feedback.
 - We are most likely to include improvements that either have a positive impact on a broad scenario or have very significant positive impact on a niche scenario. This means that we are unlikely to prioritize modest improvements to niche scenarios.
-- Compatibility will almost always be given a higher priority than improvements..
+- Compatibility will almost always be given a higher priority than improvements.
 
 ## Contribution Standards
 
