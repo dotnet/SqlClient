@@ -11,7 +11,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     /// <summary>
     /// Base class to generate utility objects required for stress tests to run. For example: connection strings, command texts, 
