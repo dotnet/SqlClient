@@ -88,6 +88,7 @@ stages:
       manualTestFileStreamDirectory: "$(Pipeline.Workspace)/filestream"
       manualTestLocalDbAppName: $(LocalDbAppName)
       manualTestLocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+      manualTestUserManagedIdentityClientId: $(UserManagedIdentityClientId)
 
   # Stage 3: Collect code coverage
   # @TODO:

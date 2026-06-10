@@ -90,6 +90,11 @@ parameters:
   - name: manualTestLocalDbSharedInstanceName
     type: string
 
+  # Name of the managed identity client ID, this value will be stored in the config.jsonc for
+  # sqlclient manual tests.
+  - name: manualTestUserManagedIdentityClientId
+    type: string
+
   # This is an array of objects with the following fields:
   # - displayName     - Friendly name to use when displaying the stage name and job names. This
   #                     must only contain alphanumeric characters and '_'. It will be used for both
@@ -181,6 +186,7 @@ stages:
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - Azure
           - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
@@ -206,6 +212,7 @@ stages:
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - Localhost Always Encrypted
           - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
@@ -231,6 +238,7 @@ stages:
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               testSet: "AE"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
