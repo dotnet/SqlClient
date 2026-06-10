@@ -14,6 +14,7 @@ jobs:
       contains(github.event.comment.body, '/ready')
     runs-on: ubuntu-latest
     permissions:
+      issues: write
       pull-requests: write
     steps:
       - name: Remove 'Author Attention Needed' label
@@ -46,19 +47,20 @@ jobs:
               core.info(`PR #${issue_number} does not have the '${labelName}' label. No action taken.`);
             }
 
-            // Re-request reviews from existing reviewers
-            const reviews = await github.rest.pulls.listReviews({
+            // Re-request reviews from existing reviewers (paginate to include all reviews)
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner,
               repo,
               pull_number: issue_number,
+              per_page: 100,
             });
 
             // Collect unique reviewers (exclude the PR author)
             const author = context.payload.issue.user.login;
             const reviewers = [...new Set(
-              reviews.data
-                .map(r => r.user.login)
-                .filter(login => login !== author)
+              reviews
+                .map(r => r.user?.login)
+                .filter(login => login && login !== author)
             )];
 
             if (reviewers.length > 0) {
