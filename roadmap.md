@@ -26,9 +26,9 @@ Our team is actively working on the following high-level themes. Features are tr
 
 | Work Item(s) | Feature | Status | ETA |
 | ------------ | ------- | ------ | --- |
-| [#3356](https://github.com/dotnet/SqlClient/issues/3356) [#601](https://github.com/dotnet/SqlClient/issues/601) [#979](https://github.com/dotnet/SqlClient/issues/979) | Connection pool performance improvements | Active | July 2026 |
+| [#3356](https://github.com/dotnet/SqlClient/issues/3356) [#601](https://github.com/dotnet/SqlClient/issues/601) [#343](https://github.com/dotnet/SqlClient/issues/343) [#979](https://github.com/dotnet/SqlClient/issues/979) [#1881](https://github.com/dotnet/SqlClient/issues/1881) [#2152](https://github.com/dotnet/SqlClient/issues/2152) [#3118](https://github.com/dotnet/SqlClient/issues/3118) [#3545](https://github.com/dotnet/SqlClient/issues/3545) | Connection pool performance improvements | Active | July 2026 |
 | N/A | Performance benchmarking suite | Active | July 2026 |
-| [#422](https://github.com/dotnet/SqlClient/issues/422) [#2408](https://github.com/dotnet/SqlClient/issues/2408) [#593](https://github.com/dotnet/SqlClient/issues/593) | Phase 1 - Unix async performance — thread starvation in parallel `ExecuteReaderAsync` | Active | September 2026 |
+| [#422](https://github.com/dotnet/SqlClient/issues/422) [#1530](https://github.com/dotnet/SqlClient/issues/1530) [#1562](https://github.com/dotnet/SqlClient/issues/1562) [#2408](https://github.com/dotnet/SqlClient/issues/2408) [#593](https://github.com/dotnet/SqlClient/issues/593) | Phase 1 - Unix async performance — thread starvation in parallel `ExecuteReaderAsync` | Active | September 2026 |
 | TBD | Phase 2 - Async usage analysis and optimization | Planned | — |
 
 ### New Data Type Support
