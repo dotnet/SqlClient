@@ -126,10 +126,10 @@ The agent (you) is responsible for keeping this label accurate — see the
 "Actions" section below for exactly when to call `add_labels` /
 `remove_labels`.
 
-Only if all three checks pass, proceed to the triage instructions below
-and produce a fresh summary. Treat the prior summary as **invalidated** —
-the new one supersedes it (the older one will be collapsed automatically
-by `hide-older-comments`).
+Only if the workflow-level `if:` gate above evaluated to true, proceed to the
+triage instructions below and produce a fresh summary. Treat the prior summary
+as **invalidated** — the new one supersedes it (the older one will be collapsed
+automatically by `hide-older-comments`).
 
 ---
 
