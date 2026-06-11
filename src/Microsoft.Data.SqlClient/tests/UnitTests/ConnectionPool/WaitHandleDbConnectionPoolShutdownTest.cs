@@ -4,7 +4,6 @@
 
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -196,13 +195,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Wait deterministically until the worker has incremented _waitCount, which
             // happens immediately before it enters WaitHandle.WaitAny. Polling avoids the
-            // CI-flakiness of a fixed Thread.Sleep on slow agents.
+            // CI-flakiness of a fixed Thread.Sleep on slow agents. Volatile.Read ensures
+            // we see the worker's Interlocked.Increment without depending on CPU memory
+            // ordering of plain int reads.
             var deadline = DateTime.UtcNow.AddSeconds(5);
-            while (DateTime.UtcNow < deadline && pool._waitCount < 1)
+            while (DateTime.UtcNow < deadline && Volatile.Read(ref pool._waitCount) < 1)
             {
                 Thread.Yield();
             }
-            Assert.True(pool._waitCount >= 1, "Waiter did not park within 5s.");
+            Assert.True(Volatile.Read(ref pool._waitCount) >= 1, "Waiter did not park within 5s.");
             Assert.True(t.IsAlive, "Waiter should be parked, but thread already exited.");
 
             pool.Shutdown();

@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
