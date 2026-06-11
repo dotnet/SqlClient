@@ -12,6 +12,7 @@ jobs:
       github.event.label.name == 'Author attention needed'
     runs-on: ubuntu-latest
     permissions:
+      issues: write
       pull-requests: write
     steps:
       - name: Post comment to PR author

@@ -11,7 +11,7 @@ jobs:
       github.repository == 'dotnet/SqlClient' &&
       github.event.issue.pull_request != null &&
       github.event.comment.user.login == github.event.issue.user.login &&
-      contains(github.event.comment.body, '/ready')
+      startsWith(github.event.comment.body, '/ready')
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -67,13 +67,17 @@ jobs:
             )];
 
             if (reviewers.length > 0) {
-              await github.rest.pulls.requestReviewers({
-                owner,
-                repo,
-                pull_number: issue_number,
-                reviewers,
-              });
-              core.info(`Re-requested reviews from: ${reviewers.join(', ')}`);
+              try {
+                await github.rest.pulls.requestReviewers({
+                  owner,
+                  repo,
+                  pull_number: issue_number,
+                  reviewers: reviewers.slice(0, 15),
+                });
+                core.info(`Re-requested reviews from: ${reviewers.join(', ')}`);
+              } catch (err) {
+                core.warning(`Failed to re-request reviewers: ${err.message}`);
+              }
             } else {
               core.info('No previous reviewers to re-request.');
             }
