@@ -1829,12 +1829,8 @@ namespace Microsoft.Data.SqlClient
 
                         handler(this, new StatementCompletedEventArgs(recordCount));
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                     {
-                        if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                        {
-                            throw;
-                        }
                     }
                 }
             }

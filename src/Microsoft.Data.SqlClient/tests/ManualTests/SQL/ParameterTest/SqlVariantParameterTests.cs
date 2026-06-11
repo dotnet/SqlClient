@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for SQL Variant parameters.
     /// Tests all SqlTypes inside sql_variant to server using sql_variant parameter, SqlBulkCopy, and TVP parameter.
     /// </summary>
+    [Trait("Set", "3")]
     public sealed class SqlVariantParameterTests : IDisposable
     {
         private readonly string _connStr;
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // which uses CultureInfo.CurrentCulture.LCID. On Linux, this LCID is 127
             // (InvariantCulture), which is not a valid SQL Server collation and causes
             // "invalid TDS collation" errors in the TVP code path.
-            // SqlClient doesn't support invariant mode: 
+            // SqlClient doesn't support invariant mode:
             // https://github.com/dotnet/SqlClient/issues/3742
             _previousCulture = Thread.CurrentThread.CurrentCulture;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");

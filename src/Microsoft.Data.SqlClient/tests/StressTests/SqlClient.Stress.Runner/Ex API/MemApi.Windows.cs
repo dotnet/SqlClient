@@ -5,7 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     static class MemApi
     {

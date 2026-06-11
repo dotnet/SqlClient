@@ -25,12 +25,31 @@ variables:
   #
   # SymbolsAzureSubscription
   # SymbolsPublishProjectNameSqlClient
-  # SymbolsPublishServerProd / SymbolsPublishServerPPE
-  # SymbolsPublishTokenUriProd / SymbolsPublishTokenUriPPE
+  # SymbolsPublishServerProd
+  # SymbolsPublishServerPpe
+  # SymbolsPublishTokenUriProd
+  # SymbolsPublishTokenUriPpe
   # SymbolsUploadAccount
-  - group: 'Symbols Publishing'
+  - group: 'symbols-variables-v3'
+
+  # Well-Known Variables ###################################################
+
+  # Directory where downloaded pipeline artifacts (NuGet packages from earlier
+  # stages) are placed. Build jobs use this as a local NuGet package source so
+  # that downstream packages can resolve dependencies on packages built by
+  # upstream stages.
+  - name: JOB_INPUT
+    value: $(REPO_ROOT)/packages
+
+  # Root directory for all job output artifacts (NuGet packages, symbols, etc.). OneBranch auto
+  # publishes everything under this directory as the artifact for the job.
+  - name: JOB_OUTPUT
+    value: $(REPO_ROOT)/output
 
   # OneBranch Template Variables ###########################################
+
+  - name: CommitHead
+    value: '' # the value will be extracted from the repo's head
 
   # https://aka.ms/obpipelines/sdl
   - name: ob_sdl_binskim_break
@@ -40,7 +59,7 @@ variables:
     value: true
 
   # OneBranch supplies a variety of container images we must use for our jobs.
-  #
+
   # Windows jobs use this image.
   - name: WindowsContainerImage
     value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest

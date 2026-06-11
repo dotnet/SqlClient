@@ -332,18 +332,20 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult == false)
-                    {
-                        // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
-                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
-                                CMKSignature);
+                    SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                        .GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
 
-                        ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                    if (cachedResult == SignatureVerificationResult.NotFound)
+                    {
+                        // Cache miss: verify with the provider and cache the result.
+                        // Exceptions from VerifyColumnMasterKeyMetadata bubble up to the outer catch.
+                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                        ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                            .AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
                     }
                     else
                     {
-                        isValidSignature = signatureVerificationResult;
+                        isValidSignature = cachedResult == SignatureVerificationResult.True;
                     }
                 }
             }

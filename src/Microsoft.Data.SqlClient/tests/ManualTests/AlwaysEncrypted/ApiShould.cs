@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -14,13 +14,19 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
+
+using CommonObjects = Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
     /// </summary>
+    [Trait("Set", "AE")]
+    // @TODO: These tests are known to not run reliably in DEBUG mode.
+    [ConditionalClass(typeof(DataTestUtility), nameof(DataTestUtility.IsNotDebugBuild))]
     public sealed class ApiShould : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy _fixture;
@@ -726,37 +732,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
-            string randomName = DataTestUtility.GetShortName(Guid.NewGuid().ToString().Replace("-", ""), false);
-            if (randomName.Length > 50)
-            {
-                randomName = randomName.Substring(0, 50);
-            }
-            string tableName = $"VeryLong_{randomName}_TestTableName";
-            int columnsCount = 50;
-
-            // Arrange - drops the table with long name and re-creates it with 52 columns (ID, name, ColumnName0..49)
-            using SqlConnection connection = new SqlConnection(connectionString);
+            // Arrange
+            // - Set up connection to run the test
+            using SqlConnection connection = new(connectionString);
             await connection.OpenAsync();
 
-            using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects.Table wideTable = new(connection, tableName, GenerateBitTableDefinition(columnsCount));
-            string name = "nobody";
+            // - Drop and create table with 52 columns (ID, name, ColumnName0..49)
+            string tableName = DataTestUtility.GetShortName("VeryLongTestTableName_", withBracket: false);
+            const int columnsCount = 50;
+            using CommonObjects.Table wideTable = new(connection, tableName, GenerateBitTableDefinition(columnsCount));
 
-            // This creates a "select top 100" query that has over 40k characters
-            using SqlCommand sqlCommand = new(GenerateSelectQuery(wideTable.Name, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
+            // - Create SELECT query that has over 40k characters *and repeats 10 times*
+            using SqlCommand sqlCommand = new(
+                GenerateSelectQuery(wideTable.Name, columnsCount, 10, "WHERE Name = @FirstName AND ID = @CustomerId"),
                 connection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
-            sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
-            sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar, name.Length);
 
-            sqlCommand.Parameters[0].Value = 0;
-            sqlCommand.Parameters[1].Value = name;
+            SqlParameter parameter1 = sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
+            parameter1.Value = 0;
 
-            // Act and Assert
-            // Test that execute reader async does not throw an exception.
-            // The table is empty so there should be no results; however, the bug previously found is that it causes a TDS RPC exception on enclave.
+            SqlParameter parameter2 = sqlCommand.Parameters.Add(@"FirstName", SqlDbType.VarChar);
+            parameter2.Value = "nobody";
+
+            // Act
             using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
+
+            // Assert
+            // - The table is empty so there should be no results; however, the bug previously
+            //   found is that it causes a TDS RPC exception on enclave.
             Assert.False(sqlDataReader.HasRows, "The table should be empty");
+
+            // Cleanup
+            // - Explicitly throw away the results from the reader to avoid any race conditions in
+            //   disposal logic.
+            await sqlDataReader.FlushAllResultsAsync();
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
@@ -1914,7 +1924,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             IList<object> values = GetValues(dataHint: 60);
             int numberOfRows = 10;
 
-            // Insert a bunch of rows in to the table.	
+            // Insert a bunch of rows in to the table.
             int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1922,12 +1932,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                // select the set of rows that were inserted just now.	
+                // select the set of rows that were inserted just now.
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     if (DataTestUtility.EnclaveEnabled)
                     {
-                        //Increase Time out for enclave-enabled server.	
+                        //Increase Time out for enclave-enabled server.
                         sqlCommand.CommandTimeout = 90;
                     }
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
@@ -2031,7 +2041,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                      * Use long-running tasks to create the thread. This enables any failed assertions to propagate, rather than
                      * allowing the exception to kill the thread and the process.
                      * These threads should progress in the sequence below:
-                     * 
+                     *
                      * Workload Thread                      | Cancel Thread
                      * ------------------------------------ | -------------
                      * Start thread                         | Start thread
@@ -2307,7 +2317,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
                 AssertExceptionCausedByFailureToDecrypt(ex);
 
-                // not required provider will replace the previous entry so required provider will not be found 
+                // not required provider will replace the previous entry so required provider will not be found
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
@@ -2448,7 +2458,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name);
             cmd.ExecuteNonQuery();
 
-            // execute the select query again. it will attempt to use the stale cache entry, receive 
+            // execute the select query again. it will attempt to use the stale cache entry, receive
             // a retryable error from the server, remove the stale cache entry, retry and succeed
             cmd.CommandText = enclaveSelectQuery;
             cmd.Parameters.AddWithValue("@CustomerId", 0);
@@ -2562,7 +2572,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             readAsyncTask2.GetAwaiter().GetResult();
 #endif
             */
-            
+
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();
             cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
@@ -2699,8 +2709,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             };
             table.Columns.Add(column);
 
-            // Create three new DataRow objects and add  
-            // them to the DataTable 
+            // Create three new DataRow objects and add
+            // them to the DataTable
             for (int i = 0; i < numberofRows; i++)
             {
                 row = table.NewRow();
@@ -2810,7 +2820,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <param name="cancellationToken"></param>
@@ -2821,7 +2831,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="sqlCommand"></param>
         /// <returns></returns>

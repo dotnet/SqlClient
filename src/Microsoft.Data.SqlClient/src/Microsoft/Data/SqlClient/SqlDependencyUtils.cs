@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 _timeoutTimer = new Timer(new TimerCallback(TimeoutTimerCallback), null, Timeout.Infinite, Timeout.Infinite);
 
-                // If rude abort - we'll leak.  This is acceptable for now.  
+                // If rude abort - we'll leak.  This is acceptable for now.
                 AppDomain.CurrentDomain.DomainUnload += new EventHandler(UnloadEventHandler);
 #else
                 _timeoutTimer = ADP.UnsafeCreateTimer(
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //  When remoted across appdomains, MarshalByRefObject links by default time out if there is no activity 
+        //  When remoted across appdomains, MarshalByRefObject links by default time out if there is no activity
         //  within a few minutes.  Add this override to prevent marshaled links from timing out.
 #if NET
         [Obsolete("InitializeLifetimeService() is not supported after .Net5.0 and throws PlatformNotSupportedException.")]
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
                             dependencyList.Add(dep);
 
                             // map command hash to notification we just created to reuse it for the next client
-                            _commandHashToNotificationId.Add(commandHash, notificationId);
+                            _commandHashToNotificationId.Add(commandHash, notificationId); // CodeQL [SM04207] This value is an opaque query-notification correlation identifier, not a secret or security token. It is used only for uniqueness and exact dictionary lookup after SQL Server round-trips the user data. Guid.NewGuid provides sufficient collision resistance for the expected in-process notification cardinality, and changing the generator would not materially improve security.
                             _notificationIdToDependenciesHash.Add(notificationId, dependencyList);
                         }
 
@@ -272,15 +272,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
                             // Since we are looping over dependencies, do not allow one Invalidate
                             // that results in a throw prevent us from invalidating all dependencies
                             // related to this server.
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
                             ADP.TraceExceptionWithoutRethrow(e);
                         }
                     }
@@ -327,15 +323,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         dependency.Invalidate(sqlNotification.Type, sqlNotification.Info, sqlNotification.Source);
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
                         // Since we are looping over dependencies, do not allow one Invalidate
                         // that results in a throw prevent us from invalidating all dependencies
                         // related to this server.
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(e);
                     }
                 }
@@ -581,13 +573,8 @@ namespace Microsoft.Data.SqlClient
                             // to invoke user-code while holding an internal lock.
                             dependencies[i].Invalidate(SqlNotificationType.Change, SqlNotificationInfo.Error, SqlNotificationSource.Timeout);
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
-
                             // This is an exception in user code, and we're in a thread-pool thread
                             // without user's code up in the stack, no much we can do other than
                             // eating the exception.
