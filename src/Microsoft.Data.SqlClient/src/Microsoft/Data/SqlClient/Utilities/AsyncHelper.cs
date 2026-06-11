@@ -36,6 +36,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * Will try to set cancelled on <paramref name="taskCompletionSource"/>
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -128,6 +130,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * Will try to set cancelled on <paramref name="taskCompletionSource"/>
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -228,6 +232,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * Will try to set cancelled on <paramref name="taskCompletionSource"/>
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -334,6 +340,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * The task will be completed with an exception.
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * The task will be completed as cancelled.
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -433,6 +441,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * The task will be completed with an exception.
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * The task will be completed as cancelled.
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -542,6 +552,8 @@ namespace Microsoft.Data.SqlClient.Utilities
         ///   * The task will be completed with an exception.
         /// * Cancelled
         ///   * <paramref name="onCancellation"/> is called (if provided)
+        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///     swallowed as unobserved.
         ///   * The task will be completed as cancelled.
         /// * Successfully
         ///   * <paramref name="onSuccess"/> is called
@@ -740,7 +752,10 @@ namespace Microsoft.Data.SqlClient.Utilities
 
         /// <summary>
         /// Waits for a maximum of <paramref name="timeoutInSeconds"/> seconds for completion of
-        /// the provided <paramref name="task"/>.
+        /// the provided <paramref name="task"/>. If the task is not completed before the timeout
+        /// elapses, a continuation is added to the task that observes any throw exceptions. The
+        /// <paramref name="onTimeout" /> callback is called after attaching the exception
+        /// observing exception.
         /// </summary>
         /// <param name="task">Task to execute with a timeout</param>
         /// <param name="timeoutInSeconds">
@@ -773,13 +788,14 @@ namespace Microsoft.Data.SqlClient.Utilities
                 {
                     Debug.Assert(ae.InnerException is not null, "Inner exception is null");
                     Debug.Assert(ae.InnerExceptions.Count == 1, "There is more than one exception in AggregateException");
-                    ExceptionDispatchInfo.Capture(ae.InnerException!).Throw();
+                    ExceptionDispatchInfo.Capture(ae.InnerException).Throw();
                 }
             }
 
             if (!task.IsCompleted)
             {
                 ObserveContinuationException(task);
+                onTimeout?.Invoke();
             }
         }
 
