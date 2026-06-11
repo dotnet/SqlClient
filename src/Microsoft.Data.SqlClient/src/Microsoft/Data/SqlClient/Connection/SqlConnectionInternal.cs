@@ -1354,6 +1354,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             len = bLen;
                         }
 
+                        if (len < 0 || len > data.Length - i)
+                        {
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, len);
+                        }
+
                         byte[] stateData = new byte[len];
                         Buffer.BlockCopy(data, i, stateData, 0, len);
                         i += len;

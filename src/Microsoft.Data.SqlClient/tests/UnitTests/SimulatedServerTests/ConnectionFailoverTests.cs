@@ -12,6 +12,8 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     [Trait("Category", "flaky")]
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
     [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
@@ -173,7 +175,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "master",// Required for failover partner to work
                 ConnectTimeout = 1,
                 ConnectRetryInterval = 1,
-                ConnectRetryCount = 0, // Disable retry 
+                ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
@@ -460,7 +462,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
             using SqlConnection connection = new(builder.ConnectionString);
-                
+
             // Act
             connection.Open();
 
