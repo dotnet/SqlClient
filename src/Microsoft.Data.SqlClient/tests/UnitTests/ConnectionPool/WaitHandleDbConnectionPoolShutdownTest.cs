@@ -217,5 +217,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Suppress unused warning - presence of waiterCompleted just documents the contract.
             _ = waiterCompleted;
         }
+
+        // Startup() must be a no-op when the pool has already been shut down. Without the
+        // guard it would create a fresh _cleanupTimer and queue a PoolCreateRequest against
+        // a pool that will never accept connections back.
+        [Fact]
+        public void Startup_AfterShutdown_DoesNotResurrectPool()
+        {
+            var pool = CreatePool();
+            pool.Shutdown();
+            Assert.Null(pool._cleanupTimer);
+            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
+
+            pool.Startup();
+
+            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
+            // No new cleanup timer must have been scheduled against a shut-down pool.
+            Assert.Null(pool._cleanupTimer);
+        }
     }
 }

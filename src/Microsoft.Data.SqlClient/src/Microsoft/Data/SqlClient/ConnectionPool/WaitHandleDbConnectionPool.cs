@@ -1544,6 +1544,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Startup()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}, CleanupWait={1}", Id, _cleanupWait);
+
+            // Do not resurrect a shut-down pool. Without this guard a Startup() call after
+            // Shutdown() would create a fresh _cleanupTimer and queue a PoolCreateRequest
+            // against a pool that will never accept connections back, leaking the timer
+            // and scheduling background work that immediately short-circuits.
+            if (State is ShuttingDown)
+            {
+                return;
+            }
+
             _cleanupTimer = CreateCleanupTimer();
 
             if (NeedToReplenish)
