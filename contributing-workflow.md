@@ -106,13 +106,13 @@ PRs (and their linked issues) move through the **Status** field to communicate r
 | **To triage** | PR just opened or linked issue is awaiting initial assessment. Maintainers will review scope, assign reviewers, and set priority. |
 | **In progress** | Author is actively developing the change. PR may be in Draft state. |
 | **In review** | PR is ready for code review. Reviewers are assigned and the author considers the implementation complete. |
-| **Waiting for customer** | Review feedback has been given; the PR author needs to respond or push changes. When a reviewer requests changes, they will also apply the **`Author Attention Needed`** label so the PR is easy to surface in queries and dashboards. Once the author addresses the feedback, they should remove the `Author Attention Needed` label and move the PR back to `In review`. |
+| **Waiting for customer** | Review feedback has been given; the PR author needs to respond or push changes. When a reviewer requests changes, they will also apply the **`Author attention needed`** label so the PR is easy to surface in queries and dashboards. Once the author addresses the feedback, they should remove the `Author attention needed` label if permissions allow or comment `/ready` on the PR to remove the label `Author attention needed` and re-engage the reviewers to move the PR back to `In review`. |
 | **In validation** | PR is approved and being validated (CI, manual testing, integration checks) before merge. |
 | **Done** | PR has been merged and the associated work is complete. |
 
 ### Status Transitions
 
-When a reviewer leaves feedback that needs author action, they move the PR to `Waiting for customer` **and** apply the `Author Attention Needed` label. The author removes the label (and updates Status back to `In review`/`In progress`) once the feedback is addressed.
+When a reviewer leaves feedback that needs author action, they move the PR to `Waiting for customer` **and** apply the `Author attention needed` label. The author removes the label (and updates Status back to `In review`/`In progress`) once the feedback is addressed.
 
 ```
 +--------------+       +---------------+       +-------------------------+       +-----------------+       +--------+
@@ -125,8 +125,8 @@ When a reviewer leaves feedback that needs author action, they move the PR to `W
                               |                      v            |
                               |          +------------------------+
                               |          | Waiting for customer    |
-                              |          | + Author Attention      |
-                              |          |   Needed (label)        |
+                              |          | + Author attention      |
+                              |          |   needed (label)        |
                               |          +------------------------+
                               |                      |
                               |                      | major rework needed
@@ -146,15 +146,15 @@ When a reviewer leaves feedback that needs author action, they move the PR to `W
 
 1. **Link your PR to an issue** — This ensures the PR appears on the project board and is tracked through the workflow.
 2. **Keep Status current** — If you're the author, move your linked issue to `In review` when your PR is ready for feedback.
-3. **Respond promptly** — When status is `Waiting for customer` and the **`Author Attention Needed`** label is applied, the team is blocked on your response. Address the feedback, push the updates, **remove the `Author Attention Needed` label**, and move Status back to `In review` (or `In progress` for major rework) so reviewers know the PR is ready for another pass.
+3. **Respond promptly** — When status is `Waiting for customer` and the **`Author attention needed`** label is applied, the team is blocked on your response. Address the feedback, push the updates, **remove the `Author attention needed` label**, and move Status back to `In review` (or `In progress` for major rework) so reviewers know the PR is ready for another pass. If you are a community contributor, you may post a comment `/ready` on the PR to automate removing the label and re-engaging reviewers on the PR.
 4. **Flag API changes early** — Set **API Impact** appropriately so PM review can happen in parallel with code review.
 5. **Don't skip validation** — Even after approval, the PR stays in `In validation` until CI passes and any manual verification is complete.
 
 ### Guidelines for Reviewers
 
-1. **Signal that author action is required** — When your review requests changes (whether via formal "Request changes" or a comment that requires author follow-up), apply the **`Author Attention Needed`** label to the PR and move its linked issue to `Waiting for customer`. This pair (label + status) is what the team uses to find PRs that are blocked on the author versus those still awaiting review.
-2. **Don't remove the label yourself** — Leave the `Author Attention Needed` label in place until the author pushes updates addressing the feedback; the author is responsible for removing it when they hand the PR back for review.
-3. **Re-review promptly** — Once the author removes the label and Status returns to `In review`, pick the PR back up so it doesn't stall.
+1. **Signal that author action is required** — When your review requests changes (whether via formal "Request changes" or a comment that requires author follow-up), apply the **`Author attention needed`** label to the PR and move its linked issue to `Waiting for customer`. This pair (label + status) is what the team uses to find PRs that are blocked on the author versus those still awaiting review.
+2. **Don't remove the label yourself** — Leave the `Author attention needed` label in place until the author pushes updates addressing the feedback; the author is responsible for removing it when they hand the PR back for review.
+3. **Re-review promptly** — Once the author removes the label, the PR status should be updated either by Author (if they have permissions) or the reviewer to `In review`, so it doesn't stall and is picked up for review on time.
 4. **Only reviewers resolve their own feedback threads** — A review comment thread should only be resolved by the reviewer who created it, once they are satisfied the feedback has been addressed. Authors should not resolve reviewer threads themselves.
 
 ## Stale PR Management
@@ -198,7 +198,7 @@ One or more Microsoft team members will review every PR prior to merge. They wil
 - Address all review comments before the PR can be merged.
 - Feel free to ask questions if feedback is unclear.
 - Push additional commits to address feedback (these will be squashed later).
-- When a reviewer leaves feedback that needs your action, they will set Status to `Waiting for customer` and apply the **`Author Attention Needed`** label. After you push updates, **remove the `Author Attention Needed` label** and move Status back to `In review` so reviewers know the PR is ready for another pass.
+- When a reviewer leaves feedback that needs your action, they will set Status to `Waiting for customer` and apply the **`Author attention needed`** label. After you push updates, **remove the `Author attention needed` label** or post a comment `/ready` to do so, so the reviewers know the PR is ready for another pass.
 
 ## Merging Pull Requests
 
