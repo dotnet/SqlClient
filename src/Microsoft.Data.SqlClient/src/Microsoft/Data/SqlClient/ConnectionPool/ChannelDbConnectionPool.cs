@@ -352,6 +352,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
+            // Short-circuit when the pool is not Running (i.e., shut down or never started).
+            // Returning (true, null) matches WaitHandleDbConnectionPool.TryGetConnection and tells
+            // the caller "completed; no connection available" without entering the channel path,
+            // which would otherwise reserve a slot, attempt to open a fresh physical connection,
+            // and then immediately destroy it on return because State == ShuttingDown.
+            if (State is not Running)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.TryGetConnection|RES|CPOOL> {0}, State != Running.", Id);
+                connection = null;
+                return true;
+            }
+
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
             {

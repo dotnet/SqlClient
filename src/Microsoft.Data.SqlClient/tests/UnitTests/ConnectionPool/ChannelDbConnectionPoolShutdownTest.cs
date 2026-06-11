@@ -184,5 +184,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
             Assert.False(pool.IsRunning);
         }
+
+        // After Shutdown, a synchronous TryGetConnection must short-circuit and return
+        // (true, null) rather than entering the channel path and opening a fresh physical
+        // connection that would be immediately destroyed on return.
+        [Fact]
+        public void TryGetConnection_AfterShutdown_Sync_ShortCircuits()
+        {
+            var pool = ConstructPool();
+            pool.Shutdown();
+
+            int countBefore = pool.Count;
+            bool completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                out DbConnectionInternal? conn);
+
+            Assert.True(completed, "Sync TryGetConnection on a shut-down pool should return true to signal completion.");
+            Assert.Null(conn);
+            Assert.Equal(countBefore, pool.Count);
+        }
+
+        // Same contract for the async (TaskCompletionSource) path: a TryGetConnection call
+        // issued after Shutdown must short-circuit without opening a new connection.
+        [Fact]
+        public void TryGetConnection_AfterShutdown_Async_ShortCircuits()
+        {
+            var pool = ConstructPool();
+            pool.Shutdown();
+
+            int countBefore = pool.Count;
+            var tcs = new TaskCompletionSource<DbConnectionInternal>();
+            bool completed = pool.TryGetConnection(
+                new SqlConnection(),
+                tcs,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                out DbConnectionInternal? conn);
+
+            // Match WaitHandleDbConnectionPool: short-circuit returns (true, null) regardless of TCS.
+            Assert.True(completed);
+            Assert.Null(conn);
+            Assert.Equal(countBefore, pool.Count);
+        }
     }
 }
