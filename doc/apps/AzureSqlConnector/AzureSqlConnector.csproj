@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WinForms WAM-broker sample. The app itself only runs on Windows because it
+    depends on net481, WinForms, and the WAM broker. We still need the project to
+    restore cleanly on Linux/macOS so the solution (.slnx) can be loaded and
+    restored in cross-platform CI; on those hosts we degrade to a no-op
+    netstandard2.0 target that builds nothing and references nothing.
+  -->
+  <PropertyGroup>
+    <TargetFramework Condition="'$(OS)' == 'Windows_NT'">net481</TargetFramework>
+    <TargetFramework Condition="'$(OS)' != 'Windows_NT'">netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Windows: real WinForms executable. -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureSqlConnector</RootNamespace>
+    <AssemblyName>AzureSqlConnector</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Platforms>AnyCPU</Platforms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!--
+    Non-Windows: suppress compilation entirely. Sources use WinForms APIs that
+    are not available on netstandard2.0, so we disable default compile items
+    and skip the build phase to keep `dotnet restore` / `dotnet build`
+    succeeding on Linux and macOS agents.
+  -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT'">
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    SqlClient project references are Windows-only. Microsoft.Data.SqlClient
+    only exposes a net462 TFM on Windows builds, so referencing it from a
+    non-Windows TFM produces NU1201. Skipping the references here keeps the
+    netstandard2.0 fallback restorable on Linux/macOS.
+
+    Pre-requisites for the Windows build:
+      1. `dotnet tool restore` must be run at the repo root.
+      2. `msbuild` should be run from the repo root so all dependencies resolve.
+  -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient.Extensions\Azure\src\Azure.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+</Project>

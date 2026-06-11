@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 Licensed to the .NET Foundation under one or more agreements.
 The .NET Foundation licenses this file to you under the MIT license.
 See the LICENSE file in the project root for more information.
@@ -52,6 +52,17 @@ See the LICENSE file in the project root for more information.
         </code>
       </example>
     </ctor2>
+    <ctor2WithBroker>
+      <param name="applicationClientId">
+        Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
+      <param name="useWamBroker">
+        When <see langword="true" />, enables the Windows Account Manager (WAM) broker for interactive Entra ID authentication on Windows when a custom application client id is used. When the driver's built-in application client id is used, the WAM broker is always enabled regardless of this value.
+      </param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id and Windows Account Manager (WAM) broker setting.
+      </summary>
+    </ctor2WithBroker>
     <ctor3>
       <param name="deviceCodeFlowCallbackMethod">
         The callback method to be used with 'Active Directory Device Code Flow' authentication.
@@ -63,6 +74,20 @@ See the LICENSE file in the project root for more information.
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
     </ctor3>
+    <ctor3WithBroker>
+      <param name="deviceCodeFlowCallbackMethod">
+        The callback method to be used with 'Active Directory Device Code Flow' authentication.
+      </param>
+      <param name="applicationClientId">
+        Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
+      <param name="useWamBroker">
+        When <see langword="true" />, enables the Windows Account Manager (WAM) broker for interactive Entra ID authentication on Windows when a custom application client id is used. When the driver's built-in application client id is used, the WAM broker is always enabled regardless of this value.
+      </param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method, application client id, and Windows Account Manager (WAM) broker setting.
+      </summary>
+    </ctor3WithBroker>
     <AcquireTokenAsync>
       <param name="parameters">
         The Active Directory authentication parameters passed to authentication providers.
@@ -124,17 +149,19 @@ See the LICENSE file in the project root for more information.
         </code>
       </example>
     </SetDeviceCodeFlowCallback>
-    <SetParentActivityOrWindowFunc>
+    <SetParentActivityOrWindow>
       <param name="parentActivityOrWindowFunc">
-        The parent as an object, in order to be used from shared .NET Standard assemblies.
+        A function that returns an <see cref="T:System.IntPtr" /> window handle on Windows
+        (or an <see cref="T:System.Windows.Forms.IWin32Window" /> on .NET Framework).
       </param>
       <summary>
-        Sets a reference to the ViewController (if using Xamarin.iOS), Activity (if using Xamarin.Android) IWin32Window or IntPtr (if using .NET Framework). Used for invoking the browser for Active Directory Interactive authentication.
+        Sets a function to return the parent window handle to be used for WAM (Windows Account Manager) broker authentication prompts.
       </summary>
       <remarks>
-        Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.
+        On Windows, this handle is used to parent the WAM broker dialog. If not set, the provider will attempt to automatically detect the console window handle.
+        On non-Windows platforms this is a no-op as the WAM broker is not available.
       </remarks>
-    </SetParentActivityOrWindowFunc>
+    </SetParentActivityOrWindow>
     <SetIWin32WindowFunc>
       <param name="iWin32WindowFunc">
         A function to return the current window.
