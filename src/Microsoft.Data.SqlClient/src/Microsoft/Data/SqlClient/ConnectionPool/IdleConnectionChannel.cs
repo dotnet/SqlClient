@@ -26,9 +26,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             var channel = Channel.CreateUnbounded<DbConnectionInternal?>();
             _reader = channel.Reader;
-            //TODO: the channel should be completed on pool shutdown
             _writer = channel.Writer;
         }
+
+        /// <summary>
+        /// Marks the channel writer as complete. After completion, <see cref="TryWrite"/>
+        /// returns <see langword="false"/> for any future writes, and any in-flight or future
+        /// <see cref="ReadAsync"/> waiters will fault with <see cref="System.Threading.Channels.ChannelClosedException"/>
+        /// once the channel is drained. Used by the connection pool to signal shutdown.
+        /// </summary>
+        /// <returns><see langword="true"/> if this call completed the channel; otherwise <see langword="false"/>
+        /// (channel was already completed).</returns>
+        internal bool Complete() => _writer.TryComplete();
 
         /// <summary>
         /// The number of non-null connections currently in the channel.

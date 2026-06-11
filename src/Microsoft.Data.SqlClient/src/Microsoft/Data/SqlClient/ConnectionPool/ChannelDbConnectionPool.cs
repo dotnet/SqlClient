@@ -5,7 +5,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
@@ -92,6 +91,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Must be updated using <see cref="Interlocked"/> operations to ensure thread safety.
         /// </summary>
         private volatile int _isClearing;
+
+        /// <summary>
+        /// Tracks whether <see cref="Shutdown"/> has already initiated the shutdown sequence so that
+        /// repeated calls are observed as no-ops. Updated atomically via
+        /// <see cref="Interlocked.CompareExchange(ref int, int, int)"/>.
+        /// </summary>
+        private int _shutdownInitiated;
         #endregion
 
         /// <summary>
@@ -264,16 +270,56 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                var written = _idleChannel.TryWrite(connection);
-                Debug.Assert(written, "Failed to write returning connection to the idle channel.");
+                if (!_idleChannel.TryWrite(connection))
+                {
+                    // The channel has been completed (pool is shutting down). Race window
+                    // between the State check above and TryWrite: destroy instead of pooling.
+                    RemoveConnection(connection);
+                }
             }
         }
 
         /// <inheritdoc />
         public void Shutdown()
         {
+            // idempotent. Compare-and-exchange ensures only one caller performs shutdown work.
+            if (Interlocked.CompareExchange(ref _shutdownInitiated, 1, 0) != 0)
+            {
+                return;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
+
+            // Transition to ShuttingDown. After this point, ReturnInternalConnection
+            // routes returning connections to RemoveConnection.
             State = ShuttingDown;
+
+            // Stop the idle-pruning timer before draining so a tick cannot race with
+            // the final drain below. PoolPruner.Dispose is idempotent and non-throwing.
             Pruner?.Dispose();
+
+            // Complete the channel writer so:
+            //  - no further idle connections can be enqueued (TryWrite returns false), and
+            //  - in-flight / future async waiters on ReadAsync fault with ChannelClosedException.
+            _idleChannel.Complete();
+
+            // Reuse Clear() for the drain. Clear bumps _clearGeneration so any active
+            // checked-out connection fails IsLiveConnection on return and is removed, and it
+            // drains the idle channel up to its captured IdleCount.
+            Clear();
+
+            // Clear() may short-circuit if another caller is already draining. Because the
+            // channel is now completed, no new items can be enqueued, so it is safe to do a
+            // final unbounded drain to mop up anything Clear() may have skipped.
+            while (_idleChannel.TryRead(out DbConnectionInternal? connection))
+            {
+                if (connection is not null)
+                {
+                    RemoveConnection(connection);
+                }
+                // null sentinels are wake-up signals only; nothing to destroy.
+            }
         }
 
         /// <summary>
@@ -284,7 +330,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Startup()
         {
-            // No-op for now, warmup will be implemented later.
+            // This pool has no background timers today (idle timeout is enforced lazily in
+            // IsLiveConnection on retrieval; pruning is not implemented). State is set to Running
+            // in the constructor, so this is currently the symmetrical counterpart of Shutdown.
+            // Background work (warmup, pruning timers) will be added here when introduced.
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}", Id);
         }
 
         /// <inheritdoc />
@@ -300,6 +351,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
+            // Short-circuit when the pool is not Running (i.e., shut down or never started).
+            // Returning (true, null) matches WaitHandleDbConnectionPool.TryGetConnection and tells
+            // the caller "completed; no connection available" without entering the channel path,
+            // which would otherwise reserve a slot, attempt to open a fresh physical connection,
+            // and then immediately destroy it on return because State == ShuttingDown.
+            if (State is not Running)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.TryGetConnection|RES|CPOOL> {0}, State != Running.", Id);
+                connection = null;
+                return true;
+            }
+
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
             {
