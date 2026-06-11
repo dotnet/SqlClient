@@ -9,11 +9,13 @@ applyTo: "**/tests/**,**/*Test*.cs"
 src/Microsoft.Data.SqlClient/tests/
 ├── FunctionalTests/          # Tests without SQL Server dependency
 ├── ManualTests/              # Integration tests requiring SQL Server
+├── PerformanceTests/         # Benchmark-style perf validation
+├── StressTests/              # Long-running stress coverage
 ├── UnitTests/                # Unit tests with minimal dependencies
 └── tools/
     └── Microsoft.Data.SqlClient.TestUtilities/
-        ├── config.default.json   # Template configuration
-        └── config.json           # Local test configuration (git-ignored)
+        ├── config.default.jsonc  # Template configuration
+        └── config.jsonc          # Local test configuration (git-ignored)
 ```
 
 ## Test Categories
@@ -32,14 +34,14 @@ src/Microsoft.Data.SqlClient/tests/
 
 ### Manual Tests (`ManualTests/`)
 - Full integration tests with SQL Server
-- Require `config.json` setup
+- Require `config.jsonc` setup
 - Test real database operations
-- Include Always Encrypted, Azure AD tests
+- Include Always Encrypted, Entra ID tests
 
 ## Test Configuration
 
-### Setting Up `config.json`
-Copy `config.default.json` to `config.json` and configure:
+### Setting Up `config.jsonc`
+Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 ```json
 {
@@ -58,7 +60,7 @@ Copy `config.default.json` to `config.json` and configure:
 |----------|-------------|
 | `TCPConnectionString` | Primary TCP connection |
 | `NPConnectionString` | Named Pipes connection |
-| `AADPasswordConnectionString` | Azure AD password auth |
+| `AADPasswordConnectionString` | Entra ID password auth |
 | `AzureKeyVaultURL` | AKV for encryption tests |
 | `EnclaveEnabled` | Enable enclave tests |
 | `FileStreamDirectory` | FileStream test path |
@@ -109,11 +111,11 @@ public async Task OpenAsync_TimingDependent_MayFail() { ... }
 All test runs use `--blame-hang-timeout 10m` to kill tests that hang for more than 10 minutes. This is configured in `build.proj` and applied to all test targets. If a test is expected to run longer than 10 minutes, it must be restructured or split.
 
 ### Test Filter Configuration
-The default test filter is defined in `build.proj`:
+The default test filter is defined in `build.proj` via `TestFilters`:
 ```xml
-<FilterStatement Condition="'$(FilterStatement)' == ''">category!=failing&amp;category!=flaky</FilterStatement>
+<TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
 ```
-This can be overridden via MSBuild property: `msbuild -p:FilterStatement="your_filter"`.
+This can be overridden via build property: `dotnet build build.proj -t:TestSqlClientUnit -p:TestFilters="your_filter"`.
 
 ### Test Attributes
 ```csharp
@@ -137,19 +139,19 @@ public void TestIntermittentlyFails() { ... }
 
 ## Running Tests
 
-### Using MSBuild (Recommended)
+### Using `build.proj` targets (Recommended)
 ```bash
 # Build and run all unit tests
-msbuild -t:RunUnitTests
+dotnet build build.proj -t:TestSqlClientUnit
 
 # Run functional tests only
-msbuild -t:RunFunctionalTests
+dotnet build build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-msbuild -t:RunManualTests -p:TF=net8.0
+dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
 
 # Run specific test set
-msbuild -t:RunManualTests -p:TestSet=1
+dotnet build build.proj -t:TestSqlClientManual -p:TestSet=1
 ```
 
 ### Using dotnet CLI
@@ -158,9 +160,9 @@ msbuild -t:RunManualTests -p:TestSet=1
 dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" \
   -p:Configuration=Release
 
-# Functional tests with filter (excludes failing and flaky)
-dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" \
-  --filter "category!=failing&category!=flaky"
+# Functional tests with filter (excludes failing, flaky, and interactive tests)
+dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" \
+  --filter "category!=failing&category!=flaky&category!=interactive"
 
 # Run ONLY quarantined flaky tests (for investigation)
 dotnet test ... --filter "category=flaky"
@@ -171,6 +173,45 @@ dotnet test ... --filter "FullyQualifiedName=Namespace.ClassName.MethodName"
 
 ## Writing Tests
 
+### Test Documentation Requirements
+
+To keep tests maintainable for contributors and AI agents, test intent must be documented at
+class and method level.
+
+#### Required XML Documentation
+- Add XML `<summary>` comments to every test class.
+- Add XML `<summary>` comments to every test method (`[Fact]`, `[Theory]`, conditional variants).
+- For helper methods used by tests, add XML `<summary>` comments and XML `<param>` / `<returns>`
+  where applicable.
+- For fixture and collection types, add XML `<summary>` comments describing why the fixture exists
+  (for example, serialization of console-mutating tests).
+
+#### What the Comments Must Explain
+- The behavior/contract being tested (not just restating the method name).
+- Why the scenario matters (for example: regression guard, parsing contract, sync/async parity,
+  isolation requirement).
+- For helper methods, what side effects occur (for example console redirection, file system
+  copying, process execution) and why they are needed.
+
+#### Style Guidance
+- Keep comments concise and factual.
+- Prefer behavior-focused wording over implementation trivia.
+- Avoid comments that merely repeat obvious code.
+- Use inline comments inside test methods only for non-obvious setup/act/assert details.
+
+#### Example
+```csharp
+/// <summary>
+/// Ensures malformed connection strings return a non-zero exit code and emit a parse error
+/// without verbose exception details.
+/// </summary>
+[Fact]
+public void AppRunWithMalformedConnectionStringReturnsOneAndWritesParseError()
+{
+        // Arrange / Act / Assert
+}
+```
+
 ### Test Structure
 ```csharp
 public class FeatureNameTests
@@ -180,10 +221,10 @@ public class FeatureNameTests
     {
         // Arrange
         var sut = new SystemUnderTest();
-        
+
         // Act
         var result = sut.PerformAction();
-        
+
         // Assert
         Assert.Equal(expected, result);
     }
@@ -310,7 +351,7 @@ Common test helper class:
 ```csharp
 DataTestUtility.TCPConnectionString  // Get TCP connection
 DataTestUtility.AreConnStringsSetup  // Check if config exists
-DataTestUtility.IsAADPasswordConnStrSetup  // Check AAD config
+DataTestUtility.IsAADPasswordConnStrSetup  // Check Entra ID config
 ```
 
 ### AssertExtensions
@@ -319,11 +360,43 @@ Extended assertions for SqlClient:
 AssertExtensions.ThrowsContains<SqlException>(() => action(), "expected message");
 ```
 
+### RAII Database Object Classes
+When writing manual integration tests that require transient database objects, use the RAII classes from `Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects` instead of manually writing `try/finally` blocks with DDL `DROP`/`CREATE` statements.
+
+**Available classes:**
+
+| Class | SQL generated | Example definition argument |
+|-------|--------------|----------------------------|
+| `Table` | `CREATE TABLE {Name} {definition}` | `"(Id INT, Value NVARCHAR(100))"` |
+| `StoredProcedure` | `CREATE PROCEDURE {Name} {definition}` | `"AS BEGIN SELECT 1 END"` |
+| `UserDefinedType` | `CREATE TYPE [dbo].{Name} AS {definition}` | `"TABLE (f1 INT)"` |
+
+Each class generates a unique object name from the given prefix (incorporating a timestamp-based GUID, username, and machine name), creates the object on construction (requiring the connection to already be open), and drops it when disposed. The generated name is available via the `.Name` property.
+
+**Pattern:**
+```csharp
+using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+conn.Open();
+
+using Table testTable = new(conn, "MyTable", "(Id INT, Name NVARCHAR(100))");
+using StoredProcedure proc = new(conn, "MyProc", $"AS BEGIN SELECT * FROM {testTable.Name} END");
+
+using SqlCommand cmd = conn.CreateCommand();
+cmd.CommandText = proc.Name;
+cmd.CommandType = CommandType.StoredProcedure;
+// ... objects are automatically dropped when the scope ends
+```
+
+**Rules:**
+- Open the connection **before** constructing any database object (the constructor executes DDL immediately)
+- When objects depend on each other (e.g., a stored procedure that references a table), declare the dependent object **last** so it is disposed first — `using` declarations are disposed in reverse order
+- Use the `.Name` property directly wherever you need to reference the object in SQL; for `UserDefinedType` this already includes the `[dbo].` schema prefix, making it suitable for use as a TVP `TypeName`
+
 ## Code Coverage
 
 ### Running with Coverage
 ```bash
-msbuild -t:RunTests -p:CollectCoverage=true
+dotnet build build.proj -t:TestSqlClientUnit -p:TestCodeCoverage=true
 ```
 
 ### Coverage Targets
@@ -333,15 +406,10 @@ msbuild -t:RunTests -p:CollectCoverage=true
 
 ## Debugging Tests
 
-### Visual Studio
+### IDE
 1. Set breakpoints in test code
-2. Right-click test → Debug Test
+2. Right-click test → Debug Test (or use CodeLens "Debug Test" link)
 3. Use Test Explorer for navigation
-
-### VS Code
-1. Configure C# extension
-2. Use CodeLens "Debug Test" link
-3. Attach to test process
 
 ### Command Line
 ```bash

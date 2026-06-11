@@ -8,11 +8,12 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
     public static class TransactionPoolTest
     {
         /// <summary>
-        /// Tests if connections in a distributed transaction are put into a transaction pool. Also checks that clearallpools 
+        /// Tests if connections in a distributed transaction are put into a transaction pool. Also checks that clearallpools
         /// does not clear transaction connections and that the transaction root is put into "stasis" when closed
         /// Synapse: only supports local transaction request.
         /// </summary>

@@ -1,16 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- Sign with the test key so signed test assemblies can reference this project. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <!-- Copy config file ================================================ -->
   <Target Name="CopyConfig" BeforeTargets="Compile">
-    <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
+    <Copy SourceFiles="config.default.jsonc" DestinationFiles="config.jsonc" Condition="!Exists('config.jsonc')" />
   </Target>
   <ItemGroup>
-    <None Update="config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <PackageReference Include="Newtonsoft.Json" />
+    <None Update="config.jsonc" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 </Project>

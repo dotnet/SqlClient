@@ -3,7 +3,7 @@ using System.Data;
 // <Snippet1>
 using Microsoft.Data.SqlClient;
 
-namespace SqlConnection1CS
+namespace SqlConnection_ServerVersion
 {
     class Program
     {

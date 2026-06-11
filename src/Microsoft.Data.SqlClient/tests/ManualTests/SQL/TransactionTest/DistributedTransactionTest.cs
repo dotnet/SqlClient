@@ -11,6 +11,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
 
+    [Trait("Set", "3")]
     [PlatformSpecific(TestPlatforms.Windows)]
     public class DistributedTransactionTestWindows
     {
@@ -55,7 +56,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task Test_EnlistedTransactionPreservedWhilePooled()
         {
             #if NET
-            TransactionManager.ImplicitDistributedTransactions = true;
+            if (OperatingSystem.IsWindows())
+            {
+                TransactionManager.ImplicitDistributedTransactions = true;
+            }
             #endif
 
             await RunTestSet(EnlistedTransactionPreservedWhilePooled);

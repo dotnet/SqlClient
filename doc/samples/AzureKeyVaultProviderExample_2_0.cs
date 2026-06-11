@@ -6,7 +6,7 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 
-namespace Microsoft.Data.SqlClient.Samples
+namespace AzureKeyVaultProviderExample_2_0
 {
     public class AzureKeyVaultProviderExample_2_0
     {

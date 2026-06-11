@@ -28,6 +28,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient
         private ALTROWSTATUS _altRowStatus;
         private int _recordsAffected = -1;
         private long _defaultTimeoutMilliseconds;
-        private SqlConnectionString.TypeSystem _typeSystem;
+        private SqlConnectionOptions.TypeSystem _typeSystem;
 
         // SQLStatistics support
         private SqlStatistics _statistics;
@@ -571,7 +572,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -593,9 +594,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
                 }
-                else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsLargeUdt)
+                else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.IsLargeUdt)
                 {
-                    if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                    if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                     {
                         schemaRow[providerType] = SqlDbType.VarBinary;
                     }
@@ -605,7 +606,7 @@ namespace Microsoft.Data.SqlClient
                         schemaRow[providerType] = SqlDbType.Image;
                     }
                 }
-                else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+                else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
                 {
                     // TypeSystem.SQLServer2005 and above
 
@@ -653,7 +654,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -844,7 +845,7 @@ namespace Microsoft.Data.SqlClient
         private void CleanPartialReadReliable()
         {
             AssertReaderState(requireData: true, permitAsync: false);
-            
+
             TdsOperationStatus result = TryCleanPartialRead();
             Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
             Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
@@ -871,7 +872,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 SqlStatistics statistics = null;
                 try
@@ -1053,7 +1054,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
-                    
+
                     // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
                     if (!wasClosed && stateObj != null)
                     {
@@ -1072,7 +1073,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                     // @TODO: CER Exception Handling was removed here (see GH#3581)
-                    
+
                     // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
 
                     // do not retry here
@@ -1193,13 +1194,13 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     dataTypeName = MetaType.MetaMaxVarBinary.TypeName;
                 }
@@ -1209,7 +1210,7 @@ namespace Microsoft.Data.SqlClient
                     dataTypeName = MetaType.MetaImage.TypeName;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -1281,14 +1282,14 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     fieldType = MetaType.MetaMaxVarBinary.ClassType;
                 }
@@ -1298,13 +1299,17 @@ namespace Microsoft.Data.SqlClient
                     fieldType = MetaType.MetaImage.ClassType;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
+                }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    fieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
@@ -1326,6 +1331,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
+        }
+
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetVectorFieldType(byte vectorElementType)
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
+            return elementType switch
+            {
+                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
         }
 
         virtual internal int GetLocaleId(int i)
@@ -1397,13 +1415,13 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
+                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
                 {
                     providerSpecificFieldType = MetaType.MetaMaxVarBinary.SqlType;
                 }
@@ -1413,13 +1431,17 @@ namespace Microsoft.Data.SqlClient
                     providerSpecificFieldType = MetaType.MetaImage.SqlType;
                 }
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
+                }
+                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    providerSpecificFieldType = GetVectorFieldType(metaData.scale);
                 }
                 else
                 {
@@ -1482,7 +1504,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 try
                 {
@@ -1657,7 +1679,7 @@ namespace Microsoft.Data.SqlClient
         {
             remaining = 0;
             TdsOperationStatus result;
-            
+
             int cbytes = 0;
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
 
@@ -1853,12 +1875,8 @@ namespace Microsoft.Data.SqlClient
 
                 Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
                 cbytes = data.Length;
 
                 if (length < 0)
@@ -2053,7 +2071,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         override public char GetChar(int i)
         {
             throw ADP.NotSupported();
@@ -2115,7 +2133,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        throw ADP.InvalidDestinationBufferIndex(buffer?.Length ?? 0, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
@@ -2130,17 +2148,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         }
-                        catch (Exception ex)
+                        catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                         {
                             // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
-                            if (ADP.IsCatchableExceptionType(ex))
-                            {
-                                throw new TargetInvocationException(ex);
-                            }
-                            else
-                            {
-                                throw;
-                            }
+                            throw new TargetInvocationException(ex);
                         }
                         charsRead = GetStreamingXmlChars(i, dataIndex, buffer, bufferIndex, length);
                     }
@@ -2210,12 +2221,8 @@ namespace Microsoft.Data.SqlClient
                     Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
                     _columnDataCharsRead += cchars;
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
                     cchars = _columnDataChars.Length;
 
                     if (length < 0)
@@ -2366,7 +2373,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/System.Data.IDataRecord.GetData/*' />
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
+        [EditorBrowsable(EditorBrowsableState.Never)] // MDAC 69508
         IDataReader IDataRecord.GetData(int i)
         {
             throw ADP.NotSupported();
@@ -2380,7 +2387,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2479,7 +2486,7 @@ namespace Microsoft.Data.SqlClient
             ReadColumn(i);
             SqlString data;
             // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 data = _data[i].Sql2008DateTimeSqlString;
             }
@@ -2558,7 +2565,7 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeSqlString;
             }
@@ -2572,7 +2579,7 @@ namespace Microsoft.Data.SqlClient
             ReadColumn(i);
             SqlXml sx = null;
 
-            if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005
 
@@ -2597,7 +2604,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
         virtual public SqlJson GetSqlJson(int i)
         {
             ReadColumn(i);
@@ -2605,7 +2612,7 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
         virtual public SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged
         {
             if (typeof(T) != typeof(float))
@@ -2658,15 +2665,15 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return data.Sql2008DateTimeSqlString;
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
                 return data.SqlValue;
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -2737,7 +2744,7 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             // Convert 2008 value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeString;
             }
@@ -2786,7 +2793,7 @@ namespace Microsoft.Data.SqlClient
 
             TimeSpan t = _data[i].Time;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2808,7 +2815,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTimeOffset dto = _data[i].DateTimeOffset;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2846,7 +2853,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -2857,11 +2864,11 @@ namespace Microsoft.Data.SqlClient
                     return data.Sql2008DateTimeString;
                 }
             }
-            else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
                 return data.Value;
             }
-            else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
+            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -2968,20 +2975,20 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.Decimal;
             }
-            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTimeOffset;
             }
-            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 return (T)(object)data.DateTime;
             }
 #if !NETFRAMEWORK
-            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.DateOnly;
             }
-            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionOptions.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.TimeOnly;
             }
@@ -3103,7 +3110,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
                 }
-                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                JsonDocument document = JsonDocument.Parse(data.String);
                 return (T)(object)document;
             }
             else
@@ -3138,7 +3145,7 @@ namespace Microsoft.Data.SqlClient
                         return (T)(object)data.String;
                     }
                     // the requested type is likely to be one that isn't supported so try the cast and
-                    // unless there is a null value conversion then feedback the cast exception with 
+                    // unless there is a null value conversion then feedback the cast exception with
                     // type named to the user so they know what went wrong. Supported types are listed
                     // in the documentation
                     try
@@ -3222,7 +3229,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType GetVersionedMetaType(MetaType actualMetaType)
         {
-            Debug.Assert(_typeSystem == SqlConnectionString.TypeSystem.SQLServer2000, "Should not be in this function under anything else but SQLServer2000");
+            Debug.Assert(_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2000, "Should not be in this function under anything else but SQLServer2000");
 
             MetaType metaType = null;
 
@@ -3492,7 +3499,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsOperationStatus result;
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -3662,7 +3669,7 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
                 try
                 {
@@ -3908,7 +3915,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InvalidRead();
             }
-            
+
             return TryReadColumnInternal(i, readHeaderOnly: true);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
@@ -3920,8 +3927,16 @@ namespace Microsoft.Data.SqlClient
             // Check if we've already read the header already
             if (i < _sharedState._nextColumnHeaderToRead)
             {
-                // Read the header, but we need to read the data
-                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly))
+                // The column header has been read (e.g. by IsDBNull) but data hasn't
+                // been consumed yet.  Consume it now unless:
+                //  - readHeaderOnly: caller only wants the header (e.g. IsDBNull itself).
+                //  - forStreaming + SequentialAccess: a streaming type (Stream, TextReader,
+                //    XmlReader) was requested in sequential mode.  The data must stay on the
+                //    wire so that SqlSequentialStream / SqlSequentialTextReader can read it
+                //    incrementally.  In non-sequential mode we still need to materialize the
+                //    data into _data[i] for the MemoryStream / StringReader path.
+                if ((i == _sharedState._nextColumnDataToRead) && (!readHeaderOnly) &&
+                    !(forStreaming && IsCommandBehavior(CommandBehavior.SequentialAccess)))
                 {
                     return TryReadColumnData();
                 }
@@ -4597,7 +4612,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4927,7 +4942,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
+            using (SqlClientEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)
@@ -5014,12 +5029,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                 {
-                    if (!ADP.IsCatchableExceptionType(ex))
-                    {
-                        throw;
-                    }
                     return Task.FromException<bool>(ex);
                 }
 
@@ -5116,12 +5127,8 @@ namespace Microsoft.Data.SqlClient
             {
                 CheckHeaderIsReady(columnIndex: i);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<bool>(ex);
             }
 
@@ -5174,12 +5181,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                 {
-                    if (!ADP.IsCatchableExceptionType(ex))
-                    {
-                        throw;
-                    }
                     return Task.FromException<bool>(ex);
                 }
 
@@ -5275,12 +5278,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<T>(ex);
             }
 
@@ -5316,12 +5315,8 @@ namespace Microsoft.Data.SqlClient
 #endif
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (!ADP.IsCatchableExceptionType(ex))
-                {
-                    throw;
-                }
                 return Task.FromException<T>(ex);
             }
 
@@ -5966,7 +5961,7 @@ namespace Microsoft.Data.SqlClient
                 _SqlMetaData col = md[i];
                 SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
                 }

@@ -7,6 +7,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if we
+      are building for Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
   <!-- Embedded resources and content files  =========================== -->
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">
@@ -19,59 +30,99 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>xunit.runner.json</Link>
+    </None>
   </ItemGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- When a test signing key is provided, sign UnitTests so IVT from signed SqlClient works. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
 
   <!-- References ====================================================== -->
   <!-- Test target reference -->
-  <ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+  </ItemGroup>
+
+  <!--
+    Package mode: Unit tests exercise internal types that only exist in the implementation assembly
+    (runtimes/{rid}/lib/{tfm}/), not in the ref assembly (ref/{tfm}/).  We exclude the ref
+    compile asset and reference the runtime DLL directly so the compiler can see internals.
+
+    TODO: This is fragile, depending on our SqlClient NuGet package layout and supported TFMs.  It
+    is only necessary because we produce ref and not-supported assemblies and package them.  By
+    default, the compiler will use the ref assemblies if present, which we must explicitly override
+    as explained above.
+  -->
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+    <_SqlClientRid Condition="'$(OS)' != 'Windows_NT'">unix</_SqlClientRid>
+    <_SqlClientRid Condition="'$(OS)' == 'Windows_NT'">win</_SqlClientRid>
+    <!-- Map test TFM to the closest available package TFM (package ships net8.0/net9.0/net462) -->
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net8.0'">net8.0</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net9.0</_SqlClientPackageTfm>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <!-- Brings in transitive dependencies and runtime deployment; ExcludeAssets="compile" prevents
+         the compiler from using the ref assembly (which only contains public API surface).
+         GeneratePathProperty="true" causes NuGet restore to emit $(PkgMicrosoft_Data_SqlClient)
+         pointing to the extracted package folder in the global packages cache. -->
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <!-- Compile against the implementation assembly so the compiler can resolve internal types
+         exposed via InternalsVisibleTo.  The path uses $(PkgMicrosoft_Data_SqlClient) generated
+         above to locate the runtime DLL inside the NuGet package layout. -->
+    <Reference Include="Microsoft.Data.SqlClient"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/runtimes/$(_SqlClientRid)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
   </ItemGroup>
 
   <!-- References for netframework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Transactions" />
 
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <!--
+      Microsoft.Extensions.TimeProvider.Testing ships a buildTransitive .targets
+      file under net462 that unconditionally emits a TFM-support warning saying
+      the package isn't tested on .NET Framework. The lib/net462 compile and
+      runtime assets are fine for our FakeTimeProvider usage, so exclude only
+      the build* assets to suppress the warning without giving up the package.
+    -->
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" ExcludeAssets="build;buildTransitive" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
-    <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.console"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
-    <PackageReference Include="xunit.runner.visualstudio"
-                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"
-                      PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
-    <ProjectReference Include="$(TestsPath)Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
   </ItemGroup>
 </Project>

@@ -1,18 +1,20 @@
 ---
 name: code-review
-description: AI-assisted code review for a pull request in Microsoft.Data.SqlClient.
+description: AI-assisted code review for a pull request or branch in Microsoft.Data.SqlClient.
 argument-hint: <PR number or branch name>
 agent: agent
-tools: ['github/search_issues', 'read/readFile', 'codebase/search']
+tools: ['github/search_issues', 'github/pull_request_read', 'github/get_file_contents', 'github/run_secret_scanning', 'read/readFile', 'search']
 ---
 
-Review the pull request "${input:pr}" in `dotnet/SqlClient`.
+Review the changes in "${input:target}" for `dotnet/SqlClient`.
+
+The target may be either a **PR number** (e.g., `4106`) or a **branch name** (e.g., `dev/user/my-feature`). Determine which by checking whether the value is purely numeric.
 
 Follow this structured review process:
 
 ## 1. Understand the Change
-- Fetch the PR details: title, description, linked issue(s), and diff.
 - Read the PR description to understand the intent and scope of the change.
+- Check for linked issues referenced in the description (e.g., `Fixes #...`).
 - Check which files are modified and categorize them:
   - **Source code** (`src/Microsoft.Data.SqlClient/src/`) — the main review focus
   - **Tests** (`tests/`) — verify coverage

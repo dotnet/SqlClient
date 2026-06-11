@@ -30,9 +30,18 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
+  # The assembly file version to stamp into the DLLs.
+  - name: abstractionsAssemblyFileVersion
+    type: string
+
   # The version to apply to the NuGet package and DLLs.
   - name: abstractionsPackageVersion
     type: string
+
+  # Additional stages we depend on, if any.
+  - name: additionalDependsOn
+    type: object
+    default: []
 
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
@@ -42,7 +51,7 @@ parameters:
     - Release
     - Debug
 
-  # True to enable extra debug steps and logging.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -58,10 +67,39 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
 stages:
 
   - stage: build_abstractions_package_stage
     displayName: Build Abstractions Package
+
+    dependsOn:
+      - secrets_stage
+      - ${{ each dep in parameters.additionalDependsOn }}:
+        - ${{ dep }}
 
     jobs:
 
@@ -116,6 +154,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+          abstractionsAssemblyFileVersion: ${{ parameters.abstractionsAssemblyFileVersion }}
           abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
@@ -126,3 +165,6 @@ stages:
             - test_abstractions_package_job_windows
             - test_abstractions_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+          referenceType: ${{ parameters.referenceType }}

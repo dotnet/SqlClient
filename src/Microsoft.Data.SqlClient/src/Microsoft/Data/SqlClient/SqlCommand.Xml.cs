@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -90,7 +91,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteXmlReader | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -164,13 +165,9 @@ namespace Microsoft.Data.SqlClient
                         processAllRows: metaData[0].SqlDbType is not SqlDbType.Xml);
                     xmlReader = sqlStream.ToXmlReader(isAsync);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        dataReader.Close();
-                    }
-
+                    dataReader.Close();
                     throw;
                 }
             }
@@ -252,21 +249,14 @@ namespace Microsoft.Data.SqlClient
 
                     // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong 
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    // @TODO: Invert
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        // If not catchable - the connection has already been caught and doomed in
-                        // RunExecuteReader.
-                        throw;
-                    }
-
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
                     throw;
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 if (writeTask is not null)
                 {

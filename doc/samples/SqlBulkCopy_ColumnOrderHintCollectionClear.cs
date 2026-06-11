@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_ColumnOrderHintCollectionClear;
+
 // <Snippet1>
 using System;
 using System.Data;

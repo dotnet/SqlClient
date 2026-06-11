@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for stream input parameters (binary streams, text readers, XML).
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Trait("Set", "3")]
     [Collection("ParameterBaselineTests")]
     public class StreamInputParameterTests
     {
@@ -41,23 +42,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string outputPath = "StreamInputParameter.out";
             string baselinePath;
 #if DEBUG
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "StreamInputParameter_DebugMode.bsl";
-            }
-            else
-            {
-                baselinePath = "StreamInputParameter_DebugMode_Azure.bsl";
-            }
+            baselinePath = "StreamInputParameter_DebugMode.bsl";
 #else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "StreamInputParameter_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "StreamInputParameter_ReleaseMode_Azure.bsl";
-            }
+            baselinePath = "StreamInputParameter_ReleaseMode.bsl";
 #endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);

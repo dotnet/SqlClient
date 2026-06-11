@@ -1,8 +1,10 @@
+namespace SqlFunctionCS;
+
 using System.Collections;
 //-----------------------------------------------------------------------------
 //<Snippet4>
 using System.Data.SqlTypes;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 public partial class UserDefinedFunctions
 {

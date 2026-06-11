@@ -60,6 +60,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Check if we're still going to raise transient error
             if (Arguments.IsEnabledTransientError && RequestCounter < Arguments.RepeatCount)
             {
+                // Increment Login7 count since we won't call base.OnLogin7Request
+                Interlocked.Increment(ref _login7Count);
                 return GenerateErrorMessage(request);
             }
 
@@ -87,7 +89,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSUtilities.Log(Arguments.Log, "Request", request);
 
             // Prepare ERROR token with the denial details
-            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, 20, errorMessage);
+            TDSErrorToken errorToken = new TDSErrorToken(errorNumber, 1, Arguments.ErrorClass, errorMessage);
 
             // Log response
             TDSUtilities.Log(Arguments.Log, "Response", errorToken);

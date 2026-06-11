@@ -1,0 +1,14 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Restores dotnet CLI tools defined in dotnet-tools.json.
+# This step should be invoked after install-dotnet.yml and before any build
+# steps that depend on the restored tools (e.g. pwsh, apicompat).
+
+steps:
+  - script: dotnet tool restore
+    displayName: Restore .NET Tools
+    workingDirectory: $(Build.SourcesDirectory)

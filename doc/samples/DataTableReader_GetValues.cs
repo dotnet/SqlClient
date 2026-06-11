@@ -1,3 +1,5 @@
+namespace DataTableReader_GetValues;
+
 // <Snippet1>
 using System;
 using System.Data;

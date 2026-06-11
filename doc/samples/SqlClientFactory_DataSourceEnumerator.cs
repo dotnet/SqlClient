@@ -1,3 +1,5 @@
+namespace SqlClientFactory_DataSourceEnumerator;
+
 // <Snippet1>
 using System;
 using System.Data;

@@ -7,6 +7,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -30,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteScalar | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -81,7 +82,6 @@ namespace Microsoft.Data.SqlClient
             return ExecuteScalarAsyncInternal(cancellationToken);
         }
         
-        #if NET
         internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
         {
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
@@ -166,7 +166,6 @@ namespace Microsoft.Data.SqlClient
             },
             TaskScheduler.Default).Unwrap();
         }
-        #endif
         
         #endregion
         

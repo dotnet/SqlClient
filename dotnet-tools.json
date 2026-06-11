@@ -3,9 +3,23 @@
   "isRoot": true,
   "tools": {
     "dotnet-coverage": {
-      "version": "18.3.2",
+      "version": "18.7.0",
       "commands": [
         "dotnet-coverage"
+      ],
+      "rollForward": false
+    },
+    "microsoft.dotnet.apicompat.tool": {
+      "version": "10.0.300",
+      "commands": [
+        "apicompat"
+      ],
+      "rollForward": false
+    },
+    "powershell": {
+      "version": "7.6.2",
+      "commands": [
+        "pwsh"
       ],
       "rollForward": false
     }

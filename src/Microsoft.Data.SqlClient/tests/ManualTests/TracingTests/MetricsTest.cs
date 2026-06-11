@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class MetricsTest
     {
 #if NETFRAMEWORK
@@ -177,6 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TransactedConnectionPool_VerifyActiveConnectionCounters()
         {
@@ -278,6 +280,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Trait("Category", "flaky")]
         public void ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();
@@ -409,7 +412,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         static SqlClientEventSourceProps()
         {
             Type sqlClientEventSourceType =
-                Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientEventSource");
+                Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientDiagnostics");
             Debug.Assert(sqlClientEventSourceType != null);
             FieldInfo metricsField = sqlClientEventSourceType.GetField("Metrics", BindingFlags.Static | BindingFlags.Public);
             Debug.Assert(metricsField != null);

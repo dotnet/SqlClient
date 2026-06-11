@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient
             
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
-            using var eventScope = TryEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
+            using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteNonQuery | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
@@ -235,21 +236,14 @@ namespace Microsoft.Data.SqlClient
                         BeginExecuteNonQueryInternalReadStage(localCompletion);
                     }
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    // @TODO: Invert.
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        // Exception is not catchable, the connection has already been caught and
-                        // doomed in a lower level.
-                        throw;
-                    }
-
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
                     throw;
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.

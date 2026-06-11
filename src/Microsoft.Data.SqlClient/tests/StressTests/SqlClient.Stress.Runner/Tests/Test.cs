@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     internal class Test : TestBase
     {

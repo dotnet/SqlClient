@@ -129,6 +129,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public bool IsUserAgentSupportEnabled { get; set; }
 
+        /// <summary>
+        /// Indicates whether this session supports enhanced routing
+        /// </summary>
+        public bool IsEnhancedRoutingSupportRequested { get; set; }
+
         #region Session Options
 
         /// <summary>

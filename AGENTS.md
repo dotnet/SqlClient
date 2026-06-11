@@ -5,6 +5,7 @@ This document provides guidance for AI coding agents working with the Microsoft.
 ## Quick Start
 
 ### Essential Context Files
+
 Before making changes, agents should be aware of:
 
 | File | Purpose |
@@ -15,6 +16,7 @@ Before making changes, agents should be aware of:
 | [.github/copilot-instructions.md](.github/copilot-instructions.md) | Copilot-specific instructions |
 
 ### Detailed Technical Instructions
+
 The `.github/instructions/` directory contains comprehensive guides:
 
 | Guide | Coverage |
@@ -22,12 +24,14 @@ The `.github/instructions/` directory contains comprehensive guides:
 | [architecture.instructions.md](.github/instructions/architecture.instructions.md) | Project structure, unified project model |
 | [tds-protocol.instructions.md](.github/instructions/tds-protocol.instructions.md) | TDS protocol, packet handling |
 | [ado-pipelines.instructions.md](.github/instructions/ado-pipelines.instructions.md) | Azure DevOps CI/CD pipelines |
+| [onebranch-pipeline-design.instructions.md](.github/instructions/onebranch-pipeline-design.instructions.md) | OneBranch multi-product pipeline design spec |
 | [testing.instructions.md](.github/instructions/testing.instructions.md) | Test framework, running tests |
 | [connection-pooling.instructions.md](.github/instructions/connection-pooling.instructions.md) | Connection pool internals |
 | [api-design.instructions.md](.github/instructions/api-design.instructions.md) | Public API design principles |
 | [features.instructions.md](.github/instructions/features.instructions.md) | Feature reference, keywords |
 | [documentation.instructions.md](.github/instructions/documentation.instructions.md) | Documentation and samples |
 | [external-resources.instructions.md](.github/instructions/external-resources.instructions.md) | Docs links, version matrix, external references |
+| [ado-work-items-markdown.instructions.md](.github/instructions/ado-work-items-markdown.instructions.md) | Ensure Azure DevOps work item descriptions are Markdown and preserve newlines |
 
 ## Workflow Prompts
 
@@ -53,17 +57,40 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 6. **Performance Optimization**: Use pooling, async, efficient allocations
 7. **Observability**: EventSource tracing, meaningful errors
 
+## Terminal Reliability Rules
+
+When using shell/terminal tools, follow these rules strictly:
+
+1. Treat non-zero terminal exit codes as immediate failures to investigate; do not continue as if the command succeeded.
+2. If a bash session exits, assume it is dead and start a new command/session; do not wait for additional output from that session.
+3. After any command expected to gather data, verify output was actually returned before proceeding.
+4. If command execution failed, report the failure clearly and retry with a corrected command instead of waiting.
+5. Avoid `set -e` in this automation context; prefer single-purpose commands with explicit follow-up checks so failures are visible without killing the shell unexpectedly.
+6. Prefer shorter command batches over long chained scripts when collecting evidence; this makes bash exits easier to detect and recover from.
+
+## Branch Naming
+
+All branches created by AI agents **must** live under the `dev/automation/` prefix. Use a descriptive suffix, for example:
+
+- `dev/automation/fix-connection-timeout`
+- `dev/automation/add-json-type-tests`
+
+Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+
 ## Common Tasks
 
 ### Bug Fix Workflow
+
 1. Understand the issue from the bug report
 2. Locate relevant code in `src/Microsoft.Data.SqlClient/src/` (do NOT modify legacy `netcore/src/` or `netfx/src/`)
-3. Write a failing test that reproduces the issue
-4. Implement the fix
-5. Ensure all tests pass
-6. Update documentation if behavior changes
+3. Check `.github/instructions/features.instructions.md` for existing AppContext switches (including failover compatibility switches) before introducing behavior changes
+4. Write a failing test that reproduces the issue
+5. Implement the fix
+6. Ensure all tests pass
+7. Update documentation if behavior changes
 
 ### Feature Implementation
+
 1. Review the feature specification
 2. Plan the implementation (see `implement-feature` prompt)
 3. Update reference assemblies if adding public APIs
@@ -72,6 +99,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 6. Do not edit `CHANGELOG.md` directly; instead, add a suggested release-note entry (per `.github/copilot-instructions.md`) in the PR description or via the release-notes workflow/prompt.
 
 ### Adding Connection String Keywords
+
 1. Add to `SqlConnectionStringBuilder`
 2. Update connection string parser
 3. Default to backward-compatible value
@@ -79,6 +107,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 5. Document in feature reference
 
 ### Protocol Changes
+
 1. Reference MS-TDS specification
 2. Update `TdsEnums.cs` for new constants
 3. Implement in `TdsParser.cs` and related files
@@ -86,6 +115,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 5. Consider backward compatibility
 
 ### Performance Optimization
+
 1. Profile the issue using benchmarks or traces
 2. Identify allocation hotspots (see `perf-optimization` prompt)
 3. Apply patterns: `ArrayPool<T>`, `Span<T>`, static/cached instances, source generation
@@ -95,6 +125,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 
 
 ### Key Documentation Links
+
 - [Microsoft.Data.SqlClient on Microsoft Learn](https://learn.microsoft.com/sql/connect/ado-net/introduction-microsoft-data-sqlclient-namespace)
 - [MS-TDS Protocol Specification](https://learn.microsoft.com/openspecs/windows_protocols/ms-tds)
 - [SQL Server Documentation](https://learn.microsoft.com/sql/sql-server/)
@@ -102,6 +133,7 @@ This repository provides reusable prompts in `.github/prompts/` for common maint
 ## Repository Policies
 
 See the `policy/` directory for:
+
 - [coding-best-practices.md](policy/coding-best-practices.md) - Programming standards
 - [coding-style.md](policy/coding-style.md) - Code formatting guidelines
 - [review-process.md](policy/review-process.md) - PR review requirements

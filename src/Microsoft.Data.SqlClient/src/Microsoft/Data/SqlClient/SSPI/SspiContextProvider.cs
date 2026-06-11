@@ -6,6 +6,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 
@@ -57,7 +58,7 @@ namespace Microsoft.Data.SqlClient
 
             Initialize();
 
-            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(
+            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionOptions connString, string serverSpn) => new(
                 resource: serverSpn,
                 serverName: connString.DataSource,
                 databaseName: connString.InitialCatalog,
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
-            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
+            using var _ = SqlClientSNIEventScope.Create(nameof(SspiContextProvider));
 
             if (_primaryAuthParams is { })
             {

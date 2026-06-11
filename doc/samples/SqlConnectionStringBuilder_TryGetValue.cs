@@ -1,8 +1,9 @@
+namespace SqlConnectionStringBuilder_TryGetValue;
+
 using System;
 using System.Data;
 // <Snippet1>
 using Microsoft.Data.SqlClient;
-
 
 class Program
 {

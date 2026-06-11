@@ -1,0 +1,69 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This file is only included in SqlClient OneBranch official/non-official pipelines.
+
+variables:
+  # Libraries ==============================================================
+
+  # These variables are used for running ESRP signing tasks. All names start with "Signing" to make
+  # it clear that these variables are used for signing (as opposed to other msc tasks).
+  #
+  # SigningAppRegistrationClientId
+  # SigningAppRegistrationTenantId
+  # SigningAuthAkvName
+  # SigningAuthSignCertName
+  # SigningEsrpClientId
+  # SigningEsrpConnectedServiceName
+  - group: 'esrp-variables-v2'
+
+  # These variables are used for running symbol publishing tasks. All names start with "Symbols" to
+  # make it clear that these variables are used for symbols (as opposed to other msc tasks).
+  #
+  # SymbolsAzureSubscription
+  # SymbolsPublishProjectNameSqlClient
+  # SymbolsPublishServerProd
+  # SymbolsPublishServerPpe
+  # SymbolsPublishTokenUriProd
+  # SymbolsPublishTokenUriPpe
+  # SymbolsUploadAccount
+  - group: 'symbols-variables-v3'
+
+  # Well-Known Variables ###################################################
+
+  # Directory where downloaded pipeline artifacts (NuGet packages from earlier
+  # stages) are placed. Build jobs use this as a local NuGet package source so
+  # that downstream packages can resolve dependencies on packages built by
+  # upstream stages.
+  - name: JOB_INPUT
+    value: $(REPO_ROOT)/packages
+
+  # Root directory for all job output artifacts (NuGet packages, symbols, etc.). OneBranch auto
+  # publishes everything under this directory as the artifact for the job.
+  - name: JOB_OUTPUT
+    value: $(REPO_ROOT)/output
+
+  # OneBranch Template Variables ###########################################
+
+  - name: CommitHead
+    value: '' # the value will be extracted from the repo's head
+
+  # https://aka.ms/obpipelines/sdl
+  - name: ob_sdl_binskim_break
+    value: true
+
+  - name: Packaging.EnableSBOMSigning
+    value: true
+
+  # OneBranch supplies a variety of container images we must use for our jobs.
+
+  # Windows jobs use this image.
+  - name: WindowsContainerImage
+    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+
+  # Linux jobs use this image.
+  - name: LinuxContainerImage
+    value: mcr.microsoft.com/onebranch/azurelinux/build:3.0

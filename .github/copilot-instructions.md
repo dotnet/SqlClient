@@ -11,17 +11,18 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj` that multi-targets `net462`, `net8.0`, and `net9.0`. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
 The project includes:
 - **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
-  - **Unit Tests**: Located in `tests/UnitTests/` directory, which includes tests for individual components and methods.
-  - **Functional Tests**: Located in `tests/FunctionalTests/` directory, which includes tests for various features and functionalities that can be run without a SQL Server instance.
-  - **Manual Tests**: Located in `tests/ManualTests/` directory, which includes tests that require a SQL Server instance to run.
+  - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
+  - **Functional Tests**: Located in `src/Microsoft.Data.SqlClient/tests/FunctionalTests/`.
+  - **Manual Tests**: Located in `src/Microsoft.Data.SqlClient/tests/ManualTests/`.
+  - **Performance/Stress Tests**: Located in `src/Microsoft.Data.SqlClient/tests/PerformanceTests/` and `src/Microsoft.Data.SqlClient/tests/StressTests/`.
 - **Documentation**: Found in the `doc/` directory, including API documentation, usage examples.
 - **Policies**: Contribution guidelines, coding standards, and review policies in the `policy/` directory.
-- **Building**: The project uses MSBuild for building and testing, with configurations and targets defined in the `build.proj` file, whereas instructions are provided in the `BUILDGUIDE.md` file.
+- **Building**: The repo uses `build.proj` for orchestrated build/test/pack workflows, `src/Microsoft.Data.SqlClient.slnx` for solution-centric development tooling, and Azure DevOps YAML under `eng/pipelines/` plus `eng/pipelines/onebranch/` for CI and official release flows. See `BUILDGUIDE.md` for local build details.
 - **CI/CD**: ADO Pipelines for CI/CD and Pull request validation are defined in the `eng/` directory, ensuring code quality and automated testing.
 
 ## 📦 Products
@@ -31,9 +32,9 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Microsoft.SqlServer.Server**: Supplies APIs for SQL Server-specific features, including user-defined types (UDTs) and SQL Server-specific attributes.
 
 ## 🛠️ Key Features
-- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Azure Active Directory authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
+- **Connectivity to SQL Server**: Provides robust and secure connections to SQL Server databases, using various authentication methods, such as Windows Authentication, SQL Server Authentication, and Entra ID authentication, e.g. `ActiveDirectoryIntegrated`, `ActiveDirectoryPassword`, `ActiveDirectoryServicePrincipal`,`ActiveDirectoryInteractive`, `ActiveDirectoryDefault`, and `ActiveDirectoryManagedIdentity`.
 - **Connection Resiliency**: Implements connection resiliency features to handle transient faults and network issues, ensuring reliable database connectivity.
-- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are: 
+- **TLS Encryption**: Supports secure connections using TLS protocols to encrypt data in transit. Supports TLS 1.2 and higher, ensuring secure communication with SQL Server. Supported encryption modes are:
   - **Optional**: Encryption is used if available, but not required.
   - **Mandatory**: Encryption is mandatory for the connection.
   - **Strict**: Enforces strict TLS requirements, ensuring only secure connections are established.
@@ -49,6 +50,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Data Encryption**: Supports data encryption for secure data transmission.
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
+  - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
 - **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
@@ -122,12 +124,16 @@ When a new issue is created, follow these steps:
 - Ensure the PR passes all CI checks before merging.
 
 ### ✅ Closing Issues
-- Add a comment summarizing the fix and referencing the PR 
+- Add a comment summarizing the fix and referencing the PR
 
 ### ⚙️ Automating Workflows
 - Auto-label PRs based on folder paths (e.g., changes in `src/Microsoft.Data.SqlClient/src/` → `Area\SqlClient`, changes in `tests/` → `Area\Testing`) and whether they add new public APIs or introduce a breaking change.
 - Suggest release note entries for fixes by updating files under `release-notes/` or by using the `release-notes` prompt (instead of editing `CHANGELOG.md` directly).
 - Tag reviewers based on `CODEOWNERS` file
+
+## 🌿 Branch Naming
+- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
+- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
@@ -144,6 +150,14 @@ When a new issue is created, follow these steps:
 - Do not modify the `CODEOWNERS` file directly.
 - Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
+
+## Terminal Execution Safety
+- Treat any non-zero shell exit code as a failed step that requires correction before proceeding.
+- If a bash process exits, do not wait for more output from that process; rerun the command in a fresh terminal session.
+- Validate that expected command output was produced before using it as evidence for conclusions.
+- When terminal execution fails, surface the failure immediately and retry with a corrected command.
+- Avoid `set -e` in this automation workflow; use focused commands and verify each result explicitly so shell exits are observable and attributable.
+- Prefer short, single-purpose terminal commands over long chained scripts when debugging or gathering state.
 
 ## 📝 Notes
 - Update policies and guidelines in the `policy/` directory as needed based on trending practices and team feedback.

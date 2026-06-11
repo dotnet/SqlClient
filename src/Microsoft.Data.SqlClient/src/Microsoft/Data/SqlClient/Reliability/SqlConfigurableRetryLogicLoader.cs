@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NET
 using System.Diagnostics.CodeAnalysis;
@@ -115,7 +116,7 @@ namespace Microsoft.Data.SqlClient
 
             if (string.IsNullOrEmpty(retryMethod))
             {
-                throw new ArgumentNullException($"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because the {nameof(retryMethod)} value is null or empty.");
+                throw new ArgumentNullException(nameof(retryMethod), StringsHelper.GetString(Strings.SQLCR_RetryMethodNullOrEmpty));
             }
 
             Type type = null;
@@ -155,7 +156,7 @@ namespace Microsoft.Data.SqlClient
                 // i.e: Opening a connection or executing a command while invoking a function 
                 // runs the application to the `TargetInvocationException`.
                 // And using an isolated zone like a specific AppDomain results in an infinite loop.
-                throw new Exception($"Exception occurred when running the `{type.FullName}.{retryMethod}()` method.", e);
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_RetryMethodException, type.FullName, retryMethod), e);
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to resolve a valid provider; Returns `null`.", TypeName, methodName);
@@ -180,7 +181,7 @@ namespace Microsoft.Data.SqlClient
                 MethodInfo internalMethod = typeof(SqlConfigurableRetryFactory).GetMethod(retryMethodName);
                 if (internalMethod == null)
                 {
-                    throw new InvalidOperationException($"Failed to resolve the '{retryMethodName}' method from `{typeof(SqlConfigurableRetryFactory).FullName}` type.");
+                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_ResolveMethodFailed, retryMethodName, typeof(SqlConfigurableRetryFactory).FullName));
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}.{3}()` method has been discovered as the `{4}` method name."
@@ -196,14 +197,14 @@ namespace Microsoft.Data.SqlClient
             MethodInfo method = type.GetMethod(retryMethodName);
             if (method == null)
             {
-                throw new InvalidOperationException($"Failed to resolve the '{retryMethodName}' method from `{type.FullName}` type.");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_ResolveMethodFailed, retryMethodName, type.FullName));
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}` method metadata has been extracted from the `{3}` type by using the `{4}` method name."
                                                     , TypeName, methodName, method.Name, type.FullName, retryMethodName);
 
             if (!typeof(SqlRetryLogicBaseProvider).IsAssignableFrom(method.ReturnType))
             {
-                throw new InvalidCastException($"Invalid return type; Return type must be of `{typeof(SqlRetryLogicBaseProvider).FullName}` type.");
+                throw new InvalidCastException(StringsHelper.GetString(Strings.SQLCR_InvalidReturnType, typeof(SqlRetryLogicBaseProvider).FullName));
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The return type of the `{2}.{3}()` method is valid."
                                                     , TypeName, methodName, type.FullName, method.Name);
@@ -243,8 +244,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!found)
                 {
-                    string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {retryMethod}'s parameters." +
-                        $"{Environment.NewLine}The function must have a paramter of type '{nameof(SqlRetryLogicOption)}'.";
+                    string message = StringsHelper.GetString(Strings.SQLCR_InvalidRetryParameters, retryMethod, Environment.NewLine);
                     throw new InvalidOperationException(message);
                 }
             }
@@ -290,8 +290,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {nameof(retryMethod)}'s parameters."
-                        + $"{Environment.NewLine}Parameter '{paramInfo.ParameterType.Name} {paramInfo.Name}' doesn't have default value.";
+                    string message = StringsHelper.GetString(Strings.SQLCR_InvalidParameterNoDefault, Environment.NewLine, paramInfo.ParameterType.Name, paramInfo.Name);
                     throw new InvalidOperationException(message);
                 }
             }
@@ -318,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(list))
             {
                 string[] parts = list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts != null && parts.Length > 0)
+                if (parts.Length > 0)
                 {
                     HashSet<int> set = new HashSet<int>();
                     for (int index = 0; index < parts.Length; index++)
@@ -416,7 +415,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (result != null)
                         {
-                            throw new InvalidOperationException("Sequence contains more than one matching element");
+                            throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_SequenceMoreThanOneMatch));
                         }
                         result = type;
                     }
@@ -424,7 +423,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (result == null)
             {
-                throw new InvalidOperationException("Sequence contains no matching element");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_SequenceNoMatch));
             }
             return result;
         }

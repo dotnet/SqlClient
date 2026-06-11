@@ -1,3 +1,6 @@
+#if NET
+namespace SqlClientFactory_Netcoreapp;
+
 using System;
 using System.Data.Common;
 using Microsoft.Data.SqlClient;
@@ -18,3 +21,4 @@ class Program
     }
     // </Snippet1>
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+#if false
+using System;
 //<Snippet1>
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -7,7 +8,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace AKVEnclaveExample
+namespace AzureKeyVaultProviderWithEnclaveProviderExample
 {
     class Program
     {
@@ -264,3 +265,4 @@ namespace AKVEnclaveExample
     }
 }
 //</Snippet1>
+#endif

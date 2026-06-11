@@ -1,3 +1,6 @@
+#if NETFRAMEWORK
+namespace IDbCommand_CommandTimeout;
+
 // <Snippet1>
 using System;
 using System.Xml;
@@ -20,3 +23,4 @@ public class Form1 : Form
     }
     // </Snippet1>
 }
+#endif

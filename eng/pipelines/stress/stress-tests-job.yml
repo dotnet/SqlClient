@@ -1,0 +1,230 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This job builds and runs stress tests by compiling the SqlClient projects transitively.
+#
+# The stress tests are located here:
+#
+#   src/Microsoft.Data.SqlClient/tests/StressTests
+#
+# This template defines a job named 'stress_tests_job_<suffix>' that can be depended on by
+# downstream jobs.
+
+parameters:
+
+  # The type of build to produce (Debug or Release)
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debugging steps.
+  - name: debug
+    type: boolean
+
+  # The prefix to prepend to the job's display name:
+  #
+  #   [<prefix>] Run Stress Tests
+  #
+  - name: displayNamePrefix
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+
+  # When true, test failures produce warnings (SucceededWithIssues) but do not fail the job.
+  # When false, test failures fail the job.  All test steps always run regardless of this setting.
+  - name: warnOnTestFailure
+    type: boolean
+
+  # The list of .NET Framework runtimes to test against.
+  - name: netFrameworkTestRuntimes
+    type: object
+
+  # The list of .NET runtimes to test against.
+  - name: netTestRuntimes
+    type: object
+
+  # The name of the Azure Pipelines pool to use.
+  - name: poolName
+    type: string
+
+  # The local SQL Server instance's 'sa' password, for use in the config file.
+  - name: saPassword
+    type: string
+
+  # The step to run to configure SQL Server.  This should configure a local SQL Server instance with
+  # an 'sa' login using the same password provided by the saPassword parameter.
+  - name: sqlSetupStep
+    type: step
+
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
+
+jobs:
+  - job: stress_tests_job_${{ parameters.jobNameSuffix }}
+    displayName: '[${{ parameters.displayNamePrefix }}] Run Stress Tests'
+    pool:
+      name: ${{ parameters.poolName }}
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
+
+    variables:
+
+      # Import the variable group that provides SQL Server build properties used by the
+      # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
+      # x86AliasRegistryPath, SQLAliasName, SQLAliasPort).
+      - group: ADO Build Properties
+
+      # Import the variable group that provides SQL Server test configuration variables.
+      - group: ADO Test Configuration Properties
+
+      # The top-level project file to build and run.
+      - name: project
+        value: $(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Runner/SqlClient.Stress.Runner.csproj
+
+      # The contents of the config file to use for all tests.  We will write this to a JSON file and
+      # then point to it via the STRESS_CONFIG_FILE environment variable.
+      - name: configContent
+        value: |
+          [
+            {
+              "name": "Azure SQL",
+              "type": "SqlServer",
+              "isDefault": true,
+              "dataSource": "localhost",
+              "user": "sa",
+              "password": "${{ parameters.saPassword }}",
+              "supportsWindowsAuthentication": false,
+              "isLocal": false,
+              "disableMultiSubnetFailover": true,
+              "disableNamedPipes": true,
+              "encrypt": false
+            }
+          ]
+
+      # IMPORTANT: Do NOT name pipeline variables "runArguments", "buildArguments", or
+      # "testArguments".  ADO exposes all pipeline variables as environment variables (uppercased),
+      # and the dotnet CLI's System.CommandLine reads env vars matching {COMMAND}ARGUMENTS (e.g.
+      # RUNARGUMENTS, BUILDARGUMENTS) and silently injects their content into the parsed arguments —
+      # bypassing the "--" separator.  This causes app arguments to contain SDK options and triggers
+      # unintended behavior.
+
+      # dotnet CLI options for build.
+      - name: dotnetBuildOpts
+        value: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+
+      # dotnet run options shared by all test steps (framework is appended per-step).
+      - name: dotnetRunOpts
+        value: >-
+          --no-build
+          --verbosity ${{ parameters.dotnetVerbosity }}
+          --configuration ${{ parameters.buildConfiguration }}
+
+      # Stress test options passed after the "--" separator.
+      - name: stressTestOpts
+        value: --assembly SqlClient.Stress.Tests --console
+
+    steps:
+
+      # Install the .NET SDK and Runtimes.
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          runtimes: [8.x, 9.x]
+
+      # Setup the local SQL Server.
+      - ${{ parameters.sqlSetupStep }}
+
+      # Write the config file.
+      - task: PowerShell@2
+        displayName: Write Config File
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            # Capture the multi-line JSON content into a variable.
+            $content = @"
+            $(configContent)
+            "@
+
+            # Write the JSON content to the config file.
+            $content | Out-File -FilePath "config.jsonc"
+
+      # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
+      # fetched through the ADO Artifacts feed.  This is required on hosted pool agents (macOS)
+      # that do not have pre-configured feed credentials.
+      - task: NuGetAuthenticate@1
+        displayName: Authenticate NuGet feeds
+
+      # Build the project.
+      - task: DotNetCoreCLI@2
+        displayName: Build Project
+        inputs:
+          command: build
+          projects: $(project)
+          arguments: ${{ variables.dotnetBuildOpts }}
+
+      # Set a flag so test steps can distinguish a build failure from a test failure.
+      - pwsh: Write-Host "##vso[task.setvariable variable=buildSucceeded]true"
+        displayName: Set build success flag
+
+      # Run the stress tests for each .NET runtime.
+      #
+      # The condition and continueOnError work together to achieve the following behavior:
+      #
+      #   condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+      #     - succeededOrFailed() allows the step to run even if a *previous test* step failed,
+      #       ensuring all runtimes are exercised regardless of earlier failures.
+      #     - eq(variables['buildSucceeded'], 'true') gates on the flag set above, so tests are
+      #       skipped entirely if the build or any setup step failed (since there's nothing to run).
+      #
+      #   continueOnError: ${{ parameters.warnOnTestFailure }}
+      #     - When warnOnTestFailure is true, continueOnError is true: a test failure marks the
+      #       step and job as SucceededWithIssues (orange warning) rather than Failed.
+      #     - When warnOnTestFailure is false, continueOnError is false: a test failure fails the
+      #       job (red), though subsequent runtimes still run due to the condition above.
+      #
+      - ${{ each runtime in parameters.netTestRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+          continueOnError: ${{ parameters.warnOnTestFailure }}
+          env:
+            STRESS_CONFIG_FILE: config.json
+          inputs:
+            command: run
+            projects: $(project)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}
+
+      # Run the stress tests for each .NET Framework runtime.
+      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+        - task: DotNetCoreCLI@2
+          displayName: Test [${{ runtime }}]
+          condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
+          continueOnError: ${{ parameters.warnOnTestFailure }}
+          env:
+            STRESS_CONFIG_FILE: config.json
+          inputs:
+            command: run
+            projects: $(project)
+            arguments: ${{ variables.dotnetRunOpts }} -f ${{ runtime }} -- ${{ variables.stressTestOpts }}

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 
@@ -35,13 +36,6 @@ internal static class LocalAppContextSwitches
     private const string EnableMultiSubnetFailoverByDefaultString =
         "Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault";
 
-    /// <summary>
-    /// The name of the app context switch that controls whether
-    /// the user agent feature is enabled.
-    /// </summary>
-    private const string EnableUserAgentString =
-        "Switch.Microsoft.Data.SqlClient.EnableUserAgent";
-
     #if NET
     /// <summary>
     /// The name of the app context switch that controls whether
@@ -63,6 +57,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string IgnoreServerProvidedFailoverPartnerString =
         "Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether failover
+    /// alternation should use legacy behavior for login-phase SQL errors.
+    /// </summary>
+    private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
 
     /// <summary>
     /// The name of the app context switch that controls whether to preserve
@@ -124,6 +125,13 @@ internal static class LocalAppContextSwitches
     private const string UseConnectionPoolV2String =
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
+    /// <summary>
+    /// The name of the app context switch that controls whether pool operations
+    /// should count against the caller's overall ConnectTimeout budget.
+    /// </summary>
+    private const string UseOverallConnectTimeoutForPoolWaitString =
+        "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
+
     #if NET && _WINDOWS
     /// <summary>
     /// The name of the app context switch that controls whether to use the
@@ -176,11 +184,6 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
 
-    /// <summary>
-    /// The cached value of the EnableUserAgent switch.
-    /// </summary>
-    private static SwitchValue s_enableUserAgent = SwitchValue.None;
-
     #if NET
     /// <summary>
     /// The cached value of the GlobalizationInvariantMode switch.
@@ -192,6 +195,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the IgnoreServerProvidedFailoverPartner switch.
     /// </summary>
     private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -232,6 +240,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
+    /// </summary>
+    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
     #if NET && _WINDOWS
     /// <summary>
@@ -317,18 +330,6 @@ internal static class LocalAppContextSwitches
             EnableMultiSubnetFailoverByDefaultString,
             defaultValue: false,
             ref s_enableMultiSubnetFailoverByDefault);
-
-    /// <summary>
-    /// When set to true, the user agent feature is enabled and the driver will
-    /// send the user agent string to the server.
-    ///
-    /// The default value of this switch is false.
-    /// </summary>
-    public static bool EnableUserAgent =>
-        AcquireAndReturn(
-            EnableUserAgentString,
-            defaultValue: false,
-            ref s_enableUserAgent);
 
     #if NET
     /// <summary>
@@ -431,6 +432,19 @@ internal static class LocalAppContextSwitches
             IgnoreServerProvidedFailoverPartnerString,
             defaultValue: false,
             ref s_ignoreServerProvidedFailoverPartner);
+
+    /// <summary>
+    /// When set to true, LoginWithFailover preserves legacy behavior and may
+    /// alternate to the failover partner on login-phase SQL errors where the
+    /// parser state is not Closed.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyFailoverAlternationOnLoginSqlErrors =>
+        AcquireAndReturn(
+            UseLegacyFailoverAlternationOnLoginSqlErrorsString,
+            defaultValue: false,
+            ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
@@ -561,6 +575,20 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When set to true, pool operations count against the
+    /// caller's ConnectTimeout budget. This includes waits and async operations.
+    /// When false, pool operations receive a full ConnectTimeout and
+    /// network calls receive a further full ConnectTimeout.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseOverallConnectTimeoutForPoolWait =>
+        AcquireAndReturn(
+            UseOverallConnectTimeoutForPoolWaitString,
+            defaultValue: false,
+            ref s_useOverallConnectTimeoutForPoolWait);
 
     #if NET && _WINDOWS
     /// <summary>

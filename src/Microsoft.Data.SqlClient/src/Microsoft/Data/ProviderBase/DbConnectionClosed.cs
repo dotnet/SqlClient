@@ -5,9 +5,9 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
@@ -48,14 +48,23 @@ namespace Microsoft.Data.ProviderBase
             throw ADP.ClosedConnectionError();
         }
 
+        protected internal override Task<DataTable> GetSchemaAsync(
+            SqlConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
+            => throw ADP.ClosedConnectionError();
+
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();
 
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
-            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
 
         /// <inheritdoc/>
         internal override void ResetConnection() => throw ADP.ClosedConnectionError();
@@ -71,7 +80,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            TimeoutTimer timeout)
             => throw ADP.ConnectionAlreadyOpen(State);
     }
 
@@ -113,14 +122,14 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, timeout);
 
         internal override bool TryOpenConnection(
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions)
+            TimeoutTimer timeout)
         {
             if (retry == null || !retry.Task.IsCompleted)
             {
@@ -169,7 +178,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
-            TryOpenConnection(outerConnection, connectionFactory, retry, userOptions);
+            TimeoutTimer timeout) =>
+            TryOpenConnection(outerConnection, connectionFactory, retry, timeout);
     }
 }

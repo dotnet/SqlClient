@@ -24,13 +24,13 @@ This is a comprehensive reference of supported connection string keywords.
 | `Integrated Security` | True/False, SSPI | Windows Authentication |
 | `User ID` | | SQL Server username |
 | `Password` | PWD | SQL Server password |
-| `Authentication` | See below | Azure AD authentication mode |
+| `Authentication` | See below | Entra ID authentication mode |
 | `Attestation Protocol` | None, HGS, AAS | Enclave attestation |
 
 #### Authentication Modes
 - `SqlPassword` - SQL Server authentication
-- `ActiveDirectoryPassword` - Azure AD with password
-- `ActiveDirectoryIntegrated` - Azure AD integrated
+- `ActiveDirectoryPassword` - Entra ID with password
+- `ActiveDirectoryIntegrated` - Entra ID integrated
 - `ActiveDirectoryInteractive` - Interactive browser auth
 - `ActiveDirectoryServicePrincipal` - Service principal
 - `ActiveDirectoryManagedIdentity` - Managed identity
@@ -246,6 +246,7 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
+| `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` | `false` | Restores legacy `LoginWithFailover` alternation for login-phase SQL errors when parser state is not `Closed` |
 | `Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior` | `false` | Restores legacy null handling for rowversion columns |
 | `Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour` | `false` | Restores legacy zero-scale behavior for time/datetime2/datetimeoffset |
 | `Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking` | `false` | Makes ReadAsync behave synchronously (legacy compat) |

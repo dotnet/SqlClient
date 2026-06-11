@@ -10,7 +10,7 @@
 
 parameters:
 
-  # True to include debug steps.
+  # True to emit debug information and steps.
   - name: debug
     type: boolean
     default: false
@@ -44,7 +44,7 @@ jobs:
           displayName: '[Debug] List Environment Variables'
 
       # Install the .NET SDK.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
 

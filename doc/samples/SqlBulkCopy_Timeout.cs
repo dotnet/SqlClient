@@ -1,3 +1,5 @@
+namespace SqlBulkCopy_Timeout;
+
 using System;
 using System.Data;
 // <Snippet1>
