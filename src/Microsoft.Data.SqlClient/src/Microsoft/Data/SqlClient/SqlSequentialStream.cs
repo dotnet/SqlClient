@@ -250,8 +250,12 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                // Set the stream as closed
-                SetClosed();
+                if (_reader != null)
+                {
+                    // Set the stream as closed
+                    SetClosed();
+                }
+                _disposalTokenSource.Dispose();
             }
 
             base.Dispose(disposing);
