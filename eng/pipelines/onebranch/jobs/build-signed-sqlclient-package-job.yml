@@ -93,17 +93,23 @@ jobs:
       sourceRoot: $(BUILD_OUTPUT)
       dllPattern: 'Microsoft.Data.SqlClient.resources.dll'
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: Release
-      displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
-      installNuget: false
-      nuspecPath: $(nuspecPath)
-      outputDirectory: $(PACK_OUTPUT)
-      packageVersion: $(mdsPackageVersion)
-      properties: 'AbstractionsPackageVersion=$(abstractionsPackageVersion);LoggingPackageVersion=$(loggingPackageVersion)'
-      referenceType: Package
+  # Create the MDS NuGet package via build.proj's GenerateMdsPackage target.
+  # This target has access to the version range properties computed in
+  # Versions.props, so it passes them through to nuget pack automatically.
+  - task: DotNetCoreCLI@2
+    displayName: 'Create MDS NuGet Package'
+    inputs:
+      command: build
+      projects: $(REPO_ROOT)/build.proj
+      arguments: >-
+        -t:GenerateMdsPackage
+        -p:GenerateNuget=true
+        -p:Configuration=Release
+        -p:ReferenceType=Package
+        -p:MdsPackageVersion=$(mdsPackageVersion)
+        -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
+        -p:LoggingPackageVersion=$(loggingPackageVersion)
+        -p:PackagesDir=$(PACK_OUTPUT)
 
   - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
