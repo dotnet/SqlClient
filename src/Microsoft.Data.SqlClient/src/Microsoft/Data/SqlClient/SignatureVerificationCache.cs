@@ -41,7 +41,8 @@ namespace Microsoft.Data.SqlClient
         private const int _cacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private const string _cacheLookupKeySeparator = ":";
-        
+        private static readonly TimeSpan s_verificationCacheTimeout = TimeSpan.FromDays(10);
+
         /// <summary>
         /// Gets the process-wide singleton instance of the signature verification cache.
         /// </summary>
@@ -54,7 +55,8 @@ namespace Microsoft.Data.SqlClient
         {
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
-/// <summary>
+
+        /// <summary>
         /// Get signature verification result for given CMK metadata 
         /// (KeystoreName, MasterKeyPath, allowEnclaveComputations) and a given signature
         /// </summary>
@@ -146,7 +148,7 @@ namespace Microsoft.Data.SqlClient
         {
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
             long currentCacheSize = _cache.Count;
-            if (currentCacheSize <= CacheSize + CacheTrimThreshold || Interlocked.CompareExchange(ref _inTrim, 1, 0) != 0)
+            if (currentCacheSize <= _cacheSize + _cacheTrimThreshold || Interlocked.CompareExchange(ref _inTrim, 1, 0) != 0)
             {
                 return;
             }
@@ -154,7 +156,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 // Example: 2301 - 2000 = 301; 301 / 2301 = 0.1308 * 100 = 13% compacting
-                _cache.Compact((double)(currentCacheSize - CacheSize) / currentCacheSize * 100);
+                _cache.Compact((double)(currentCacheSize - _cacheSize) / currentCacheSize * 100);
             }
             finally
             {
