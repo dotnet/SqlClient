@@ -7768,6 +7768,12 @@ namespace Microsoft.Data.SqlClient
                     WriteDateTimeOffset((DateTimeOffset)value, mt.Scale, length, stateObj);
                     break;
 
+                #if NET
+                case TdsEnums.SQLDATE:
+                    WriteDate((DateOnly)value, stateObj);
+                    break;
+                #endif
+
                 default:
                     Debug.Fail("unknown tds type for sqlvariant!");
                     break;
@@ -7938,6 +7944,13 @@ namespace Microsoft.Data.SqlClient
                     stateObj.WriteByte(metatype.Scale); //propbytes: scale
                     WriteDateTimeOffset((DateTimeOffset)value, metatype.Scale, 10, stateObj);
                     break;
+
+                #if NET
+                case TdsEnums.SQLDATE:
+                    WriteSqlVariantHeader(5, metatype.TDSType, metatype.PropBytes, stateObj);
+                    WriteDate((DateOnly)value, stateObj);
+                    break;
+                #endif
 
                 default:
                     Debug.Fail("unknown tds type for sqlvariant!");
@@ -8111,6 +8124,11 @@ namespace Microsoft.Data.SqlClient
             long days = value.Subtract(DateTime.MinValue).Days;
             WritePartialLong(days, 3, stateObj);
         }
+
+#if NET
+        private void WriteDate(DateOnly value, TdsParserStateObject stateObj) =>
+            WritePartialLong(value.DayNumber, 3, stateObj);
+#endif
 
         private byte[] SerializeTime(TimeSpan value, byte scale, int length)
         {
