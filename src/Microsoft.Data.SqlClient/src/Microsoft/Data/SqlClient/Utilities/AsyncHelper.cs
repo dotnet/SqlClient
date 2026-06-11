@@ -696,7 +696,9 @@ namespace Microsoft.Data.SqlClient.Utilities
                             taskCompletionSource.TrySetException(onTimeout());
                         }
                     },
-                    cancellationToken: CancellationToken.None);
+                    cancellationToken: CancellationToken.None,
+                    continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
+                    scheduler: TaskScheduler.Default);
         }
 
         /// <summary>
@@ -739,15 +741,17 @@ namespace Microsoft.Data.SqlClient.Utilities
                 .ContinueWith(
                     (task, state2) =>
                     {
-                        // If the timeout ran to completion AND the task to complete did not complete
-                        // then the timeout expired first, run the timeout handler
+                        // If the timeout ran to completion AND the task to complete did not
+                        // complete, then the timeout expired first, run the timeout handler.
                         if (!task.IsCanceled && !taskCompletionSource.Task.IsCompleted)
                         {
                             taskCompletionSource.TrySetException(onTimeout((TState)state2!));
                         }
                     },
                     state: state,
-                    cancellationToken: CancellationToken.None);
+                    cancellationToken: CancellationToken.None,
+                    continuationOptions: TaskContinuationOptions.ExecuteSynchronously,
+                    scheduler: TaskScheduler.Default);
         }
 
         /// <summary>
