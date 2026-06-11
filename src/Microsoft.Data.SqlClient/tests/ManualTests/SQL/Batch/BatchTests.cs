@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -378,10 +379,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ParameterInOutAndReturn()
         {
-            string create =
-                @"
-CREATE PROCEDURE TestInAndOutParams
-	@Input int,
+            SqlParameter input = CreateParameter("@Input", SqlDbType.Int, 2);
+            SqlParameter inputOutput = CreateParameter("@InOut", SqlDbType.Int, 4, ParameterDirection.InputOutput);
+            SqlParameter output = CreateParameter("@Output", SqlDbType.Int, DBNull.Value, ParameterDirection.Output);
+            SqlParameter returned = CreateParameter("@RETURN_VALUE", SqlDbType.Int, DBNull.Value, ParameterDirection.ReturnValue);
+
+            using (SqlConnection conn = new(DataTestUtility.TCPConnectionString))
+            using (StoredProcedure spTestInAndOutParams = new(conn, "TestInAndOutParams", @"
+	@Input int, 
 	@InOut int OUTPUT,
 	@Output int = default OUTPUT
 AS
@@ -389,26 +394,14 @@ BEGIN
 	SET NOCOUNT ON;
 	SELECT @InOut = 2 * @InOut, @Output = 2 * @Input
 	RETURN @Input
-END";
-            string drop = "DROP PROCEDURE TestInAndOutParams";
-
-            SqlParameter input = CreateParameter("@Input", SqlDbType.Int, 2);
-            SqlParameter inputOutput = CreateParameter("@InOut", SqlDbType.Int, 4, ParameterDirection.InputOutput);
-            SqlParameter output = CreateParameter("@Output", SqlDbType.Int, DBNull.Value, ParameterDirection.Output);
-            SqlParameter returned = CreateParameter("@RETURN_VALUE", SqlDbType.Int, DBNull.Value, ParameterDirection.ReturnValue);
-            try
+END"))
             {
-                TryExecuteNonQueryCommand(drop);
-                ExecuteNonQueryCommand(create);
-
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlBatch batch = new SqlBatch(conn))
                 {
-                    conn.Open();
                     batch.Commands.Add(new SqlBatchCommand("SELECT @@VERSION"));
                     batch.Commands.Add(
                         new SqlBatchCommand(
-                            "TestInAndOutParams",
+                            spTestInAndOutParams.Name,
                             CommandType.StoredProcedure,
                             new[] { input, inputOutput, output, returned }
                         )
@@ -416,10 +409,6 @@ END";
                     batch.Commands.Add(new SqlBatchCommand("SELECT @@SPID"));
                     batch.ExecuteNonQuery();
                 }
-            }
-            finally
-            {
-                TryExecuteNonQueryCommand(drop);
             }
 
             Assert.Equal(8, Convert.ToInt32(inputOutput.Value));
@@ -656,29 +645,6 @@ END";
             parameter.Direction = direction;
             parameter.Value = value;
             return parameter;
-        }
-
-        private static void ExecuteNonQueryCommand(string command)
-        {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = conn.CreateCommand())
-            {
-                conn.Open();
-                cmd.CommandText = command;
-                cmd.ExecuteNonQuery();
-            }
-        }
-        private static bool TryExecuteNonQueryCommand(string command)
-        {
-            try
-            {
-                ExecuteNonQueryCommand(command);
-                return true;
-            }
-            catch
-            {
-            }
-            return false;
         }
     }
 }
