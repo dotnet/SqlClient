@@ -2906,6 +2906,10 @@ namespace Microsoft.Data.SqlClient
                             // new value has 4 byte length
                             return result;
                         }
+                        if (env._newLength < 0 || env._newLength > TdsEnums.MaxPromoteTransactionLength)
+                        {
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, env._newLength);
+                        }
                         // read new value with 4 byte length
                         env._newBinValue = new byte[env._newLength];
                         result = stateObj.TryReadByteArray(env._newBinValue, env._newLength);
@@ -3300,10 +3304,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         return result;
                     }
-                    byte[] data = new byte[dataLen];
-                    if (dataLen > 0)
+                    if (dataLen > (uint)TdsEnums.MaxTokenDataLength)
                     {
-                        result = stateObj.TryReadByteArray(data, checked((int)dataLen));
+                        throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, dataLen);
+                    }
+                    int dataLength = (int)dataLen;
+                    byte[] data = new byte[dataLength];
+                    if (dataLength > 0)
+                    {
+                        result = stateObj.TryReadByteArray(data, dataLength);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -3623,6 +3632,10 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.ParsingError();
             }
+            if (length > TdsEnums.MaxTokenDataLength)
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, length);
+            }
             uint seqNum;
             TdsOperationStatus result = stateObj.TryReadUInt32(out seqNum);
             if (result != TdsOperationStatus.Done)
@@ -3671,6 +3684,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         return result;
                     }
+                }
+                if (stateLen < 0 || stateLen > TdsEnums.MaxTokenDataLength)
+                {
+                    throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, stateLen);
                 }
                 byte[] buffer = null;
                 lock (sdata._delta)
@@ -3887,6 +3904,10 @@ namespace Microsoft.Data.SqlClient
                 // the token must at least contain a DWORD indicating the number of info IDs
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> FEDAUTHINFO token stream length too short for CountOfInfoIDs.");
                 throw SQL.ParsingErrorLength(ParsingErrorState.FedAuthInfoLengthTooShortForCountOfInfoIds, tokenLen);
+            }
+            if (tokenLen > TdsEnums.MaxTokenDataLength)
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, tokenLen);
             }
 
             // read how many FedAuthInfo options there are
@@ -4361,13 +4382,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             // always read as sql types
-            Debug.Assert(valLen < (ulong)(int.MaxValue), "ProcessReturnValue received data size > 2Gb");
-
-            int intlen = valLen > (ulong)(int.MaxValue) ? int.MaxValue : (int)valLen;
+            int intlen;
 
             if (rec.metaType.IsPlp)
             {
                 intlen = int.MaxValue;    // If plp data, read it all
+            }
+            else if (valLen > (ulong)int.MaxValue)
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, unchecked((int)valLen));
+            }
+            else
+            {
+                intlen = (int)valLen;
             }
 
             if (rec.type == SqlDbTypeExtensions.Vector)
@@ -6548,7 +6575,14 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
-            Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
+            // DateTimeOffset is the largest datetime type at 10 bytes (5 time + 3 date + 2 offset).
+            // Reject anything larger to prevent heap allocation from spoofed metadata.
+            if (length < 0 || length > TdsEnums.MaxDateTimeLength)
+            {
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, length);
+            }
+
+            Span<byte> datetimeBuffer = stackalloc byte[TdsEnums.MaxDateTimeLength];
             TdsOperationStatus result;
 
             result = stateObj.TryReadByteArray(datetimeBuffer, length);
@@ -6801,7 +6835,10 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVECTOR:
                     {
                         // Note: Better not come here with plp data!!
-                        Debug.Assert(length <= TdsEnums.MAXSIZE);
+                        if (length < 0 || length > TdsEnums.MAXSIZE)
+                        {
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, length);
+                        }
                         byte[] b = new byte[length];
                         result = stateObj.TryReadByteArray(b, length);
                         if (result != TdsOperationStatus.Done)
