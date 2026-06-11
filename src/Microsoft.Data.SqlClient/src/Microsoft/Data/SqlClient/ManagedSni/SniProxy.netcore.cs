@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return sniHandle;
         }
 
-        private static ResolvedServerSpn GetSqlServerSPNs(DataSource dataSource, string serverSPN)
+        internal static ResolvedServerSpn GetSqlServerSPNs(DataSource dataSource, string serverSPN)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
             if (!string.IsNullOrWhiteSpace(serverSPN))
@@ -132,14 +132,24 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                postfix = dataSource.ResolvedProtocol == DataSource.Protocol.TCP ? dataSource.ResolvedPort.ToString() : dataSource.InstanceName;
+                // Per SQL Server Kerberos/SPN guidance, TCP client connections should use
+                // MSSQLSvc/<FQDN>:<port>, while named pipes/shared-memory use
+                // MSSQLSvc/<FQDN>:<instancename> for named instances. For our managed SNI path,
+                // NP uses instance-name postfix and TCP-like protocols (TCP, None, Admin)
+                // use a port postfix (resolved via SSRP for named instances).
+                // If SSRP resolution hasn't populated ResolvedPort yet (value is -1), fall back
+                // to the instance name to avoid producing a malformed SPN like ":-1".
+                // https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/register-a-service-principal-name-for-kerberos-connections?view=sql-server-ver17#named-instance
+                postfix = (dataSource.ResolvedProtocol == DataSource.Protocol.NP || dataSource.ResolvedPort <= 0)
+                    ? dataSource.InstanceName
+                    : dataSource.ResolvedPort.ToString();
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, ResolvedPort {3}, ResolvedProtocol {4}, postfix {5}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, dataSource?.ResolvedPort, dataSource?.ResolvedProtocol, postfix);
             return GetSqlServerSPNs(hostName, postfix, dataSource.ResolvedProtocol);
         }
 
-        private static ResolvedServerSpn GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
+        internal static ResolvedServerSpn GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(hostNameOrAddress));
             IPHostEntry hostEntry = null;
@@ -607,8 +617,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // If the data source starts with "np:servername"
                 if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
-                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance, 
-                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path 
+                    // Assuming that user did not change default NamedPipe name, if the datasource is in the format servername\instance,
+                    // separate servername and instance and prepend instance with MSSQL$ and append default pipe path
                     // https://learn.microsoft.com/en-us/sql/tools/configuration-manager/named-pipes-properties?view=sql-server-ver16
                     if (_dataSourceAfterTrimmingProtocol.Contains(PathSeparator) && ResolvedProtocol == Protocol.NP)
                     {
