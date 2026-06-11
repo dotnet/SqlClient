@@ -109,10 +109,12 @@ stages:
 
           # Upload the report
           # NOTE: pipeline name is used as "flag" (-F) to distinguish reports from other pipelines.
+          # NOTE: CodeCov's CLI requires that "options" go before the "command"
+          #     https://docs.codecov.com/docs/the-codecov-cli
           - script: >-
               "${{ variables.workingDir }}/codecov"
-              upload-process
               --verbose
+              upload-process
               --fail-on-error
               -f "${{ variables.workingDir }}/merge/cobertura.xml"
               -t ${{ parameters.codeCovApiToken }}

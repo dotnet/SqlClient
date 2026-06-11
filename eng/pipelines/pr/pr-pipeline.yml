@@ -4,7 +4,55 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# This pipeline builds and tests all products that we release. It is intended to run as validation
+# for every PR. The set of tests it executes is not exhaustive, as many tests require special
+# environments to provide complete coverage. Instead, this PR strikes a balance between complete
+# confidence and speed of PR validation.
+#
+# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and release/* branches in
+# GitHub. The dev/* pattern includes dev/automation/* branches created by AI agents.
+#
+# It maps to the "sqlclient-pr" pipeline in the Public ADO project:
+#    https://sqlclientdrivers.visualstudio.com/public/_build?definitionId=2281
+# And the "pr-pipeline" pipeline in the internal ADO project:
+#    https://dev.azure.com/SqlClientDrivers/ADO.Net/_build?definitionId=2271
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
+
+# Trigger PR validation runs for all pushes to PRs that target the specified branches.
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
+pr:
+  branches:
+    include:
+      # GitHub repo branch targets that will trigger PR validation builds.
+      - dev/*
+      - feat/*
+      - main
+      - release/*
+
+  paths:
+    include:
+      - .azuredevops/*
+      - .config/*
+      - doc/*
+      - eng/pipelines/*
+      - src/*
+      - tools/*
+      - azurepipelines-coverage.yml
+      - build.proj
+      - Directory.Packages.props
+      - dotnet-tools.json
+      - global.json
+      - NuGet.config
+    exclude:
+      - eng/pipelines/ci/*
+      - eng/pipelines/kerberos/*
+      - eng/pipelines/onebranch/*
+      - eng/pipelines/stress/*
+
+# Do not trigger commit or schedule runs for this pipeline.
+trigger: none
 
 parameters:
   # General Parameters =====================================================
