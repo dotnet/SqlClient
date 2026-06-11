@@ -1,0 +1,65 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# Compute Versions Stage (CI/PR)
+# ===============================
+# Extracts all package/file versions up-front in a single fast job.
+# Downstream stages consume these via stage dependency output variables:
+#
+#   stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.LoggingPackageVersion']
+#
+# In CI/PR mode, ALL packages always use their "next" version (with BuildSuffix
+# appended). There is no released-vs-dependency distinction as in the OneBranch
+# official pipeline.
+#
+# This stage MUST run before all build stages so they can consume computed versions.
+
+parameters:
+  # Build suffix appended to prerelease tag (e.g. 'ci' or 'pr').
+  - name: buildSuffix
+    type: string
+
+stages:
+  - stage: compute_versions_ci
+    displayName: "Compute Package Versions"
+    dependsOn: []
+
+    jobs:
+      - job: compute_versions_job
+        displayName: "Extract versions from Versions.props"
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+          # Extract all versions (package, file) per project.
+          # Each GetVersions* target emits labeled stdout lines.
+          - script: |
+              set -euo pipefail
+              echo "Extracting all versions with BuildNumber=$(Build.BuildNumber) BuildSuffix=${{ parameters.buildSuffix }}..."
+
+              extract() {
+                local label="$1"
+                local output
+                output=$(dotnet build "$(Build.SourcesDirectory)/build.proj" \
+                  -t:"GetVersions${label}" -v:m -nologo \
+                  -p:BuildNumber=$(Build.BuildNumber) \
+                  -p:BuildSuffix=${{ parameters.buildSuffix }})
+                local pkg file
+                pkg=$(echo "$output" | sed -n 's/^ *PackageVersion: //p')
+                file=$(echo "$output" | sed -n 's/^ *FileVersion: //p')
+                echo "  ${label}: pkg=$pkg  file=$file"
+                echo "##vso[task.setvariable variable=${label}PackageVersion;isOutput=true]$pkg"
+                echo "##vso[task.setvariable variable=${label}FileVersion;isOutput=true]$file"
+              }
+
+              extract Logging
+              extract Abstractions
+              extract SqlClient
+              extract Azure
+              extract AkvProvider
+              extract SqlServer
+            displayName: "Extract All Versions"
+            name: "versions"

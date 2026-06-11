@@ -56,37 +56,19 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
-  - name: abstractionsPackageVersion
-    type: string
-
   - name: akvProviderArtifactsName
-    type: string
-
-  - name: akvProviderPackageVersion
     type: string
 
   - name: azureArtifactsName
     type: string
 
-  - name: azurePackageVersion
-    type: string
-
   - name: loggingArtifactsName
-    type: string
-
-  - name: loggingPackageVersion
     type: string
 
   - name: sqlClientArtifactsName
     type: string
 
-  - name: sqlClientPackageVersion
-    type: string
-
   - name: sqlServerArtifactsName
-    type: string
-
-  - name: sqlServerPackageVersion
     type: string
 
   # ── Symbols publishing parameter ───────────────────────────────────────
@@ -193,7 +175,6 @@ stages:
             parameters:
               packageName: Microsoft.SqlServer.Server
               artifactName: '${{ parameters.sqlServerArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.SqlServer.Server.${{ parameters.sqlServerPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -203,7 +184,6 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Internal.Logging
               artifactName: '${{ parameters.loggingArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.Data.SqlClient.Internal.Logging.${{ parameters.loggingPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -213,7 +193,6 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Abstractions
               artifactName: '${{ parameters.abstractionsArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.Data.SqlClient.Extensions.Abstractions.${{ parameters.abstractionsPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -223,7 +202,6 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient
               artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.Data.SqlClient.${{ parameters.sqlClientPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -233,7 +211,6 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.Extensions.Azure
               artifactName: '${{ parameters.azureArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.Data.SqlClient.Extensions.Azure.${{ parameters.azurePackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}
@@ -243,7 +220,6 @@ stages:
             parameters:
               packageName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
               artifactName: '${{ parameters.akvProviderArtifactsName }}'
-              packagePath: 'Package-Release/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.${{ parameters.akvProviderPackageVersion }}.nupkg'
               nugetServiceConnection: ${{ variables.nugetServiceConnection }}
               isProduction: ${{ parameters.isOfficial }}
               displaySuffix: ${{ variables.nugetTargetSuffix }}

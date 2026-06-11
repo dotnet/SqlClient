@@ -43,37 +43,19 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
-  - name: abstractionsPackageVersion
-    type: string
-
   - name: akvProviderArtifactsName
-    type: string
-
-  - name: akvProviderPackageVersion
     type: string
 
   - name: azureArtifactsName
     type: string
 
-  - name: azurePackageVersion
-    type: string
-
   - name: loggingArtifactsName
-    type: string
-
-  - name: loggingPackageVersion
     type: string
 
   - name: sqlClientArtifactsName
     type: string
 
-  - name: sqlClientPackageVersion
-    type: string
-
   - name: sqlServerArtifactsName
-    type: string
-
-  - name: sqlServerPackageVersion
     type: string
 
   # ── Symbols Publishing Parameters ──────────────────────────────────────
@@ -93,6 +75,34 @@ parameters:
   - name: symbolsUploadAccount
     type: string
 
+  # ── Pre-computed versions (from compute-versions stage) ─────────────────
+  # These default to $(variableName) tokens that resolve at runtime from
+  # stage-level variables populated via stageDependencies.compute_versions outputs.
+
+  - name: loggingPackageVersion
+    type: string
+    default: $(loggingPackageVersion)
+
+  - name: abstractionsPackageVersion
+    type: string
+    default: $(abstractionsPackageVersion)
+
+  - name: sqlClientPackageVersion
+    type: string
+    default: $(sqlClientPackageVersion)
+
+  - name: azurePackageVersion
+    type: string
+    default: $(azurePackageVersion)
+
+  - name: akvProviderPackageVersion
+    type: string
+    default: $(akvProviderPackageVersion)
+
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
 stages:
   # Stage is emitted whenever publishSymbols is true.  If no packages were
   # built, only the no-op placeholder job runs and the stage succeeds
@@ -103,6 +113,7 @@ stages:
 
       # Depend on whichever build stages produced artifacts we need to publish.
       dependsOn:
+        - compute_versions
         - ${{ if or(parameters.buildSqlServerServer, parameters.buildSqlClient, parameters.buildAkvProvider) }}:
           - build_independent
         - ${{ if parameters.buildSqlClient }}:
@@ -110,6 +121,20 @@ stages:
           - build_dependent
         - ${{ if and(parameters.buildAkvProvider, parameters.buildSqlClient) }}:
           - build_addons
+
+      variables:
+        - name: loggingPackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+        - name: abstractionsPackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+        - name: sqlClientPackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+        - name: azurePackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AzurePackageVersion'] ]
+        - name: akvProviderPackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AkvProviderPackageVersion'] ]
+        - name: sqlServerPackageVersion
+          value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
       jobs:
         # ── No-op placeholder ──────────────────────────────────────────

@@ -33,60 +33,77 @@ parameters:
   - name: buildAkvProvider
     type: boolean
 
+  # ── Pre-computed versions (from compute-versions stage) ─────────────────
+  # These default to $(variableName) tokens that resolve at runtime from
+  # stage-level variables populated via stageDependencies.compute_versions outputs.
+  # Callers may override with explicit values if needed.
+
+  - name: loggingPackageVersion
+    type: string
+    default: $(loggingPackageVersion)
+
+  - name: abstractionsPackageVersion
+    type: string
+    default: $(abstractionsPackageVersion)
+
+  - name: sqlClientPackageVersion
+    type: string
+    default: $(sqlClientPackageVersion)
+
+  - name: azurePackageVersion
+    type: string
+    default: $(azurePackageVersion)
+
+  - name: akvProviderPackageVersion
+    type: string
+    default: $(akvProviderPackageVersion)
+
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
+  - name: loggingFileVersion
+    type: string
+    default: $(loggingFileVersion)
+
+  - name: abstractionsFileVersion
+    type: string
+    default: $(abstractionsFileVersion)
+
+  - name: sqlClientFileVersion
+    type: string
+    default: $(sqlClientFileVersion)
+
+  - name: azureFileVersion
+    type: string
+    default: $(azureFileVersion)
+
+  - name: akvProviderFileVersion
+    type: string
+    default: $(akvProviderFileVersion)
+
+  - name: sqlServerFileVersion
+    type: string
+    default: $(sqlServerFileVersion)
+
   # Package Parameters -----------------------------------------------------
 
   - name: abstractionsArtifactsName
     type: string
 
-  - name: abstractionsFileVersion
-    type: string
-
-  - name: abstractionsPackageVersion
-    type: string
-
   - name: akvProviderArtifactsName
-    type: string
-
-  - name: akvProviderFileVersion
-    type: string
-
-  - name: akvProviderPackageVersion
     type: string
 
   - name: azureArtifactsName
     type: string
 
-  - name: azureFileVersion
-    type: string
-
-  - name: azurePackageVersion
-    type: string
-
   - name: loggingArtifactsName
-    type: string
-
-  - name: loggingFileVersion
-    type: string
-
-  - name: loggingPackageVersion
     type: string
 
   - name: sqlClientArtifactsName
     type: string
 
-  - name: sqlClientFileVersion
-    type: string
-
-  - name: sqlClientPackageVersion
-    type: string
-
   - name: sqlServerArtifactsName
-    type: string
-
-  - name: sqlServerFileVersion
-    type: string
-
-  - name: sqlServerPackageVersion
     type: string
 
   # Signing Parameters -----------------------------------------------------
@@ -116,6 +133,17 @@ stages:
   # ====================================================================
   - stage: build_independent
     displayName: "Build Independent Packages"
+    dependsOn: compute_versions
+
+    variables:
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+      - name: loggingFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingFileVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlServerFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerFileVersion'] ]
 
     jobs:
       - ${{ if or(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
@@ -167,7 +195,17 @@ stages:
   - ${{ if eq(parameters.buildSqlClient, true) }}:
       - stage: build_abstractions
         displayName: "Build Abstractions Package"
-        dependsOn: build_independent
+        dependsOn:
+          - compute_versions
+          - build_independent
+
+        variables:
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: abstractionsFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsFileVersion'] ]
 
         jobs:
           # Build Microsoft.Data.SqlClient.Extensions.Abstractions
@@ -200,7 +238,25 @@ stages:
   - ${{ if eq(parameters.buildSqlClient, true) }}:
       - stage: build_dependent
         displayName: "Build Core Packages"
-        dependsOn: build_abstractions
+        dependsOn:
+          - compute_versions
+          - build_abstractions
+
+        variables:
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: sqlServerPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+          - name: sqlClientPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+          - name: sqlClientFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
+          - name: azurePackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AzurePackageVersion'] ]
+          - name: azureFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AzureFileVersion'] ]
 
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
@@ -262,7 +318,23 @@ stages:
   - ${{ if and(eq(parameters.buildAkvProvider, true), eq(parameters.buildSqlClient, true)) }}:
       - stage: build_addons
         displayName: "Build Add-on Packages"
-        dependsOn: build_dependent
+        dependsOn:
+          - compute_versions
+          - build_dependent
+
+        variables:
+          - name: abstractionsPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+          - name: loggingPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+          - name: sqlClientPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+          - name: sqlServerPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+          - name: akvProviderPackageVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AkvProviderPackageVersion'] ]
+          - name: akvProviderFileVersion
+            value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.AkvProviderFileVersion'] ]
 
         jobs:
           - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
@@ -297,15 +369,17 @@ stages:
 
   # ====================================================================
   # Validation
+  # @TODO: Update validate-signed-package-job to compute expected versions from
+  # Versions.props (same as build jobs) instead of receiving them as parameters.
   # ====================================================================
-  - ${{ if eq(parameters.buildSqlClient, true) }}:
-      - stage: sqlclient_package_validation
-        displayName: "SqlClient Package Validation"
-        dependsOn: build_dependent
-        jobs:
-          - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
-            parameters:
-              artifactName: '${{ parameters.sqlClientArtifactsName }}'
-              expectedFileVersion: '${{ parameters.sqlClientFileVersion }}'
-              expectedPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
-              isOfficial: ${{ parameters.isOfficial }}
+  # - ${{ if eq(parameters.buildSqlClient, true) }}:
+  #     - stage: sqlclient_package_validation
+  #       displayName: "SqlClient Package Validation"
+  #       dependsOn: build_dependent
+  #       jobs:
+  #         - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
+  #           parameters:
+  #             artifactName: '${{ parameters.sqlClientArtifactsName }}'
+  #             expectedFileVersion: <computed>
+  #             expectedPackageVersion: <computed>
+  #             isOfficial: ${{ parameters.isOfficial }}

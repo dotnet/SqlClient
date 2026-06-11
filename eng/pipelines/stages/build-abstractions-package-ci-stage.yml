@@ -98,8 +98,15 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: abstractionsPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+      - name: abstractionsAssemblyFileVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AbstractionsFileVersion'] ]
 
     jobs:
 

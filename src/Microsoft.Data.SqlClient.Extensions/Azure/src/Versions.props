@@ -25,11 +25,14 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <AzurePublishedVersion>1.0.0</AzurePublishedVersion>
+
     <!--
       This is the *next* version to release of Azure. Update this when the next version is decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AzureVersionDefault>1.1.0-preview1</AzureVersionDefault>
+    <AzureNextVersion>1.1.0-preview1</AzureNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -61,10 +64,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <AzurePackageVersion Condition="'$(BuildSuffix)' != ''">$(AzureVersionDefault)-$(BuildSuffix)$(BuildNumber)</AzurePackageVersion>
-        <AzurePackageVersion Condition="'$(BuildSuffix)' == ''">$(AzureVersionDefault)</AzurePackageVersion>
+        <AzurePackageVersion Condition="'$(BuildSuffix)' != ''">$(AzureNextVersion)-$(BuildSuffix)$(BuildNumber)</AzurePackageVersion>
+        <AzurePackageVersion Condition="'$(BuildSuffix)' == ''">$(AzureNextVersion)</AzurePackageVersion>
 
-        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
+        <AzureFileVersion>$(AzureNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </When>
 
@@ -76,8 +79,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <AzurePackageVersion>$(AzureVersionDefault)-dev</AzurePackageVersion>
-        <AzureFileVersion>$(AzureVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
+        <AzurePackageVersion>$(AzureNextVersion)-dev</AzurePackageVersion>
+        <AzureFileVersion>$(AzureNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</AzureFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

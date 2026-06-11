@@ -1,0 +1,169 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Compute Versions Stage
+# ======================
+# Computes all package versions up-front in a single fast job.
+# Downstream stages consume these via stage/job output variables:
+#
+#   stageDependencies.compute_versions.compute_versions_job.outputs['versions.LoggingPackageVersion']
+#
+# Design:
+#   - Packages being released get their "next" version (from Versions.props + BuildNumber).
+#   - Packages NOT being released use their "published" version (last shipped to NuGet),
+#     regardless of whether they are being built as dependencies.
+#   - Versions are extracted via build.proj GetVersions* targets by parsing stdout.
+#
+# This stage MUST run before all build stages so they can consume computed versions.
+
+parameters:
+  # ── Which packages are being released this run ──────────────────────────
+  # A package is "released" when it is built, signed, and published to NuGet.
+  # Packages that are only built as dependencies (but not released) use their
+  # published (last-shipped) version as the effective version.
+  - name: releaseSqlServerServer
+    type: boolean
+
+  - name: releaseLogging
+    type: boolean
+
+  - name: releaseAbstractions
+    type: boolean
+
+  - name: releaseSqlClient
+    type: boolean
+
+  - name: releaseAzure
+    type: boolean
+
+  - name: releaseAkvProvider
+    type: boolean
+
+stages:
+  - stage: compute_versions
+    displayName: "Compute Package Versions"
+
+    jobs:
+      - job: compute_versions_job
+        displayName: "Extract versions from Versions.props"
+        pool:
+          type: linux
+
+        variables:
+          ob_outputDirectory: $(Build.SourcesDirectory)/no_publish
+          # Disable all SDL scanning — this job only evaluates MSBuild properties.
+          ob_sdl_apiscan_enabled: false
+          ob_sdl_binskim_break: false
+          ob_sdl_binskim_enabled: false
+
+        steps:
+          - pwsh: |
+              New-Item -Path "$(ob_outputDirectory)" -ItemType Directory -Force
+              "**" | Out-File -FilePath "$(ob_outputDirectory)/.artifactignore" -Encoding ascii
+            displayName: 'Suppress artifact publishing'
+
+          # Extract all versions (package, published, file) per project.
+          # Each GetVersions* target emits labeled messages to stdout.
+          - script: |
+              set -euo pipefail
+              echo "Extracting all versions with BuildNumber=$(Build.BuildNumber)..."
+
+              extract() {
+                local label="$1"
+                local output
+                output=$(dotnet build "$(Build.SourcesDirectory)/build.proj" -t:"GetVersions${label}" -v:m -nologo -p:BuildNumber=$(Build.BuildNumber))
+                local pkg pub file
+                pkg=$(echo "$output" | sed -n 's/^ *PackageVersion: //p')
+                pub=$(echo "$output" | sed -n 's/^ *PublishedVersion: //p')
+                file=$(echo "$output" | sed -n 's/^ *FileVersion: //p')
+                echo "  ${label}: pkg=$pkg  pub=$pub  file=$file"
+                echo "##vso[task.setvariable variable=${label}NextVersion]$pkg"
+                echo "##vso[task.setvariable variable=${label}PublishedVersion]$pub"
+                echo "##vso[task.setvariable variable=${label}FileVersion]$file"
+              }
+
+              extract Logging
+              extract Abstractions
+              extract SqlClient
+              extract Azure
+              extract AkvProvider
+              extract SqlServer
+            displayName: "Extract All Versions"
+
+          # Resolve effective versions: "next" if being built, "published" if not.
+          # Publish as job output variables for consumption by downstream stages.
+          - script: |
+              echo "Resolving effective versions..."
+
+              # Each package uses its "next" version when being released,
+              # or its "published" (last-shipped) version otherwise.
+
+              # Logging
+              if [ "${{ parameters.releaseLogging }}" = "True" ]; then
+                LOGGING_VERSION="$(LoggingNextVersion)"
+              else
+                LOGGING_VERSION="$(LoggingPublishedVersion)"
+              fi
+
+              # Abstractions
+              if [ "${{ parameters.releaseAbstractions }}" = "True" ]; then
+                ABSTRACTIONS_VERSION="$(AbstractionsNextVersion)"
+              else
+                ABSTRACTIONS_VERSION="$(AbstractionsPublishedVersion)"
+              fi
+
+              # SqlClient
+              if [ "${{ parameters.releaseSqlClient }}" = "True" ]; then
+                SQLCLIENT_VERSION="$(SqlClientNextVersion)"
+              else
+                SQLCLIENT_VERSION="$(SqlClientPublishedVersion)"
+              fi
+
+              # Azure
+              if [ "${{ parameters.releaseAzure }}" = "True" ]; then
+                AZURE_VERSION="$(AzureNextVersion)"
+              else
+                AZURE_VERSION="$(AzurePublishedVersion)"
+              fi
+
+              # AkvProvider
+              if [ "${{ parameters.releaseAkvProvider }}" = "True" ]; then
+                AKVPROVIDER_VERSION="$(AkvProviderNextVersion)"
+              else
+                AKVPROVIDER_VERSION="$(AkvProviderPublishedVersion)"
+              fi
+
+              # SqlServer
+              if [ "${{ parameters.releaseSqlServerServer }}" = "True" ]; then
+                SQLSERVER_VERSION="$(SqlServerNextVersion)"
+              else
+                SQLSERVER_VERSION="$(SqlServerPublishedVersion)"
+              fi
+
+              echo "Effective versions:"
+              echo "  Logging:      $LOGGING_VERSION"
+              echo "  Abstractions: $ABSTRACTIONS_VERSION"
+              echo "  SqlClient:    $SQLCLIENT_VERSION"
+              echo "  Azure:        $AZURE_VERSION"
+              echo "  AkvProvider:  $AKVPROVIDER_VERSION"
+              echo "  SqlServer:    $SQLSERVER_VERSION"
+
+              # Set as output variables (isOutput=true makes them visible to downstream stages)
+              echo "##vso[task.setvariable variable=LoggingPackageVersion;isOutput=true]$LOGGING_VERSION"
+              echo "##vso[task.setvariable variable=AbstractionsPackageVersion;isOutput=true]$ABSTRACTIONS_VERSION"
+              echo "##vso[task.setvariable variable=SqlClientPackageVersion;isOutput=true]$SQLCLIENT_VERSION"
+              echo "##vso[task.setvariable variable=AzurePackageVersion;isOutput=true]$AZURE_VERSION"
+              echo "##vso[task.setvariable variable=AkvProviderPackageVersion;isOutput=true]$AKVPROVIDER_VERSION"
+              echo "##vso[task.setvariable variable=SqlServerPackageVersion;isOutput=true]$SQLSERVER_VERSION"
+
+              echo "##vso[task.setvariable variable=LoggingFileVersion;isOutput=true]$(LoggingFileVersion)"
+              echo "##vso[task.setvariable variable=AbstractionsFileVersion;isOutput=true]$(AbstractionsFileVersion)"
+              echo "##vso[task.setvariable variable=SqlClientFileVersion;isOutput=true]$(SqlClientFileVersion)"
+              echo "##vso[task.setvariable variable=AzureFileVersion;isOutput=true]$(AzureFileVersion)"
+              echo "##vso[task.setvariable variable=AkvProviderFileVersion;isOutput=true]$(AkvProviderFileVersion)"
+              echo "##vso[task.setvariable variable=SqlServerFileVersion;isOutput=true]$(SqlServerFileVersion)"
+            displayName: "Resolve Effective Versions"
+            name: "versions"

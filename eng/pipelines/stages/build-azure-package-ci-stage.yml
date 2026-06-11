@@ -159,6 +159,7 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
 
@@ -166,6 +167,19 @@ stages:
       # Bring the SA password from the secrets_stage into scope here.
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+      # Package versions from compute-versions stage.
+      - name: azurePackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AzurePackageVersion'] ]
+      - name: azureAssemblyFileVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AzureFileVersion'] ]
+      - name: loggingPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.LoggingPackageVersion'] ]
+      - name: abstractionsPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.AbstractionsPackageVersion'] ]
+      - name: mdsPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
 
