@@ -5,6 +5,8 @@
 #################################################################################
 
 parameters:
+  # General Parameters =====================================================
+
   # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
@@ -15,6 +17,17 @@ parameters:
   # Suffix to append to the package version to indicate it is a pre-release/development build.
   - name: buildSuffix
     type: string
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
   # Name of the stage that generated the SA password
   - name: stageNameSecrets
@@ -51,39 +64,58 @@ parameters:
 
   # Test Configuration Parameters ==========================================
 
-  # Azure Key Vault tenant ID that will be set in the config.json file.
+  # Azure Key Vault tenant ID that will be set in the config.jsonc file.
   - name: azureKeyVaultTenantId
     type: string
 
-  # Azure Key Vault URL that will be set in the config.json file.
+  # Azure Key Vault URL that will be set in the config.jsonc file.
   - name: azureKeyVaultUrl
     type: string
 
-  # Connection string using named pipes that will be set in the config.json file.
+  # Display name for the config being used for this execution of the manual jobs. This will be used
+  # for the job name, so it may only contain alphanumeric and '_' characters.
+  - name: configDisplayName
+    type: string
+
+  # Connection string using named pipes that will be set in the config.jsonc file.
   - name: connectionStringNp
     type: string
 
-  # Connection string using TCP that will be set in the config.json file.
+  # Connection string using TCP that will be set in the config.jsonc file.
   - name: connectionStringTcp
     type: string
 
-  # Path to use for file stream tests, this value will be stored in the config.json file.
+  # Path to use for file stream tests, this value will be stored in the config.jsonc file.
   - name: fileStreamDirectory
     type: string
 
+  # Whether the server that tests will be executed against is local to the job agent. If `true`
+  # server configuration steps will be executed prior to running the tests.
+  - name: isLocalServer
+    type: boolean
+
   # Name of the local DB application name for localdb tests, this value will be stored in the
-  # config.json
+  # config.jsonc
   - name: localDbAppName
     type: string
 
   # Name of the local DB shared instance name for localdb tests, this value will be stored in the
-  # config.json
+  # config.jsonc
   - name: localDbSharedInstanceName
     type: string
 
+  # Manual test set to execute.
+  - name: testSet
+    type: string
+
+  # Name of the user managed identity client ID. This value will be stored in config.jsonc for use
+  # in AKV tests and substituted in for Azure connection string user IDs.
+  - name: userManagedIdentityClientId
+    type: string
+
 jobs:
-  - job: "test_${{ parameters.platformDisplayName }}_sqlclient_manual"
-    displayName: "sqlclient_manual_${{ parameters.platformDisplayName }}"
+  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.configDisplayName }}_${{ parameters.testSet }}_sqlclient_manual"
+    displayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}_${{ parameters.platformDisplayName }}"
 
     pool:
       name: ${{ parameters.poolName }}
@@ -97,17 +129,23 @@ jobs:
         value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
     steps:
-      # Install the version of the dotnet runtime we will use to execute the test target.
-      - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
+      # Install dotnet and the runtime that will run the tests (if it is not netframework)
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
-          runtimeVersion: ${{ parameters.platformDotnet }}
+          ${{ if not(contains(parameters.platformDotnet, 'net4')) }}:
+            runtimes:
+              - "${{ replace(parameters.platformDotnet, 'net', '') }}.x"
+
+      # Restore dotnet tools
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
       # Configure the local SQL Server instance
-      - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
-        parameters:
-          fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
-          operatingSystem: ${{ parameters.platformOperatingSystem }}
-          saPassword: $(saPassword)
+      - ${{ if eq(parameters.isLocalServer, true) }}:
+        - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
+          parameters:
+            fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+            operatingSystem: ${{ parameters.platformOperatingSystem }}
+            saPassword: $(saPassword)
 
       # Assign the generated SA password to the $Password field. This will allow $(Password) to be
       # be replaced in connection strings with whatever set in the secrets stage.
@@ -116,12 +154,12 @@ jobs:
           Write-Host "##vso[task.setvariable variable=Password;isSecret=true]$password"
         displayName: Set Connection String Password
 
-      # Write configuration information to the config.json file.
+      # Write configuration information to the config.jsonc file.
       - pwsh: |
           # Read existing default configuration from file
-          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json"
+          $defaultConfigPath = "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc"
           $configDirectory = "$(Agent.TempDirectory)/mds-config"
-          $configPath = Join-Path $configDirectory "config.json"
+          $configPath = Join-Path $configDirectory "config.jsonc"
           $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
           # Update the config values
@@ -133,6 +171,7 @@ jobs:
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = $true
           $config.SupportsIntegratedSecurity = $false
+          $config.UserManagedIdentityClientId = "${{ parameters.userManagedIdentityClientId }}"
 
           if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
               $config.FileStreamDirectory = "${{ parameters.fileStreamDirectory }}"
@@ -149,12 +188,17 @@ jobs:
         displayName: 'Generate manual test config'
 
       # Execute TestSqlClientManual target from build.proj
-      - template: /eng/pipelines/pr/steps/test-buildproj-step.yml
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          buildSuffix: ${{ parameters.buildSuffix }}
-
-          packageShortName: "SqlClient"
-          testFramework: ${{ parameters.platformDotnet }}
-          testProject: "Manual"
+      - task: DotNetCoreCLI@2
+        displayName: 'Test: SqlClientManual ${{ parameters.testSet }}'
+        inputs:
+          command: build
+          projects: build.proj
+          verbosity: ${{ parameters.dotnetVerbosity }}
+          arguments: >-
+            -t:TestSqlClientManual
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:BuildNumber='$(Build.BuildNumber)'
+            -p:BuildSuffix='${{ parameters.buildSuffix }}'
+            -p:TestFramework=${{ parameters.platformDotnet }}
+            -p:TestSet=${{ parameters.testSet }}
 
