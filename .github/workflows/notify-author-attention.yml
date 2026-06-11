@@ -1,0 +1,34 @@
+name: Notify Author Attention Needed
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  notify-author:
+    # Only run when 'Author Attention Needed' label is added to a PR
+    if: >-
+      github.repository == 'dotnet/SqlClient' &&
+      github.event.label.name == 'Author Attention Needed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post comment to PR author
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const author = context.payload.pull_request.user.login;
+
+            const body = `@${author} This pull request has been marked as **Author Attention Needed**.\n\nWhen you have addressed the reviewer feedback and are ready for another review, please post a comment with \`/ready\` to remove the label and re-engage reviewers.`;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body,
+            });
+            core.info(`Posted notification comment on PR #${issue_number}`);
