@@ -393,8 +393,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // a worst-case return-just-before-a-tick connection would otherwise be destroyed
                         // after only ~IdleTimeout/2. Honour the documented contract by consulting the
                         // per-connection ReturnedTime; if it hasn't been idle long enough yet, push it
-                        // back and stop draining. _stackOld is age-ordered, so anything still on it is
-                        // younger and cannot be expired either.
+                        // back and stop draining. Note: _stackOld is LIFO and is not ordered by age,
+                        // so we retry on a later cleanup tick (or on retrieval) rather than scanning the entire stack.
                         if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && !IsIdleExpired(obj))
                         {
                             _stackOld.Push(obj);
