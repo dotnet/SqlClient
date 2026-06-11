@@ -230,12 +230,14 @@
 
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
-    <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
-    <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
-    <!-- This file does not support pre-processor directives, so it must be conditionally         -->
-    <!-- included into the build.                                                                 -->
+    <!-- Cross-platform linker substitution: auth provider feature switch and                      -->
+    <!-- UseManagedNetworkingOnWindows feature switch. The UseManagedNetworking property            -->
+    <!-- includes a platform guard (!OperatingSystem.IsWindows()) so the substitution of           -->
+    <!-- UseManagedNetworkingOnWindows is safe on all platforms.                                   -->
+    <!-- Excluded from net462 (no trimmer support).                                               -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
-                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+                      LogicalName="ILLink.Substitutions.xml"
+                      Condition="'$(TargetFramework)' != 'net462'" />
 
     <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">

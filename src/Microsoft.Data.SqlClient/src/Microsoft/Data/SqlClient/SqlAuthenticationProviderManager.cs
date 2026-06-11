@@ -6,6 +6,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+#if NET
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Internal;
@@ -14,7 +17,8 @@ using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlAuthenticationProviderManager
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SqlAuthenticationProviderManager/*'/>
+    public sealed class SqlAuthenticationProviderManager
     {
         [Obsolete("ActiveDirectoryPassword is deprecated, use a more secure authentication method. See https://aka.ms/SqlClientEntraIDAuthentication for more details.")]
         private const string ActiveDirectoryPassword = "active directory password";
@@ -58,6 +62,27 @@ namespace Microsoft.Data.SqlClient
 
             // If our Azure extensions package is present, use its authentication provider as our
             // default.
+            if (LocalAppContextSwitches.EnableReflectionBasedAuthenticationProviderDiscovery)
+            {
+                LoadAzureExtensionProvider();
+            }
+        }
+
+        /// <summary>
+        /// Attempts to load the Azure extension authentication provider via
+        /// reflection. This method uses Assembly.Load and Activator.CreateInstance
+        /// and is not compatible with NativeAOT trimming.
+        /// </summary>
+        #if NET
+        [RequiresUnreferencedCode(
+            "Azure extension provider discovery uses Assembly.Load and Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        [RequiresDynamicCode(
+            "Azure extension provider discovery uses Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        #endif
+        private static void LoadAzureExtensionProvider()
+        {
             try
             {
                 // Try to load our Azure extension.
@@ -216,6 +241,9 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string? _applicationClientId = null;
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/ApplicationClientId/*'/>
+        public static string? ApplicationClientId => Instance._applicationClientId;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -305,27 +333,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Get an authentication provider by method.
-        /// </summary>
-        /// <param name="authenticationMethod">Authentication method.</param>
-        /// <returns>Authentication provider or null if not found.</returns>
-        internal static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/GetProvider/*'/>
+        public static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
             SqlAuthenticationProvider? value;
             return Instance._providers.TryGetValue(authenticationMethod, out value) ? value : null;
         }
 
-        /// <summary>
-        /// Set an authentication provider by method.
-        /// </summary>
-        /// <param name="authenticationMethod">Authentication method.</param>
-        /// <param name="provider">Authentication provider.</param>
-        /// <returns>
-        ///   True if succeeded, false on any errors or if the authentication method has already
-        ///   been claimed via app configuration.
-        /// </returns>
-        internal static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProviderManager.xml' path='docs/members[@name="SqlAuthenticationProviderManager"]/SetProvider/*'/>
+        public static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
             if (!provider.IsSupported(authenticationMethod))
             {

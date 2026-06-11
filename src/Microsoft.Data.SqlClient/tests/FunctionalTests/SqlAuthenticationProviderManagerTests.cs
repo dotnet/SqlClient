@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(SqlAuthenticationProvider.GetProvider(
                 #pragma warning disable CS0618 // Type or member is obsolete
                 SqlAuthenticationMethod.ActiveDirectoryPassword));
-                #pragma warning restore CS0618 // Type or member is obsolete
+                #pragma warning restore CS0618
 
             Assert.Null(SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity));
@@ -56,6 +56,16 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.IsType<DummySqlAuthenticationProvider>(
                 SqlAuthenticationProvider.GetProvider(
                     SqlAuthenticationMethod.ActiveDirectoryInteractive));
+        }
+
+        // Verify that ApplicationClientId is read from the app.config section.
+        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
+        public void ApplicationClientId_ReadFromAppConfig()
+        {
+            // The app.config sets applicationClientId="f3e3a0a0-1234-5678-9abc-def012345678"
+            Assert.Equal(
+                "f3e3a0a0-1234-5678-9abc-def012345678",
+                SqlAuthenticationProviderManager.ApplicationClientId);
         }
 
         private class TestProvider : SqlAuthenticationProvider

@@ -73,4 +73,107 @@ public class SqlAuthenticationProviderManagerTests
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
+
+    /// <summary>
+    /// Verifies that GetProvider returns null when no provider has been registered
+    /// for the specified authentication method.
+    /// </summary>
+    [Fact]
+    public void GetProvider_ReturnsNull_WhenNoProviderRegistered()
+    {
+        // SqlPassword is never auto-registered with the AD provider.
+        var result = SqlAuthenticationProviderManager.GetProvider(
+            SqlAuthenticationMethod.SqlPassword);
+
+        Assert.Null(result);
+    }
+
+    /// <summary>
+    /// Verifies that SetProvider throws NotSupportedException when the provider
+    /// does not support the specified authentication method.
+    /// </summary>
+    [Fact]
+    public void SetProvider_ThrowsOnUnsupportedMethod()
+    {
+        // Our test Provider only supports DeviceCodeFlow.
+        // Attempting to register it for a different method should throw.
+        Provider provider = new();
+
+        Assert.Throws<NotSupportedException>(() =>
+            SqlAuthenticationProviderManager.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                provider));
+    }
+
+    /// <summary>
+    /// Verifies that ApplicationClientId is accessible and returns null when
+    /// no app.config section is present.
+    /// </summary>
+    [Fact]
+    public void ApplicationClientId_IsAccessible()
+    {
+        // ApplicationClientId should be accessible (may be null if no config
+        // section is present, which is the typical unit test scenario).
+        // This test verifies the property doesn't throw.
+        string? clientId = SqlAuthenticationProviderManager.ApplicationClientId;
+
+        // In unit tests without an app.config section, this will be null.
+        Assert.Null(clientId);
+    }
+
+    /// <summary>
+    /// Verifies that SetProvider replaces a previously registered provider for
+    /// the same authentication method.
+    /// </summary>
+    [Fact]
+    public void SetProvider_ReplacesExistingProvider()
+    {
+        Provider provider1 = new();
+        Provider provider2 = new();
+
+        SqlAuthenticationProviderManager.SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+            provider1);
+
+        Assert.Same(
+            provider1,
+            SqlAuthenticationProviderManager.GetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+
+        // Replace with provider2.
+        SqlAuthenticationProviderManager.SetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+            provider2);
+
+        Assert.Same(
+            provider2,
+            SqlAuthenticationProviderManager.GetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+    }
+
+    /// <summary>
+    /// Verifies that SetProvider throws NullReferenceException when a null
+    /// provider is passed (current behavior, not validated argument).
+    /// </summary>
+    [Fact]
+    public void SetProvider_ThrowsOnNullProvider()
+    {
+        Assert.Throws<NullReferenceException>(() =>
+            SqlAuthenticationProviderManager.SetProvider(
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+                null!));
+    }
+
+    /// <summary>
+    /// Verifies that GetProvider returns null for NotSpecified, which is never
+    /// a valid registration target.
+    /// </summary>
+    [Fact]
+    public void GetProvider_ReturnsNull_ForNotSpecified()
+    {
+        var result = SqlAuthenticationProviderManager.GetProvider(
+            SqlAuthenticationMethod.NotSpecified);
+
+        Assert.Null(result);
+    }
 }

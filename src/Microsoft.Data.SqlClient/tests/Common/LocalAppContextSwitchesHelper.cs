@@ -57,8 +57,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET && _WINDOWS
     private readonly bool? _useManagedNetworkingOriginal;
-    #endif    
+    #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
+    private readonly bool? _enableReflectionBasedAuthenticationProviderDiscoveryOriginal;
 
     #endregion
 
@@ -124,6 +125,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _useMinimumLoginTimeoutOriginal =
                 GetSwitchValue("s_useMinimumLoginTimeout");
+            _enableReflectionBasedAuthenticationProviderDiscoveryOriginal =
+                GetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery");
         }
         catch
         {
@@ -162,7 +165,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
             SetSwitchValue(
-                "s_legacyRowVersionNullBehavior", 
+                "s_legacyRowVersionNullBehavior",
                 _legacyRowVersionNullBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyVarTimeZeroScaleBehaviour",
@@ -196,6 +199,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useMinimumLoginTimeout",
                 _useMinimumLoginTimeoutOriginal);
+            SetSwitchValue(
+                "s_enableReflectionBasedAuthenticationProviderDiscovery",
+                _enableReflectionBasedAuthenticationProviderDiscoveryOriginal);
         }
         finally
         {
@@ -362,6 +368,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useMinimumLoginTimeout", value);
     }
 
+    /// <summary>
+    /// Get or set the EnableReflectionBasedAuthenticationProviderDiscovery switch value.
+    /// </summary>
+    public bool? EnableReflectionBasedAuthenticationProviderDiscovery
+    {
+        get => GetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery");
+        set => SetSwitchValue("s_enableReflectionBasedAuthenticationProviderDiscovery", value);
+    }
+
     #endregion
 
     #region Helpers
@@ -377,7 +392,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {
@@ -424,7 +439,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             throw new InvalidOperationException(
                 "Could not get assembly for Microsoft.Data.SqlClient");
         }
-        
+
         var type = assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
         if (type is null)
         {
