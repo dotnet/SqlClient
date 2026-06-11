@@ -48,6 +48,7 @@
           CopyToOutputDirectory="PreserveNewest" />
     <None Update="SQL\ConnectionTestWithSSLCert\GenerateSelfSignedCertificate.ps1"
           CopyToOutputDirectory="Always" />
+  </ItemGroup>
 
   <!-- Items to include in test set 1 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('1'))">
