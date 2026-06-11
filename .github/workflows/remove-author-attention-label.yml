@@ -36,17 +36,18 @@ jobs:
 
             const hasLabel = labels.some(label => label.name === labelName);
 
-            if (hasLabel) {
-              await github.rest.issues.removeLabel({
-                owner,
-                repo,
-                issue_number,
-                name: labelName,
-              });
-              core.info(`Removed '${labelName}' label from PR #${issue_number}`);
-            } else {
+            if (!hasLabel) {
               core.info(`PR #${issue_number} does not have the '${labelName}' label. No action taken.`);
+              return;
             }
+
+            await github.rest.issues.removeLabel({
+              owner,
+              repo,
+              issue_number,
+              name: labelName,
+            });
+            core.info(`Removed '${labelName}' label from PR #${issue_number}`);
 
             // Re-request reviews from existing reviewers (paginate to include all reviews)
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
