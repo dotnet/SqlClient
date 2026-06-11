@@ -17,6 +17,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
@@ -24,10 +25,6 @@ using System.Runtime.ConstrainedExecution;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
-#endif
-    
     sealed internal class LastIOTimer
     {
         internal long _value;
@@ -189,7 +186,7 @@ namespace Microsoft.Data.SqlClient
         private readonly TimerCallback _onTimeoutAsync;
         private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
-        // Below 2 properties are used to enforce timeout delays in code to 
+        // Below 2 properties are used to enforce timeout delays in code to
         // reproduce issues related to theadpool starvation and timeout delay.
         // It should always be set to false by default, and only be enabled during testing.
         internal bool _enforceTimeoutDelay = false;
@@ -1272,13 +1269,12 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask,
+                            taskToContinue: writePacketTask,
                             state: this,
-                            onSuccess: static (object state) =>
+                            onSuccess: static state =>
                             {
-                                TdsParserStateObject stateObject = (TdsParserStateObject)state;
-                                stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0;
+                                state.HasPendingData = true;
+                                state._messageStatus = 0;
                             }
                         );
                     }
@@ -2178,7 +2174,7 @@ namespace Microsoft.Data.SqlClient
                         buf = TryTakeSnapshotStorage() as byte[];
                         Debug.Assert(buf != null || !isContinuing, "if continuing stored buffer must be present to contain previous data to continue from");
                         Debug.Assert(buf == null || buf.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                        
+
                         if (buf != null)
                         {
                             startOffset = GetSnapshotTotalSize();
@@ -2191,7 +2187,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, canContinue);
-                    
+
                     if (result != TdsOperationStatus.Done)
                     {
                         if (result == TdsOperationStatus.NeedMoreData)
@@ -3485,7 +3481,7 @@ namespace Microsoft.Data.SqlClient
                 while (_inBytesRead == 0)
                 {
                     // a partial packet must have taken the packet data so we
-                    // need to read more data to complete the packet, but we 
+                    // need to read more data to complete the packet, but we
                     // can't return NeedMoreData in sync mode so we have to
                     // spin fetching more data here until we have something
                     // that the caller can read
@@ -3772,7 +3768,7 @@ namespace Microsoft.Data.SqlClient
             TimeoutState timeoutState = (TimeoutState)state;
             if (timeoutState.IdentityValue == _timeoutIdentityValue)
             {
-                // the return value is not useful here because no choice is going to be made using it 
+                // the return value is not useful here because no choice is going to be made using it
                 // we only want to make this call to set the state knowing that it will be seen later
                 OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
             }
@@ -3935,7 +3931,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
 
-                // if the state is currently stopped then change it to running and allocate a new identity value from 
+                // if the state is currently stopped then change it to running and allocate a new identity value from
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
@@ -4372,7 +4368,7 @@ namespace Microsoft.Data.SqlClient
         /// packet parsing.
         /// </summary>
         /// <returns></returns>
-        internal string DumpBuffer() 
+        internal string DumpBuffer()
         {
             StringBuilder buffer = new StringBuilder(128);
             buffer.AppendLine("dumping buffer");
@@ -4381,7 +4377,7 @@ namespace Microsoft.Data.SqlClient
             int cc = 0; // character counter
             int i;
             buffer.AppendLine("used buffer:");
-            for (i=0; i< _inBytesUsed; i++) 
+            for (i=0; i< _inBytesUsed; i++)
             {
                 if (cc==16) {
                     buffer.AppendLine();
@@ -4390,16 +4386,16 @@ namespace Microsoft.Data.SqlClient
                 buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
-            if (cc>0) 
+            if (cc>0)
             {
                 buffer.AppendLine();
             }
 
             cc = 0;
             buffer.AppendLine("unused buffer:");
-            for (i=_inBytesUsed; i<_inBytesRead; i++) 
+            for (i=_inBytesUsed; i<_inBytesRead; i++)
             {
-                if (cc==16) 
+                if (cc==16)
                 {
                     buffer.AppendLine();
                     cc = 0;
@@ -4407,13 +4403,13 @@ namespace Microsoft.Data.SqlClient
                 buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
-            if (cc>0) 
+            if (cc>0)
             {
                 buffer.AppendLine();
             }
             return buffer.ToString();
         }
-        
+
         internal void SetSnapshot()
         {
             StateSnapshot snapshot = _snapshot;
@@ -4444,7 +4440,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Returns true if the state object is in the state of continuing from a previously stored snapshot packet 
+        /// Returns true if the state object is in the state of continuing from a previously stored snapshot packet
         /// meaning that consumers should resume from the point where they last needed more data instead of beginning
         /// to process packets in the snapshot from the beginning again
         /// </summary>
@@ -4539,7 +4535,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// sets a value on the snapshot to allow the ContinueEnabled property to return true. <br />
         /// this function should be called only by functions that explicitly support the snapshot status
-        /// <see cref="SnapshotStatus.ContinueRunning"/> status 
+        /// <see cref="SnapshotStatus.ContinueRunning"/> status
         /// </summary>
         internal void RequestContinue(bool value)
         {
@@ -4862,7 +4858,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Hash = null;
                     }
-                    
+
                 }
 
                 partial void CheckDebugDataHashImpl()
