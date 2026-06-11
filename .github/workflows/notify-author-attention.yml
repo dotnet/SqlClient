@@ -1,4 +1,4 @@
-name: Notify Author Attention Needed
+name: Notify Author attention needed
 
 on:
   pull_request_target:
@@ -6,10 +6,10 @@ on:
 
 jobs:
   notify-author:
-    # Only run when 'Author Attention Needed' label is added to a PR
+    # Only run when 'Author attention needed' label is added to a PR
     if: >-
       github.repository == 'dotnet/SqlClient' &&
-      github.event.label.name == 'Author Attention Needed'
+      github.event.label.name == 'Author attention needed'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -23,7 +23,7 @@ jobs:
             const repo = context.repo.repo;
             const author = context.payload.pull_request.user.login;
 
-            const body = `@${author} This pull request has been marked as **Author Attention Needed**.\n\nWhen you have addressed the reviewer feedback and are ready for another review, please post a comment with \`/ready\` to remove the label and re-engage reviewers.`;
+            const body = `@${author} This pull request has been marked as **Author attention needed**.\n\nWhen you have addressed the reviewer feedback and are ready for another review, please post a comment with \`/ready\` to remove the label and re-engage reviewers.`;
 
             await github.rest.issues.createComment({
               owner,

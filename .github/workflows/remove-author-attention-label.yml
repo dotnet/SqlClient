@@ -1,4 +1,4 @@
-name: Remove Author Attention Needed Label
+name: Remove Author attention needed Label
 
 on:
   issue_comment:
@@ -17,11 +17,11 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - name: Remove 'Author Attention Needed' label
+      - name: Remove 'Author attention needed' label
         uses: actions/github-script@v9
         with:
           script: |
-            const labelName = 'Author Attention Needed';
+            const labelName = 'Author attention needed';
             const issue_number = context.issue.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
