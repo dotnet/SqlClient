@@ -132,7 +132,7 @@ internal static class LocalAppContextSwitches
     private const string UseOverallConnectTimeoutForPoolWaitString =
         "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
     /// managed SNI implementation instead of the native SNI implementation on
@@ -246,7 +246,7 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// The cached value of the UseManagedNetworking switch.
     /// </summary>
@@ -590,7 +590,7 @@ internal static class LocalAppContextSwitches
             defaultValue: false,
             ref s_useOverallConnectTimeoutForPoolWait);
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// When set to true, .NET on Windows will use the managed SNI
     /// implementation instead of the native SNI implementation.
@@ -629,12 +629,6 @@ internal static class LocalAppContextSwitches
             return false;
         }
     }
-    #elif NET
-    /// <summary>
-    /// .NET Core on Unix does not support native SNI, so this will always be
-    /// true.
-    /// </summary>
-    public static bool UseManagedNetworking => true;
     #else
     /// <summary>
     /// .NET Framework does not support the managed SNI, so this will always be

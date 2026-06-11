@@ -1,7 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
@@ -41,8 +42,6 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
-        #endif
-        #if NET && _WINDOWS
         switchesHelper.UseManagedNetworking = null;
         #endif
         #if NETFRAMEWORK
@@ -65,9 +64,7 @@ public class LocalAppContextSwitchesTest
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
         #endif
-        #if NET && _WINDOWS
-        Assert.False(LocalAppContextSwitches.UseManagedNetworking);
-        #endif
+        Assert.Equal(!ADP.IsWindows, LocalAppContextSwitches.UseManagedNetworking);
         #if NETFRAMEWORK
         Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
         #endif

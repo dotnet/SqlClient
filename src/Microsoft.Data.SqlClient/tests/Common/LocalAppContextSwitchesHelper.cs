@@ -55,7 +55,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
-    #if NET && _WINDOWS
+    #if NET
     private readonly bool? _useManagedNetworkingOriginal;
     #endif    
     private readonly bool? _useMinimumLoginTimeoutOriginal;
@@ -118,7 +118,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useConnectionPoolV2");
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
-            #if NET && _WINDOWS
+            #if NET
             _useManagedNetworkingOriginal =
                 GetSwitchValue("s_useManagedNetworking");
             #endif
@@ -188,7 +188,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
-            #if NET && _WINDOWS
+            #if NET
             SetSwitchValue(
                 "s_useManagedNetworking",
                 _useManagedNetworkingOriginal);
@@ -342,7 +342,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
     }
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// Get or set the UseManagedNetworking switch value.
     /// </summary>
