@@ -45,7 +45,6 @@ We use and recommend the following workflow:
 
 - It is OK for your PR to include a large number of commits.
 - PRs are merged via the default "Squash and Merge" strategy (see [Merging Pull Requests](#merging-pull-requests)), so your commit history is automatically collapsed into a single commit at merge time.
-- If the PR is planned NOT to follow the default squash-and-merge path (for example, when the author requests "Merge and Commit" to preserve a meaningful commit series), you will be asked to squash your commits into one or some appropriately small number of commits before your PR is merged.
 
 ## PR - CI Process
 

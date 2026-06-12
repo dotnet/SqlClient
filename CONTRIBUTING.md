@@ -134,7 +134,7 @@ Security issues and bugs should be reported privately, via email, to the Microso
 - **New features from community PRs must be driven by creating a GitHub issue first.** Discuss the proposal in the issue before starting implementation. This helps avoid wasted effort and ensures alignment with project goals.
 - **Community contributions must not derail the project roadmap.** We prioritize features and fixes according to our published milestones. PRs that conflict with or distract from active roadmap items may be deferred.
 - **Our maintainers reserve the right to reject PRs** that do not meet the required criteria to qualify for review. This includes PRs that:
-  - Lack a corresponding approved issue (i.e., an issue that has been reviewed, acknowledged, and agreed upon by maintainers — typically indicated by the **PM Approved** status in the GitHub Project board)
+  - Lack a corresponding approved issue (i.e., an issue that has been reviewed, acknowledged, and agreed upon by maintainers — typically indicated by the **`PM Approved`** field being set to **`Approved`** in the GitHub Project board)
   - Introduce breaking changes without prior discussion
   - Do not follow the project's coding standards and conventions
   - Are missing adequate test coverage
