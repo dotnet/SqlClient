@@ -1,0 +1,108 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+
+  # API token used to access the CodeCov API
+  - name: codeCovApiToken
+    type: string
+
+  # Names of the test stages that must complete before collecting coverage.
+  - name: dependsOn
+    type: object
+    default: []
+
+stages:
+  - stage: collect_code_coverage
+    displayName: "Collect code coverage"
+    dependsOn: ${{ parameters.dependsOn }}
+
+    jobs:
+      - job: collect_code_coverage
+        displayName: "Collect Code Coverage"
+
+        pool:
+          vmImage: ubuntu-latest
+
+        variables:
+
+          # Set up a temporary directory that is cleaned up after each job run. This helps avoid
+          # disk space issues on pooled agents that may run many jobs before being retired.
+          - name: workingDir
+            value: "$(Agent.TempDirectory)/coverage"
+
+        steps:
+
+          # Part 1) Merge coverage reports =================================
+
+          # Install .NET SDK
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          # Restore additional dotnet tools
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+          # Download coverage reports from the test jobs.
+          # NOTE: The artifact name is not specified, so *all* artifacts of the build will be
+          #    checked for the coverage reports.
+          - task: DownloadPipelineArtifact@2
+            displayName: Download coverage reports
+            inputs:
+              itemPattern: '**/*.coverage'
+              targetPath: "${{ variables.workingDir }}/originals"
+
+          # Merge original files into a single Cobertura XML file
+          - script: >-
+              dotnet tool run dotnet-coverage -- merge "${{ variables.workingDir }}/originals/**/*.coverage"
+              --output "${{ variables.workingDir }}/merge/cobertura.xml"
+              --output-format cobertura
+              --log-file "${{ variables.workingDir }}/merge/merge.log"
+              --log-level Verbose
+            displayName: Merge coverage files
+            workingDirectory: $(REPO_ROOT)
+
+          # Part 2) Publish merged results to the pipeline results/artifacts
+
+          # Publish the merged coverage file as a pipeline artifact
+          - task: PublishPipelineArtifact@1
+            displayName: Publish coverage artifact
+            inputs:
+              artifact: merged_coverage
+              targetPath: "${{ variables.workingDir }}/merge"
+
+          # Publish the merged coverage file as coverage results so they can be viewed in ADO UI.
+          - task: PublishCodeCoverageResults@2
+            displayName: Publish coverage results
+            inputs:
+              summaryFileLocation: "${{ variables.workingDir }}/merge/cobertura.xml"
+
+          # Part 3) Publish merged results to CodeCov
+
+          # Download the CodeCov CLI
+          # @TODO: should this be using something more governed?
+          - script: |
+              curl -o "${{ variables.workingDir }}/codecov" https://cli.codecov.io/latest/linux/codecov
+              chmod +x "${{ variables.workingDir }}/codecov"
+            displayName: Download CodeCov CLI
+
+          # Upload the report
+          # NOTE: pipeline name is used as "flag" (-F) to distinguish reports from other pipelines.
+          # NOTE: Override repository metadata because this ADO pipeline uploads coverage for the
+          #     GitHub repository. CodeCov otherwise derives an invalid slug from the ADO metadata.
+          # NOTE: CodeCov's CLI requires that "options" go before the "command"
+          #     https://docs.codecov.com/docs/the-codecov-cli
+          - script: >-
+              "${{ variables.workingDir }}/codecov"
+              --verbose
+              upload-process
+              --fail-on-error
+              --git-service github
+              --slug dotnet/SqlClient
+              -f "${{ variables.workingDir }}/merge/cobertura.xml"
+              -F $(Build.DefinitionName)
+            displayName: Upload coverage to CodeCov
+            env:
+              CODECOV_TOKEN: ${{ parameters.codeCovApiToken }}
+

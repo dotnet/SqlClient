@@ -13,6 +13,7 @@ variables:
   #
   # AzureKeyVaultTenantId
   # AzureKeyVaultUrl
+  # CodeCovApiToken
   # ConnectionStringNp_Azure_ManagedIdentity
   # ConnectionStringNp_LocalhostDefault_UsernamePassword
   # ConnectionStringTcp_Azure_ManagedIdentity
@@ -29,3 +30,6 @@ variables:
 
   - name: stageNameSecrets
     value: "secrets_stage"
+
+  - name: testResultsArtifactName
+    value: "test_results"

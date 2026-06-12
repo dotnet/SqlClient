@@ -18,6 +18,10 @@ parameters:
   - name: buildSuffix
     type: string
 
+  # Name of the artifact to upload the test results (including code coverage) to.
+  - name: testResultsArtifactName
+    type: string
+
   # Dotnet CLI verbosity level.
   - name: dotnetVerbosity
     type: string
@@ -78,6 +82,10 @@ jobs:
   - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
     displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
 
+    variables:
+      - name: testResultsPath
+        value: "$(REPO_ROOT)/test_results/${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
+
     pool:
       name: ${{ parameters.poolName }}
       demands:
@@ -107,3 +115,13 @@ jobs:
             -p:BuildNumber='$(Build.BuildNumber)'
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
             -p:TestFramework=${{ parameters.platformDotnet }}
+            -p:TestResultsFolderPath=${{ variables.testResultsPath }}
+
+      # Publish test results
+      - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          platformDisplayName: ${{ parameters.platformDisplayName }}
+          testDisplayName: ${{ parameters.testDisplayName }}
+          testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+          testResultsPath: ${{ variables.testResultsPath }}
