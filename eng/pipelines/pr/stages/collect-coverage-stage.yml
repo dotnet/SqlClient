@@ -41,26 +41,8 @@ stages:
           # Install .NET SDK
           - template: /eng/pipelines/common/steps/install-dotnet.yml@self
 
-          # Install additional dotnet tools
-          #
-          # We must work around a bug in the dotnet CLI that prevents tool installs when multiple
-          # project/solution files are present in the working directory. At various times, multiple
-          # project files have existed in the root of the repository. See SDK issue:
-          #   https://github.com/dotnet/sdk/issues/9623
-          #
-          # However, we must respect the nuget.config to only download packages from governed
-          # feeds. Thus, we copy the nuget.config from the root of the repo to a temp directory
-          # then run dotnet tool installation from that folder.
-          - script: cp "$(REPO_ROOT)/Nuget.config" "$(Agent.TempDirectory)"
-            displayName: Copy nuget.config for tool installs
-
-          - task: DotNetCoreCLI@2
-            displayName: Install dotnet-coverage
-            inputs:
-              command: custom
-              custom: tool
-              workingDirectory: $(Agent.TempDirectory)
-              arguments: install --global dotnet-coverage --version 18.3.2
+          # Restore additional dotnet tools
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # Download coverage reports from the test jobs.
           # NOTE: The artifact name is not specified, so *all* artifacts of the build will be
@@ -73,12 +55,13 @@ stages:
 
           # Merge original files into a single Cobertura XML file
           - script: >-
-              dotnet-coverage merge "${{ variables.workingDir }}/originals/**/*.coverage"
+              dotnet tool run dotnet-coverage -- merge "${{ variables.workingDir }}/originals/**/*.coverage"
               --output "${{ variables.workingDir }}/merge/cobertura.xml"
               --output-format cobertura
               --log-file "${{ variables.workingDir }}/merge/merge.log"
               --log-level Verbose
             displayName: Merge coverage files
+            workingDirectory: $(REPO_ROOT)
 
           # Part 2) Publish merged results to the pipeline results/artifacts
 
