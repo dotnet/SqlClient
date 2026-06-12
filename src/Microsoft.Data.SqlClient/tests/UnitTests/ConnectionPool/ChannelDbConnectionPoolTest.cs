@@ -975,6 +975,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
 
+            public override ConnectionCapabilities Capabilities => throw new NotImplementedException();
+
             public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
             {
                 throw new NotImplementedException();
