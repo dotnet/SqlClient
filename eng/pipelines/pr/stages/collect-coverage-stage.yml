@@ -51,11 +51,8 @@ stages:
           # However, we must respect the nuget.config to only download packages from governed
           # feeds. Thus, we copy the nuget.config from the root of the repo to a temp directory
           # then run dotnet tool installation from that folder.
-          - task: CopyFiles@2
+          - script: cp "$(REPO_ROOT)/Nuget.config" "$(Agent.TempDirectory)"
             displayName: Copy nuget.config for tool installs
-            inputs:
-              contents: "$(REPO_ROOT)/nuget.config"
-              targetFolder: $(Agent.TempDirectory)
 
           - task: DotNetCoreCLI@2
             displayName: Install dotnet-coverage

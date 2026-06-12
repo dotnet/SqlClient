@@ -14,7 +14,7 @@
 #
 # It maps to the "sqlclient-pr" pipeline in the Public ADO project:
 #    https://sqlclientdrivers.visualstudio.com/public/_build?definitionId=2281
-# And the "pr-pipeline" pipeline in the internal ADO project:
+# And the "sqlclient-pr" pipeline in the internal ADO project:
 #    https://dev.azure.com/SqlClientDrivers/ADO.Net/_build?definitionId=2271
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
@@ -36,7 +36,8 @@ pr:
       - .azuredevops/*
       - .config/*
       - doc/*
-      - eng/pipelines/*
+      - eng/pipelines/common/*
+      - eng/pipelines/pr/*
       - src/*
       - tools/*
       - azurepipelines-coverage.yml
@@ -45,11 +46,6 @@ pr:
       - dotnet-tools.json
       - global.json
       - NuGet.config
-    exclude:
-      - eng/pipelines/ci/*
-      - eng/pipelines/kerberos/*
-      - eng/pipelines/onebranch/*
-      - eng/pipelines/stress/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none

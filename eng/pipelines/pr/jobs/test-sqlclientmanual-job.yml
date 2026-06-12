@@ -132,6 +132,12 @@ jobs:
       - name: saPassword
         value: $[stageDependencies.${{ parameters.stageNameSecrets }}.secrets_job.outputs['SaPassword.Value']]
 
+      - name: testDisplayName
+        value: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}"
+
+      - name: testResultsPath
+        value: "$(REPO_ROOT)/test_results/${{ parameters.platformDisplayName }}_$(testDisplayName)"
+
     steps:
       # Install dotnet and the runtime that will run the tests (if it is not netframework)
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
@@ -205,12 +211,13 @@ jobs:
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
             -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestSet=${{ parameters.testSet }}
+            -p:TestResultsFolderPath=${{ variables.testResultsPath }}
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           platformDisplayName: ${{ parameters.platformDisplayName }}
-          testDisplayName: "sqlclient_manual_${{ parameters.configDisplayName}}_${{ parameters.testSet }}"
+          testDisplayName: ${{ variables.testDisplayName }}
           testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
           testResultsPath: ${{ variables.testResultsPath }}
