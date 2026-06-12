@@ -760,6 +760,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantined due to intermittent failure:
+        //     Assert.Equal() Failure: Strings differ
+        //                            ↓ (pos 14)
+        //   Expected: "localhost,56862"
+        //   Actual:   "localhost,56861"
+        [Trait("Category", "flaky")]
         public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
         {
             // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.
