@@ -711,6 +711,7 @@ namespace Microsoft.Data.SqlClient
             };
 
             LoadDataTypesDataTables(metaDataCollectionsDataSet);
+            LoadReservedWordsDataTables(metaDataCollectionsDataSet);
 
             XmlReaderSettings settings = new()
             {
@@ -760,9 +761,6 @@ namespace Microsoft.Data.SqlClient
                     case "DataSourceInformationTable":
                         dataTable = CreateDataSourceInformationDataTable();
                         rowFixup = FixUpDataSourceInformationRow;
-                        break;
-                    case "ReservedWordsTable":
-                        dataTable = CreateReservedWordsDataTable();
                         break;
                     default:
                         Debug.Fail($"Unexpected table element name: {reader.Name}");
@@ -891,17 +889,6 @@ namespace Microsoft.Data.SqlClient
                     new DataColumn(DbMetaDataColumnNames.StatementSeparatorPattern, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.StringLiteralPattern, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.SupportedJoinOperators, typeof(SupportedJoinOperators))
-                }
-            };
-
-        private static DataTable CreateReservedWordsDataTable()
-            => new(DbMetaDataCollectionNames.ReservedWords)
-            {
-                Columns =
-                {
-                    new DataColumn(DbMetaDataColumnNames.ReservedWord, typeof(string)),
-                    new DataColumn(MinimumVersionKey, typeof(string)),
-                    new DataColumn(MaximumVersionKey, typeof(string))
                 }
             };
         #endregion
