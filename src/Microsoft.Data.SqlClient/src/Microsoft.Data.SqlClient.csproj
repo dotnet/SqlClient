@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -229,12 +229,6 @@
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
                       Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
-
-    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
-    <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
-      <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
-    </EmbeddedResource>
 
     <!-- Base strings in English -->
     <EmbeddedResource Update="Resources\Strings.resx">

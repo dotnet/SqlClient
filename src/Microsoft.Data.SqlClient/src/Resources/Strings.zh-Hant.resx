@@ -1,17 +1,17 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--
-    Microsoft ResX Schema
-
+  <!-- 
+    Microsoft ResX Schema 
+    
     Version 2.0
-
-    The primary goals of this format is to allow a simple XML format
-    that is mostly human readable. The generation and parsing of the
-    various data types are done through the TypeConverter classes
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
     associated with the data types.
-
+    
     Example:
-
+    
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-
-    There are any number of "resheader" rows that contain simple
+                
+    There are any number of "resheader" rows that contain simple 
     name/value pairs.
-
-    Each data row contains a name, and value. The row also contains a
-    type or mimetype. Type corresponds to a .NET class that support
-    text/value conversion through the TypeConverter architecture.
-    Classes that don't support this are serialized and stored with the
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
     mimetype set.
-
-    The mimetype is used for serialized objects, and tells the
-    ResXResourceReader how to depersist the object. This is currently not
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
     extensible. For a given mimetype the value must be set accordingly:
-
-    Note - application/x-microsoft.net.object.binary.base64 is the format
-    that the ResXResourceWriter will generate, however the reader can
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
     read any of the formats listed below.
-
+    
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-
+    
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with
+    value   : The object must be serialized with 
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array
+    value   : The object must be serialized into a byte array 
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -252,20 +252,8 @@
   <data name="MDF_UndefinedCollection" xml:space="preserve">
     <value>未定義必要的集合 ({0})。</value>
   </data>
-  <data name="MDF_UndefinedPopulationMechanism" xml:space="preserve">
-    <value>未定義擴展機制 '{0}'。</value>
-  </data>
   <data name="MDF_UnsupportedVersion" xml:space="preserve">
     <value>提供者的版本不支援要求的集合 ({0})。</value>
-  </data>
-  <data name="MDF_MissingRestrictionRow" xml:space="preserve">
-    <value>有一項限制為限制集合中沒有相符的資料列。</value>
-  </data>
-  <data name="MDF_NoColumns" xml:space="preserve">
-    <value>結構描述資料表沒有包含資料行。</value>
-  </data>
-  <data name="MDF_UnableToBuildCollection" xml:space="preserve">
-    <value>無法建置結構描述 '{0}';</value>
   </data>
   <data name="MDF_AmbiguousCollectionName" xml:space="preserve">
     <value>集合名稱 '{0}' 至少與兩個同名但大小寫不同的名稱相符，但與其中任一個均不完全相符。</value>
@@ -275,9 +263,6 @@
   </data>
   <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
     <value>集合 '{0}' 已從中繼資料 XML 中遺失。</value>
-  </data>
-  <data name="MDF_InvalidXmlInvalidValue" xml:space="preserve">
-    <value>中繼資料 XML 無效。{0} 集合的 {1} 資料行必須包含非空的字串。</value>
   </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>填滿</value>

@@ -7,12 +7,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -749,10 +747,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
 
-            Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
-            Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-            
-            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
+            return new SqlMetaDataFactory(internalConnection.ServerVersion);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
@@ -950,7 +945,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-        #if NET
+#if NET
         private void Unload(object sender, EventArgs e)
         {
             try
@@ -973,9 +968,9 @@ namespace Microsoft.Data.SqlClient
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
         }
-        #endif
+#endif
         
-        #endregion
+#endregion
     }
 }
 

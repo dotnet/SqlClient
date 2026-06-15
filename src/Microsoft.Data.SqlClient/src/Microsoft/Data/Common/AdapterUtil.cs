@@ -1245,6 +1245,7 @@ namespace Microsoft.Data.Common
 #endregion
 
 #region SqlMetaDataFactory
+        // TODO: Rephrase error message
         internal static Exception DataTableDoesNotExist(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
 
@@ -1268,8 +1269,6 @@ namespace Microsoft.Data.Common
         internal static Exception QueryFailed(string collectionName, Exception e)
             => InvalidOperation(StringsHelper.GetString(Strings.MDF_QueryFailed, collectionName), e);
 
-        internal static Exception NoColumns() => Argument(StringsHelper.GetString(Strings.MDF_NoColumns));
-
         internal static InvalidOperationException ConnectionRequired(string method)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_ConnectionRequired, method));
 
@@ -1281,14 +1280,9 @@ namespace Microsoft.Data.Common
         internal static Exception OpenReaderExists(Exception e, bool marsOn)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection), e);
 
-        internal static Exception InvalidXmlInvalidValue(string collectionName, string columnName)
-            => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlInvalidValue, collectionName, columnName));
-
         internal static Exception CollectionNameIsNotUnique(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_CollectionNameISNotUnique, collectionName));
 
-        internal static Exception UnableToBuildCollection(string collectionName)
-            => Argument(StringsHelper.GetString(Strings.MDF_UnableToBuildCollection, collectionName));
 
         internal static Exception UndefinedCollection(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_UndefinedCollection, collectionName));
@@ -1298,14 +1292,6 @@ namespace Microsoft.Data.Common
         internal static Exception AmbiguousCollectionName(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_AmbiguousCollectionName, collectionName));
 
-        internal static Exception MissingRestrictionRow() => Argument(StringsHelper.GetString(Strings.MDF_MissingRestrictionRow));
-
-        internal static Exception UndefinedPopulationMechanism(string populationMechanism)
-#if NETFRAMEWORK
-            => Argument(StringsHelper.GetString(Strings.MDF_UndefinedPopulationMechanism, populationMechanism));
-#else
-            => throw new NotImplementedException();
-#endif
 #endregion
 
 #region DbConnectionPool and related
