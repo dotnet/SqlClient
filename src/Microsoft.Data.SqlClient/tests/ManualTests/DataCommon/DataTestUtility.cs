@@ -640,6 +640,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
         }
 
+        public static bool IsNamedInstanceSetup()
+        {
+            return IsTCPConnStringSetup() &&
+                ParseDataSource(new SqlConnectionStringBuilder(TCPConnectionString).DataSource,
+                    out _, out _, out string instanceName) &&
+                !string.IsNullOrEmpty(instanceName);
+        }
+
+        public static bool HasExplicitPortInTCPConnString()
+        {
+            return IsTCPConnStringSetup() &&
+                ParseDataSource(new SqlConnectionStringBuilder(TCPConnectionString).DataSource,
+                    out _, out int port, out _) &&
+                port > 0;
+        }
+
         public static bool IsLocalHost()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -695,8 +711,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #else
             !OperatingSystem.IsWindows() || (AppContext.TryGetSwitch(ManagedNetworkingAppContextSwitch, out bool enabled) && enabled);
 #endif
-
-        public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         /// <summary>
         /// Returns <see langword="true"/> when the native SNI implementation is active.

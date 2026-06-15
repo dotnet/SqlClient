@@ -54,18 +54,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Environment: Requires a named instance running on a domain-joined server with an SSRP-resolvable port.
         /// </summary>
         [PlatformSpecific(TestPlatforms.Linux)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNamedInstanceSetup))]
         public void KerberosTest_ProtocolNone_NamedInstanceWithSsrpResolution()
         {
-            // Skip if no TCP connection string with a named instance is available
             string tcpConnStr = DataTestUtility.TCPConnectionString;
-            if (string.IsNullOrEmpty(tcpConnStr) ||
-                !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName) ||
-                string.IsNullOrEmpty(instanceName))
-            {
-                return; // Skip test; no named instance available
-            }
+            DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
+                out string hostname, out int port, out string instanceName);
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
@@ -97,17 +91,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Environment: Requires a named instance with an explicitly specified or SSRP-resolvable port.
         /// </summary>
         [PlatformSpecific(TestPlatforms.Linux)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNamedInstanceSetup))]
         public void KerberosTest_ProtocolTcp_NamedInstance()
         {
             string tcpConnStr = DataTestUtility.TCPConnectionString;
-            if (string.IsNullOrEmpty(tcpConnStr) ||
-                !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName) ||
-                string.IsNullOrEmpty(instanceName))
-            {
-                return; // Skip test; no named instance available
-            }
+            DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
+                out string hostname, out int port, out string instanceName);
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
@@ -147,24 +136,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Environment: Requires ability to specify a valid SPN for the target instance.
         /// </summary>
         [PlatformSpecific(TestPlatforms.Linux)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.HasExplicitPortInTCPConnString))]
         public void KerberosTest_CustomServerSPN_BypassesAutoGeneration()
         {
             string tcpConnStr = DataTestUtility.TCPConnectionString;
-            if (string.IsNullOrEmpty(tcpConnStr) ||
-                !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName))
-            {
-                return; // Skip test
-            }
-
-            // For a reliable custom SPN test, we need to know the exact port so we can construct
-            // the TCP-format SPN the server expects: MSSQLSvc/fqdn:port.
-            // Using the instance name here is wrong for TCP environments that register only port-based SPNs.
-            if (port <= 0)
-            {
-                return; // Skip test; cannot construct a valid port-based custom SPN without an explicit port
-            }
+            DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
+                out string hostname, out int port, out string instanceName);
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 
@@ -196,17 +173,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Note: May be skipped if DAC is not enabled or not accessible via Kerberos.
         /// </summary>
         [PlatformSpecific(TestPlatforms.Linux)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest), nameof(DataTestUtility.IsNamedInstanceSetup))]
         public void KerberosTest_ProtocolAdmin_DedicatedAdminConnection()
         {
             string tcpConnStr = DataTestUtility.TCPConnectionString;
-            if (string.IsNullOrEmpty(tcpConnStr) ||
-                !DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
-                    out string hostname, out int port, out string instanceName) ||
-                string.IsNullOrEmpty(instanceName))
-            {
-                return; // Skip test; no named instance available
-            }
+            DataTestUtility.ParseDataSource(new SqlConnectionStringBuilder(tcpConnStr).DataSource,
+                out string hostname, out int port, out string instanceName);
 
             KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser, DataTestUtility.KerberosDomainPassword);
 

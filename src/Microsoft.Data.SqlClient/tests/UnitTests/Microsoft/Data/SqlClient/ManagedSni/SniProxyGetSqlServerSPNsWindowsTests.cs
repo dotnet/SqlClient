@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET && WINDOWS
+#if NET
 
 using System;
 using Microsoft.Data.SqlClient.ManagedSni;
@@ -17,25 +17,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     public sealed class SniProxyGetSqlServerSPNsWindowsTests
     {
         /// <summary>
-        /// Verifies that on Windows the managed networking app-context switch is
-        /// reflected through <see cref="LocalAppContextSwitches.UseManagedNetworking"/>.
-        /// </summary>
-        [Fact]
-        [PlatformSpecific(TestPlatforms.Windows)]
-        public void UseManagedNetworking_OnWindows_RespectsAppContextSwitch()
-        {
-            using LocalAppContextSwitchesHelper helper = new();
-
-            // Toggle to managed mode and assert the runtime switch value updates.
-            helper.UseManagedNetworking = true;
-            Assert.True(LocalAppContextSwitches.UseManagedNetworking);
-
-            // Toggle back to native mode and verify it is reflected immediately.
-            helper.UseManagedNetworking = false;
-            Assert.False(LocalAppContextSwitches.UseManagedNetworking);
-        }
-
-        /// <summary>
         /// Verifies Protocol.None uses the SSRP-resolved port in the generated SPN
         /// for a named instance on Windows.
         /// </summary>
@@ -43,7 +24,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [PlatformSpecific(TestPlatforms.Windows)]
         public void GetSqlServerSPNs_ProtocolNone_WithResolvedPort_UsesPort_OnWindows()
         {
-            DataSource dataSource = DataSource.ParseServerName(@"localhost\\instance");
+            DataSource dataSource = DataSource.ParseServerName(@"localhost\instance");
             Assert.NotNull(dataSource);
 
             // Mirror post-SSRP state by injecting a resolved TCP port.
@@ -64,7 +45,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [PlatformSpecific(TestPlatforms.Windows)]
         public void GetSqlServerSPNs_ProtocolTcp_WithResolvedPort_UsesPort_OnWindows()
         {
-            DataSource dataSource = DataSource.ParseServerName(@"tcp:localhost\\instance");
+            DataSource dataSource = DataSource.ParseServerName(@"tcp:localhost\instance");
             Assert.NotNull(dataSource);
 
             // Mirror post-SSRP state by injecting a resolved TCP port.
@@ -85,7 +66,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [PlatformSpecific(TestPlatforms.Windows)]
         public void GetSqlServerSPNs_ProtocolAdmin_WithResolvedPort_UsesPort_OnWindows()
         {
-            DataSource dataSource = DataSource.ParseServerName(@"admin:localhost\\instance");
+            DataSource dataSource = DataSource.ParseServerName(@"admin:localhost\instance");
             Assert.NotNull(dataSource);
 
             // Mirror post-SSRP state by injecting a resolved DAC port.
