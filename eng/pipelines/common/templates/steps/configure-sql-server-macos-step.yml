@@ -33,6 +33,7 @@ steps:
       brew install colima
       brew install docker
       brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+      brew trust microsoft/mssql-release
       brew update
       HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
 
