@@ -681,15 +681,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
         }
 
-        public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
+        /// <summary>
+        /// Returns <see langword="true"/> when the managed SNI implementation is active.
+        /// On .NET (non-Framework), managed SNI is always used on non-Windows platforms
+        /// (native SNI does not exist there) and is used on Windows when the
+        /// <c>Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows</c> AppContext
+        /// switch is enabled (which is what the product code checks at runtime).
+        /// On .NET Framework, native SNI is always used.
+        /// </summary>
+        public static bool IsUsingManagedSNI() =>
+#if NETFRAMEWORK
+            false;
+#else
+            !OperatingSystem.IsWindows() || (AppContext.TryGetSwitch(ManagedNetworkingAppContextSwitch, out bool enabled) && enabled);
+#endif
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
+        /// <summary>
+        /// Returns <see langword="true"/> when the native SNI implementation is active.
+        /// Native SNI is only available on Windows: always on .NET Framework, and on .NET
+        /// only when the <c>Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows</c>
+        /// AppContext switch is not enabled.
+        /// </summary>
         public static bool IsUsingNativeSNI() =>
-#if !NETFRAMEWORK
-            IsNotUsingManagedSNIOnWindows();
-#else
+#if NETFRAMEWORK
             true;
+#else
+            OperatingSystem.IsWindows() && !(AppContext.TryGetSwitch(ManagedNetworkingAppContextSwitch, out bool enabled) && enabled);
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna
