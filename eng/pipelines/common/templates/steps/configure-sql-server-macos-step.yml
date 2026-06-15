@@ -33,9 +33,19 @@ steps:
       brew install colima
       brew install docker
       brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
-      brew trust microsoft/mssql-release
       brew update
+      # Homebrew 5.2+ requires explicit trust for third-party taps.  Run this
+      # after 'brew update' so the trust command is available even if the runner
+      # image shipped an older Homebrew version.
+      brew trust microsoft/mssql-release
       HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
+
+      # Fail fast if sqlcmd was not installed (e.g. tap-trust or formula error).
+      # Without this check the script would loop for ~6 minutes trying to connect.
+      if ! command -v sqlcmd &>/dev/null; then
+        echo "ERROR: sqlcmd is not on PATH after brew install. Check the mssql-tools18 installation above."
+        exit 1
+      fi
 
       # Start Colima with Virtualization.framework for x86_64 binary translation
       # on Apple Silicon.  Rosetta/binfmt emulation is enabled by default in
