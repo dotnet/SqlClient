@@ -225,10 +225,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool IsSPNPortNumberTestForNP()
         {
+#if NETFRAMEWORK
+            return false; // Named pipe SPN tests use managed SNI which is not available on .NET Framework
+#else
             return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
                  && DataTestUtility.IsUsingManagedSNI()
+                 && OperatingSystem.IsWindows()
                  && DataTestUtility.IsNotAzureServer()
                  && DataTestUtility.IsNotAzureSynapse());
+#endif
         }
         private static bool IsInstanceNameValid(string connectionString)
         {
