@@ -7,7 +7,7 @@
   "sdk": {
     // global.json lookup stops at the nearest file and does not merge with the repo-root file.
     // This subtree therefore needs to repeat the root SDK settings so commands run from
-    // tools/PackageCompatibility keep using the same pinned SDK behavior.
+    // tools/PackageCompatibility keep using the same SDK behavior.
     "version": "10.0.300",
     "rollForward": "patch",
     "allowPrerelease": false
