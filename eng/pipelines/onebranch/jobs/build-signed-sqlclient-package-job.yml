@@ -96,6 +96,11 @@ jobs:
   # Create the MDS NuGet package via build.proj's GenerateMdsPackage target.
   # This target has access to the version range properties computed in
   # Versions.props, so it passes them through to nuget pack automatically.
+  - task: NuGetToolInstaller@1
+    displayName: 'Install NuGet'
+    inputs:
+      checkLatest: true
+
   - task: DotNetCoreCLI@2
     displayName: 'Create MDS NuGet Package'
     inputs:
@@ -110,6 +115,7 @@ jobs:
         -p:AbstractionsPackageVersion=$(abstractionsPackageVersion)
         -p:LoggingPackageVersion=$(loggingPackageVersion)
         -p:PackagesDir=$(PACK_OUTPUT)
+        -p:NuGetCmd=nuget.exe
 
   - template: /eng/pipelines/onebranch/steps/esrp-code-signing-step.yml@self
     parameters:
