@@ -13,6 +13,14 @@ Tests and tools may require different .NET Runtimes that may be installed
 independently.  For example, tests targeting .NET 8.0 will need that runtime
 installed.
 
+### NuGet CLI
+
+The `GenerateMdsPackage` build target uses `nuget.exe` to create the Microsoft.Data.SqlClient NuGet
+package, and is thus only supported on Windows build hosts.  In CI, this is installed automatically
+by the `NuGetToolInstaller@1` pipeline task.  For local builds, install the [NuGet
+CLI](https://learn.microsoft.com/nuget/install-nuget-client-tools) and ensure `nuget.exe` is on your
+PATH.
+
 ### Visual Studio
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:

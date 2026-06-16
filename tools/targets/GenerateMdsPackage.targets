@@ -7,9 +7,21 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="CommitId" />
     </Exec>
     <Message Text="Commit Id = $(CommitId)" />
-    <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
-      -command &quot;&amp;$(ToolsDir)scripts\downloadLatestNuget.ps1 -nugetDestPath '$(NuGetRoot)'&quot;"
-      Condition="!Exists('$(NuGetCmd)')" />
+    <!-- This target uses nuget.exe which is a Windows-only binary. -->
+    <Error Text="GenerateMdsPackage requires Windows. This target uses nuget.exe which is not available on non-Windows platforms."
+      Condition="!$([MSBuild]::IsOSPlatform('Windows'))" />
+    <!-- Verify that nuget.exe is available. In CI it is installed by NuGetToolInstaller@1.
+         For local builds, install it manually and ensure it is on the PATH.
+         See BUILDGUIDE.md for prerequisites. -->
+    <Exec Command="where $(NuGetCmd)"
+      Condition="'$(NuGetCmd)' != ''"
+      IgnoreExitCode="true"
+      StandardErrorImportance="low"
+      StandardOutputImportance="low">
+      <Output TaskParameter="ExitCode" PropertyName="_NuGetWhereExitCode" />
+    </Exec>
+    <Error Text="nuget.exe was not found at '$(NuGetCmd)' and is not on the PATH. Install NuGet CLI (https://learn.microsoft.com/nuget/install-nuget-client-tools) and ensure nuget.exe is available before running this target."
+      Condition="'$(NuGetCmd)' == '' OR '$(_NuGetWhereExitCode)' != '0'" />
     <Exec Command="$(NuGetCmd) pack -Symbols -SymbolPackageFormat snupkg $(ToolsDir)specs\Microsoft.Data.SqlClient.nuspec -Version $(MdsPackageVersion) -OutputDirectory $(PackagesDir) -properties &quot;COMMITID=$(CommitId);Configuration=$(Configuration);ReferenceType=$(ReferenceType);AbstractionsVersionRange=$(AbstractionsVersionRange);LoggingVersionRange=$(LoggingVersionRange);SqlServerVersionRange=$(SqlServerVersionRange);SniVersionRange=$(SniVersionRange)&quot;" />
   </Target>
 </Project>
