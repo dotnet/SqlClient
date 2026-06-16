@@ -1204,6 +1204,7 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
+        $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -1223,6 +1224,7 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
+        $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
