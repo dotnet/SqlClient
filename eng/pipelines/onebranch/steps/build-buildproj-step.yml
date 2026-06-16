@@ -6,6 +6,10 @@
 
 # This collection of steps to build a project via the build.proj. This will execute the "Build*"
 # target in build.proj, where * is the packageShortName provided in the parameters.
+#
+# Note: This differs from the pr/ci build-buildproj-step.yml in that it always strong-name signs
+#    the assemblies, it only builds in package reference mode, and as such allows for version
+#    parameters to be provided.
 
 parameters:
   # Build configuration - Release or Debug.
@@ -56,6 +60,7 @@ steps:
         -t:Build${{ parameters.packageShortName }}
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:ReferenceType=Package
+        -p:SkipDependencyPack=true
         -p:SigningKeyPath="$(keyFile.secureFilePath)"
         -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"

@@ -68,6 +68,11 @@ parameters:
     type: string
     default: $(akvPackageVersion)
 
+  # Necessary when referenceType is Package.  Ignored when referenceType is Project.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
 steps:
   # Build MDS
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -85,6 +90,7 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -103,3 +109,4 @@ steps:
           -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}

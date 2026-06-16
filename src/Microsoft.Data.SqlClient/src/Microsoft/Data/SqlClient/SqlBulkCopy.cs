@@ -1092,12 +1092,8 @@ DROP TABLE #Column_Aliases
                             _internalTransaction = null;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(e);
                     }
                 }
@@ -1861,12 +1857,8 @@ DROP TABLE #Column_Aliases
 
                 return value;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }

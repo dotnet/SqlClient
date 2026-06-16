@@ -8,9 +8,9 @@ using System.IO;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.XPath;
-using static Stress.Data.DataStressSettings;
+using static Microsoft.Data.SqlClient.Test.Stress.DataStressSettings;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     /// <summary>
     /// Reads the configuration from a configuration file and provides the configuration
