@@ -74,7 +74,7 @@ projects they depend on.
 
 | `<build_target>`              | Description                                                                     |
 |-------------------------------|---------------------------------------------------------------------------------|
-| `Build`                       | Builds all projects for all platforms                                           |
+| `Build`                       | Builds all driver projects for all platforms                                    |
 | `BuildAbstractions`           | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
 | `BuildAkvProvider`            | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
 | `BuildAll`                    | Builds all projects, tests, and samples for all supported OS combinations       |
