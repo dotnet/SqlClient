@@ -1296,6 +1296,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
                 return new StubDbConnectionInternal();
             }
+        }
+
+        #endregion
 
         #region Connection Timeout Awareness Tests
 
@@ -1421,9 +1424,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
         }
 
-        #endregion
-    }
-        
         #endregion
     }
 }
