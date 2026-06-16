@@ -37,7 +37,7 @@ internal sealed partial class SqlMetaDataFactory
 
             foreach (MetaDataCollectionBase mdc in s_metaDataCollection)
             {
-                if (mdc.SupportedByCurrentVersion(context.ServerVersion))
+                if (mdc.SupportedByCurrentVersion(context.ServerVersion) && mdc.CollectionName[0] != '_')
                 {
                     DataRow row = table.NewRow();
                     table.Rows.Add([mdc.CollectionName, mdc.NumberOfRestrictions, mdc.NumberOfIdentifierParts]);
@@ -49,6 +49,11 @@ internal sealed partial class SqlMetaDataFactory
 
         internal async ValueTask<DataTable> GetMetadata(string collectionName, MetaDataContext context, DataTable accumulator = null)
         {
+            if (string.IsNullOrEmpty(collectionName) || collectionName[0] == '_')
+            {
+                throw ADP.UndefinedCollection(collectionName);
+            }
+
             MetaDataCollectionBase collection = FindMetaDataCollection(collectionName, context.ServerVersion);
             if (collection == null)
             {

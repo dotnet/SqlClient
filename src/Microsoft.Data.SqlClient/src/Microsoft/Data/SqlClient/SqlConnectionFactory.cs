@@ -945,7 +945,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-#if NET
+        #if NET
         private void Unload(object sender, EventArgs e)
         {
             try
@@ -968,9 +968,9 @@ namespace Microsoft.Data.SqlClient
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
         }
-#endif
+        #endif
         
-#endregion
+        #endregion
     }
 }
 

@@ -11,166 +11,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SqlMetaDataFactory
     {    
         #pragma warning disable format
         private readonly static MetaDataCollectionBase[] s_metaDataCollection = [
-            new MetaDataCollection(),
-            new DataSourceInformationCollection(
-                CompositeIdentifierSeparatorPattern: "\\.",
-                DataSourceProductName: "Microsoft SQL Server",
-                GroupByBehavior: GroupByBehavior.Unrelated,
-                IdentifierPattern: @"(^\[\p{Lo}\p{Lu}\p{Ll}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Nd}@$#_]*$)|(^\[[^\]\0]|\]\]+\]$)|(^\""[^\""\0]|\""\""+\""$)",
-                IdentifierCase: IdentifierCase.Insensitive,
-                OrderByColumnsInSelect: false,
-                ParameterMarkerFormat: "{0}",
-                ParameterMarkerPattern: @"@[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)",
-                ParameterNameMaxLength: 128,
-                ParameterNamePattern: @"^[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)",
-                QuotedIdentifierPattern:"(([^\\[]|\\]\\])*)",
-                QuotedIdentifierCase: IdentifierCase.Insensitive,
-                StatementSeparatorPattern: ";",
-                StringLiteralPattern: "'(([^']|'')*)'",
-                SupportedJoinOperators: SupportedJoinOperators.Inner | SupportedJoinOperators.LeftOuter | SupportedJoinOperators.RightOuter | SupportedJoinOperators.FullOuter),
-            new DataTypesCollection([
-                // Type order follows the order from SqlMetaData.xml               
-                //                                                                                            IsBestMatch             isFixedPrecisionScale   IsSearchable           MaximumScale             MinimumVersion                  LiteralPrefix
-                //                      ProviderDbType                                                                IsCaseSensitive         IsLong                  IsSearchableWithLike    MinimumScale                    MaximumVersion          LiteralSuffix
-                //   TypeName                ColumnSize CreateFormat          DataType                IsAutoIncrementable     IsFixedLength           IsNullable              isUnsigned              IsConcurrencyType               IsLiteralSupported      CreateParameters
-                new ("smallint"        ,16  ,5         ,"smallint"           ,"System.Int16"         ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("int"             ,8   ,10        ,"int"                ,"System.Int32"         ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("real"            ,13  ,7         ,"real"               ,"System.Single"        ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("float"           ,6   ,53        ,"float({0})"         ,"System.Double"        ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,"number of bits used to store the mantissa"),
-                new ("money"           ,9   ,19        ,"money"              ,"System.Decimal"       ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("smallmoney"      ,17  ,10        ,"smallmoney"         ,"System.Decimal"       ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("bit"             ,2   ,1         ,"bit"                ,"System.Boolean"       ,false  ,false  ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("tinyint"         ,20  ,3         ,"tinyint"            ,"System.Byte"          ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("bigint"          ,0   ,19        ,"bigint"             ,"System.Int64"         ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null           ,null   ,null   ,null   ,null   ,""),
-                new ("timestamp"       ,19  ,8         ,"timestamp"          ,"System.Byte[]"        ,false  ,false  ,false  ,true   ,false  ,false  ,false  ,true   ,false  ,null   ,-1     ,-1     ,true   ,null           ,null   ,null   ,"0x"   ,null   ,""),
-                new ("binary"          ,1   ,8000      ,"binary({0})"        ,"System.Byte[]"        ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"0x"   ,null   ,"length"),
-                new ("image"           ,7   ,2147483647,"image"              ,"System.Byte[]"        ,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"0x"   ,null   ,""),
-                new ("text"            ,18  ,2147483647,"text"               ,"System.String"        ,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"'"    ,"'"    ,""),
-                new ("ntext"           ,11  ,1073741823,"ntext"              ,"System.String"        ,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"N'"   ,"'"    ,""),
-                new ("decimal"         ,5   ,38        ,"decimal({0}, {1})"  ,"System.Decimal"       ,true   ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,38     ,0      ,false  ,null           ,null   ,null   ,null   ,null   ,"precision,scale"),
-                new ("numeric"         ,5   ,38        ,"numeric({0}, {1})"  ,"System.Decimal"       ,true   ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,38     ,0      ,false  ,null           ,null   ,null   ,null   ,null   ,"precision,scale"),
-                new ("datetime"        ,4   ,23        ,"datetime"           ,"System.DateTime"      ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"{ts '","'}"   ,""),
-                new ("smalldatetime"   ,15  ,16        ,"smalldatetime"      ,"System.DateTime"      ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"{ts '","'}"   ,""),
-                new ("sql_variant"     ,23  ,-1        ,"sql_variant"        ,"System.Object"        ,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,false  ,null   ,null   ,""),
-                new ("xml"             ,25  ,2147483647,"xml"                ,"System.String"        ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,false  ,null   ,null   ,""),
-                new ("varchar"         ,22  ,2147483647,"varchar({0})"       ,"System.String"        ,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"'"    ,"'"    ,"max length"),
-                new ("char"            ,3   ,2147483647,"char({0})"          ,"System.String"        ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"'"    ,"'"    ,"length"),
-                new ("nchar"           ,10  ,1073741823,"nchar({0})"         ,"System.String"        ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"N'"   ,"'"    ,"length"),
-                new ("nvarchar"        ,12  ,1073741823,"nvarchar({0})"      ,"System.String"        ,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"N'"   ,"'"    ,"max length"),
-                new ("varbinary"       ,21  ,1073741823,"varbinary({0})"     ,"System.Byte[]"        ,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"0x"   ,null   ,"max length"),
-                new ("uniqueidentifier",14  ,16        ,"uniqueidentifier"   ,"System.Guid"          ,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null           ,null   ,null   ,"'"    ,"'"    ,""),
-                new ("date"            ,31  ,3         ,"date"               ,"System.DateTime"      ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,"10.00.000.0"  ,null   ,null   ,"{ts '","'}"   ,""),
-                new ("time"            ,32  ,5         ,"time({0})"          ,"System.TimeSpan"      ,false  ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,"10.00.000.0"  ,null   ,null   ,"{ts '","'}"   ,"scale"),
-                new ("datetime2"       ,33  ,8         ,"datetime2({0})"     ,"System.DateTime"      ,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,"10.00.000.0"  ,null   ,null   ,"{ts '","'}"   ,"scale"),
-                new ("datetimeoffset"  ,34  ,10        ,"datetimeoffset({0})","System.DateTimeOffset",false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,"10.00.000.0"  ,null   ,null   ,"{ts '","'}"   ,"scale"),
-                new ("json"            ,35  ,2147483647,"json"               ,"System.String"        ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,"17.00.000.0"  ,null   ,false  ,"'"    ,"'"    ,""),
-                ]),
+            new MetaDataCollection(),  // GetSchemaCore(...) expects MetaDataCollection to be first element.
+            new DataSourceInformationCollection(),
+            new DataTypesCollection(),
             new RestrictionsCollection(),
-            new ReservedWordsCollection([
-                // Reserved keywords used by SQL Server and Azure Synapse Analytics.
-                 "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUTHORIZATION", "BACKUP",
-                "BEGIN", "BETWEEN", "BREAK", "BROWSE", "BULK", "BY", "CASCADE", "CASE", "CHECK",
-                "CHECKPOINT", "CLOSE", "CLUSTERED", "COALESCE", "COLLATE", "COLUMN", "COMMIT", "COMPUTE", "CONSTRAINT",
-                "CONTAINS", "CONTAINSTABLE", "CONTINUE", "CONVERT", "CREATE", "CROSS", "CURRENT", "CURRENT_DATE", "CURRENT_TIME",
-                "CURRENT_TIMESTAMP", "CURRENT_USER", "CURSOR", "DATABASE", "DBCC", "DEALLOCATE", "DECLARE", "DEFAULT", "DELETE",
-                "DENY", "DESC", "DISK", "DISTINCT", "DISTRIBUTED", "DOUBLE", "DROP", "DUMP", "ELSE",
-                "END", "ERRLVL", "ESCAPE", "EXCEPT", "EXEC", "EXECUTE", "EXISTS", "EXIT", "EXTERNAL",
-                "FETCH", "FILE", "FILLFACTOR", "FOR", "FOREIGN", "FREETEXT", "FREETEXTTABLE", "FROM", "FULL",
-                "FUNCTION", "GOTO", "GRANT", "GROUP", "HAVING", "HOLDLOCK", "IDENTITY", "IDENTITY_INSERT", "IDENTITYCOL",
-                "IF", "IN", "INDEX", "INNER", "INSERT", "INTERSECT", "INTO", "IS", "JOIN",
-                // @TODO: Missing keyword: MERGE
-                "KEY", "KILL", "LEFT", "LIKE", "LINENO", "LOAD", /* "MERGE", */ "NATIONAL", "NOCHECK",
-                "NONCLUSTERED", "NOT", "NULL", "NULLIF", "OF", "OFF", "OFFSETS", "ON", "OPEN",
-                "OPENDATASOURCE", "OPENQUERY", "OPENROWSET", "OPENXML", "OPTION", "OR", "ORDER", "OUTER", "OVER",
-                // @TODO: Missing keyword: PIVOT
-                "PERCENT", /* "PIVOT", */ "PLAN", "PRECISION", "PRIMARY", "PRINT", "PROC", "PROCEDURE", "PUBLIC",
-                "RAISERROR", "READ", "READTEXT", "RECONFIGURE", "REFERENCES", "REPLICATION", "RESTORE", "RESTRICT", "RETURN",
-                // @TODO: Missing keyword: REVERT
-                /* "REVERT", */ "REVOKE", "RIGHT", "ROLLBACK", "ROWCOUNT", "ROWGUIDCOL", "RULE", "SAVE", "SCHEMA",
-                // @TODO: Missing keywords: SECURITYAUDIT, SEMANTICKEYPHRASETABLE, SEMANTICSIMILARITYDETAILSTABLE
-                /* "SECURITYAUDIT", */ "SELECT", /* "SEMANTICKEYPHRASETABLE", "SEMANTICSIMILARITYDETAILSTABLE", */
-                // @TODO: Missing keyword: SEMANTICSIMILARITYTABLE
-                /* "SEMANTICSIMILARITYTABLE", */ "SESSION_USER", "SET", "SETUSER", "SHUTDOWN",
-                // @TODO: Missing keyword: TABLESAMPLE
-                "SOME", "STATISTICS", "SYSTEM_USER", "TABLE", /* "TABLESAMPLE", */ "TEXTSIZE", "THEN", "TO", "TOP",
-                // @TODO: Missing keywords: TRY_CONVERT, UNPIVOT
-                "TRAN", "TRANSACTION", "TRIGGER", "TRUNCATE", /* "TRY_CONVERT", */ "TSEQUAL", "UNION", "UNIQUE", /* "UNPIVOT", */
-                "UPDATE", "UPDATETEXT", "USE", "USER", "VALUES", "VARYING", "VIEW", "WAITFOR", "WHEN",
-                // @TODO: Missing keyword: WITHIN GROUP
-                "WHERE", "WHILE", "WITH", /* "WITHIN GROUP", */ "WRITETEXT",
-
-                // ODBC reserved keywords.
-                "ABSOLUTE", "ACTION", "ADA", "ALLOCATE", "ARE", "ASSERTION", "AT", "AVG", "BIT",
-                "BIT_LENGTH", "BOTH", "CASCADED", "CAST", "CATALOG", "CHAR", "CHAR_LENGTH", "CHARACTER", "CHARACTER_LENGTH",
-                "COLLATION", "CONNECT", "CONNECTION", "CONSTRAINTS", "CORRESPONDING", "COUNT", "DATE", "DAY", "DECIMAL",
-                "DEFERRABLE", "DEFERRED", "DESCRIBE", "DESCRIPTOR", "DIAGNOSTICS", "DISCONNECT", "DOMAIN", "END-EXEC", "EXCEPTION",
-                "EXTRACT", "FALSE", "FIRST", "FLOAT", "FORTRAN", "FOUND", "GET", "GLOBAL", "GO",
-                "HOUR", "IMMEDIATE", "INCLUDE", "INDICATOR", "INITIALLY", "INPUT", "INSENSITIVE", "INT", "INTEGER",
-                "INTERVAL", "ISOLATION", "LANGUAGE", "LAST", "LEADING", "LEVEL", "LOCAL", "LOWER", "MATCH",
-                "MAX", "MIN", "MINUTE", "MODULE", "MONTH", "NAMES", "NATURAL", "NCHAR", "NEXT",
-                "NO", "NONE", "NUMERIC", "OCTET_LENGTH", "ONLY", "OUTPUT", "OVERLAPS", "PAD", "PASCAL",
-                "POSITION", "PREPARE", "PRESERVE", "PRIOR", "PRIVILEGES", "REAL", "RELATIVE", "ROWS", "SCROLL",
-                "SECOND", "SECTION", "SESSION", "SIZE", "SMALLINT", "SPACE", "SQL", "SQLCA", "SQLCODE",
-                "SQLERROR", "SQLSTATE", "SQLWARNING", "SUBSTRING", "SUM", "TEMPORARY", "TIME", "TIMESTAMP", "TIMEZONE_HOUR",
-                "TIMEZONE_MINUTE", "TRAILING", "TRANSLATE", "TRANSLATION", "TRIM", "TRUE", "UNKNOWN", "UPPER", "USAGE",
-                "USING", "VALUE", "VARCHAR", "WHENEVER", "WORK", "WRITE", "YEAR", "ZONE",
-
-                // Future reserved keywords.
-                // @TODO: Missing keywords: ASENSITIVE, ASYMMETRIC, ATOMIC
-                "ADMIN", "AFTER", "AGGREGATE", "ALIAS", "ARRAY", /* "ASENSITIVE", "ASYMMETRIC", "ATOMIC", */ "BEFORE",
-                // @TODO: Missing keyword: CALLED, CARDINALITY
-                "BINARY", "BLOB", "BOOLEAN", "BREADTH", "CALL", /* "CALLED", "CARDINALITY", */ "CLASS", "CLOB",
-                // @TODO: Missing keywords: COLLECT, CONDITION, CORR, COVAR_POP, COVAR_SAMP, CUME_DIST
-                /* "COLLECT", */ "COMPLETION", /* "CONDITION", */ "CONSTRUCTOR", /* "CORR", "COVAR_POP", "COVAR_SAMP", */ "CUBE", /* "CUME_DIST", */
-                // @TODO: Missing keywords: CURRENT_CATALOG, CURRENT_DEFAULT_TRANSFORM_GROUP
-                /* "CURRENT_CATALOG", "CURRENT_DEFAULT_TRANSFORM_GROUP", */ "CURRENT_PATH", "CURRENT_ROLE",
-                // @TODO: Missing keywords: CURRENT_SCHEMA, CURRENT_TRANSFORM_GROUP_FOR_TYPE
-                /* "CURRENT_SCHEMA", "CURRENT_TRANSFORM_GROUP_FOR_TYPE", */ "CYCLE", "DATA", "DEC",
-                // @TODO: Missing keyword: ELEMENT
-                "DEPTH", "DEREF", "DESTROY", "DESTRUCTOR", "DETERMINISTIC", "DICTIONARY", "DYNAMIC", "EACH", /* "ELEMENT", */
-                // @TODO: Missing keywords: FILTER, FULLTEXTTABLE, FUSION, HOLD
-                "EQUALS", "EVERY", /* "FILTER", */ "FREE", /* "FULLTEXTTABLE", "FUSION", */ "GENERAL", "GROUPING", /* "HOLD", */
-                // @TODO: Missing keyword: INTERSECTION
-                "HOST", "IGNORE", "INITIALIZE", "INOUT", /* "INTERSECTION", */ "ITERATE", "LARGE", "LATERAL", "LESS",
-                // @TODO: Missing keywords: LIKE_REGEX, LN, MEMBER, METHOD
-                /* "LIKE_REGEX",*/ "LIMIT", /* "LN", */ "LOCALTIME", "LOCALTIMESTAMP", "LOCATOR", "MAP", /* "MEMBER", "METHOD", */
-                // @TODO: Missing keywords: MOD, MULTISET, NORMALIZE, OCCURRENCES_REGEX
-                /* "MOD", */ "MODIFIES", "MODIFY", /* "MULTISET", */ "NCLOB", "NEW", /* "NORMALIZE", */ "OBJECT", /* "OCCURRENCES_REGEX", */
-                // @TODO: Missing keyword: OVERLAY, PARTITION
-                "OLD", "OPERATION", "ORDINALITY", "OUT", /* "OVERLAY", */ "PARAMETER", "PARAMETERS", "PARTIAL", /* "PARTITION" */
-                // @TODO: Missing keywords: PERCENT_RANK, PERCENTILE_CONT, PERCENTILE_DISC, POSITION_REGEX, RANGE
-                "PATH", "POSTFIX", "PREFIX", "PREORDER", /* "PERCENT_RANK", "PERCENTILE_CONT", "PERCENTILE_DISC", "POSITION_REGEX", "RANGE", */
-                "READS", "RECURSIVE", "REF", "REFERENCING",
-                // @TODO: Missing keywords: REGR_AVGX, REGR_AVGY, REGR_COUNT, REGR_INTERCEPT, REGR_R2, REGR_SLOPE
-                /* "REGR_AVGX", "REGR_AVGY", "REGR_COUNT", "REGR_INTERCEPT", "REGR_R2", "REGR_SLOPE", */
-                // @TODO: Missing keywords: REGR_SXX, REGR_SXY, REGR_SYY, RELEASE
-                /* "REGR_SXX", "REGR_SXY", "REGR_SYY", "RELEASE", */ "RESULT", "RETURNS", "ROLE", "ROLLUP", "ROUTINE",
-                // @TODO: Missing keywords: SENSITIVE, SIMILAR
-                "ROW", "SAVEPOINT", "SCOPE", "SEARCH", /* "SENSITIVE", */ "SEQUENCE", "SETS", /* "SIMILAR", */ "SPECIFIC",
-                // @TODO: Missing keywords: STDDEV_POP, STDDEV_SAMP
-                "SPECIFICTYPE", "SQLEXCEPTION", "START", "STATE", "STATEMENT", "STATIC", /* "STDDEV_POP", "STDDEV_SAMP", */ "STRUCTURE",
-
-                // @TODO: Missing keywords: SUBMULTISET, SUBSTRING_REGEX, SYMMETRIC, SYSTEM, TRANSLATE_REGEX, UESCAPE
-                /* "SUBMULTISET", "SUBSTRING_REGEX", "SYMMETRIC", "SYSTEM", */ "TERMINATE", "THAN", /* "TRANSLATE_REGEX", */ "TREAT", /* "UESCAPE", */
-                // @TODO: Missing keywords: VAR_POP, VAR_SAMP, WIDTH_BUCKET, WINDOW, WITHIN
-                "UNDER", "UNNEST", /* "VAR_POP", "VAR_SAMP", */ "VARIABLE", /* "WIDTH_BUCKET", */ "WITHOUT", /* , "WINDOW", "WITHIN", */
-                // @TODO: Missing keywords: XMLAGG, XMLATTRIBUTES, XMLBINARY, XMLCAST, XMLCOMMENT, XMLCONCAT, XMLDOCUMENT, XMLELEMENT, XMLEXISTS
-                /* "XMLAGG", "XMLATTRIBUTES", "XMLBINARY", "XMLCAST", "XMLCOMMENT", "XMLCONCAT", "XMLDOCUMENT", "XMLELEMENT", "XMLEXISTS", */
-                // @TODO: Missing keywords: XMLFOREST, XMLITERATE, XMLNAMESPACES, XMLPARSE, XMLPI, XMLQUERY, XMLSERIALIZE, XMLTABLE, XMLTEXT
-                /* "XMLFOREST", "XMLITERATE", "XMLNAMESPACES", "XMLPARSE", "XMLPI", "XMLQUERY", "XMLSERIALIZE", "XMLTABLE", "XMLTEXT", */
-                // @TODO: Missing keyword: XMLVALIDATE
-                /* "XMLVALIDATE" */
-
-                // Keywords which appear in the SQL Server 2000 documentation but not in newer versions.
-                // Preserved for backwards compatibility purposes.
-                 "DUMMY"
-                ]),
+            new ReservedWordsCollection(),
             new SqlCommandCollection("Users",                  1, 1, null, null,          "select uid, name as user_name, createdate, updatedate from sysusers where (name = @Name or (@Name is null))",
                     [new Restriction(1, "User_Name", "@Name")]),
             new SqlCommandCollection("Databases",              1, 1, null, "09.99.999.9", "select name as database_name, dbid, crdate as create_date from master..sysdatabases where (name = @Name or (@Name is null))",
@@ -255,8 +108,8 @@ namespace Microsoft.Data.SqlClient
                      new Restriction(2, "Owner", "@Owner"),
                      new Restriction(3, "Table", "@Table"),
                      new Restriction(4, "Name", "@Name")]),
-            new SqlCommandCollection("TVPs",                   0, 0, "10.00.0000", null, @"select name TypeName, 30 ProviderDbType, max_length ColumnSize, null CreateFormat, null CreateParameters, null DataType, null IsAutoincrementable, null IsBestMatch, null IsCaseSensitive, null IsFixedLength, null IsFixedPrecisionScale, null IsLong, is_nullable IsNullable, 0 IsSearchable, null IsSearchableWithLike, null IsUnsigned, null MaximumScale, null MinimumScale, null IsConcurrencyType, 0 IsLiteralSupported, null LiteralPrefix, null LiteralSuffix, null NativeDataType from sys.types  where is_table_type = 1", null),
-            new SqlCommandCollection("UDTs",                   0, 0, "09.00.0000", null, @"select types.assembly_class COLLATE database_default + ', ' + assemblies.name + ', Version=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMinor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionBuild')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionRevision')) + ISNULL(', Culture=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'CultureInfo')),'') + ISNULL(', PublicKeyToken=' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'PublicKey'),1),'0x','')),'') TypeName, 29 ProviderDbType, max_length ColumnSize, null CreateFormat, null CreateParameters, null DataType, null IsAutoincrementable, null IsBestMatch, null IsCaseSensitive, is_fixed_length IsFixedLength, null IsFixedPrecisionScale, null IsLong, is_nullable IsNullable, 1 IsSearchable, null IsSearchableWithLike, null IsUnsigned, null MaximumScale, null MinimumScale, null IsConcurrencyType, 0 IsLiteralSupported, null LiteralPrefix, null LiteralSuffix, null NativeDataType from sys.assemblies as assemblies  join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id", null),
+            new SqlCommandCollection("_TVPs",                  0, 0, "10.00.0000", null, @"select name TypeName, 30 ProviderDbType, max_length ColumnSize, null CreateFormat, null CreateParameters, null DataType, null IsAutoincrementable, null IsBestMatch, null IsCaseSensitive, null IsFixedLength, null IsFixedPrecisionScale, null IsLong, is_nullable IsNullable, 0 IsSearchable, null IsSearchableWithLike, null IsUnsigned, null MaximumScale, null MinimumScale, null IsConcurrencyType, 0 IsLiteralSupported, null LiteralPrefix, null LiteralSuffix, null NativeDataType from sys.types  where is_table_type = 1", null),
+            new SqlCommandCollection("_UDTs",                  0, 0, "09.00.0000", null, @"select types.assembly_class COLLATE database_default + ', ' + assemblies.name + ', Version=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMinor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionBuild')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionRevision')) + ISNULL(', Culture=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'CultureInfo')),'') + ISNULL(', PublicKeyToken=' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'PublicKey'),1),'0x','')),'') TypeName, 29 ProviderDbType, max_length ColumnSize, null CreateFormat, null CreateParameters, null DataType, null IsAutoincrementable, null IsBestMatch, null IsCaseSensitive, is_fixed_length IsFixedLength, null IsFixedPrecisionScale, null IsLong, is_nullable IsNullable, 1 IsSearchable, null IsSearchableWithLike, null IsUnsigned, null MaximumScale, null MinimumScale, null IsConcurrencyType, 0 IsLiteralSupported, null LiteralPrefix, null LiteralSuffix, null NativeDataType from sys.assemblies as assemblies  join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id", null),
         ];
     #pragma warning restore format
 
@@ -290,10 +143,10 @@ namespace Microsoft.Data.SqlClient
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            MetaDataCollection metadataRoot = s_metaDataCollection[0] as MetaDataCollection;
+            MetaDataCollection? metadataRoot = s_metaDataCollection[0] as MetaDataCollection;
             // We expect first element of s_metaDataCollection to be an instance of MetaDataCollection
             Debug.Assert(metadataRoot != null);
-            DataTable schema = await metadataRoot.GetMetadata(collectionName, new MetaDataContext(_serverVersion, restrictions, connection, isAsync, cancellationToken));
+            DataTable schema = await metadataRoot!.GetMetadata(collectionName, new MetaDataContext(_serverVersion, restrictions, connection, isAsync, cancellationToken));
 
             return schema;
         }
@@ -303,14 +156,14 @@ namespace Microsoft.Data.SqlClient
 
 
 
-               
+
         internal sealed class MetaDataContext
         {
-            public readonly string ServerVersion;
-            public readonly string[] RestrictionValues;
-            public readonly DbConnection Connection;
-            public readonly bool IsAsync = false;
-            public readonly CancellationToken CancellationToken;
+            public string ServerVersion { get; init; }
+            public string[] RestrictionValues { get; init; }
+            public DbConnection Connection { get; init; }
+            public bool IsAsync { get; init; }
+            public CancellationToken CancellationToken { get; init; }
 
             internal MetaDataContext(string serverVersion, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
             {
@@ -324,9 +177,9 @@ namespace Microsoft.Data.SqlClient
 
         internal sealed class Restriction
         {
-            public readonly string RestrictionName;
-            public readonly string ParameterName;
-            public readonly int RestrictionNumber;
+            public string RestrictionName { get; init; }
+            public string ParameterName { get; init; }
+            public int RestrictionNumber { get; init; }
 
             internal Restriction(int restrictionNumber, string restrictionName, string parameterName)
             {
@@ -338,13 +191,13 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract class MetaDataCollectionBase
         {
-            public readonly string CollectionName;
-            public readonly int NumberOfRestrictions;
-            public readonly int NumberOfIdentifierParts;
-            private readonly string _minimumVersion;
-            private readonly string _maximumVersion;
+            private readonly string? _minimumVersion;
+            private readonly string? _maximumVersion;
+            public string CollectionName { get; init; }
+            public int NumberOfRestrictions { get; init; }
+            public int NumberOfIdentifierParts { get; init; }
 
-            internal MetaDataCollectionBase(string collectionName, int numberOfRestrictions, int numberOfIdentifierParts, string minimumVersion = null, string maximumVersion = null)
+            internal MetaDataCollectionBase(string collectionName, int numberOfRestrictions, int numberOfIdentifierParts, string? minimumVersion = null, string? maximumVersion = null)
             {
                 CollectionName = collectionName;
                 NumberOfRestrictions = numberOfRestrictions;
@@ -353,19 +206,19 @@ namespace Microsoft.Data.SqlClient
                 _maximumVersion = maximumVersion;
             }
 
-            public abstract ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable accumulator = null);
+            public abstract ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable? accumulator = null);
 
             public bool SupportedByCurrentVersion(string serverVersion) =>
                 (_minimumVersion == null || string.Compare(serverVersion, _minimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
                 (_maximumVersion == null || string.Compare(serverVersion, _maximumVersion, StringComparison.OrdinalIgnoreCase) <= 0);
 
-            protected MetaDataCollectionBase FindMetaDataCollection(string collectionName, string serverVersion)
+            protected MetaDataCollectionBase? FindMetaDataCollection(string collectionName, string serverVersion)
             {
                 bool versionFailure = false;
                 bool haveExactMatch = false;
                 bool haveMultipleInexactMatches = false;
-                string exactCollectionName = null;
-                MetaDataCollectionBase requestedCollection = null;
+                string? exactCollectionName = null;
+                MetaDataCollectionBase? requestedCollection = null;
 
                 foreach (MetaDataCollectionBase metaData in s_metaDataCollection)
                 {
