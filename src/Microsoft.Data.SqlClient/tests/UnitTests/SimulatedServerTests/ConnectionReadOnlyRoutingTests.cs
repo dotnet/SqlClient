@@ -11,6 +11,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
     [Collection("SimulatedServerTests")]
     public class ConnectionReadOnlyRoutingTests
     {
@@ -71,7 +73,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     router.Start();
                     routingLayers.Push(router);
                     lastEndpoint = router.EndPoint;
-                    lastConnectionString = (new SqlConnectionStringBuilder() { 
+                    lastConnectionString = (new SqlConnectionStringBuilder() {
                         DataSource = $"localhost,{lastEndpoint.Port}",
                         ApplicationIntent = ApplicationIntent.ReadOnly,
                         Encrypt = false
@@ -114,8 +116,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     router.Start();
                     routingLayers.Push(router);
                     lastEndpoint = router.EndPoint;
-                    lastConnectionString = (new SqlConnectionStringBuilder() { 
-                        DataSource = $"localhost,{lastEndpoint.Port}", 
+                    lastConnectionString = (new SqlConnectionStringBuilder() {
+                        DataSource = $"localhost,{lastEndpoint.Port}",
                         ApplicationIntent = ApplicationIntent.ReadOnly,
                         Encrypt = false
                     }).ConnectionString;

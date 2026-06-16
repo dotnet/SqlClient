@@ -6,9 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient;
-using Microsoft.Test.Data.SqlClient;
 
-namespace Stress.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class SqlClientStressFactory : DataStressFactory
     {
