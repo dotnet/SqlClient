@@ -13,7 +13,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class DataStressReader : IDisposable
     {
