@@ -138,11 +138,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // are valid — SQL Server registers both at startup — but the port
                 // form is canonical for TCP listeners and matches native SNI behavior.
                 //
-                // Protocol.None means no protocol was explicitly specified; the driver
-                // attempts shared memory (Windows-local only), then TCP, then NP.
-                // Since shared memory is local-only and never requires Kerberos, any
-                // remote authenticated Protocol.None connection will use TCP, so the
-                // port-based SPN is appropriate for None/TCP/Admin.
+                // Protocol.None means no protocol was explicitly specified. In managed
+                // SNI, Protocol.None is treated as TCP (see CreateConnectionHandle),
+                // so the port-based SPN is appropriate for None/TCP/Admin.
                 //
                 // If SSRP resolution hasn't populated ResolvedPort yet (value <= 0),
                 // fall back to instance name since both SPN forms are valid.
