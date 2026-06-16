@@ -132,13 +132,20 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (!string.IsNullOrWhiteSpace(dataSource.InstanceName))
             {
-                // Per SQL Server Kerberos/SPN guidance, TCP client connections should use
-                // MSSQLSvc/<FQDN>:<port>, while named pipes/shared-memory use
-                // MSSQLSvc/<FQDN>:<instancename> for named instances. For our managed SNI path,
-                // NP uses instance-name postfix and TCP-like protocols (TCP, None, Admin)
-                // use a port postfix (resolved via SSRP for named instances).
-                // If SSRP resolution hasn't populated ResolvedPort yet (value is -1), fall back
-                // to the instance name to avoid producing a malformed SPN like ":-1".
+                // Per SQL Server Kerberos/SPN guidance, TCP connections use
+                // MSSQLSvc/<FQDN>:<port> while named pipes use
+                // MSSQLSvc/<FQDN>:<instancename> for named instances. Both forms
+                // are valid — SQL Server registers both at startup — but the port
+                // form is canonical for TCP listeners and matches native SNI behavior.
+                //
+                // Protocol.None means no protocol was explicitly specified; the driver
+                // attempts shared memory (Windows-local only), then TCP, then NP.
+                // Since shared memory is local-only and never requires Kerberos, any
+                // remote authenticated Protocol.None connection will use TCP, so the
+                // port-based SPN is appropriate for None/TCP/Admin.
+                //
+                // If SSRP resolution hasn't populated ResolvedPort yet (value <= 0),
+                // fall back to instance name since both SPN forms are valid.
                 // https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/register-a-service-principal-name-for-kerberos-connections?view=sql-server-ver17#named-instance
                 postfix = (dataSource.ResolvedProtocol == DataSource.Protocol.NP || dataSource.ResolvedPort <= 0)
                     ? dataSource.InstanceName
