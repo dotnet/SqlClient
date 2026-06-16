@@ -704,12 +704,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        private Exception TryCloneCachedException()
-        // Cached exception can be of any type, so is not always cloneable.
-        // This functions clones SqlException
-        // OleDb and Odbc connections are not passing throw this code
-            => _errorState.CloneCachedException();
-
         private void WaitForPendingOpen()
         {
             Debug.Assert(!Thread.CurrentThread.IsThreadPoolThread, "This thread may block for a long time.  Threadpool threads should not be used.");
@@ -933,7 +927,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // Throw the error that PoolCreateRequest stashed.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Errors are set.", Id);
                                 Interlocked.Decrement(ref _waitCount);
-                                throw TryCloneCachedException();
+                                _errorState.ThrowIfActive();
+                                // Narrow race: error state cleared between WaitAny observing
+                                // the signal and this check. Re-balance _waitCount and let the
+                                // outer do/while loop retry.
+                                Interlocked.Increment(ref _waitCount);
+                                break;
 
                             case CREATION_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
@@ -1481,25 +1480,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // instead obtained creation mutex
 
             DbConnectionInternal obj = null;
-            if (ErrorOccurred)
-            {
-                throw TryCloneCachedException();
-            }
-            else
-            {
-                if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
-                {
-                    // If we have an odd number of total objects, reclaim any dead objects.
-                    // If we did not find any objects to reclaim, create a new one.
+            _errorState.ThrowIfActive();
 
-                    // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
-                    if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
-                    {
-                        obj = CreateObject(owningObject, oldConnection, timeout);
-                    }
+            if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
+            {
+                // If we have an odd number of total objects, reclaim any dead objects.
+                // If we did not find any objects to reclaim, create a new one.
+
+                // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
+                if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
+                {
+                    obj = CreateObject(owningObject, oldConnection, timeout);
                 }
-                return obj;
             }
+            return obj;
         }
     }
 }

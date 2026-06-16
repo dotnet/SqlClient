@@ -25,8 +25,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly Action? _onEnter;
         private readonly Action? _onExit;
         private readonly object _lock = new();
-        private volatile bool _hasError;
-        private Exception? _cachedException;
+        // Non-null while the pool is in the blocking period. Doubles as the "has error"
+        // flag, so callers don't need a separate bool. Volatile so other threads observe
+        // entry/exit transitions without acquiring _lock.
+        private volatile Exception? _cachedException;
         private Timer? _exitTimer;
         private TimeSpan _nextWait = InitialWait;
 
@@ -50,29 +52,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// True while the pool is in the blocking period. Subsequent acquisition attempts
         /// should fast-fail with the cached exception.
         /// </summary>
-        internal bool HasError => _hasError;
-
-        /// <summary>
-        /// Returns a throwable copy of the cached exception, cloning <see cref="SqlException"/>
-        /// instances so stack traces are not shared across callers. Returns <c>null</c> if no
-        /// exception is currently cached.
-        /// </summary>
-        internal Exception? CloneCachedException()
-        {
-            Exception? cached = _cachedException;
-            return cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
-        }
+        internal bool HasError => _cachedException is not null;
 
         /// <summary>
         /// Throws the cached error if the pool is currently in the blocking period.
         /// </summary>
         internal void ThrowIfActive()
         {
-            if (!_hasError)
-            {
-                return;
-            }
-
             Exception? cached = _cachedException;
             if (cached is null)
             {
@@ -98,7 +84,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             lock (_lock)
             {
                 _cachedException = ex;
-                _hasError = true;
                 wait = _nextWait;
 
                 newTimer = new Timer(ExitCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -130,12 +115,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Timer? oldTimer;
             lock (_lock)
             {
-                if (!_hasError && _cachedException is null && _exitTimer is null && _nextWait == InitialWait)
+                if (_cachedException is null && _exitTimer is null && _nextWait == InitialWait)
                 {
                     return;
                 }
 
-                _hasError = false;
                 _cachedException = null;
                 _nextWait = InitialWait;
                 oldTimer = _exitTimer;
@@ -151,18 +135,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Timer callback that exits the blocking period, allowing the next caller to attempt
-        /// a fresh connection creation. The cached exception and current backoff are left
-        /// intact so that, if the very next attempt fails, the backoff continues to grow
-        /// rather than resetting. They are reset only on a successful creation or on
-        /// <see cref="Clear"/>.
+        /// Timer callback that exits the blocking period by clearing the cached exception,
+        /// allowing the next caller to attempt a fresh connection creation. The current
+        /// backoff is left intact so that, if the next attempt fails, the backoff continues
+        /// to grow rather than resetting. The backoff is reset only on a successful creation
+        /// or on <see cref="Clear"/>.
         /// </summary>
         private void ExitCallback(object? state)
         {
             Timer? oldTimer;
             lock (_lock)
             {
-                _hasError = false;
+                _cachedException = null;
                 oldTimer = _exitTimer;
                 _exitTimer = null;
             }
