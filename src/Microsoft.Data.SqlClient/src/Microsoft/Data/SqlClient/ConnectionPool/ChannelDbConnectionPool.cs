@@ -95,11 +95,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private volatile int _isClearing;
 
         /// <summary>
-        /// Throttles the number of concurrent physical connection creation attempts to prevent login
-        /// storms against the database server. Callers acquire a lease before creating a connection and
-        /// dispose it when creation completes (success or failure).
+        /// Optional rate limiter that throttles the number of concurrent physical connection
+        /// creation attempts. When null, no rate limiting is applied. A non-null limiter is
+        /// supplied at pool construction time; there is no default. Callers fast-fail against
+        /// the limiter and fall back to the idle-channel wait when no permit is available.
         /// </summary>
-        private readonly RateLimiter _connectionCreationRateLimiter;
+        private readonly RateLimiter? _connectionCreationRateLimiter;
 
         /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
@@ -129,20 +130,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
             _errorState = new BlockingPeriodErrorState(_instanceId);
-
-            // Limit concurrent connection creation attempts. The cap is bounded by MaxPoolSize since
-            // we can never have more in-flight creations than the pool can hold. We use a small but
-            // non-trivial default so that callers queue (FIFO) rather than stampede the server with
-            // simultaneous logins. The QueueLimit is set to MaxPoolSize so we never silently reject
-            // a caller -- a caller that cannot acquire immediately waits until either its own
-            // ConnectTimeout elapses or capacity is available.
-            int maxConcurrentCreations = Math.Max(1, Math.Min((int)MaxPoolSize, Environment.ProcessorCount));
-            _connectionCreationRateLimiter = new ConcurrencyLimiter(new ConcurrencyLimiterOptions
-            {
-                PermitLimit = maxConcurrentCreations,
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = (int)MaxPoolSize,
-            });
 
             // Pruning is only useful when the pool can grow beyond MinPoolSize.
             // If min >= max, the pool is fixed-size and pruning would never activate.
@@ -418,17 +405,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Opens a new internal connection to the database, throttled by the pool's rate limiter.
         /// </summary>
         /// <param name="owningConnection">The owning connection.</param>
-        /// <param name="async">Whether the call is in an async context.</param>
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <param name="timeout">The overall timeout budget. Passed through to the physical connection
         /// so it uses the remaining budget rather than starting a fresh timeout.</param>
-        /// <returns>The new internal connection, or null if the pool has no available slot.</returns>
+        /// <returns>The new internal connection, or null if the pool has no available slot or the
+        /// rate limiter is currently saturated. In the latter case the caller should fall back to
+        /// the idle-channel wait; the rate limiter will write a null to the idle channel when a
+        /// permit is released so the waiter can retry.</returns>
         /// <exception cref="OperationCanceledException">
         /// Thrown when the cancellation token is cancelled before the connection operation completes.
         /// </exception>
-        private async Task<DbConnectionInternal?> OpenNewInternalConnectionAsync(
+        private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection,
-            bool async,
             CancellationToken cancellationToken,
             TimeoutTimer timeout)
         {
@@ -437,56 +425,38 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Fast-fail in the error state. FR-006.
             _errorState.ThrowIfActive();
 
-            // Quick (racy) capacity check: if we're at MaxPoolSize there's no point waiting for the
-            // rate limiter -- the caller will have to block on the idle channel instead.
-            if (_connectionSlots.ReservationCount >= MaxPoolSize)
-            {
-                return null;
-            }
-
-            // Throttle concurrent creation attempts. Time spent waiting here counts against the
-            // caller's ConnectTimeout because the cancellation token already encodes the timeout.
-            // FR-001, FR-002, FR-003.
-            RateLimitLease lease;
-            if (async)
-            {
-                lease = await _connectionCreationRateLimiter.AcquireAsync(1, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                // The lease acquisition completes synchronously when capacity is available and only
-                // blocks (queues) otherwise. We rely on the surrounding sync-over-async semantics in
-                // the caller to bound thread pool usage on the sync path.
-                lease = _connectionCreationRateLimiter.AcquireAsync(1, cancellationToken)
-                    .AsTask().GetAwaiter().GetResult();
-            }
-
-            if (!lease.IsAcquired)
-            {
-                // The rate limiter refused to admit us (e.g. the queue is full) but the
-                // caller's CancellationToken has not fired, so we have not actually timed out.
-                // Return null so the outer GetInternalConnection loop falls through to the
-                // idle-channel wait. That wait observes the real timeout and will wake up
-                // either when capacity frees (a peer create completes or a connection is
-                // returned) or when the timeout elapses. The loop then cycles and re-attempts
-                // lease acquisition.
-                return null;
-            }
-
-            DbConnectionInternal? connection;
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // Re-check the error state after acquiring the lease -- it may have been set while we
-                // waited.
-                _errorState.ThrowIfActive();
-
-                try
-                {
-                    connection = _connectionSlots.Add(
-                        createCallback: () =>
+                // Reserve a pool slot up front so we don't pay the rate-limit cost only to
+                // discover the pool is full. Add() reserves synchronously and returns null
+                // immediately if no slot is available; the rate-limit check only happens inside
+                // the createCallback, which runs after the reservation succeeds.
+                DbConnectionInternal? connection = _connectionSlots.Add(
+                    createCallback: () =>
+                    {
+                        // Fast-fail rate-limit attempt when a limiter is configured.
+                        // AttemptAcquire returns synchronously and does not queue: if no permit
+                        // is available right now, the lease comes back with IsAcquired == false.
+                        // We deliberately do not block here so the caller can fall back to
+                        // waiting on the idle channel, where it can be satisfied either by a
+                        // returning connection or by a null poke from another caller releasing
+                        // its rate-limit lease (see finally below). When no limiter is
+                        // configured we substitute a no-op acquired lease.
+                        // FR-001, FR-002, FR-003.
+                        try
                         {
+                            using RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
+                            
+                            if (!lease.IsAcquired)
+                            {
+                                // TODO: When we fail to acquire a lease, surface the lease metadata
+                                // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
+                                // path so the user can identify why the lease was denied.
+                                return null;
+                            }
+
+                            cancellationToken.ThrowIfCancellationRequested();
+
                             // https://github.com/dotnet/SqlClient/issues/3459
                             // TODO: This blocks the thread for several network calls!
                             // When running async, the blocked thread is one allocated from the managed thread pool (due to 
@@ -507,72 +477,53 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
 
                             return newConnection;
-                        },
-                        cleanupCallback: (newConnection) =>
+                        }
+                        finally
                         {
-                            // If we fail to open a connection, we need to write a null to the idle channel to
-                            // wake up any waiters
-                            _idleChannel?.TryWrite(null);
-                            newConnection?.Dispose();
-                        });
-                }
-                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
-                {
-                    // Enter the blocking period error state on creation failure if configured.
-                    // FR-006, FR-007.
-                    if (IsBlockingPeriodEnabled())
+                            // Disposing the lease releases the permit back to the limiter (no-op
+                            // for the default lease). After releasing, signal a waiter on the
+                            // idle channel that they may now retry an open. We only do this if
+                            // the pool can still grow; if we're at MaxPoolSize, only a connection
+                            // return can satisfy a waiter. FR-004.
+                            if (lease.IsAcquired && _connectionSlots.ReservationCount < MaxPoolSize)
+                            {
+                                _idleChannel.TryWrite(null);
+                            }
+                        }
+                    },
+                    cleanupCallback: (newConnection) =>
                     {
-                        _errorState.Enter(ex);
-                    }
+                        // If we fail to open a connection, we need to write a null to the idle channel to
+                        // wake up any waiters
+                        _idleChannel.TryWrite(null);
+                        newConnection?.Dispose();
+                    });
 
-                    throw;
+                if (connection is not null)
+                {
+                    // A new connection was added to the pool. If we've grown past MinPoolSize,
+                    // start the pruning timer so idle connections can be reclaimed.
+                    Pruner?.UpdateTimer();
                 }
-            }
-            finally
-            {
-                // Disposing the lease wakes the next FIFO waiter. FR-004.
-                lease.Dispose();
-            }
 
-            if (connection is not null)
-            {
-                // A new connection was added to the pool. If we've grown past MinPoolSize,
-                // start the pruning timer so idle connections can be reclaimed.
-                Pruner?.UpdateTimer();
+                // A successful creation clears any prior error state and resets backoff. FR-009.
+                if (connection is not null && _errorState.HasError)
+                {
+                    _errorState.Clear();
+                }
+
+                return connection;
             }
-
-            // A successful creation clears any prior error state and resets backoff. FR-009.
-            if (connection is not null && _errorState.HasError)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                _errorState.Clear();
-            }
+                // Enter the blocking period error state on creation failure if configured.
+                // FR-006, FR-007.
+                if (PoolGroup.IsBlockingPeriodEnabled())
+                {
+                    _errorState.Enter(ex);
+                }
 
-            return connection;
-        }
-
-        /// <summary>
-        /// Determines whether the blocking period is enabled for this pool based on the configured
-        /// <see cref="PoolBlockingPeriod"/> and the target data source.
-        /// </summary>
-        private bool IsBlockingPeriodEnabled()
-        {
-            var poolGroupConnectionOptions = PoolGroup?.ConnectionOptions;
-            if (poolGroupConnectionOptions is null)
-            {
-                return true;
-            }
-
-            switch (poolGroupConnectionOptions.PoolBlockingPeriod)
-            {
-                case PoolBlockingPeriod.Auto:
-                    return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
-                case PoolBlockingPeriod.AlwaysBlock:
-                    return true;
-                case PoolBlockingPeriod.NeverBlock:
-                    return false;
-                default:
-                    Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
-                    return true;
+                throw;
             }
         }
 
@@ -824,14 +775,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection ??= GetIdleConnection();
 
 
-                    // If we didn't find an idle connection, try to open a new one. The async path
-                    // also waits on the rate limiter; the sync path performs the same wait but
-                    // blocks the current thread.
-                    connection ??= await OpenNewInternalConnectionAsync(
+                    // If we didn't find an idle connection, try to open a new one. This may
+                    // return null if the pool is full or the rate limiter is currently saturated;
+                    // in either case the caller falls through to the idle-channel wait below.
+                    connection ??= OpenNewInternalConnection(
                         owningConnection,
-                        async,
                         cancellationToken,
-                        timeout).ConfigureAwait(false);
+                        timeout);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync

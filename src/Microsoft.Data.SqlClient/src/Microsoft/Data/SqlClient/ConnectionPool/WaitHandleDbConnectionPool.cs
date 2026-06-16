@@ -489,39 +489,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cleanupWait,
                 _cleanupWait);
 
-        private bool IsBlockingPeriodEnabled()
-        {
-            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions;
-            if (poolGroupConnectionOptions == null)
-            {
-                return true;
-            }
-
-            var policy = poolGroupConnectionOptions.PoolBlockingPeriod;
-
-            switch (policy)
-            {
-                case PoolBlockingPeriod.Auto:
-                    {
-                        return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
-                    }
-                case PoolBlockingPeriod.AlwaysBlock:
-                    {
-                        return true; //Enabled
-                    }
-                case PoolBlockingPeriod.NeverBlock:
-                    {
-                        return false; //Disabled
-                    }
-                default:
-                    {
-                        //we should never get into this path.
-                        Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
-                        return true;
-                    }
-            }
-        }
-
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
@@ -554,7 +521,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 ADP.TraceExceptionWithoutRethrow(e);
 
-                if (!IsBlockingPeriodEnabled())
+                if (!_connectionPoolGroup.IsBlockingPeriodEnabled())
                 {
                     throw;
                 }
