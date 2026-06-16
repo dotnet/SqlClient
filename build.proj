@@ -1201,6 +1201,11 @@
         "$(DotnetPath)dotnet" build "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
@@ -1215,6 +1220,11 @@
         "$(DotnetPath)dotnet" build "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
@@ -1281,6 +1291,7 @@
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
@@ -1301,6 +1312,7 @@
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
