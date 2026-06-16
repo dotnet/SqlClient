@@ -22,15 +22,28 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(60);
 
         private readonly int _ownerPoolId;
+        private readonly Action? _onEnter;
+        private readonly Action? _onExit;
         private readonly object _lock = new();
         private volatile bool _hasError;
         private Exception? _cachedException;
         private Timer? _exitTimer;
         private TimeSpan _nextWait = InitialWait;
 
-        internal BlockingPeriodErrorState(int ownerPoolId)
+        /// <summary>
+        /// Creates a new instance.
+        /// </summary>
+        /// <param name="ownerPoolId">Identifier of the owning pool, used in trace events.</param>
+        /// <param name="onEnter">Optional callback invoked (outside the internal lock) after the
+        /// state transitions into the blocking period. Used by the legacy wait-handle pool to
+        /// signal its error wait handle.</param>
+        /// <param name="onExit">Optional callback invoked (outside the internal lock) after the
+        /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.</param>
+        internal BlockingPeriodErrorState(int ownerPoolId, Action? onEnter = null, Action? onExit = null)
         {
             _ownerPoolId = ownerPoolId;
+            _onEnter = onEnter;
+            _onExit = onExit;
         }
 
         /// <summary>
@@ -38,6 +51,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// should fast-fail with the cached exception.
         /// </summary>
         internal bool HasError => _hasError;
+
+        /// <summary>
+        /// Returns a throwable copy of the cached exception, cloning <see cref="SqlException"/>
+        /// instances so stack traces are not shared across callers. Returns <c>null</c> if no
+        /// exception is currently cached.
+        /// </summary>
+        internal Exception? CloneCachedException()
+        {
+            Exception? cached = _cachedException;
+            return cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
+        }
 
         /// <summary>
         /// Throws the cached error if the pool is currently in the blocking period.
@@ -89,6 +113,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             oldTimer?.Dispose();
             newTimer.Change(wait, Timeout.InfiniteTimeSpan);
 
+            _onEnter?.Invoke();
+
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
                 _ownerPoolId,
@@ -118,6 +144,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             oldTimer?.Dispose();
 
+            _onExit?.Invoke();
+
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ClearErrorState|RES|CPOOL> {0}, Error state cleared.", _ownerPoolId);
         }
@@ -140,6 +168,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             oldTimer?.Dispose();
+
+            _onExit?.Invoke();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", _ownerPoolId);
