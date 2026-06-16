@@ -10,7 +10,6 @@ using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Servers;
-using Microsoft.SqlServer.TDS.SessionState;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;

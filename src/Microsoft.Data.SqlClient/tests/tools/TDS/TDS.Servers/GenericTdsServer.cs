@@ -138,7 +138,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// sent to the client. Tests can use this to inject or replace tokens in the
         /// response message.
         /// </summary>
-        public Action<TDSMessage> OnSQLBatchCompleted { get; set; }
+        public Action<TDSMessage> OnSQLBatchCompleted { private get; set; }
 
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
 

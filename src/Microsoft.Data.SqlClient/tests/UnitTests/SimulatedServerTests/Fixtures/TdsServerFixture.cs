@@ -5,6 +5,8 @@
 using System;
 using Microsoft.SqlServer.TDS.Servers;
 
+namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
+
 /// <summary>
 /// An xunit test fixture that manages the lifecycle of a TdsServer.
 /// </summary>
