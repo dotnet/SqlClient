@@ -42,6 +42,8 @@ if: |
 
 engine: copilot
 
+environment: issue-triage
+
 permissions:
   contents: read
   issues: read
