@@ -84,6 +84,17 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_PACKET_SIZE = 32768;
         public const int MAX_SERVER_USER_NAME = 256;  // obtained from luxor
 
+        // Maximum allowed data length for token payloads (feature ext ack,
+        // session state, fedauth info). Prevents a malicious server from causing
+        // unbounded memory allocation via spoofed token length fields.
+        internal const int MaxTokenDataLength = 1 << 20; // 1 MB
+
+        // Maximum allowed data length for a DTC promote transaction propagation token.
+        internal const int MaxPromoteTransactionLength = 1 << 16; // 64 KB
+
+        // Maximum valid wire size for datetime types (DateTimeOffset = 5 time + 3 date + 2 offset).
+        internal const int MaxDateTimeLength = 10;
+
         // Severity  0 - 10 indicates informational (non-error) messages
         // Severity 11 - 16 indicates errors that can be corrected by user (syntax errors, etc...)
         // Severity 17 - 19 indicates failure due to insufficient resources in the server
