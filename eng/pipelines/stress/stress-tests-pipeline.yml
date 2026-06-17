@@ -92,6 +92,17 @@ parameters:
       - detailed
       - diagnostic
 
+# Pipeline-level variables evaluated at compile time.
+variables:
+  # The 1ES pool name, determined automatically by ADO project:
+  #   - ADO.Net  -> ADO-1ES-Pool
+  #   - public   -> ADO-CI-1ES-Pool
+  - name: poolName
+    ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
+      value: ADO-1ES-Pool
+    ${{ else }}:
+      value: ADO-CI-1ES-Pool
+
 # The stages to run.
 stages:
 
@@ -105,5 +116,6 @@ stages:
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
+      poolName: ${{ variables.poolName }}
       warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
