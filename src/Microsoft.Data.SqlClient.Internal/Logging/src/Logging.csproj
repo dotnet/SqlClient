@@ -36,8 +36,20 @@
 
   <!-- Strong name signing ============================================= -->
   <!-- This is done in Directory.Build.props -->
+
+  <!-- Unsigned: expose internals to the test assembly in any reference mode. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
+  <!--
+    Signed + Package mode: expose internals to the test assembly signed with the test key.
+    Signed + Project mode is intentionally omitted: production-signed assemblies should not
+    grant internal access to test assemblies during local development.  Tests that need internals
+    in Project mode run unsigned; only the CI package-validation pipeline uses signed packages.
+  -->
+  <ItemGroup Condition="'$(SigningKeyPath)' != '' AND '$(ReferenceType)' == 'Package'">
+    <InternalsVisibleTo Include="$(AssemblyName).Test, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7" />
   </ItemGroup>
 
   <!-- Build Output ==================================================== -->

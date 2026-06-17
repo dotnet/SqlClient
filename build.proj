@@ -394,7 +394,7 @@
       environments. Please consider running project specific test targets or specific test sets
       within the project.
   -->
-  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+  <Target Name="Test" DependsOnTargets="TestLogging;TestAbstractions;TestAzure;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
@@ -887,10 +887,6 @@
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
   <Target Name="TestAbstractions">
     <PropertyGroup>
-      <!--
-        Note: This test exclusively uses project references, so neither ReferenceType nor any
-        package version arguments are specified in this command.
-      -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
@@ -901,6 +897,12 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Reference type arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
@@ -999,8 +1001,8 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        --results-directory "$(TestResultsFolderPath)"
-        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -1008,6 +1010,8 @@
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1022,6 +1026,7 @@
   <PropertyGroup>
     <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
     <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
+    <LoggingTestProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/test/Logging.Test.csproj</LoggingTestProjectPath>
     <LoggingArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.Internal.Logging/$(Configuration)/</LoggingArtifactRoot>
   </PropertyGroup>
 
@@ -1077,6 +1082,33 @@
       SourceFiles="@(LoggingPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- TestLogging: Runs Microsoft.Data.SqlClient.Internal.Logging.Tests -->
+  <Target Name="TestLogging">
+    <PropertyGroup>
+      <LogFilePrefix>LoggingTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(LoggingTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+        $(ReferenceTypeArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- ================================================================= -->
