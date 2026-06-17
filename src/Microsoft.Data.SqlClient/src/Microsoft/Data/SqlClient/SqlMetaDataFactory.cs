@@ -278,6 +278,14 @@ namespace Microsoft.Data.SqlClient
     {
         internal static bool SupportedByCurrentVersion(this SqlMetaDataFactory.ISupported item, SqlMetaDataFactory.MetaDataContext context)
         {
+            bool isAzure = ADP.IsAzureSqlServerEndpoint(context.Connection.DataSource);
+            // Azure SQL always returns v12.00.XXXX (TDS returns 12.00.9114, SERVERPROPERTY('ProductVersion') returns 12.0.2000.8, SERVERPROPERTY('ResourceVersion') returns 17.00.9114),
+            // but in fact it has latest stable version. For Azure SQL only item where MaximumVersion=null should be valid.
+            if (isAzure)
+            {
+                return item.MaximumVersion == null;
+            }
+
             return (item.MinimumVersion == null || string.Compare(context.ServerVersion, item.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
                    (item.MaximumVersion == null || string.Compare(context.ServerVersion, item.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0);
         }
