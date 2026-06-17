@@ -128,6 +128,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return _poolCollection.Count;
         }
 
+        /// <summary>
+        /// Clears the cached federated-authentication contexts on every pool in this group
+        /// without disposing the pools or their pooled connections. Used to force the driver
+        /// to re-acquire fed-auth tokens (e.g. when the caller has cleared the upstream MSAL
+        /// token cache).
+        /// </summary>
+        internal void ClearAuthenticationContexts()
+        {
+            foreach (IDbConnectionPool pool in _poolCollection.Values)
+            {
+                pool?.AuthenticationContexts.Clear();
+            }
+        }
+
         internal IDbConnectionPool GetConnectionPool(SqlConnectionFactory connectionFactory)
         {
             // When this method returns null it indicates that the connection

@@ -167,6 +167,11 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             s_tokenCredentialMap.Clear();
         }
+
+        // Also evict any fed-auth tokens the driver has cached per pool, so subsequent
+        // SqlConnection.Open calls reacquire tokens from MSAL/Azure.Identity instead of
+        // reusing entries that are now considered stale by the caller.
+        SqlAuthenticationProvider.ClearFederatedAuthenticationInformationCache();
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
@@ -665,10 +670,19 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
             else
             {
+                // Device Code Flow needs minutes for the user to navigate to the verification
+                // URL and enter the user code. The outer per-request CTS inherits the
+                // SqlConnection's Connect Timeout (default 15s) and would cancel MSAL long
+                // before the user can finish, surfacing as "The operation was canceled."
+                // Use a dedicated CTS with the typical AAD user-code lifetime as the cap,
+                // mirroring the pattern used for ActiveDirectoryInteractive above.
+                using CancellationTokenSource ctsDeviceFlow = new();
+                ctsDeviceFlow.CancelAfter(900000); // 15 minutes
+
                 return await app.AcquireTokenWithDeviceCode(scopes,
                     deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))
                     .WithCorrelationId(connectionId)
-                    .ExecuteAsync(cancellationToken: cts.Token)
+                    .ExecuteAsync(cancellationToken: ctsDeviceFlow.Token)
                     .ConfigureAwait(false);
             }
         }
@@ -862,13 +876,19 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
             #endif
         }
-        #if NETFRAMEWORK
-        else if (publicClientAppKey.IWin32WindowFunc is not null)
+        else
         {
-            // Not on Windows (shouldn't happen for NETFRAMEWORK, but be defensive).
-            builder.WithParentActivityOrWindow(publicClientAppKey.IWin32WindowFunc);
+            // Non-Windows (Android / iOS / MAUI on .NET). Forward the caller-supplied callback
+            // to MSAL so interactive flows can parent their UI to the host Activity /
+            // UIViewController. WAM broker remains Windows-only and is intentionally skipped.
+            // The callback is snapshotted at PCA build time; callers who update the callback
+            // after the PCA is cached must invoke ClearUserTokenCache() to pick up the change.
+            Func<object>? parentActivityOrWindowFunc = _parentActivityOrWindowFunc;
+            if (parentActivityOrWindowFunc is not null)
+            {
+                builder.WithParentActivityOrWindow(parentActivityOrWindowFunc);
+            }
         }
-        #endif
 
         return builder.Build();
     }

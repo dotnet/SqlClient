@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
+using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 {
@@ -86,6 +88,11 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             // broker consults on Windows.
             provider.SetParentActivityOrWindowFunc(() => ownerHwnd);
 
+            // Without this, MSAL's default device-code callback writes the prompt to
+            // Console.WriteLine, which is invisible in a WinForms host — the connection
+            // appears to hang while MSAL polls for a code the user never sees.
+            provider.SetDeviceCodeFlowCallback(DeviceCodeFlowCallback);
+
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, provider);
@@ -97,6 +104,60 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             #pragma warning disable CS0618 // Type or member is obsolete
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, provider);
             #pragma warning restore CS0618 // Type or member is obsolete
+        }
+
+        /// <summary>
+        /// Device Code Flow callback. MSAL invokes this on a worker thread before it begins
+        /// polling the token endpoint. We surface the user code three ways so the user always
+        /// sees it: (1) appended to the log textbox via BeginInvoke (the UI thread is free in
+        /// this variant because Open() runs on a Task.Run worker), (2) the verification URL
+        /// launched in the default browser, and (3) a modal owned by the MSAL worker thread.
+        /// MSAL polling waits for the returned Task to complete, so dismissing the dialog
+        /// also resumes polling.
+        /// </summary>
+        private Task DeviceCodeFlowCallback(DeviceCodeResult result)
+        {
+            string message = result.Message;
+            string url = result.VerificationUrl;
+            string code = result.UserCode;
+
+            if (IsHandleCreated)
+            {
+                try
+                {
+                    BeginInvoke((Action)(() =>
+                    {
+                        AppendStatus(string.Empty);
+                        AppendStatus("=== Device Code Flow ===");
+                        AppendStatus(message);
+                    }));
+                }
+                catch (InvalidOperationException)
+                {
+                    // Form is closing or handle was destroyed; fall through to the modal.
+                }
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+                // Best-effort; the modal below still shows the URL and code.
+            }
+
+            MessageBox.Show(
+                "Sign in to complete Device Code Flow:" + Environment.NewLine + Environment.NewLine +
+                "  URL : " + url + Environment.NewLine +
+                "  Code: " + code + Environment.NewLine + Environment.NewLine +
+                "A browser window has been opened. Enter the code above, complete sign-in," +
+                Environment.NewLine + "then click OK to resume the connection.",
+                "Device Code Flow",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            return Task.CompletedTask;
         }
 
         #endregion

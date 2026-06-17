@@ -34,6 +34,11 @@ public abstract partial class SqlAuthenticationProvider
         private static readonly MethodInfo? _setProvider = null;
 
         /// <summary>
+        /// Our handle to the reflected ClearFederatedAuthenticationInformationCache() method.
+        /// </summary>
+        private static readonly MethodInfo? _clearFedAuthCache = null;
+
+        /// <summary>
         /// Static construction performs the reflection lookups.
         /// </summary>
         static Internal()
@@ -101,6 +106,16 @@ public abstract partial class SqlAuthenticationProvider
                 {
                     Log($"MDS SetProvider() method not found; " +
                         "SetProvider() will not function");
+                }
+
+                _clearFedAuthCache = manager.GetMethod(
+                    "ClearFederatedAuthenticationInformationCache",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+
+                if (_clearFedAuthCache is null)
+                {
+                    Log($"MDS ClearFederatedAuthenticationInformationCache() method not found; " +
+                        "ClearFederatedAuthenticationInformationCache() will not function");
                 }
             }
             // All of these exceptions mean we couldn't find the get/set
@@ -235,6 +250,39 @@ public abstract partial class SqlAuthenticationProvider
                      or TargetInvocationException)
             {
                 Log($"SetProvider() invocation failed: " +
+                    $"{ex.GetType().Name}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Call the reflected ClearFederatedAuthenticationInformationCache method to
+        /// evict any fed-auth tokens the driver has cached across its connection pools.
+        /// </summary>
+        /// <returns>
+        ///   True if the reflected call ran successfully, false if reflection wasn't
+        ///   available or the invocation threw a recognized exception.
+        /// </returns>
+        internal static bool ClearFederatedAuthenticationInformationCache()
+        {
+            if (_clearFedAuthCache is null)
+            {
+                return false;
+            }
+
+            try
+            {
+                _clearFedAuthCache.Invoke(null, null);
+                return true;
+            }
+            catch (Exception ex)
+            when (ex is InvalidOperationException
+                     or MemberAccessException
+                     or MethodAccessException
+                     or NotSupportedException
+                     or TargetInvocationException)
+            {
+                Log($"ClearFederatedAuthenticationInformationCache() invocation failed: " +
                     $"{ex.GetType().Name}: {ex.Message}");
                 return false;
             }

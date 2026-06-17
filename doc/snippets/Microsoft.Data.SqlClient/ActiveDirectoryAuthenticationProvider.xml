@@ -104,7 +104,12 @@ See the LICENSE file in the project root for more information.
         Clears cached user tokens from the token provider.
       </summary>
       <remarks>
-        This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.
+        <para>
+          This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.
+        </para>
+        <para>
+          The driver's per-pool federated-authentication token cache is also cleared, so subsequent <see cref="SqlConnection.Open" /> calls will reacquire fed-auth tokens instead of reusing cached entries.
+        </para>
       </remarks>
     </ClearUserTokenCache>
     <SetDeviceCodeFlowCallback>

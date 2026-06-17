@@ -381,6 +381,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Clears the driver's in-memory cache of federated-authentication tokens
+        /// (<c>DbConnectionPoolAuthenticationContext</c>) across every active pool.
+        /// Pools and pooled physical connections are not torn down; only the cached
+        /// fed-auth contexts are evicted, so the next connection that needs a fed-auth
+        /// token will reacquire it from its <see cref="SqlAuthenticationProvider"/>.
+        /// Reflected into by <c>Microsoft.Data.SqlClient.Extensions.Abstractions</c> so
+        /// extension token-cache-clear APIs (e.g. <c>ActiveDirectoryAuthenticationProvider.ClearUserTokenCache</c>)
+        /// can keep the driver's cache in sync with the upstream MSAL/credential cache.
+        /// </summary>
+        internal static void ClearFederatedAuthenticationInformationCache()
+        {
+            SqlConnectionFactory.Instance.ClearAllAuthenticationContexts();
+        }
+
+        /// <summary>
         /// Fetches provided configuration section from app.config file.
         /// Does not support reading from appsettings.json yet.
         /// </summary>

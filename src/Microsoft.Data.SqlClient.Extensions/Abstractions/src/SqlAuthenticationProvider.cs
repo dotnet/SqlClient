@@ -42,4 +42,10 @@ public abstract partial class SqlAuthenticationProvider
     {
         return Internal.SetProvider(authenticationMethod, provider);
     }
+
+    /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/ClearFederatedAuthenticationInformationCache/*'/>
+    public static void ClearFederatedAuthenticationInformationCache()
+    {
+        Internal.ClearFederatedAuthenticationInformationCache();
+    }
 }
