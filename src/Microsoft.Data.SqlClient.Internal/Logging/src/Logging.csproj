@@ -34,7 +34,7 @@
     <Version>$(LoggingPackageVersion)</Version>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
   <!-- This is done in Directory.Build.props -->
 
   <!-- Unsigned: expose internals to the test assembly in any reference mode. -->

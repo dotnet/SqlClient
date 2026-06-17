@@ -247,8 +247,8 @@
     <!--
       SigningKeyPath
       Applies to:     Build*, Pack*
-      Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
-                      will not be strong name signed.
+      Description:    Path to the key to use to sign driver assemblies. If omitted, driver
+                      assemblies will not be signed.
                       For Pack* targets, this only applies to a build - ie, if PackBuild is set to
                       false, SigningKeyPath will have no effect.
       Default value:  [blank]
@@ -318,7 +318,7 @@
     <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
     <!--
       Exclude tests in the "signed" category when building unsigned assemblies.  We have some tests
-      that require signed assemblies, and they would fail with strong name validation exceptions on
+      that require signed assemblies, and they would fail with assembly validation exceptions on
       .NET Framework.
     -->
     <TestFilters Condition="'$(TestFilters)' != '' AND '$(SigningKeyPath)' == ''">$(TestFilters)&amp;category!=signed</TestFilters>
