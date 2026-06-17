@@ -95,7 +95,7 @@ jobs:
         value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
 
       # dotnet CLI arguments for build/test/pack commands
-      - name: buildArguments
+      - name: dotnetBuildOpts
         value: >-
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
@@ -159,7 +159,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments) $(signingArguments)
+          arguments: $(dotnetBuildOpts) $(signingArguments)
 
       # Run the tests for each .NET runtime.
       - ${{ each runtime in parameters.netRuntimes }}:
@@ -169,7 +169,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -180,7 +180,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
@@ -193,7 +193,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -204,7 +204,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"

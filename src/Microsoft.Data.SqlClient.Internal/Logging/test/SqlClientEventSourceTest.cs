@@ -11,4 +11,10 @@ public class SqlClientEventSourceTest
     {
         Assert.NotNull(SqlClientEventSource.Log);
     }
+
+    [Fact]
+    public void SqlClientEventSource_Log_IsSingleton()
+    {
+        Assert.Same(SqlClientEventSource.Log, SqlClientEventSource.Log);
+    }
 }
