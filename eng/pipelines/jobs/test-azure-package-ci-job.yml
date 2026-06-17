@@ -69,6 +69,12 @@ parameters:
     - detailed
     - diagnostic
 
+  # True when building on the internal ADO.Net project.  When set, assemblies
+  # are signed with the driver key and tests are signed with the test key.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
   # The suffix to append to the job name.
   - name: jobNameSuffix
     type: string
@@ -179,6 +185,16 @@ jobs:
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
 
+      # Signing arguments — only set for internal builds.
+      - ${{ if eq(parameters.isInternalBuild, true) }}:
+        - name: signingArguments
+          value: >-
+            -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
+            -p:TestSigningKeyPath=$(testKeyFile.secureFilePath)
+      - ${{ else }}:
+        - name: signingArguments
+          value: ''
+
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
       # project.  This is defined with a non-standard Platform of 'AnyCPU', and
@@ -205,6 +221,13 @@ jobs:
       - ${{ if eq(parameters.debug, true) }}:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
+
+      # Download the assembly signing keys for internal builds.
+      - ${{ if eq(parameters.isInternalBuild, true) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+          parameters:
+            isTest: true
 
       # We have a few extra steps for Package reference builds.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -289,7 +312,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: $(buildArguments) $(signingArguments)
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:

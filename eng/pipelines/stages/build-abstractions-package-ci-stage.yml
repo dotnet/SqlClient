@@ -91,6 +91,11 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_abstractions_package_stage
@@ -112,6 +117,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: linux
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
@@ -127,6 +133,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
@@ -142,6 +149,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: macos
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
@@ -168,3 +176,4 @@ stages:
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
