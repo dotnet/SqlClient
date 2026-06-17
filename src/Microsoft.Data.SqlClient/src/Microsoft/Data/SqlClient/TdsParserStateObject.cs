@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
@@ -274,7 +275,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlErrorCollection _errors;
         internal SqlErrorCollection _warnings;
         internal object _errorAndWarningsLock = new object();
-        private bool _hasErrorOrWarning;
+        private volatile bool _hasErrorOrWarning;
 
         // local exceptions to cache warnings and errors that occurred prior to sending attention
         internal SqlErrorCollection _preAttentionErrors;
@@ -1082,13 +1083,8 @@ namespace Microsoft.Data.SqlClient
                     goodForReuse = true;
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
-
                 ADP.TraceExceptionWithoutRethrow(e);
             }
             return goodForReuse;
@@ -2671,6 +2667,12 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning &&
+                    Volatile.Read(ref _errors) == null &&
+                    Volatile.Read(ref _warnings) == null)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
@@ -2712,6 +2714,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (!_hasErrorOrWarning && _warnings == null)
+                {
+                    return 0;
+                }
                 int count = 0;
                 lock (_errorAndWarningsLock)
                 {
@@ -3493,7 +3499,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             if (s_failAsyncPends)
             {
-                throw new InvalidOperationException("Attempted to pend a read when s_failAsyncPends test hook was enabled");
+                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_FailAsyncPendsEnabled));
             }
             if (s_forceSyncOverAsyncAfterFirstPend)
             {
@@ -3824,12 +3830,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 SendAttention(mustTakeWriteLock: true, asyncClose);
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
-                                if (!ADP.IsCatchableExceptionType(e))
-                                {
-                                    throw;
-                                }
                                 // if unable to send attention, cancel the _networkPacketTaskSource to
                                 // request the parser be broken.  SNIWritePacket errors will already
                                 // be in the _errors collection.
@@ -4869,7 +4871,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (Buffer != null && Read > 0)
                         {
-                            throw new InvalidOperationException("Packet modification detected. Hash is null but packet contains non-null buffer");
+                            throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_PacketHashNullWithNonNullBuffer));
                         }
                     }
                     else
@@ -4884,7 +4886,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (Hash[index] != checkHash[index])
                             {
-                                throw new InvalidOperationException("Packet modification detected. Hash from packet creation does not match hash from packet check");
+                                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_PacketHashMismatch));
                             }
                         }
                     }

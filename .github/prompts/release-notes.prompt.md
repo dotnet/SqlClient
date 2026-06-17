@@ -1,38 +1,38 @@
 ---
 name: release-notes
 description: Generate release notes for a specific milestone, covering all packages in the repository that have changes.
-argument-hint: <milestone>
+argument-hint: <milestone> <branch>
 agent: agent
-tools: ['edit/createFile', 'edit/editFiles', 'read/readFile']
+tools: ['edit/createFile', 'edit/editFiles', 'read/readFile', 'execute/runInTerminal']
 ---
 
-Generate release notes for the milestone "${input:milestone}".
+Generate release notes for the milestone "${input:milestone}" on the branch "${input:branch}".
 
 This repository ships multiple packages. Only generate release notes for packages that have relevant PRs in the milestone. All packages use the same template: [release-notes/template/release-notes-template.md](release-notes/template/release-notes-template.md).
 
 ## Package Registry
 
 | Package | Release Notes Directory | How to Identify PRs |
-|---------|------------------------|---------------------|
+| ------- | ----------------------- | ------------------- |
 | `Microsoft.Data.SqlClient` | `release-notes/<Major.Minor>/` | Default — PRs not assigned to another package |
 | `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` | `release-notes/add-ons/AzureKeyVaultProvider/<Major.Minor>/` | Labels containing `AKV`, or PR titles/bodies/files referencing `AzureKeyVaultProvider`, `add-ons/`, or `AlwaysEncrypted.AzureKeyVaultProvider` |
 | `Microsoft.SqlServer.Server` | `release-notes/MSqlServerServer/<Major.Minor>/` | PR titles/bodies/files referencing `Microsoft.SqlServer.Server` or `src/Microsoft.SqlServer.Server/` |
 | `Microsoft.Data.SqlClient.Extensions.Abstractions` | `release-notes/Extensions/Abstractions/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Abstractions` |
 | `Microsoft.Data.SqlClient.Extensions.Azure` | `release-notes/Extensions/Azure/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Azure` |
-| `Microsoft.Data.SqlClient.Extensions.Logging` | `release-notes/Extensions/Logging/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Logging` |
+| `Microsoft.Data.SqlClient.Internal.Logging` | `release-notes/Internal/Logging/<Major.Minor>/` | PR titles/bodies/files referencing `Internal.Logging` |
 
 ## Version and Dependency Lookup
 
 Each package has its own versioning and dependency sources. Use these to determine package versions and dependency lists:
 
 | Package | Version Source | Dependency Source |
-|---------|---------------|-------------------|
+| ------- | -------------- | ----------------- |
 | `Microsoft.Data.SqlClient` | [tools/props/Versions.props](tools/props/Versions.props) (`MdsVersionDefault`) | [Directory.Packages.props](Directory.Packages.props) and the [project file](src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj) |
-| `AzureKeyVaultProvider` | [tools/props/Versions.props](tools/props/Versions.props) (`AkvVersionDefault`) | [AKV project file](src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj) and [Directory.Packages.props](Directory.Packages.props) |
+| `AzureKeyVaultProvider` | [tools/props/Versions.props](tools/props/Versions.props) (`AkvVersionDefault`) | [AKV project file](src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj) and [Directory.Packages.props](Directory.Packages.props) |
 | `Microsoft.SqlServer.Server` | [tools/props/Versions.props](tools/props/Versions.props) (`SqlServerPackageVersion`) | [SqlServer project file](src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj) |
 | `Extensions.Abstractions` | [AbstractionsVersions.props](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/AbstractionsVersions.props) | [Abstractions.csproj](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj) |
 | `Extensions.Azure` | [AzureVersions.props](src/Microsoft.Data.SqlClient.Extensions/Azure/src/AzureVersions.props) | [Azure.csproj](src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj) |
-| `Extensions.Logging` | [LoggingVersions.props](src/Microsoft.Data.SqlClient.Extensions/Logging/src/LoggingVersions.props) | [Logging.csproj](src/Microsoft.Data.SqlClient.Extensions/Logging/src/Logging.csproj) |
+| `Internal.Logging` | [LoggingVersions.props](src/Microsoft.Data.SqlClient.Internal/Logging/src/LoggingVersions.props) | [Logging.csproj](src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj) |
 
 Concrete dependency versions (e.g., `Azure.Core 1.49.0`) are centrally managed in [Directory.Packages.props](Directory.Packages.props). Framework-conditional versions (e.g., `net9.0` vs everything else) are handled by `Condition` attributes in the same file.
 
@@ -46,7 +46,8 @@ This prompt uses the following skill:
 ### 1. Fetch Milestone Items
 
 - Follow the instructions in the [fetch-milestone-prs](.github/skills/fetch-milestone-prs/SKILL.md) skill to fetch all merged PRs for the milestone "${input:milestone}".
-- The output will be saved to `.milestone-prs/${input:milestone}/` with individual JSON files per PR and an `_index.json` summary.
+- The output will be saved to `.milestone-prs/${input:milestone}/${input:branch}` with individual JSON files per PR and an `_index.json` summary.
+- Identify any milestone items that don't have corresponding commits on the release branch "${input:branch}", and vice versa.
 
 ### 2. Analyze and Categorize
 
@@ -56,6 +57,52 @@ This prompt uses the following skill:
 - Ignore PRs labelled `Area\Engineering` (use the `has_engineering_label` field in the JSON).
 - Identify the contributors for the "Contributors" section.
 - **Assign each PR to one or more packages** using the identification rules in the Package Registry table. A PR may be relevant to multiple packages. PRs not matching any non-core package belong to `Microsoft.Data.SqlClient`.
+
+### 2.1. Determine Target Framework (TFM) Scope Per Change
+
+For each PR included in release notes, determine whether it applies to all supported TFMs for the package or only a subset.
+
+Use source-level evidence (not assumptions) to classify scope:
+
+- **TFM-specific files** indicate scoped impact (for example, `.netfx.cs`, `.netcore.cs`).
+- **Conditional compilation** indicates scoped impact (for example, `#if NETFRAMEWORK`, `#if NET`).
+- **Project or build conditions** indicate scoped impact (for example, `Condition` expressions on `TargetFramework` or `TargetFrameworks`).
+- **Tests-only TFM changes** should not be called out as customer-facing unless the behavior change is also present in product code.
+
+When writing notes:
+
+- If the change affects **all supported TFMs** for that package, do not add a TFM qualifier.
+- If the change affects **only some TFMs**, include an explicit qualifier in the relevant bullet or section title.
+- Use concise qualifiers like:
+  - `(net462 only)`
+  - `(net8.0/net9.0 only)`
+
+Do not infer TFM scope from labels alone; verify from changed files and code paths.
+
+### 2.2. Determine Operating System (OS) Scope Per Change
+
+For each PR included in release notes, determine whether it applies to all supported OS targets for the package or only a subset.
+
+Use source-level evidence (not assumptions) to classify scope:
+
+- **OS-specific files** indicate scoped impact (for example, `.windows.cs`, `.unix.cs`).
+- **OS preprocessor symbols** indicate scoped impact (for example, `#if _WINDOWS`, `#if _UNIX`).
+- **Project/build conditions** indicate scoped impact (for example, `TargetOs`, `NormalizedTargetOs`, or OS-conditional `ItemGroup`/`PropertyGroup` entries).
+- **SNI implementation or native dependency gates** can imply OS scope when behavior changes only apply to native Windows SNI vs managed cross-platform paths.
+- **Tests-only OS changes** should not be called out as customer-facing unless the behavior change is also present in product code.
+
+When writing notes:
+
+- If the change affects **all supported OS targets**, do not add an OS qualifier.
+- If the change affects **only some OS targets**, include an explicit qualifier in the relevant bullet or section title.
+- Use concise qualifiers like:
+  - `(Windows only)`
+  - `(Unix only)`
+  - `(Linux only)`
+  - `(macOS only)`
+- If both TFM and OS are scoped, combine them in one qualifier, for example: `(net8.0/net9.0 on Windows only)`.
+
+Do not infer OS scope from labels alone; verify from changed files and code paths.
 
 ### 3. Enrich Feature Sections with Issue Context
 
@@ -83,9 +130,14 @@ For each package that has relevant PRs in the milestone:
    - Use the template from [release-notes/template/release-notes-template.md](release-notes/template/release-notes-template.md).
    - Fill in the template following the instructions in each section.
    - Only include sections (Added, Changed, Fixed, Removed) that have entries.
+   - For each Added/Changed/Fixed/Removed item, include TFM and OS scope qualifiers when Step 2.1 or Step 2.2 determines the change is not universal across the package's supported targets.
    - Look up dependencies using the Dependency Sources from the lookup table above. Resolve concrete versions from [Directory.Packages.props](Directory.Packages.props).
    - List dependencies per target framework. Use the project file's `<TargetFrameworks>` to determine which frameworks to list.
    - Omit the Contributors section for packages with no public contributors.
+   - **GA releases (all packages):** When the release is a stable (non-preview) version, structure the notes with two sections:
+     1. **"Changes Since [last preview]"** — only the delta since the most recent preview of this package.
+     2. **"Cumulative Changes Since [last stable]"** — all changes since the last stable release of this package, synthesized from all preview release notes plus the GA milestone. This applies to every package (MDS, AKV, Extensions.Azure, Abstractions, Internal.Logging, etc.), not just the core driver. Apply the cross-referencing from Step 3 to eliminate items already shipped in prior stable patch releases.
+   - **Preview releases:** Only include the delta since the previous release (preview or stable). No cumulative section is needed.
 
 3. **Create or update the version README** at `<Directory>/README.md`. Follow the existing format — see [release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md](release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md) for reference:
 
@@ -114,6 +166,14 @@ For each package that has relevant PRs in the milestone:
   - Add the new release to the appropriate package section.
   - If a section for the package doesn't yet exist, add one following the existing pattern (see the `AzureKeyVaultProvider` and `Microsoft.SqlServer.Server` sections for reference).
   - If the section already exists, add the new version link to its Release Information list.
+
+### 8. Markdown for GitHub Release
+
+- Use the contents of the new release notes markdown file to produce markdown suitable for pasting into a GitHub UI Release textbox.
+  - GitHub renders newlines within paragraphs and lists as hard breaks, so remove those.
+  - Omit the main heading and first sub-heading.
+  - Update any relative links to use absolute URLs pointing to the file in the repository.
+  - Provide this new markdown in a code block that can easily be copied and pasted directly into the GitHub UI.
 
 ## Notes
 

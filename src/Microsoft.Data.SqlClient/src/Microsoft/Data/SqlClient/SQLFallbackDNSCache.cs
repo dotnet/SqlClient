@@ -28,13 +28,8 @@ namespace Microsoft.Data.SqlClient
         {
             if (item != null)
             {
-                if (DNSInfoCache.ContainsKey(item.FQDN))
-                {
-
-                    DeleteDNSInfo(item.FQDN);
-                }
-
-                return DNSInfoCache.TryAdd(item.FQDN, item);
+                DNSInfoCache[item.FQDN] = item;
+                return true;
             }
 
             return false;

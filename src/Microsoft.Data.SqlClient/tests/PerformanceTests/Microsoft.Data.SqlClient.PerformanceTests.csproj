@@ -4,35 +4,38 @@
     <AssemblyName>PerformanceTests</AssemblyName>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <Configurations>Debug;Release;</Configurations>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
   </PropertyGroup>
+
+  <!-- Items to remove -->
   <ItemGroup>
     <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
+    <None Remove=".AssemblyAttributes" />
     <None Remove="BenchmarkDotNet.Artifacts\**" />
   </ItemGroup>
-  <ItemGroup>
-    <None Remove=".AssemblyAttributes" />
-  </ItemGroup>
 
-  <!-- Conditional Project References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
-    <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-  </ItemGroup>
-
-  <!-- Conditional Package References -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-  </ItemGroup>
-
-  <!-- Unconditional Package References -->
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" />
-  </ItemGroup>
-
+  <!-- Content files to copy to output directory -->
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <!-- Test target references -->
+  <ItemGroup>
+    <!-- If the tests are compiled/running in "Package" mode, the reference to MDS will be to the -->
+    <!-- nuget package. This enables ensuring the tests run successfully against a fully-packaged -->
+    <!-- version of MDS. Package mode is specified by setting the build parameter ReferenceType   -->
+    <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
+    <!-- referencing MDS via the project.                                                         -->
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"  />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- Other references -->
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
   </ItemGroup>
 </Project>

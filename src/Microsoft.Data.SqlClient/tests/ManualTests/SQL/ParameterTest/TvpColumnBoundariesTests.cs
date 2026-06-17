@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for TVP column boundaries with various data types.
     /// These tests run independently with their own baseline comparison.
     /// </summary>
+    [Trait("Set", "3")]
     [Collection("ParameterBaselineTests")]
     public class TvpColumnBoundariesTests
     {
@@ -33,25 +34,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
             string outputPath = "TvpColumnBoundaries.out";
             string baselinePath;
-#if DEBUG
             if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
             {
-                baselinePath = "TvpColumnBoundaries_DebugMode.bsl";
+                baselinePath = "TvpColumnBoundaries.bsl";
             }
             else
             {
-                baselinePath = "TvpColumnBoundaries_DebugMode_Azure.bsl";
+                baselinePath = "TvpColumnBoundaries_Azure.bsl";
             }
-#else
-            if (DataTestUtility.IsNotAzureServer() || DataTestUtility.IsManagedInstance)
-            {
-                baselinePath = "TvpColumnBoundaries_ReleaseMode.bsl";
-            }
-            else
-            {
-                baselinePath = "TvpColumnBoundaries_ReleaseMode_Azure.bsl";
-            }
-#endif
 
             var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
             var swriter = new StreamWriter(fstream, Encoding.UTF8);

@@ -1,7 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
     <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Versioning ====================================================== -->
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
+  <PropertyGroup>
+    <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlClientFileVersion)</FileVersion>
+    <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- CLS Compliance ================================================== -->
@@ -11,12 +28,77 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+
+  <!-- Build Output ==================================================== -->
+  <PropertyGroup>
+    <!-- @TODO: Move to directory.build.props? -->
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
+    <!--
+      MSBuild will add the target framework to the end of this path by default. Telling it not to
+      is possible but also requires specifying the IntermediateOutputPath. So while it would be
+      nice to have a flatter directory structure, it's more hassle than its worth.
+    -->
+    <OutputPath>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/</OutputPath>
+  </PropertyGroup>
+
+
+  <!-- Trim Docs for IntelliSense ====================================== -->
+  <!--
+    It has been determined that including the remarks section in IntelliSense docs looks bad in
+    Visual Studio. So, before we generate the ref binaries, we trim off the remarks tags. We leave
+    them in the xml files, though, because those are the source for the docs site, which needs to
+    have the full documentation.
+  -->
+  <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
+  <Target Name="_CheckPwshToolRestored">
+    <Exec Command="dotnet tool run pwsh -- -Version"
+          WorkingDirectory="$(RepoRoot)"
+          ConsoleToMsBuild="true"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_PwshExitCode" />
+    </Exec>
+    <Error Condition="'$(_PwshExitCode)' != '0'"
+           Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
+  </Target>
+
+  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <Target Name="TrimDocsForIntelliSense"
+          AfterTargets="Build"
+          DependsOnTargets="_CheckPwshToolRestored"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+
+    <PropertyGroup>
+      <PowerShellCommand>
+        dotnet tool run pwsh --
+          -NonInteractive
+          -ExecutionPolicy Unrestricted
+          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
+      </PowerShellCommand>
+
+      <!-- Convert more than one whitespace character into one space -->
+      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s+", " "))</PowerShellCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
+    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+  </Target>
+
   <!-- References ====================================================== -->
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+  <!-- .NET Framework and .NET Standard 2.0 don't need to reference SqlServer. -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
@@ -33,9 +115,7 @@
     <Reference Include="System.Xml" />
 
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI"
-                      PrivateAssets="all"
-                      IncludeAssets="runtime;build;native;contentfiles;analyzers;buildtransitive" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
@@ -54,7 +134,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
@@ -66,7 +145,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />

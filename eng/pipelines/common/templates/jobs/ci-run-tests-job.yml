@@ -30,11 +30,9 @@ parameters:
   # template expansion.
   #
   #   EnclaveEnabled
-  #   IsAzureSynapse
   #   IsDNSCachingSupportedCR
   #   IsDNSCachingSupportedTR
   #   ManagedIdentitySupported
-  #   SupportsFileStream
   #   SupportsIntegratedSecurity
   #   TracingEnabled
   #
@@ -87,6 +85,16 @@ parameters:
   # The version of the SqlClient package to depend on when referenceType is 'Package'.
   - name: mdsPackageVersion
     type: string
+
+  # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
 
   # TODO: What is this for?
   - name: netcoreVersionTestUtils
@@ -194,8 +202,14 @@ jobs:
         artifactName: ${{ parameters.mdsArtifactsName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
+    - task: DownloadPipelineArtifact@2
+      displayName: Download SqlServer Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.sqlServerArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
   # Install the .NET SDK and Runtimes.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
+  - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       ${{ if parameters.isArm64 }}:
@@ -206,6 +220,9 @@ jobs:
       ${{ else }}:
         runtimes: [8.x, 9.x]
 
+  # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+  - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
@@ -214,14 +231,10 @@ jobs:
       parameters:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
-        referenceType: ${{ parameters.referenceType }}
-        assemblyBuildNumber: $(assemblyBuildNumber)
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        referenceType: Project
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
-    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.json file
+    - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.jsonc file
       parameters:
         debug: ${{ parameters.debug }}
         saPassword: ${{ parameters.saPassword }}
@@ -264,8 +277,6 @@ jobs:
           AliasName: ${{ parameters.configProperties.AliasName }}
         ${{ if parameters.configProperties.SupportsIntegratedSecurity }}:
           SupportsIntegratedSecurity: ${{ eq(parameters.configProperties.SupportsIntegratedSecurity, 'true') }}
-        ${{ if parameters.configProperties.SupportsFileStream }}:
-          SupportsFileStream: ${{ eq(parameters.configProperties.SupportsFileStream, 'true') }}
         ${{ if parameters.configProperties.DNSCachingConnString }}:
           DNSCachingConnString: ${{ parameters.configProperties.DNSCachingConnString }}
         ${{ if parameters.configProperties.DNSCachingServerCR }}:
@@ -278,8 +289,6 @@ jobs:
           IsDNSCachingSupportedCR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedCR, 'true') }}
         ${{ if parameters.configProperties.IsDNSCachingSupportedTR }}:
           IsDNSCachingSupportedTR: ${{ eq(parameters.configProperties.IsDNSCachingSupportedTR, 'true') }}
-        ${{ if parameters.configProperties.IsAzureSynapse }}:
-          IsAzureSynapse: ${{ eq(parameters.configProperties.IsAzureSynapse, 'true') }}
         ${{ if parameters.configProperties.ManagedIdentitySupported }}:
           ManagedIdentitySupported: ${{ eq(parameters.configProperties.ManagedIdentitySupported, 'true') }}
 
@@ -329,6 +338,33 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
+  # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
+  # is only used to execute the test runtime (framework to test is specified in build params), so
+  # it should be acceptable to just install a specific version in all cases.
+  # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
+  #    earlier in the job. There has to be a cleaner way of doing this.
+  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
+    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
+      # Install the .NET SDK and Runtimes for x86.
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          architecture: x86
+          debug: ${{ parameters.debug }}
+          installDir: $(dotnetx86RootPath)
+          runtimes: [8.x, 9.x]
+
+  # Ensure TestResults directory exists so that publish steps don't fail when
+  # tests are skipped due to a setup failure.
+  - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+    displayName: 'Create TestResults Directory'
+
+  # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
+  # install, etc.) completed successfully.  Test steps condition on this variable
+  # so they are skipped when setup fails, yet remain independent of each
+  # other's results.
+  - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
+    displayName: 'Gate: Mark Setup Succeeded'
+
   - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self # run tests
       parameters:
@@ -341,22 +377,9 @@ jobs:
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
-    # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
-    # is only used to execute the test runtime (framework to test is specified in build params), so
-    # it should be acceptable to just install a specific version in all cases.
-    # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
-    #    earlier in the job. There has to be a cleaner way of doing this.
-    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
-      # Install the .NET SDK and Runtimes for x86.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
-        parameters:
-          architecture: x86
-          debug: ${{ parameters.debug }}
-          installDir: $(dotnetx86RootPath)
-          runtimes: [8.x, 9.x]
-
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
@@ -370,6 +393,7 @@ jobs:
         abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

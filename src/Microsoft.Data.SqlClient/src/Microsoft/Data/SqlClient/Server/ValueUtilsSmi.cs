@@ -2384,12 +2384,8 @@ namespace Microsoft.Data.SqlClient.Server
                 SetChars_FromReader(setters, ordinal, metaData, reader, offset);
                 success = true;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
             }
 
             if (!success)

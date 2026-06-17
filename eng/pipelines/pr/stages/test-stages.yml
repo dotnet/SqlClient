@@ -1,0 +1,256 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# These stages are meant to validate a PR against a battery of tests to ensure confidence in the
+# changes the PR presents. There is, however, a balance to be struck between completeness of
+# confidence and expedience of validation.
+
+parameters:
+  # General Parameters =====================================================
+
+  # Configuration with which to build the packages and execute the tests.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
+  - name: buildSuffix
+    type: string
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
+  # Name of the build/pack stage that this stage will depend on.
+  - name: stageNamePack
+    type: string
+
+  # Name of the secret generation job used to determine the path to the SA password variable.
+  - name: stageNameSecrets
+    type: string
+
+  # Manual Test Configuration Parameters ==================================
+
+  # Azure Key Vault tenant ID that will be set in the config.jsonc file for sqlclient manual tests.
+  - name: manualTestAzureKeyVaultTenantId
+    type: string
+
+  # Azure Key Vault URL that will be set in the config.jsonc file for sqlclient manual tests.
+  - name: manualTestAzureKeyVaultUrl
+    type: string
+
+  # Connection string to Azure SQL using named pipes that will be set in the config.jsonc file for
+  # sqlclient manual tests against Azure SQL.
+  - name: manualTestConnectionStringNpAzure
+    type: string
+
+  # Connection string to localhost using named pipes that will be set in the config.jsonc file for
+  # sqlclient manual tests against a local box product.
+  - name: manualTestConnectionStringNpLocalhost
+    type: string
+
+  # Connection string to Azure SQL using TCP that will be set in the config.jsonc file for sqlclient
+  # manual tests against Azure SQL.
+  - name: manualTestConnectionStringTcpAzure
+    type: string
+
+  # Connection string to localhost using TCP that will be set in the config.jsonc file for sqlclient
+  # manual tests against a local box product.
+  - name: manualTestConnectionStringTcpLocalhost
+    type: string
+
+  # Path to use for file stream tests, this value will be stored in the config.jsonc for sqlclient
+  # manual tests.
+  - name: manualTestFileStreamDirectory
+    type: string
+
+  # Name of the local DB application name for localdb tests, this value will be stored in the
+  # config.jsonc for sqlclient manual tests.
+  - name: manualTestLocalDbAppName
+    type: string
+
+  # Name of the local DB shared instance name for localdb tests, this value will be stored in the
+  # config.jsonc for sqlclient manual tests.
+  - name: manualTestLocalDbSharedInstanceName
+    type: string
+
+  # Name of the managed identity client ID, this value will be stored in the config.jsonc for
+  # sqlclient manual tests.
+  - name: manualTestUserManagedIdentityClientId
+    type: string
+
+  # This is an array of objects with the following fields:
+  # - displayName     - Friendly name to use when displaying the stage name and job names. This
+  #                     must only contain alphanumeric characters and '_'. It will be used for both
+  #                     display name fields and stage/job names.
+  # - dotnet          - Version of dotnet runtime to use to execute the tests
+  # - image           - Image to use to execute the test jobs in the pipeline
+  # - operatingSystem - General OS "class" that the image contains. This is used to switch between
+  #                     server configuration behaviors.
+  #
+  # Each one of the objects in this parameter will become a stage that executes all test projects
+  # available.
+  - name: platforms
+    type: object
+    default: []
+
+stages:
+  - ${{ each platform in parameters.platforms }}:
+      - stage: "test_${{ platform.displayName }}"
+        displayName: "Test: ${{ platform.displayName }}"
+        dependsOn:
+          - ${{ parameters.stageNamePack }}
+          - ${{ parameters.stageNameSecrets }}
+
+        jobs:
+          # TestAbstractions
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+
+              packageShortName: "Abstractions"
+              testDisplayName: "abstractions"
+
+          # TestAzure
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+
+              packageShortName: "Azure"
+              testDisplayName: "azure"
+
+          # TestSqlClientFunctional
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+
+              packageShortName: "SqlClient"
+              testDisplayName: "sqlclient_functional"
+              testProject: "Functional"
+
+          # TestSqlClientManual - Localhost
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - Azure
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "azure"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: false
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - Localhost Always Encrypted
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: "Release"      # AE tests are not stable enough to run in DEBUG mode (as of 5/29/26)
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost_ae"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "AE"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientUnit
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+
+              packageShortName: "SqlClient"
+              testDisplayName: "sqlclient_unit"
+              testProject: "Unit"

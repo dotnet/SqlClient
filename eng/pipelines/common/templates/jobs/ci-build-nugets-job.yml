@@ -73,6 +73,20 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The version to apply to the AKV Provider package.
+  - name: akvPackageVersion
+    type: string
+
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
+  # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -81,7 +95,6 @@ jobs:
     name: ${{parameters.poolName }}
     demands:
     - imageOverride -equals ${{ parameters.imageOverride }}
-    - msbuild
 
   variables:
     - template: /eng/pipelines/libraries/ci-build-variables.yml@self
@@ -98,21 +111,31 @@ jobs:
     - ${{ parameters.prebuildSteps }}
 
   # If we're testing in Package mode, then we must download dependent package artifacts.
+  # Downloads go to localFeedPath (local NuGet source), not $(packagePath) (build output).
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
-        targetPath: $(packagePath)
+        targetPath: $(localFeedPath)
 
     - task: DownloadPipelineArtifact@2
       displayName: Download Logging Package Artifacts
       inputs:
         artifactName: ${{ parameters.loggingArtifactsName }}
-        targetPath: $(packagePath)
+        targetPath: $(localFeedPath)
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download SqlServer Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.sqlServerArtifactsName }}
+        targetPath: $(localFeedPath)
 
   # Install the .NET SDK.
-  - template: /eng/pipelines/steps/install-dotnet.yml@self
+  - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+  # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+  - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
   # When we're performing a Debug build, we still want to try _compiling_ the
   # code in Release mode to ensure downstream pipelines don't encounter
@@ -125,7 +148,6 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
-        assemblyBuildNumber: $(assemblyBuildNumber)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -134,42 +156,83 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
-      assemblyBuildNumber: $(assemblyBuildNumber)
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
-      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - task: DotNetCoreCLI@2
+    displayName: 'Create MDS NuGet Package'
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackSqlClient
+        -p:PackBuild=false
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+
+  # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
+  # Downstream steps (local feed copy, AKV pack, artifact publish) all expect packages at
+  # $(packagePath), so copy them there.
+  - task: CopyFiles@2
+    displayName: Copy MDS Package to Output Directory
+    inputs:
+      sourceFolder: $(Build.SourcesDirectory)/artifacts/Microsoft.Data.SqlClient/${{ parameters.referenceType }}-${{ parameters.buildConfiguration }}
+      contents: 'Microsoft.Data.SqlClient.*'
+      targetFolder: $(packagePath)
+
+  # When building in Package mode, the AKV Provider restore needs to find the MDS package
+  # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.
+  - ${{ if eq(parameters.referenceType, 'Package') }}:
+    - task: CopyFiles@2
+      displayName: Copy MDS Package to Local Feed
+      inputs:
+        sourceFolder: $(packagePath)
+        contents: 'Microsoft.Data.SqlClient.*.nupkg'
+        targetFolder: $(localFeedPath)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
-      operatingSystem: Windows
-      build: AKV
-      assemblyBuildNumber: $(assemblyBuildNumber)
+      build: AkvProvider
+      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
+      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+      akvPackageVersion: ${{ parameters.akvPackageVersion }}
+      sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create AKV NuGet Package'
-      generateSymbolsPackage: true
-      installNuget: false
-      nuspecPath: 'tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: $(akvPackageVersion)
-      properties: 'MdsPackageVersion=${{ parameters.mdsPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  - task: DotNetCoreCLI@2
+    displayName: 'Create AKV Provider NuGet Package'
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:PackAkvProvider
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:PackBuild=false
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:BuildNumber=$(Build.BuildNumber)
+        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+        -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
+
+  - task: CopyFiles@2
+    displayName: Copy AKV Package to Output Folder
+    inputs:
+      sourceFolder: artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/${{ parameters.buildConfiguration }}
+      contents: |
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.nupkg
+        **/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider*.snupkg
+      targetFolder: $(packagePath)
+      flattenFolders: true
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Pipeline Artifacts'

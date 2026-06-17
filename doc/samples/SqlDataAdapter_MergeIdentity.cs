@@ -1,4 +1,4 @@
-﻿namespace SqlDataAdapter_MergeIdentity;
+namespace SqlDataAdapter_MergeIdentity;
 
 using System;
 using System.Data;

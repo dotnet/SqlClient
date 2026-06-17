@@ -50,6 +50,16 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifacts to download.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
   # Jobs to run after the test jobs complete, if any.
   - name: postTestJobs
     type: jobList
@@ -114,6 +124,8 @@ stages:
                   loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+                  sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+                  sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
@@ -150,6 +162,8 @@ stages:
                     loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+                    sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+                    sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}

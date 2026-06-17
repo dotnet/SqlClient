@@ -1,4 +1,4 @@
-﻿namespace SqlUserDefinedTypeAttribute_Type1;
+namespace SqlUserDefinedTypeAttribute_Type1;
 
 //-----------------------------------------------------------------------------
 //<Snippet5>

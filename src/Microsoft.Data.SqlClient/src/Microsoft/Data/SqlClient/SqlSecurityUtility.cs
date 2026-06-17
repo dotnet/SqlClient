@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -98,7 +99,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (cipherAlgorithmName == null)
                 {
-                    throw SQL.NullColumnEncryptionAlgorithm(SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
+                    throw SQL.NullColumnEncryptionAlgorithm(EncryptionAlgorithmFactoryList.RegisteredCipherAlgorithmNames);
                 }
 
                 return cipherAlgorithmName;
@@ -206,7 +207,7 @@ namespace Microsoft.Data.SqlClient
             md.CipherAlgorithm = null;
             SqlClientEncryptionAlgorithm cipherAlgorithm = null;
             string algorithmName = ValidateAndGetEncryptionAlgorithmName(md.CipherAlgorithmId, md.CipherAlgorithmName); // may throw
-            SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
+            EncryptionAlgorithmFactoryList.GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
             Debug.Assert(cipherAlgorithm is not null);
             md.CipherAlgorithm = cipherAlgorithm;
             md.EncryptionKeyInfo = encryptionkeyInfoChosen;
@@ -331,18 +332,20 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult == false)
-                    {
-                        // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
-                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
-                                CMKSignature);
+                    SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                        .GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
 
-                        ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                    if (cachedResult == SignatureVerificationResult.NotFound)
+                    {
+                        // Cache miss: verify with the provider and cache the result.
+                        // Exceptions from VerifyColumnMasterKeyMetadata bubble up to the outer catch.
+                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                        ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                            .AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
                     }
                     else
                     {
-                        isValidSignature = signatureVerificationResult;
+                        isValidSignature = cachedResult == SignatureVerificationResult.True;
                     }
                 }
             }

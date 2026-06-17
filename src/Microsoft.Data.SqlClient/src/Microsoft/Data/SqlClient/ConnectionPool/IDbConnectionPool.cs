@@ -7,7 +7,6 @@ using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 
 #nullable enable
@@ -37,6 +36,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// May be larger than the number of connections currently sitting idle in the pool.
         /// </summary>
         int Count { get; }
+
+        /// <summary>
+        /// The number of connections currently sitting idle in the pool.
+        /// </summary>
+        int IdleCount { get; }
 
         /// <summary>
         /// Indicates whether an error has occurred in the pool.
@@ -86,6 +90,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         DbConnectionPoolState State { get; }
 
         /// <summary>
+        /// Holds connections that are currently enlisted in a transaction.
+        /// </summary>
+        TransactedConnectionPool TransactedConnectionPool { get; }
+
+        /// <summary>
         /// Indicates whether the connection pool is using load balancing.
         /// </summary>
         bool UseLoadBalancing { get; }
@@ -95,6 +104,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Clears the connection pool, releasing all connections and resetting the state.
         /// </summary>
+        /// <remarks>
+        /// Clearing the pool is an expensive operation and should only be used if required.
+        /// This operation may negatively interfere with pool warmup and generate high connection
+        /// churn as the warmup operation continually opens new connections to attempt 
+        /// to reach min pool size. This situation is especially likely if clear is called in a 
+        /// tight loop.
+        /// </remarks>
         void Clear();
 
         /// <summary>
@@ -103,19 +119,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">The SqlConnection that will own this internal connection.</param>
         /// <param name="taskCompletionSource">Used when calling this method in an async context. 
         /// The internal connection will be set on completion source rather than passed out via the out parameter.</param>
-        /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
+        /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting in
+        /// the pool is deducted from the budget available for physical connection creation.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.
         /// </summary>
-        /// <param name="owningObject">The connection whos internal connection should be replaced.</param>
-        /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
+        /// <param name="owningObject">The connection whose internal connection should be replaced.</param>
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
+        /// <param name="timeout">The overall timeout budget for this connection request.</param>
         /// <returns>A reference to the new DbConnectionInternal.</returns>
-        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);
+        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
 
         /// <summary>
         /// Returns an internal connection to the pool.

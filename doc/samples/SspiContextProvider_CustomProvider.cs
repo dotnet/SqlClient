@@ -1,4 +1,7 @@
+#if NET
 // <Snippet1>
+#nullable enable
+
 using System;
 using System.Buffers;
 using System.Net.Security;
@@ -53,3 +56,4 @@ class Program
     }
 }
 // </Snippet1>
+#endif

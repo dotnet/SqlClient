@@ -1,0 +1,24 @@
+name: Check Milestone
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, milestoned, demilestoned]
+
+jobs:
+  check-milestone:
+    name: Validate milestone
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Check milestone is set
+        if: github.event.pull_request.milestone == null
+        run: |
+          echo "::error::This PR does not have a milestone set. Please assign a milestone before merging."
+          exit 1
+
+      - name: Check milestone is open
+        if: github.event.pull_request.milestone != null && github.event.pull_request.milestone.state != 'open'
+        run: |
+          echo "::error::Milestone '${{ github.event.pull_request.milestone.title }}' is ${{ github.event.pull_request.milestone.state }}. Please assign an open milestone."
+          exit 1

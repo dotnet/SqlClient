@@ -2,9 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Reflection;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
@@ -43,11 +41,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _disableTnirByDefaultOriginal;
     #endif
     private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
-    private readonly bool? _enableUserAgentOriginal;
     #if NET
     private readonly bool? _globalizationInvariantModeOriginal;
     #endif
     private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
+    private readonly bool? _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal;
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -56,6 +54,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
+    private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET && _WINDOWS
     private readonly bool? _useManagedNetworkingOriginal;
     #endif    
@@ -93,14 +92,14 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _enableMultiSubnetFailoverByDefaultOriginal =
                 GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
-            _enableUserAgentOriginal =
-                GetSwitchValue("s_enableUserAgent");
             #if NET
             _globalizationInvariantModeOriginal =
                 GetSwitchValue("s_globalizationInvariantMode");
             #endif
             _ignoreServerProvidedFailoverPartnerOriginal =
                 GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
+            _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal =
+                GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
             _legacyRowVersionNullBehaviorOriginal =
                 GetSwitchValue("s_legacyRowVersionNullBehavior");
             _legacyVarTimeZeroScaleBehaviourOriginal =
@@ -117,6 +116,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useCompatibilityProcessSni");
             _useConnectionPoolV2Original =
                 GetSwitchValue("s_useConnectionPoolV2");
+            _useOverallConnectTimeoutForPoolWaitOriginal =
+                GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
             #if NET && _WINDOWS
             _useManagedNetworkingOriginal =
                 GetSwitchValue("s_useManagedNetworking");
@@ -149,9 +150,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_enableMultiSubnetFailoverByDefault",
                 _enableMultiSubnetFailoverByDefaultOriginal);
-            SetSwitchValue(
-                "s_enableUserAgent",
-                _enableUserAgentOriginal);
             #if NET
             SetSwitchValue(
                 "s_globalizationInvariantMode",
@@ -160,6 +158,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_ignoreServerProvidedFailoverPartner",
                 _ignoreServerProvidedFailoverPartnerOriginal);
+            SetSwitchValue(
+                "s_useLegacyFailoverAlternationOnLoginSqlErrors",
+                _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
             SetSwitchValue(
                 "s_legacyRowVersionNullBehavior", 
                 _legacyRowVersionNullBehaviorOriginal);
@@ -184,6 +185,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useConnectionPoolV2",
                 _useConnectionPoolV2Original);
+            SetSwitchValue(
+                "s_useOverallConnectTimeoutForPoolWait",
+                _useOverallConnectTimeoutForPoolWaitOriginal);
             #if NET && _WINDOWS
             SetSwitchValue(
                 "s_useManagedNetworking",
@@ -228,15 +232,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_enableMultiSubnetFailoverByDefault", value);
     }
 
-    /// <summary>
-    /// Get or set the EnableUserAgent switch value.
-    /// </summary>
-    public bool? EnableUserAgent
-    {
-        get => GetSwitchValue("s_enableUserAgent");
-        set => SetSwitchValue("s_enableUserAgent", value);
-    }
-
     #if NET
     /// <summary>
     /// Get or set the GlobalizationInvariantMode switch value.
@@ -255,6 +250,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
         set => SetSwitchValue("s_ignoreServerProvidedFailoverPartner", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyFailoverAlternationOnLoginSqlErrors switch value.
+    /// </summary>
+    public bool? UseLegacyFailoverAlternationOnLoginSqlErrors
+    {
+        get => GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
+        set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
     }
 
     /// <summary>
@@ -327,6 +331,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_useConnectionPoolV2");
         set => SetSwitchValue("s_useConnectionPoolV2", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseOverallConnectTimeoutForPoolWait switch value.
+    /// </summary>
+    public bool? UseOverallConnectTimeoutForPoolWait
+    {
+        get => GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
+        set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
     }
 
     #if NET && _WINDOWS

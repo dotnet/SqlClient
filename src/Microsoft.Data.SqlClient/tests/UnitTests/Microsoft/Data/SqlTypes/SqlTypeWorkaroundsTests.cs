@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlDecimalWriteTdsValue_NonNullInput_Data))]
+        [MemberData(nameof(SqlDecimalWriteTdsValue_NonNullInput_Data), DisableDiscoveryEnumeration = true)]
         public void SqlDecimalWriteTdsValue_NonNullInput(SqlDecimal input)
         {
             // Arrange
@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(LongToSqlMoney_Data))]
+        [MemberData(nameof(LongToSqlMoney_Data), DisableDiscoveryEnumeration = true)]
         public void LongToSqlMoney(long input, SqlMoney expected)
         {
             // Act
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlMoneyToLong_NonNullInput_Data))]
+        [MemberData(nameof(SqlMoneyToLong_NonNullInput_Data), DisableDiscoveryEnumeration = true)]
         public void SqlMoneyToLong_NonNullInput(SqlMoney input, long expected)
         {
             // Act
