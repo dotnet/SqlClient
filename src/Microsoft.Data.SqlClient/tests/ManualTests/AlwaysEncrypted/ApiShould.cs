@@ -1999,6 +1999,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        [Trait("Category", "flaky")] // System.AggregateException : One or more errors occurred. (Assert.ThrowsAny() Failure: No exception was thrown
+                                     // Expected: typeof(System.Exception))
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value)
@@ -2184,6 +2186,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     tasks[1].Start();
 
                     // Wait for the threads to finish.
+                    // Flaky Stack Trace --------------------------------------
+                    // Assert.ThrowsAny() Failure: No exception was thrown
+                    // Expected: typeof(System.Exception)
+                    // Stack Trace:
+                    //    at System.Threading.Tasks.Task.WaitAllCore(ReadOnlySpan`1 tasks, Int32 millisecondsTimeout, CancellationToken cancellationToken)
+                    //    at System.Threading.Tasks.Task.WaitAll(Task[] tasks)
+                    //    at Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.TestSqlCommandCancel(String connection, String value) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\ManualTests\AlwaysEncrypted\ApiShould.cs:line 2187
+                    //    at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+                    //    at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
+
                     Task.WaitAll(tasks);
 
                     CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, false);

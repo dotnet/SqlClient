@@ -57,6 +57,10 @@ parameters:
     type: object
     default: [net8.0, net9.0, net10.0]
 
+  # The 1ES pool name for Linux and Windows jobs.  macOS always uses 'Azure Pipelines'.
+  - name: poolName
+    type: string
+
 stages:
   - stage: stress_tests_stage
     displayName: Run Stress Tests
@@ -67,15 +71,6 @@ stages:
       # Bring the SA password from the secrets_stage into scope here.
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
-
-      # The 1ES pool name, determined automatically by ADO project:
-      #   - ADO.Net  -> ADO-1ES-Pool
-      #   - public   -> ADO-CI-1ES-Pool
-      - name: poolName
-        ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
-          value: ADO-1ES-Pool
-        ${{ else }}:
-          value: ADO-CI-1ES-Pool
 
     jobs:
 
@@ -93,7 +88,7 @@ stages:
         # No .NET Framework runtimes on Linux.
         netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ${{ variables.poolName }}
+        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
@@ -115,7 +110,7 @@ stages:
         # Note that we include the .NET Framework runtimes for test runs on Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ${{ variables.poolName }}
+        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self

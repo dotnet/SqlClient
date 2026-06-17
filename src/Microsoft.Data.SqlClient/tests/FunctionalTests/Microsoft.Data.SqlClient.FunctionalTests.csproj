@@ -67,7 +67,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -92,7 +91,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Data.Odbc" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />

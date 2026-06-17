@@ -20,6 +20,7 @@ variables:
   # LocalDbAppName
   # LocalDbSharedInstanceName
   # PoolNameDefault
+  # UserManagedIdentityClientId
   - group: sqlclient-testconfig-v1
 
   # General Variables ======================================================
