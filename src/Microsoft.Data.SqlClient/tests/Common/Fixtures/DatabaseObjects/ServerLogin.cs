@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Security.Cryptography;
+
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 /// <summary>
@@ -55,22 +57,29 @@ public sealed class ServerLogin : DatabaseObject<string>
 
         // First 5 characters are uppercase letters, next 5 are lowercase letters, and the last 6 are digits
         Span<char> passwordDigits = stackalloc char[PasswordLength];
-        Random rnd = new();
+        byte[] randomBytes = new byte[PasswordLength];
+        using RandomNumberGenerator rndGen = RandomNumberGenerator.Create();
 
+        rndGen.GetBytes(randomBytes);
         for(int i = 0; i < 5; i++)
         {
-            passwordDigits[i] = (char)(UpperCaseStart + rnd.Next(26));
+            passwordDigits[i] = (char)(UpperCaseStart + Scale(randomBytes[i], byte.MaxValue, 26));
         }
         for (int i = 5; i < 10; i++)
         {
-            passwordDigits[i] = (char)(LowerCaseStart + rnd.Next(26));
+            passwordDigits[i] = (char)(LowerCaseStart + Scale(randomBytes[i], byte.MaxValue, 26));
         }
         for (int i = 10; i < PasswordLength; i++)
         {
-            passwordDigits[i] = (char)(DigitsStart + rnd.Next(10));
+            passwordDigits[i] = (char)(DigitsStart + Scale(randomBytes[i], byte.MaxValue, 10));
         }
 
         return passwordDigits.ToString();
+
+        static int Scale(byte value, int existingMaximum, int newMaximum)
+        {
+            return (int)((double)value / existingMaximum * newMaximum);
+        }
     }
 
     protected override void CreateObject(string definition)
