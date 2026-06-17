@@ -206,6 +206,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     #if NETFRAMEWORK
     private Func<System.Windows.Forms.IWin32Window>? _iWin32WindowFunc = null;
 
+    // @TODO: deprecate SetIWin32WindowFunc. It is redundant with SetParentActivityOrWindowFunc:
+    // callers can return an IWin32Window from the Func<object> callback and GetParentWindow()
+    // already unwraps it to an HWND on .NET Framework. Keeping both APIs also splits the
+    // PublicClientAppKey cache (IWin32WindowFunc is part of its equality), so the same logical
+    // identity ends up with two IPublicClientApplication instances depending on which setter
+    // the caller used. Mark [Obsolete] in a future release once we have a migration window.
+    
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
     public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
