@@ -129,20 +129,19 @@ jobs:
       - name: baseBuildProperties
         value: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
 
-      - name: packageModeProperties
-        ${{ if eq(parameters.referenceType, 'Package') }}:
-          value: ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        ${{ else }}:
-          value: ''
-
-      - name: signingProperties
-        ${{ if eq(parameters.isInternalBuild, true) }}:
-          value: SigningKeyPath=$(driverKeyFile.secureFilePath)
-        ${{ else }}:
-          value: ''
-
+      # NOTE: We use compile-time ${{ if }} branches rather than concatenating
+      # separate variables (e.g. "$(base);$(optional);$(signing)") because
+      # when the optional variables are empty the semicolons remain, producing
+      # a trailing ";;" that MSBuild rejects with MSB1005.
       - name: buildProperties
-        value: $(baseBuildProperties);$(packageModeProperties);$(signingProperties)
+        ${{ if and(eq(parameters.referenceType, 'Package'), eq(parameters.isInternalBuild, true)) }}:
+          value: $(baseBuildProperties);ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SigningKeyPath=$(driverKeyFile.secureFilePath)
+        ${{ elseif eq(parameters.referenceType, 'Package') }}:
+          value: $(baseBuildProperties);ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        ${{ elseif eq(parameters.isInternalBuild, true) }}:
+          value: $(baseBuildProperties);SigningKeyPath=$(driverKeyFile.secureFilePath)
+        ${{ else }}:
+          value: $(baseBuildProperties)
 
     steps:
 

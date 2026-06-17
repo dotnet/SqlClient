@@ -95,14 +95,15 @@ jobs:
       - name: baseBuildProperties
         value: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
 
-      - name: signingProperties
-        ${{ if eq(parameters.isInternalBuild, true) }}:
-          value: SigningKeyPath=$(driverKeyFile.secureFilePath)
-        ${{ else }}:
-          value: ''
-
+      # NOTE: We use compile-time ${{ if }} branches rather than concatenating
+      # separate variables (e.g. "$(base);$(signing)") because when the
+      # optional variable is empty the semicolons remain, producing a trailing
+      # ";;" that MSBuild rejects with MSB1005.
       - name: buildProperties
-        value: $(baseBuildProperties);$(signingProperties)
+        ${{ if eq(parameters.isInternalBuild, true) }}:
+          value: $(baseBuildProperties);SigningKeyPath=$(driverKeyFile.secureFilePath)
+        ${{ else }}:
+          value: $(baseBuildProperties)
 
     steps:
 
