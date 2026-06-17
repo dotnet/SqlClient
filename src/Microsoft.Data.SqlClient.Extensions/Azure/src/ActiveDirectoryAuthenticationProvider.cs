@@ -31,15 +31,37 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
     private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
     private const int s_accountPwCacheTtlInHours = 2;
-    private const string s_sqlclientapplicationid = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-    private readonly string _applicationClientId = s_sqlclientapplicationid;
-    // Maintain a flag to disable WAM broker mode for backwards compatibility
-    // in applications using ActiveDirectoryAuthenticationProvider with custom Application Client ID.
-    private readonly bool _useWamBroker = false;
+
+    // SqlClient's first-party Entra ID application id. When the provider is constructed without
+    // a caller-supplied application id (or with this id explicitly), WAM broker mode is forced on
+    // because the corresponding app registration is configured for the WAM broker redirect URI.
+    private const string s_sqlClientApplicationId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
+
+    // MSAL redirect URI used when WAM brokered authentication is in effect on Windows. MSAL
+    // expects the suffix to match the client id of the registered application.
     private const string s_wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
+
+    // Non-broker redirect URI used on .NET Framework when WAM is not in use (legacy embedded
+    // WebView path).
     private const string s_windowsNativeRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+
+    // Loopback redirect URI used by MSAL's system browser flow on non-Windows platforms and on
+    // .NET (non-framework) Windows without WAM.
     private const string s_systemBrowserRedirectUri = "http://localhost";
+
+    // Suffix MSAL requires on Entra ID resource scopes (e.g. "https://database.windows.net/.default").
     private const string s_defaultScopeSuffix = "/.default";
+
+    // The Entra ID application client id used by this provider instance. Defaults to the SqlClient
+    // first-party app id; a caller can override it via the Options-pattern constructor or the
+    // single-string overload.
+    private readonly string _applicationClientId = s_sqlClientApplicationId;
+
+    // True when this provider should enable the Windows Account Manager (WAM) broker for
+    // interactive Entra ID flows on Windows. Always true for the SqlClient first-party app id;
+    // for caller-supplied app ids, opt-in via the Options-pattern constructor.
+    private readonly bool _useWamBroker = false;
+
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
@@ -50,41 +72,88 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private const int MsalRetryStatusCode = 429;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
+    /// <remarks>
+    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
+    /// overload to avoid adding more constructor overloads as new options are introduced.
+    /// </remarks>
     public ActiveDirectoryAuthenticationProvider()
-        : this(DefaultDeviceFlowCallback)
+        : this(new ProviderOptions())
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
+    /// <remarks>
+    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
+    /// overload to avoid adding more constructor overloads as new options are introduced.
+    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(string applicationClientId)
-        : this(DefaultDeviceFlowCallback, applicationClientId)
+        : this(new ProviderOptions { ApplicationClientId = applicationClientId })
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2WithBroker/*'/>
+    /// <remarks>
+    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
+    /// overload to avoid adding more constructor overloads as new options are introduced.
+    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(string applicationClientId, bool useWamBroker)
-        : this(DefaultDeviceFlowCallback, applicationClientId, useWamBroker)
+        : this(new ProviderOptions { ApplicationClientId = applicationClientId, UseWamBroker = useWamBroker })
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
+    /// <remarks>
+    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
+    /// overload to avoid adding more constructor overloads as new options are introduced.
+    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
-        : this(deviceCodeFlowCallbackMethod, applicationClientId, useWamBroker: false)
+        : this(new ProviderOptions
+        {
+            DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
+            ApplicationClientId = applicationClientId,
+        })
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3WithBroker/*'/>
+    /// <remarks>
+    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
+    /// overload to avoid adding more constructor overloads as new options are introduced.
+    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId, bool useWamBroker)
-    {
-        _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
-        if (applicationClientId is not null)
+        : this(new ProviderOptions
         {
-            _applicationClientId = applicationClientId;
-        }
-        // WAM broker mode is always enabled for the SQL Client application.
-        // If a custom application client ID is provided, WAM broker mode will be enabled only when customer specifies it.
-        _useWamBroker = _applicationClientId == s_sqlclientapplicationid || useWamBroker;
+            DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
+            ApplicationClientId = applicationClientId,
+            UseWamBroker = useWamBroker,
+        })
+    {
     }
+
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctorOptions/*'/>
+    public ActiveDirectoryAuthenticationProvider(ProviderOptions options)
+    {
+        if (options is null)
+        {
+            throw new ArgumentNullException(nameof(options));
+        }
+
+        _deviceCodeFlowCallback = options.DeviceCodeFlowCallback ?? DefaultDeviceFlowCallback;
+        if (options.ApplicationClientId is not null)
+        {
+            _applicationClientId = options.ApplicationClientId;
+        }
+        // WAM broker mode is always enabled for the SqlClient first-party application id (its
+        // app registration is configured for the WAM broker redirect URI). For a caller-supplied
+        // application id, WAM is opt-in via ProviderOptions.UseWamBroker.
+        _useWamBroker = _applicationClientId == s_sqlClientApplicationId || options.UseWamBroker;
+    }
+
+    /// <summary>
+    /// Indicates whether this provider instance has the Windows Account Manager (WAM) broker
+    /// enabled for interactive Entra ID flows on Windows. Exposed as <c>internal</c> for tests.
+    /// </summary>
+    internal bool UseWamBroker => _useWamBroker;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
     public static void ClearUserTokenCache()
@@ -143,10 +212,12 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     private Func<object>? _parentActivityOrWindowFunc = null;
 
-    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindow/*'/>
-    public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc)
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
+    public void SetParentActivityOrWindowFunc(Func<object>? parentActivityOrWindowFunc)
     {
-        _parentActivityOrWindowFunc = parentActivityOrWindowFunc ?? throw new ArgumentNullException(nameof(parentActivityOrWindowFunc));
+        // Passing null clears a previously-installed callback (and reverts the provider to its
+        // automatic console-window fallback on Windows).
+        _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -778,10 +849,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
             else
             {
-                builder.WithParentActivityOrWindow(GetBrokerParentWindow);
+                builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
             }
             #else
-            builder.WithParentActivityOrWindow(GetBrokerParentWindow);
+            builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
             #endif
         }
         #if NETFRAMEWORK
@@ -865,6 +936,34 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
         // This should never be reached, but if it is, throw an exception that will be noticed during development
         throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
+    }
+
+    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ProviderOptions/*'/>
+    public sealed class ProviderOptions
+    {
+        /// <summary>
+        /// Optional device-code-flow callback invoked for
+        /// <c>SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow</c>. When <see langword="null"/>,
+        /// the provider's default callback (which writes the device-code instructions to the
+        /// console) is used.
+        /// </summary>
+        public Func<DeviceCodeResult, Task>? DeviceCodeFlowCallback { get; set; }
+
+        /// <summary>
+        /// Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient
+        /// first-party application id is used and WAM broker mode is forced on (regardless of
+        /// <see cref="UseWamBroker"/>).
+        /// </summary>
+        public string? ApplicationClientId { get; set; }
+
+        /// <summary>
+        /// When <see langword="true"/>, enables the Windows Account Manager (WAM) broker for
+        /// interactive Entra ID flows on Windows when a caller-supplied
+        /// <see cref="ApplicationClientId"/> is used. Ignored (treated as <see langword="true"/>)
+        /// when <see cref="ApplicationClientId"/> is <see langword="null"/> because the SqlClient
+        /// first-party app id always uses the broker.
+        /// </summary>
+        public bool UseWamBroker { get; set; }
     }
 
     internal class PublicClientAppKey

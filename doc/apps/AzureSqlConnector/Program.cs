@@ -9,14 +9,31 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
     internal static class Program
     {
         /// <summary>
-        /// The main entry point for the application.
+        /// The main entry point for the application. Shows a small chooser dialog at startup so
+        /// the user can pick between the UI-thread <see cref="MainForm"/> and the worker-thread
+        /// <see cref="MainFormWorker"/> variant of the connector.
         /// </summary>
         [STAThread]
         private static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+            ConnectionMode mode;
+            using (ModeSelectorForm selector = new ModeSelectorForm())
+            {
+                if (selector.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+                mode = selector.SelectedMode;
+            }
+
+            Form main = mode == ConnectionMode.WorkerThreadOpen
+                ? (Form)new MainFormWorker()
+                : new MainForm();
+
+            Application.Run(main);
         }
     }
 }

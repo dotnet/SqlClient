@@ -144,11 +144,31 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                // Try to instantiate it.
-                var instance = Activator.CreateInstance(
-                    type,
-                    [Instance._applicationClientId])
-                    as SqlAuthenticationProvider;
+                // Try to instantiate it.  When no application client id is configured we use
+                // the parameterless constructor (which defaults to the SqlClient first-party app
+                // id and enables WAM brokering on Windows).  Otherwise, explicitly resolve the
+                // (string) constructor to avoid AmbiguousMatchException between the
+                // (string applicationClientId) and (ProviderOptions options) overloads when the
+                // single argument is null.
+                SqlAuthenticationProvider? instance;
+                if (Instance._applicationClientId is null)
+                {
+                    instance = Activator.CreateInstance(type) as SqlAuthenticationProvider;
+                }
+                else
+                {
+                    var ctor = type.GetConstructor(new[] { typeof(string) });
+                    if (ctor is null)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Azure extension class={className} is missing the (string) " +
+                            "constructor; no default Active Directory provider installed");
+                        return;
+                    }
+
+                    instance = ctor.Invoke(new object[] { Instance._applicationClientId }) as SqlAuthenticationProvider;
+                }
 
                 if (instance is null)
                 {
@@ -189,6 +209,7 @@ namespace Microsoft.Data.SqlClient
             // attempt to use Active Directory authentication.
             catch (Exception ex)
             when (ex is
+                      AmbiguousMatchException or
                       ArgumentException or
                       BadImageFormatException or
                       FileLoadException or
@@ -198,6 +219,7 @@ namespace Microsoft.Data.SqlClient
                       MissingMethodException or
                       NotSupportedException or
                       TargetInvocationException or
+                      TypeInitializationException or
                       TypeLoadException)
             {
                 SqlClientEventSource.Log.TryTraceEvent(

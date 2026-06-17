@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
@@ -6,24 +7,38 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 {
     /// <summary>
-    /// "UI-thread" variant of the connector form. Opens the SQL connection via
-    /// <see cref="SqlConnection.OpenAsync()"/> on the UI thread; the WinForms
-    /// <see cref="System.Threading.SynchronizationContext"/> keeps the message pump alive while
-    /// the async I/O completes, so the form remains responsive and MSAL.NET's embedded sign-in
-    /// browser (for <c>ActiveDirectoryInteractive</c>) parents itself correctly.
+    /// "Worker thread" variant of the connector form. Opens the SQL connection synchronously
+    /// inside a <see cref="Task.Run(System.Action)"/> call so the UI thread never blocks.
     /// </summary>
-    public partial class MainForm : Form
+    /// <remarks>
+    /// <para>
+    /// The form's HWND is captured on the UI thread in the constructor and stashed in
+    /// <see cref="_ownerHwnd"/>. Both Entra ID parent-window callbacks return that captured
+    /// handle, so they are safe to invoke from the worker thread (touching <c>Form.Handle</c>
+    /// from a non-UI thread is illegal).
+    /// </para>
+    /// <para>
+    /// Compare with <see cref="MainForm"/>, which keeps Open on the UI thread and relies on
+    /// <see cref="SqlConnection.OpenAsync()"/> for responsiveness.
+    /// </para>
+    /// </remarks>
+    public partial class MainFormWorker : Form
     {
         // ──────────────────────────────────────────────────────────────────
         #region Construction
 
-        public MainForm()
+        public MainFormWorker()
         {
             InitializeComponent();
-            this.Text = "Azure SQL Connector — UI thread (OpenAsync)";
             PopulateAuthenticationMethods();
             PopulateEncryptOptions();
             UpdateCredentialFieldsAvailability();
+
+            // Force the underlying Win32 window to be created NOW (on the UI thread) so we can
+            // safely capture its HWND for MSAL to use later from a worker thread. Touching
+            // Form.Handle from a non-UI thread is illegal, so we read it here once and stash it.
+            _ownerHwnd = this.Handle;
+
             RegisterActiveDirectoryProvider();
         }
 
@@ -52,21 +67,25 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
         /// <summary>
         /// Registers a single <see cref="ActiveDirectoryAuthenticationProvider"/> for every
-        /// Entra ID authentication method and parents its UI to this form. With the UI-thread
-        /// <see cref="SqlConnection.OpenAsync()"/> approach, the callbacks run on the UI thread,
-        /// so it is safe for them to return <c>this</c> directly.
+        /// Entra ID authentication method and gives it the form's captured HWND as the parent
+        /// window owner. Both callbacks intentionally use the HWND captured in the constructor
+        /// (<see cref="_ownerHwnd"/>) rather than <c>this.Handle</c>; they are invoked by MSAL on
+        /// the worker thread that called <see cref="SqlConnection.Open"/>.
         /// </summary>
         private void RegisterActiveDirectoryProvider()
         {
             ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider();
+            IntPtr ownerHwnd = _ownerHwnd;
+
 #if NETFRAMEWORK
             // .NET Framework: parent the embedded WebView via the legacy IWin32Window API.
-            provider.SetIWin32WindowFunc(() => this);
-#else
+            provider.SetIWin32WindowFunc(() => new Win32WindowHandle(ownerHwnd));
+#endif
+
             // Modern API: works on both .NET Framework and .NET 8+, and is the one MSAL's WAM
             // broker consults on Windows.
-            provider.SetParentActivityOrWindowFunc(() => this.Handle);
-#endif
+            provider.SetParentActivityOrWindowFunc(() => ownerHwnd);
+
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, provider);
@@ -128,18 +147,24 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             try
             {
-                // Call OpenAsync on the UI thread so the WinForms SynchronizationContext is
-                // preserved. The ActiveDirectoryInteractive flow needs a running UI message pump
-                // on the calling thread for MSAL.NET to display its embedded sign-in browser.
-                // OpenAsync still keeps the UI responsive because the I/O wait does not block the
-                // message loop.
-                string serverVersion;
-                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                // Run Open() on a thread-pool worker so the UI thread never blocks. The await
+                // continuation hops back onto the UI thread automatically (the awaiter captures
+                // the current SynchronizationContext), so it is safe to touch the form's controls
+                // after the await.
+                //
+                // The Entra ID interactive / WAM flows still find a parent window because we
+                // captured the form's HWND on the UI thread in the constructor and the callbacks
+                // registered in RegisterActiveDirectoryProvider return that captured handle (no
+                // UI-thread-only Form.Handle access from the worker thread).
+                string connectionString = builder.ConnectionString;
+                string serverVersion = await Task.Run(() =>
                 {
-                    await connection.OpenAsync().ConfigureAwait(true);
-                    // connection.Open();
-                    serverVersion = connection.ServerVersion;
-                }
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        return connection.ServerVersion;
+                    }
+                }).ConfigureAwait(true);
 
                 SetStatus("Connected successfully.", isError: false);
                 AppendStatus("Connected successfully! Server version: " + serverVersion);
@@ -147,13 +172,12 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             catch (SqlException ex)
             {
                 SetStatus("Connection failed (SqlException).", isError: true);
-                AppendStatus("SqlException [" + ex.Number + "]: " + ex.Message + "\r\n" + ex.StackTrace);
+                AppendStatus("SqlException [" + ex.Number + "]: " + ex.Message);
             }
             catch (Exception ex)
             {
                 SetStatus("Connection failed.", isError: true);
-                AppendStatus(ex.GetType().Name + ": " + ex.Message + "\r\n" + ex.StackTrace);
-                AppendStatus(ex.GetType().Name + ": " + ex.Message + "\r\n" + ex.StackTrace);
+                AppendStatus(ex.GetType().Name + ": " + ex.Message);
             }
             finally
             {
@@ -182,36 +206,52 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             try
             {
-                // Same UI-thread reasoning as btnTest_Click — keep the message pump alive for any
-                // ActiveDirectoryInteractive sign-in that may be required.
-                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                // Run the whole open + query + read on a worker thread so the UI never blocks.
+                // We materialize the single result row into a List<(name, value)> on the worker
+                // and then format it on the UI thread once the await returns.
+                string connectionString = builder.ConnectionString;
+                List<(string Name, object Value)> row = await Task.Run(() =>
                 {
-                    await connection.OpenAsync().ConfigureAwait(true);
-
-                    using (SqlCommand command = connection.CreateCommand())
+                    using (SqlConnection connection = new SqlConnection(connectionString))
                     {
-                        command.CommandText = IdentityQuery.CommandText;
+                        connection.Open();
 
-                        using (SqlDataReader reader = await command.ExecuteReaderAsync().ConfigureAwait(true))
+                        using (SqlCommand command = connection.CreateCommand())
                         {
-                            if (await reader.ReadAsync().ConfigureAwait(true))
+                            command.CommandText = IdentityQuery.CommandText;
+
+                            using (SqlDataReader reader = command.ExecuteReader())
                             {
-                                AppendStatus("Identity:");
+                                if (!reader.Read())
+                                {
+                                    return null;
+                                }
+
+                                var fields = new List<(string, object)>(reader.FieldCount);
                                 for (int i = 0; i < reader.FieldCount; i++)
                                 {
-                                    string name = reader.GetName(i);
                                     object value = reader.IsDBNull(i) ? "(null)" : reader.GetValue(i);
-                                    AppendStatus("  " + name.PadRight(16) + ": " + value);
+                                    fields.Add((reader.GetName(i), value));
                                 }
-                                SetStatus("Identity query succeeded.", isError: false);
-                            }
-                            else
-                            {
-                                SetStatus("Identity query returned no rows.", isError: true);
-                                AppendStatus("(no rows returned)");
+                                return fields;
                             }
                         }
                     }
+                }).ConfigureAwait(true);
+
+                if (row is null)
+                {
+                    SetStatus("Identity query returned no rows.", isError: true);
+                    AppendStatus("(no rows returned)");
+                }
+                else
+                {
+                    AppendStatus("Identity:");
+                    foreach (var (name, value) in row)
+                    {
+                        AppendStatus("  " + name.PadRight(16) + ": " + value);
+                    }
+                    SetStatus("Identity query succeeded.", isError: false);
                 }
             }
             catch (SqlException ex)
@@ -445,6 +485,33 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             public const string Optional = "Optional";
             public const string Strict = "Strict";
         }
+
+        /// <summary>
+        /// Tiny <see cref="IWin32Window"/> wrapper around a raw HWND captured on the UI thread.
+        /// Used so that MSAL.NET's <c>IWin32WindowFunc</c> callback can safely return a window
+        /// owner from a worker thread without ever touching <see cref="Control.Handle"/> off-UI.
+        /// Only needed on .NET Framework where the legacy <c>SetIWin32WindowFunc</c> API is used.
+        /// </summary>
+#if NETFRAMEWORK
+        private sealed class Win32WindowHandle : IWin32Window
+        {
+            private readonly IntPtr _hwnd;
+            public Win32WindowHandle(IntPtr hwnd) => _hwnd = hwnd;
+            public IntPtr Handle => _hwnd;
+        }
+#endif
+
+        #endregion
+
+        // ──────────────────────────────────────────────────────────────────
+        #region Private Fields
+
+        /// <summary>
+        /// The form's Win32 window handle, captured on the UI thread in the constructor.
+        /// Read from worker threads by the Entra ID provider callbacks to parent MSAL's
+        /// sign-in / WAM broker UI without illegally touching <see cref="Control.Handle"/>.
+        /// </summary>
+        private readonly IntPtr _ownerHwnd;
 
         #endregion
     }
