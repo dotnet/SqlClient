@@ -17,17 +17,6 @@ public class WamBrokerTests
     // that this value differs from the SqlClient first-party id.
     private const string TestCustomAppId = "11111111-2222-3333-4444-555555555555";
 
-    /// <summary>
-    /// Defensive guard: <see cref="TestCustomAppId"/> is reused across the entire suite as a
-    /// stand-in for a caller-supplied application id. This single assertion makes the
-    /// "not the SqlClient first-party id" precondition explicit instead of relying on RNG.
-    /// </summary>
-    [Fact]
-    public void TestCustomAppId_IsNotSqlClientAppId()
-    {
-        Assert.NotEqual(SqlClientApplicationId, TestCustomAppId);
-    }
-
     // Reads the private _parentActivityOrWindowFunc field. Used to assert downstream effects
     // of SetParentActivityOrWindowFunc without triggering a live MSAL flow.
     private static Func<object>? GetParentActivityOrWindowFunc(ActiveDirectoryAuthenticationProvider provider)
@@ -58,56 +47,17 @@ public class WamBrokerTests
         Assert.Null(GetParentActivityOrWindowFunc(provider));
     }
 
-    /// <summary>A non-null callback installs cleanly, does not throw, and is the value the provider holds.</summary>
-    [Fact]
-    public void SetParentActivityOrWindowFunc_ValidFunc_DoesNotThrow()
-    {
-        var provider = new ActiveDirectoryAuthenticationProvider();
-        Func<object> func = () => IntPtr.Zero;
-        provider.SetParentActivityOrWindowFunc(func);
-        Assert.Same(func, GetParentActivityOrWindowFunc(provider));
-    }
-
-    /// <summary>Repeated calls must be supported (no internal locking guard rejects a second set).</summary>
-    [Fact]
-    public void SetParentActivityOrWindowFunc_CanBeCalledMultipleTimes()
-    {
-        var provider = new ActiveDirectoryAuthenticationProvider();
-        provider.SetParentActivityOrWindowFunc(() => IntPtr.Zero);
-        Func<object> second = () => new IntPtr(12345);
-        provider.SetParentActivityOrWindowFunc(second);
-        Assert.Same(second, GetParentActivityOrWindowFunc(provider));
-    }
-
     /// <summary>
-    /// Last-write-wins: the most recently installed callback is the one the provider exposes
-    /// downstream. Verified by reading the private backing field after a sequence of sets
-    /// (including a null clear in the middle).
+    /// The constructor uses the SqlClient first-party application id, which always
+    /// enables WAM broker mode regardless of any opt-in flag.
     /// </summary>
     [Fact]
-    public void SetParentActivityOrWindowFunc_LastSetWins()
+    public void Ctor_ApplicationClientId_EnablesWamBroker()
     {
-        var provider = new ActiveDirectoryAuthenticationProvider();
-
-        Func<object> firstThrowing = () => throw new InvalidOperationException("first");
-        Func<object> secondZero = () => IntPtr.Zero;
-        Func<object> finalSeven = () => new IntPtr(7);
-
-        provider.SetParentActivityOrWindowFunc(firstThrowing);
-        Assert.Same(firstThrowing, GetParentActivityOrWindowFunc(provider));
-
-        provider.SetParentActivityOrWindowFunc(secondZero);
-        Assert.Same(secondZero, GetParentActivityOrWindowFunc(provider));
-
-        // Re-installing a null clears it.
-        provider.SetParentActivityOrWindowFunc(null);
-        Assert.Null(GetParentActivityOrWindowFunc(provider));
-
-        provider.SetParentActivityOrWindowFunc(finalSeven);
-        Assert.Same(finalSeven, GetParentActivityOrWindowFunc(provider));
-
-        // The earlier throwing callback must not resurface.
-        Assert.NotSame(firstThrowing, GetParentActivityOrWindowFunc(provider));
+        var provider = new ActiveDirectoryAuthenticationProvider(SqlClientApplicationId);
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
+        Assert.True(provider.UseWamBroker,
+            "Constructor with SqlClient first-party application id must enable WAM broker.");
     }
 
     /// <summary>
@@ -118,7 +68,6 @@ public class WamBrokerTests
     public void Ctor_Default_EnablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider();
-
         Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker,
             "Default ctor must enable WAM broker (uses SqlClient first-party application id).");

@@ -961,17 +961,21 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         /// <summary>
         /// Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient
         /// first-party application id is used and WAM broker mode is forced on (regardless of
-        /// <see cref="UseWamBroker"/>).
+        /// <see cref="UseWamBroker"/>) when running on Windows.
         /// </summary>
         public string? ApplicationClientId { get; set; }
 
         /// <summary>
         /// When <see langword="true"/>, enables the Windows Account Manager (WAM) broker for
-        /// interactive Entra ID flows on Windows when a caller-supplied
-        /// <see cref="ApplicationClientId"/> is used. Ignored (treated as <see langword="true"/>)
-        /// when <see cref="ApplicationClientId"/> is <see langword="null"/> because the SqlClient
+        /// interactive Entra ID flows when a caller-supplied <see cref="ApplicationClientId"/>
+        /// is used. Ignored (treated as <see langword="true"/>) when
+        /// <see cref="ApplicationClientId"/> is <see langword="null"/> because the SqlClient
         /// first-party app id always uses the broker.
         /// </summary>
+        /// <remarks>
+        /// The WAM broker is a Windows-only feature. On non-Windows platforms this property has
+        /// no effect and interactive Entra ID flows always fall back to the system browser.
+        /// </remarks>
         public bool UseWamBroker { get; set; }
     }
 

@@ -102,7 +102,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Azure.Identity" Version="1.18.0" />
-    <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.83.0" />
+    <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

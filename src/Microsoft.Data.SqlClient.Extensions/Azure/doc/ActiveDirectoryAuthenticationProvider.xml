@@ -80,6 +80,9 @@ See the LICENSE file in the project root for more information.
       </summary>
       <remarks>
         Prefer this options-bag constructor over the positional-argument overloads in new code. Additional options can be added here in future versions without introducing new constructor overloads.
+        <para>
+          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker" /> is a Windows-only setting: it has no effect on non-Windows platforms, where interactive Entra ID flows always use the system browser.
+        </para>
       </remarks>
     </ProviderOptions>
     <AcquireTokenAsync>

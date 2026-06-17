@@ -72,6 +72,9 @@ See the LICENSE file in the project root for more information.
       </summary>
       <remarks>
         When <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.ApplicationClientId" /> is left unset (or set to the driver's built-in application client id), the Windows Account Manager (WAM) broker is always enabled regardless of <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker" />. For caller-supplied application client ids, WAM is opt-in via <c>UseWamBroker</c>.
+        <para>
+          The WAM broker is a Windows-only feature. <c>UseWamBroker</c> has no effect on non-Windows platforms; interactive Entra ID flows there always fall back to the system browser.
+        </para>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         Thrown when <paramref name="options" /> is <see langword="null" />.
