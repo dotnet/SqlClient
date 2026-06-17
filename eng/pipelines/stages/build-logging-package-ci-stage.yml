@@ -67,6 +67,11 @@ parameters:
     - detailed
     - diagnostic
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_logging_package_stage
@@ -79,11 +84,56 @@ stages:
 
     jobs:
 
+      # ------------------------------------------------------------------------
+      # Build and test on Linux.
+
+      - template: /eng/pipelines/jobs/test-logging-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Linux
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
+          jobNameSuffix: linux
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: ubuntu-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on Windows.
+
+      - template: /eng/pipelines/jobs/test-logging-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: Win
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
+          jobNameSuffix: windows
+          netFrameworkRuntimes: [net462]
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: windows-latest
+
+      # ------------------------------------------------------------------------
+      # Build and test on macOS.
+
+      - template: /eng/pipelines/jobs/test-logging-package-ci-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          displayNamePrefix: macOS
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
+          jobNameSuffix: macos
+          netFrameworkRuntimes: []
+          netRuntimes: [net8.0, net9.0, net10.0]
+          poolName: Azure Pipelines
+          vmImage: macos-latest
+
+      # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
-      # Note: No test jobs because the Logging project does not have a test
-      # project yet.  When a test project is added, test jobs should be added
-      # here (mirroring the Abstractions stage pattern) and the pack job should
-      # depend on them.
 
       - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
         parameters:
@@ -93,3 +143,4 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
