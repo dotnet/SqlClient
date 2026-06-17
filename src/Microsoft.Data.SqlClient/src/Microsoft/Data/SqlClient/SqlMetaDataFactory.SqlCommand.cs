@@ -10,30 +10,68 @@ using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SqlMetaDataFactory
     {
+        private sealed class SupportedQuery : ISupported
+        {
+            public string? MinimumVersion { get; init; }
+            public string? MaximumVersion { get; init; }
+            public string Query { get; init; }
+
+            public SupportedQuery(string? minimumVersion, string? maximumVersion, string query)
+            {
+                MinimumVersion = minimumVersion;
+                MaximumVersion = maximumVersion;
+                Query = query;
+            }
+        }
+
         private sealed class SqlCommandCollection : MetaDataCollectionBase
         {
-            private readonly string _populationString;
-            public readonly Restriction[] RestrictionParams;
+            private readonly SupportedQuery[] Queries;
+            public Restriction[] RestrictionParams { get; init; }
 
-            public SqlCommandCollection(string collectionName, int numberOfRestrictions, int numberOfIdentifierParts,
-            string minimumVersion, string maximumVersion, string populationString, Restriction[] restrictions)
-                : base(collectionName, numberOfRestrictions, numberOfIdentifierParts, minimumVersion, maximumVersion)
+            public SqlCommandCollection(string collectionName, int numberOfRestrictions, int numberOfIdentifierParts, SupportedQuery[] queries, Restriction[] restrictions)
+                : base(collectionName, numberOfRestrictions, numberOfIdentifierParts)
             {
                 RestrictionParams = restrictions;
-                _populationString = populationString;
+                Queries = queries;
             }
 
-            public async override ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable accumulator = null)
+            public override bool SupportedByCurrentVersion(MetaDataContext context) => GetSupportedQuery(context, false) != null;
+
+            private SupportedQuery? GetSupportedQuery(MetaDataContext context, bool throwIfNotFound)
+            {
+                SupportedQuery? validQuery = null;
+                foreach (SupportedQuery query in Queries)
+                {
+                    if (query.SupportedByCurrentVersion(context))
+                    {
+                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.ServerVersion} in collection {CollectionName}");
+                        validQuery = query;
+                    }
+                }
+
+                // If there are no queries matching current server version, then whole collection is undefined for this version
+                if (validQuery == null && throwIfNotFound)
+                {
+                    throw ADP.UndefinedCollection(CollectionName);
+                }
+
+                return validQuery;
+            }
+
+            public async override ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable? accumulator = null)
             {
                 Debug.Assert(NumberOfRestrictions >= (context.RestrictionValues?.Length ?? 0));
 
                 context.CancellationToken.ThrowIfCancellationRequested();
 
-                DataTable resultTable = null;
+                DataTable resultTable;
 
                 if ((context.RestrictionValues is not null) && (context.RestrictionValues.Length > NumberOfRestrictions))
                 {
@@ -42,7 +80,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!ADP.IsEmptyArray(context.RestrictionValues))
                 {
-                    for (int i = 0; i < context.RestrictionValues.Length; i++)
+                    for (int i = 0; i < context.RestrictionValues!.Length; i++)
                     {
                         if ((context.RestrictionValues[i] is not null) && (context.RestrictionValues[i].Length > 4096))
                         {
@@ -53,10 +91,10 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                SqlConnection castConnection = context.Connection as SqlConnection;
+                SqlConnection castConnection = (SqlConnection)context.Connection;
                 using SqlCommand command = castConnection.CreateCommand();
 
-                command.CommandText = _populationString;
+                command.CommandText = GetSupportedQuery(context, true)!.Query;
                 command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
                 command.Transaction = castConnection?.GetOpenTdsConnection()?.CurrentTransaction?.Parent;
 
@@ -79,7 +117,7 @@ namespace Microsoft.Data.SqlClient
                     command.Parameters.Add(restrictionParameter);
                 }
 
-                SqlDataReader reader = null;
+                SqlDataReader? reader = null;
                 try
                 {
                     try
@@ -112,7 +150,7 @@ namespace Microsoft.Data.SqlClient
                         System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> colSchema = reader.GetColumnSchema();
                         foreach (DbColumn col in colSchema)
                         {
-                            resultTable.Columns.Add(col.ColumnName, col.DataType);
+                            resultTable.Columns.Add(col.ColumnName, col.DataType!);
                         }
                     }
 

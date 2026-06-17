@@ -133,8 +133,6 @@ internal sealed partial class SqlMetaDataFactory
                     new DataColumn(DbMetaDataColumnNames.MaximumScale, typeof(short)),
                     new DataColumn(DbMetaDataColumnNames.MinimumScale, typeof(short)),
                     new DataColumn(DbMetaDataColumnNames.IsConcurrencyType, typeof(bool)),
-                    //new DataColumn(MaximumVersionKey, typeof(string)),
-                    //new DataColumn(MinimumVersionKey, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.IsLiteralSupported, typeof(bool)),
                     new DataColumn(DbMetaDataColumnNames.LiteralPrefix, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.LiteralSuffix, typeof(string))
@@ -145,10 +143,7 @@ internal sealed partial class SqlMetaDataFactory
             result.BeginLoadData();
             foreach(TypeMetaData t in s_types)
             {
-                // TODO : There is a problem, that json datatype is not returned on Azure, because it's minimumVersion="17.0.0000.0", but Azure SQL version is always 12.0.2000.8
-                // || ((context.Connection as SqlConnection)?.InnerConnection as SqlConnectionInternal)?.IsAzureSqlConnection ?? false)
-                if ((t.MinimumVersion == null || string.Compare(context.ServerVersion, t.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
-                    (t.MaximumVersion == null || string.Compare(context.ServerVersion, t.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0))
+                if (t.SupportedByCurrentVersion(context))
                 {
                     DataRow row = result.NewRow();
                     row[DbMetaDataColumnNames.TypeName] = t.TypeName;
@@ -200,7 +195,7 @@ internal sealed partial class SqlMetaDataFactory
             result.AcceptChanges();
 
             // 2. Add UDTs from the server if supported
-            MetaDataCollectionBase? udtCollection = FindMetaDataCollection("_UDTs", context.ServerVersion);
+            MetaDataCollectionBase? udtCollection = FindMetaDataCollection("_UDTs", context);
             if (udtCollection != null)
             {
                 const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
@@ -218,7 +213,7 @@ internal sealed partial class SqlMetaDataFactory
             }
 
             // 3. Add TVPs from the server if supported
-            MetaDataCollectionBase? tvpCollection = FindMetaDataCollection("_TVPs", context.ServerVersion);
+            MetaDataCollectionBase? tvpCollection = FindMetaDataCollection("_TVPs", context);
             if (tvpCollection != null)
             {
                 await tvpCollection.GetMetadata(context, result);
@@ -228,32 +223,32 @@ internal sealed partial class SqlMetaDataFactory
         }
     }
 
-    private sealed class TypeMetaData
+    private sealed class TypeMetaData : ISupported
     {
-        public readonly string TypeName;
-        public readonly int ProviderDbType;
-        public readonly long ColumnSize;
-        public readonly string CreateFormat;
-        public readonly string? CreateParameters;
-        public readonly string DataType;
-        public readonly bool IsAutoIncrementable;
-        public readonly bool IsBestMatch;
-        public readonly bool IsCaseSensitive;
-        public readonly bool IsFixedLength;
-        public readonly bool IsFixedPrecisionScale;
-        public readonly bool IsLong;
-        public readonly bool IsNullable;
-        public readonly bool IsSearchable;
-        public readonly bool IsSearchableWithLike;
-        public readonly bool? IsUnsigned;
-        public readonly short MaximumScale;
-        public readonly short MinimumScale;
-        public readonly bool IsConcurrencyType;
-        public readonly string? MaximumVersion;
-        public readonly string? MinimumVersion;
-        public readonly bool? IsLiteralSupported;
-        public readonly string? LiteralPrefix;
-        public readonly string? LiteralSuffix;
+        public string TypeName{ get; init; }
+        public int ProviderDbType{ get; init; }
+        public long ColumnSize{ get; init; }
+        public string CreateFormat{ get; init; }
+        public string? CreateParameters{ get; init; }
+        public string DataType{ get; init; }
+        public bool IsAutoIncrementable{ get; init; }
+        public bool IsBestMatch{ get; init; }
+        public bool IsCaseSensitive{ get; init; }
+        public bool IsFixedLength{ get; init; }
+        public bool IsFixedPrecisionScale{ get; init; }
+        public bool IsLong{ get; init; }
+        public bool IsNullable{ get; init; }
+        public bool IsSearchable{ get; init; }
+        public bool IsSearchableWithLike{ get; init; }
+        public bool? IsUnsigned{ get; init; }
+        public short MaximumScale{ get; init; }
+        public short MinimumScale{ get; init; }
+        public bool IsConcurrencyType{ get; init; }
+        public string? MaximumVersion{ get; init; }
+        public string? MinimumVersion{ get; init; }
+        public bool? IsLiteralSupported{ get; init; }
+        public string? LiteralPrefix{ get; init; }
+        public string? LiteralSuffix{ get; init; }
 
         public TypeMetaData(string typeName, int providerDbType, long columnSize, string createFormat,
             string dataType, bool isAutoIncrementable, bool isBestMatch, bool isCaseSensitive, bool isFixedLength,

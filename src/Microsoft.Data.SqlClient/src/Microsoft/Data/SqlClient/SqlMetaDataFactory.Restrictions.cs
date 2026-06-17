@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (mdc is SqlCommandCollection sqlCollection &&
                         sqlCollection.RestrictionParams != null &&
-                        mdc.SupportedByCurrentVersion(context.ServerVersion))
+                        sqlCollection.SupportedByCurrentVersion(context))
                     {
                         foreach (Restriction restriction in sqlCollection.RestrictionParams)
                         {

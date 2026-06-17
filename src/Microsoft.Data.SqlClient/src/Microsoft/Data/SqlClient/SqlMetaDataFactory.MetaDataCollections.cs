@@ -4,6 +4,7 @@
 
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
@@ -37,7 +38,7 @@ internal sealed partial class SqlMetaDataFactory
 
             foreach (MetaDataCollectionBase mdc in s_metaDataCollection)
             {
-                if (mdc.SupportedByCurrentVersion(context.ServerVersion) && mdc.CollectionName[0] != '_')
+                if (mdc.SupportedByCurrentVersion(context) && mdc.CollectionName[0] != '_')
                 {
                     DataRow row = table.NewRow();
                     table.Rows.Add([mdc.CollectionName, mdc.NumberOfRestrictions, mdc.NumberOfIdentifierParts]);
@@ -47,14 +48,15 @@ internal sealed partial class SqlMetaDataFactory
             return new ValueTask<DataTable>(table);
         }
 
-        internal async ValueTask<DataTable> GetMetadata(string collectionName, MetaDataContext context, DataTable accumulator = null)
+        internal async ValueTask<DataTable> GetMetadata(string collectionName, MetaDataContext context)
         {
+            Debug.Assert(context != null);
             if (string.IsNullOrEmpty(collectionName) || collectionName[0] == '_')
             {
                 throw ADP.UndefinedCollection(collectionName);
             }
 
-            MetaDataCollectionBase collection = FindMetaDataCollection(collectionName, context.ServerVersion);
+            MetaDataCollectionBase collection = FindMetaDataCollection(collectionName, context);
             if (collection == null)
             {
                 throw ADP.UnsupportedVersion(collectionName);
