@@ -74,7 +74,6 @@ internal sealed partial class SqlMetaDataFactory
                 }
             };
 
-            DataRow row = table.NewRow();
             table.Rows.Add([
                 CompositeIdentifierSeparatorPattern,
                 DataSourceProductName,
@@ -94,6 +93,7 @@ internal sealed partial class SqlMetaDataFactory
                 StringLiteralPattern,
                 SupportedJoinOperators
                 ]);
+
             return new ValueTask<DataTable>(table);
         }
     }
