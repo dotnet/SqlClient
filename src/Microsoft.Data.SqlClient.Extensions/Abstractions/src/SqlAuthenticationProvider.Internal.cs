@@ -54,12 +54,26 @@ public abstract partial class SqlAuthenticationProvider
                     return;
                 }
 
-                // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39845):
-                // Verify the assembly is signed by us?
+                // Defense-in-depth: only reflect into MDS if it carries the same strong-name
+                // public key as this Extensions assembly. This is not a substitute for
+                // Authenticode verification (which would require WinVerifyTrust and is
+                // Windows-only) — it only catches an MDS built by a different publisher
+                // dropped on the load path. On .NET Framework Assembly.Load already enforces
+                // strong-name matching; on .NET (Core+) it does not, which is why we check
+                // explicitly here. Throws on mismatch so that consumers see a hard failure
+                // (surfaced as TypeInitializationException on first GetProvider/SetProvider
+                // call) instead of silently falling back to a no-op provider table.
+                if (!IsSiblingAssembly(assembly))
+                {
+                    throw new InvalidOperationException(
+                        $"MDS assembly={assemblyName} is loaded but is not signed with the " +
+                        "same strong-name key as Microsoft.Data.SqlClient.Extensions.Abstractions. " +
+                        "Refusing to reflect into a foreign-signed MDS for security reasons.");
+                }
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";
-                var manager = assembly.GetType(className);
+                Type? manager = assembly.GetType(className);
 
                 if (manager is null)
                 {
@@ -101,6 +115,42 @@ public abstract partial class SqlAuthenticationProvider
                     $"Get/SetProvider() will not function: {ex} ");
             }
             // Any other exceptions are fatal.
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when it is safe to reflect into <paramref name="assembly"/>.
+        /// Policy: if this Extensions assembly is strong-name signed, the loaded MDS must carry
+        /// the same public-key token; if Extensions itself is unsigned (e.g. local developer
+        /// builds), no token comparison is possible, so we permit it.
+        /// </summary>
+        private static bool IsSiblingAssembly(Assembly assembly)
+        {
+            byte[]? expected = typeof(SqlAuthenticationProvider)
+                .Assembly.GetName().GetPublicKeyToken();
+
+            // Extensions itself isn't strong-name signed (local dev build) — no token to
+            // compare against, so we can't make a meaningful authenticity claim either way.
+            if (expected is null || expected.Length == 0)
+            {
+                return true;
+            }
+
+            byte[]? actual = assembly.GetName().GetPublicKeyToken();
+
+            if (actual is null || actual.Length != expected.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < expected.Length; i++)
+            {
+                if (expected[i] != actual[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
