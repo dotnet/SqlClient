@@ -659,7 +659,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 // Use a dedicated CTS with the typical AAD user-code lifetime as the cap,
                 // mirroring the pattern used for ActiveDirectoryInteractive above.
                 using CancellationTokenSource ctsDeviceFlow = new();
-                ctsDeviceFlow.CancelAfter(900000); // 15 minutes
+                ctsDeviceFlow.CancelAfter(TimeSpan.FromMinutes(15)); // 15 minutes
 
                 return await app.AcquireTokenWithDeviceCode(scopes,
                     deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))
