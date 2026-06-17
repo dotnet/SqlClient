@@ -1,4 +1,4 @@
-﻿namespace ConnectionStringSettings_RetrieveFromConfigByProvider;
+namespace ConnectionStringSettings_RetrieveFromConfigByProvider;
 
 using System;
 using System.Data;

@@ -2,9 +2,12 @@
   <PropertyGroup>
     <RootNamespace>Microsoft.SqlServer.TDS</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS</AssemblyName>
-    <ProjectGuid>{8DC9D1A0-351B-47BC-A90F-B9DA542550E9}</ProjectGuid>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
-    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- Sign when a test key is provided so signed test assemblies can reference this. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 </Project>

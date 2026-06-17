@@ -13,6 +13,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.IO;
@@ -235,7 +236,7 @@ namespace Microsoft.Data.SqlClient
         private List<EventContextPair> _eventList = new();
         private readonly object _eventHandlerLock = new(); // Lock for event serialization.
         // Track the time that this dependency should time out. If the server didn't send a change
-        // notification or a time-out before this point then the client will perform a client-side 
+        // notification or a time-out before this point then the client will perform a client-side
         // timeout.
         private DateTime _expirationTime = DateTime.MaxValue;
         // Used for invalidation of dependencies based on which servers they rely upon.
@@ -246,8 +247,8 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly object s_startStopLock = new();
         private static readonly string s_appDomainKey = Guid.NewGuid().ToString();
-        // Hashtable containing all information to match from a server, user, database triple to the service started for that 
-        // triple.  For each server, there can be N users.  For each user, there can be N databases.  For each server, user, 
+        // Hashtable containing all information to match from a server, user, database triple to the service started for that
+        // triple.  For each server, there can be N users.  For each user, there can be N databases.  For each server, user,
         // database, there can only be one service.
         private static readonly Dictionary<string, Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>> s_serverUserHash =
                    new(StringComparer.OrdinalIgnoreCase);
@@ -256,7 +257,7 @@ namespace Microsoft.Data.SqlClient
         // The following two strings are used for AppDomain.CreateInstance.
         private static readonly string s_assemblyName = (typeof(SqlDependencyProcessDispatcher)).Assembly.FullName;
         private static readonly string s_typeName = (typeof(SqlDependencyProcessDispatcher)).FullName;
-#endif 
+#endif
 
         // EventSource members
         private static int s_objectTypeCount; // EventSourceCounter counter
@@ -265,7 +266,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // Constructors
 #if NETFRAMEWORK
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+        [HostProtection(ExternalThreading = true)]
 #endif
         public SqlDependency() : this(null, null, SQL.SqlDependencyTimeoutDefault)
         {
@@ -273,7 +274,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
 #if NETFRAMEWORK
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+        [HostProtection(ExternalThreading = true)]
 #endif
         public SqlDependency(SqlCommand command) : this(command, null, SQL.SqlDependencyTimeoutDefault)
         {
@@ -312,8 +313,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_HasChanges))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_HasChanges))
         ]
 #endif
         public bool HasChanges => _dependencyFired;
@@ -321,8 +322,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_Id))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_Id))
         ]
 #endif
         public string Id => _id;
@@ -343,8 +344,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_OnChange))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_OnChange))
         ]
 #endif
         public event OnChangeEventHandler OnChange
@@ -421,8 +422,8 @@ namespace Microsoft.Data.SqlClient
 /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
 #if NETFRAMEWORK
         [
-        ResCategoryAttribute(nameof(Strings.DataCategory_Data)),
-        ResDescriptionAttribute(nameof(Strings.SqlDependency_AddCommandDependency))
+        ResCategory(nameof(Strings.DataCategory_Data)),
+        ResDescription(nameof(Strings.SqlDependency_AddCommandDependency))
         ]
 #endif
         public void AddCommandDependency(SqlCommand command)
@@ -465,9 +466,9 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 #endif // DEBUG
-                
+
                 _AppDomain masterDomain = AppDomain.CurrentDomain;
-                
+
                 ObjectHandle handle = CreateProcessDispatcher(masterDomain);
                 if (handle != null)
                 {
@@ -483,9 +484,9 @@ namespace Microsoft.Data.SqlClient
                             SqlClientObjRef objRef = new(s_processDispatcher);
                             DataContractSerializer serializer = new(objRef.GetType());
                             GetSerializedObject(objRef, serializer, stream);
-                            
+
                             // Native will be forced to synchronize and not overwrite.
-                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray()); 
+                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray());
                         }
                     }
                     else
@@ -538,7 +539,7 @@ namespace Microsoft.Data.SqlClient
         private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
         {
             object refResult = serializer.ReadObject(stream);
-            var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
+            var result = RemotingServices.Unmarshal(((SqlClientObjRef)refResult).GetObjRef());
             return result as SqlDependencyProcessDispatcher;
         }
 #endif // NETFRAMEWORK
@@ -575,7 +576,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // Create new connection options for demand on their connection string.  We modify the connection string
                 // and assert on our modified string when we create the container.
-                SqlConnectionString connectionStringObject = new(connectionString);
+                SqlConnectionOptions connectionStringObject = new(connectionString);
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
@@ -637,13 +638,8 @@ namespace Microsoft.Data.SqlClient
                                         {
                                             Stop(connectionString, queue, useDefaults, true);
                                         }
-                                        catch (Exception e)
-                                        { // Discard stop failure!
-                                            if (!ADP.IsCatchableExceptionType(e))
-                                            {
-                                                throw;
-                                            }
-
+                                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+                                        {
                                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from Stop() after duplicate was found on Start().");
                                         }
@@ -665,13 +661,8 @@ namespace Microsoft.Data.SqlClient
                             // to provide options themselves.
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-
                         ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.Start|DEP|ERR> Exception occurred from _processDispatcher.Start(...), calling Invalidate(...).");
                         throw;
@@ -718,7 +709,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // Create new connection options for demand on their connection string.  We modify the connection string
                 // and assert on our modified string when we create the container.
-                SqlConnectionString connectionStringObject = new(connectionString);
+                SqlConnectionOptions connectionStringObject = new(connectionString);
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
@@ -784,13 +775,8 @@ namespace Microsoft.Data.SqlClient
                                 // to provide options themselves.
                             }
                         }
-                        catch (Exception e)
+                        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                         {
-                            if (!ADP.IsCatchableExceptionType(e))
-                            {
-                                throw;
-                            }
-
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace for now.
                         }
                     }
@@ -816,28 +802,20 @@ namespace Microsoft.Data.SqlClient
                 {
                     Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
 
-                    if (!s_serverUserHash.ContainsKey(server))
+                    if (!s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerUserHash|DEP> Hash did not contain server, adding.");
                         identityDatabaseHash = new Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>();
                         s_serverUserHash.Add(server, identityDatabaseHash);
                     }
-                    else
-                    {
-                        identityDatabaseHash = s_serverUserHash[server];
-                    }
 
                     List<DatabaseServicePair> databaseServiceList;
 
-                    if (!identityDatabaseHash.ContainsKey(identityUser))
+                    if (!identityDatabaseHash.TryGetValue(identityUser, out databaseServiceList))
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerUserHash|DEP> Hash contained server but not user, adding user.");
                         databaseServiceList = new List<DatabaseServicePair>();
                         identityDatabaseHash.Add(identityUser, databaseServiceList);
-                    }
-                    else
-                    {
-                        databaseServiceList = identityDatabaseHash[identityUser];
                     }
 
                     if (!databaseServiceList.Contains(databaseService))
@@ -869,15 +847,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
 
-                    if (s_serverUserHash.ContainsKey(server))
+                    if (s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
-                        identityDatabaseHash = s_serverUserHash[server];
-
                         List<DatabaseServicePair> databaseServiceList;
 
-                        if (identityDatabaseHash.ContainsKey(identityUser))
+                        if (identityDatabaseHash.TryGetValue(identityUser, out databaseServiceList))
                         {
-                            databaseServiceList = identityDatabaseHash[identityUser];
 
                             int index = databaseServiceList.IndexOf(databaseService);
                             if (index >= 0)
@@ -924,7 +899,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static string GetDefaultComposedOptions(string server, string failoverServer, IdentityUserNamePair identityUser, string database)
         {
-            // Server must be an exact match, but user and database only needs to match exactly if there is more than one 
+            // Server must be an exact match, but user and database only needs to match exactly if there is more than one
             // for the given user or database passed.  That is ambiguous and we must fail.
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> server: '{0}', failoverServer: '{1}', database: '{2}'", server, failoverServer, database);
             try
@@ -933,7 +908,9 @@ namespace Microsoft.Data.SqlClient
 
                 lock (s_serverUserHash)
                 {
-                    if (!s_serverUserHash.ContainsKey(server))
+                    Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash;
+
+                    if (!s_serverUserHash.TryGetValue(server, out identityDatabaseHash))
                     {
                         if (0 == s_serverUserHash.Count)
                         {
@@ -941,7 +918,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP|ERR> ERROR - no start calls have been made, about to throw.");
                             throw SQL.SqlDepDefaultOptionsButNoStart();
                         }
-                        else if (!string.IsNullOrEmpty(failoverServer) && s_serverUserHash.ContainsKey(failoverServer))
+                        else if (!string.IsNullOrEmpty(failoverServer) && s_serverUserHash.TryGetValue(failoverServer, out identityDatabaseHash))
                         {
                             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.GetDefaultComposedOptions|DEP> using failover server instead\n");
                             server = failoverServer;
@@ -953,11 +930,9 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    Dictionary<IdentityUserNamePair, List<DatabaseServicePair>> identityDatabaseHash = s_serverUserHash[server];
-
                     List<DatabaseServicePair> databaseList = null;
 
-                    if (!identityDatabaseHash.ContainsKey(identityUser))
+                    if (!identityDatabaseHash.TryGetValue(identityUser, out databaseList))
                     {
                         if (identityDatabaseHash.Count > 1)
                         {
@@ -975,10 +950,6 @@ namespace Microsoft.Data.SqlClient
                                 break; // Only iterate once.
                             }
                         }
-                    }
-                    else
-                    {
-                        databaseList = identityDatabaseHash[identityUser];
                     }
 
                     DatabaseServicePair pair = new(database, null);
@@ -1028,7 +999,7 @@ namespace Microsoft.Data.SqlClient
 
         // Internal Methods
 
-        // Called by SqlCommand upon execution of a SqlNotificationRequest class created by this dependency.  We 
+        // Called by SqlCommand upon execution of a SqlNotificationRequest class created by this dependency.  We
         // use this list for a reverse lookup based on server.
         internal void AddToServerList(string server)
         {

@@ -9,13 +9,13 @@
 #
 # The NuGet packages have the following properties:
 #
-#   Name:     Microsoft.Data.SqlClient.Extensions.Logging
+#   Name:     Microsoft.Data.SqlClient.Internal.Logging
 #   Version:  <loggingPackageVersion> (from parameter)
 #
 # The following NuGet packages are published:
 #
-#   Microsoft.Data.SqlClient.Extensions.Logging.<version>.nupkg
-#   Microsoft.Data.SqlClient.Extensions.Logging.<version>.snupkg (symbols)
+#   Microsoft.Data.SqlClient.Internal.Logging.<version>.nupkg
+#   Microsoft.Data.SqlClient.Internal.Logging.<version>.snupkg (symbols)
 #
 # The packages are published to pipeline artifacts with the name specified by
 # the loggingArtifactsName parameter.

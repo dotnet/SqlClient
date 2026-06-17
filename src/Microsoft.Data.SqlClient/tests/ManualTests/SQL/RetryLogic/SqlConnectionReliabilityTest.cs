@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class SqlConnectionReliabilityTest
     {
         internal const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
@@ -23,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
+        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or Entra ID auth
         // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionRetryOpenInvalidCatalogFailed_Data), DisableDiscoveryEnumeration = true)]
@@ -48,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
+        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or Entra ID auth
         // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionCancelRetryOpenInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]
@@ -194,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or AAD auth
+        // Test relies on error 4060 for automatic retry, which is not reliable when using Azure or Entra ID auth
         // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionRetryOpenAsyncInvalidCatalogFailed_Data), DisableDiscoveryEnumeration = true)]
@@ -219,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 maxInterval: TimeSpan.FromSeconds(1),
                 deltaTime: TimeSpan.FromMilliseconds(250));
 
-        // Test relies on error 4060 for automatic retry, which is not returned when using AAD auth
+        // Test relies on error 4060 for automatic retry, which is not returned when using Entra ID auth
         // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(ConnectionCancelRetryOpenAsyncInvalidCatalog_Data), DisableDiscoveryEnumeration = true)]

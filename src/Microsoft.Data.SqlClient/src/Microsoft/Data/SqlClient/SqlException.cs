@@ -25,15 +25,15 @@ namespace Microsoft.Data.SqlClient
 
         private readonly SqlErrorCollection _errors;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
+        [OptionalField(VersionAdded = 4)]
 #endif
         private Guid _clientConnectionId = Guid.Empty;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.IgnoreDataMember]
+        [IgnoreDataMember]
 #endif
         private SqlBatchCommand _batchCommand;
 #if NETFRAMEWORK
-        [System.Runtime.Serialization.IgnoreDataMember]
+        [IgnoreDataMember]
 #endif
         // Do not serialize this field! It is used to indicate that no reconnection attempts are required
         internal bool _doNotReconnect = false;
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
         override public string Source => DbConnectionStringDefaults.ApplicationName;
 
 
-#if NET
+        #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 
@@ -127,14 +127,15 @@ namespace Microsoft.Data.SqlClient
             get => _batchCommand;
             internal set => _batchCommand = value;
         }
-#else
-        internal SqlBatchCommand BatchCommand
+        #else
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/BatchCommand/*' />
+        public SqlBatchCommand BatchCommand
         {
             get => _batchCommand;
-            set => _batchCommand = value;
+            internal set => _batchCommand = value;
         }
-#endif 
-        
+        #endif
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
         {

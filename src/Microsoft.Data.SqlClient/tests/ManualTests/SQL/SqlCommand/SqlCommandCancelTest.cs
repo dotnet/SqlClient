@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class SqlCommandCancelTest
     {
         // Shrink the packet size - this should make timeouts more likely
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     cmd.Cancel();
-                    DataTestUtility.AssertThrowsWrapper<SqlException>(
+                    DataTestUtility.AssertThrows<SqlException>(
                         () =>
                         {
                             do
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
                 Task<SqlDataReader> readerTask = cmd.ExecuteReaderAsync();
-                DataTestUtility.AssertThrowsWrapper<SqlException>(
+                DataTestUtility.AssertThrows<SqlException>(
                     () =>
                     {
                         readerTask.Wait(2000);
@@ -150,6 +151,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TimeOutDuringRead_Tcp() =>
             TimeOutDuringRead(tcp_connStr);
 
+        // @TODO: This test does not test NP behavior as the proxy server converts the named pipe connection string to a TCP connection string.
+        [ActiveIssue("https://dev.azure.com/SqlClientDrivers/ADO.Net/_workitems/edit/40840/")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeOutDuringRead_NamedPipe() =>
@@ -214,7 +217,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void CancelFollowedByAlert(string constr)
         {
             var alertName = "myAlert" + Guid.NewGuid().ToString();
-            // Since Alert conditions are randomly generated, 
+            // Since Alert conditions are randomly generated,
             // we will retry on unexpected error messages to avoid collision in pipelines.
             var n = new Random().Next(1, 100);
             bool retry = true;

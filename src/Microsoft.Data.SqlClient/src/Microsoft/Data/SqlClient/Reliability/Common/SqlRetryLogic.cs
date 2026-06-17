@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
 {

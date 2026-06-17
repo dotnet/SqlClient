@@ -78,11 +78,6 @@ parameters:
     type: string
     default: $(ci_var_defaultPoolName)
 
-  # True to add a Stress Test stage to the pipeline.
-  - name: enableStressTests
-    type: boolean
-    default: false
-
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
     type: number
@@ -90,6 +85,12 @@ parameters:
   # If true, the Always Encrypted (AE) test set will be run, which requires
   # Enclave-enabled SQL Server instances.
   - name: runAlwaysEncryptedTests
+    type: boolean
+    default: true
+
+  # If true, run manual tests against legacy SQL Server versions (2016, 2017).
+  # Enabled for CI pipelines; disabled for PR pipelines to keep validation fast.
+  - name: runLegacySqlTests
     type: boolean
     default: true
 
@@ -118,11 +119,25 @@ variables:
   - name: mdsArtifactsName
     value: MDS.Artifacts
 
+  - name: sqlServerArtifactsName
+    value: SqlServer.Artifacts
+
 stages:
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
+
+  # Build the SqlServer package, and publish it to the pipeline artifacts
+  # under the given artifact name.  This runs in parallel with the Secrets
+  # generation stage since it has no package dependencies.
+  - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
+    parameters:
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # Build the Logging package, and publish it to the pipeline artifacts
   # under the given artifact name.  This runs in parallel with the Secrets
@@ -149,6 +164,9 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
+      referenceType: ${{ parameters.referenceType }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -168,15 +186,19 @@ stages:
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
+      akvPackageVersion: $(akvPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
-      # When building SqlClient via packages, we must depend on the Abstractions and Logging
-      # packages.
+      # When building SqlClient via packages, we must depend on the Abstractions, Logging,
+      # and SqlServer packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
 
   # Build the Azure package, and publish it to the pipeline artifacts under the
   # given artifact name.
@@ -190,29 +212,32 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       # When building via packages, we must depend on the Abstractions, Logging,
-      # and MDS packages.
+      # SqlServer, and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
 
-  # Run the stress tests, if desired.
-  - ${{ if eq(parameters.enableStressTests, true) }}:
-      - template: /eng/pipelines/stages/stress-tests-ci-stage.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          additionalDependsOn:
-            - build_sqlclient_package_stage
-            - build_azure_package_stage
-          mdsArtifactsName: $(mdsArtifactsName)
-          mdsPackageVersion: $(mdsPackageVersion)
-          azurePackageVersion: $(azurePackageVersion)
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+  # Verify that all NuGet packages comply with Microsoft metadata requirements.
+  # This runs on a Windows agent after all packages have been built and
+  # published as pipeline artifacts.
+  - template: /eng/pipelines/stages/verify-nuget-packages-ci-stage.yml@self
+    parameters:
+      abstractionsArtifactsName: $(abstractionsArtifactsName)
+      azureArtifactsName: $(azureArtifactsName)
+      loggingArtifactsName: $(loggingArtifactsName)
+      mdsArtifactsName: $(mdsArtifactsName)
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
 
   # Run the MDS and AKV tests.
   - template: /eng/pipelines/common/templates/stages/ci-run-tests-stage.yml@self
@@ -226,14 +251,17 @@ stages:
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
+      sqlServerArtifactsName: $(sqlServerArtifactsName)
+      sqlServerPackageVersion: $(sqlServerPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
-      # Logging, MDS, and Azure packages.
+      # Logging, SqlServer, MDS, and Azure packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:
         additionalDependsOn:
           - build_abstractions_package_stage
           - build_logging_package_stage
+          - build_sqlserver_package_stage
           - build_sqlclient_package_stage
           - build_azure_package_stage
 
@@ -278,6 +306,62 @@ stages:
       # Configuration of test jobs.  Each entry in this object will become a test job, and the
       # properties of each entry will be supplied as parameters to the test job template.
       testConfigurations:
+        # SQL Server 2016 and 2017 on Windows Server 2022 (x64 only).
+        # x86 testing is intentionally skipped for these legacy SQL versions
+        # because x86 support is already validated via SQL 2019 and 2022 images.
+        ${{ if eq(parameters.runLegacySqlTests, true) }}:
+          # Windows Server 22 with local SQL Server 2016, x64 build platform.
+          windows_sql_16_x64:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Win22_Sql16: ADO-MMS22-SQL16
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            configSqlFor: local
+            operatingSystem: Windows
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: true
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              FileStreamDirectory: $(FileStreamDirectory)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
+              SQLRootPath: $(SQL16RootPath)
+              enableLocalDB: true
+
+          # Windows Server 22 with local SQL Server 2017, x64 build platform.
+          windows_sql_17_x64:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Win22_Sql17: ADO-MMS22-SQL17
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            configSqlFor: local
+            operatingSystem: Windows
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: true
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              FileStreamDirectory: $(FileStreamDirectory)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
+              SQLRootPath: $(SQL17RootPath)
+              enableLocalDB: true
+
         # Windows Server 22 with local SQL Server 2019, x64 build platform.
         windows_sql_19_x64:
           pool: ${{parameters.defaultPoolName }}
@@ -290,7 +374,7 @@ stages:
           useManagedSNI: ${{parameters.useManagedSNI }}
           configSqlFor: local
           operatingSystem: Windows
-          # config.json properties
+          # config.jsonc properties
           configProperties:
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)

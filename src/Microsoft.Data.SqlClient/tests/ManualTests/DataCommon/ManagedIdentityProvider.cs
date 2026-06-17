@@ -49,7 +49,8 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
 
             TokenRequestContext context = new([scope]);
 
-            TokenCredentialOptions options = new()
+            ManagedIdentityCredentialOptions options = new(
+                ManagedIdentityId.FromUserAssignedClientId(parameters.UserId))
             {
                 AuthorityHost = new Uri(parameters.Authority)
             };
@@ -58,7 +59,7 @@ internal class ManagedIdentityProvider : SqlAuthenticationProvider
             ManagedIdentityCredential credential =
                 _credentialCache.GetOrAdd(
                     parameters.UserId,
-                    (_) => new(parameters.UserId, options));
+                    (_) => new(options));
 
             // Set up a cancellation token based on the authentication timeout,
             // ignoring overflow since this is just test code.

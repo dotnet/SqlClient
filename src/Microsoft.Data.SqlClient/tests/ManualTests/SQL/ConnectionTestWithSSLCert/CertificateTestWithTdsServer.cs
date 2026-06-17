@@ -19,6 +19,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "1")]
     public class CertificateTestWithTdsServer : IDisposable
     {
         private static readonly string s_fullPathToPowershellScript = Path.Combine(Directory.GetCurrentDirectory(), "makepfxcert.ps1");
@@ -89,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
-                if (DataTestUtility.IsSQL2016())
+                if (DataTestUtility.IsSQL2017())
                 {
                     return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{s_instanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }

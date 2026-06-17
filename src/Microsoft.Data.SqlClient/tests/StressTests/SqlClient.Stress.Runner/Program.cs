@@ -4,208 +4,195 @@
 
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.IO;
 using System.Reflection;
 
 using Microsoft.Data.SqlClient;
 
-namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     class Program
     {
         private static bool s_debugMode = false;
-        static int Main(string[] args)
-        {
-            Init(args);
-            return Run();
-        }
-
-        public enum RunMode
-        {
-            RunAll,
-            RunVerify,
-            Help,
-            ExitWithError
-        };
-
-        private static RunMode s_mode = RunMode.RunAll;
+        private static bool s_console = false;
         private static IEnumerable<TestBase> s_tests;
         private static StressEngine s_eng;
-        private static string s_error;
-        private static bool s_console = false;
 
-        public static void Init(string[] args)
+        static int Main(string[] args)
         {
-            for (int i = 0; i < args.Length; i++)
+            var assemblyOption = new Option<string>("--assembly")
             {
-                switch (args[i])
+                Description = "The name of the assembly containing the tests (loaded via Assembly.Load).",
+                Required = true
+            };
+
+            var overrideOption = new Option<string[]>("--override")
+            {
+                Description = "Override a test property. Format: name=value",
+                AllowMultipleArgumentsPerToken = true
+            };
+
+            var variationOption = new Option<string[]>("--variation")
+            {
+                Description = "Add a test variation.",
+                AllowMultipleArgumentsPerToken = true
+            };
+
+            var testOption = new Option<string>("--test") { Description = "Run specific test(s), semicolon-separated." };
+            var durationOption = new Option<int?>("--duration") { Description = "Duration of the test in seconds." };
+            var threadsOption = new Option<int?>("--threads") { Description = "Number of threads to use." };
+            var consoleOption = new Option<bool>("--console") { Description = "Emit all output to the console." };
+            var debugOption = new Option<bool>("--debug") { Description = "Print process ID and wait for debugger attach." };
+            var exceptionThresholdOption = new Option<int?>("--exception-threshold") { Description = "Limit on exceptions before test halts." };
+            var monitorEnabledOption = new Option<bool?>("--monitor-enabled") { Description = "Enable monitoring." };
+            var randomSeedOption = new Option<int?>("--random-seed") { Description = "Seed for the random number generator." };
+            var filterOption = new Option<string>("--filter") { Description = "Run tests matching the given filter. Example: TestType=Query,Update;IsServerTest=True" };
+            var printMethodNameOption = new Option<bool>("--print-method-name") { Description = "Print test method names to console." };
+            var deadlockDetectionOption = new Option<bool>("--deadlock-detection") { Description = "Enable deadlock detection." };
+
+            var rootCommand = new RootCommand("SqlClient Stress Test Runner")
+            {
+                assemblyOption,
+                overrideOption,
+                variationOption,
+                testOption,
+                durationOption,
+                threadsOption,
+                consoleOption,
+                debugOption,
+                exceptionThresholdOption,
+                monitorEnabledOption,
+                randomSeedOption,
+                filterOption,
+                printMethodNameOption,
+                deadlockDetectionOption
+            };
+
+            rootCommand.SetAction((ParseResult result) =>
+            {
+                // Assembly
+                TestFinder.AssemblyName = new AssemblyName(result.GetValue(assemblyOption));
+
+                // Overrides (format: name=value)
+                var overrides = result.GetValue(overrideOption);
+                if (overrides != null)
                 {
-                    case "-a":
-                        string assemblyName = args[++i];
-                        TestFinder.AssemblyName = new AssemblyName(assemblyName);
-                        break;
-
-                    case "-all":
-                        s_mode = RunMode.RunAll;
-                        break;
-
-                    case "-override":
-                        TestMetrics.Overrides.Add(args[++i], args[++i]);
-                        break;
-
-                    case "-variation":
-                        TestMetrics.Variations.Add(args[++i]);
-                        break;
-
-                    case "-test":
-                        TestMetrics.SelectedTests.AddRange(args[++i].Split(';'));
-                        break;
-
-                    case "-duration":
-                        TestMetrics.StressDuration = int.Parse(args[++i]);
-                        break;
-
-                    case "-threads":
-                        TestMetrics.StressThreads = int.Parse(args[++i]);
-                        break;
-
-                    case "-verify":
-                        s_mode = RunMode.RunVerify;
-                        break;
-
-                    case "-console":
-                        s_console = true;
-                        break;
-
-                    case "-debug":
-                        s_debugMode = true;
-                        if (System.Diagnostics.Debugger.IsAttached)
+                    foreach (var item in overrides)
+                    {
+                        var eqIndex = item.IndexOf('=');
+                        if (eqIndex <= 0)
                         {
-                            System.Diagnostics.Debugger.Break();
+                            Console.Error.WriteLine($"Error: --override value '{item}' must be in name=value format.");
+                            Environment.Exit(1);
                         }
-                        else
-                        {
-                            Console.WriteLine("Current PID: {0}, attach the debugger and press Enter to continue the execution...", System.Diagnostics.Process.GetCurrentProcess().Id);
-                            Console.ReadLine();
-                        }
-                        break;
-
-                    case "-exceptionThreshold":
-                        TestMetrics.ExceptionThreshold = int.Parse(args[++i]);
-                        break;
-
-                    case "-monitorenabled":
-                        TestMetrics.MonitorEnabled = bool.Parse(args[++i]);
-                        break;
-
-                    case "-randomSeed":
-                        TestMetrics.RandomSeed = int.Parse(args[++i]);
-                        break;
-
-                    case "-filter":
-                        TestMetrics.Filter = args[++i];
-                        break;
-
-                    case "-printMethodName":
-                        TestMetrics.PrintMethodName = true;
-                        break;
-
-                    case "-deadlockdetection":
-                        if (bool.Parse(args[++i]))
-                        {
-                            DeadlockDetection.Enable();
-                        }
-                        break;
-
-                    default:
-                        s_mode = RunMode.Help;
-                        break;
+                        TestMetrics.Overrides.Add(item.Substring(0, eqIndex), item.Substring(eqIndex + 1));
+                    }
                 }
-            }
 
-            PrintConfigSummary();
+                // Variations
+                var variations = result.GetValue(variationOption);
+                if (variations != null)
+                {
+                    foreach (var v in variations)
+                    {
+                        TestMetrics.Variations.Add(v);
+                    }
+                }
 
-            if (TestFinder.AssemblyName != null)
-            {
+                // Test
+                var test = result.GetValue(testOption);
+                if (test != null)
+                {
+                    TestMetrics.SelectedTests.AddRange(test.Split(';'));
+                }
+
+                // Duration
+                var duration = result.GetValue(durationOption);
+                if (duration.HasValue)
+                {
+                    TestMetrics.StressDuration = duration.Value;
+                }
+
+                // Threads
+                var threads = result.GetValue(threadsOption);
+                if (threads.HasValue)
+                {
+                    TestMetrics.StressThreads = threads.Value;
+                }
+
+                // Console
+                s_console = result.GetValue(consoleOption);
+
+                // Debug
+                s_debugMode = result.GetValue(debugOption);
+                if (s_debugMode)
+                {
+                    if (System.Diagnostics.Debugger.IsAttached)
+                    {
+                        System.Diagnostics.Debugger.Break();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Current PID: {0}, attach the debugger and press Enter to continue the execution...", System.Diagnostics.Process.GetCurrentProcess().Id);
+                        Console.ReadLine();
+                    }
+                }
+
+                // Exception threshold
+                var threshold = result.GetValue(exceptionThresholdOption);
+                if (threshold.HasValue)
+                {
+                    TestMetrics.ExceptionThreshold = threshold.Value;
+                }
+
+                // Monitor enabled
+                var monitor = result.GetValue(monitorEnabledOption);
+                if (monitor.HasValue)
+                {
+                    TestMetrics.MonitorEnabled = monitor.Value;
+                }
+
+                // Random seed
+                var seed = result.GetValue(randomSeedOption);
+                if (seed.HasValue)
+                {
+                    TestMetrics.RandomSeed = seed.Value;
+                }
+
+                // Filter
+                var filter = result.GetValue(filterOption);
+                if (filter != null)
+                {
+                    TestMetrics.Filter = filter;
+                }
+
+                // Print method name
+                TestMetrics.PrintMethodName = result.GetValue(printMethodNameOption);
+
+                // Deadlock detection
+                if (result.GetValue(deadlockDetectionOption))
+                {
+                    DeadlockDetection.Enable();
+                }
+
+                // Print config, load tests, and run
+                PrintConfigSummary();
+
                 Console.WriteLine("Assembly Found for the Assembly Name " + TestFinder.AssemblyName);
-
-                // get and load all the tests
                 s_tests = TestFinder.GetTests(Assembly.Load(TestFinder.AssemblyName));
-
-                // instantiate the stress engine
                 s_eng = new StressEngine(TestMetrics.StressThreads, TestMetrics.StressDuration, s_tests, TestMetrics.RandomSeed);
-            }
-            else
+            });
+
+            var parseResult = rootCommand.Parse(args);
+            int exitCode = parseResult.Invoke();
+            if (exitCode != 0 || s_eng == null)
             {
-                Program.s_error = string.Format("Assembly {0} cannot be found.", TestFinder.AssemblyName);
-                s_mode = RunMode.ExitWithError;
+                return exitCode;
             }
-        }
 
-        public static int Run()
-        {
-            if (TestFinder.AssemblyName == null)
-            {
-                s_mode = RunMode.Help;
-            }
-            switch (s_mode)
-            {
-                case RunMode.RunAll:
-                    return RunStress();
-
-                case RunMode.RunVerify:
-                    return RunVerify();
-
-                case RunMode.ExitWithError:
-                    return ExitWithError();
-
-                case RunMode.Help:
-                default:
-                    return PrintHelp();
-            }
-        }
-
-        private static int PrintHelp()
-        {
-            Console.WriteLine("stresstest.exe [-a <module name>] <arguments>");
-            Console.WriteLine();
-            Console.WriteLine("   -a <module name> should specify path to the assembly containing the tests.");
-            Console.WriteLine();
-            Console.WriteLine("Supported options are:");
-            Console.WriteLine();
-            Console.WriteLine("   -all                        Run all tests - best for debugging, not perf measurements.");
-            Console.WriteLine();
-            Console.WriteLine("   -verify                     Run in functional verification mode.");
-            Console.WriteLine();
-            Console.WriteLine("   -duration <n>               Duration of the test in seconds.");
-            Console.WriteLine();
-            Console.WriteLine("   -threads <n>                Number of threads to use.");
-            Console.WriteLine();
-            Console.WriteLine("   -override <name> <value>    Override the value of a test property.");
-            Console.WriteLine();
-            Console.WriteLine("   -test <name1;name2>         Run specific test(s).");
-            Console.WriteLine();
-            Console.WriteLine("   -console                    Emit all output to the console.");
-            Console.WriteLine();
-            Console.WriteLine("   -debug                      Print process ID in the beginning and wait for Enter (to give your time to attach the debugger).");
-            Console.WriteLine();
-            Console.WriteLine("   -exceptionThreshold <n>     An optional limit on exceptions which will be caught. When reached, test will halt.");
-            Console.WriteLine();
-            Console.WriteLine("   -monitorenabled             True or False to enable monitoring. Default is false");
-            Console.WriteLine();
-            Console.WriteLine("   -randomSeed                 Enables setting of the random number generator used internally.  This serves both the purpose");
-            Console.WriteLine("                               of helping to improve reproducibility and making it deterministic from Chess's perspective");
-            Console.WriteLine("                               for a given schedule. Default is " + TestMetrics.RandomSeed + ".");
-            Console.WriteLine();
-            Console.WriteLine("   -filter                     Run tests whose stress test attributes match the given filter. Filter is not applied if attribute");
-            Console.WriteLine("                               does not implement ITestAttributeFilter. Example: -filter TestType=Query,Update;IsServerTest=True ");
-            Console.WriteLine();
-            Console.WriteLine("   -printMethodName            Print tests' title in console window");
-            Console.WriteLine();
-            Console.WriteLine("   -deadlockdetection          True or False to enable deadlock detection. Default is false");
-            Console.WriteLine();
-
-            return 1;
+            return Run();
         }
 
         private static void PrintConfigSummary()
@@ -215,7 +202,6 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine(border);
             Console.WriteLine($"MDS Version:         {GetMdsVersion()}");
             Console.WriteLine($"Test Assembly Name:  {TestFinder.AssemblyName}");
-            Console.WriteLine($"Run mode:            {Enum.GetName(typeof(RunMode), s_mode)}");
             foreach (var item in TestMetrics.Overrides)
             {
                 Console.WriteLine($"Override:            {item.Key} = {item.Value}");
@@ -235,18 +221,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             Console.WriteLine(border);
         }
 
-        private static int ExitWithError()
-        {
-            Environment.FailFast("Exit with error(s).");
-            return 1;
-        }
-
-        private static int RunVerify()
-        {
-            throw new NotImplementedException();
-        }
-
-        private static int RunStress()
+        private static int Run()
         {
             if (!s_console)
             {
@@ -275,7 +250,7 @@ namespace DPStressHarness//Microsoft.Data.SqlClient.Stress
             // See:  tools/targets/GenerateThisAssemblyCs.targets
             //
             var assembly = typeof(SqlConnection).Assembly;
-            var type = assembly.GetType("System.ThisAssembly");
+            var type = assembly.GetType("Microsoft.Data.SqlClient.ThisAssembly");
             if (type is null)
             {
                 return "<unknown>";

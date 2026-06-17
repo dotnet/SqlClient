@@ -4,6 +4,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 

@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class MarsSessionPoolingTest
     {
         private const int ConcurrentCommands = 5;
@@ -227,6 +228,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ
+                                     // Expected: 5
+                                     // Actual:   4
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
         [InlineData(CommandType.StoredProcedure)]
@@ -253,6 +257,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 //   Disposing of the command does *not* close the reader, meaning the MARS session
                 //   is left in an incomplete state. As such, with each command that's executed, a
                 //   new session is opened.
+
+                // Flaky stack trace ------------------
+                // Assert.Equal() Failure: Values differ
+                // Expected: 5
+                // Actual:   4
+                // Stack Trace:
+                //    at Microsoft.Data.SqlClient.ManualTesting.Tests.MarsSessionPoolingTest.AssertSessionsAndRequests(SqlConnection connection, Int32 openMarsSessions, Int32 openRequests) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs:line 368
+                //    at Microsoft.Data.SqlClient.ManualTesting.Tests.MarsSessionPoolingTest.ExecuteReader_DisposeCommand(CommandType commandType) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\MARSSessionPoolingTest\MarsSessionPoolingTest.cs:line 256
+                //    at InvokeStub_MarsSessionPoolingTest.ExecuteReader_DisposeCommand(Object, Span`1)
+                //    at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+
                 AssertSessionsAndRequests(connection, openMarsSessions: i + 1, openRequests: i + 1);
             }
         }

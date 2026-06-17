@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class PoolBlockPeriodTest
     {
         private const string AzureEndpointSample = "nonexistent.database.windows.net";
@@ -38,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestAzureBlockingPeriod(string description, object[] Params)
         {
             string _ = description; // Using C# Discards as workaround to the XUnit warning.
-            string serverName = Params[0] as string;
+            string serverName = (string)Params[0];
             PoolBlockingPeriod? policy = null;
             if (Params.Length > 1)
             {
@@ -60,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestNonAzureBlockingPeriod(string description, object[] Params)
         {
             string _ = description; // Using C# Discards as workaround to the XUnit warning.
-            string serverName = Params[0] as string;
+            string serverName = (string)Params[0];
             PoolBlockingPeriod? policy = null;
 
             if (Params.Length > 1)
