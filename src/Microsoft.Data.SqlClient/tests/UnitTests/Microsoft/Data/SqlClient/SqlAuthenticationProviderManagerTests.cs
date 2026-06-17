@@ -73,4 +73,35 @@ public class SqlAuthenticationProviderManagerTests
             SqlAuthenticationProvider.GetProvider(
                 SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
     }
+
+    // Regression: the manager's static initializer reflectively constructs the Azure extension's
+    // ActiveDirectoryAuthenticationProvider. That class has overlapping 1-arg constructors
+    // ((string) and (ProviderOptions)), so calling Activator.CreateInstance(type, [null]) used
+    // to throw AmbiguousMatchException -- which surfaced as TypeInitializationException from
+    // GetProvider and broke every AD-authenticated connection. Calling GetProvider for an AD
+    // method must succeed (returning either the registered provider or null) and must not throw.
+    [Fact]
+    public void GetProvider_ForActiveDirectoryMethod_DoesNotThrow()
+    {
+        foreach (SqlAuthenticationMethod method in new[]
+        {
+            SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+            #pragma warning disable CS0618 // ActiveDirectoryPassword is obsolete.
+            SqlAuthenticationMethod.ActiveDirectoryPassword,
+            #pragma warning restore CS0618
+            SqlAuthenticationMethod.ActiveDirectoryInteractive,
+            SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
+            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
+            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+            SqlAuthenticationMethod.ActiveDirectoryMSI,
+            SqlAuthenticationMethod.ActiveDirectoryDefault,
+            SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity,
+        })
+        {
+            // No assertion on the value -- the provider may or may not be installed depending on
+            // whether the Azure extension is on disk. We only assert no throw (which is what a
+            // TypeInitializationException from the static initializer would do).
+            _ = SqlAuthenticationProviderManager.GetProvider(method);
+        }
+    }
 }

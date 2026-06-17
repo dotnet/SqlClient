@@ -12,6 +12,9 @@
   <PropertyGroup>
     <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net481;net10.0-windows</TargetFrameworks>
     <TargetFramework Condition="'$(OS)' != 'Windows_NT'">net10.0-windows</TargetFramework>
+    <!-- Required to build the net*-windows TFM on Linux/macOS (e.g. CodeQL); without
+         this, the SDK fails with NETSDK1100. The produced binary still only runs on Windows. -->
+    <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureSqlConnector</RootNamespace>
     <AssemblyName>AzureSqlConnector</AssemblyName>

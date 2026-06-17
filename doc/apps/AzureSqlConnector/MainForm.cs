@@ -20,10 +20,19 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
         public MainForm()
         {
             InitializeComponent();
-            this.Text = "Azure SQL Connector — UI thread (OpenAsync)";
+            this.Text = "Azure SQL Connector — UI thread";
             PopulateAuthenticationMethods();
             PopulateEncryptOptions();
+            PopulateOpenModes();
             UpdateCredentialFieldsAvailability();
+
+            // Force the underlying Win32 window to be created NOW (on the UI thread) so we can
+            // safely hand its HWND to MSAL later. Even in async mode, MSAL.NET may invoke the
+            // parent-window callback from a worker thread (e.g. when the driver blocks on a
+            // synchronous Open()), and touching Form.Handle from a non-UI thread throws
+            // InvalidOperationException ("Cross-thread operation not valid").
+            _ownerHwnd = this.Handle;
+
             RegisterActiveDirectoryProvider();
         }
 
@@ -50,23 +59,34 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             cmbEncrypt.SelectedIndex = 0;
         }
 
+        private void PopulateOpenModes()
+        {
+            cmbOpenMode.Items.Add(OpenModeDisplay.Async);
+            cmbOpenMode.Items.Add(OpenModeDisplay.Sync);
+            cmbOpenMode.SelectedIndex = 0;
+        }
+
         /// <summary>
         /// Registers a single <see cref="ActiveDirectoryAuthenticationProvider"/> for every
-        /// Entra ID authentication method and parents its UI to this form. With the UI-thread
-        /// <see cref="SqlConnection.OpenAsync()"/> approach, the callbacks run on the UI thread,
-        /// so it is safe for them to return <c>this</c> directly.
+        /// Entra ID authentication method and gives it the form's captured HWND as the parent
+        /// window owner. Both callbacks intentionally use the HWND captured in the constructor
+        /// (<see cref="_ownerHwnd"/>) rather than <c>this.Handle</c>, because MSAL.NET can invoke
+        /// them from a worker thread (e.g. when the driver blocks on a synchronous <c>Open()</c>
+        /// or when its internal continuations resume off-UI).
         /// </summary>
         private void RegisterActiveDirectoryProvider()
         {
             ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider();
+            IntPtr ownerHwnd = _ownerHwnd;
+
 #if NETFRAMEWORK
             // .NET Framework: parent the embedded WebView via the legacy IWin32Window API.
-            provider.SetIWin32WindowFunc(() => this);
-#else
+            provider.SetIWin32WindowFunc(() => new Win32WindowHandle(ownerHwnd));
+#endif
+
             // Modern API: works on both .NET Framework and .NET 8+, and is the one MSAL's WAM
             // broker consults on Windows.
-            provider.SetParentActivityOrWindowFunc(() => this.Handle);
-#endif
+            provider.SetParentActivityOrWindowFunc(() => ownerHwnd);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, provider);
@@ -122,22 +142,18 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
                 return;
             }
 
-            SetBusy(true, "Testing connection...");
+            bool useAsync = IsAsyncOpenSelected();
+            SetBusy(true, useAsync ? "Testing connection (OpenAsync)..." : "Testing connection (Open)...");
             AppendStatus(string.Empty);
-            AppendStatus("Testing connectivity to " + builder.DataSource + " ...");
+            AppendStatus("Testing connectivity to " + builder.DataSource + " ("
+                + (useAsync ? "OpenAsync" : "sync Open") + ") ...");
 
             try
             {
-                // Call OpenAsync on the UI thread so the WinForms SynchronizationContext is
-                // preserved. The ActiveDirectoryInteractive flow needs a running UI message pump
-                // on the calling thread for MSAL.NET to display its embedded sign-in browser.
-                // OpenAsync still keeps the UI responsive because the I/O wait does not block the
-                // message loop.
                 string serverVersion;
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
-                    await connection.OpenAsync().ConfigureAwait(true);
-                    // connection.Open();
+                    await OpenConnectionAsync(connection, useAsync).ConfigureAwait(true);
                     serverVersion = connection.ServerVersion;
                 }
 
@@ -152,7 +168,6 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             catch (Exception ex)
             {
                 SetStatus("Connection failed.", isError: true);
-                AppendStatus(ex.GetType().Name + ": " + ex.Message + "\r\n" + ex.StackTrace);
                 AppendStatus(ex.GetType().Name + ": " + ex.Message + "\r\n" + ex.StackTrace);
             }
             finally
@@ -176,9 +191,13 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
                 return;
             }
 
-            SetBusy(true, "Querying logged-in identity...");
+            bool useAsync = IsAsyncOpenSelected();
+            SetBusy(true, useAsync
+                ? "Querying logged-in identity (OpenAsync)..."
+                : "Querying logged-in identity (Open)...");
             AppendStatus(string.Empty);
-            AppendStatus("Running identity query against " + builder.DataSource + " ...");
+            AppendStatus("Running identity query against " + builder.DataSource + " ("
+                + (useAsync ? "OpenAsync" : "sync Open") + ") ...");
 
             try
             {
@@ -186,7 +205,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
                 // ActiveDirectoryInteractive sign-in that may be required.
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
-                    await connection.OpenAsync().ConfigureAwait(true);
+                    await OpenConnectionAsync(connection, useAsync).ConfigureAwait(true);
 
                     using (SqlCommand command = connection.CreateCommand())
                     {
@@ -260,6 +279,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             txtStatus.Clear();
             cmbAuthentication.SelectedItem = SqlAuthenticationMethod.SqlPassword;
             cmbEncrypt.SelectedIndex = 0;
+            cmbOpenMode.SelectedIndex = 0;
             chkTrustServerCertificate.Checked = false;
             numTimeout.Value = 30;
             SetStatus("Ready", isError: false);
@@ -377,6 +397,34 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             return copy.ConnectionString;
         }
 
+        /// <summary>
+        /// Returns <see langword="true"/> when the user picked <c>Async (OpenAsync)</c> in the
+        /// open-mode selector. Defaults to async if the selector has not been initialized yet.
+        /// </summary>
+        private bool IsAsyncOpenSelected()
+        {
+            return cmbOpenMode.SelectedItem as string != OpenModeDisplay.Sync;
+        }
+
+        /// <summary>
+        /// Opens <paramref name="connection"/> on the calling thread using either
+        /// <see cref="SqlConnection.OpenAsync()"/> or the synchronous <see cref="SqlConnection.Open"/>
+        /// based on <paramref name="useAsync"/>. The method itself is always async-returning so
+        /// callers can <c>await</c> uniformly; for the sync case it runs <c>Open()</c> inline on
+        /// the UI thread (which is supported with WAM broker because the broker dialog is hosted
+        /// by a separate process and does not need this thread's message pump).
+        /// </summary>
+        private static Task OpenConnectionAsync(SqlConnection connection, bool useAsync)
+        {
+            if (useAsync)
+            {
+                return connection.OpenAsync();
+            }
+
+            connection.Open();
+            return Task.CompletedTask;
+        }
+
         #endregion
 
         // ──────────────────────────────────────────────────────────────────
@@ -426,6 +474,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             btnCopy.Enabled = !busy;
             btnClear.Enabled = !busy;
             btnWhoAmI.Enabled = !busy;
+            cmbOpenMode.Enabled = !busy;
             Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
 
             if (statusText != null)
@@ -445,6 +494,34 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             public const string Optional = "Optional";
             public const string Strict = "Strict";
         }
+
+        private static class OpenModeDisplay
+        {
+            public const string Async = "Async (OpenAsync)";
+            public const string Sync = "Sync (Open)";
+        }
+
+#if NETFRAMEWORK
+        // Tiny IWin32Window wrapper around a raw HWND captured on the UI thread so MSAL.NET's
+        // legacy IWin32WindowFunc callback can safely return a window owner from a worker thread
+        // without ever touching Control.Handle off-UI.
+        private sealed class Win32WindowHandle : IWin32Window
+        {
+            private readonly IntPtr _hwnd;
+            public Win32WindowHandle(IntPtr hwnd) => _hwnd = hwnd;
+            public IntPtr Handle => _hwnd;
+        }
+#endif
+
+        #endregion
+
+        // ───────────────────────────────────────────────────────────────
+        #region Private Fields
+
+        // The form's Win32 window handle, captured on the UI thread in the constructor.
+        // Read from worker threads by the Entra ID provider callbacks to parent MSAL's sign-in
+        // / WAM broker UI without illegally touching Control.Handle.
+        private readonly IntPtr _ownerHwnd;
 
         #endregion
     }

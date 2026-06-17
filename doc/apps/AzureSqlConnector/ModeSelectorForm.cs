@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             _rdoUiThread = new RadioButton
             {
-                Text = "&UI thread — SqlConnection.OpenAsync()",
+                Text = "&UI thread",
                 Location = new Point(20, 42),
                 Size = new Size(420, 20),
                 Checked = true,
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             Label lblUiHint = new Label
             {
                 AutoSize = false,
-                Text = "    Async open on the UI thread; SynchronizationContext keeps the form responsive.",
+                Text = "    Async/Sync open on the UI thread; SynchronizationContext keeps the form responsive.",
                 Location = new Point(20, 62),
                 Size = new Size(420, 18),
                 ForeColor = SystemColors.GrayText,
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             _rdoWorker = new RadioButton
             {
-                Text = "&Worker thread — Task.Run(() => connection.Open())",
+                Text = "&Worker thread",
                 Location = new Point(20, 90),
                 Size = new Size(420, 20),
             };

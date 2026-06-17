@@ -43,6 +43,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.chkTrustServerCertificate = new System.Windows.Forms.CheckBox();
             this.lblTimeout = new System.Windows.Forms.Label();
             this.numTimeout = new System.Windows.Forms.NumericUpDown();
+            this.lblOpenMode = new System.Windows.Forms.Label();
+            this.cmbOpenMode = new System.Windows.Forms.ComboBox();
             this.lblConnectionString = new System.Windows.Forms.Label();
             this.txtConnectionString = new System.Windows.Forms.TextBox();
             this.btnBuild = new System.Windows.Forms.Button();
@@ -189,6 +191,24 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.numTimeout.TabIndex = 14;
             this.numTimeout.Value = new decimal(new int[] { 30, 0, 0, 0 });
             //
+            // lblOpenMode
+            //
+            this.lblOpenMode.AutoSize = true;
+            this.lblOpenMode.Location = new System.Drawing.Point(260, 198);
+            this.lblOpenMode.Name = "lblOpenMode";
+            this.lblOpenMode.Size = new System.Drawing.Size(67, 13);
+            this.lblOpenMode.TabIndex = 25;
+            this.lblOpenMode.Text = "&Open mode:";
+            //
+            // cmbOpenMode
+            //
+            this.cmbOpenMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbOpenMode.FormattingEnabled = true;
+            this.cmbOpenMode.Location = new System.Drawing.Point(350, 195);
+            this.cmbOpenMode.Name = "cmbOpenMode";
+            this.cmbOpenMode.Size = new System.Drawing.Size(200, 21);
+            this.cmbOpenMode.TabIndex = 26;
+            //
             // lblConnectionString
             //
             this.lblConnectionString.AutoSize = true;
@@ -311,6 +331,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.Controls.Add(this.btnBuild);
             this.Controls.Add(this.txtConnectionString);
             this.Controls.Add(this.lblConnectionString);
+            this.Controls.Add(this.cmbOpenMode);
+            this.Controls.Add(this.lblOpenMode);
             this.Controls.Add(this.numTimeout);
             this.Controls.Add(this.lblTimeout);
             this.Controls.Add(this.chkTrustServerCertificate);
@@ -355,6 +377,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
         private System.Windows.Forms.CheckBox chkTrustServerCertificate;
         private System.Windows.Forms.Label lblTimeout;
         private System.Windows.Forms.NumericUpDown numTimeout;
+        private System.Windows.Forms.Label lblOpenMode;
+        private System.Windows.Forms.ComboBox cmbOpenMode;
         private System.Windows.Forms.Label lblConnectionString;
         private System.Windows.Forms.TextBox txtConnectionString;
         private System.Windows.Forms.Button btnBuild;
