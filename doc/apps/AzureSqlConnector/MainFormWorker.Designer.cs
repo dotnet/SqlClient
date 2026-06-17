@@ -43,6 +43,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.chkTrustServerCertificate = new System.Windows.Forms.CheckBox();
             this.lblTimeout = new System.Windows.Forms.Label();
             this.numTimeout = new System.Windows.Forms.NumericUpDown();
+            this.chkClearTokenCache = new System.Windows.Forms.CheckBox();
             this.lblConnectionString = new System.Windows.Forms.Label();
             this.txtConnectionString = new System.Windows.Forms.TextBox();
             this.btnBuild = new System.Windows.Forms.Button();
@@ -189,6 +190,16 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.numTimeout.TabIndex = 14;
             this.numTimeout.Value = new decimal(new int[] { 30, 0, 0, 0 });
             //
+            // chkClearTokenCache
+            //
+            this.chkClearTokenCache.AutoSize = true;
+            this.chkClearTokenCache.Location = new System.Drawing.Point(260, 198);
+            this.chkClearTokenCache.Name = "chkClearTokenCache";
+            this.chkClearTokenCache.Size = new System.Drawing.Size(290, 17);
+            this.chkClearTokenCache.TabIndex = 15;
+            this.chkClearTokenCache.Text = "Clear MSAL token &cache before connect (force prompt)";
+            this.chkClearTokenCache.UseVisualStyleBackColor = true;
+            //
             // lblConnectionString
             //
             this.lblConnectionString.AutoSize = true;
@@ -313,6 +324,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.Controls.Add(this.lblConnectionString);
             this.Controls.Add(this.numTimeout);
             this.Controls.Add(this.lblTimeout);
+            this.Controls.Add(this.chkClearTokenCache);
             this.Controls.Add(this.chkTrustServerCertificate);
             this.Controls.Add(this.cmbEncrypt);
             this.Controls.Add(this.lblEncrypt);
@@ -355,6 +367,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
         private System.Windows.Forms.CheckBox chkTrustServerCertificate;
         private System.Windows.Forms.Label lblTimeout;
         private System.Windows.Forms.NumericUpDown numTimeout;
+        private System.Windows.Forms.CheckBox chkClearTokenCache;
         private System.Windows.Forms.Label lblConnectionString;
         private System.Windows.Forms.TextBox txtConnectionString;
         private System.Windows.Forms.Button btnBuild;

@@ -145,6 +145,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             AppendStatus(string.Empty);
             AppendStatus("Testing connectivity to " + builder.DataSource + " ...");
 
+            MaybeClearTokenCache();
+
             try
             {
                 // Run Open() on a thread-pool worker so the UI thread never blocks. The await
@@ -203,6 +205,8 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             SetBusy(true, "Querying logged-in identity...");
             AppendStatus(string.Empty);
             AppendStatus("Running identity query against " + builder.DataSource + " ...");
+
+            MaybeClearTokenCache();
 
             try
             {
@@ -472,6 +476,21 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             {
                 SetStatus(statusText, isError: false);
             }
+        }
+
+        // Only drops the in-process PCA / TokenCredential maps; MSAL's persistent on-disk cache
+        // and WAM broker accounts are untouched. Sufficient to demo a worker-thread interactive
+        // prompt when the persistent cache has already been cleared (fresh run or no WAM account
+        // bound), and a useful reset between back-to-back connects within a single session.
+        private void MaybeClearTokenCache()
+        {
+            if (!chkClearTokenCache.Checked)
+            {
+                return;
+            }
+
+            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
+            AppendStatus("Cleared in-process MSAL token cache.");
         }
 
         #endregion
