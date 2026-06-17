@@ -52,17 +52,6 @@ See the LICENSE file in the project root for more information.
         </code>
       </example>
     </ctor2>
-    <ctor2WithBroker>
-      <param name="applicationClientId">
-        Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
-      </param>
-      <param name="useWamBroker">
-        When <see langword="true" />, enables the Windows Account Manager (WAM) broker for interactive Entra ID authentication on Windows when a custom application client id is used. When the driver's built-in application client id is used, the WAM broker is always enabled regardless of this value.
-      </param>
-      <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id and Windows Account Manager (WAM) broker setting.
-      </summary>
-    </ctor2WithBroker>
     <ctor3>
       <param name="deviceCodeFlowCallbackMethod">
         The callback method to be used with 'Active Directory Device Code Flow' authentication.
@@ -74,20 +63,6 @@ See the LICENSE file in the project root for more information.
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
     </ctor3>
-    <ctor3WithBroker>
-      <param name="deviceCodeFlowCallbackMethod">
-        The callback method to be used with 'Active Directory Device Code Flow' authentication.
-      </param>
-      <param name="applicationClientId">
-        Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
-      </param>
-      <param name="useWamBroker">
-        When <see langword="true" />, enables the Windows Account Manager (WAM) broker for interactive Entra ID authentication on Windows when a custom application client id is used. When the driver's built-in application client id is used, the WAM broker is always enabled regardless of this value.
-      </param>
-      <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method, application client id, and Windows Account Manager (WAM) broker setting.
-      </summary>
-    </ctor3WithBroker>
     <ctorOptions>
       <param name="options">
         A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.

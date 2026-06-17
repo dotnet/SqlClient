@@ -105,10 +105,15 @@ public class WamBrokerTests
     public void Ctor_AppClientId_UseWamBrokerTrue_EnablesWamBroker()
     {
         string customAppId = Guid.NewGuid().ToString();
-        var provider = new ActiveDirectoryAuthenticationProvider(customAppId, useWamBroker: true);
+        var provider = new ActiveDirectoryAuthenticationProvider(
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                ApplicationClientId = customAppId,
+                UseWamBroker = true,
+            });
 
         Assert.True(provider.UseWamBroker,
-            "Custom application id with useWamBroker=true must enable WAM broker.");
+            "Custom application id with UseWamBroker=true must enable WAM broker.");
     }
 
     /// <summary>A caller-supplied application id with explicit opt-out keeps WAM broker disabled.</summary>
@@ -116,38 +121,52 @@ public class WamBrokerTests
     public void Ctor_AppClientId_UseWamBrokerFalse_DisablesWamBroker()
     {
         string customAppId = Guid.NewGuid().ToString();
-        var provider = new ActiveDirectoryAuthenticationProvider(customAppId, useWamBroker: false);
+        var provider = new ActiveDirectoryAuthenticationProvider(
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                ApplicationClientId = customAppId,
+                UseWamBroker = false,
+            });
 
         Assert.False(provider.UseWamBroker);
     }
 
     /// <summary>
     /// Even when the SqlClient first-party application id is passed explicitly with
-    /// <c>useWamBroker:false</c>, WAM broker mode must remain enabled because the first-party
+    /// <c>UseWamBroker=false</c>, WAM broker mode must remain enabled because the first-party
     /// app id is hard-wired to the WAM broker redirect URI. This guards the OR-condition in
     /// the provider's constructor.
     /// </summary>
     [Fact]
     public void Ctor_SqlClientAppIdExplicit_UseWamBrokerFalse_StillEnablesWamBroker()
     {
-        var provider = new ActiveDirectoryAuthenticationProvider(SqlClientApplicationId, useWamBroker: false);
+        var provider = new ActiveDirectoryAuthenticationProvider(
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                ApplicationClientId = SqlClientApplicationId,
+                UseWamBroker = false,
+            });
 
         Assert.True(provider.UseWamBroker,
-            "SqlClient first-party application id must always enable WAM broker, regardless of the useWamBroker argument.");
+            "SqlClient first-party application id must always enable WAM broker, regardless of the UseWamBroker option.");
     }
 
     /// <summary>
-    /// The three-arg constructor (deviceCodeCallback, applicationClientId, useWamBroker) must
-    /// honor the broker flag the same way the two-arg constructor does.
+    /// Passing a device-code callback together with a custom application id and
+    /// <c>UseWamBroker=true</c> via <see cref="ActiveDirectoryAuthenticationProvider.ProviderOptions"/>
+    /// must enable WAM broker mode.
     /// </summary>
     [Fact]
     public void Ctor_WithDeviceCodeCallback_UseWamBrokerTrue_EnablesWamBroker()
     {
         string customAppId = Guid.NewGuid().ToString();
         var provider = new ActiveDirectoryAuthenticationProvider(
-            deviceCodeFlowCallbackMethod: static _ => Task.CompletedTask,
-            applicationClientId: customAppId,
-            useWamBroker: true);
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                DeviceCodeFlowCallback = static _ => Task.CompletedTask,
+                ApplicationClientId = customAppId,
+                UseWamBroker = true,
+            });
 
         Assert.True(provider.UseWamBroker);
     }
@@ -236,7 +255,12 @@ public class WamBrokerTests
     public void Ctor_RegisteredAsProvider_PreservesUseWamBrokerSetting()
     {
         string customAppId = Guid.NewGuid().ToString();
-        var provider = new ActiveDirectoryAuthenticationProvider(customAppId, useWamBroker: true);
+        var provider = new ActiveDirectoryAuthenticationProvider(
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                ApplicationClientId = customAppId,
+                UseWamBroker = true,
+            });
 
         SqlAuthenticationProvider? original =
             SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);

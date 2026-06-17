@@ -52,7 +52,7 @@ See the LICENSE file in the project root for more information.
         </code>
       </example>
     </ctor2>
-    <ctor2WithBroker>
+    <ctor3>
       <param name="applicationClientId">
         Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
       </param>

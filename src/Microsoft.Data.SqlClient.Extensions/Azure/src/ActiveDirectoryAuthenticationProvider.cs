@@ -91,16 +91,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     {
     }
 
-    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2WithBroker/*'/>
-    /// <remarks>
-    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
-    /// overload to avoid adding more constructor overloads as new options are introduced.
-    /// </remarks>
-    public ActiveDirectoryAuthenticationProvider(string applicationClientId, bool useWamBroker)
-        : this(new ProviderOptions { ApplicationClientId = applicationClientId, UseWamBroker = useWamBroker })
-    {
-    }
-
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
     /// <remarks>
     /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
@@ -111,21 +101,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
             ApplicationClientId = applicationClientId,
-        })
-    {
-    }
-
-    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3WithBroker/*'/>
-    /// <remarks>
-    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
-    /// overload to avoid adding more constructor overloads as new options are introduced.
-    /// </remarks>
-    public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId, bool useWamBroker)
-        : this(new ProviderOptions
-        {
-            DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
-            ApplicationClientId = applicationClientId,
-            UseWamBroker = useWamBroker,
         })
     {
     }
