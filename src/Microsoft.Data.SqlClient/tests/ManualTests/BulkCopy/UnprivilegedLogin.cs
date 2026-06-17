@@ -59,7 +59,7 @@ public sealed class UnprivilegedLogin : IDisposable
             permissionsModificationCommand.CommandText = $"DENY SELECT ON [master].[sys].[all_columns] TO {_unprivilegedMasterUser.Name}";
             permissionsModificationCommand.ExecuteNonQuery();
 
-            permissionsModificationCommand.CommandText = $"DENY SELECT ON [{_managementConnection.Database}].[sys].[all_columns] TO {_unprivilegedMasterUser.Name}";
+            permissionsModificationCommand.CommandText = $"DENY SELECT ON [{_managementConnection.Database}].[sys].[all_columns] TO {_unprivilegedAppUser.Name}";
             permissionsModificationCommand.ExecuteNonQuery();
         }
 
