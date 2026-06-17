@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
 
         // The public key token of our Azure extension assembly, used to avoid loading imposter
         // assemblies.
-        private static readonly byte[] azurePublicKeyToken = [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
+        private static readonly byte[] s_azurePublicKeyToken = [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
 
         static SqlAuthenticationProviderManager()
         {
@@ -70,10 +70,10 @@ namespace Microsoft.Data.SqlClient
                     nameof(SqlAuthenticationProviderManager) +
                     $": Attempting to load Azure extension assembly={azureAssemblyName} with " +
                     "expected public key token=" +
-                    BitConverter.ToString(azurePublicKeyToken).Replace("-", ""));
+                    BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
 
                 var qualifiedName = new AssemblyName(azureAssemblyName);
-                qualifiedName.SetPublicKeyToken(azurePublicKeyToken);
+                qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
 
                 // The .NET Framework runtime will enforce the token during binding, causing Load()
                 // to throw.  This prevents an untrusted assembly from being loaded and having its
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
 
-                    if (actualToken is null || !actualToken.AsSpan().SequenceEqual(azurePublicKeyToken))
+                    if (actualToken is null || !actualToken.AsSpan().SequenceEqual(s_azurePublicKeyToken))
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             nameof(SqlAuthenticationProviderManager) +
@@ -144,30 +144,66 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                // Try to instantiate it.  When no application client id is configured we use
-                // the parameterless constructor (which defaults to the SqlClient first-party app
-                // id and enables WAM brokering on Windows).  Otherwise, explicitly resolve the
-                // (string) constructor to avoid AmbiguousMatchException between the
-                // (string applicationClientId) and (ProviderOptions options) overloads when the
-                // single argument is null.
+                // Try to instantiate it.  When neither an application client id nor a
+                // useWamBroker flag has been configured we use the parameterless constructor
+                // (which defaults to the SqlClient first-party app id and enables WAM brokering
+                // on Windows).  Otherwise we resolve the (ProviderOptions) constructor and pass
+                // through only the properties the app actually configured: either may be
+                // supplied without the other (e.g. applicationClientId set with no
+                // useWamBroker, or useWamBroker set with no applicationClientId), and any
+                // omitted property keeps the ProviderOptions default.
                 SqlAuthenticationProvider? instance;
-                if (Instance._applicationClientId is null)
+                if (Instance._applicationClientId is null && Instance._useWamBroker is null)
                 {
                     instance = Activator.CreateInstance(type) as SqlAuthenticationProvider;
                 }
                 else
                 {
-                    var ctor = type.GetConstructor(new[] { typeof(string) });
+                    const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider+ProviderOptions";
+                    var optionsType = assembly.GetType(optionsTypeName);
+                    if (optionsType is null)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Azure extension class={className} is missing the nested " +
+                            $"options type={optionsTypeName}; no default Active Directory " +
+                            "provider installed");
+                        return;
+                    }
+
+                    var ctor = type.GetConstructor([optionsType]);
                     if (ctor is null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             nameof(SqlAuthenticationProviderManager) +
-                            $": Azure extension class={className} is missing the (string) " +
-                            "constructor; no default Active Directory provider installed");
+                            $": Azure extension class={className} is missing the " +
+                            "(ProviderOptions) constructor; no default Active Directory " +
+                            "provider installed");
                         return;
                     }
 
-                    instance = ctor.Invoke(new object[] { Instance._applicationClientId }) as SqlAuthenticationProvider;
+                    var options = Activator.CreateInstance(optionsType);
+                    if (options is null)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Failed to instantiate options type={optionsTypeName}; " +
+                            "no default Active Directory provider installed");
+                        return;
+                    }
+
+                    if (Instance._applicationClientId is not null)
+                    {
+                        optionsType.GetProperty("ApplicationClientId")
+                            ?.SetValue(options, Instance._applicationClientId);
+                    }
+                    if (Instance._useWamBroker is bool useWamBroker)
+                    {
+                        optionsType.GetProperty("UseWamBroker")
+                            ?.SetValue(options, useWamBroker);
+                    }
+
+                    instance = ctor.Invoke([options]) as SqlAuthenticationProvider;
                 }
 
                 if (instance is null)
@@ -238,6 +274,13 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string? _applicationClientId = null;
 
+        // Optional override for ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker
+        // read from the app.config <SqlClientAuthenticationProviders useWamBroker="..."/> attribute.
+        // null means the app did not configure the value, in which case we leave the
+        // provider's default behavior (WAM is implied by the SqlClient first-party app id and
+        // off otherwise) untouched.
+        private readonly bool? _useWamBroker = null;
+
         /// <summary>
         /// Constructor.
         /// </summary>
@@ -259,6 +302,23 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined Application Client Id found.");
+            }
+
+            if (!string.IsNullOrEmpty(configSection.UseWamBroker))
+            {
+                if (bool.TryParse(configSection.UseWamBroker, out bool useWamBroker))
+                {
+                    _useWamBroker = useWamBroker;
+                    _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Received user-defined UseWamBroker={useWamBroker}.");
+                }
+                else
+                {
+                    _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Ignoring user-defined UseWamBroker='{configSection.UseWamBroker}': not a valid boolean.");
+                }
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined UseWamBroker found.");
             }
 
             // Create user-defined auth initializer, if any.
@@ -485,6 +545,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         [ConfigurationProperty("applicationClientId", IsRequired = false)]
         public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
+
+        /// <summary>
+        /// Forwarded to <c>ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker</c>
+        /// when the Azure extension's default provider is auto-installed. Stored as a string so
+        /// that an unset attribute can be distinguished from <c>useWamBroker="false"</c>; the
+        /// runtime parses it with <see cref="bool.TryParse(string, out bool)"/>.
+        /// </summary>
+        [ConfigurationProperty("useWamBroker", IsRequired = false)]
+        public string UseWamBroker => this["useWamBroker"] as string ?? string.Empty;
     }
 
     /// <summary>

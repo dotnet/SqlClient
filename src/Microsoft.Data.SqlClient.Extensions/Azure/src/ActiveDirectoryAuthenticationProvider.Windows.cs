@@ -79,8 +79,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
 #endif
             if (parentWindow is not null)
             {
-                throw new InvalidOperationException($"{nameof(SetParentActivityOrWindowFunc)} expects the callback to return an IntPtr window handle" +
-                    " (or an IWin32Window on .NET Framework)." );
+                throw new InvalidOperationException(
+                    $"{nameof(SetParentActivityOrWindowFunc)} expects the callback to return an " +
+                    "IntPtr window handle" +
+#if NETFRAMEWORK
+                    " (or an IWin32Window on .NET Framework)" +
+#endif
+                    $"; got {parentWindow.GetType().FullName}.");
             }
         }
 

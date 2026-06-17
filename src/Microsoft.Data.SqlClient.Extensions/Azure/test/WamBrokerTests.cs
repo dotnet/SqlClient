@@ -119,6 +119,7 @@ public class WamBrokerTests
     {
         var provider = new ActiveDirectoryAuthenticationProvider();
 
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker,
             "Default ctor must enable WAM broker (uses SqlClient first-party application id).");
     }
@@ -129,8 +130,31 @@ public class WamBrokerTests
     {
         var provider = new ActiveDirectoryAuthenticationProvider(TestCustomAppId);
 
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
         Assert.False(provider.UseWamBroker,
             "Custom application id without useWamBroker=true must keep WAM broker disabled.");
+    }
+
+    /// <summary>
+    /// Mirrors the previous test for the <see cref="ActiveDirectoryAuthenticationProvider.ProviderOptions"/>
+    /// constructor: a caller (or app.config) that sets only <c>ApplicationClientId</c> and skips
+    /// <c>UseWamBroker</c> must get the documented default of <see langword="false"/>. This is
+    /// the contract <c>SqlAuthenticationProviderManager</c> relies on when reflecting onto the
+    /// Options ctor and only forwarding the properties that were explicitly configured.
+    /// </summary>
+    [Fact]
+    public void Ctor_Options_AppClientIdOnly_DefaultsUseWamBrokerToFalse()
+    {
+        var provider = new ActiveDirectoryAuthenticationProvider(
+            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            {
+                ApplicationClientId = TestCustomAppId,
+                // UseWamBroker intentionally left at its default (false).
+            });
+
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
+        Assert.False(provider.UseWamBroker,
+            "Options ctor with ApplicationClientId set and UseWamBroker omitted must keep WAM broker disabled.");
     }
 
     /// <summary>
@@ -144,6 +168,7 @@ public class WamBrokerTests
     {
         var provider = new ActiveDirectoryAuthenticationProvider(SqlClientApplicationId);
 
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker,
             "Single-string ctor with the SqlClient first-party id must enable WAM broker.");
     }
@@ -159,6 +184,7 @@ public class WamBrokerTests
                 UseWamBroker = true,
             });
 
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker,
             "Custom application id with UseWamBroker=true must enable WAM broker.");
     }
@@ -174,6 +200,7 @@ public class WamBrokerTests
                 UseWamBroker = false,
             });
 
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
         Assert.False(provider.UseWamBroker);
     }
 
@@ -193,6 +220,7 @@ public class WamBrokerTests
                 UseWamBroker = false,
             });
 
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker,
             "SqlClient first-party application id must always enable WAM broker, regardless of the UseWamBroker option.");
     }
@@ -213,6 +241,7 @@ public class WamBrokerTests
                 UseWamBroker = true,
             });
 
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker);
     }
 
@@ -228,6 +257,7 @@ public class WamBrokerTests
             applicationClientId: TestCustomAppId);
 
         Assert.False(provider.UseWamBroker);
+        Assert.NotEqual(SqlClientApplicationId, provider.ApplicationClientId);
     }
 
     /// <summary>
@@ -241,6 +271,7 @@ public class WamBrokerTests
             deviceCodeFlowCallbackMethod: static _ => Task.CompletedTask);
 
         Assert.True(provider.UseWamBroker);
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
     }
 
     /// <summary>
@@ -258,6 +289,7 @@ public class WamBrokerTests
                 UseWamBroker = true,
             });
 
+        Assert.Equal(TestCustomAppId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker);
     }
 
@@ -277,6 +309,7 @@ public class WamBrokerTests
                 UseWamBroker = useWamBroker,
             });
 
+        Assert.Equal(SqlClientApplicationId, provider.ApplicationClientId);
         Assert.True(provider.UseWamBroker);
     }
 
@@ -320,7 +353,8 @@ public class WamBrokerTests
                 as ActiveDirectoryAuthenticationProvider;
             Assert.NotNull(retrieved);
             Assert.Same(provider, retrieved);
-            Assert.True(retrieved!.UseWamBroker);
+            Assert.Equal(TestCustomAppId, retrieved!.ApplicationClientId);
+            Assert.True(retrieved.UseWamBroker);
         }
         finally
         {

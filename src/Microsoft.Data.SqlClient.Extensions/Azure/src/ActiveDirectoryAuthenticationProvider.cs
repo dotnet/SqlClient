@@ -130,6 +130,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// </summary>
     internal bool UseWamBroker => _useWamBroker;
 
+    /// <summary>
+    /// The Entra ID application client id used by this provider instance. Exposed as <c>internal</c> for tests.
+    /// The client id is used in the redirect URI when WAM broker mode is enabled, so it must match the client id configured 
+    /// in the app registration for the Entra ID application to successfully broker with WAM on Windows.
+    /// </summary>
+    internal string ApplicationClientId => _applicationClientId;
+
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
     public static void ClearUserTokenCache()
     {
