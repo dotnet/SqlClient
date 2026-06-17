@@ -20,6 +20,12 @@ The sample multi-targets:
 binary only runs on Windows, so the project no longer needs a separate no-op cross-platform
 fallback.
 
+> **Note:** `SetParentActivityOrWindowFunc` is also available on `net481` and is the
+> recommended API for new code on any framework. The sample wires `net481` up to
+> `SetIWin32WindowFunc` only to keep coverage of that legacy code path; replacing the
+> `SetIWin32WindowFunc(() => this)` call with `SetParentActivityOrWindowFunc(() => this.Handle)`
+> on `net481` works the same way.
+
 ## Mode selector
 
 When the app launches it shows a small `ModeSelectorForm` that picks between two top-level forms:

@@ -154,6 +154,7 @@ See the LICENSE file in the project root for more information.
         On Windows, return an <see cref="T:System.IntPtr" /> window handle (or an <see cref="T:System.Windows.Forms.IWin32Window" /> on .NET Framework).
         On Android, return an Activity; on iOS, return a UIViewController (or the platform equivalent).
         Pass <see langword="null" /> to clear a previously installed callback and revert to the provider's default behavior.
+      </param>
       <summary>
         Sets a function to return the parent window handle to be used for WAM (Windows Account Manager) broker authentication prompts.
       </summary>
