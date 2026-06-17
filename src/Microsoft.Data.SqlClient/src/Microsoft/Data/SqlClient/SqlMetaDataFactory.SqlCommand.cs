@@ -30,6 +30,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        /// <summary>
+        /// Returns one of the <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections">SQL Server Schema collections</see>
+        /// </summary>
         private sealed class SqlCommandCollection : MetaDataCollectionBase
         {
             private readonly SupportedQuery[] Queries;

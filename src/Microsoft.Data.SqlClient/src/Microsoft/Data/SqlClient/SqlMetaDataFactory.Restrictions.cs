@@ -6,11 +6,15 @@ using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using static System.Net.WebRequestMethods;
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SqlMetaDataFactory
     {
+        /// <summary>
+        /// Returns <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/common-schema-collections#restrictions">Restrictions</see> schema collection.
+        /// </summary>
         private sealed class RestrictionsCollection : MetaDataCollectionBase
         {
             internal RestrictionsCollection() : base(DbMetaDataCollectionNames.Restrictions, 0, 0)

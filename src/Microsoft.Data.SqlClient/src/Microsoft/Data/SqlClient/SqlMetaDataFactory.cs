@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
                     [new SupportedQuery("09.00.0000", null, "select types.assembly_class COLLATE database_default + ', ' + assemblies.name + ', Version=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMinor')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionBuild')) + '.' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionRevision')) + ISNULL(', Culture=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'CultureInfo')),'') + ISNULL(', PublicKeyToken=' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'PublicKey'),1),'0x','')),'') TypeName, 29 ProviderDbType, max_length ColumnSize, null CreateFormat, null CreateParameters, null DataType, null IsAutoincrementable, null IsBestMatch, null IsCaseSensitive, is_fixed_length IsFixedLength, null IsFixedPrecisionScale, null IsLong, is_nullable IsNullable, 1 IsSearchable, null IsSearchableWithLike, null IsUnsigned, null MaximumScale, null MinimumScale, null IsConcurrencyType, 0 IsLiteralSupported, null LiteralPrefix, null LiteralSuffix, null NativeDataType from sys.assemblies as assemblies  join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id")],
                     []),
         ];
-    #pragma warning restore format
+        #pragma warning restore format
 
 
         // Well-known column names

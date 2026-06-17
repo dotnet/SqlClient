@@ -13,6 +13,10 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
+    /// <summary>
+    /// Returns <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/common-schema-collections#datasourceinformation">
+    /// DataSourceInformation</see> schema collection.
+    /// </summary>
     private sealed class DataSourceInformationCollection : MetaDataCollectionBase
     {
         private const string CompositeIdentifierSeparatorPattern = "\\.";

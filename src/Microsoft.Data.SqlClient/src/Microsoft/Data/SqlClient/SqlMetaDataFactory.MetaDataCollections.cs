@@ -12,6 +12,13 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
+    /// <summary>
+    /// Returns a list of all schema collections supported by the current data provider
+    /// </summary>
+    /// <remarks>
+    /// Returns both common schema collections <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/common-schema-collections"/>
+    /// and SQL Server schema collections <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections"/>
+    /// </remarks>
     private class MetaDataCollection : MetaDataCollectionBase
     {
         internal MetaDataCollection()

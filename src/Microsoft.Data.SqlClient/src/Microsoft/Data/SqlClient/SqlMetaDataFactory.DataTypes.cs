@@ -2,13 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Connection;
 
 #nullable enable
 
@@ -16,6 +13,10 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
+    /// <summary>
+    /// Returns <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/common-schema-collections#datatypes">DataTypes</see>
+    /// schema collection.
+    /// </summary>
     private sealed class DataTypesCollection : MetaDataCollectionBase
     {
         #pragma warning disable format
