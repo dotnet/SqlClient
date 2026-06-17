@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests;
 /// handle column aliases. These tests verify that bulk copy operations can handle such situations
 /// gracefully, falling back and ignoring column aliases.
 /// </summary>
+[Trait("Set", "2")]
 public sealed class UnprivilegedLogin : IDisposable
 {
     private readonly SqlConnection? _managementConnection;
