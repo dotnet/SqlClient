@@ -541,7 +541,7 @@ DECLARE @Column_Name_Query_FILTER NVARCHAR(MAX);
 DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
-DECLARE @Has_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
+DECLARE @Has_Sys_All_Columns_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
 
 CREATE TABLE #Column_Aliases
 (
@@ -561,7 +561,7 @@ BEGIN
     SET @Column_Name_Query_SORT = N'ORDER BY [column_id] ASC';
 END
 
-IF @Has_Permissions = 1
+IF @Has_Sys_All_Columns_Permissions = 1
 BEGIN
     IF EXISTS (SELECT TOP 1 * FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{catalogNameStringLiteral}.[sys].[all_columns]') AND [name] = 'graph_type')
     BEGIN
