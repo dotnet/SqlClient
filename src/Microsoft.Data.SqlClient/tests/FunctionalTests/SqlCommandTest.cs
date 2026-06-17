@@ -562,6 +562,16 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [Fact]
+        public void Cancel_WithNullConnection_DoesNotThrow()
+        {
+            using SqlCommand cmd = new SqlCommand();
+            Assert.Null(cmd.Connection);
+
+            // Should be a no-op, not throw NullReferenceException
+            cmd.Cancel();
+        }
+
         private static SqlConnection GetNonConnectingConnection() =>
             new SqlConnection("Initial Catalog=a;Server=b;User ID=c;Password=d");
     }
