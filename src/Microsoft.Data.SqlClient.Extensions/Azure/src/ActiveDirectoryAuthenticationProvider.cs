@@ -72,30 +72,18 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private const int MsalRetryStatusCode = 429;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
-    /// <remarks>
-    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
-    /// overload to avoid adding more constructor overloads as new options are introduced.
-    /// </remarks>
     public ActiveDirectoryAuthenticationProvider()
         : this(new ProviderOptions())
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-    /// <remarks>
-    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
-    /// overload to avoid adding more constructor overloads as new options are introduced.
-    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(string applicationClientId)
         : this(new ProviderOptions { ApplicationClientId = applicationClientId })
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
-    /// <remarks>
-    /// New code should prefer the <see cref="ActiveDirectoryAuthenticationProvider(ProviderOptions)"/>
-    /// overload to avoid adding more constructor overloads as new options are introduced.
-    /// </remarks>
     public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
         : this(new ProviderOptions
         {
@@ -149,11 +137,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             s_tokenCredentialMap.Clear();
         }
-
-        // Also evict any fed-auth tokens the driver has cached per pool, so subsequent
-        // SqlConnection.Open calls reacquire tokens from MSAL/Azure.Identity instead of
-        // reusing entries that are now considered stale by the caller.
-        SqlAuthenticationProvider.ClearFederatedAuthenticationInformationCache();
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
@@ -351,7 +334,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                     // as obsolete in MSAL.NET but it is still a supported way
                     // to acquire tokens for Active Directory Integrated
                     // authentication.
-                    var builder =
+                    AcquireTokenByIntegratedWindowsAuthParameterBuilder builder =
                         #pragma warning disable CS0618 // Type or member is obsolete
                         app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         #pragma warning restore CS0618 // Type or member is obsolete
@@ -659,7 +642,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 // Use a dedicated CTS with the typical AAD user-code lifetime as the cap,
                 // mirroring the pattern used for ActiveDirectoryInteractive above.
                 using CancellationTokenSource ctsDeviceFlow = new();
-                ctsDeviceFlow.CancelAfter(TimeSpan.FromMinutes(15)); // 15 minutes
+                ctsDeviceFlow.CancelAfter(TimeSpan.FromMinutes(3)); // 3 minutes
 
                 return await app.AcquireTokenWithDeviceCode(scopes,
                     deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))

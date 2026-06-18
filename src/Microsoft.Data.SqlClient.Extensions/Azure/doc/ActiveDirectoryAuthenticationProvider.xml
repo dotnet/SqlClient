@@ -14,6 +14,10 @@ See the LICENSE file in the project root for more information.
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class.
       </summary>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor>
     <ctor2>
       <param name="applicationClientId">
@@ -51,6 +55,10 @@ See the LICENSE file in the project root for more information.
           }
         </code>
       </example>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor2>
     <ctor3>
       <param name="deviceCodeFlowCallbackMethod">
@@ -62,6 +70,10 @@ See the LICENSE file in the project root for more information.
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor3>
     <ctorOptions>
       <param name="options">
