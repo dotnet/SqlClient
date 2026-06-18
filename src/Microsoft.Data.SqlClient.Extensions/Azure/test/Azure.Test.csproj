@@ -25,14 +25,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
-  <!-- When a test signing key is provided, sign the test assembly so the IVT entry on Azure.csproj
-       (which is keyed by the corresponding public key) is honored in signed-build configurations. -->
-  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-
   <!-- Global Usings =================================================== -->
   <ItemGroup>
     <Using Include="Xunit" />

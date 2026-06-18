@@ -139,18 +139,5 @@ See the LICENSE file in the project root for more information.
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
     </SetProvider>
-    <ClearFederatedAuthenticationInformationCache>
-      <summary>
-        Clears the driver's in-memory cache of federated-authentication tokens across every active connection pool.
-      </summary>
-      <remarks>
-        <para>
-          Pools and their pooled physical connections are not torn down. Only the cached fed-auth tokens are evicted, so the next connection that needs a fed-auth token will reacquire it from its registered <see cref="SqlAuthenticationProvider" />.
-        </para>
-        <para>
-          This is invoked by extension token-cache-clear APIs (for example <c>ActiveDirectoryAuthenticationProvider.ClearUserTokenCache</c>) so the driver's cache stays in sync with the upstream MSAL/credential cache. The call is a no-op if <c>Microsoft.Data.SqlClient</c> is not loaded.
-        </para>
-      </remarks>
-    </ClearFederatedAuthenticationInformationCache>
   </members>
 </docs>

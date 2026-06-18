@@ -87,22 +87,6 @@ namespace Microsoft.Data.SqlClient
                 group?.Clear();
             }
         }
-
-        /// <summary>
-        /// Clears every pool's cached federated-authentication contexts without disposing
-        /// the pools or their pooled connections. Pooled connections remain reusable; only
-        /// the cached fed-auth tokens are evicted, so the next connection that needs a
-        /// fed-auth token will reacquire it. Invoked when an extension's token-cache-clear
-        /// API is called so the driver's in-memory cache stays in sync.
-        /// </summary>
-        internal void ClearAllAuthenticationContexts()
-        {
-            using SqlClientEventScope scope = SqlClientEventScope.Create(nameof(SqlConnectionFactory));
-            foreach (DbConnectionPoolGroup group in _connectionPoolGroups.Values)
-            {
-                group?.ClearAuthenticationContexts();
-            }
-        }
         
         internal void ClearPool(DbConnection connection)
         {
