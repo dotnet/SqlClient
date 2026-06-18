@@ -25,10 +25,9 @@
         </ApplicationClientId>
         <UseWamBroker>
             <summary>
-                Windows-only setting to control whether the provider should use the WAM broker for interactive authentication. 
-                When <see langword="true"/>, interactive flows will use WAM; when <see langword="false"/>, they won't. 
-                The default value is <see langword="false"/>, but if <see cref="ApplicationClientId"/> is not null 
-                and the provider is running on Windows, WAM broker mode will be forced on regardless of this setting.
+                Windows-only setting to control whether the provider uses the WAM broker for interactive authentication. 
+                Defaults to <see langword="false"/> when you provide a custom <see cref="ApplicationClientId"/>.
+                Otherwise, WAM broker mode is used automatically on Windows.
             </summary>
         </UseWamBroker>
     </members>

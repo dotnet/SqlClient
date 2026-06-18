@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Look for the authentication provider class.
                 const string className = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider";
-                var type = assembly.GetType(className);
+                Type? type = assembly.GetType(className);
 
                 if (type is null)
                 {
@@ -144,67 +144,28 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                // Try to instantiate it.  When neither an application client id nor a
-                // useWamBroker flag has been configured we use the parameterless constructor
-                // (which defaults to the SqlClient first-party app id and enables WAM brokering
-                // on Windows).  Otherwise we resolve the (ActiveDirectoryAuthenticationProviderOptions) 
-                // constructor and pass through only the properties the app actually configured: either may be
-                // supplied without the other (e.g. applicationClientId set with no
-                // useWamBroker, or useWamBroker set with no applicationClientId), and any
-                // omitted property keeps the ActiveDirectoryAuthenticationProviderOptions default.
-                SqlAuthenticationProvider? instance;
-                if (Instance._applicationClientId is null && Instance._useWamBroker is null)
-                {
-                    instance = Activator.CreateInstance(type) as SqlAuthenticationProvider;
-                }
-                else
-                {
-                    const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
-                    var optionsType = assembly.GetType(optionsTypeName);
-                    if (optionsType is null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            $": Azure extension class={className} is missing the nested " +
-                            $"options type={optionsTypeName}; no default Active Directory " +
-                            "provider installed");
-                        return;
-                    }
+                // Try to instantiate it.  Behavior depends on what the app
+                // configured in <SqlClientAuthenticationProviders>:
+                //  * Neither applicationClientId nor useWamBroker -> use the
+                //    parameterless constructor (defaults to the SqlClient
+                //    first-party app id and enables WAM brokering on Windows).
+                //  * applicationClientId only -> prefer the
+                //    (ActiveDirectoryAuthenticationProviderOptions) constructor
+                //    when the Azure extension exposes it; otherwise fall back
+                //    to the legacy (string applicationClientId) constructor so
+                //    older Azure extension versions keep working.
+                //  * useWamBroker (with or without applicationClientId) ->
+                //    requires the (Options) constructor because there is no
+                //    positional analog. If the Azure extension is too old to
+                //    expose Options, throw to surface the misconfiguration.
+                const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
+                Type? optionsType = assembly.GetType(optionsTypeName);
 
-                    var ctor = type.GetConstructor([optionsType]);
-                    if (ctor is null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            $": Azure extension class={className} is missing the " +
-                            "(ProviderOptions) constructor; no default Active Directory " +
-                            "provider installed");
-                        return;
-                    }
-
-                    var options = Activator.CreateInstance(optionsType);
-                    if (options is null)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            $": Failed to instantiate options type={optionsTypeName}; " +
-                            "no default Active Directory provider installed");
-                        return;
-                    }
-
-                    if (Instance._applicationClientId is not null)
-                    {
-                        optionsType.GetProperty("ApplicationClientId")
-                            ?.SetValue(options, Instance._applicationClientId);
-                    }
-                    if (Instance._useWamBroker is bool useWamBroker)
-                    {
-                        optionsType.GetProperty("UseWamBroker")
-                            ?.SetValue(options, useWamBroker);
-                    }
-
-                    instance = ctor.Invoke([options]) as SqlAuthenticationProvider;
-                }
+                SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
+                    type,
+                    optionsType,
+                    Instance._applicationClientId,
+                    Instance._useWamBroker);
 
                 if (instance is null)
                 {
@@ -395,6 +356,80 @@ namespace Microsoft.Data.SqlClient
         internal static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
             return Instance._providers.TryGetValue(authenticationMethod, out SqlAuthenticationProvider? value) ? value : null;
+        }
+
+        // Reflectively constructs the Azure extension's ActiveDirectoryAuthenticationProvider,
+        // selecting the constructor that matches what the app configured. Extracted from the
+        // static initializer so it can be unit-tested with stub provider/options shapes.
+        //
+        // Returns null when no compatible constructor is available (e.g. a custom assembly
+        // that lacks both the (Options) and (string) ctors).
+        //
+        // Throws InvalidOperationException when useWamBroker is configured but the Azure
+        // extension is too old to expose ActiveDirectoryAuthenticationProviderOptions; that
+        // signals user-actionable misconfiguration and intentionally escapes the static ctor's
+        // catch-when filter so it surfaces as a TypeInitializationException.
+        internal static SqlAuthenticationProvider? CreateAzureAuthenticationProvider(
+            Type providerType,
+            Type? optionsType,
+            string? applicationClientId,
+            bool? useWamBroker)
+        {
+            if (applicationClientId is null && useWamBroker is null)
+            {
+                return Activator.CreateInstance(providerType) as SqlAuthenticationProvider;
+            }
+
+            ConstructorInfo? optionsCtor = optionsType is null
+                ? null
+                : providerType.GetConstructor([optionsType]);
+
+            if (useWamBroker is bool useWam)
+            {
+                if (optionsType is null || optionsCtor is null)
+                {
+                    throw SQL.UseWamBrokerRequiresAzureExtensionUpgrade();
+                }
+
+                var options = Activator.CreateInstance(optionsType);
+                if (options is null)
+                {
+                    return null;
+                }
+
+                if (applicationClientId is not null)
+                {
+                    optionsType.GetProperty("ApplicationClientId")
+                        ?.SetValue(options, applicationClientId);
+                }
+                optionsType.GetProperty("UseWamBroker")
+                    ?.SetValue(options, useWam);
+
+                return optionsCtor.Invoke([options]) as SqlAuthenticationProvider;
+            }
+
+            // applicationClientId-only: prefer Options when the extension exposes it,
+            // otherwise fall back to the legacy (string) ctor for backward compatibility
+            // with older Azure extension versions.
+            if (optionsType is not null && optionsCtor is not null)
+            {
+                var options = Activator.CreateInstance(optionsType);
+                if (options is null)
+                {
+                    return null;
+                }
+                optionsType.GetProperty("ApplicationClientId")
+                    ?.SetValue(options, applicationClientId);
+                return optionsCtor.Invoke([options]) as SqlAuthenticationProvider;
+            }
+
+            ConstructorInfo? legacyCtor = providerType.GetConstructor([typeof(string)]);
+            if (legacyCtor is not null)
+            {
+                return legacyCtor.Invoke([applicationClientId]) as SqlAuthenticationProvider;
+            }
+
+            return null;
         }
 
         /// <summary>
