@@ -85,7 +85,7 @@ public class WamBrokerTests
     }
 
     /// <summary>
-    /// Mirrors the previous test for the <see cref="ActiveDirectoryAuthenticationProvider.ProviderOptions"/>
+    /// Mirrors the previous test for the <see cref="ActiveDirectoryAuthenticationProviderOptions"/>
     /// constructor: a caller (or app.config) that sets only <c>ApplicationClientId</c> and skips
     /// <c>UseWamBroker</c> must get the documented default of <see langword="false"/>. This is
     /// the contract <c>SqlAuthenticationProviderManager</c> relies on when reflecting onto the
@@ -95,7 +95,7 @@ public class WamBrokerTests
     public void Ctor_Options_AppClientIdOnly_DefaultsUseWamBrokerToFalse()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = TestCustomAppId,
                 // UseWamBroker intentionally left at its default (false).
@@ -127,7 +127,7 @@ public class WamBrokerTests
     public void Ctor_AppClientId_UseWamBrokerTrue_EnablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = TestCustomAppId,
                 UseWamBroker = true,
@@ -143,7 +143,7 @@ public class WamBrokerTests
     public void Ctor_AppClientId_UseWamBrokerFalse_DisablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = TestCustomAppId,
                 UseWamBroker = false,
@@ -163,7 +163,7 @@ public class WamBrokerTests
     public void Ctor_SqlClientAppIdExplicit_UseWamBrokerFalse_StillEnablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = SqlClientApplicationId,
                 UseWamBroker = false,
@@ -183,7 +183,7 @@ public class WamBrokerTests
     public void Ctor_WithDeviceCodeCallback_UseWamBrokerTrue_EnablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 DeviceCodeFlowCallback = static _ => Task.CompletedTask,
                 ApplicationClientId = TestCustomAppId,
@@ -232,7 +232,7 @@ public class WamBrokerTests
     public void Ctor_Options_CustomAppId_UseWamBrokerTrue_EnablesWamBroker()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = TestCustomAppId,
                 UseWamBroker = true,
@@ -252,7 +252,7 @@ public class WamBrokerTests
     public void Ctor_Options_NullAppId_AlwaysEnablesWamBroker(bool useWamBroker)
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = null,
                 UseWamBroker = useWamBroker,
@@ -270,7 +270,7 @@ public class WamBrokerTests
     public void Ctor_Options_Null_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(
-            () => new ActiveDirectoryAuthenticationProvider((ActiveDirectoryAuthenticationProvider.ProviderOptions)null!));
+            () => new ActiveDirectoryAuthenticationProvider((ActiveDirectoryAuthenticationProviderOptions)null!));
     }
 
     /// <summary>
@@ -286,7 +286,7 @@ public class WamBrokerTests
     public void Ctor_RegisteredAsProvider_PreservesUseWamBrokerSetting()
     {
         var provider = new ActiveDirectoryAuthenticationProvider(
-            new ActiveDirectoryAuthenticationProvider.ProviderOptions
+            new ActiveDirectoryAuthenticationProviderOptions
             {
                 ApplicationClientId = TestCustomAppId,
                 UseWamBroker = true,

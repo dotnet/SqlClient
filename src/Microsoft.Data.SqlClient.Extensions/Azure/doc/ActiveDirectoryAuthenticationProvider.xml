@@ -15,7 +15,7 @@ See the LICENSE file in the project root for more information.
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class.
       </summary>
       <remarks>
-        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
         overload to avoid adding more constructor overloads as new options are introduced.
       </remarks>
     </ctor>
@@ -56,7 +56,7 @@ See the LICENSE file in the project root for more information.
         </code>
       </example>
       <remarks>
-        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
         overload to avoid adding more constructor overloads as new options are introduced.
       </remarks>
     </ctor2>
@@ -71,32 +71,21 @@ See the LICENSE file in the project root for more information.
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
       <remarks>
-        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)"/>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
         overload to avoid adding more constructor overloads as new options are introduced.
       </remarks>
     </ctor3>
     <ctorOptions>
       <param name="options">
-        A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.
+        A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.
       </param>
       <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class from a <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions" /> bag. This is the recommended constructor for new code because new options can be added to <c>ProviderOptions</c> without forcing breaking changes on callers.
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class from a <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> bag. This is the recommended constructor for new code because new options can be added to <c>ActiveDirectoryAuthenticationProviderOptions</c> without forcing breaking changes on callers.
       </summary>
       <exception cref="T:System.ArgumentNullException">
         Thrown when <paramref name="options" /> is <see langword="null" />.
       </exception>
     </ctorOptions>
-    <ProviderOptions>
-      <summary>
-        Property bag used by the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions)" /> constructor.
-      </summary>
-      <remarks>
-        Prefer this options-bag constructor over the positional-argument overloads in new code. Additional options can be added here in future versions without introducing new constructor overloads.
-        <para>
-          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker" /> is a Windows-only setting: it has no effect on non-Windows platforms, where interactive Entra ID flows always use the system browser.
-        </para>
-      </remarks>
-    </ProviderOptions>
     <AcquireTokenAsync>
       <param name="parameters">
         The Active Directory authentication parameters passed to authentication providers.

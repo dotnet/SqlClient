@@ -147,11 +147,11 @@ namespace Microsoft.Data.SqlClient
                 // Try to instantiate it.  When neither an application client id nor a
                 // useWamBroker flag has been configured we use the parameterless constructor
                 // (which defaults to the SqlClient first-party app id and enables WAM brokering
-                // on Windows).  Otherwise we resolve the (ProviderOptions) constructor and pass
-                // through only the properties the app actually configured: either may be
+                // on Windows).  Otherwise we resolve the (ActiveDirectoryAuthenticationProviderOptions) 
+                // constructor and pass through only the properties the app actually configured: either may be
                 // supplied without the other (e.g. applicationClientId set with no
                 // useWamBroker, or useWamBroker set with no applicationClientId), and any
-                // omitted property keeps the ProviderOptions default.
+                // omitted property keeps the ActiveDirectoryAuthenticationProviderOptions default.
                 SqlAuthenticationProvider? instance;
                 if (Instance._applicationClientId is null && Instance._useWamBroker is null)
                 {
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider+ProviderOptions";
+                    const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
                     var optionsType = assembly.GetType(optionsTypeName);
                     if (optionsType is null)
                     {
@@ -274,7 +274,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string? _applicationClientId = null;
 
-        // Optional override for ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker
+        // Optional override for ActiveDirectoryAuthenticationProviderOptions.UseWamBroker
         // read from the app.config <SqlClientAuthenticationProviders useWamBroker="..."/> attribute.
         // null means the app did not configure the value, in which case we leave the
         // provider's default behavior (WAM is implied by the SqlClient first-party app id and
@@ -394,8 +394,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Authentication provider or null if not found.</returns>
         internal static SqlAuthenticationProvider? GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
-            SqlAuthenticationProvider? value;
-            return Instance._providers.TryGetValue(authenticationMethod, out value) ? value : null;
+            return Instance._providers.TryGetValue(authenticationMethod, out SqlAuthenticationProvider? value) ? value : null;
         }
 
         /// <summary>
@@ -438,21 +437,6 @@ namespace Microsoft.Data.SqlClient
                     return provider;
                 });
             return true;
-        }
-
-        /// <summary>
-        /// Clears the driver's in-memory cache of federated-authentication tokens
-        /// (<c>DbConnectionPoolAuthenticationContext</c>) across every active pool.
-        /// Pools and pooled physical connections are not torn down; only the cached
-        /// fed-auth contexts are evicted, so the next connection that needs a fed-auth
-        /// token will reacquire it from its <see cref="SqlAuthenticationProvider"/>.
-        /// Reflected into by <c>Microsoft.Data.SqlClient.Extensions.Abstractions</c> so
-        /// extension token-cache-clear APIs (e.g. <c>ActiveDirectoryAuthenticationProvider.ClearUserTokenCache</c>)
-        /// can keep the driver's cache in sync with the upstream MSAL/credential cache.
-        /// </summary>
-        internal static void ClearFederatedAuthenticationInformationCache()
-        {
-            SqlConnectionFactory.Instance.ClearAllAuthenticationContexts();
         }
 
         /// <summary>
@@ -547,7 +531,7 @@ namespace Microsoft.Data.SqlClient
         public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
 
         /// <summary>
-        /// Forwarded to <c>ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker</c>
+        /// Forwarded to <c>ActiveDirectoryAuthenticationProviderOptions.UseWamBroker</c>
         /// when the Azure extension's default provider is auto-installed. Stored as a string so
         /// that an unset attribute can be distinguished from <c>useWamBroker="false"</c>; the
         /// runtime parses it with <see cref="bool.TryParse(string, out bool)"/>.

@@ -1,0 +1,35 @@
+<docs>
+    <members name="ActiveDirectoryAuthenticationProviderOptions">
+        <ActiveDirectoryAuthenticationProviderOptions>
+            <summary>
+                Property bag used by the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)" /> constructor.
+            </summary>
+            <remarks>
+                Prefer this options-bag constructor over the positional-argument overloads in new code. Additional options can be added here in future versions without introducing new constructor overloads.
+                <para>
+                    <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.UseWamBroker" /> is a Windows-only setting: it has no effect on non-Windows platforms, where interactive Entra ID flows always use the system browser.
+                </para>
+            </remarks>
+        </ActiveDirectoryAuthenticationProviderOptions>
+        <DeviceCodeFlowCallback>
+            <summary>
+                Optional device-code-flow callback invoked for <c>SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow</c>. 
+                When <see langword="null"/>, the provider's default callback (which writes the device-code instructions to the console) 
+                is used.
+            </summary>
+        </DeviceCodeFlowCallback>
+        <ApplicationClientId>
+            <summary>
+                Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient first-party application id is used and WAM broker mode is forced on (regardless of <see cref="UseWamBroker"/>) when running on Windows.
+            </summary>
+        </ApplicationClientId>
+        <UseWamBroker>
+            <summary>
+                Windows-only setting to control whether the provider should use the WAM broker for interactive authentication. 
+                When <see langword="true"/>, interactive flows will use WAM; when <see langword="false"/>, they won't. 
+                The default value is <see langword="false"/>, but if <see cref="ApplicationClientId"/> is not null 
+                and the provider is running on Windows, WAM broker mode will be forced on regardless of this setting.
+            </summary>
+        </UseWamBroker>
+    </members>
+</docs>

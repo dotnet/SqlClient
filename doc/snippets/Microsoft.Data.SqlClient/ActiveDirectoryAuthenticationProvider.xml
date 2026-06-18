@@ -63,23 +63,6 @@ See the LICENSE file in the project root for more information.
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
     </ctor3>
-    <ctorOptions>
-      <param name="options">
-        A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.
-      </param>
-      <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class from a <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions" /> bag. This is the recommended constructor for new code because new options can be added to <c>ProviderOptions</c> without forcing breaking changes on callers.
-      </summary>
-      <remarks>
-        When <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.ApplicationClientId" /> is left unset (or set to the driver's built-in application client id), the Windows Account Manager (WAM) broker is always enabled regardless of <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.ProviderOptions.UseWamBroker" />. For caller-supplied application client ids, WAM is opt-in via <c>UseWamBroker</c>.
-        <para>
-          The WAM broker is a Windows-only feature. <c>UseWamBroker</c> has no effect on non-Windows platforms; interactive Entra ID flows there always fall back to the system browser.
-        </para>
-      </remarks>
-      <exception cref="T:System.ArgumentNullException">
-        Thrown when <paramref name="options" /> is <see langword="null" />.
-      </exception>
-    </ctorOptions>
     <AcquireTokenAsync>
       <param name="parameters">
         The Active Directory authentication parameters passed to authentication providers.

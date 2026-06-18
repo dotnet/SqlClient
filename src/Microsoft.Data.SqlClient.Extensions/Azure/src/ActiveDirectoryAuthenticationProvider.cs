@@ -73,19 +73,19 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
     public ActiveDirectoryAuthenticationProvider()
-        : this(new ProviderOptions())
+        : this(new ActiveDirectoryAuthenticationProviderOptions())
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
     public ActiveDirectoryAuthenticationProvider(string applicationClientId)
-        : this(new ProviderOptions { ApplicationClientId = applicationClientId })
+        : this(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = applicationClientId })
     {
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
     public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string? applicationClientId = null)
-        : this(new ProviderOptions
+        : this(new ActiveDirectoryAuthenticationProviderOptions
         {
             DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
             ApplicationClientId = applicationClientId,
@@ -94,7 +94,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctorOptions/*'/>
-    public ActiveDirectoryAuthenticationProvider(ProviderOptions options)
+    public ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)
     {
         if (options is null)
         {
@@ -930,38 +930,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
     }
 
-    /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ProviderOptions/*'/>
-    public sealed class ProviderOptions
-    {
-        /// <summary>
-        /// Optional device-code-flow callback invoked for
-        /// <c>SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow</c>. When <see langword="null"/>,
-        /// the provider's default callback (which writes the device-code instructions to the
-        /// console) is used.
-        /// </summary>
-        public Func<DeviceCodeResult, Task>? DeviceCodeFlowCallback { get; set; }
-
-        /// <summary>
-        /// Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient
-        /// first-party application id is used and WAM broker mode is forced on (regardless of
-        /// <see cref="UseWamBroker"/>) when running on Windows.
-        /// </summary>
-        public string? ApplicationClientId { get; set; }
-
-        /// <summary>
-        /// When <see langword="true"/>, enables the Windows Account Manager (WAM) broker for
-        /// interactive Entra ID flows when a caller-supplied <see cref="ApplicationClientId"/>
-        /// is used. Ignored (treated as <see langword="true"/>) when
-        /// <see cref="ApplicationClientId"/> is <see langword="null"/> because the SqlClient
-        /// first-party app id always uses the broker.
-        /// </summary>
-        /// <remarks>
-        /// The WAM broker is a Windows-only feature. On non-Windows platforms this property has
-        /// no effect and interactive Entra ID flows always fall back to the system browser.
-        /// </remarks>
-        public bool UseWamBroker { get; set; }
-    }
-
     internal class PublicClientAppKey
     {
         public string Authority { get; }
@@ -992,13 +960,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
             {
-                return (string.CompareOrdinal(Authority, pcaKey.Authority) == 0
+                return string.CompareOrdinal(Authority, pcaKey.Authority) == 0
                     && string.CompareOrdinal(RedirectUri, pcaKey.RedirectUri) == 0
                     && string.CompareOrdinal(ApplicationClientId, pcaKey.ApplicationClientId) == 0
                     #if NETFRAMEWORK
                     && IWin32WindowFunc == pcaKey.IWin32WindowFunc
                     #endif
-                );
+                ;
             }
             return false;
         }
