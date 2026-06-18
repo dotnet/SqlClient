@@ -452,6 +452,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
@@ -483,6 +485,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
@@ -491,7 +495,7 @@
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
 
-        <!-- Reference type arguments -->
+        <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionSqlServerArgument)
@@ -512,6 +516,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
         $(SigningKeyPathArgument)
@@ -543,11 +549,13 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
         $(SigningKeyPathArgument)
 
-        <!-- Versioning Arguments -->
+        <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
@@ -586,6 +594,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(SqlClientProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -601,7 +611,7 @@
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
 
-        <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
+        <!-- Pack arguments -->
         -p:PackageOutputPath="$(SqlClientPackageArtifactRoot)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -635,7 +645,12 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientFunctionalTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -680,7 +695,12 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(ManualTestFiltersArgument)
@@ -710,17 +730,24 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientUnitTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(ReferenceTypeArgument)
-        $(TestSigningKeyPathArgument)
-        $(PackageVersionSqlClientArgument)
-        $(PackageVersionSqlServerArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
 
       <!-- Convert more than one whitespace character into one space -->
@@ -746,15 +773,17 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
-        <!--Versioning arguments -->
+        <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionAkvProviderArgument)
 
-        <!-- Reference type arguments -->
+        <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
@@ -774,6 +803,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AkvProviderProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -827,6 +858,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
@@ -852,6 +885,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AbstractionsProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -892,19 +927,23 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(SigningKeyPathArgument)
-        $(TestSigningKeyPathArgument)
-
-        <!-- Reference type arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -931,6 +970,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
@@ -939,7 +980,7 @@
         $(BuildSuffixArgument)
         $(PackageVersionAzureArgument)
 
-        <!-- Reference type arguments -->
+        <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionLoggingArgument)
       </DotnetCommand>
@@ -956,6 +997,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AzureProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -996,22 +1039,26 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AzureTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(SigningKeyPathArgument)
-        $(TestSigningKeyPathArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
-        <!-- Reference type arguments -->
+        <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionAbstractionsArgument)
         $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
-        --results-directory "$(TestResultsFolderPath)"
-        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1035,6 +1082,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(LoggingProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
@@ -1056,6 +1105,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack $(LoggingProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -1092,16 +1143,22 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(LoggingTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(SigningKeyPathArgument)
-        $(TestSigningKeyPathArgument)
-        $(ReferenceTypeArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1124,10 +1181,12 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
 
-        <!--Versioning arguments -->
+        <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
@@ -1145,6 +1204,8 @@
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
