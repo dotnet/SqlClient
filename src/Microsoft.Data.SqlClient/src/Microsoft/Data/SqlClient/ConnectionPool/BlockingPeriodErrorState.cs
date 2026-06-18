@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading;
+using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
 
@@ -15,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// connection-acquisition path remains focused on capacity/queue concerns and stays
     /// decoupled from the (independent) rate limiting policy.
     /// </summary>
-    internal sealed class BlockingPeriodErrorState
+    internal sealed class BlockingPeriodErrorState : IDisposable
     {
         // Mirrors the values used by WaitHandleDbConnectionPool (5s initial, 60s cap).
         private static readonly TimeSpan InitialWait = TimeSpan.FromSeconds(5);
@@ -24,13 +25,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly int _ownerPoolId;
         private readonly Action? _onEnter;
         private readonly Action? _onExit;
+        private readonly TimeProvider _timeProvider;
         private readonly object _lock = new();
         // Non-null while the pool is in the blocking period. Doubles as the "has error"
         // flag, so callers don't need a separate bool. Volatile so other threads observe
         // entry/exit transitions without acquiring _lock.
         private volatile Exception? _cachedException;
-        private Timer? _exitTimer;
+        private ITimer? _exitTimer;
         private TimeSpan _nextWait = InitialWait;
+        private bool _disposed;
 
         /// <summary>
         /// Creates a new instance.
@@ -41,11 +44,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// signal its error wait handle.</param>
         /// <param name="onExit">Optional callback invoked (outside the internal lock) after the
         /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.</param>
-        internal BlockingPeriodErrorState(int ownerPoolId, Action? onEnter = null, Action? onExit = null)
+        /// <param name="timeProvider">The time provider used to create the exit timer. Defaults to
+        /// <see cref="TimeProvider.System"/>. Inject a test double (e.g.
+        /// <c>Microsoft.Extensions.TimeProvider.Testing.FakeTimeProvider</c>) in unit tests to
+        /// control timer scheduling deterministically.</param>
+        internal BlockingPeriodErrorState(int ownerPoolId, Action? onEnter = null, Action? onExit = null, TimeProvider? timeProvider = null)
         {
             _ownerPoolId = ownerPoolId;
             _onEnter = onEnter;
             _onExit = onExit;
+            _timeProvider = timeProvider ?? TimeProvider.System;
         }
 
         /// <summary>
@@ -78,15 +86,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal void Enter(Exception ex)
         {
             TimeSpan wait;
-            Timer? oldTimer;
-            Timer newTimer;
+            ITimer? oldTimer;
+            ITimer newTimer;
 
             lock (_lock)
             {
                 _cachedException = ex;
                 wait = _nextWait;
 
-                newTimer = new Timer(ExitCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                newTimer = _timeProvider.CreateTimer(ExitCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
                 oldTimer = _exitTimer;
                 _exitTimer = newTimer;
 
@@ -112,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void Clear()
         {
-            Timer? oldTimer;
+            ITimer? oldTimer;
             lock (_lock)
             {
                 if (_cachedException is null && _exitTimer is null && _nextWait == InitialWait)
@@ -143,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private void ExitCallback(object? state)
         {
-            Timer? oldTimer;
+            ITimer? oldTimer;
             lock (_lock)
             {
                 _cachedException = null;
@@ -157,6 +165,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", _ownerPoolId);
+        }
+
+        /// <summary>
+        /// Disposes the instance, releasing the exit timer if one is active. Clears the
+        /// error state so that any waiting callers do not observe a stale exception after
+        /// the owning pool is torn down.
+        /// </summary>
+        public void Dispose()
+        {
+            ITimer? timerToDispose;
+            lock (_lock)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _cachedException = null;
+                timerToDispose = _exitTimer;
+                _exitTimer = null;
+            }
+
+            timerToDispose?.Dispose();
         }
     }
 }
