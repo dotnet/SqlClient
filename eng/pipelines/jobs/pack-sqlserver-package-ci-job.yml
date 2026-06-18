@@ -49,6 +49,11 @@ parameters:
     - detailed
     - diagnostic
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 jobs:
 
   - job: pack_sqlserver_package_job
@@ -82,6 +87,14 @@ jobs:
       - name: Configuration
         value: ''
 
+      # Build properties passed to dotnet pack.  Composed from a base set plus
+      # optional signing key path for internal builds.
+      - name: buildProperties
+        ${{ if eq(parameters.isInternalBuild, true) }}:
+          value: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};SigningKeyPath=$(driverKeyFile.secureFilePath)
+        ${{ else }}:
+          value: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+
     steps:
 
       # Emit environment variables if debug is enabled.
@@ -94,6 +107,10 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
+      # Download the assembly signing key for internal builds.
+      - ${{ if eq(parameters.isInternalBuild, true) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+
       # Create the NuGet packages.
       - task: DotNetCoreCLI@2
         displayName: Create NuGet Package
@@ -103,7 +120,7 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+          buildProperties: $(buildProperties)
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Pipeline Artifact

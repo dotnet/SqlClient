@@ -63,6 +63,11 @@ parameters:
     - detailed
     - diagnostic
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_sqlserver_package_stage
@@ -81,3 +86,4 @@ stages:
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}

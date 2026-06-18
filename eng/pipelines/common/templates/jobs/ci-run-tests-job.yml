@@ -244,8 +244,6 @@ jobs:
         build: allNoDocs
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: Project
-        ${{ if eq(parameters.isInternalBuild, true) }}:
-          signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.jsonc file
@@ -392,7 +390,7 @@ jobs:
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-        ${{ if eq(parameters.isInternalBuild, true) }}:
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
           signingKeyPath: $(driverKeyFile.secureFilePath)
           testSigningKeyPath: $(testKeyFile.secureFilePath)
 
@@ -411,7 +409,7 @@ jobs:
         loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-        ${{ if eq(parameters.isInternalBuild, true) }}:
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
           signingKeyPath: $(driverKeyFile.secureFilePath)
           testSigningKeyPath: $(testKeyFile.secureFilePath)
 

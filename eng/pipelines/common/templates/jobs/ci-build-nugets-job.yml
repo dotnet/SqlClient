@@ -157,8 +157,6 @@ jobs:
         buildConfiguration: Release
         referenceType: Project
         build: all
-        ${{ if eq(parameters.isInternalBuild, true) }}:
-          signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - template: /eng/pipelines/common/templates/steps/ci-project-build-step.yml@self
     parameters:
@@ -170,7 +168,7 @@ jobs:
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-      ${{ if eq(parameters.isInternalBuild, true) }}:
+      ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - task: DotNetCoreCLI@2
@@ -219,7 +217,7 @@ jobs:
       mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
       akvPackageVersion: ${{ parameters.akvPackageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-      ${{ if eq(parameters.isInternalBuild, true) }}:
+      ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - task: DotNetCoreCLI@2
