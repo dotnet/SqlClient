@@ -106,9 +106,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
-        /// backoff timer, and synchronization. See <see cref="BlockingPeriodErrorState"/>.
+        /// backoff timer, and synchronization. Created only when blocking period is enabled for
+        /// this pool group. See <see cref="BlockingPeriodErrorState"/>.
         /// </summary>
-        private readonly BlockingPeriodErrorState _errorState;
+        private readonly BlockingPeriodErrorState? _errorState;
         #endregion
 
         /// <summary>
@@ -131,7 +132,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
-            _errorState = new BlockingPeriodErrorState(_instanceId);
+            if (PoolGroup.IsBlockingPeriodEnabled())
+            {
+                _errorState = new BlockingPeriodErrorState(_instanceId);
+            }
 
             // Pruning is only useful when the pool can grow beyond MinPoolSize.
             // If min >= max, the pool is fixed-size and pruning would never activate.
@@ -159,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int IdleCount => _idleChannel.Count;
 
         /// <inheritdoc />
-        public bool ErrorOccurred => _errorState.HasError;
+        public bool ErrorOccurred => _errorState?.HasError ?? false;
 
         /// <inheritdoc />
         public int Id => _instanceId;
@@ -205,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Clearing the pool implies the caller wants a clean slate, so abandon any cached
             // error state. FR-011.
-            _errorState.Clear();
+            _errorState?.Clear();
 
             Interlocked.Increment(ref _clearGeneration);
 
@@ -425,7 +429,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             cancellationToken.ThrowIfCancellationRequested();
 
             // Fast-fail in the error state. FR-006.
-            _errorState.ThrowIfActive();
+            _errorState?.ThrowIfActive();
 
             try
             {
@@ -442,7 +446,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // We deliberately do not block here so the caller can fall back to
                         // waiting on the idle channel, where it can be satisfied either by a
                         // returning connection or by a null poke from another caller releasing
-                        // its rate-limit lease (see finally below). When no limiter is
+                        // its rate-limit lease (see finally below). We prefer to recycle existing 
+                        // connections rather then queue on the rate limit. When no limiter is
                         // configured we substitute a no-op acquired lease.
                         // FR-001, FR-002, FR-003.
                         using RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
@@ -485,8 +490,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             // for the default lease). After releasing, signal a waiter on the
                             // idle channel that they may now retry an open. We only do this if
                             // the pool can still grow; if we're at MaxPoolSize, only a connection
-                            // return can satisfy a waiter. FR-004.
-                            if (lease.IsAcquired && _connectionSlots.ReservationCount < MaxPoolSize)
+                            // return can satisfy a waiter. FR-004. This is best-effort; Disposing 
+                            // a lease doesn't guarantee that the rate limiter will immediately 
+                            // have an available permit.
+                            if (lease.IsAcquired &&
+                            (_connectionCreationRateLimiter?.GetStatistics()?.CurrentAvailablePermits ?? 0) > 0 && 
+                            _connectionSlots.ReservationCount < MaxPoolSize)
                             {
                                 _idleChannel.TryWrite(null);
                             }
@@ -505,12 +514,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
-                }
 
-                // A successful creation clears any prior error state and resets backoff. FR-009.
-                if (connection is not null && _errorState.HasError)
-                {
-                    _errorState.Clear();
+                    // A successful creation clears error/backoff state
+                    // FR-009.
+                    _errorState?.Clear();
                 }
 
                 return connection;
@@ -519,10 +526,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Enter the blocking period error state on creation failure if configured.
                 // FR-006, FR-007.
-                if (PoolGroup.IsBlockingPeriodEnabled())
-                {
-                    _errorState.Enter(ex);
-                }
+                _errorState?.Enter(ex);
 
                 throw;
             }
