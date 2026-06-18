@@ -189,9 +189,14 @@ class and method level.
 #### What the Comments Must Explain
 - The behavior/contract being tested (not just restating the method name).
 - Why the scenario matters (for example: regression guard, parsing contract, sync/async parity,
-  isolation requirement).
+  isolation requirement, thread-safety validation, edge case handling).
 - For helper methods, what side effects occur (for example console redirection, file system
   copying, process execution) and why they are needed.
+
+#### Implementation Guidance
+- Always use the **Arrange-Act-Assert (AAA)** pattern with explicit section comments (see [Test Structure](#test-structure-arrange-act-assert-aaa-pattern)).
+- Keep the test body focused on a single logical assertion; avoid testing multiple unrelated behaviors.
+- Extract complex setup into helper methods or fixtures rather than embedding it in the test.
 
 #### Style Guidance
 - Keep comments concise and factual.
@@ -212,24 +217,40 @@ public void AppRunWithMalformedConnectionStringReturnsOneAndWritesParseError()
 }
 ```
 
-### Test Structure
+### Test Structure: Arrange-Act-Assert (AAA) Pattern
+
+All test methods **must** follow the **Arrange-Act-Assert (AAA)** pattern with explicit section comments.
+This pattern improves readability and maintainability by clearly delineating setup, execution, and validation.
+
+**Pattern:**
 ```csharp
-public class FeatureNameTests
+[Fact]
+public void MethodName_Scenario_ExpectedResult()
 {
-    [Fact]
-    public void MethodName_Scenario_ExpectedResult()
-    {
-        // Arrange
-        var sut = new SystemUnderTest();
+    // Arrange
+    // Set up test fixtures, initial state, dependencies, and test data
+    var sut = new SystemUnderTest();
+    var input = new TestData();
 
-        // Act
-        var result = sut.PerformAction();
+    // Act
+    // Execute the code under test
+    var result = sut.PerformAction(input);
 
-        // Assert
-        Assert.Equal(expected, result);
-    }
+    // Assert
+    // Validate outcomes and expectations
+    Assert.Equal(expected, result);
 }
 ```
+
+**Benefits:**
+- Clear visual separation of setup, execution, and validation
+- Easier to identify test logic flow
+- Simpler to debug failing tests (know which section failed)
+- Consistent convention across codebase
+- Improves AI agent comprehension and test generation
+
+**Guideline:** Each section should be visually distinct. If AAA sections become too large (e.g., Arrange > 20 lines),
+consider extracting helper methods or fixtures rather than embedding complexity in the test method itself.
 
 ### Naming Conventions
 - Test class: `{ClassName}Tests`

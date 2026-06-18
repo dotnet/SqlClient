@@ -150,6 +150,24 @@ When a new issue is created, follow these steps:
 - Do not modify the `CODEOWNERS` file directly.
 - Do not modify `CHANGELOG.md` unless executing a release workflow (see `release-notes` prompt).
 - Do not close issues without a fix or without providing a clear reason.
+- **Check `.github/instructions/` for matching `applyTo` patterns BEFORE starting any file creation or modification task.** Apply all conventions from those files from the start—do not refactor later.
+
+## Instruction File Lookup (Required Workflow)
+
+Before creating or modifying any file, check if matching instruction files exist:
+
+1. Scan `.github/instructions/` for files with `applyTo` patterns that match your file path
+2. Read **all** matching instruction files completely before writing code
+3. Apply **all** conventions, patterns, and requirements from the start
+4. Do not skip instructions or plan to refactor later
+
+**Example:** Creating `src/Microsoft.Data.SqlClient/tests/UnitTests/ConnectionPool/NewTest.cs`
+- File matches `applyTo: "**/tests/**,**/*Test*.cs"` from `testing.instructions.md`
+- Must read `testing.instructions.md` before writing the first test method
+- Must apply AAA pattern, XML doc comments, and all testing conventions from the start
+- Do not create tests first and add documentation later
+
+This ensures consistency across the codebase and prevents rework.
 
 ## Terminal Execution Safety
 - Treat any non-zero shell exit code as a failed step that requires correction before proceeding.
