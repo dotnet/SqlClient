@@ -12,6 +12,10 @@ using System.Text.RegularExpressions;
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 // These tests were migrated from MDS ManualTests AADConnectionTest.cs.
+// [Collection] serializes this class against other tests (e.g. WamBrokerTests) that mutate the
+// global SqlAuthenticationProvider registry; individual password tests opt into a non-broker
+// provider via `using var _ = new AadPasswordWithoutBrokerScope();` (see scope class for why).
+[Collection("SqlAuthenticationProvider")]
 public class AADConnectionTest
 {
     [ConditionalFact(
@@ -45,6 +49,8 @@ public class AADConnectionTest
         nameof(Config.HasPasswordConnectionString))]
     public static void TestADPasswordAuthentication()
     {
+        using var _ = new AadPasswordWithoutBrokerScope();
+
         // Connect to Azure DB with password and retrieve user name.
         using (SqlConnection conn = new SqlConnection(Config.PasswordConnectionString))
         {
@@ -128,6 +134,8 @@ public class AADConnectionTest
         nameof(Config.HasPasswordConnectionString))]
     public static void NoCredentialsActiveDirectoryPassword()
     {
+        using var _ = new AadPasswordWithoutBrokerScope();
+
         // test Passes with correct connection string.
         ConnectAndDisconnect(Config.PasswordConnectionString);
 
