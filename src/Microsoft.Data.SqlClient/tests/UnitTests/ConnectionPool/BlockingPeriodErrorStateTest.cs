@@ -4,7 +4,7 @@
 
 using System;
 using System.Threading;
-using Microsoft.Extensions.TimeProvider.Testing;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
 
@@ -608,20 +608,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             bool hasErrorObservedInCallback = false;
-            using var state = new BlockingPeriodErrorState(
+            BlockingPeriodErrorState? state = null;
+            using (state = new BlockingPeriodErrorState(
                 ownerPoolId: 1,
                 onEnter: () =>
                 {
                     // Observe state from inside the callback.
                     // HasError must already be true at this point.
-                    hasErrorObservedInCallback = state.HasError;
+                    hasErrorObservedInCallback = state!.HasError;
 
                     // Calling ThrowIfActive from the callback must not deadlock.
                     Assert.Throws<InvalidOperationException>(() => state.ThrowIfActive());
-                });
+                }))
+            {
 
-            // Act
-            state.Enter(new InvalidOperationException("test"));
+                // Act
+                state.Enter(new InvalidOperationException("test"));
+            }
 
             // Assert
             Assert.True(hasErrorObservedInCallback);
@@ -639,20 +642,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             bool hasErrorObservedInCallback = true; // initialized to true; must be false after Clear
-            using var state = new BlockingPeriodErrorState(
+            BlockingPeriodErrorState? state = null;
+            using (state = new BlockingPeriodErrorState(
                 ownerPoolId: 1,
                 onExit: () =>
                 {
                     // HasError must already be false when onExit is called.
-                    hasErrorObservedInCallback = state.HasError;
+                    hasErrorObservedInCallback = state!.HasError;
 
                     // Calling ThrowIfActive from the callback must not deadlock.
                     state.ThrowIfActive(); // must not throw
-                });
+                }))
+            {
 
-            // Act
-            state.Enter(new Exception());
-            state.Clear();
+                // Act
+                state.Enter(new Exception());
+                state.Clear();
+            }
 
             // Assert
             Assert.False(hasErrorObservedInCallback);
