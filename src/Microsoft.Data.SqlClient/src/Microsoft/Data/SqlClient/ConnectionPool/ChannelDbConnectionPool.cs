@@ -100,9 +100,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// supplied at pool construction time; there is no default. Callers fast-fail against
         /// the limiter and fall back to the idle-channel wait when no permit is available.
         /// </summary>
-#pragma warning disable CS0649 // Field is never assigned — rate-limiter wiring is in-progress (FR-001)
         private readonly RateLimiter? _connectionCreationRateLimiter;
-#pragma warning restore CS0649
 
         /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
@@ -119,7 +117,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
-            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo,
+            RateLimiter? connectionCreationRateLimiter = null)
         {
             ConnectionFactory = connectionFactory;
             PoolGroup = connectionPoolGroup;
@@ -129,6 +128,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this);
+            _connectionCreationRateLimiter = connectionCreationRateLimiter;
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
