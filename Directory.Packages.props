@@ -14,6 +14,20 @@
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
+  <!--
+    Version range properties (e.g. SqlServerVersionRange, LoggingVersionRange,
+    AbstractionsVersionRange, MdsVersionRange, AzureVersionRange, AkvVersionRange,
+    SniVersionRange) are computed in tools/props/Versions.props, which is imported
+    via Directory.Build.props before this file is evaluated.
+
+    Import order guarantee: Directory.Build.props is imported early in
+    Microsoft.Common.props (part of the SDK's initial props chain), whereas
+    Directory.Packages.props is processed later by NuGet's SDK integration.
+    See:
+      - https://learn.microsoft.com/visualstudio/msbuild/customize-by-directory#import-order
+      - https://learn.microsoft.com/nuget/consume-packages/central-package-management
+  -->
+
   <!-- Ordered from least dependent to most dependent, and then alphabetically. -->
 
   <ItemGroup>
@@ -21,7 +35,7 @@
       We never reference this package via its project, so we always need a
       version specified.
     -->
-    <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="$(SqlServerVersionRange)" />
   </ItemGroup>
 
   <!--
@@ -31,19 +45,19 @@
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Internal.Logging"
-      Version="$(LoggingPackageVersion)" />
+      Version="$(LoggingVersionRange)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-      Version="$(AbstractionsPackageVersion)" />
+      Version="$(AbstractionsVersionRange)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="$(AzurePackageVersion)" />
+      Version="$(AzureVersionRange)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient"
-      Version="$(MdsPackageVersion)" />
+      Version="$(MdsVersionRange)" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="$(AkvPackageVersion)" />
+      Version="$(AkvVersionRange)" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -89,8 +103,8 @@
   <!-- SqlClient Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="$(SniVersionRange)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(SniVersionRange)" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />

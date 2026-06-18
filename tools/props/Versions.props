@@ -67,4 +67,29 @@
 
   <!-- AKV Provider Package Properties -->
   <Import Project="..\..\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider\AkvProviderVersions.props" />
+
+  <!--
+    Version range properties for nuspec token expansion and PackageVersion items.
+    These compute [floor, ceiling) ranges so NuGet cannot resolve an incompatible
+    newer major version at restore time.
+
+    Defined here (after all floor versions are imported) so they are available to
+    both build.proj (non-SDK, imports this via src/Directory.Build.props) and
+    SDK-style projects (where Directory.Build.props is imported early in
+    Microsoft.Common.props, before Directory.Packages.props is evaluated).
+    See:
+      - https://learn.microsoft.com/visualstudio/msbuild/customize-by-directory#import-order
+      - https://learn.microsoft.com/nuget/consume-packages/central-package-management
+  -->
+  <PropertyGroup>
+    <SniVersion>6.0.2</SniVersion>
+    <SniVersionRange>[$(SniVersion), $([MSBuild]::Add($(SniVersion.Split('.')[0]), 1)).0.0)</SniVersionRange>
+    <SqlServerVersionRange>[1.0.0, 2.0.0)</SqlServerVersionRange>
+    <AbstractionsVersionRange>[$(AbstractionsPackageVersion), $([MSBuild]::Add($(AbstractionsPackageVersion.Trim().Split('.')[0]), 1)).0.0)</AbstractionsVersionRange>
+    <LoggingVersionRange>[$(LoggingPackageVersion), $([MSBuild]::Add($(LoggingPackageVersion.Trim().Split('.')[0]), 1)).0.0)</LoggingVersionRange>
+    <MdsVersionRange>[$(MdsPackageVersion), $([MSBuild]::Add($(MdsPackageVersion.Trim().Split('.')[0]), 1)).0.0)</MdsVersionRange>
+    <AzureVersionRange>[$(AzurePackageVersion), $([MSBuild]::Add($(AzurePackageVersion.Trim().Split('.')[0]), 1)).0.0)</AzureVersionRange>
+    <AkvVersionRange>[$(AkvPackageVersion), $([MSBuild]::Add($(AkvPackageVersion.Trim().Split('.')[0]), 1)).0.0)</AkvVersionRange>
+  </PropertyGroup>
+
 </Project>

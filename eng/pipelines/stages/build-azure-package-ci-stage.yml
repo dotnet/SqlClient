@@ -101,6 +101,20 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
   # The name of the MDS pipeline artifacts to download.
   #
   # This is used when the referenceType is 'Package'.
@@ -282,4 +296,6 @@ stages:
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

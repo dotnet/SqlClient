@@ -143,16 +143,29 @@ jobs:
       abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
       loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
 
-  - template: /eng/pipelines/common/templates/steps/generate-nuget-package-step.yml@self
-    parameters:
-      buildConfiguration: ${{ parameters.buildConfiguration }}
-      displayName: 'Create MDS NuGet Package'
-      generateSymbolsPackage: true
-      nuspecPath: 'tools/specs/Microsoft.Data.SqlClient.nuspec'
-      outputDirectory: $(packagePath)
-      packageVersion: ${{ parameters.mdsPackageVersion }}
-      properties: 'AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};LoggingPackageVersion=${{ parameters.loggingPackageVersion }}'
-      referenceType: ${{ parameters.referenceType }}
+  # Create the MDS NuGet package via build.proj's GenerateMdsPackage target.
+  # This target has access to the version range properties computed in
+  # Versions.props, so it passes them through to nuget pack automatically.
+  - task: NuGetToolInstaller@1
+    displayName: 'Install NuGet'
+    inputs:
+      checkLatest: true
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Create MDS NuGet Package'
+    inputs:
+      command: build
+      projects: build.proj
+      arguments: >-
+        -t:GenerateMdsPackage
+        -p:GenerateNuget=true
+        -p:Configuration=${{ parameters.buildConfiguration }}
+        -p:ReferenceType=${{ parameters.referenceType }}
+        -p:MdsPackageVersion=${{ parameters.mdsPackageVersion }}
+        -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+        -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+        -p:PackagesDir=$(packagePath)
+        -p:NuGetCmd=nuget.exe
 
   # When building in Package mode, the AKV Provider restore needs to find the MDS package
   # we just built. Copy it to the local NuGet feed so NuGet.config can resolve it.

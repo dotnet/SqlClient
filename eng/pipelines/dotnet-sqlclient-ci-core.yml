@@ -149,6 +149,9 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
+      referenceType: ${{ parameters.referenceType }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -198,6 +201,8 @@ stages:
           - build_logging_package_stage
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      loggingArtifactsName: $(loggingArtifactsName)
+      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
