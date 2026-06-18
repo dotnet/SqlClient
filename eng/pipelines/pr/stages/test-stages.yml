@@ -48,7 +48,7 @@ parameters:
   # Name of the artifact to upload the test results (including code coverage) to.
   # Note: This artifact will be used to store results from all jobs. Ensure that the folders used
   #     to store the results is unique to the test run.
-  - name: testResultsArtifactName
+  - name: testResultsArtifactBaseName
     type: string
 
   # Manual Test Configuration Parameters ==================================
@@ -135,7 +135,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "Abstractions"
               testDisplayName: "abstractions"
@@ -150,7 +150,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "Azure"
               testDisplayName: "azure"
@@ -165,7 +165,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_functional"
@@ -178,7 +178,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -205,7 +205,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -232,7 +232,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -262,7 +262,7 @@ stages:
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
-              testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_unit"

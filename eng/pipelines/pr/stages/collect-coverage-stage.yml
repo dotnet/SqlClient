@@ -6,10 +6,6 @@
 
 parameters:
 
-  # API token used to access the CodeCov API
-  - name: codeCovApiToken
-    type: string
-
   # Names of the test stages that must complete before collecting coverage.
   - name: dependsOn
     type: object
@@ -77,32 +73,3 @@ stages:
             displayName: Publish coverage results
             inputs:
               summaryFileLocation: "${{ variables.workingDir }}/merge/cobertura.xml"
-
-          # Part 3) Publish merged results to CodeCov
-
-          # Download the CodeCov CLI
-          # @TODO: should this be using something more governed?
-          - script: |
-              curl -o "${{ variables.workingDir }}/codecov" https://cli.codecov.io/latest/linux/codecov
-              chmod +x "${{ variables.workingDir }}/codecov"
-            displayName: Download CodeCov CLI
-
-          # Upload the report
-          # NOTE: pipeline name is used as "flag" (-F) to distinguish reports from other pipelines.
-          # NOTE: Override repository metadata because this ADO pipeline uploads coverage for the
-          #     GitHub repository. CodeCov otherwise derives an invalid slug from the ADO metadata.
-          # NOTE: CodeCov's CLI requires that "options" go before the "command"
-          #     https://docs.codecov.com/docs/the-codecov-cli
-          - script: >-
-              "${{ variables.workingDir }}/codecov"
-              --verbose
-              upload-process
-              --fail-on-error
-              --git-service github
-              --slug dotnet/SqlClient
-              -f "${{ variables.workingDir }}/merge/cobertura.xml"
-              -F $(Build.DefinitionName)
-            displayName: Upload coverage to CodeCov
-            env:
-              CODECOV_TOKEN: ${{ parameters.codeCovApiToken }}
-

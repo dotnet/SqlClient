@@ -34,7 +34,7 @@ parameters:
     type: string
 
   # Name of the artifact to upload the test results (including code coverage) to.
-  - name: testResultsArtifactName
+  - name: testResultsArtifactBaseName
     type: string
 
   # Platform Parameters ====================================================
@@ -219,5 +219,5 @@ jobs:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           platformDisplayName: ${{ parameters.platformDisplayName }}
           testDisplayName: ${{ variables.testDisplayName }}
-          testResultsArtifactName: ${{ parameters.testResultsArtifactName }}
+          testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
           testResultsPath: ${{ variables.testResultsPath }}

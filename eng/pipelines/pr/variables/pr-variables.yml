@@ -13,7 +13,6 @@ variables:
   #
   # AzureKeyVaultTenantId
   # AzureKeyVaultUrl
-  # CodeCovApiToken
   # ConnectionStringNp_Azure_ManagedIdentity
   # ConnectionStringNp_LocalhostDefault_UsernamePassword
   # ConnectionStringTcp_Azure_ManagedIdentity
@@ -25,11 +24,17 @@ variables:
   - group: sqlclient-testconfig-v1
 
   # General Variables ======================================================
+
+  # Name to use for the packaging stage. This is to ensure that the packaging stage and the test
+  # stages (that will depend on the packaging stage passing) use the same name.
   - name: stageNamePack
     value: "pack_stage"
 
+  # Name to use for the secret generation stage. This is to ensure that the secret generation stage
+  # and the test stages (that will depend on the generated secret) use the same name.
   - name: stageNameSecrets
     value: "secrets_stage"
 
-  - name: testResultsArtifactName
+  # Base name of the test result artifacts. Job ID should be appended to this to prevent collision.
+  - name: testResultsArtifactBaseName
     value: "test_results"

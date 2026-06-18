@@ -27,15 +27,19 @@ parameters:
     type: string
 
   # Name of the artifact to upload the test results (including code coverage) to.
-  - name: testResultsArtifactName
+  - name: testResultsArtifactBaseName
     type: string
 
   # Absolute path to the test results folder. This folder will be published to the artifact defined
-  # by ${{ testResultsArtifactName }}
+  # by ${{ testResultsArtifactBaseName }}_$(System.JobId)
   - name: testResultsPath
     type: string
 
 steps:
+  - pwsh: New-Item -ItemType Directory -Force -Path "${{ parameters.testResultsPath }}"
+    displayName: Ensure test results directory exists
+    condition: succeededOrFailed()
+
   # Publish the test results (trx files) to the pipeline
   - task: PublishTestResults@2
     displayName: 'Publish Test Results'
@@ -53,7 +57,7 @@ steps:
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Test Artifacts'
     inputs:
-      artifact: ${{ parameters.testResultsArtifactName }}_$(System.JobId)
+      artifact: ${{ parameters.testResultsArtifactBaseName }}_$(System.JobId)
       targetPath: ${{ parameters.testResultsPath }}
     condition: succeededOrFailed()
 

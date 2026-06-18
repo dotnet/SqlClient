@@ -124,7 +124,7 @@ stages:
       poolName: $(PoolNameDefault)
       stageNamePack: ${{ variables.stageNamePack }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}
-      testResultsArtifactName: ${{ variables.testResultsArtifactName }}
+      testResultsArtifactBaseName: ${{ variables.testResultsArtifactBaseName }}
 
       platforms: ${{ parameters.platforms }}
 
@@ -142,7 +142,6 @@ stages:
   # Stage 3: Collect code coverage
   - template: /eng/pipelines/pr/stages/collect-coverage-stage.yml@self
     parameters:
-      codeCovApiToken: $(CodeCovApiToken)
       dependsOn:
         - ${{ each platform in parameters.platforms }}:
             - "test_${{ platform.displayName }}"
