@@ -1165,7 +1165,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.False(pool.ErrorOccurred);
 
             Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
 
             Assert.True(pool.ErrorOccurred);
         }
@@ -1178,7 +1178,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 "Data Source=localhost;Pool Blocking Period=NeverBlock;");
 
             Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
 
             // FR-007: NeverBlock must not enter the error state.
             Assert.False(pool.ErrorOccurred);
@@ -1192,7 +1192,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 "Data Source=localhost;Pool Blocking Period=AlwaysBlock;");
 
             Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
 
             Assert.True(pool.ErrorOccurred);
         }
@@ -1203,14 +1203,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithOptions(TimeoutConnectionFactory, "Data Source=localhost;");
 
             var first = Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
 
             // FR-006: subsequent requests inside the blocking window must fail fast with the
             // cached exception. We assert it returns very quickly compared to a fresh attempt.
             var sw = Stopwatch.StartNew();
             var second = Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             sw.Stop();
 
             Assert.Equal(first.Message, second.Message);
@@ -1224,7 +1224,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPoolWithOptions(TimeoutConnectionFactory, "Data Source=localhost;");
 
             Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
 
             // FR-011: Clear must reset the error state.
@@ -1241,7 +1241,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // First call fails and enters the error state.
             factory.FailNextCreate = true;
             Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out _));
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
 
             // Manually clear the error flag (simulating the backoff timer firing) and then
@@ -1250,7 +1250,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.False(pool.ErrorOccurred);
 
             factory.FailNextCreate = false;
-            var completed = pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, out var conn);
+            var completed = pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out var conn);
             Assert.True(completed);
             Assert.NotNull(conn);
             Assert.False(pool.ErrorOccurred);
@@ -1272,7 +1272,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 await Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 {
                     var tcs = new TaskCompletionSource<DbConnectionInternal>();
-                    pool.TryGetConnection(new SqlConnection(), tcs, out _);
+                    pool.TryGetConnection(new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _);
                     await tcs.Task;
                 });
             }
@@ -1287,7 +1287,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
             {
                 if (FailNextCreate)
                 {
@@ -1427,3 +1428,4 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
     }
 }
+

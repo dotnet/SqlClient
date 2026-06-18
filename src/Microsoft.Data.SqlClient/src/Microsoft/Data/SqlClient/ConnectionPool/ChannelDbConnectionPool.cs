@@ -100,7 +100,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// supplied at pool construction time; there is no default. Callers fast-fail against
         /// the limiter and fall back to the idle-channel wait when no permit is available.
         /// </summary>
+#pragma warning disable CS0649 // Field is never assigned — rate-limiter wiring is in-progress (FR-001)
         private readonly RateLimiter? _connectionCreationRateLimiter;
+#pragma warning restore CS0649
 
         /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
@@ -443,10 +445,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // its rate-limit lease (see finally below). When no limiter is
                         // configured we substitute a no-op acquired lease.
                         // FR-001, FR-002, FR-003.
+                        using RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
                         try
                         {
-                            using RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
-                            
                             if (!lease.IsAcquired)
                             {
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
