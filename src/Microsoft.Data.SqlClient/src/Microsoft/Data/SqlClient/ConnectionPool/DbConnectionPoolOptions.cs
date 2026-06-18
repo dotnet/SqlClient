@@ -67,8 +67,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return _loadBalanceTimeout; }
         }
         /// <summary>
-        /// The maximum time a pooled connection can sit unused (idle) in the pool before it is discarded
-        /// on the next retrieval attempt. <see cref="TimeSpan.Zero"/> disables idle expiration.
+        /// The maximum time a pooled connection can sit unused (idle) in the pool before it becomes
+        /// eligible for eviction. Eviction is best-effort: a connection that has been idle longer
+        /// than this value is discarded either on the next retrieval attempt or during a periodic
+        /// pool maintenance pass, whichever happens first. Because maintenance runs on a fixed
+        /// cadence, a connection may occasionally be evicted earlier than the configured value;
+        /// callers that need a strict floor should configure a correspondingly larger timeout.
+        /// <see cref="TimeSpan.Zero"/> disables idle expiration.
         /// </summary>
         public TimeSpan IdleTimeout
         {

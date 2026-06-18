@@ -368,15 +368,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // at least one period but not more than two periods.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}", Id);
 
-            // When the new idle-timeout behaviour is enabled and IdleTimeout is 0, idle eviction is
-            // disabled entirely: skip the generational destroy/age-into-old-stack sweep and only run
-            // the MinPoolSize floor maintenance below.
-            bool idleEvictionDisabled =
-                !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
-                PoolGroupOptions.IdleTimeout == TimeSpan.Zero;
+            // Idle eviction (the generational destroy/age-into-old-stack sweep below) is enabled under
+            // the legacy switch, or when the new behaviour is on with a non-zero IdleTimeout. When the
+            // new behaviour is on and IdleTimeout is 0, eviction is disabled entirely: skip the sweep
+            // and only run the MinPoolSize floor maintenance.
+            bool idleEvictionEnabled =
+                LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior ||
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero;
 
             // Destroy free objects that put us above MinPoolSize from old stack.
-            while (!idleEvictionDisabled && Count > MinPoolSize)
+            while (idleEvictionEnabled && Count > MinPoolSize)
             {
                 // While above MinPoolSize...
                 if (_waitHandles.PoolSemaphore.WaitOne(0, false))
@@ -387,20 +388,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     if (_stackOld.TryPop(out obj))
                     {
                         Debug.Assert(obj != null, "null connection is not expected");
-
-                        // When the new idle-timeout behaviour is enabled, the generational position
-                        // alone is not sufficient to decide eviction: with _cleanupWait = IdleTimeout/2
-                        // a worst-case return-just-before-a-tick connection would otherwise be destroyed
-                        // after only ~IdleTimeout/2. Honour the documented contract by consulting the
-                        // per-connection ReturnedTime; if it hasn't been idle long enough yet, push it
-                        // back and stop draining. Note: _stackOld is LIFO and is not ordered by age,
-                        // so we retry on a later cleanup tick (or on retrieval) rather than scanning the entire stack.
-                        if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior && !IsIdleExpired(obj))
-                        {
-                            _stackOld.Push(obj);
-                            _waitHandles.PoolSemaphore.Release(1);
-                            break;
-                        }
 
                         // If we obtained one from the old stack, destroy it.
 
@@ -453,7 +440,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Push to the old-stack.  For each free object, move object from
             // new stack to old stack.
-            if (!idleEvictionDisabled && _waitHandles.PoolSemaphore.WaitOne(0, false))
+            if (idleEvictionEnabled && _waitHandles.PoolSemaphore.WaitOne(0, false))
             {
                 for (; ; )
                 {
