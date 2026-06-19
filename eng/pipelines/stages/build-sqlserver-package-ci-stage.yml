@@ -68,6 +68,14 @@ parameters:
     type: boolean
     default: false
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
 stages:
 
   - stage: build_sqlserver_package_stage
@@ -87,3 +95,4 @@ stages:
           sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           isInternalBuild: ${{ parameters.isInternalBuild }}
+          referenceType: ${{ parameters.referenceType }}

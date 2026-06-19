@@ -138,8 +138,6 @@ jobs:
           value: $(baseBuildProperties);ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }};SigningKeyPath=$(driverKeyFile.secureFilePath)
         ${{ elseif eq(parameters.referenceType, 'Package') }}:
           value: $(baseBuildProperties);ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-        ${{ elseif eq(parameters.isInternalBuild, true) }}:
-          value: $(baseBuildProperties);SigningKeyPath=$(driverKeyFile.secureFilePath)
         ${{ else }}:
           value: $(baseBuildProperties)
 
@@ -164,8 +162,8 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
-      # Download the assembly signing key for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Download the assembly signing key for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
       # Create the NuGet packages.

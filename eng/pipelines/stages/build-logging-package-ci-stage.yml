@@ -72,6 +72,14 @@ parameters:
     type: boolean
     default: false
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
 stages:
 
   - stage: build_logging_package_stage
@@ -144,3 +152,4 @@ stages:
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           isInternalBuild: ${{ parameters.isInternalBuild }}
+          referenceType: ${{ parameters.referenceType }}

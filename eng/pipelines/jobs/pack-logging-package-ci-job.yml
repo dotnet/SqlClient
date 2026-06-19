@@ -53,6 +53,14 @@ parameters:
     - detailed
     - diagnostic
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
@@ -100,7 +108,7 @@ jobs:
       # optional variable is empty the semicolons remain, producing a trailing
       # ";;" that MSBuild rejects with MSB1005.
       - name: buildProperties
-        ${{ if eq(parameters.isInternalBuild, true) }}:
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
           value: $(baseBuildProperties);SigningKeyPath=$(driverKeyFile.secureFilePath)
         ${{ else }}:
           value: $(baseBuildProperties)
@@ -117,8 +125,8 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
-      # Download the assembly signing key for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Download the assembly signing key for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
       # Create the NuGet packages.
