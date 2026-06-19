@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!-- .NET Framework Dependencies -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
+  </ItemGroup>
+  
+  <!-- .NET Runtime Dependencies -->
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+  </ItemGroup>
+</Project>
+  

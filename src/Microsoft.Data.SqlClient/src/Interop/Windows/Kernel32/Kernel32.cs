@@ -90,5 +90,13 @@ namespace Interop.Windows.Kernel32
 
         [DllImport(DllName, SetLastError = true, ExactSpelling = true)]
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
+
+        /// <summary>
+        /// Raw <c>kernel32!GetConsoleWindow</c> P/Invoke. Documented by Windows to return
+        /// <see cref="IntPtr.Zero"/> when the calling process is not attached to a console
+        /// (and to never throw).
+        /// </summary>
+        [DllImport(DllName)]
+        internal static extern IntPtr GetConsoleWindow();
     }
 }

@@ -42,6 +42,7 @@
     <Compile Include="SqlCommandTest.cs" />
     <Compile Include="SqlConnectionTest.cs" />
     <Compile Include="AADAuthenticationTests.cs" />
+    <Compile Include="SqlAuthenticationProviderCollection.cs" />
     <Compile Include="CloneTests.cs" />
     <Compile Include="BaseProviderAsyncTest\BaseProviderAsyncTest.cs" />
     <Compile Include="BaseProviderAsyncTest\MockCommand.cs" />

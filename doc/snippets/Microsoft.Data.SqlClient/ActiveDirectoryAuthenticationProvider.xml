@@ -58,6 +58,17 @@
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
     </ctor3>
+    <ctorOptions>
+      <param name="options">
+        A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.
+      </param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class from a <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> bag. This is the recommended constructor for new code because new options can be added to <c>ActiveDirectoryAuthenticationProviderOptions</c> without forcing breaking changes on callers.
+      </summary>
+      <exception cref="T:System.ArgumentNullException">
+        Thrown when <paramref name="options" /> is <see langword="null" />.
+      </exception>
+    </ctorOptions>
     <AcquireTokenAsync>
       <param name="parameters">
         The Active Directory authentication parameters passed to authentication providers.

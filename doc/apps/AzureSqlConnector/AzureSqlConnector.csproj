@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Choose and enter target framework: net481 or net9.0-windows -->
+    <TargetFramework Condition="'$(OS)' == 'Windows_NT'">net481</TargetFramework>
+    <TargetFramework Condition="'$(OS)' != 'Windows_NT'">net9.0-windows</TargetFramework>
+    <EnableWindowsTargeting Condition="'$(OS)' != 'Windows_NT'">true</EnableWindowsTargeting>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Microsoft.Data.SqlClient.Samples.AzureSqlConnector</RootNamespace>
+    <AssemblyName>AzureSqlConnector</AssemblyName>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Platforms>AnyCPU</Platforms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- On 6.1, Azure auth lives inside the main Microsoft.Data.SqlClient assembly,
+       so the sample references the netcore/netfx Microsoft.Data.SqlClient project directly -->
+
+  <!-- .NET Framework target framework dependencies -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  
+  <!-- .NET Runtime target framework dependencies -->
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <ProjectReference Include="..\..\..\src\Microsoft.Data.SqlClient\netcore\src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+
+</Project>
+
+
