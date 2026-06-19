@@ -337,16 +337,11 @@ stages:
               #
               # https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#build-variables-devops-services
               #
-              # We're choosing to upload from these pipelines only:
-              #
-              # - PR-SqlClient-Project
-              # - CI-SqlClient
-              #
-              # Other pipelines that share this template don't add much, if any,
-              # value to the coverage reports.  They have not been configured with
-              # suitable CodeCov credentials to perform the upload.
-              #
-              upload: ${{ or(eq(variables['Build.DefinitionName'], 'PR-SqlClient-Project'), eq(variables['Build.DefinitionName'], 'CI-SqlClient')) }}
+              # We're choosing to upload from CI-SqlClient only.  Other pipelines
+              # that share this template don't add much, if any, value to the
+              # coverage reports.  They have not been configured with suitable
+              # CodeCov credentials to perform the upload.
+              upload: ${{ eq(variables['Build.DefinitionName'], 'CI-SqlClient') }}
 
       # Configuration of test jobs.  Each entry in this object will become a test job, and the
       # properties of each entry will be supplied as parameters to the test job template.

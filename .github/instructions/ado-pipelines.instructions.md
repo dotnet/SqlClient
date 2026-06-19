@@ -16,13 +16,12 @@ Two categories of pipelines exist in this repository:
 - **CI/PR pipelines** (`eng/pipelines/`) — Build, test, and validate on every push/PR
 - **OneBranch pipelines** (`eng/pipelines/onebranch/`) — Official signing/release builds (separate instructions file)
 
-Top-level CI/PR pipeline files:
-- `dotnet-sqlclient-ci-core.yml` — Reusable core template; all CI and PR pipelines extend this
+Top-level CI pipeline files:
+- `dotnet-sqlclient-ci-core.yml` — Reusable core template; CI pipelines extend this
 - `dotnet-sqlclient-ci-package-reference-pipeline.yml` — CI with Package references (Release)
 - `dotnet-sqlclient-ci-project-reference-pipeline.yml` — CI with Project references (Release)
-- `sqlclient-pr-package-ref-pipeline.yml` — PR validation with Package references
-- `sqlclient-pr-project-ref-pipeline.yml` — PR validation with Project references
 - `ci/stress/sqlclient-ci-stress-pipeline.yml` — Stress test pipeline and templates
+- `pr/sqlclient-pr-pipeline.yml` - PR validation
 
 Reusable templates are organized under:
 - `common/templates/jobs/` — Job templates (`ci-build-nugets-job`, `ci-code-coverage-job`, `ci-run-tests-job`)
@@ -35,7 +34,7 @@ Reusable templates are organized under:
 
 ## CI Core Template
 
-`dotnet-sqlclient-ci-core.yml` is the central orchestrator. All CI and PR pipelines extend it with different parameters.
+`dotnet-sqlclient-ci-core.yml` is the central orchestrator for the Package/Project reference CI pipelines.
 
 Key parameters:
 - `referenceType` (required) — `Package` or `Project`; controls how sibling packages are referenced
