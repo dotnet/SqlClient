@@ -95,7 +95,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Azure.Core" Version="1.51.1" />
-    <PackageVersion Include="Microsoft.Identity.Client" Version="4.83.0" />
+    <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
@@ -126,6 +126,7 @@
 
   <ItemGroup>
     <PackageVersion Include="Azure.Identity" Version="1.18.0" />
+    <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
