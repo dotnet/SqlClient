@@ -149,6 +149,7 @@
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.Internal.Logging/">
     <Project Path="Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj" />
+    <Project Path="Microsoft.Data.SqlClient.Internal/Logging/test/Logging.Test.csproj" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient/">
     <File Path="Microsoft.Data.SqlClient/Versions.props" />

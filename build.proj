@@ -394,7 +394,7 @@
       environments. Please consider running project specific test targets or specific test sets
       within the project.
   -->
-  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+  <Target Name="Test" DependsOnTargets="TestLogging;TestAbstractions;TestAzure;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
@@ -1073,6 +1073,7 @@
   <PropertyGroup>
     <LoggingSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/src/</LoggingSrcRoot>
     <LoggingProjectPath>$(LoggingSrcRoot)Logging.csproj</LoggingProjectPath>
+    <LoggingTestProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient.Internal/Logging/test/Logging.Test.csproj</LoggingTestProjectPath>
     <LoggingArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.Internal.Logging/$(Configuration)/</LoggingArtifactRoot>
   </PropertyGroup>
 
@@ -1132,6 +1133,39 @@
       SourceFiles="@(LoggingPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- TestLogging: Runs Microsoft.Data.SqlClient.Internal.Logging.Tests -->
+  <Target Name="TestLogging">
+    <PropertyGroup>
+      <LogFilePrefix>LoggingTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(LoggingTestProjectPath)"
+
+        <!-- Build arguments -->
+        -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Text=">>> Running tests for Logging via command: $(DotnetCommand)" />
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- ================================================================= -->
