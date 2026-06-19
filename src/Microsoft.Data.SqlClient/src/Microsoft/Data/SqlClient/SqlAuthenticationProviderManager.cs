@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
                     $": Attempting to load Azure extension assembly={azureAssemblyName} without " +
-                    "assembly verification; ensure this assembly is from a trusted source");
+                    "strong-name identity verification; ensure this assembly is from a trusted source");
 
                 var assembly = Assembly.Load(azureAssemblyName);
 

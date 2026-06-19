@@ -142,8 +142,8 @@ jobs:
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-  # Download the assembly signing key for internal builds.
-  - ${{ if eq(parameters.isInternalBuild, true) }}:
+  # Download the assembly signing key for internal Package-mode builds.
+  - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
     - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
   # When we're performing a Debug build, we still want to try _compiling_ the

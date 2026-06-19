@@ -24,14 +24,6 @@ public abstract partial class SqlAuthenticationProvider
     private static class Internal
     {
         /// <summary>
-        /// The expected public key token of the SqlClient assembly, used to avoid loading imposter
-        /// assemblies.  This is the public key token of the assembly signing key used for all of
-        /// our driver assemblies.
-        /// </summary>
-        private static readonly byte[] _sqlClientPublicKeyToken =
-            [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
-
-        /// <summary>
         /// Our handle to the reflected GetProvider() method.
         /// </summary>
         private static readonly MethodInfo? _getProvider = null;
@@ -56,14 +48,20 @@ public abstract partial class SqlAuthenticationProvider
 
                 #if ASSEMBLY_SIGNING
 
+                // The expected public key token of the SqlClient assembly, used to avoid invoking
+                // APIs from imposter assemblies.  This is the public key token of the assembly
+                // signing key used for all of our driver assemblies.
+                byte[] expectedPublicKeyToken =
+                    [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
+
                 // When assembly signing is enabled, build a fully-qualified AssemblyName that
                 // includes the expected public key token.
                 Log($"Attempting to load SqlClient assembly={assemblyName} with " +
                     "expected public key token=" +
-                    BitConverter.ToString(_sqlClientPublicKeyToken).Replace("-", ""));
+                    BitConverter.ToString(expectedPublicKeyToken).Replace("-", ""));
 
                 var qualifiedName = new AssemblyName(assemblyName);
-                qualifiedName.SetPublicKeyToken(_sqlClientPublicKeyToken);
+                qualifiedName.SetPublicKeyToken(expectedPublicKeyToken);
 
                 // The .NET Framework runtime enforces the token during binding, causing Load() to
                 // throw if it doesn't match. The .NET (Core) runtime ignores the token, so we
@@ -78,7 +76,7 @@ public abstract partial class SqlAuthenticationProvider
                     byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
 
                     if (actualToken is null ||
-                        !actualToken.AsSpan().SequenceEqual(_sqlClientPublicKeyToken))
+                        !actualToken.AsSpan().SequenceEqual(expectedPublicKeyToken))
                     {
                         Log($"SqlClient assembly={assembly.GetName()} has an " +
                             "unexpected public key token; " +
@@ -90,8 +88,8 @@ public abstract partial class SqlAuthenticationProvider
                 #else
 
                 // Assembly signing is disabled, so we cannot verify the public key token.
-                Log($"Loading SqlClient assembly={assemblyName} without assembly verification; " +
-                    "ensure this assembly is from a trusted source");
+                Log($"Loading SqlClient assembly={assemblyName} without strong-name identity " +
+                    "verification; ensure this assembly is from a trusted source");
 
                 var assembly = Assembly.Load(assemblyName);
 

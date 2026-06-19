@@ -157,8 +157,8 @@ jobs:
           $nugetPackageInstallPath = "${{ variables.nugetPackageInstallPath }}"
           echo "nugetPackageInstallPath= $nugetPackageInstallPath"
 
-          # Verify assembly signing #####################################
-          echo "> 1. Verifying assembly signing of DLLs ..."
+          # Verify strong-name signing ###################################
+          echo "> 1. Verifying strong-name signing of DLLs ..."
 
           # @TODO: This path seems brittle to VS upgrades, can we make it more flexible?
           $snPath = "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe"
