@@ -7,7 +7,7 @@
     // .NET 10 SDK versions in the 10.0.2xx series require MSBuild 18.x, so we stick with the
     // 10.0.1xx feature band which is compatible with MSBuild 17.x.
     //
-    "version": "10.0.100",
+    "version": "10.0.109",
 
     // Allow roll-forward within the 10.0.1xx feature band so servicing patches
     // are picked up automatically without requiring a PR for each bump.
