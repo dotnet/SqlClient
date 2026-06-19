@@ -8,6 +8,13 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <!-- Assembly signing ============================================= -->
+  <!-- When a test signing key is provided, sign the test assembly so IVT from signed source works. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
