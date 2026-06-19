@@ -42,6 +42,9 @@ public sealed class DatabaseUser : DatabaseObject<string>
 
     private void ExecuteCommandInDatabase(SqlCommand command)
     {
+        // In some cases, we want to manage a database user in a different database to the one that the connection
+        // currently has open. In such a case, we need to change the database context for the command execution
+        // and then restore it afterwards.
         string? originalDatabase = DatabaseName == command.Connection.Database ? null : command.Connection.Database;
 
         try
