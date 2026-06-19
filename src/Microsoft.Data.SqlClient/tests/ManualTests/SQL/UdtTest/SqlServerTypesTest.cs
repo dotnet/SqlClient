@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         #if NETFRAMEWORK
-        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        [Trait("Category", "signed")] // Requires a signed Microsoft.SqlServer.Server assembly
         #endif
         public static void GetSchemaTableTest()
         {
@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         #if NETFRAMEWORK
-        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        [Trait("Category", "signed")] // Requires a signed Microsoft.SqlServer.Server assembly
         #endif
         public static void GetValueTest()
         {
@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         #if NETFRAMEWORK
-        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        [Trait("Category", "signed")] // Requires a signed Microsoft.SqlServer.Server assembly
         #endif
         public static void TestUdtSchemaMetadata()
         {
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         #if NETFRAMEWORK
-        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        [Trait("Category", "signed")] // Requires a signed Microsoft.SqlServer.Server assembly
         #endif
         public static void TestSqlServerTypesInsertAndRead()
         {

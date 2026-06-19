@@ -106,15 +106,15 @@
     <NuGetAuditLevel>low</NuGetAuditLevel>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
 
-  <!-- When a signing key is specified, we will perform strong name assembly signing. -->
+  <!-- When a signing key is specified, we will perform assembly signing. -->
   <PropertyGroup Condition="'$(SigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
 
     <!-- We also define a constant used for conditional compilation. -->
-    <DefineConstants>$(DefineConstants);STRONG_NAME_SIGNING</DefineConstants>
+    <DefineConstants>$(DefineConstants);ASSEMBLY_SIGNING</DefineConstants>
   </PropertyGroup>
 
   <!-- Packaging for source link-->

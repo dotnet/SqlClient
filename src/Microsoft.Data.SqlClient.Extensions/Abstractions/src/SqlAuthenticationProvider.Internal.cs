@@ -46,15 +46,15 @@ public abstract partial class SqlAuthenticationProvider
             {
                 // Try to load the SqlClient assembly.
 
-                #if STRONG_NAME_SIGNING
+                #if ASSEMBLY_SIGNING
 
                 // The expected public key token of the SqlClient assembly, used to avoid invoking
-                // APIs from imposter assemblies.  This is the same token used by all assemblies in
-                // this repository when strong-name signed.
+                // APIs from imposter assemblies.  This is the public key token of the assembly
+                // signing key used for all of our driver assemblies.
                 byte[] expectedPublicKeyToken =
                     [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
 
-                // When strong-name signing is enabled, build a fully-qualified AssemblyName that
+                // When assembly signing is enabled, build a fully-qualified AssemblyName that
                 // includes the expected public key token.
                 Log($"Attempting to load SqlClient assembly={assemblyName} with " +
                     "expected public key token=" +
@@ -87,7 +87,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 #else
 
-                // Strong-name signing is disabled, so we cannot verify the public key token.
+                // Assembly signing is disabled, so we cannot verify the public key token.
                 Log($"Loading SqlClient assembly={assemblyName} without strong-name identity " +
                     "verification; ensure this assembly is from a trusted source");
 

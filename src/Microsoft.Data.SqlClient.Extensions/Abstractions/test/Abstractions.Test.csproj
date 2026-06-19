@@ -15,7 +15,7 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
   <!-- When a test signing key is provided, sign the test assembly so IVT from signed source works. -->
   <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
