@@ -28,7 +28,7 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
   <!-- This is done in Directory.Build.props -->
 
   <!-- Build Output ==================================================== -->

@@ -14,7 +14,7 @@
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
   <!-- Sign with the test key so signed test assemblies can reference this project. -->
   <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>

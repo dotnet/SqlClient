@@ -11,7 +11,7 @@
 #   - On pushes to GitHub main and ADO internal/main (batched)
 #   - Nightly at 00:00 UTC on both branches
 #
-# On internal/main the strong-name signing key is downloaded and used to sign assemblies during the
+# On internal/main the assembly signing key is downloaded and used to sign assemblies during the
 # build.
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We distinguish the two via
