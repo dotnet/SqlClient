@@ -26,7 +26,7 @@ public sealed class ServerLogin : DatabaseObject<string>
     }
 
     private ServerLogin(SqlConnection connection, string namePrefix, string password, string? defaultDatabase)
-        : base(connection, namePrefix, GenerateDefinition(password, defaultDatabase), password, shouldCreate: true, shouldDrop: true)
+        : base(connection, namePrefix, GenerateDefinition(password, defaultDatabase), state: password, shouldCreate: true, shouldDrop: true)
     {
     }
 

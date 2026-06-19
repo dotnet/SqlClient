@@ -22,7 +22,7 @@ public sealed class DatabaseUser : DatabaseObject<string>
     /// <param name="database">The name of the database where the user will be created.</param>
     /// <param name="login">The server login which the database user will be associated with.</param>
     public DatabaseUser(SqlConnection connection, string database, ServerLogin login)
-        : base(connection, login.Name, $"FOR LOGIN {login.Name}", database, shouldCreate: true, shouldDrop: true)
+        : base(connection, login.Name, $"FOR LOGIN {login.Name}", state: database, shouldCreate: true, shouldDrop: true)
     {
     }
 
