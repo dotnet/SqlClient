@@ -53,6 +53,19 @@ parameters:
     - detailed
     - diagnostic
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 jobs:
 
   - job: pack_logging_package_job
@@ -86,6 +99,20 @@ jobs:
       - name: Configuration
         value: ''
 
+      # Build properties passed to dotnet pack.
+      - name: baseBuildProperties
+        value: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+
+      # NOTE: We use compile-time ${{ if }} branches rather than concatenating
+      # separate variables (e.g. "$(base);$(signing)") because when the
+      # optional variable is empty the semicolons remain, producing a trailing
+      # ";;" that MSBuild rejects with MSB1005.
+      - name: buildProperties
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+          value: $(baseBuildProperties);SigningKeyPath=$(driverKeyFile.secureFilePath)
+        ${{ else }}:
+          value: $(baseBuildProperties)
+
     steps:
 
       # Emit environment variables if debug is enabled.
@@ -98,6 +125,10 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
+      # Download the assembly signing key for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+
       # Create the NuGet packages.
       - task: DotNetCoreCLI@2
         displayName: Create NuGet Package
@@ -107,7 +138,7 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+          buildProperties: $(buildProperties)
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

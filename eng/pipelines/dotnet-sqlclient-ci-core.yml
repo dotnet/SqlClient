@@ -156,6 +156,8 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
+      referenceType: ${{ parameters.referenceType }}
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
