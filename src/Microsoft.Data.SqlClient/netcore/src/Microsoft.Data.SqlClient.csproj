@@ -175,14 +175,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProviderOptions.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProviderOptions.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\User32\User32.cs">
-      <Link>Interop\Windows\User32\User32.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
@@ -822,6 +816,12 @@
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\User32\User32.cs">
+      <Link>Interop\Windows\User32\User32.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
       <Link>Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
     </Compile>
