@@ -109,6 +109,12 @@ parameters:
       - detailed
       - diagnostic
 
+  # True when building on the internal ADO.Net project.  Internal builds may perform additional or
+  # different steps, such as assembly signing.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
@@ -173,6 +179,7 @@ stages:
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -190,6 +197,7 @@ stages:
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
@@ -243,6 +251,8 @@ stages:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
+      mdsPackageVersion: $(mdsPackageVersion)
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
