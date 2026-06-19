@@ -185,8 +185,8 @@ jobs:
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
 
-      # Signing arguments — only set for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Signing arguments — only set for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - name: signingArguments
           value: >-
             -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
@@ -222,8 +222,8 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # Download the assembly signing keys for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Download the assembly signing keys for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
           parameters:

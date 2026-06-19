@@ -122,6 +122,7 @@ stages:
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: ubuntu-latest
 
       # ------------------------------------------------------------------------
@@ -138,6 +139,7 @@ stages:
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: windows-latest
 
       # ------------------------------------------------------------------------
@@ -154,6 +156,7 @@ stages:
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: macos-latest
 
       # ------------------------------------------------------------------------

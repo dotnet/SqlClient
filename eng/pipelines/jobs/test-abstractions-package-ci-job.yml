@@ -67,6 +67,14 @@ parameters:
     type: boolean
     default: false
 
+  # The C# project reference type to use when building.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
   # The pool VM image to use.
   - name: vmImage
     type: string
@@ -100,8 +108,8 @@ jobs:
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
 
-      # Signing arguments — only set for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Signing arguments — only set for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - name: signingArguments
           value: >-
             -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
@@ -137,8 +145,8 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # Download the assembly signing keys for internal builds.
-      - ${{ if eq(parameters.isInternalBuild, true) }}:
+      # Download the assembly signing keys for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
           parameters:
