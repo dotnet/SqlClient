@@ -103,6 +103,8 @@ public sealed class UnprivilegedLogin : IDisposable
     {
         AssertEnvironmentCreated();
 
+        const int BulkCopyRowCount = 5;
+
         using DataTable srcDataTable = new()
         {
             Columns = { new DataColumn("Description", typeof(string)) }
@@ -115,7 +117,7 @@ public sealed class UnprivilegedLogin : IDisposable
 
         using SqlBulkCopy nodeCopy = new(_unprivilegedConnectionString);
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < BulkCopyRowCount; i++)
         {
             srcDataTable.Rows.Add($"Description {i}");
         }
@@ -123,6 +125,14 @@ public sealed class UnprivilegedLogin : IDisposable
         nodeCopy.DestinationTableName = dstTable.Name;
         nodeCopy.ColumnMappings.Add("Description", "Description");
         nodeCopy.WriteToServer(srcDataTable);
+
+        int resultantRowCount;
+        using (SqlCommand rowCountQuery = new($"SELECT COUNT(*) FROM {dstTable.Name}", _managementConnection))
+        {
+            resultantRowCount = (int)rowCountQuery.ExecuteScalar();
+        }
+
+        Assert.Equal(BulkCopyRowCount, resultantRowCount);
     }
 
     [ConditionalFact(nameof(CanRunTests))]
