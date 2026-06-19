@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Internal;
@@ -375,9 +374,7 @@ namespace Microsoft.Data.SqlClient
         // signals user-actionable misconfiguration and intentionally escapes the static ctor's
         // catch-when filter so it surfaces as a TypeInitializationException.
         internal static SqlAuthenticationProvider? CreateAzureAuthenticationProvider(
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicConstructors)]
             Type providerType,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicProperties)]
             Type? optionsType,
             string? applicationClientId,
             bool? useWamBroker)
