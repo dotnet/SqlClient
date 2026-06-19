@@ -60,8 +60,8 @@ namespace Microsoft.Data.SqlClient
                 if (instance._useWamBroker.HasValue)
                 {
                     // useWamBroker was explicitly set via config; route through the Options ctor so
-                    // the configured value wins over the default (which is to enable WAM when the
-                    // SqlClient first-party application id is in use).
+                    // the value is applied for caller-supplied application ids. Note: when the SqlClient
+                    // first-party application id is used, WAM broker is always enabled by design.
                     activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(
                         new ActiveDirectoryAuthenticationProviderOptions
                         {

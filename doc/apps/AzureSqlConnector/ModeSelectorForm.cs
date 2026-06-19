@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
         internal ModeSelectorForm()
         {
-            Text = "Azure SQL Connector ΓÇö Choose Mode";
+            Text = "Azure SQL Connector — Choose Mode";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterScreen;
             MaximizeBox = false;

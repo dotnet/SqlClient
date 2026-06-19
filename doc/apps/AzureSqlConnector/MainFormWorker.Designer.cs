@@ -342,7 +342,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             this.MaximizeBox = false;
             this.Name = "MainFormWorker";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Azure SQL Connector ΓÇö Worker thread (Task.Run + Open)";
+            this.Text = "Azure SQL Connector — Worker thread (Task.Run + Open)";
             ((System.ComponentModel.ISupportInitialize)(this.numTimeout)).EndInit();
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();

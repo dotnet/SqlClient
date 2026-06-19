@@ -9,8 +9,8 @@ combinations (server / database / authentication mode / encryption / etc.) again
 or SQL Server instance, **and as a manual repro** for the WAM-broker behavior added in this
 branch's `ActiveDirectoryAuthenticationProvider`.
 
-The sample targets **`net9.0-windows`**, exercising the modern
-`SetParentActivityOrWindowFunc` API used on .NET 8+ and the WAM broker integration.
+The sample targets **`net481`** on Windows and **`net9.0-windows`** on non-Windows hosts, exercising the modern
+`SetParentActivityOrWindowFunc` API (used on .NET 8+) and the WAM broker integration.
 
 `net9.0-windows` restores and builds cleanly on Linux/macOS hosts (via
 `EnableWindowsTargeting`) even though the resulting binary only runs on Windows.
@@ -49,11 +49,11 @@ The **Authentication** dropdown is populated from every member of
 `Microsoft.Data.SqlClient.SqlAuthenticationMethod`. The User ID and Password fields are enabled /
 disabled automatically based on the selected method:
 
-- **SqlPassword** / **ActiveDirectoryPassword** ΓÇö both User ID and Password are required.
-- **ActiveDirectoryServicePrincipal** ΓÇö User ID = App (Client) ID, Password = client secret.
+- **SqlPassword** / **ActiveDirectoryPassword** — both User ID and Password are required.
+- **ActiveDirectoryServicePrincipal** — User ID = App (Client) ID, Password = client secret.
 - **ActiveDirectoryManagedIdentity / MSI / Default / Interactive / DeviceCodeFlow / WorkloadIdentity**
-  ΓÇö User ID is optional (e.g. user-assigned MI client id), Password is disabled.
-- **ActiveDirectoryIntegrated** ΓÇö credentials come from the OS, both fields disabled.
+  — User ID is optional (e.g. user-assigned MI client id), Password is disabled.
+- **ActiveDirectoryIntegrated** — credentials come from the OS, both fields disabled.
 
 ## Buttons
 
@@ -87,7 +87,7 @@ dotnet run --project .\AzureSqlConnector.csproj
 Or from the repository root:
 
 ```pwsh
-dotnet build doc\samples\AzureSqlConnector\AzureSqlConnector.csproj
+dotnet build doc\apps\AzureSqlConnector\AzureSqlConnector.csproj
 ```
 
 ## Example
@@ -124,4 +124,4 @@ waits for the user.
 ## Notes
 
 - This is a sample / diagnostic tool, **not** a product. It does not persist credentials.
-- From the repo root: `dotnet run --project doc\samples\AzureSqlConnector\AzureSqlConnector.csproj`
+- From the repo root: `dotnet run --project doc\apps\AzureSqlConnector\AzureSqlConnector.csproj`
