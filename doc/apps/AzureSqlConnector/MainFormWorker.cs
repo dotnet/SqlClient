@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             provider.SetParentActivityOrWindowFunc(() => ownerHwnd);
 
             // Without this, MSAL's default device-code callback writes the prompt to
-            // Console.WriteLine, which is invisible in a WinForms host ΓÇö the connection
+            // Console.WriteLine, which is invisible in a WinForms host — the connection
             // appears to hang while MSAL polls for a code the user never sees.
             provider.SetDeviceCodeFlowCallback(DeviceCodeFlowCallback);
 

@@ -99,7 +99,7 @@ dotnet build doc\apps\AzureSqlConnector\AzureSqlConnector.csproj
 5. **Password:** *your password*
 6. **Encrypt:** `Mandatory`
 7. **Trust server certificate:** unchecked
-8. Click **Test Connection** ΓÇö the result pane should display
+8. Click **Test Connection** — the result pane should display
    `Connected successfully! Server version: 12.00.xxxx`.
 
 ## Entra ID parent-window plumbing

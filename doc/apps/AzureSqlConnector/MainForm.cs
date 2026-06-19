@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
     /// </summary>
     public partial class MainForm : Form
     {
-        // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
         #region Construction
 
         public MainForm()
@@ -90,7 +89,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
             provider.SetParentActivityOrWindowFunc(() => ownerHwnd);
 
             // Without this, MSAL's default device-code callback writes the prompt to
-            // Console.WriteLine, which is invisible in a WinForms host ΓÇö the connection
+            // Console.WriteLine, which is invisible in a WinForms host — the connection
             // appears to hang while MSAL polls for a code the user never sees.
             provider.SetDeviceCodeFlowCallback(DeviceCodeFlowCallback);
 
@@ -111,7 +110,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
         /// Device Code Flow callback. MSAL invokes this on a worker thread before it begins
         /// polling the token endpoint. We surface the user code three ways so the user always
         /// sees it: (1) appended to the log textbox via BeginInvoke (works whenever the UI
-        /// thread is pumping ΓÇö async <c>OpenAsync</c>), (2) the verification URL launched in
+        /// thread is pumping — async <c>OpenAsync</c>), (2) the verification URL launched in
         /// the default browser, and (3) a modal owned by the MSAL worker thread (works even
         /// when the UI thread is blocked by a synchronous <c>Open()</c>). MSAL polling waits
         /// for the returned Task to complete, so dismissing the dialog also resumes polling.
@@ -261,7 +260,7 @@ namespace Microsoft.Data.SqlClient.Samples.AzureSqlConnector
 
             try
             {
-                // Same UI-thread reasoning as btnTest_Click ΓÇö keep the message pump alive for any
+                // Same UI-thread reasoning as btnTest_Click — keep the message pump alive for any
                 // ActiveDirectoryInteractive sign-in that may be required.
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
