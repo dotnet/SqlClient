@@ -4,7 +4,6 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -118,26 +117,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// enabled for interactive Entra ID flows on Windows. Exposed as <c>internal</c> for tests.
     /// </summary>
     internal bool UseWamBroker => _useWamBroker;
-
-    /// <summary>
-    /// Test-only factory: builds a provider bound to the SqlClient first-party application id
-    /// but with WAM broker explicitly disabled. The production ctor at
-    /// <see cref="ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions)"/>
-    /// forces WAM on for the first-party app id, so callers cannot otherwise express this
-    /// combination. WAM requires an active interactive Windows user session
-    /// (see https://learn.microsoft.com/entra/msal/dotnet/acquiring-tokens/desktop-mobile/wam#integration-best-practices),
-    /// which non-interactive CI agents cannot satisfy. Production callers that want WAM off
-    /// must instead supply their own application id via
-    /// <see cref="ActiveDirectoryAuthenticationProviderOptions.ApplicationClientId"/>.
-    /// </summary>
-    internal static ActiveDirectoryAuthenticationProvider CreateForTestsWithoutBroker()
-    {
-        var provider = new ActiveDirectoryAuthenticationProvider();
-        typeof(ActiveDirectoryAuthenticationProvider)
-            .GetField(nameof(_useWamBroker), BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(provider, false);
-        return provider;
-    }
 
     /// <summary>
     /// The Entra ID application client id used by this provider instance. Exposed as <c>internal</c> for tests.
