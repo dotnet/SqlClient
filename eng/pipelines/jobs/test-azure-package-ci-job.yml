@@ -69,6 +69,12 @@ parameters:
     - detailed
     - diagnostic
 
+  # True when building on the internal ADO.Net project.  When set, assemblies
+  # are signed with the driver key and tests are signed with the test key.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
   # The suffix to append to the job name.
   - name: jobNameSuffix
     type: string
@@ -169,7 +175,7 @@ jobs:
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
 
       # dotnet CLI arguments for build/test/pack commands.
-      - name: buildArguments
+      - name: dotnetBuildOpts
         value: >-
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
@@ -178,6 +184,16 @@ jobs:
           -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
           -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
           -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+
+      # Signing arguments — only set for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - name: signingArguments
+          value: >-
+            -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
+            -p:TestSigningKeyPath=$(testKeyFile.secureFilePath)
+      - ${{ else }}:
+        - name: signingArguments
+          value: ''
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public
@@ -205,6 +221,13 @@ jobs:
       - ${{ if eq(parameters.debug, true) }}:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
+
+      # Download the assembly signing keys for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+          parameters:
+            isTest: true
 
       # We have a few extra steps for Package reference builds.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -289,7 +312,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: $(dotnetBuildOpts) $(signingArguments)
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
@@ -324,7 +347,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -342,7 +365,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
@@ -362,7 +385,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -380,7 +403,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"

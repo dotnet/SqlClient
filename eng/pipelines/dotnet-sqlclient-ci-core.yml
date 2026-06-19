@@ -228,6 +228,7 @@ stages:
           - build_sqlserver_package_stage
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       loggingArtifactsName: $(loggingArtifactsName)
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)

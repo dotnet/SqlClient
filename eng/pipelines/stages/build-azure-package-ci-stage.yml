@@ -152,6 +152,11 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_azure_package_stage
@@ -180,6 +185,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: linux
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
@@ -202,6 +208,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: linux_integration
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
@@ -233,6 +240,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: windows
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
@@ -255,6 +263,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: windows_integration
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
@@ -295,6 +304,7 @@ stages:
           debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: macos
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
@@ -331,6 +341,7 @@ stages:
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}
