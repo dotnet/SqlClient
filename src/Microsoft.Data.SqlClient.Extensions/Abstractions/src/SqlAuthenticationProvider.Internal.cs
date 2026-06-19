@@ -40,22 +40,67 @@ public abstract partial class SqlAuthenticationProvider
         {
             const string assemblyName = "Microsoft.Data.SqlClient";
 
-            // If the MDS package is present, load its
+            // If the SqlClient assembly is present, load its
             // SqlAuthenticationProviderManager class and get/set methods.
             try
             {
-                // Try to load the MDS assembly.
+                // Try to load the SqlClient assembly.
+
+                #if STRONG_NAME_SIGNING
+
+                // The expected public key token of the SqlClient assembly, used to avoid invoking
+                // APIs from imposter assemblies.  This is the same token used by all assemblies in
+                // this repository when strong-name signed.
+                byte[] expectedPublicKeyToken =
+                    [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
+
+                // When strong-name signing is enabled, build a fully-qualified AssemblyName that
+                // includes the expected public key token.
+                Log($"Attempting to load SqlClient assembly={assemblyName} with " +
+                    "expected public key token=" +
+                    BitConverter.ToString(expectedPublicKeyToken).Replace("-", ""));
+
+                var qualifiedName = new AssemblyName(assemblyName);
+                qualifiedName.SetPublicKeyToken(expectedPublicKeyToken);
+
+                // The .NET Framework runtime enforces the token during binding, causing Load() to
+                // throw if it doesn't match. The .NET (Core) runtime ignores the token, so we
+                // verify it ourselves below.
+                var assembly = Assembly.Load(qualifiedName);
+
+                // Defense-in-depth: verify the public key token after loading.  This is necessary
+                // on .NET Core where the runtime does not enforce the token. It is harmless on .NET
+                // Framework.
+                if (assembly is not null)
+                {
+                    byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
+
+                    if (actualToken is null ||
+                        !actualToken.AsSpan().SequenceEqual(expectedPublicKeyToken))
+                    {
+                        Log($"SqlClient assembly={assembly.GetName()} has an " +
+                            "unexpected public key token; " +
+                            "Get/SetProvider() will not function");
+                        return;
+                    }
+                }
+
+                #else
+
+                // Strong-name signing is disabled, so we cannot verify the public key token.
+                Log($"Loading SqlClient assembly={assemblyName} without strong-name identity " +
+                    "verification; ensure this assembly is from a trusted source");
+
                 var assembly = Assembly.Load(assemblyName);
+
+                #endif
 
                 if (assembly is null)
                 {
-                    Log($"MDS assembly={assemblyName} not found; " +
+                    Log($"SqlClient assembly={assemblyName} not found; " +
                         "Get/SetProvider() will not function");
                     return;
                 }
-
-                // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/39845):
-                // Verify the assembly is signed by us?
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";
@@ -63,7 +108,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (manager is null)
                 {
-                    Log($"MDS auth manager manager class={className} not found; " +
+                    Log($"SqlClient auth manager class={className} not found; " +
                         "Get/SetProvider() will not function");
                     return;
                 }
@@ -75,7 +120,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (_getProvider is null)
                 {
-                    Log($"MDS GetProvider() method not found; " +
+                    Log($"SqlClient GetProvider() method not found; " +
                         "GetProvider() will not function");
                 }
 
@@ -85,7 +130,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 if (_setProvider is null)
                 {
-                    Log($"MDS SetProvider() method not found; " +
+                    Log($"SqlClient SetProvider() method not found; " +
                         "SetProvider() will not function");
                 }
             }
@@ -97,7 +142,7 @@ public abstract partial class SqlAuthenticationProvider
                      or FileLoadException
                      or FileNotFoundException)
             {
-                Log($"MDS assembly={assemblyName} not found or not usable; " +
+                Log($"SqlClient assembly={assemblyName} not found or not usable; " +
                     $"Get/SetProvider() will not function: {ex} ");
             }
             // Any other exceptions are fatal.

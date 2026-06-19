@@ -73,6 +73,13 @@ parameters:
     type: string
     default: $(sqlServerPackageVersion)
 
+  # Path to the assembly signing key file.  When non-empty, passed as -p:SigningKeyPath="" to the
+  # build.  The calling job is responsible for downloading the key (via
+  # download-assembly-signing-key.yml).
+  - name: signingKeyPath
+    type: string
+    default: ''
+
 steps:
   # Build MDS
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -91,6 +98,7 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:SigningKeyPath="${{ parameters.signingKeyPath }}"
 
   # Build AKV Provider
   - ${{ if or(eq(parameters.build, 'AkvProvider'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
@@ -110,3 +118,4 @@ steps:
           -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:SigningKeyPath="${{ parameters.signingKeyPath }}"

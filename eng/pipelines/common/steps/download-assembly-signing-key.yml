@@ -1,0 +1,39 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# Downloads a signing key from ADO secure files.
+#
+# When isTest is false, downloads the driver signing key and exports it as 'driverKeyFile'.  When
+# isTest is true, downloads the test signing key and exports it as 'testKeyFile'.
+#
+# Downstream steps reference the path via:
+#
+#  $(driverKeyFile.secureFilePath)  or
+#  $(testKeyFile.secureFilePath)
+
+parameters:
+
+  # When false, download the driver signing key.
+  # When true, download the test signing key.
+  - name: isTest
+    type: boolean
+    default: false
+
+steps:
+
+  - ${{ if eq(parameters.isTest, false) }}:
+    - task: DownloadSecureFile@1
+      displayName: Download Driver Signing Key
+      inputs:
+        secureFile: netfxKeypair.snk
+      name: driverKeyFile
+
+  - ${{ if eq(parameters.isTest, true) }}:
+    - task: DownloadSecureFile@1
+      displayName: Download Test Signing Key
+      inputs:
+        secureFile: sqlclient-test-key.snk
+      name: testKeyFile
