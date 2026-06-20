@@ -76,9 +76,10 @@ public sealed class ServerLogin : DatabaseObject<string>
 
         return passwordDigits.ToString();
 
+        // Scales a byte value from the range [0, 255) to the range [0, newMaximum)
         static int Scale(byte value, int existingMaximum, int newMaximum)
         {
-            return (int)((double)value / existingMaximum * newMaximum);
+            return (int)((double)value / (existingMaximum + 1) * newMaximum);
         }
     }
 
