@@ -71,8 +71,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// eligible for eviction. Eviction is best-effort: a connection that has been idle longer
         /// than this value is discarded either on the next retrieval attempt or during a periodic
         /// pool maintenance pass, whichever happens first. Because maintenance runs on a fixed
-        /// cadence, a connection may occasionally be evicted earlier than the configured value;
-        /// callers that need a strict floor should configure a correspondingly larger timeout.
+        /// cadence shorter than the timeout, a connection that becomes idle just before a
+        /// maintenance pass may be discarded after roughly half the configured timeout; callers
+        /// that need a strict floor should configure a correspondingly larger value.
         /// <see cref="TimeSpan.Zero"/> disables idle expiration.
         /// </summary>
         public TimeSpan IdleTimeout
