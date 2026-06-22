@@ -1429,7 +1429,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.
+        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration..
         /// </summary>
         internal static string DbConnectionString_IdleTimeout {
             get {

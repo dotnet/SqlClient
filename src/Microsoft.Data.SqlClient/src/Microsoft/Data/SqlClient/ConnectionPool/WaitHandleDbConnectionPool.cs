@@ -1091,9 +1091,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 Interlocked.Decrement(ref _waitCount);
                                 obj = GetFromGeneralPool();
 
-                                if ((obj != null) && (IsIdleExpired(obj) || !obj.IsConnectionAlive()))
+                                bool isIdleExpired = obj != null && IsIdleExpired(obj);
+                                if ((obj != null) && (isIdleExpired || !obj.IsConnectionAlive()))
                                 {
-                                    string reason = IsIdleExpired(obj) ? "idle-expired" : "found dead";
+                                    string reason = isIdleExpired ? "idle-expired" : "found dead";
                                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, {2} and removed.", Id, obj.ObjectID, reason);
                                     DestroyObject(obj);
                                     obj = null;     // Setting to null in case creating a new object fails
@@ -1416,7 +1417,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Returns true when the supplied connection has been sitting idle in the pool longer than the
         /// configured <see cref="DbConnectionPoolGroupOptions.IdleTimeout"/>. Returns false when idle
-        /// eviction is off &#8212; that is, when the <see cref="LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior"/>
+        /// eviction is off - that is, when the <see cref="LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior"/>
         /// switch is enabled or <see cref="DbConnectionPoolGroupOptions.IdleTimeout"/> is zero.
         /// </summary>
         private bool IsIdleExpired(DbConnectionInternal obj)
