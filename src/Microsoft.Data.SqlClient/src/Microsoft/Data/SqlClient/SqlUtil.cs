@@ -511,6 +511,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
         }
 
+        internal static Exception UseWamBrokerRequiresAzureExtensionUpgrade()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UseWamBrokerRequiresAzureExtensionUpgrade));
+        }
+
         internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
         {
             string authName = authentication.ToString();

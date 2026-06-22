@@ -15,7 +15,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
+    <NoWarn>$(NoWarn);IL2026;IL2057;IL2067;IL2070;IL2072;IL2075</NoWarn>
     <RootNamespace />
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>

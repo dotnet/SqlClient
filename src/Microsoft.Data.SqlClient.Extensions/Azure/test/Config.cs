@@ -40,6 +40,7 @@ internal static class Config
     internal static bool DebugEmit { get; } = false;
     internal static bool IntegratedSecuritySupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
+    // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
     internal static string PasswordConnectionString { get; } = string.Empty;
     internal static string ServicePrincipalId { get; } = string.Empty;
     internal static string ServicePrincipalSecret { get; } = string.Empty;
