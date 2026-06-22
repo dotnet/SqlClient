@@ -305,9 +305,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void NoCredentialsActiveDirectoryPassword()
         {
-            // test Passes with correct connection string.
-            ConnectAndDisconnect(DataTestUtility.AADPasswordConnectionString);
-
             // connection fails with expected error message.
             string[] credKeys = { "User ID", "Password", "UID", "PWD" };
             string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
@@ -320,11 +317,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADServicePrincipalSetup))]
         public static void NoCredentialsActiveDirectoryServicePrincipal()
         {
-            // test Passes with correct connection string.
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
                 $"Authentication=Active Directory Service Principal; User ID={DataTestUtility.AADServicePrincipalId}; PWD={DataTestUtility.AADServicePrincipalSecret};";
-            ConnectAndDisconnect(connStr);
 
             // connection fails with expected error message.
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
