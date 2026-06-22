@@ -161,17 +161,11 @@ namespace Microsoft.Data.SqlClient
                 const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
                 Type? optionsType = assembly.GetType(optionsTypeName);
 
-                // IL2072: The return value of assembly.GetType() carries no DynamicallyAccessedMembers
-                // annotation, so passing it to CreateAzureAuthenticationProvider — whose parameters
-                // do carry such annotations — triggers a trim-analysis warning.  The types come from
-                // a trusted external assembly, so we suppress the warning here.
-#pragma warning disable IL2072
                 SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                     type,
                     optionsType,
                     Instance._applicationClientId,
                     Instance._useWamBroker);
-#pragma warning restore IL2072
 
                 if (instance is null)
                 {
@@ -211,17 +205,19 @@ namespace Microsoft.Data.SqlClient
             // simply have no default and the app must provide one if they
             // attempt to use Active Directory authentication.
             catch (Exception ex)
-            when (ex is ArgumentNullException ||
-                  ex is ArgumentException ||
-                  ex is BadImageFormatException ||
-                  ex is FileLoadException ||
-                  ex is FileNotFoundException ||
-                  ex is MemberAccessException ||
-                  ex is MethodAccessException ||
-                  ex is MissingMethodException ||
-                  ex is NotSupportedException ||
-                  ex is TargetInvocationException ||
-                  ex is TypeLoadException)
+            when (ex is
+                      AmbiguousMatchException or
+                      ArgumentException or
+                      BadImageFormatException or
+                      FileLoadException or
+                      FileNotFoundException or
+                      MemberAccessException or
+                      MethodAccessException or
+                      MissingMethodException or
+                      NotSupportedException or
+                      TargetInvocationException or
+                      TypeInitializationException or
+                      TypeLoadException)
             {
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
