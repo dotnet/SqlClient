@@ -210,7 +210,7 @@ jobs:
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ parameters.warnOnTestFailure }}
           env:
-            STRESS_CONFIG_FILE: config.json
+            STRESS_CONFIG_FILE: config.jsonc
           inputs:
             command: run
             projects: $(project)
@@ -223,7 +223,7 @@ jobs:
           condition: and(succeededOrFailed(), eq(variables['buildSucceeded'], 'true'))
           continueOnError: ${{ parameters.warnOnTestFailure }}
           env:
-            STRESS_CONFIG_FILE: config.json
+            STRESS_CONFIG_FILE: config.jsonc
           inputs:
             command: run
             projects: $(project)
