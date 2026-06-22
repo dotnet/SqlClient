@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
@@ -269,7 +271,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task ContinueTask_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
@@ -277,7 +279,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                     GetCancelledTask(),
                     taskCompletionSource,
                     onSuccess: static () => { },
-                    onCancellation: onCancellation);
+                    onCancellation: () => throw e);
                 await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
             });
         }
@@ -548,7 +550,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task ContinueTaskWithState_1Generic_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
@@ -557,7 +559,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                     taskCompletionSource,
                     new object(),
                     onSuccess: static _ => { },
-                    onCancellation: _ => onCancellation());
+                    onCancellation: _ => throw e);
                 await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
             });
         }
@@ -839,7 +841,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task ContinueTaskWithState_2Generics_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 TaskCompletionSource<object?> taskCompletionSource = GetTaskCompletionSource();
 
@@ -849,7 +851,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                     new object(),
                     new object(),
                     onSuccess: static (_, _) => { },
-                    onCancellation: (_, _) => onCancellation());
+                    onCancellation: (_, _) => throw e);
                 await RunWithTimeout(taskCompletionSource.Task, RunTimeout);
             });
         }
@@ -1101,12 +1103,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task CreateContinuationTask_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 Task? continuationTask = AsyncHelper.CreateContinuationTask(
                     GetCancelledTask(),
                     onSuccess: static () => { },
-                    onCancellation: onCancellation);
+                    onCancellation: () => throw e);
                 await RunWithTimeout(continuationTask, RunTimeout);
             });
         }
@@ -1380,13 +1382,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task CreateContinuationTaskWithState_1Generic_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                     GetCancelledTask(),
                     new object(),
                     onSuccess: static _ => { },
-                    onCancellation: _ => onCancellation());
+                    onCancellation: _ => throw e);
                 await RunWithTimeout(continuationTask, RunTimeout);
             });
         }
@@ -1674,14 +1676,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         [Fact]
         public async Task CreateContinuationTaskWithState_2Generics_DoesNotCreateUnobservedException()
         {
-            await VerifyDoesNotCreateUnobservedException(async onCancellation =>
+            await VerifyDoesNotCreateUnobservedException(async e =>
             {
                 Task? continuationTask = AsyncHelper.CreateContinuationTaskWithState(
                     GetCancelledTask(),
                     new object(),
                     new object(),
                     onSuccess: static (_, _) => { },
-                    onCancellation: (_, _) => onCancellation());
+                    onCancellation: (_, _) => throw e);
                 await RunWithTimeout(continuationTask, RunTimeout);
             });
         }
@@ -1696,20 +1698,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         /// out are properly handled and do not propagate as unobserved task exceptions.
         /// </summary>
         [Fact]
-        public void WaitForCompletion_DoesNotCreateUnobservedException()
+        public async Task WaitForCompletion_DoesNotCreateUnobservedException()
         {
-            // Arrange
-            // - Create a handler to capture any unhandled exception
-            Exception? unhandledException = null;
-            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
-                (_, args) => unhandledException = args.Exception;
-
-            // @TODO: Can we do this with a custom scheduler to avoid changing global state?
-            TaskScheduler.UnobservedTaskException += handleUnobservedException;
-
-            try
+            await VerifyDoesNotCreateUnobservedException(e =>
             {
-                // Act
                 // - Run task that will always time out
                 TaskCompletionSource<object?>? tcs = new();
                 AsyncHelper.WaitForCompletion(
@@ -1719,26 +1711,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
                     rethrowExceptions: true);
 
                 // - Task has timed out, simulate faulting task completion source
-                tcs.SetException(new Exception("late failure"));
+                tcs.SetException(e);
 
-                // - Drop the last strong reference so the faulted Task can be finalized
+                // - Drop the last strong reference to tcs so the faulting task can be finalized
                 tcs = null;
 
-                // - Force collection of unobserved task
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                // Assert
-                // - Make sure no unobserved tasks happened
-                Assert.Null(unhandledException);
-            }
-            finally
-            {
-                // Cleanup
-                // - Remove the unobserved task handler
-                TaskScheduler.UnobservedTaskException -= handleUnobservedException;
-            }
+                return Task.CompletedTask;
+            });
         }
 
         #endregion
@@ -1754,31 +1733,53 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
         private static TaskCompletionSource<object?> GetTaskCompletionSource()
             => new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private static async Task VerifyDoesNotCreateUnobservedException(Func<Action, Task> runContinuation)
+        private static async Task VerifyDoesNotCreateUnobservedException(Func<ObservableException, Task> methodUnderTest)
         {
+            // Arrange
+            // - Set up an unobserved exception handler that only captures the exception that will
+            //   be thrown by the continuation callback.
+            // NOTE: This only captures the exception thrown by the callback because unit tests run
+            //   in parallel. Thus, other tests may cause unobserved exceptions that would cause
+            //   false failures of this test.
+            Guid exceptionId = Guid.NewGuid();
             Exception? unhandledException = null;
             EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
                 (_, args) =>
                 {
-                    unhandledException = args.Exception;
-                    args.SetObserved();
+                    // Filter inner exceptions on type and expected ID
+                    IEnumerable<ObservableException> observableInnerExceptions =
+                        args.Exception.InnerExceptions.OfType<ObservableException>();
+                    if (observableInnerExceptions.Any(oe => oe.Identifier == exceptionId))
+                    {
+                        unhandledException = args.Exception;
+                        args.SetObserved();
+                    }
                 };
 
+            // - Register the unobserved exception handler
             // @TODO: Can we do this with a custom scheduler to avoid changing global state?
             TaskScheduler.UnobservedTaskException += handleUnobservedException;
 
             try
             {
-                await runContinuation(static () => throw new Exception("callback failure"));
+                // Act
+                // - Run the test method
+                await methodUnderTest(new ObservableException(exceptionId));
 
+                // - Force GC collection to get any unobserved exception to raise an exception.
+                //   However, if the method under test is behaving correctly, this *should not*
+                //   raise any exception.
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 GC.Collect();
 
+                // Assert
+                // - The unobserved exception handler should not have captured any exception.
                 Assert.Null(unhandledException);
             }
             finally
             {
+                // Cleanup
                 TaskScheduler.UnobservedTaskException -= handleUnobservedException;
             }
         }
@@ -1798,6 +1799,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
 
             // Force observation of any exception
             _ = taskToRun.Exception;
+        }
+
+        private class ObservableException : Exception
+        {
+            public ObservableException(Guid id)
+            {
+                Identifier = id;
+            }
+
+            public Guid Identifier { get; set; }
         }
     }
 }
