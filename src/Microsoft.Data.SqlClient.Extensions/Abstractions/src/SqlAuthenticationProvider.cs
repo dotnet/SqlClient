@@ -21,25 +21,17 @@ public abstract partial class SqlAuthenticationProvider
 
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
-    //
-    // We would like to deprecate this method in favour of
-    // SqlAuthenticationProviderManager.GetProvider().
-    //
     public static SqlAuthenticationProvider? GetProvider(
         SqlAuthenticationMethod authenticationMethod)
     {
-        return Internal.GetProvider(authenticationMethod);
+        return AuthenticationProviderRegistry.Instance.GetProvider(authenticationMethod);
     }
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
-    //
-    // We would like to deprecate this method in favour of
-    // SqlAuthenticationProviderManager.SetProvider().
-    //
     public static bool SetProvider(
         SqlAuthenticationMethod authenticationMethod,
         SqlAuthenticationProvider provider)
     {
-        return Internal.SetProvider(authenticationMethod, provider);
+        return AuthenticationProviderRegistry.Instance.SetProvider(authenticationMethod, provider);
     }
 }

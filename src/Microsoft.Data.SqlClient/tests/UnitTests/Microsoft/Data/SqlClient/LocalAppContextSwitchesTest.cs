@@ -39,6 +39,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseCompatibilityProcessSni = null;
         switchesHelper.UseConnectionPoolV2 = null;
         switchesHelper.UseMinimumLoginTimeout = null;
+        switchesHelper.EnableReflectionBasedAuthenticationProviderDiscovery = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
         #endif
@@ -62,6 +63,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
         Assert.False(LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        Assert.True(LocalAppContextSwitches.EnableReflectionBasedAuthenticationProviderDiscovery);
         #if NET
         Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
         #endif

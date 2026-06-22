@@ -6,6 +6,11 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
+/// <summary>
+/// Tests for the public <see cref="SqlAuthenticationProvider"/> static API, which delegates to
+/// the shared <c>AuthenticationProviderRegistry.Instance</c> within the Abstractions assembly.
+/// Registry behavior in isolation is covered by <c>AuthenticationProviderRegistryTest</c>.
+/// </summary>
 public class SqlAuthenticationProviderTest
 {
     #region Test Setup
@@ -15,7 +20,8 @@ public class SqlAuthenticationProviderTest
     /// </summary>
     public SqlAuthenticationProviderTest()
     {
-        // Confirm that the MDS assembly is indeed not present.
+        // Confirm that the MDS assembly is indeed not present.  This proves the
+        // registry operates purely within the Abstractions assembly.
         Assert.Throws<FileNotFoundException>(
             () => Assembly.Load("Microsoft.Data.SqlClient"));
     }
@@ -25,50 +31,35 @@ public class SqlAuthenticationProviderTest
     #region Tests
 
     /// <summary>
-    /// Test that GetProvider fails predictably when the MDS assembly can't be
-    /// found.
+    /// The public static <see cref="SqlAuthenticationProvider"/> API delegates to the shared
+    /// <see cref="AuthenticationProviderRegistry.Instance"/>, so reads and writes through the
+    /// public API and the shared registry instance observe the same backing store.
     /// </summary>
-    [Theory]
-    #pragma warning disable CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
-    #pragma warning restore CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
-    public void GetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
+    [Fact]
+    public void PublicApi_DelegatesToSharedInstance()
     {
-        // GetProvider() should return null when the MDS assembly can't be
-        // found.
-        Assert.Null(SqlAuthenticationProvider.GetProvider(method));
-    }
+        // Use a method that no other test registers on the shared instance, so this cannot
+        // interfere with other tests running in the same class.
+        const SqlAuthenticationMethod method =
+            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
 
-    /// <summary>
-    /// Test that SetProvider fails predictably when the MDS assembly can't be
-    /// found.
-    /// </summary>
-    [Theory]
-    #pragma warning disable CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
-    #pragma warning restore CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
-    public void SetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
-    {
-        // SetProvider() should return false when the MDS assembly can't be
-        // found.
-        Assert.False(
-            SqlAuthenticationProvider.SetProvider(method, new Provider()));
+        DeviceCodeProvider provider = new();
+
+        Assert.True(SqlAuthenticationProvider.SetProvider(method, provider));
+
+        Assert.Same(provider, SqlAuthenticationProvider.GetProvider(method));
+
+        // The public API and the shared registry instance agree.
+        Assert.Same(provider, AuthenticationProviderRegistry.Instance.GetProvider(method));
+
+        // Replacing via the internal API is reflected through both the public API and the shared
+        // registry instance, confirming they observe the same backing store.
+        DeviceCodeProvider replacement = new();
+
+        Assert.True(AuthenticationProviderRegistry.Instance.SetProvider(method, replacement));
+
+        Assert.Same(replacement, SqlAuthenticationProvider.GetProvider(method));
+        Assert.Same(replacement, AuthenticationProviderRegistry.Instance.GetProvider(method));
     }
 
     #endregion
@@ -76,22 +67,25 @@ public class SqlAuthenticationProviderTest
     #region Helpers
 
     /// <summary>
-    /// A dummy provider that supports all authentication methods.
+    /// A dummy provider that only supports ActiveDirectoryDeviceCodeFlow.
     /// </summary>
-    private sealed class Provider : SqlAuthenticationProvider
+    private sealed class DeviceCodeProvider : SqlAuthenticationProvider
     {
         /// <inheritDoc/>
         public override bool IsSupported(
             SqlAuthenticationMethod authenticationMethod)
         {
-            return true;
+            return authenticationMethod ==
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         }
 
         /// <inheritDoc/>
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(
             SqlAuthenticationParameters parameters)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(
+                new SqlAuthenticationToken(
+                    "SampleAccessToken", DateTimeOffset.UtcNow.AddMinutes(5)));
         }
     }
 

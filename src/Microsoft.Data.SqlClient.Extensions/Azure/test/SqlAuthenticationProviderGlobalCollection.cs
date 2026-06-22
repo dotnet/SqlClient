@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 /// Defines a test collection that serializes execution of test classes
 /// which mutate the global <see cref="SqlAuthenticationProvider"/> registry.
 /// </summary>
-[CollectionDefinition("SqlAuthenticationProvider")]
-public class SqlAuthenticationProviderCollection
+[CollectionDefinition("SqlAuthenticationProviderGlobal")]
+public class SqlAuthenticationProviderGlobalCollection
 {
 }
