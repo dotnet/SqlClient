@@ -37,18 +37,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 var cts = new CancellationTokenSource();
                 cts.CancelAfter(parameters.ConnectionTimeout * 1000);
 
-                string[] scopes = new string[] { scope };
-                SecureString password = new SecureString();
+                string[] scopes = [scope];
+                AccessToken result = await DataTestUtility.GetTokenCredential().GetTokenAsync(new TokenRequestContext(scopes), cts.Token).ConfigureAwait(false);
 
-                #pragma warning disable CS0618 // Type or member is obsolete
-                AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
-                .WithAuthority(parameters.Authority)
-                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
-                    .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync(cancellationToken: cts.Token);
-                #pragma warning restore CS0618 // Type or member is obsolete
-
-                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+                return new SqlAuthenticationToken(result.Token, result.ExpiresOn);
             }
 
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
@@ -222,63 +214,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // We cannot verify error message with certainity as driver may cache token from other tests for current user
             // and error message may change accordingly.
-        }
-
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void GetAccessTokenByPasswordTest()
-        {
-            // Clear token cache for code coverage.
-            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
-            {
-                connection.Open();
-                Assert.True(connection.State == System.Data.ConnectionState.Open);
-            }
-        }
-
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void TestADPasswordAuthentication()
-        {
-            // Connect to Azure DB with password and retrieve user name.
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
-            {
-                conn.Open();
-                using (SqlCommand sqlCommand = new SqlCommand
-                (
-                    cmdText: $"SELECT SUSER_SNAME();",
-                    connection: conn,
-                    transaction: null
-                ))
-                {
-                    string customerId = (string)sqlCommand.ExecuteScalar();
-                    string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                    Assert.Equal(expected, customerId);
-                }
-            }
-        }
-
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void TestCustomProviderAuthentication()
-        {
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
-            // Connect to Azure DB with password and retrieve user name using custom authentication provider
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
-            {
-                conn.Open();
-                using (SqlCommand sqlCommand = new SqlCommand
-                (
-                    cmdText: $"SELECT SUSER_SNAME();",
-                    connection: conn,
-                    transaction: null
-                ))
-                {
-                    string customerId = (string)sqlCommand.ExecuteScalar();
-                    string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                    Assert.Equal(expected, customerId);
-                }
-            }
-            // Reset to driver internal provider.
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
