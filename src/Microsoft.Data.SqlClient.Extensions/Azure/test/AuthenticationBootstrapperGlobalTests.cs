@@ -74,12 +74,14 @@ public class AuthenticationBootstrapperGlobalTests
                     break;
                 }
                 default:
+                {
                     // There is either no provider installed, or it is not ours.
                     if (provider is not null)
                     {
                         Assert.IsNotType<ActiveDirectoryAuthenticationProvider>(provider);
                     }
                     break;
+                }
             }
         }
     }

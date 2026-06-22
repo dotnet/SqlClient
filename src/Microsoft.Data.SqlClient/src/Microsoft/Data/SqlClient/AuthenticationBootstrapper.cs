@@ -45,23 +45,29 @@ namespace Microsoft.Data.SqlClient
         private static readonly Lazy<AuthenticationBootstrapper> s_instance =
             new(static () => new AuthenticationBootstrapper(AuthenticationProviderRegistry.Instance));
 
-        // The registry this bootstrapper seeds. Production uses the shared singleton registry;
-        // tests can inject an isolated registry to avoid mutating global state.
-        private readonly AuthenticationProviderRegistry _registry;
-
         // Our logging instance.
         private readonly SqlClientLogger _sqlAuthLogger = new();
 
-        // Application client ID read from the app.config configuration section, or null if none
-        // was configured.
-        private string? _applicationClientId = null;
+        /// <summary>
+        /// Gets the registry this bootstrapper seeds. Production uses the shared singleton registry;
+        /// tests can inject an isolated registry to avoid mutating global state.
+        /// </summary>
+        internal AuthenticationProviderRegistry Registry { get; }
 
-        // Optional override for ActiveDirectoryAuthenticationProviderOptions.UseWamBroker read from
-        // the app.config <SqlClientAuthenticationProviders useWamBroker="..."/> attribute.
-        // null means the app did not configure the value, in which case we leave the provider's
-        // default behavior (WAM is implied by the SqlClient first-party app id and off otherwise)
-        // untouched.
-        private bool? _useWamBroker = null;
+        /// <summary>
+        /// Gets the application client ID read from the app.config configuration section,
+        /// or <see langword="null"/> if none was configured.
+        /// </summary>
+        internal string? ApplicationClientId { get; private set; }
+
+        /// <summary>
+        /// Gets the optional override for ActiveDirectoryAuthenticationProviderOptions.UseWamBroker
+        /// read from the app.config <c>&lt;SqlClientAuthenticationProviders useWamBroker="..."/&gt;</c>
+        /// attribute.  <see langword="null"/> means the app did not configure the value, in which
+        /// case we leave the provider's default behavior (WAM is implied by the SqlClient
+        /// first-party app id and off otherwise) untouched.
+        /// </summary>
+        internal bool? UseWamBroker { get; private set; }
 
         /// <summary>
         /// Creates a bootstrapper that seeds the supplied registry, running config-driven and
@@ -69,7 +75,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal AuthenticationBootstrapper(AuthenticationProviderRegistry registry)
         {
-            _registry = registry;
+            Registry = registry;
 
             // Config-driven auth providers, initializers, and application client ID all use
             // reflection (Type.GetType / Activator.CreateInstance) and are incompatible with AOT.
@@ -99,12 +105,6 @@ namespace Microsoft.Data.SqlClient
         {
             _ = s_instance.Value;
         }
-
-        /// <summary>
-        /// Gets the application client ID read from the app.config configuration section,
-        /// or <see langword="null"/> if none was configured.
-        /// </summary>
-        internal string? ApplicationClientId => _applicationClientId;
 
         /// <summary>
         /// Reads the app.config configuration section and registers config-driven initializers and
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!string.IsNullOrEmpty(configSection.ApplicationClientId))
             {
-                _applicationClientId = configSection.ApplicationClientId;
+                ApplicationClientId = configSection.ApplicationClientId;
                 _sqlAuthLogger.LogInfo(nameof(AuthenticationBootstrapper), methodName, "Received user-defined Application Client Id");
             }
             else
@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (bool.TryParse(configSection.UseWamBroker, out bool useWamBroker))
                 {
-                    _useWamBroker = useWamBroker;
+                    UseWamBroker = useWamBroker;
                     _sqlAuthLogger.LogInfo(nameof(AuthenticationBootstrapper), methodName, $"Received user-defined UseWamBroker={useWamBroker}.");
                 }
                 else
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Register as a permanent (application-specified) provider so it cannot be
                     // overridden by the Azure extension default or by a later SetProvider call.
-                    _registry.SetPermanentProvider(authentication, provider);
+                    Registry.SetPermanentProvider(authentication, provider);
                     _sqlAuthLogger.LogInfo(nameof(AuthenticationBootstrapper), methodName, string.Format("Added user-defined auth provider: {0} for authentication {1}.", providerSettings?.Type, authentication));
                 }
             }
@@ -371,8 +371,8 @@ namespace Microsoft.Data.SqlClient
                 SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                     type,
                     optionsType,
-                    _applicationClientId,
-                    _useWamBroker);
+                    ApplicationClientId,
+                    UseWamBroker);
 
                 if (instance is null)
                 {
@@ -390,17 +390,17 @@ namespace Microsoft.Data.SqlClient
                 // Note that SetProvider() will refuse to clobber an application
                 // specified provider, so these defaults will only be applied
                 // for methods that do not already have a provider.
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, instance);
                 #pragma warning disable 0618 // Type or member is obsolete
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, instance);
                 #pragma warning restore 0618 // Type or member is obsolete
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, instance);
-                _registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, instance);
+                Registry.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, instance);
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(AuthenticationBootstrapper) +

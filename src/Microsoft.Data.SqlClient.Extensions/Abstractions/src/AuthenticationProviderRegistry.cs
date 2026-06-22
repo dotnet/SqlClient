@@ -62,21 +62,6 @@ internal sealed class AuthenticationProviderRegistry
     /// </summary>
     private readonly ConcurrentDictionary<SqlAuthenticationMethod, ProviderEntry> _providers = new();
 
-    /// <summary>
-    /// Control-flow sentinel used to abort <see cref="SetProvider"/>'s update factory when it
-    /// would replace a permanent provider.  Never escapes <see cref="SetProvider"/>.
-    /// </summary>
-    private sealed class PermanentProviderException : Exception
-    {
-    }
-
-    /// <summary>
-    /// Sentinel thrown from <see cref="SetProvider"/>'s update factory to abort the
-    /// <c>AddOrUpdate</c> call when it would replace a permanent provider.  It never escapes
-    /// <see cref="SetProvider"/>.
-    /// </summary>
-    private static readonly PermanentProviderException s_permanentProviderException = new();
-
     #endregion
 
     #region Construction
@@ -114,6 +99,9 @@ internal sealed class AuthenticationProviderRegistry
     /// <exception cref="NotSupportedException">
     /// The provider does not support the given authentication method.
     /// </exception>
+    /// <exception cref="NullReferenceException">
+    /// <paramref name="provider"/> is <see langword="null"/>.
+    /// </exception>
     internal bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
     {
         if (!provider.IsSupported(authenticationMethod))
@@ -125,59 +113,53 @@ internal sealed class AuthenticationProviderRegistry
                     authenticationMethod.ToString()));
         }
 
-        try
-        {
-            _providers.AddOrUpdate(
-                authenticationMethod,
-                // addValueFactory: no provider is registered for this method yet.
-                (SqlAuthenticationMethod key) =>
+        ProviderEntry result = _providers.AddOrUpdate(
+            authenticationMethod,
+            // addValueFactory: no provider is registered for this method yet.
+            (SqlAuthenticationMethod key) =>
+            {
+                InvokeProviderCallback(provider, provider.BeforeLoad, key, nameof(SqlAuthenticationProvider.BeforeLoad));
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "AuthenticationProviderRegistry.SetProvider | Added auth provider {0} for authentication {1}.",
+                    GetProviderType(provider),
+                    key);
+
+                return new ProviderEntry(provider, IsPermanent: false);
+            },
+            // updateValueFactory: a provider is already registered for this method.
+            (SqlAuthenticationMethod key, ProviderEntry existing) =>
+            {
+                // Permanent providers cannot be replaced. Return the existing entry unchanged so
+                // AddOrUpdate keeps it; SetProvider detects this from the returned entry below.
+                if (existing.IsPermanent)
                 {
-                    InvokeProviderCallback(provider, provider.BeforeLoad, key, nameof(SqlAuthenticationProvider.BeforeLoad));
-
                     SqlClientEventSource.Log.TryTraceEvent(
-                        "AuthenticationProviderRegistry.SetProvider | Added auth provider {0} for authentication {1}.",
-                        GetProviderType(provider),
-                        key);
-
-                    return new ProviderEntry(provider, IsPermanent: false);
-                },
-                // updateValueFactory: a provider is already registered for this method.
-                (SqlAuthenticationMethod key, ProviderEntry existing) =>
-                {
-                    // Permanent providers cannot be replaced.
-                    if (existing.IsPermanent)
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "AuthenticationProviderRegistry.SetProvider | Failed to add provider {0} because a " +
-                            "permanent provider with type {1} already existed for authentication {2}.",
-                            GetProviderType(provider),
-                            GetProviderType(existing.Provider),
-                            key);
-
-                        // A permanent provider was specified for this authentication method, so we
-                        // won't override it.  Abort the update; SetProvider catches this below.
-                        throw s_permanentProviderException;
-                    }
-
-                    InvokeProviderCallback(existing.Provider, existing.Provider.BeforeUnload, key, nameof(SqlAuthenticationProvider.BeforeUnload));
-                    InvokeProviderCallback(provider, provider.BeforeLoad, key, nameof(SqlAuthenticationProvider.BeforeLoad));
-
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "AuthenticationProviderRegistry.SetProvider | Added auth provider {0}, overriding " +
-                        "existing provider {1} for authentication {2}.",
+                        "AuthenticationProviderRegistry.SetProvider | Failed to add provider {0} because a " +
+                        "permanent provider with type {1} already existed for authentication {2}.",
                         GetProviderType(provider),
                         GetProviderType(existing.Provider),
                         key);
 
-                    return new ProviderEntry(provider, IsPermanent: false);
-                });
-        }
-        catch (PermanentProviderException)
-        {
-            return false;
-        }
+                    return existing;
+                }
 
-        return true;
+                InvokeProviderCallback(existing.Provider, existing.Provider.BeforeUnload, key, nameof(SqlAuthenticationProvider.BeforeUnload));
+                InvokeProviderCallback(provider, provider.BeforeLoad, key, nameof(SqlAuthenticationProvider.BeforeLoad));
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "AuthenticationProviderRegistry.SetProvider | Added auth provider {0}, overriding " +
+                    "existing provider {1} for authentication {2}.",
+                    GetProviderType(provider),
+                    GetProviderType(existing.Provider),
+                    key);
+
+                return new ProviderEntry(provider, IsPermanent: false);
+            });
+
+        // The new provider is always stored non-permanent; if a permanent provider blocked the
+        // update, AddOrUpdate returned that (permanent) entry instead.
+        return !result.IsPermanent;
     }
 
     /// <summary>
