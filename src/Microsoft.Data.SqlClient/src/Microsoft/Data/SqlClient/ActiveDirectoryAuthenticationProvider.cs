@@ -666,7 +666,9 @@ namespace Microsoft.Data.SqlClient
                     builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
                 }
 #else
+#if TARGETS_WINDOWS
                 builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
+#endif
 #endif
             }
             else
