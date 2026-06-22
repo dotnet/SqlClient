@@ -40,7 +40,7 @@
     -->
 
     <!-- The default major version number. -->
-    <AzureDefaultMajorVersion>1</AzureDefaultMajorVersion>
+    <AzureDefaultMajorVersion>7</AzureDefaultMajorVersion>
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(AzurePackageVersion)' != ''">$(AzurePackageVersion)</_OurPackageVersion>
