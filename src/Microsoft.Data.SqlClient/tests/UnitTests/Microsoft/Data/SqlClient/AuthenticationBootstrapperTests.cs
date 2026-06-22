@@ -201,15 +201,20 @@ public class AuthenticationBootstrapperTests
     // ApplicationClientId tests ------------------------------------------------------------
 
     /// <summary>
-    /// Verifies that ApplicationClientId is accessible and returns null when
-    /// no app.config section is present (non-Framework targets).
+    /// Verifies that ApplicationClientId is accessible and returns null when no app.config
+    /// section is present (non-Framework targets), and that the bootstrapper exposes the
+    /// registry it was constructed with.
     /// </summary>
     [ConditionalFact(nameof(IsNotNetFramework))]
     public void ApplicationClientId_IsNull_WhenNoConfig()
     {
-        // On non-Framework targets there is no app.config, so the property
-        // should be null.
-        AuthenticationBootstrapper bootstrapper = new(new AuthenticationProviderRegistry());
+        // On non-Framework targets there is no app.config, so ApplicationClientId should be null.
+        AuthenticationProviderRegistry registry = new();
+        AuthenticationBootstrapper bootstrapper = new(registry);
+
+        // The bootstrapper exposes the registry it was given.
+        Assert.Same(registry, bootstrapper.Registry);
+
         Assert.Null(bootstrapper.ApplicationClientId);
     }
 
@@ -218,16 +223,45 @@ public class AuthenticationBootstrapperTests
     // applicationClientId.  The following tests verify this on .NET Framework.
 
     /// <summary>
-    /// Verifies that ApplicationClientId is read from the app.config section.
+    /// Verifies that ApplicationClientId is read from the app.config section and that the
+    /// bootstrapper exposes the registry it was constructed with.
     /// </summary>
     [ConditionalFact(nameof(IsNetFramework))]
     public void ApplicationClientId_ReadFromAppConfig()
     {
-        // The app.config sets applicationClientId="f3e3a0a0-1234-5678-9abc-def012345678"
-        AuthenticationBootstrapper bootstrapper = new(new AuthenticationProviderRegistry());
+        // The app.config sets applicationClientId="f3e3a0a0-1234-5678-9abc-def012345678".
+        AuthenticationProviderRegistry registry = new();
+        AuthenticationBootstrapper bootstrapper = new(registry);
+
+        Assert.Same(registry, bootstrapper.Registry);
         Assert.Equal(
             "f3e3a0a0-1234-5678-9abc-def012345678",
             bootstrapper.ApplicationClientId);
+    }
+
+    // UseWamBroker tests -------------------------------------------------------------------
+
+    /// <summary>
+    /// Verifies that UseWamBroker is accessible and returns null when no app.config
+    /// section is present (non-Framework targets).
+    /// </summary>
+    [ConditionalFact(nameof(IsNotNetFramework))]
+    public void UseWamBroker_IsNull_WhenNoConfig()
+    {
+        // On non-Framework targets there is no app.config, so the property should be null.
+        AuthenticationBootstrapper bootstrapper = new(new AuthenticationProviderRegistry());
+        Assert.Null(bootstrapper.UseWamBroker);
+    }
+
+    /// <summary>
+    /// Verifies that UseWamBroker is read from the app.config section.
+    /// </summary>
+    [ConditionalFact(nameof(IsNetFramework))]
+    public void UseWamBroker_ReadFromAppConfig()
+    {
+        // The app.config sets useWamBroker="true".
+        AuthenticationBootstrapper bootstrapper = new(new AuthenticationProviderRegistry());
+        Assert.True(bootstrapper.UseWamBroker);
     }
 
     /// <summary>
