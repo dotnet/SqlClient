@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * Will try to set exception on <paramref name="taskCompletionSource"/>
         /// * Cancelled
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * The task will be completed with an exception.
         /// * Cancelled
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * The task will be completed with an exception.
         /// * Cancelled
@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient.Utilities
         /// actions will be taken:
         /// * With exception
         ///   * <paramref name="onFailure"/> is called (if provided)
-        ///   * Any exception thrown by <paramref name="onCancellation"/> will be logged and
+        ///   * Any exception thrown by <paramref name="onFailure"/> will be logged and
         ///     swallowed as unobserved.
         ///   * The task will be completed with an exception.
         /// * Cancelled
