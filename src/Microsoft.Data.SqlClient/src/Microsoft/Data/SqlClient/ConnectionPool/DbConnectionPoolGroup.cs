@@ -93,6 +93,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal SqlMetaDataFactory MetaDataFactory { get; set; }
 
+        /// <summary>
+        /// Determines whether the blocking period is enabled for this pool group based on the
+        /// configured <see cref="PoolBlockingPeriod"/> and the target data source.
+        /// </summary>
+        internal bool IsBlockingPeriodEnabled()
+        {
+            switch (_connectionOptions.PoolBlockingPeriod)
+            {
+                case PoolBlockingPeriod.Auto:
+                    return !ADP.IsAzureSqlServerEndpoint(_connectionOptions.DataSource);
+                case PoolBlockingPeriod.AlwaysBlock:
+                    return true;
+                case PoolBlockingPeriod.NeverBlock:
+                    return false;
+                default:
+                    Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
+                    return true;
+            }
+        }
+
         internal int Clear()
         {
             // must be multi-thread safe with competing calls by Clear and Prune via background thread
