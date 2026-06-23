@@ -54,6 +54,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
+    private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET && _WINDOWS
     private readonly bool? _useManagedNetworkingOriginal;
@@ -116,6 +117,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useCompatibilityProcessSni");
             _useConnectionPoolV2Original =
                 GetSwitchValue("s_useConnectionPoolV2");
+            _useLegacyIdleTimeoutBehaviorOriginal =
+                GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
             #if NET && _WINDOWS
@@ -185,6 +188,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useConnectionPoolV2",
                 _useConnectionPoolV2Original);
+            SetSwitchValue(
+                "s_useLegacyIdleTimeoutBehavior",
+                _useLegacyIdleTimeoutBehaviorOriginal);
             SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
@@ -331,6 +337,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchValue("s_useConnectionPoolV2");
         set => SetSwitchValue("s_useConnectionPoolV2", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyIdleTimeoutBehavior switch value.
+    /// </summary>
+    public bool? UseLegacyIdleTimeoutBehavior
+    {
+        get => GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
+        set => SetSwitchValue("s_useLegacyIdleTimeoutBehavior", value);
     }
 
     /// <summary>
