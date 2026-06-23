@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.Tests.Common
 
         /// <summary>
         /// Removes the authentication and credential properties from the connection string. The properties removed are: "Authentication", "User ID", "Password", "UID", and "PWD".
-        /// This is useful for testing scenarios where you want to ensure that the connection string does not
+        /// This is useful for testing scenarios where you want to ensure that the connection string does not contain any sensitive information related to authentication or credentials.
         /// </summary>
         /// <param name="connectionString"></param>
         /// <returns></returns>

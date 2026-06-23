@@ -163,7 +163,7 @@ internal static class Config
             Console.WriteLine(
                 $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
             Console.WriteLine(
-                $"  PasswordConnectionString:               {AzureSqlConnString}");
+                $"  AzureSqlConnectionString:               {AzureSqlConnString}");
             Console.WriteLine(
                 $"                                          {Base64Encode(AzureSqlConnString)}");
             Console.WriteLine(
