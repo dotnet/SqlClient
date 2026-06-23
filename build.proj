@@ -365,16 +365,16 @@
   <!-- Top Level/Miscellaneous Targets -->
 
   <!--
-    Build: Builds all driver projects.
+    BuildDriver: Builds all driver projects.
     Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
   -->
-  <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
+  <Target Name="BuildDriver" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
 
   <!--
     BuildAll: Build all projects in the repo, for all supported OS and TargetFramework combinations.
     This is the default target.
   -->
-  <Target Name="BuildAll" DependsOnTargets="Build;BuildTests;BuildSamples" />
+  <Target Name="BuildAll" DependsOnTargets="BuildDriver;BuildTests;BuildSamples" />
 
   <!-- Clean: Convenience target to remove build/test output -->
   <Target Name="Clean">

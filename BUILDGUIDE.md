@@ -71,18 +71,18 @@ it from the `dotnet build` command.
 
 If no target is specified, `build.proj` runs the `BuildAll` target by default, which builds all
 projects, tests, and samples for all supported OS combinations. To build only the driver projects,
-specify `-t:Build` explicitly.
+specify `-t:BuildDriver` explicitly.
 
 The following build targets can be used to build the following projects. All targets will implicitly build any other
 projects they depend on.
 
 | `<build_target>`              | Description                                                                     |
 |-------------------------------|---------------------------------------------------------------------------------|
-| `Build`                       | Builds all driver projects for all platforms                                    |
 | `BuildAbstractions`           | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
 | `BuildAkvProvider`            | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
 | `BuildAll`                    | Builds all projects, tests, and samples for all supported OS combinations (default target) |
 | `BuildAzure`                  | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
+| `BuildDriver`                 | Builds all driver projects for all platforms                                    |
 | `BuildLogging`                | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
 | `BuildSamples`                | Builds the sample projects under `doc/samples/`                                 |
 | `BuildSqlClient`              | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
@@ -124,7 +124,7 @@ dotnet build
 Build only the driver projects:
 
 ```bash
-dotnet build -t:Build
+dotnet build -t:BuildDriver
 ```
 
 Build Microsoft.Data.SqlClient in Release configuration:
