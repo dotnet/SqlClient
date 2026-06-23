@@ -7,6 +7,8 @@
 // This file has intentionally not been tidied up or modernized.  Its content will be absorbed into
 // new unit and/or integration tests in the future.
 
+using Microsoft.Data.SqlClient.Tests.Common;
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>
@@ -28,21 +30,24 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasPasswordConnectionString),
+        nameof(Config.HasAzureSqlConnectionString),
         nameof(Config.HasServicePrincipal))]
     public static void NoCredentialsActiveDirectoryServicePrincipal()
     {
         // test Passes with correct connection string.
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) +
-        $"Authentication=Active Directory Service Principal; User ID={Config.ServicePrincipalId}; PWD={Config.ServicePrincipalSecret};";
-        ConnectAndDisconnect(connStr);
+        string connString = Config.AzureSqlConnString
+            .AddServicePrincipalAuthenticationToConnString()
+            .AddUserToConnString(Config.ServicePrincipalId)
+            .AddPasswordToConnString(Config.ServicePrincipalSecret);
+
+        ConnectAndDisconnect(connString);
 
         // connection fails with expected error message.
-        string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
-        "Authentication=Active Directory Service Principal;";
-        InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+        string connStrWithNoCred = Config.AzureSqlConnString
+            .AddServicePrincipalAuthenticationToConnString();
+
+        InvalidOperationException e = Assert.Throws<InvalidOperationException>
+        (() => ConnectAndDisconnect(connStrWithNoCred));
 
         string expectedMessage = "Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication=Active Directory Service Principal'.";
         Assert.Contains(expectedMessage, e.Message);
@@ -54,7 +59,7 @@ public class AADConnectionTest
     /// </summary>
     [ConditionalTheory(
         typeof(Config),
-        nameof(Config.HasPasswordConnectionString),
+        nameof(Config.HasAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     [InlineData("2445343 2343253", false)]
     [InlineData("2445343 2343253", true)]
@@ -62,9 +67,9 @@ public class AADConnectionTest
     [InlineData("2445343$#^@@%2343253", true)]
     public static async Task ActiveDirectoryManagedIdentityWithInvalidUserIdMustFail(string userId, bool async)
     {
-        string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
-        $"Authentication=Active Directory Managed Identity; User Id={userId}";
+        string connStrWithNoCred = Config.AzureSqlConnString
+            .AddManagedIdentityAuthenticationToConnString()
+            .AddUserToConnString(userId);
 
         using SqlConnection connection = new(connStrWithNoCred);
         SqlException e = async
@@ -80,13 +85,13 @@ public class AADConnectionTest
     [ConditionalFact(
         typeof(Config),
         nameof(Config.OnAdoPool),
-        nameof(Config.HasPasswordConnectionString),
+        nameof(Config.HasAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void ActiveDirectoryDefaultMustPass()
     {
-        string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
-        $"Authentication=ActiveDirectoryDefault;User ID={Config.UserManagedIdentityClientId};";
+        string connStr = Config.AzureSqlConnString
+            .AddAADDefaultAuthenticationToConnString()
+            .AddUserToConnString(Config.UserManagedIdentityClientId);
 
         // Connection should be established using Managed Identity by default.
         ConnectAndDisconnect(connStr);
@@ -101,9 +106,9 @@ public class AADConnectionTest
     public static void ADIntegratedUsingSSPI()
     {
         // test Passes with correct connection string.
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
-        string connStr = RemoveKeysInConnStr(Config.TcpConnectionString, removeKeys) +
-        $"Authentication=Active Directory Integrated;";
+        string connStr = Config.TcpConnectionString
+            .RemoveAuthAndCredsProperties()
+            .AddAADIntegratedAuthenticationToConnString();
         ConnectAndDisconnect(connStr);
     }
 
@@ -111,25 +116,26 @@ public class AADConnectionTest
         typeof(Config),
         nameof(Config.SupportsManagedIdentity),
         nameof(Config.SupportsSystemAssignedManagedIdentity),
-        nameof(Config.HasPasswordConnectionString))]
+        nameof(Config.HasAzureSqlConnectionString))]
     public static void SystemAssigned_ManagedIdentityTest()
     {
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) +
-        $"Authentication=Active Directory Managed Identity;";
+        string connStr = Config.AzureSqlConnString
+            .AddManagedIdentityAuthenticationToConnString();
+
         ConnectAndDisconnect(connStr);
     }
 
     [ConditionalFact(
         typeof(Config),
         nameof(Config.OnAdoPool),
-        nameof(Config.HasPasswordConnectionString),
+        nameof(Config.HasAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void UserAssigned_ManagedIdentityTest()
     {
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-        string connStr = RemoveKeysInConnStr(Config.PasswordConnectionString, removeKeys) +
-        $"Authentication=Active Directory Managed Identity; User Id={Config.UserManagedIdentityClientId};";
+        string connStr = Config.AzureSqlConnString
+            .AddManagedIdentityAuthenticationToConnString()
+            .AddUserToConnString(Config.UserManagedIdentityClientId);
+
         ConnectAndDisconnect(connStr);
     }
 
@@ -141,16 +147,14 @@ public class AADConnectionTest
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_SystemManagedIdentityTest()
     {
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
-        string connectionString = RemoveKeysInConnStr(Config.TcpConnectionString, removeKeys)
-        + $"Authentication=Active Directory Managed Identity;";
+        string connectionString = Config.TcpConnectionString
+            .RemoveAuthAndCredsProperties()
+            .AddManagedIdentityAuthenticationToConnString();
 
-        using (SqlConnection conn = new SqlConnection(connectionString))
-        {
-            conn.Open();
+        using SqlConnection conn = new(connectionString);
+        conn.Open();
 
-            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
-        }
+        Assert.Equal(System.Data.ConnectionState.Open, conn.State);
     }
 
     [ConditionalFact(
@@ -162,16 +166,15 @@ public class AADConnectionTest
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_UserManagedIdentityTest()
     {
-        string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
-        string connectionString = RemoveKeysInConnStr(Config.TcpConnectionString, removeKeys)
-            + $"Authentication=Active Directory Managed Identity; User Id={Config.UserManagedIdentityClientId}";
+        string connectionString = Config.TcpConnectionString
+            .RemoveAuthAndCredsProperties()
+            .AddManagedIdentityAuthenticationToConnString()
+            .AddUserToConnString(Config.UserManagedIdentityClientId);
 
-        using (SqlConnection conn = new SqlConnection(connectionString))
-        {
-            conn.Open();
+        using SqlConnection conn = new(connectionString);
+        conn.Open();
 
-            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
-        }
+        Assert.Equal(System.Data.ConnectionState.Open, conn.State);
     }
 
     // The helpers below were copied verbatim from AADConnectionTest.cs and ManualTests
