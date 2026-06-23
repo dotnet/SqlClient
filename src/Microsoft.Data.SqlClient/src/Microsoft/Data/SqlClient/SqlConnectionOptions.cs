@@ -104,6 +104,7 @@ namespace Microsoft.Data.SqlClient
         private readonly int _commandTimeout;
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
+        private readonly int _idleTimeout;
         private readonly int _maxPoolSize;
         private readonly int _minPoolSize;
         private readonly int _packetSize;
@@ -194,6 +195,7 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.IpAddressPreference);
             AddKeywordToMap(DbConnectionStringKeywords.LoadBalanceTimeout,
                             DbConnectionStringSynonyms.ConnectionLifetime);
+            AddKeywordToMap(DbConnectionStringKeywords.IdleTimeout);
             AddKeywordToMap(DbConnectionStringKeywords.MultipleActiveResultSets,
                             DbConnectionStringSynonyms.MultipleActiveResultSets);
             AddKeywordToMap(DbConnectionStringKeywords.MaxPoolSize);
@@ -273,6 +275,7 @@ namespace Microsoft.Data.SqlClient
             _commandTimeout = ConvertValueToInt32(DbConnectionStringKeywords.CommandTimeout, DbConnectionStringDefaults.CommandTimeout);
             _connectTimeout = ConvertValueToInt32(DbConnectionStringKeywords.ConnectTimeout, DbConnectionStringDefaults.ConnectTimeout);
             _loadBalanceTimeout = ConvertValueToInt32(DbConnectionStringKeywords.LoadBalanceTimeout, DbConnectionStringDefaults.LoadBalanceTimeout);
+            _idleTimeout = ConvertValueToInt32(DbConnectionStringKeywords.IdleTimeout, DbConnectionStringDefaults.IdleTimeout);
             _maxPoolSize = ConvertValueToInt32(DbConnectionStringKeywords.MaxPoolSize, DbConnectionStringDefaults.MaxPoolSize);
             _minPoolSize = ConvertValueToInt32(DbConnectionStringKeywords.MinPoolSize, DbConnectionStringDefaults.MinPoolSize);
             _packetSize = ConvertValueToInt32(DbConnectionStringKeywords.PacketSize, DbConnectionStringDefaults.PacketSize);
@@ -315,6 +318,11 @@ namespace Microsoft.Data.SqlClient
             if (_loadBalanceTimeout < 0)
             {
                 throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.LoadBalanceTimeout);
+            }
+
+            if (_idleTimeout < 0)
+            {
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IdleTimeout);
             }
 
             if (_connectTimeout < 0)
@@ -574,6 +582,7 @@ namespace Microsoft.Data.SqlClient
             _commandTimeout = connectionOptions._commandTimeout;
             _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
+            _idleTimeout = connectionOptions._idleTimeout;
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
             _maxPoolSize = connectionOptions._maxPoolSize;
             _minPoolSize = connectionOptions._minPoolSize;
@@ -645,6 +654,9 @@ namespace Microsoft.Data.SqlClient
         internal int CommandTimeout => _commandTimeout;
         internal int ConnectTimeout => _connectTimeout;
         internal int LoadBalanceTimeout => _loadBalanceTimeout;
+        // Maximum time (in seconds) a connection can sit idle in the pool before it is discarded.
+        // 0 disables idle expiration.
+        internal int IdleTimeout => _idleTimeout;
         internal int MaxPoolSize => _maxPoolSize;
         internal int MinPoolSize => _minPoolSize;
         internal int PacketSize => _packetSize;

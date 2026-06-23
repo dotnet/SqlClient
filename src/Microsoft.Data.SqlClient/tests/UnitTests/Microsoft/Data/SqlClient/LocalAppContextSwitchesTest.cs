@@ -56,6 +56,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
         Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
         Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.True(LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
         Assert.False(LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);

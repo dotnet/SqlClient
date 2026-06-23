@@ -47,7 +47,8 @@ public class WaitHandleDbConnectionPoolBudgetTest : IDisposable
             maxPoolSize: maxPoolSize,
             creationTimeout: creationTimeoutMs,
             loadBalanceTimeout: 0,
-            hasTransactionAffinity: true);
+            hasTransactionAffinity: true,
+            idleTimeout: 0);
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
             new SqlConnectionOptions("Data Source=localhost;"),

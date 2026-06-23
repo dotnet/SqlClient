@@ -8,11 +8,12 @@ using System.IO;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
-using Newtonsoft.Json.Linq;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 
@@ -52,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 });
             }
 
-            string json = JsonConvert.SerializeObject(records, Formatting.Indented);
+            string json = JsonSerializer.Serialize(records, new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
             File.WriteAllText(filename, json);
             Assert.True(File.Exists(filename));
             _output.WriteLine("Generated JSON file "+filename);
@@ -60,15 +61,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void CompareJsonFiles()
         {
-            using (var stream1 = File.OpenText(_jsonFile))
-            using (var stream2 = File.OpenText(_outputFile))
-            using (var reader1 = new JsonTextReader(stream1))
-            using (var reader2 = new JsonTextReader(stream2))
-            {
-                var jToken1 = JToken.ReadFrom(reader1);
-                var jToken2 = JToken.ReadFrom(reader2);
-                Assert.True(JToken.DeepEquals(jToken1, jToken2));
-            }
+            using JsonDocument doc1 = JsonDocument.Parse(File.ReadAllText(_jsonFile));
+            using JsonDocument doc2 = JsonDocument.Parse(File.ReadAllText(_outputFile));
+            Assert.True(JsonTestHelper.JsonDeepEquals(doc1.RootElement, doc2.RootElement));
         }
 
         private void PrintJsonDataToFile(SqlConnection connection, string tableName)
