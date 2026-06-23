@@ -29,12 +29,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // Identifier of the owning pool, included in trace events for diagnostics.
         private readonly int _ownerPoolId;
 
-        // Optional callback invoked (outside _lock) when the state enters the blocking period;
-        // used by the legacy wait-handle pool to signal its error wait handle.
+        // Optional callback invoked (under _lock) when the state enters the blocking period;
+        // used by the legacy wait-handle pool to signal its error wait handle. Must be cheap
+        // and non-reentrant.
         private readonly Action? _onEnter;
 
-        // Optional callback invoked (outside _lock) when the state leaves the blocking period
-        // via the exit timer or Clear().
+        // Optional callback invoked (under _lock) when the state leaves the blocking period
+        // via the exit timer or Clear(). Must be cheap and non-reentrant.
         private readonly Action? _onExit;
 
         // Time source used to create the exit timer; overridable so tests can drive scheduling
@@ -48,6 +49,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // flag, so callers don't need a separate bool. Volatile so other threads observe
         // entry/exit transitions without acquiring _lock.
         private volatile Exception? _cachedException;
+
+        // True from the moment Enter() activates the blocking period until Clear()/Dispose()
+        // fully resets it. The exit timer clears _cachedException but leaves this set so a
+        // later Clear() still resets the backoff. Volatile so Clear() can take a
+        // lock-free path when there is nothing to do. This allows Clear() to be called on hot paths.
+        private volatile bool _inElevatedState;
 
         // The armed exit timer that ends the current blocking period; null when no period is
         // active. Replaced (and the old one disposed) each time Enter() is called.
@@ -64,11 +71,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Creates a new instance.
         /// </summary>
         /// <param name="ownerPoolId">Identifier of the owning pool, used in trace events.</param>
-        /// <param name="onEnter">Optional callback invoked (outside the internal lock) after the
-        /// state transitions into the blocking period. Used by the legacy wait-handle pool to
-        /// signal its error wait handle.</param>
-        /// <param name="onExit">Optional callback invoked (outside the internal lock) after the
-        /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.</param>
+        /// <param name="onEnter">Optional callback invoked (while holding the internal lock) after
+        /// the state transitions into the blocking period. Used by the legacy wait-handle pool to
+        /// signal its error wait handle. Because it runs under a lock, it must be cheap and
+        /// non-reentrant.</param>
+        /// <param name="onExit">Optional callback invoked (while holding the internal lock) after the
+        /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.
+        /// Because it runs under a lock, it must be cheap and non-reentrant.</param>
         /// <param name="timeProvider">The time provider used to create the exit timer. Defaults to
         /// <see cref="TimeProvider.System"/>. Inject a test double (e.g.
         /// <c>Microsoft.Extensions.Time.Testing.FakeTimeProvider</c>) in unit tests to
@@ -112,22 +121,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             TimeSpan wait;
             ITimer? oldTimer;
-            ITimer newTimer;
 
+            // If we call this, we're already in an exception path. Prefer correctness over performance.
             lock (_lock)
             {
+                _inElevatedState = true;
                 _cachedException = ex;
                 wait = _nextWait;
 
-                // Create the exit timer disarmed (infinite due time); it is armed below outside
-                // the lock. ADP.UnsafeCreateTimer suppresses execution-context flow so the timer
+                // Create the exit timer disarmed (infinite due time); it is armed below, still
+                // under the lock. ADP.UnsafeCreateTimer suppresses execution-context flow so the timer
                 // doesn't capture and pin the current ExecutionContext and its AsyncLocals for its
                 // lifetime, while still honoring the injected TimeProvider for testability.
-                newTimer = ADP.UnsafeCreateTimer(
+                ITimer newTimer = ADP.UnsafeCreateTimer(
                     _timeProvider,
                     ExitCallback,
                     null,
-                    Timeout.InfiniteTimeSpan,
+                    wait,
                     Timeout.InfiniteTimeSpan);
                 oldTimer = _exitTimer;
                 _exitTimer = newTimer;
@@ -136,11 +146,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 TimeSpan doubled = _nextWait + _nextWait;
                 _nextWait = doubled >= MaxWait ? MaxWait : doubled;
 
-                oldTimer?.Dispose();
-                newTimer.Change(wait, Timeout.InfiniteTimeSpan);
+                // Signal the enter event while still holding the lock so the external signal order
+                // (onEnter/onExit) can never diverge from the internal state transitions under
+                // concurrent Enter/Clear/exit-timer activity. The callbacks are expected to be
+                // cheap, non-reentrant operations.
+                _onEnter?.Invoke();
             }
 
-            _onEnter?.Invoke();
+            oldTimer?.Dispose();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.EnterErrorState|RES|CPOOL> {0}, Entering blocking period for {1}ms.",
@@ -154,23 +167,29 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void Clear()
         {
+            // Fast path: the create flow calls Clear() after every successful create, so avoid
+            // taking the lock in the common (no-error) case where there is nothing to reset.
+            if (!_inElevatedState)
+            {
+                return;
+            }
+
             ITimer? oldTimer;
+
             lock (_lock)
             {
-                if (_cachedException is null && _exitTimer is null && _nextWait == InitialWait)
-                {
-                    return;
-                }
-
                 _cachedException = null;
                 _nextWait = InitialWait;
+                _inElevatedState = false;
                 oldTimer = _exitTimer;
                 _exitTimer = null;
+
+                // Signal and trace under the lock so the exit signal is ordered consistently
+                // with the state transition relative to concurrent Enter/exit-timer callbacks.
+                _onExit?.Invoke();
             }
 
             oldTimer?.Dispose();
-
-            _onExit?.Invoke();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ClearErrorState|RES|CPOOL> {0}, Error state cleared.", _ownerPoolId);
@@ -180,22 +199,27 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Timer callback that exits the blocking period by clearing the cached exception,
         /// allowing the next caller to attempt a fresh connection creation. The current
         /// backoff is left intact so that, if the next attempt fails, the backoff continues
-        /// to grow rather than resetting. The backoff is reset only on a successful creation
-        /// or on <see cref="Clear"/>.
+        /// to grow rather than resetting. The backoff is reset only on <see cref="Clear"/>.
         /// </summary>
+        /// <param name="state">The state object passed to the timer callback. Not used,
+        /// but required for the callback signature.
+        /// </param>
         private void ExitCallback(object? state)
         {
             ITimer? oldTimer;
+
             lock (_lock)
             {
                 _cachedException = null;
                 oldTimer = _exitTimer;
                 _exitTimer = null;
+
+                // Signal and trace under the lock so the exit signal is ordered consistently
+                // with the state transition relative to concurrent Enter/Clear callbacks.
+                _onExit?.Invoke();
             }
 
             oldTimer?.Dispose();
-
-            _onExit?.Invoke();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", _ownerPoolId);
@@ -218,6 +242,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 _disposed = true;
                 _cachedException = null;
+                _inElevatedState = false;
                 timerToDispose = _exitTimer;
                 _exitTimer = null;
             }
