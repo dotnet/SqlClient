@@ -1429,6 +1429,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration..
+        /// </summary>
+        internal static string DbConnectionString_IdleTimeout {
+            get {
+                return ResourceManager.GetString("DbConnectionString_IdleTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The maximum number of connections allowed in the pool..
         /// </summary>
         internal static string DbConnectionString_MaxPoolSize {
@@ -3045,6 +3054,15 @@ namespace System {
         internal static string SQL_CannotFindActiveDirectoryAuthProvider {
             get {
                 return ResourceManager.GetString("SQL_CannotFindActiveDirectoryAuthProvider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting &apos;useWamBroker&apos; requires the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to expose &apos;Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions&apos;. Upgrade the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to a version that includes this type..
+        /// </summary>
+        internal static string SQL_UseWamBrokerRequiresAzureExtensionUpgrade {
+            get {
+                return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
             }
         }
         

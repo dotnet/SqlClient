@@ -10,6 +10,7 @@
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 // These tests were moved from MDS FunctionalTests AADAuthenticationTests.cs.
+[Collection("SqlAuthenticationProvider")]
 public class AADAuthenticationTests
 {
     [Fact]
