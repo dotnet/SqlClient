@@ -1114,6 +1114,40 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Same(first, second);
         }
 
+        [Fact]
+        public void IdleTimeout_LongCheckout_ReturnedConnectionIsPreserved()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // 1-second idle timeout: tight enough that a 5-second "checkout" backdate exceeds it.
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection);
+            Assert.NotNull(connection);
+
+            // Simulate a long-running query: ReturnedTime (initialised to CreateTime when minted) is
+            // backdated past the idle window while the connection is still checked out and busy on
+            // the wire.
+            BackdateReturnedTime(connection, TimeSpan.FromSeconds(5));
+
+            // Act - return the actively-used connection.
+            pool.ReturnInternalConnection(connection, owner);
+
+            // Assert - the connection must be re-stamped and preserved, not evicted as idle-expired.
+            // If IsLiveConnection runs before SetReturnedTime in ReturnInternalConnection, it sees
+            // the stale stamp and wrongly destroys a healthy in-use connection.
+            Assert.Equal(1, pool.Count);
+
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? reused);
+            Assert.Same(connection, reused);
+        }
+
         // Forcibly rewinds a connection's ReturnedTime by the given amount so tests don't have to sleep.
         private static void BackdateReturnedTime(DbConnectionInternal connection, TimeSpan delta)
         {
