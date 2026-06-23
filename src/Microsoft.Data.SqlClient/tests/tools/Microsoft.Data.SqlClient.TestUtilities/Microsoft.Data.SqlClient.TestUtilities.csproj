@@ -22,4 +22,8 @@
   <ItemGroup>
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj"/>
+  </ItemGroup>
 </Project>

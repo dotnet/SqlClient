@@ -45,7 +45,7 @@ parameters:
     type: string
     default: ''
 
-  - name: AADPasswordConnectionString
+  - name: AzureSqlConnectionString
     type: string
     default: ''
 
@@ -154,7 +154,7 @@ steps:
 
           $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
 
-          $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
+          $p.AzureSqlConnectionString="${{parameters.AzureSqlConnectionString }}"
 
           $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
 

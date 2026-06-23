@@ -504,14 +504,14 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             AADAuthorityURL: $(AADAuthorityURL)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -535,11 +535,11 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
+            AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
             AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -586,11 +586,11 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
