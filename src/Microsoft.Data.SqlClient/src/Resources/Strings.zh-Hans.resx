@@ -606,6 +606,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>找不到 ‘{0}’ 的身份验证提供程序。安装 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 包(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)以使用 Active Directory (Entra ID)身份验证方法。</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>参数“{0}”不能为 null 或为空。</value>
   </data>
@@ -959,6 +962,9 @@
   </data>
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>此连接在池中存活直至被销毁的最短时间(以秒为单位)。</value>
+  </data>
+  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
+    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>池中所允许连接的最大数目。</value>
