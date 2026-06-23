@@ -3049,6 +3049,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Setting &apos;useWamBroker&apos; requires the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to expose &apos;Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions&apos;. Upgrade the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to a version that includes this type..
+        /// </summary>
+        internal static string SQL_UseWamBrokerRequiresAzureExtensionUpgrade {
+            get {
+                return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_CannotFindAuthProvider {
