@@ -21,7 +21,7 @@
     </When>
     <Otherwise>
       <PropertyGroup>
-        <MdsVersion>6.1.4</MdsVersion>
+        <MdsVersion>6.1.5</MdsVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
