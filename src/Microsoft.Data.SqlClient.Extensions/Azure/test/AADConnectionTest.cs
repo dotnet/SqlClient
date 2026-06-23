@@ -205,36 +205,6 @@ public class AADConnectionTest
 
     #region Helpers from ManualTests DataTestUtility.cs
 
-    public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
-    {
-        // tokenize connection string and remove input keys.
-        string res = "";
-        if (connStr != null && keysToRemove != null)
-        {
-            string[] keys = connStr.Split(';');
-            foreach (var key in keys)
-            {
-                if (!string.IsNullOrEmpty(key.Trim()))
-                {
-                    bool removeKey = false;
-                    foreach (var keyToRemove in keysToRemove)
-                    {
-                        if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower(), StringComparison.Ordinal))
-                        {
-                            removeKey = true;
-                            break;
-                        }
-                    }
-                    if (!removeKey)
-                    {
-                        res += key + ";";
-                    }
-                }
-            }
-        }
-        return res;
-    }
-
     public static string? FetchKeyInConnStr(string connStr, string[] keys)
     {
         // tokenize connection string and find matching key
