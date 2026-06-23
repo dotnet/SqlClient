@@ -175,6 +175,23 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
+        /// capturing the current <see cref="ExecutionContext"/>. Suppressing the flow prevents the
+        /// timer from rooting the calling context and its <c>AsyncLocal</c> values for the lifetime
+        /// of the timer, while routing creation through <paramref name="timeProvider"/> so callers
+        /// can inject a test double (e.g. a fake time provider) for deterministic scheduling.
+        /// </summary>
+        /// <param name="timeProvider">The time provider used to create the timer.</param>
+        /// <param name="callback">The delegate invoked when the timer fires.</param>
+        /// <param name="state">An object passed to <paramref name="callback"/>, or <see langword="null"/>.</param>
+        /// <param name="dueTime">The amount of time to wait before the first invocation, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to create the timer disarmed.</param>
+        /// <param name="period">The interval between invocations, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to disable periodic signaling.</param>
+        /// <returns>An <see cref="ITimer"/> created by <paramref name="timeProvider"/>.</returns>
+        // TODO: Route the other UnsafeCreateTimer overloads through this method (passing
+        // TimeProvider.System) so execution-context suppression lives in a single place.
         internal static ITimer UnsafeCreateTimer(
             TimeProvider timeProvider,
             TimerCallback callback,

@@ -19,21 +19,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// </summary>
     internal sealed class BlockingPeriodErrorState : IDisposable
     {
-        // Mirrors the values used by WaitHandleDbConnectionPool (5s initial, 60s cap).
+        // Backoff interval used the first time the pool enters the blocking period, and the
+        // value the backoff resets to on a successful create or Clear().
         private static readonly TimeSpan InitialWait = TimeSpan.FromSeconds(5);
+
+        // Upper bound the exponential backoff is capped at; further failures never wait longer.
         private static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(60);
 
+        // Identifier of the owning pool, included in trace events for diagnostics.
         private readonly int _ownerPoolId;
+
+        // Optional callback invoked (outside _lock) when the state enters the blocking period;
+        // used by the legacy wait-handle pool to signal its error wait handle.
         private readonly Action? _onEnter;
+
+        // Optional callback invoked (outside _lock) when the state leaves the blocking period
+        // via the exit timer or Clear().
         private readonly Action? _onExit;
+
+        // Time source used to create the exit timer; overridable so tests can drive scheduling
+        // deterministically. Defaults to TimeProvider.System.
         private readonly TimeProvider _timeProvider;
+
+        // Guards the mutable error state (_cachedException, _exitTimer, _nextWait, _disposed).
         private readonly object _lock = new();
+
         // Non-null while the pool is in the blocking period. Doubles as the "has error"
         // flag, so callers don't need a separate bool. Volatile so other threads observe
         // entry/exit transitions without acquiring _lock.
         private volatile Exception? _cachedException;
+
+        // The armed exit timer that ends the current blocking period; null when no period is
+        // active. Replaced (and the old one disposed) each time Enter() is called.
         private ITimer? _exitTimer;
+
+        // The backoff interval to use for the next Enter(); doubles per failure up to MaxWait
+        // and resets to InitialWait on a successful create or Clear().
         private TimeSpan _nextWait = InitialWait;
+
+        // True once Dispose() has run, so repeated disposal and post-teardown work are no-ops.
         private bool _disposed;
 
         /// <summary>
@@ -47,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.</param>
         /// <param name="timeProvider">The time provider used to create the exit timer. Defaults to
         /// <see cref="TimeProvider.System"/>. Inject a test double (e.g.
-        /// <c>Microsoft.Extensions.TimeProvider.Testing.FakeTimeProvider</c>) in unit tests to
+        /// <c>Microsoft.Extensions.Time.Testing.FakeTimeProvider</c>) in unit tests to
         /// control timer scheduling deterministically.</param>
         internal BlockingPeriodErrorState(int ownerPoolId, Action? onEnter = null, Action? onExit = null, TimeProvider? timeProvider = null)
         {
@@ -111,10 +135,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Bump the backoff for the next failure, capped at MaxWait. FR-008.
                 TimeSpan doubled = _nextWait + _nextWait;
                 _nextWait = doubled >= MaxWait ? MaxWait : doubled;
-            }
 
-            oldTimer?.Dispose();
-            newTimer.Change(wait, Timeout.InfiniteTimeSpan);
+                oldTimer?.Dispose();
+                newTimer.Change(wait, Timeout.InfiniteTimeSpan);
+            }
 
             _onEnter?.Invoke();
 
