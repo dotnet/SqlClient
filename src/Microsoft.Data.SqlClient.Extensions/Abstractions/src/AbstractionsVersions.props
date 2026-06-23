@@ -41,7 +41,7 @@
     -->
 
     <!-- The default major version number. -->
-    <AbstractionsDefaultMajorVersion>1</AbstractionsDefaultMajorVersion>
+    <AbstractionsDefaultMajorVersion>7</AbstractionsDefaultMajorVersion>
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(AbstractionsPackageVersion)' != ''">$(AbstractionsPackageVersion)</_OurPackageVersion>

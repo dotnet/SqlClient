@@ -24,43 +24,43 @@ variables:
 
   # Abstractions library assembly file version
   - name: abstractionsAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.0.2.$(assemblyBuildNumber)
 
   # Abstractions library NuGet package version
   - name: abstractionsPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.2.$(Build.BuildNumber)-ci
 
   # AKV provider assembly file version
   - name: akvAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
+    value: 7.0.2.$(assemblyBuildNumber)
 
   # AKV provider NuGet package version
   - name: akvPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.2.$(Build.BuildNumber)-ci
 
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.0.2.$(assemblyBuildNumber)
 
   # Azure library NuGet package version
   - name: azurePackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.2.$(Build.BuildNumber)-ci
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.0.2.$(assemblyBuildNumber)
 
   # Logging library NuGet package version
   - name: loggingPackageVersion
-    value: 1.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.2.$(Build.BuildNumber)-ci
 
   # MDS library assembly file version
   - name: mdsAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
+    value: 7.0.2.$(assemblyBuildNumber)
 
   # MDS library NuGet package version
   - name: mdsPackageVersion
-    value: 7.0.0.$(Build.BuildNumber)-ci
+    value: 7.0.2.$(Build.BuildNumber)-ci
 
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.

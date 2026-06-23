@@ -41,7 +41,7 @@
     -->
 
     <!-- The default major version number. -->
-    <LoggingDefaultMajorVersion>1</LoggingDefaultMajorVersion>
+    <LoggingDefaultMajorVersion>7</LoggingDefaultMajorVersion>
 
     <!-- Determine the package version. -->
     <_OurPackageVersion Condition="'$(LoggingPackageVersion)' != ''">$(LoggingPackageVersion)</_OurPackageVersion>
