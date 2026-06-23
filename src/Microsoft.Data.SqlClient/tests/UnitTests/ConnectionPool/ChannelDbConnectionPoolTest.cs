@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
@@ -1475,12 +1474,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Verifies that once the pool enters the blocking period, subsequent synchronous requests
-        /// fail fast with the cached exception instead of waiting for a full connection attempt.
+        /// fail fast with the cached exception without attempting another physical open.
         /// </summary>
         [Fact]
         public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
         {
             // Arrange
+            var factory = new CountingTimeoutConnectionFactory();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
@@ -1491,24 +1491,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     creationTimeout: 15,
                     loadBalanceTimeout: 0,
                     hasTransactionAffinity: true));
-            var pool = ConstructPool(TimeoutConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+            var pool = ConstructPool(factory, dbConnectionPoolGroup: dbConnectionPoolGroup);
 
             // Act
             var first = Assert.Throws<InvalidOperationException>(() =>
                 pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
+            Assert.Equal(1, factory.CreateCount);
 
             // FR-006: subsequent requests inside the blocking window must fail fast with the
-            // cached exception. We assert it returns very quickly compared to a fresh attempt.
-            var sw = Stopwatch.StartNew();
+            // cached exception without attempting another physical open.
             var second = Assert.Throws<InvalidOperationException>(() =>
                 pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
-            sw.Stop();
 
-            // Assert
+            // Assert - the second request reused the cached exception and did not invoke
+            // CreateConnection again while the pool remained in the error state.
             Assert.Equal(first.Message, second.Message);
-            Assert.True(sw.ElapsedMilliseconds < 1000,
-                $"Expected fast-fail (<1000ms) while in blocking period, took {sw.ElapsedMilliseconds}ms.");
+            Assert.True(pool.ErrorOccurred);
+            Assert.Equal(1, factory.CreateCount);
         }
 
         /// <summary>
@@ -1743,10 +1743,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Test connection factory that records how many physical connection creations the pool
-        /// performs so rate-limiter tests can distinguish reuse from new opens.
+        /// Test connection factory that always throws the pooled-open timeout and records how many
+        /// physical connection creations the pool attempted, so blocking-period tests can assert
+        /// that subsequent requests fail fast without invoking another open.
         /// </summary>
-        internal sealed class CountingSuccessfulConnectionFactory : SqlConnectionFactory
+        internal sealed class CountingTimeoutConnectionFactory : SqlConnectionFactory
+        {
+            /// <summary>
+            /// Gets the number of times the pool asked the factory to create a physical connection.
+            /// </summary>
+            internal int CreateCount { get; private set; }
+
+            /// <summary>
+            /// Increments the creation counter and throws the pooled-open timeout exception to
+            /// simulate a failed physical connection creation.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                CreateCount++;
+                throw ADP.PooledOpenTimeout();
+            }
+        }
+
+        /// <summary>
         {
             /// <summary>
             /// Gets the number of times the pool asked the factory to create a physical connection.
