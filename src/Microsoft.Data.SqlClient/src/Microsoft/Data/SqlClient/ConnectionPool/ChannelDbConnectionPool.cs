@@ -244,6 +244,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
+            // Stamp the return time before IsLiveConnection runs so the idle-expiry gate inside it
+            // measures time-in-pool, not time-since-last-return. Without this, a connection whose
+            // checkout exceeded IdleTimeout (e.g. a long-running query) would be wrongly evicted on
+            // return even though it was actively in use on the wire. The same gating conditions are
+            // applied here as in IsLiveConnection so we avoid the per-return DateTime.UtcNow when
+            // idle expiry is disabled or the legacy idle-timeout behavior is in effect.
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+            {
+                connection.SetReturnedTime();
+            }
+
             if (!IsLiveConnection(connection))
             {
                 RemoveConnection(connection);
@@ -264,16 +276,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                // Stamp the return time so IsLiveConnection can later evict the connection if it sits
-                // idle past the configured limit. Skip the stamp when idle expiry is disabled or the
-                // legacy idle-timeout behavior is in effect to avoid the per-return DateTime.UtcNow on
-                // the hot return path; IsLiveConnection short-circuits on the same conditions so the
-                // value would be unread in those cases.
-                if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
-                    PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
-                {
-                    connection.SetReturnedTime();
-                }
                 var written = _idleChannel.TryWrite(connection);
                 Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
