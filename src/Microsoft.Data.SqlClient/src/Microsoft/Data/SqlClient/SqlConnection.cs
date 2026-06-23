@@ -1404,12 +1404,11 @@ namespace Microsoft.Data.SqlClient
                     Task reconnectTask = _currentReconnectionTask;
                     if (reconnectTask != null && !reconnectTask.IsCompleted)
                     {
-                        CancellationTokenSource cts = _reconnectionCancellationSource;
-                        if (cts != null)
-                        {
-                            cts.Cancel();
-                            cts.Dispose();
-                        }
+                        // Only request cancellation here. ReconnectAsync still owns the
+                        // CancellationTokenSource and disposes it in its finally block once it
+                        // has stopped using the token; disposing it here while the reconnect
+                        // task is still running could surface ObjectDisposedException.
+                        _reconnectionCancellationSource?.Cancel();
                         AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                         if (State != ConnectionState.Open)
                         {// if we cancelled before the connection was opened

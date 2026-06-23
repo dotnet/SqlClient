@@ -280,6 +280,9 @@ namespace Microsoft.Data.SqlClient
                     // Set the textreader as closed
                     SetClosed();
                 }
+                // Safe to call unconditionally: the IsClosed guard above ensures SetClosed()
+                // (and thus Cancel()) runs at most once, and CancellationTokenSource.Dispose()
+                // is idempotent, so repeated Dispose() calls do not throw.
                 _disposalTokenSource.Dispose();
             }
 

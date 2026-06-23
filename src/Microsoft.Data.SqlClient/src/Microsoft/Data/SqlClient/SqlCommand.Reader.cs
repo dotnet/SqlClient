@@ -1643,6 +1643,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (completion.Task.IsCompleted)
                     {
+                        timeoutCts.Cancel();
                         timeoutCts.Dispose();
                         return;
                     }
@@ -1675,8 +1676,16 @@ namespace Microsoft.Data.SqlClient
                             onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
                     }
                 },
-                onFailure: _ => timeoutCts.Dispose(),
-                onCancellation: () => timeoutCts.Dispose());
+                onFailure: _ =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
+                },
+                onCancellation: () =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
+                });
         }
 
         private SqlDataReader RunExecuteReaderTdsWithTransparentParameterEncryption(
