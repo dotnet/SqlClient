@@ -798,7 +798,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static async Task<string> GetSystemIdentityAccessTokenAsync()
         {
-            if (IsUserManagedIdentitySupported && IsSystemManagedIdentitySupported && AADSystemIdentityAccessToken == null && IsAzureConnStringSetup())
+            if (IsSystemManagedIdentitySupported && AADSystemIdentityAccessToken == null && IsAzureConnStringSetup())
             {
                 AADSystemIdentityAccessToken = await AADUtility.GetManagedIdentityToken();
                 if (AADSystemIdentityAccessToken == null)

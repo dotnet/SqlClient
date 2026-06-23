@@ -10,16 +10,26 @@ public static class CommonUtils
 {
     // Ensures the base connection string ends with ';' before appending a new keyword.
     public static string EnsureSeparator(string connectionString)
-        => string.IsNullOrEmpty(connectionString) || connectionString.EndsWith(';') ? connectionString : connectionString + ';';
+        => string.IsNullOrEmpty(connectionString) || connectionString.EndsWith(";", StringComparison.Ordinal) ? connectionString : connectionString + ';';
 
     // Returns randomly generated characters of specified length.
     public static SecureString GenerateRandomSecureString(int length = 10)
     {
         SecureString secureString = new();
+        
+        byte[] bytes = new byte[length];
+        using (System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(bytes);
+        }
+        
+        // Map random bytes into the printable ASCII range [33, 126).
         for (int i = 0; i < length; i++)
         {
             secureString.AppendChar((char)Random.Shared.Next(33, 126));
+            secureString.AppendChar((char)(33 + (bytes[i] % 93)));
         }
+        
         secureString.MakeReadOnly();
         return secureString;
     }

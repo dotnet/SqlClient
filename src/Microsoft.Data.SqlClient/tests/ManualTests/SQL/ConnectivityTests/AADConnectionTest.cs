@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsAzure() => !DataTestUtility.IsNotAzureServer();
-        private static Task<bool> IsAccessTokenSetup() => DataTestUtility.IsAccessTokenAsyncSetup();
+        private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenAsyncSetup().GetAwaiter().GetResult();
         private static bool IsAzureSqlConnStringSetup() => DataTestUtility.IsAzureConnStringSetup() && DataTestUtility.IsUserManagedIdentitySupported;
         private static bool IsManagedIdentitySetup() => DataTestUtility.IsUserManagedIdentitySupported;
         private static bool SupportsSystemAssignedManagedIdentity() => DataTestUtility.IsSystemManagedIdentitySupported;
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task AccessTokenWithAuthType()
         {
-            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString.AddManagedIdentityAuthenticationToConnString());
             InvalidOperationException e = await Assert.ThrowsAsync<InvalidOperationException>
             (async () =>
                 connection.AccessToken = await DataTestUtility.GetAccessTokenAsync()
