@@ -40,8 +40,7 @@ internal static class Config
     internal static bool DebugEmit { get; } = false;
     internal static bool IntegratedSecuritySupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
-    // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
-    internal static string PasswordConnectionString { get; } = string.Empty;
+    internal static string AzureSqlConnString { get; } = string.Empty;
     internal static string ServicePrincipalId { get; } = string.Empty;
     internal static string ServicePrincipalSecret { get; } = string.Empty;
     internal static string SystemAccessToken { get; } = string.Empty;
@@ -56,7 +55,7 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.IsEmpty();
+    internal static bool HasAzureSqlConnectionString() => !AzureSqlConnString.IsEmpty();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
     internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();
@@ -117,7 +116,7 @@ internal static class Config
             //
             IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
             ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");
-            PasswordConnectionString = GetString(root, "AADPasswordConnectionString");
+            AzureSqlConnString = GetString(root, "AzureSqlConnectionString");
             ServicePrincipalId = GetString(root, "AADServicePrincipalId");
             ServicePrincipalSecret = GetString(root, "AADServicePrincipalSecret");
             SystemAssignedManagedIdentitySupported =
@@ -164,9 +163,9 @@ internal static class Config
             Console.WriteLine(
                 $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
             Console.WriteLine(
-                $"  PasswordConnectionString:               {PasswordConnectionString}");
+                $"  PasswordConnectionString:               {AzureSqlConnString}");
             Console.WriteLine(
-                $"                                          {Base64Encode(PasswordConnectionString)}");
+                $"                                          {Base64Encode(AzureSqlConnString)}");
             Console.WriteLine(
                 $"  ServicePrincipalId:                     {ServicePrincipalId}");
             Console.WriteLine(

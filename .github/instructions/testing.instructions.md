@@ -58,9 +58,9 @@ Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 | Property | Description |
 |----------|-------------|
-| `TCPConnectionString` | Primary TCP connection |
-| `NPConnectionString` | Named Pipes connection |
-| `AADPasswordConnectionString` | Entra ID password auth |
+| `TCPConnectionString` | Primary TCP connection to on-premises SQL Server |
+| `NPConnectionString` | Named Pipes connection to on-premises SQL Server |
+| `AzureSqlConnectionString` | Entra ID connection string to Azure SQL Database |
 | `AzureKeyVaultURL` | AKV for encryption tests |
 | `EnclaveEnabled` | Enable enclave tests |
 | `FileStreamDirectory` | FileStream test path |
