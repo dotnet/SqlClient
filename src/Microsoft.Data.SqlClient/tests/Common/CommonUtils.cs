@@ -26,7 +26,6 @@ public static class CommonUtils
         // Map random bytes into the printable ASCII range [33, 126).
         for (int i = 0; i < length; i++)
         {
-            secureString.AppendChar((char)Random.Shared.Next(33, 126));
             secureString.AppendChar((char)(33 + (bytes[i] % 93)));
         }
         
@@ -39,7 +38,7 @@ public static class CommonUtils
     {
         string path = Path.GetRandomFileName();
         path = path.Replace(".", ""); // Remove period.
-        return string.Concat(prefix, path.AsSpan(0, length));
+        return string.Concat(prefix, path.Substring(0, length));
     }
 
     public static string GenerateObjectName()
