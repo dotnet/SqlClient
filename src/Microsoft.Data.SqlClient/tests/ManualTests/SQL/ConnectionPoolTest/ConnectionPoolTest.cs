@@ -78,10 +78,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenConnectionPoolingTest()
         {
             SqlConnection.ClearAllPools();
-
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            
+            // Get connection string to connect to Azure SQL Database without credentials
+            string connectionString = DataTestUtility.GetAzureConnectionStringWithoutAuthInfo();
 
             using SqlConnection connection = new SqlConnection(connectionString);
             connection.AccessToken = DataTestUtility.GetAccessToken();

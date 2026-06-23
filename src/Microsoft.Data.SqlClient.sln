@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31912.275
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11911.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
@@ -297,15 +297,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4
 		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
 		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
+		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
+		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
 		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
 		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
-		..\eng\pipelines\steps\install-dotnet.yml = ..\eng\pipelines\steps\install-dotnet.yml
-		..\eng\pipelines\steps\install-dotnet-arm64.ps1 = ..\eng\pipelines\steps\install-dotnet-arm64.ps1
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Microsoft.Data.SqlClient\tests\Common\Common.csproj", "{67128EC0-30F5-6A98-448B-55F88A1DE707}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{B7FEAC28-743E-4837-BC7E-A30127CE5E6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureSqlConnector", "..\doc\apps\AzureSqlConnector\AzureSqlConnector.csproj", "{8B299DCD-C728-231A-747E-254252866A0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -575,6 +579,18 @@ Global
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.Build.0 = Release|x64
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.ActiveCfg = Release|x86
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.Build.0 = Release|x86
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|x64.Build.0 = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Debug|x86.Build.0 = Debug|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|x64.ActiveCfg = Release|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|x64.Build.0 = Release|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|x86.ActiveCfg = Release|Any CPU
+		{8B299DCD-C728-231A-747E-254252866A0F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -625,6 +641,8 @@ Global
 		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{67128EC0-30F5-6A98-448B-55F88A1DE707} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{B7FEAC28-743E-4837-BC7E-A30127CE5E6D} = {ED952CF7-84DF-437A-B066-F516E9BE1C2C}
+		{8B299DCD-C728-231A-747E-254252866A0F} = {B7FEAC28-743E-4837-BC7E-A30127CE5E6D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

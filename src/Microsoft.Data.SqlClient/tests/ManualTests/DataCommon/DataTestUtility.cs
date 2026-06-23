@@ -524,6 +524,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AADAuthorityURL);
         }
 
+        public static bool IsUserManagedIdentitySetup()
+        {
+            return !string.IsNullOrEmpty(UserManagedIdentityClientId);
+        }
+
         public static bool IsAzureServer()
         {
             return AreConnStringsSetup() && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
@@ -619,7 +624,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsTCPConnectionStringPasswordIncluded()
         {
-            return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
+            return RetrieveValueFromConnStr(TCPConnectionString, ["Password", "PWD"]) != string.Empty;
+        }
+
+        /// <summary>
+        /// Returns the Azure connection string without credentials (user id, password) and authentication information.
+        /// </summary>
+        /// <returns></returns>
+        public static string GetAzureConnectionStringWithoutAuthInfo()
+        {
+            string[] credKeys = ["Authentication", "User ID", "Password", "UID", "PWD"];
+            return RemoveKeysInConnStr(AADPasswordConnectionString, credKeys);
+        }
+
+        public static string GetManagedIdentityAuthConnectionString()
+        {
+            string connStr = GetAzureConnectionStringWithoutAuthInfo() +
+                $"Authentication=ActiveDirectoryManagedIdentity;User ID={UserManagedIdentityClientId};";
+            return connStr;
         }
 
         public static bool DoesHostAddressContainBothIPv4AndIPv6()

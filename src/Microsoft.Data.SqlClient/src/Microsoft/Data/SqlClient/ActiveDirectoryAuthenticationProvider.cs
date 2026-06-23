@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -13,12 +14,13 @@ using Azure.Identity;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
-    public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
         /// <summary>
         /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
@@ -31,7 +33,21 @@ namespace Microsoft.Data.SqlClient
         private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
         private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
         private static readonly int s_accountPwCacheTtlInHours = 2;
+
+        // MSAL redirect URI used when WAM brokered authentication is in effect on Windows. MSAL
+        // expects the suffix to match the client id of the registered application.
+        private const string s_wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
+
+#if NETFRAMEWORK
+        // Non-broker redirect URI used on .NET Framework when WAM is not in use (legacy embedded
+        // WebView path).
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+#endif
+
+        // Loopback redirect URI used by MSAL's system browser flow on non-Windows platforms and on
+        // .NET (non-framework) Windows without WAM.
+        private const string s_systemBrowserRedirectUri = "http://localhost";
+
         private static readonly string s_defaultScopeSuffix = "/.default";
         private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new();
@@ -39,27 +55,62 @@ namespace Microsoft.Data.SqlClient
         private ICustomWebUi _customWebUI = null;
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
+        // True when this provider should enable the Windows Account Manager (WAM) broker for
+        // interactive Entra ID flows on Windows. Always true for the SqlClient first-party app id;
+        // for caller-supplied app ids, opt-in via the Options-pattern constructor.
+        private readonly bool _useWamBroker = false;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider()
-            : this(DefaultDeviceFlowCallback)
+            : this(new ActiveDirectoryAuthenticationProviderOptions())
         {
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
         public ActiveDirectoryAuthenticationProvider(string applicationClientId)
-            : this(DefaultDeviceFlowCallback, applicationClientId)
+            : this(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = applicationClientId })
         {
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
         public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string applicationClientId = null)
-        {
-            if (applicationClientId != null)
+            : this(new ActiveDirectoryAuthenticationProviderOptions
             {
-                _applicationClientId = applicationClientId;
-            }
-            SetDeviceCodeFlowCallback(deviceCodeFlowCallbackMethod);
+                DeviceCodeFlowCallback = deviceCodeFlowCallbackMethod,
+                ApplicationClientId = applicationClientId,
+            })
+        {
         }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctorOptions/*'/>
+        public ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            _deviceCodeFlowCallback = options.DeviceCodeFlowCallback ?? DefaultDeviceFlowCallback;
+            if (options.ApplicationClientId != null)
+            {
+                _applicationClientId = options.ApplicationClientId;
+            }
+            // WAM broker mode is always enabled for the SqlClient first-party application id (its
+            // app registration is configured for the WAM broker redirect URI). For a caller-supplied
+            // application id, WAM is opt-in via the Options ctor.
+            _useWamBroker = _applicationClientId == ActiveDirectoryAuthentication.AdoClientId || options.UseWamBroker;
+        }
+
+        /// <summary>
+        /// Indicates whether this provider instance has the Windows Account Manager (WAM) broker
+        /// enabled for interactive Entra ID flows on Windows. Exposed as <c>internal</c> for tests.
+        /// </summary>
+        internal bool UseWamBroker => _useWamBroker;
+
+        /// <summary>
+        /// The Entra ID application client id used by this provider instance. Exposed as <c>internal</c> for tests.
+        /// </summary>
+        internal string ApplicationClientId => _applicationClientId;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
         public static void ClearUserTokenCache()
@@ -113,6 +164,16 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
         public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => this._iWin32WindowFunc = iWin32WindowFunc;
 #endif
+
+        private Func<object> _parentActivityOrWindowFunc = null;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
+        public void SetParentActivityOrWindowFunc(Func<object> parentActivityOrWindowFunc)
+        {
+            // Passing null clears a previously-installed callback (and reverts the provider to its
+            // automatic console-window fallback on Windows).
+            _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
 
@@ -192,20 +253,33 @@ namespace Microsoft.Data.SqlClient
             }
 
             /*
-             * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
-             * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
-             * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
+             * For the remaining Active Directory authentication methods, we use MSAL.NET to acquire tokens.
+             * With WAM broker support in MSAL enabled, on Windows we use a fixed redirect URI in the format
+             * "ms-appx-web://microsoft.aad.brokerplugin/{clientId}" where {clientId} is the client ID configured for this provider.
+             * This is required for MSAL to correctly route the authentication request to the WAM broker and for WAM to route the response back to MSAL.
              *
-             * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
+             * This means the Entra ID app registration for that client ID must include the above redirect URI to use WAM brokered authentication on Windows.
              */
-            string redirectUri = s_nativeClientRedirectUri;
-
-#if NET
-            if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            string redirectUri;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                redirectUri = "http://localhost";
-            }
+                if (_useWamBroker)
+                {
+                    redirectUri = s_wamBrokerRedirectUriPrefix + _applicationClientId;
+                }
+                else
+                {
+#if NETFRAMEWORK
+                    redirectUri = s_nativeClientRedirectUri;
+#else
+                    redirectUri = s_systemBrowserRedirectUri;
 #endif
+                }
+            }
+            else
+            {
+                redirectUri = s_systemBrowserRedirectUri;
+            }
             PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId
 #if NETFRAMEWORK
             , _iWin32WindowFunc
@@ -411,10 +485,19 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    // Device Code Flow needs minutes for the user to navigate to the verification
+                    // URL and enter the user code. The outer per-request CTS inherits the
+                    // SqlConnection's Connect Timeout (default 15s) and would cancel MSAL long
+                    // before the user can finish, surfacing as "The operation was canceled."
+                    // Use a dedicated CTS with the typical AAD user-code lifetime as the cap,
+                    // mirroring the pattern used for ActiveDirectoryInteractive above.
+                    using CancellationTokenSource ctsDeviceFlow = new();
+                    ctsDeviceFlow.CancelAfter(TimeSpan.FromMinutes(3)); // 3 minutes
+
                     AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
                         deviceCodeResult => deviceCodeFlowCallback(deviceCodeResult))
                         .WithCorrelationId(connectionId)
-                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ExecuteAsync(cancellationToken: ctsDeviceFlow.Token)
                         .ConfigureAwait(false);
                     return result;
                 }
@@ -560,13 +643,45 @@ namespace Microsoft.Data.SqlClient
                     RedirectUri = publicClientAppKey._redirectUri,
                 })
                 .WithAuthority(publicClientAppKey._authority);
-            
-            #if NETFRAMEWORK
-            if (_iWin32WindowFunc is not null)
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+                if (_useWamBroker)
+                {
+                    // Enable WAM broker on Windows for all supported authentication modes.
+                    // The broker provides enhanced security by enabling device-based Conditional Access
+                    // policies through the Windows Account Manager (WAM).
+                    builder.WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows));
+                }
+
+                // Set the parent window handle for broker UI.
+                // On .NET Framework, prefer the IWin32WindowFunc if provided by the caller.
+#if NETFRAMEWORK
+                if (publicClientAppKey._iWin32WindowFunc is not null)
+                {
+                    builder.WithParentActivityOrWindow(publicClientAppKey._iWin32WindowFunc);
+                }
+                else
+                {
+                    builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
+                }
+#else
+#if TARGETS_WINDOWS
+                builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
+#endif
+#endif
             }
-            #endif
+            else
+            {
+                // Non-Windows (Android / iOS / MAUI on .NET). Forward the caller-supplied callback
+                // to MSAL so interactive flows can parent their UI to the host Activity /
+                // UIViewController. WAM broker remains Windows-only and is intentionally skipped.
+                Func<object> parentActivityOrWindowFunc = _parentActivityOrWindowFunc;
+                if (parentActivityOrWindowFunc is not null)
+                {
+                    builder.WithParentActivityOrWindow(parentActivityOrWindowFunc);
+                }
+            }
 
             return builder.Build();
         }

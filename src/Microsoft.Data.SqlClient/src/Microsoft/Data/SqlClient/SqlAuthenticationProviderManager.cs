@@ -56,7 +56,23 @@ namespace Microsoft.Data.SqlClient
         {
             if (instance != null)
             {
-                var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
+                ActiveDirectoryAuthenticationProvider activeDirectoryAuthProvider;
+                if (instance._useWamBroker.HasValue)
+                {
+                    // useWamBroker was explicitly set via config; route through the Options ctor so
+                    // the value is applied for caller-supplied application ids. Note: when the SqlClient
+                    // first-party application id is used, WAM broker is always enabled by design.
+                    activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(
+                        new ActiveDirectoryAuthenticationProviderOptions
+                        {
+                            ApplicationClientId = instance._applicationClientId,
+                            UseWamBroker = instance._useWamBroker.Value,
+                        });
+                }
+                else
+                {
+                    activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
+                }
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
@@ -76,6 +92,13 @@ namespace Microsoft.Data.SqlClient
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
+
+        // Optional override for ActiveDirectoryAuthenticationProviderOptions.UseWamBroker
+        // read from the app.config <SqlClientAuthenticationProviders useWamBroker="..."/> attribute.
+        // null means the app did not configure the value, in which case we leave the
+        // provider's default behavior (WAM is implied by the SqlClient first-party app id and
+        // off otherwise) untouched.
+        private readonly bool? _useWamBroker = null;
 
         /// <summary>
         /// Constructor.
@@ -101,6 +124,23 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined Application Client Id found.");
+            }
+
+            if (!string.IsNullOrEmpty(configSection.UseWamBroker))
+            {
+                if (bool.TryParse(configSection.UseWamBroker, out bool useWamBroker))
+                {
+                    _useWamBroker = useWamBroker;
+                    _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Received user-defined UseWamBroker={useWamBroker}.");
+                }
+                else
+                {
+                    _sqlAuthLogger.LogError(nameof(SqlAuthenticationProviderManager), methodName, $"Ignoring user-defined UseWamBroker='{configSection.UseWamBroker}': not a valid boolean.");
+                }
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, "No user-defined UseWamBroker found.");
             }
 
             // Create user-defined auth initializer, if any.
@@ -292,6 +332,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         [ConfigurationProperty("applicationClientId", IsRequired = false)]
         public string ApplicationClientId => this["applicationClientId"] as string;
+
+        /// <summary>
+        /// Forwarded to <c>ActiveDirectoryAuthenticationProviderOptions.UseWamBroker</c>
+        /// when the default Active Directory provider is auto-installed. Stored as a string so
+        /// that an unset attribute can be distinguished from <c>useWamBroker="false"</c>; the
+        /// runtime parses it with <see cref="bool.TryParse(string, out bool)"/>.
+        /// </summary>
+        [ConfigurationProperty("useWamBroker", IsRequired = false)]
+        public string UseWamBroker => this["useWamBroker"] as string;
     }
 
     /// <summary>

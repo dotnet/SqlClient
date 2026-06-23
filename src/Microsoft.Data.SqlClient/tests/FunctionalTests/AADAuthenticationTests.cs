@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    [Collection("SqlAuthenticationProvider")]
     public class AADAuthenticationTests
     {
         private SqlConnectionStringBuilder _builder;
