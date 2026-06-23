@@ -299,6 +299,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             State = ShuttingDown;
             Pruner?.Dispose();
+
+            // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
+            // during the blocking period would keep this pool reachable and continue firing
+            // callbacks/logging after shutdown.
+            _errorState?.Dispose();
         }
 
         /// <summary>

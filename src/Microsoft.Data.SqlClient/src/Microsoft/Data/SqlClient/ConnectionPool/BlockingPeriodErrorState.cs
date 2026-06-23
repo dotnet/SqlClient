@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
@@ -94,7 +95,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cachedException = ex;
                 wait = _nextWait;
 
-                newTimer = _timeProvider.CreateTimer(ExitCallback, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                // Create the exit timer disarmed (infinite due time); it is armed below outside
+                // the lock. ADP.UnsafeCreateTimer suppresses execution-context flow so the timer
+                // doesn't capture and pin the current ExecutionContext and its AsyncLocals for its
+                // lifetime, while still honoring the injected TimeProvider for testability.
+                newTimer = ADP.UnsafeCreateTimer(
+                    _timeProvider,
+                    ExitCallback,
+                    null,
+                    Timeout.InfiniteTimeSpan,
+                    Timeout.InfiniteTimeSpan);
                 oldTimer = _exitTimer;
                 _exitTimer = newTimer;
 
