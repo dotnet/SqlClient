@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection.ClearAllPools();
             
             // Get connection string to connect to Azure SQL Database without credentials
-            string connectionString = DataTestUtility.GetAzureConnectionStringWithoutCreds();
+            string connectionString = DataTestUtility.GetAzureConnectionStringWithoutAuthInfo();
 
             using SqlConnection connection = new SqlConnection(connectionString);
             connection.AccessToken = DataTestUtility.GetAccessToken();

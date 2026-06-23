@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsUserManagedIdentitySetup))]
         public void FedAuthTokenRefreshTest()
         {
             string connectionString = DataTestUtility.GetManagedIdentityAuthConnectionString();

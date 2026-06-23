@@ -815,6 +815,9 @@
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
   <!-- Windows only -->
+  <PropertyGroup Condition="'$(TargetsWindows)' == 'true'">
+    <DefineConstants>$(DefineConstants);TARGETS_WINDOWS</DefineConstants>
+  </PropertyGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs</Link>

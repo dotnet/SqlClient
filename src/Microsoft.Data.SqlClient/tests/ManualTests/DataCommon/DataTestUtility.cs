@@ -524,6 +524,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AADAuthorityURL);
         }
 
+        public static bool IsUserManagedIdentitySetup()
+        {
+            return !string.IsNullOrEmpty(UserManagedIdentityClientId);
+        }
+
         public static bool IsAzureServer()
         {
             return AreConnStringsSetup() && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
