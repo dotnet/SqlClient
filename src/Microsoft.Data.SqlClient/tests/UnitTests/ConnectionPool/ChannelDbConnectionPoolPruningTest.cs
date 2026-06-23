@@ -35,7 +35,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: maxPoolSize,
                 creationTimeout: 15,
                 loadBalanceTimeout: loadBalanceTimeout,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),

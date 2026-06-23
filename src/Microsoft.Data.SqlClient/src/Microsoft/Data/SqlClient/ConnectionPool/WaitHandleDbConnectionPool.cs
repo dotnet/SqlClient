@@ -223,8 +223,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             lock (s_random)
             {
-                // Random.Next is not thread-safe
-                _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                TimeSpan idleTimeout = connectionPoolGroup.PoolGroupOptions.IdleTimeout;
+                if (LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior || idleTimeout == TimeSpan.Zero)
+                {
+                    // Historical 2-4 minute random cleanup window. Used for the legacy switch and for
+                    // the "idle eviction disabled" state (IdleTimeout=0) where the timer still runs for
+                    // non-idle maintenance but CleanupCallback skips the generational sweep.
+                    _cleanupWait = s_random.Next(12, 24) * 10 * 1000; // 2-4 minutes in 10 sec intervals, WebData 103603
+                }
+                else
+                {
+                    // New idle-timeout behavior with a configured value: the WaitHandle pool takes two
+                    // pruning cycles to evict an idle connection (new->old generation, then old->closed),
+                    // so halve the configured timeout to approximate the requested idle lifetime. Floor
+                    // the period at 1 second so small IdleTimeout values (e.g. 1s) don't schedule a
+                    // sub-second timer that wakes the threadpool just to walk empty stacks.
+                    long cleanupWaitMilliseconds = (long)idleTimeout.TotalMilliseconds / 2;
+                    cleanupWaitMilliseconds = Math.Max(cleanupWaitMilliseconds, 1000);
+                    _cleanupWait = cleanupWaitMilliseconds >= int.MaxValue ? int.MaxValue : (int)cleanupWaitMilliseconds;
+                }
             }
 
             _connectionFactory = connectionFactory;
@@ -351,8 +368,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // at least one period but not more than two periods.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}", Id);
 
+            // Idle eviction (the generational destroy/age-into-old-stack sweep below) is enabled under
+            // the legacy switch, or when the new behavior is on with a non-zero IdleTimeout. When the
+            // new behavior is on and IdleTimeout is 0, eviction is disabled entirely: skip the sweep
+            // and only run the MinPoolSize floor maintenance.
+            bool idleEvictionEnabled =
+                LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior ||
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero;
+
             // Destroy free objects that put us above MinPoolSize from old stack.
-            while (Count > MinPoolSize)
+            while (idleEvictionEnabled && Count > MinPoolSize)
             {
                 // While above MinPoolSize...
                 if (_waitHandles.PoolSemaphore.WaitOne(0, false))
@@ -363,6 +388,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     if (_stackOld.TryPop(out obj))
                     {
                         Debug.Assert(obj != null, "null connection is not expected");
+
                         // If we obtained one from the old stack, destroy it.
 
                         SqlClientDiagnostics.Metrics.ExitFreeConnection();
@@ -414,7 +440,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Push to the old-stack.  For each free object, move object from
             // new stack to old stack.
-            if (_waitHandles.PoolSemaphore.WaitOne(0, false))
+            if (idleEvictionEnabled && _waitHandles.PoolSemaphore.WaitOne(0, false))
             {
                 for (; ; )
                 {
@@ -667,6 +693,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 //   DelegatedTransactionEnded event will clean up the
                                 //   connection appropriately regardless of the pool state.
                                 Debug.Assert(_transactedConnectionPool != null, "Transacted connection pool was not expected to be null.");
+                                // Transacting connections are held in their own store and are never
+                                // proactively closed (doing so would abort the transaction, which can be
+                                // distributed). Idle-timeout enforcement does not apply here, so we do
+                                // not call SetReturnedTime when parking the connection in the transacted pool.
                                 _transactedConnectionPool.PutTransactedObject(transaction, obj);
                                 rootTxn = true;
                             }
@@ -1061,9 +1091,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 Interlocked.Decrement(ref _waitCount);
                                 obj = GetFromGeneralPool();
 
-                                if ((obj != null) && (!obj.IsConnectionAlive()))
+                                bool isIdleExpired = obj != null && IsIdleExpired(obj);
+                                if ((obj != null) && (isIdleExpired || !obj.IsConnectionAlive()))
                                 {
-                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
+                                    string reason = isIdleExpired ? "idle-expired" : "found dead";
+                                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Connection {1}, {2} and removed.", Id, obj.ObjectID, reason);
                                     DestroyObject(obj);
                                     obj = null;     // Setting to null in case creating a new object fails
 
@@ -1243,6 +1275,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                     else if (!obj.IsConnectionAlive())
                     {
+                        // Transacting connections are exempt from idle-timeout eviction (closing them
+                        // would abort the transaction, possibly distributed). Only liveness is checked here.
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", Id, obj.ObjectID);
                         DestroyObject(obj);
                         obj = null;
@@ -1363,11 +1397,38 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutNewObject|RES|CPOOL> {0}, Connection {1}, Pushing to general pool.", Id, obj.ObjectID);
 
+            // Stamp the return time so IsIdleExpired can later decide whether the connection has sat
+            // unused too long. Skip the stamp when idle expiry is disabled or the legacy idle-timeout
+            // behavior is in effect to avoid the per-return DateTime.UtcNow on the hot return path;
+            // IsIdleExpired short-circuits on the same conditions so the value would be unread in
+            // those cases.
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+            {
+                obj.SetReturnedTime();
+            }
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 
             SqlClientDiagnostics.Metrics.EnterFreeConnection();
 
+        }
+
+        /// <summary>
+        /// Returns true when the supplied connection has been sitting idle in the pool longer than the
+        /// configured <see cref="DbConnectionPoolGroupOptions.IdleTimeout"/>. Returns false when idle
+        /// eviction is off - that is, when the <see cref="LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior"/>
+        /// switch is enabled or <see cref="DbConnectionPoolGroupOptions.IdleTimeout"/> is zero.
+        /// </summary>
+        private bool IsIdleExpired(DbConnectionInternal obj)
+        {
+            // Use subtraction rather than addition so the comparison cannot throw if ReturnedTime is
+            // ever close to DateTime.MaxValue. A clock skew that leaves ReturnedTime in the future
+            // produces a negative TimeSpan, which falls through as not-expired (fail safe).
+            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
+            return !LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                   idleTimeout != TimeSpan.Zero &&
+                   DateTime.UtcNow - obj.ReturnedTime > idleTimeout;
         }
 
         public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
