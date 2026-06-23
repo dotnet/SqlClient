@@ -69,6 +69,10 @@ dotnet build -t:<build_target> [optional_parameters]
 The command-line examples below will assume that `build.proj` is selected by default and will omit
 it from the `dotnet build` command.
 
+If no target is specified, `build.proj` runs the `BuildAll` target by default, which builds all
+projects, tests, and samples for all supported OS combinations. To build only the driver projects,
+specify `-t:Build` explicitly.
+
 The following build targets can be used to build the following projects. All targets will implicitly build any other
 projects they depend on.
 
@@ -77,7 +81,7 @@ projects they depend on.
 | `Build`                       | Builds all driver projects for all platforms                                    |
 | `BuildAbstractions`           | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
 | `BuildAkvProvider`            | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
-| `BuildAll`                    | Builds all projects, tests, and samples for all supported OS combinations       |
+| `BuildAll`                    | Builds all projects, tests, and samples for all supported OS combinations (default target) |
 | `BuildAzure`                  | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
 | `BuildLogging`                | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
 | `BuildSamples`                | Builds the sample projects under `doc/samples/`                                 |
@@ -111,7 +115,13 @@ placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`
 
 #### Examples
 
-Build all projects:
+Build everything (all projects, tests, and samples) using the default target:
+
+```bash
+dotnet build
+```
+
+Build only the driver projects:
 
 ```bash
 dotnet build -t:Build

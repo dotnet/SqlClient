@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
 
@@ -365,12 +365,15 @@
   <!-- Top Level/Miscellaneous Targets -->
 
   <!--
-    Build: Builds all driver projects.  This is the default target.
+    Build: Builds all driver projects.
     Note: These have been ordered in a vague attempt to minimize multiple rebuilds of dependencies.
   -->
   <Target Name="Build" DependsOnTargets="BuildLogging;BuildAbstractions;BuildSqlClient;BuildAzure;BuildAkvProvider;BuildSqlServer" />
 
-  <!-- Build all projects in the repo, for all supported OS and TargetFramework combinations.-->
+  <!--
+    BuildAll: Build all projects in the repo, for all supported OS and TargetFramework combinations.
+    This is the default target.
+  -->
   <Target Name="BuildAll" DependsOnTargets="Build;BuildTests;BuildSamples" />
 
   <!-- Clean: Convenience target to remove build/test output -->
