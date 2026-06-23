@@ -95,9 +95,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Determines whether the blocking period is enabled for this pool group based on the
-        /// configured <see cref="PoolBlockingPeriod"/> and the target data source. Returns true
-        /// when no connection options are available so callers fail safe into the blocking
-        /// behavior.
+        /// configured <see cref="PoolBlockingPeriod"/> and the target data source.
         /// </summary>
         internal bool IsBlockingPeriodEnabled()
         {
