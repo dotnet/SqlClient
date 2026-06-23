@@ -606,6 +606,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>找不到 '{0}' 的驗證提供者。請安裝 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 套件 (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)，以使用 Active Directory (Entra ID) 認證方法。</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>
   </data>

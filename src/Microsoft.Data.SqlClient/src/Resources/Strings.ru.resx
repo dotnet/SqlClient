@@ -606,6 +606,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Не удается найти поставщик проверки подлинности для "{0}". Установите пакет NuGet "Microsoft.Data.SqlClient.Extensions.Azure" (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) для использования методов проверки подлинности Active Directory (Entra ID).</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Параметр «{0}» не может иметь значение NULL или быть пустым.</value>
   </data>
