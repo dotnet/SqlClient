@@ -25,15 +25,13 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
-using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
-#if _WINDOWS
 using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.SqlTypes;
 #endif
 
@@ -12327,11 +12325,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(
+                    return AsyncHelper.CreateContinuationTaskWithState(
                         unterminatedWriteTask,
-                        onSuccess: WriteInt,
-                        arg1: 0,
-                        arg2: stateObj);
+                        state1: this,
+                        state2: stateObj,
+                        onSuccess: static (parser, state) => parser.WriteInt(0, state));
                 }
             }
             else
@@ -13288,11 +13286,11 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Otherwise, create a continuation task to write the encryption metadata after the previous write completes.
-                return AsyncHelper.CreateContinuationTask<SqlColumnEncryptionInputParameterInfo, TdsParserStateObject>(
+                return AsyncHelper.CreateContinuationTaskWithState(
                     terminatedWriteTask,
-                    onSuccess: WriteEncryptionMetadata,
-                    arg1: columnEncryptionParameterInfo,
-                    arg2: stateObj);
+                    state1: columnEncryptionParameterInfo,
+                    state2: stateObj,
+                    onSuccess: WriteEncryptionMetadata);
             }
         }
 
