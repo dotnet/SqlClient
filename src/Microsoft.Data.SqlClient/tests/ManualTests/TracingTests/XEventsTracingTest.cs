@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Our stored procedure name is an escaped SQL Server object name. This will not match the object_name data
             // in the XEvent XML, which records it as an unescaped name.
-            string unescapedProcedureName = sp.Name.Substring(1, sp.Name.Length - 2).Replace("]]", "]");
+            string unescapedProcedureName = sp.UnescapedName;
 
             VerifyXEventActivityIDConsistentWithTracing(unescapedProcedureName, System.Data.CommandType.StoredProcedure, "rpc_starting");
         }
