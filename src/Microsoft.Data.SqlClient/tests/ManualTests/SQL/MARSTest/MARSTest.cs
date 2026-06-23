@@ -8,6 +8,7 @@ using System.Data;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -648,7 +649,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MarsConcurrencyTest()
         {
-            var table = DataTestUtility.GenerateObjectName();
+            var table = CommonUtils.GenerateObjectName();
             using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();

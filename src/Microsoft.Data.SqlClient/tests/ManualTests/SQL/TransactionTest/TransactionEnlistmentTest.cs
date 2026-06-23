@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -221,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RunTestFormat(Action testCase)
         {
-            TestTableName = DataTestUtility.GenerateObjectName();
+            TestTableName = CommonUtils.GenerateObjectName();
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {

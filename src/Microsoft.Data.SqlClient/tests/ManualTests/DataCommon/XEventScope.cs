@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Xml;
+using Microsoft.Data.SqlClient.Tests.Common;
 
 #nullable enable
 
@@ -62,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string targetSpecification,
             ushort durationInMinutes = 5)
         {
-            SessionName = DataTestUtility.GenerateRandomCharacters(sessionName);
+            SessionName = CommonUtils.GenerateRandomCharacters(sessionName);
 
             _connection = connection;
             if (connection.State is not ConnectionState.Open)
