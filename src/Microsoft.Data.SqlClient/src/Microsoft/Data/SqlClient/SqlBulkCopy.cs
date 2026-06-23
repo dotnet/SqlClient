@@ -472,11 +472,12 @@ namespace Microsoft.Data.SqlClient
             }
             else if (!string.IsNullOrEmpty(CatalogName))
             {
-                CatalogName = SqlServerEscapeHelper.EscapeStringAsLiteral(SqlServerEscapeHelper.EscapeIdentifier(CatalogName));
+                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
+            string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -512,6 +513,11 @@ namespace Microsoft.Data.SqlClient
             // we use STRING_AGG in that case and the COALESCE method otherwise.
             //
             // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
+            //
+            // All of this is wrapped in an test against HAS_PERMS_BY_NAME. This test verifies that
+            // the user possesses the necessary permissions to access sys.all_columns. If they do not
+            // @Column_Names will remain NULL (and be coalesced to *) and SqlBulkCopy will degrade
+            // gracefully, silently dropping support for hidden columns and column aliases.
             return $"""
 SELECT @@TRANCOUNT;
 
@@ -521,6 +527,7 @@ DECLARE @Column_Name_Query_FILTER NVARCHAR(MAX);
 DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
+DECLARE @Has_Sys_All_Columns_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
 
 IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
@@ -533,17 +540,21 @@ BEGIN
     SET @Column_Name_Query_SORT = N'ORDER BY [column_id] ASC';
 END
 
-IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+IF @Has_Sys_All_Columns_Permissions = 1
 BEGIN
-    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
-END
-ELSE
-BEGIN
-    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
-END
-SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {CatalogName}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
+    IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+    BEGIN
+        SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
+    END
+    ELSE
+    BEGIN
+        SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
+    END
+    SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {catalogNameStringLiteral}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
 
-EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
+    EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
+END
+
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;
