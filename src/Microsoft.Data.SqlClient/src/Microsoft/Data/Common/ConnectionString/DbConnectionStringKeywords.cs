@@ -31,6 +31,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string IntegratedSecurity = "Integrated Security";
         internal const string IpAddressPreference = "IP Address Preference";
         internal const string LoadBalanceTimeout = "Load Balance Timeout";
+        internal const string IdleTimeout = "Connection Idle Timeout";
         internal const string MaxPoolSize = "Max Pool Size";
         internal const string MinPoolSize = "Min Pool Size";
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";

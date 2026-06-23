@@ -244,6 +244,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
+            // Stamp the return time before IsLiveConnection runs so the idle-expiry gate inside it
+            // measures time-in-pool, not time-since-last-return. Without this, a connection whose
+            // checkout exceeded IdleTimeout (e.g. a long-running query) would be wrongly evicted on
+            // return even though it was actively in use on the wire. The same gating conditions are
+            // applied here as in IsLiveConnection so we avoid the per-return DateTime.UtcNow when
+            // idle expiry is disabled or the legacy idle-timeout behavior is in effect.
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
+            {
+                connection.SetReturnedTime();
+            }
+
             if (!IsLiveConnection(connection))
             {
                 RemoveConnection(connection);
@@ -453,6 +465,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
         private bool IsLiveConnection(DbConnectionInternal connection)
         {
+            // Connection has been sitting idle longer than the configured idle timeout.
+            // Checked before the (potentially expensive) liveness probe so an idle-expired
+            // connection is discarded without an SNI round-trip.
+            // ReturnedTime is initialized to CreateTime so a freshly minted connection never trips this
+            // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
+            // Use subtraction rather than addition so the comparison cannot throw if ReturnedTime is
+            // ever close to DateTime.MaxValue. A clock skew that leaves ReturnedTime in the future
+            // produces a negative TimeSpan, which falls through as not-expired (fail safe).
+            TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
+            if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
+                idleTimeout != TimeSpan.Zero &&
+                DateTime.UtcNow - connection.ReturnedTime > idleTimeout)
+            {
+                return false;
+            }
+
             // Broken physical connection
             if (!connection.IsConnectionAlive())
             {
