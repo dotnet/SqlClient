@@ -1468,4 +1468,43 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
+  <!-- ================================================================= -->
+  <!-- Build Tools Target -->
+
+  <PropertyGroup>
+    <AzureSqlConnectorProjectPath>$(RepoRoot)doc/apps/AzureSqlConnector/AzureSqlConnector.csproj</AzureSqlConnectorProjectPath>
+    <PackageCompatibilityProjectPath>$(RepoRoot)tools/PackageCompatibility/src/PackageCompatibility.csproj</PackageCompatibilityProjectPath>
+  </PropertyGroup>
+
+  <!-- BuildTools: Builds auxiliary tool/app projects. -->
+  <Target Name="BuildTools" DependsOnTargets="BuildAzureSqlConnector;BuildPackageCompatibility" />
+
+  <!-- BuildAzureSqlConnector: Builds the AzureSqlConnector sample app. -->
+  <Target Name="BuildAzureSqlConnector">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AzureSqlConnectorProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building AzureSqlConnector"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildPackageCompatibility: Builds the PackageCompatibility tool. -->
+  <Target Name="BuildPackageCompatibility">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(PackageCompatibilityProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building PackageCompatibility"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
 </Project>
