@@ -70,10 +70,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// The maximum time a pooled connection can sit unused (idle) in the pool before it becomes
         /// eligible for eviction. Eviction is best-effort: a connection that has been idle longer
         /// than this value is discarded either on the next retrieval attempt or during a periodic
-        /// pool maintenance pass, whichever happens first. Because maintenance runs on a fixed
-        /// cadence shorter than the timeout, a connection that becomes idle just before a
-        /// maintenance pass may be discarded after roughly half the configured timeout; callers
-        /// that need a strict floor should configure a correspondingly larger value.
+        /// pool maintenance pass (in pool implementations that perform periodic maintenance),
+        /// whichever happens first. Implementations may check this threshold opportunistically, so
+        /// eviction may occur somewhat before or after the exact timeout depending on the pool
+        /// implementation and maintenance cadence.
         /// <see cref="TimeSpan.Zero"/> disables idle expiration.
         /// </summary>
         public TimeSpan IdleTimeout

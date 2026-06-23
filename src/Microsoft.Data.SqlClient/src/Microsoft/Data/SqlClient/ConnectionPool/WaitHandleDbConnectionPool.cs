@@ -369,8 +369,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CleanupCallback|RES|INFO|CPOOL> {0}", Id);
 
             // Idle eviction (the generational destroy/age-into-old-stack sweep below) is enabled under
-            // the legacy switch, or when the new behaviour is on with a non-zero IdleTimeout. When the
-            // new behaviour is on and IdleTimeout is 0, eviction is disabled entirely: skip the sweep
+            // the legacy switch, or when the new behavior is on with a non-zero IdleTimeout. When the
+            // new behavior is on and IdleTimeout is 0, eviction is disabled entirely: skip the sweep
             // and only run the MinPoolSize floor maintenance.
             bool idleEvictionEnabled =
                 LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior ||
