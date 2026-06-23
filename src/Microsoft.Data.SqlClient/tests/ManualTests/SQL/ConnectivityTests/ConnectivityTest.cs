@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -19,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string COL_PROGRAM_NAME = "ProgramName";
         private const string COL_HOSTNAME = "HostName";
         private static readonly string s_databaseName = "d_" + Guid.NewGuid().ToString().Replace('-', '_');
-        private static readonly string s_tableName = DataTestUtility.GenerateObjectName();
+        private static readonly string s_tableName = CommonUtils.GenerateObjectName();
         private static readonly string s_connectionString = DataTestUtility.TCPConnectionString;
         private static readonly string s_dbConnectionString = new SqlConnectionStringBuilder(s_connectionString) { InitialCatalog = s_databaseName }.ConnectionString;
         private static readonly string s_createDatabaseCmd = $"CREATE DATABASE {s_databaseName}";
