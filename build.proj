@@ -368,7 +368,7 @@
     BuildAll: Build all projects in the repo, for all supported OS and TargetFramework combinations.
     This is the default target.
   -->
-  <Target Name="BuildAll" DependsOnTargets="BuildDriver;BuildTests;BuildSamples" />
+  <Target Name="BuildAll" DependsOnTargets="BuildDriver;BuildTests;BuildSamples;BuildTools" />
 
   <!--
     BuildDriver: Builds all driver projects.
