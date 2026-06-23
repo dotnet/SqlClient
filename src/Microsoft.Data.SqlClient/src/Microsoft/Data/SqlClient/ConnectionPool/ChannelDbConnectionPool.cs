@@ -455,10 +455,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // connections rather then queue on the rate limit. When no limiter is
                         // configured we substitute a no-op acquired lease.
                         // FR-001, FR-002, FR-003.
-                        using RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
+
+                        //TODO: some other options to consider:
+                        // 1. fail immediately and surface an error to the caller
+                        // 2. block on acquire (subject to overall timeout) - this would be the simplest
+                        RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
+                        bool leaseAcquired = lease.IsAcquired;
                         try
                         {
-                            if (!lease.IsAcquired)
+                            if (!leaseAcquired)
                             {
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
                                 // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
@@ -491,16 +496,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         finally
                         {
-                            // Disposing the lease releases the permit back to the limiter (no-op
-                            // for the default lease). After releasing, signal a waiter on the
-                            // idle channel that they may now retry an open. We only do this if
+                            // Release the permit back to the limiter (no-op for the default lease)
+                            // BEFORE signaling a waiter. Otherwise a woken waiter could consume the
+                            // null poke and retry its acquire before the permit is actually returned,
+                            // fail to acquire, and fall back to waiting with no subsequent signal -
+                            // stalling connection creation even though the limiter has capacity.
+                            lease.Dispose();
+
+                            // After releasing, signal a waiter on the idle channel that they may now
+                            // retry an open. We only poke when a limiter is configured (a waiter only
+                            // falls back to the idle channel due to rate limiting in that case) and
                             // the pool can still grow; if we're at MaxPoolSize, only a connection
-                            // return can satisfy a waiter. FR-004. This is best-effort; Disposing 
-                            // a lease doesn't guarantee that the rate limiter will immediately 
-                            // have an available permit.
-                            if (lease.IsAcquired &&
-                            (_connectionCreationRateLimiter?.GetStatistics()?.CurrentAvailablePermits ?? 0) > 0 && 
-                            _connectionSlots.ReservationCount < MaxPoolSize)
+                            // return can satisfy a waiter. FR-004. This is best-effort; releasing a
+                            // lease doesn't guarantee the rate limiter immediately has an available
+                            // permit, but the waiter we wake will fall back to waiting again if not.
+                            if (leaseAcquired &&
+                                _connectionCreationRateLimiter is not null &&
+                                _connectionSlots.ReservationCount < MaxPoolSize)
                             {
                                 _idleChannel.TryWrite(null);
                             }
