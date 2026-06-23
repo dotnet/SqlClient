@@ -295,6 +295,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal void SetClosed()
         {
+            // Idempotent: once closed, _reader is null and _disposalTokenSource may already
+            // have been disposed by Dispose(). Calling Cancel() again would throw
+            // ObjectDisposedException, so bail out. SqlDataReader can invoke SetClosed()
+            // after the consumer has already disposed the text reader.
+            if (IsClosed)
+            {
+                return;
+            }
+
             _disposalTokenSource.Cancel();
             _reader = null;
             _peekedChar = -1;
