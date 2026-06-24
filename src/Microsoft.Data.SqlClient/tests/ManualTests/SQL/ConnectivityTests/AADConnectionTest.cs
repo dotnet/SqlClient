@@ -159,7 +159,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     connection: conn,
                     transaction: null);
                 string customerId = (string)sqlCommand.ExecuteScalar();
-                Assert.Equal(DataTestUtility.UserManagedIdentityClientId, customerId);
+                // SUSER_SNAME() may return "clientId@tenantId" for managed identity principals.
+                string clientIdPart = customerId.Contains('@') ? customerId.Substring(0, customerId.IndexOf('@')) : customerId;
+                Assert.Equal(DataTestUtility.UserManagedIdentityClientId, clientIdPart);
             }
             finally
             {
