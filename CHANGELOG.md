@@ -27,11 +27,11 @@ See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptio
 
 ### Changed
 
-- Hardened TDS token parsing by adding data-length bounds checks for token and feature-extension-acknowledgement data.
+- Hardened TDS token parsing by adding data-length bounds checks for token and feature-extension-acknowledgment data.
   ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
    [#4358](https://github.com/dotnet/SqlClient/pull/4358))
 
-- Released `Microsoft.Data.SqlClient.Extensions.Azure 7.0.2`, adding WAM broker support for interactive Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.0/7.0.2.md).
+- Released `Microsoft.Data.SqlClient.Extensions.Azure 7.0.2`, adding WAM broker support for Entra ID authentication modes on Windows. See [release notes](release-notes/Extensions/Azure/7.0/7.0.2.md).
   ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
    [#4388](https://github.com/dotnet/SqlClient/pull/4388))
 
