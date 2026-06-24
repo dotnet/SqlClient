@@ -104,6 +104,12 @@ parameters:
       - detailed
       - diagnostic
 
+  # True when building on the internal ADO.Net project.  Internal builds may perform additional or
+  # different steps, such as assembly signing.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
@@ -138,6 +144,8 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
+      referenceType: ${{ parameters.referenceType }}
 
   # Build the Logging package, and publish it to the pipeline artifacts
   # under the given artifact name.  This runs in parallel with the Secrets
@@ -150,6 +158,8 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
+      referenceType: ${{ parameters.referenceType }}
 
   # Build the Abstractions package, and publish it to the pipeline artifacts
   # under the given artifact name.
@@ -167,6 +177,7 @@ stages:
       loggingArtifactsName: $(loggingArtifactsName)
       loggingPackageVersion: $(loggingPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:
@@ -188,6 +199,7 @@ stages:
       mdsPackageVersion: $(mdsPackageVersion)
       akvPackageVersion: $(akvPackageVersion)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       sqlServerPackageVersion: $(sqlServerPackageVersion)
       SNIVersion: ${{ parameters.SNIVersion }}
@@ -220,6 +232,7 @@ stages:
           - build_sqlserver_package_stage
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       loggingArtifactsName: $(loggingArtifactsName)
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
@@ -251,6 +264,7 @@ stages:
       loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
       mdsPackageVersion: $(mdsPackageVersion)
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       sqlServerPackageVersion: $(sqlServerPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}

@@ -4,11 +4,11 @@
 # file in the project root for more information.
 ################################################################################
 
-# This job builds the Abstractions package and runs its tests for a set of .NET
+# This job builds the Logging package and runs its tests for a set of .NET
 # runtimes.
 #
 # This template defines a job named
-# 'test_abstractions_package_job_<jobNameSuffix>' that can be depended on by
+# 'test_logging_package_job_<jobNameSuffix>' that can be depended on by
 # downstream jobs.
 
 parameters:
@@ -27,7 +27,7 @@ parameters:
 
   # The prefix to prepend to the job's display name:
   #
-  #   [<prefix>] Test Abstractions Package
+  #   [<prefix>] Test Logging Package
   #
   - name: displayNamePrefix
     type: string
@@ -42,6 +42,12 @@ parameters:
     - normal
     - detailed
     - diagnostic
+
+  # True when building on the internal ADO.Net project.  When set, assemblies
+  # are signed with the driver key and tests are signed with the test key.
+  - name: isInternalBuild
+    type: boolean
+    default: false
 
   # The suffix to append to the job name.
   - name: jobNameSuffix
@@ -61,11 +67,9 @@ parameters:
   - name: poolName
     type: string
 
-  # True when building on the internal ADO.Net project.  When set, assemblies
-  # are signed with the driver key and tests are signed with the test key.
-  - name: isInternalBuild
-    type: boolean
-    default: false
+  # The pool VM image to use.
+  - name: vmImage
+    type: string
 
   # The C# project reference type to use when building.
   - name: referenceType
@@ -75,14 +79,10 @@ parameters:
       - Package
       - Project
 
-  # The pool VM image to use.
-  - name: vmImage
-    type: string
-
 jobs:
 
-  - job: test_abstractions_package_job_${{ parameters.jobNameSuffix }}
-    displayName: '[${{ parameters.displayNamePrefix }}] Test Abstractions Package'
+  - job: test_logging_package_job_${{ parameters.jobNameSuffix }}
+    displayName: '[${{ parameters.displayNamePrefix }}] Test Logging Package'
     pool:
       name: ${{ parameters.poolName }}
 
@@ -96,11 +96,11 @@ jobs:
 
     variables:
 
-      # The Abstractions test project file to use for all dotnet CLI commands.
+      # The Logging test project file to use for all dotnet CLI commands.
       #
-      # Building this project implicitly builds the Abstractions project.
+      # Building this project implicitly builds the Logging project.
       - name: project
-        value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
+        value: src/Microsoft.Data.SqlClient.Internal/Logging/test/Logging.Test.csproj
 
       # dotnet CLI arguments for build/test/pack commands
       - name: dotnetBuildOpts

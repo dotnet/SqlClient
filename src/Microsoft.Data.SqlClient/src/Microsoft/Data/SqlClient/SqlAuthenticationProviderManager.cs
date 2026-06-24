@@ -61,9 +61,9 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 // Try to load our Azure extension.
-                #if STRONG_NAME_SIGNING
+                #if ASSEMBLY_SIGNING
 
-                // When strong-name signing is enabled, build a fully-qualified AssemblyName
+                // When assembly signing is enabled, build a fully-qualified AssemblyName
                 // that includes the expected public key token.
 
                 SqlClientEventSource.Log.TryTraceEvent(
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
                     $": Attempting to load Azure extension assembly={azureAssemblyName} without " +
-                    "strong name verification; ensure this assembly is from a trusted source");
+                    "strong-name identity verification; ensure this assembly is from a trusted source");
 
                 var assembly = Assembly.Load(azureAssemblyName);
 

@@ -60,7 +60,7 @@
     <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
 
-  <!-- Strong name signing ============================================= -->
+  <!-- Assembly signing ============================================= -->
   <!-- Strong naming is being done in Directory.Build.props -->
 
   <!-- Unsigned: expose internals to UnitTests in any reference mode. -->

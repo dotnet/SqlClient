@@ -11,7 +11,7 @@
 #   - On pushes to GitHub main and ADO internal/main (batched)
 #   - Nightly at 00:00 UTC on both branches
 #
-# On internal/main the strong-name signing key is downloaded and used to sign assemblies during the
+# On internal/main the assembly signing key is downloaded and used to sign assemblies during the
 # build.
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We distinguish the two via
@@ -89,10 +89,10 @@ variables:
     value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
   # Signing key argument passed to build.proj. On internal builds this references the secure file
-  # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
+  # downloaded by download-assembly-signing-key.yml; on public builds it expands to empty.
   - name: signingKeyArg
     ${{ if eq(variables.isInternalBuild, true) }}:
-      value: '-p:SigningKeyPath="$(keyFile.secureFilePath)"'
+      value: '-p:SigningKeyPath="$(driverKeyFile.secureFilePath)"'
     ${{ else }}:
       value: ''
 
@@ -133,13 +133,9 @@ jobs:
           Write-Host 'Done.'
         displayName: Clean packages/ directory
 
-      # On internal builds, download the strong-name signing key.
+      # On internal builds, download the assembly signing key.
       - ${{ if eq(variables.isInternalBuild, true) }}:
-        - task: DownloadSecureFile@1
-          displayName: Download Signing Key
-          inputs:
-            secureFile: netfxKeypair.snk
-          name: keyFile
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
       # Run the Pack target via build.proj.
       - task: DotNetCoreCLI@2
