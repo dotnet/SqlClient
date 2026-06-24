@@ -15,20 +15,22 @@ public static class CommonUtils
     // Returns randomly generated characters of specified length.
     public static SecureString GenerateRandomSecureString(int length = 10)
     {
+        const string alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         SecureString secureString = new();
-        
+
         byte[] bytes = new byte[length];
         using (System.Security.Cryptography.RandomNumberGenerator rng = System.Security.Cryptography.RandomNumberGenerator.Create())
         {
             rng.GetBytes(bytes);
         }
-        
-        // Map random bytes into the printable ASCII range [33, 126).
+
+        // Map random bytes into alphanumeric characters to avoid
+        // connection-string delimiters such as ';' and '='.
         for (int i = 0; i < length; i++)
         {
-            secureString.AppendChar((char)(33 + (bytes[i] % 93)));
+            secureString.AppendChar(alphanumeric[bytes[i] % alphanumeric.Length]);
         }
-        
+
         secureString.MakeReadOnly();
         return secureString;
     }
@@ -38,7 +40,8 @@ public static class CommonUtils
     {
         string path = Path.GetRandomFileName();
         path = path.Replace(".", ""); // Remove period.
-        return string.Concat(prefix, path.Substring(0, length));
+        // Clamp length to available characters to avoid ArgumentOutOfRangeException.
+        return string.Concat(prefix, path.Substring(0, Math.Min(length, path.Length)));
     }
 
     public static string GenerateObjectName()
