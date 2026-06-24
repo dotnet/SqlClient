@@ -35,6 +35,8 @@ See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptio
   ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
    [#4388](https://github.com/dotnet/SqlClient/pull/4388))
 
+- Version-aligned the SqlClient package family to `7.0.2`. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` were re-shipped as `7.0.2` with no functional changes. See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.2.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.2.md).
+
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.

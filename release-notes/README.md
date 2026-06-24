@@ -40,10 +40,11 @@ The latest stable release is
 # Microsoft.Data.SqlClient.Extensions.Abstractions Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0).
+[Microsoft.Data.SqlClient.Extensions.Abstractions 7.0](Extensions/Abstractions/7.0).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0](Extensions/Abstractions/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0)
 
 # Microsoft.Data.SqlClient.Extensions.Azure Release Notes
@@ -60,10 +61,11 @@ The latest release is
 # Microsoft.Data.SqlClient.Internal.Logging Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Internal.Logging 1.0](Internal/Logging/1.0).
+[Microsoft.Data.SqlClient.Internal.Logging 7.0](Internal/Logging/7.0).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Internal.Logging 7.0](Internal/Logging/7.0)
 - [Microsoft.Data.SqlClient.Internal.Logging 1.0](Internal/Logging/1.0)
 
 # Microsoft.SqlServer.Server Release Notes
