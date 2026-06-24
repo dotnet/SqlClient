@@ -5,6 +5,7 @@ This document provides guidance for AI coding agents working with the Microsoft.
 ## Quick Start
 
 ### Essential Context Files
+
 Before making changes, agents should be aware of:
 
 | File | Purpose |
@@ -15,6 +16,7 @@ Before making changes, agents should be aware of:
 | [.github/copilot-instructions.md](.github/copilot-instructions.md) | Copilot-specific instructions |
 
 ### Detailed Technical Instructions
+
 The `.github/instructions/` directory contains comprehensive guides:
 
 | Guide | Coverage |
@@ -29,6 +31,7 @@ The `.github/instructions/` directory contains comprehensive guides:
 | [features.instructions.md](.github/instructions/features.instructions.md) | Feature reference, keywords |
 | [documentation.instructions.md](.github/instructions/documentation.instructions.md) | Documentation and samples |
 | [external-resources.instructions.md](.github/instructions/external-resources.instructions.md) | Docs links, version matrix, external references |
+| [ado-work-items-markdown.instructions.md](.github/instructions/ado-work-items-markdown.instructions.md) | Ensure Azure DevOps work item descriptions are Markdown and preserve newlines |
 
 ## Workflow Prompts
 
@@ -77,6 +80,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 ## Common Tasks
 
 ### Bug Fix Workflow
+
 1. Understand the issue from the bug report
 2. Locate relevant code in `src/Microsoft.Data.SqlClient/src/` (do NOT modify legacy `netcore/src/` or `netfx/src/`)
 3. Check `.github/instructions/features.instructions.md` for existing AppContext switches (including failover compatibility switches) before introducing behavior changes
@@ -86,6 +90,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 7. Update documentation if behavior changes
 
 ### Feature Implementation
+
 1. Review the feature specification
 2. Plan the implementation (see `implement-feature` prompt)
 3. Update reference assemblies if adding public APIs
@@ -94,6 +99,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 6. Do not edit `CHANGELOG.md` directly; instead, add a suggested release-note entry (per `.github/copilot-instructions.md`) in the PR description or via the release-notes workflow/prompt.
 
 ### Adding Connection String Keywords
+
 1. Add to `SqlConnectionStringBuilder`
 2. Update connection string parser
 3. Default to backward-compatible value
@@ -101,6 +107,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 5. Document in feature reference
 
 ### Protocol Changes
+
 1. Reference MS-TDS specification
 2. Update `TdsEnums.cs` for new constants
 3. Implement in `TdsParser.cs` and related files
@@ -108,6 +115,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 5. Consider backward compatibility
 
 ### Performance Optimization
+
 1. Profile the issue using benchmarks or traces
 2. Identify allocation hotspots (see `perf-optimization` prompt)
 3. Apply patterns: `ArrayPool<T>`, `Span<T>`, static/cached instances, source generation
@@ -117,6 +125,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 
 
 ### Key Documentation Links
+
 - [Microsoft.Data.SqlClient on Microsoft Learn](https://learn.microsoft.com/sql/connect/ado-net/introduction-microsoft-data-sqlclient-namespace)
 - [MS-TDS Protocol Specification](https://learn.microsoft.com/openspecs/windows_protocols/ms-tds)
 - [SQL Server Documentation](https://learn.microsoft.com/sql/sql-server/)
@@ -124,6 +133,7 @@ Do **not** create branches directly under `main`, `dev/`, or any other top-level
 ## Repository Policies
 
 See the `policy/` directory for:
+
 - [coding-best-practices.md](policy/coding-best-practices.md) - Programming standards
 - [coding-style.md](policy/coding-style.md) - Code formatting guidelines
 - [review-process.md](policy/review-process.md) - PR review requirements

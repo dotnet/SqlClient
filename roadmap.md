@@ -1,30 +1,92 @@
 # Microsoft.Data.SqlClient Roadmap
 
-The Microsoft.Data.SqlClient roadmap communicates project priorities for evolving and extending the scope of the product. We encourage the community to work with us to improve SqlClient driver for these scenarios and extend it for others.
+The Microsoft.Data.SqlClient roadmap communicates project priorities for evolving and extending the scope of the product. We encourage the community to work with us to improve the SqlClient driver for these scenarios and extend it for others.
+
+> **Last updated:** May 2026
+>
+> This roadmap is a living document. Priorities and timelines may shift based on community feedback, engineering constraints, and business needs. We update this page regularly to reflect the current state of development.
+
+---
+
+## Release Milestones
+
+For active release milestones, their target dates, and the changes included, see [SqlClient milestones](https://github.com/dotnet/SqlClient/milestones).
+
+---
+
+## Current Focus Areas
+
+Our team is actively working on the following high-level themes. Features are tracked via [GitHub issues](https://github.com/dotnet/SqlClient/issues) where applicable — see the linked milestones for associated issue details.
+
+- **Active** — Currently in development
+- **Planned** — Committed for a future milestone with estimated delivery
+- **Backlog** — On our radar for future months, not yet scheduled
+
+### Performance & Reliability
+
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#3356](https://github.com/dotnet/SqlClient/issues/3356) | Connection pool performance improvements | Active | July 2026 |
+| N/A | Performance benchmarking suite | Active | July 2026 |
+| [#422](https://github.com/dotnet/SqlClient/issues/422) | Phase 1 - Unix async performance — thread starvation in parallel `ExecuteReaderAsync` | Active | September 2026 |
+| TBD | Phase 2 - Async usage analysis and optimization | Planned | — |
+
+### New Data Type Support
+
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| TBD | Vector subtype support — `float16` (`Half`) | Active | August 2026 |
+
+### Observability & Diagnostics
+
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#2210](https://github.com/dotnet/SqlClient/issues/2210) [#2211](https://github.com/dotnet/SqlClient/issues/2211) | OpenTelemetry support | Planned | — |
+| N/A | Logging improvements | Planned | — |
+| TBD | Integrate with / expose MSAL logging | Planned | — |
+
+### API Improvements
+
+| Work Item(s) | Feature | Status | ETA |
+| ------------ | ------- | ------ | --- |
+| [#2353](https://github.com/dotnet/SqlClient/issues/2353) | Expose connection encryption information to clients | Planned | September 2026 |
+| [#26](https://github.com/dotnet/SqlClient/issues/26) | Throw `TaskCanceledException` instead of `SqlException` for cancellations | Planned | September 2026 |
+| [#113](https://github.com/dotnet/SqlClient/issues/113) | `BeginTransactionAsync` API on `SqlConnection` | Planned | — |
+
+### Security & Architecture
+
+| Feature | Status | ETA |
+| ------- | ------ | --- |
+| Security hardening activities | Active | Ongoing internally |
+
+### AI & Developer Tooling
+
+| Feature | Status | ETA |
+| ------- | ------ | --- |
+| `System.Data.SqlClient` → `Microsoft.Data.SqlClient` migration via Modernize with Copilot | Active | September 2026 |
+| Modernize SqlClient repository with AI | Active | Ongoing |
+
+### Engineering & Infrastructure
+
+| Feature | Status | ETA |
+| ------- | ------ | --- |
+| CI/CD pipeline redesign | Active | August 2026 |
+| Add SQL Server 2025 to test matrix | Planned | August 2026 |
+| Add .NET 10 to test matrix | Planned | August 2026 |
+| Converting existing traditional pipelines to YAML | Active | August 2026 |
+| Performance benchmarking pipeline (Internal) | Planned | September 2026 |
+
+---
 
 ## Released Versions
 
-- [Release Notes](release-notes/README.md) - For detailed release notes summarizing of all changes/features released.
-- [GitHub Releases](https://github.com/dotnet/sqlclient/releases) - For downloading NuGet Packages and identifying driver releases with changelog notes.
+- [Release Notes](release-notes/README.md) — Detailed release notes summarizing all changes and features released.
+- [GitHub Releases](https://github.com/dotnet/SqlClient/releases) — NuGet packages and changelog notes for each release.
 
-## Upcoming Ship Dates
+---
 
-For upcoming release dates, see [SqlClient milestones](https://github.com/dotnet/SqlClient/milestones).
+## Community Contributions & Feedback
 
-[SqlClient Projects](https://github.com/dotnet/SqlClient/projects) are used by our development team to define roadmap of prioritized work. SqlClient Boards contain issues, pull requests, and other features, development activities that are categorized as cards. Our goal is to be transparent over priorities, work in progress and deliverables.
+For information on how to contribute, see [CONTRIBUTING.md](CONTRIBUTING.md). For details on the PR tracking workflow, see [contributing-workflow.md](contributing-workflow.md).
 
-## Feedback
-
-The best way to give feedback is to create issues in the [dotnet/sqlclient](https://github.com/dotnet/sqlclient) repo.
-
-Although mostly obvious, please give us feedback that will give us insight on the following points:
-
-- Existing features are missing some capability or otherwise don't work well enough.
-- Missing features that should be added to the product.
-- Design choices for a feature that is currently in-progress.
-
-Some important caveats / notes:
-
-- It is best to give design feedback quickly for improvements that are in-development. We're unlikely to hold a feature being part of a release on late feedback.
-- We are most likely to include improvements that either have a positive impact on a broad scenario or have very significant positive impact on a niche scenario. This means that we are unlikely to prioritize modest improvements to niche scenarios.
-- Compatibility will almost always be given a higher priority than improvements.
+The best way to give feedback is to create issues in the [dotnet/SqlClient](https://github.com/dotnet/SqlClient) repo.

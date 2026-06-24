@@ -11,10 +11,9 @@ using System.Transactions;
 using Microsoft.Data.SqlClient;
 using System.Xml;
 
-using DPStressHarness;
 using System.IO;
 
-namespace Stress.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class SqlClientTestGroup : DataTestGroup
     {

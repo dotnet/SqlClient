@@ -67,7 +67,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -77,7 +76,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
@@ -92,7 +91,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Data.Odbc" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
@@ -101,7 +99,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />

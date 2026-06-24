@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Text;
@@ -14,12 +13,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
+using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using Microsoft.Data.Common.ConnectionString;
+#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -376,7 +378,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                // If we want to consider pool operations against the overall connect timeout, 
+                // If we want to consider pool operations against the overall connect timeout,
                 // use the provided timeout. Otherwise, start a fresh timeout to receive the full
                 // connect timeout.
                 _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
@@ -1293,6 +1295,11 @@ namespace Microsoft.Data.SqlClient.Connection
                             len = bLen;
                         }
 
+                        if (len < 0 || len > data.Length - i)
+                        {
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, len);
+                        }
+
                         byte[] stateData = new byte[len];
                         Buffer.BlockCopy(data, i, stateData, 0, len);
                         i += len;
@@ -2177,7 +2184,6 @@ namespace Microsoft.Data.SqlClient.Connection
         // TODO: if this call timed out, what reason do we have to believe some other call succeeded? why not just fail?
         private bool AttemptRetryADAuthWithTimeoutError(
             SqlException sqlex,
-            SqlConnectionOptions connectionOptions, // @TODO: this is not used
             TimeoutTimer timeout)
         {
             if (!_activeDirectoryAuthTimeoutRetryHelper.CanRetryWithSqlException(sqlex))
@@ -2187,8 +2193,10 @@ namespace Microsoft.Data.SqlClient.Connection
             // Reset client-side timeout.
             timeout.Reset();
 
-            // When server timeout, the auth context key was already created. Clean it up here.
+            // Clear fed-auth state captured by the failed attempt so OnFedAuthInfo's cache-reuse branch starts from null on the retry.
             _dbConnectionPoolAuthenticationContextKey = null;
+            _fedAuthToken = null;
+            _newDbConnectionPoolAuthenticationContext = null;
 
             // When server timeouts, connection is doomed. Reset here to allow reconnection.
             UnDoomThisConnection();
@@ -3286,7 +3294,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
                 catch (SqlException sqlex)
                 {
-                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
                         continue;
                     }
@@ -3599,7 +3607,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
                 catch (SqlException sqlex)
                 {
-                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
                         continue;
                     }

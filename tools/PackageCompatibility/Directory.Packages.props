@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- We purposely do not include any parent Directory.Packages.props files. -->
+
+  <PropertyGroup>
+    <!-- Use the following package versions if not supplied. -->
+    <AbstractionsVersion>1.0.0</AbstractionsVersion>
+    <AkvProviderVersion>7.0.0</AkvProviderVersion>
+    <LoggingVersion>1.0.0</LoggingVersion>
+    <SqlClientVersion>7.0.1</SqlClientVersion>
+    <SqlServerVersion>1.0.0</SqlServerVersion>
+
+    <!-- We omit referencing the Azure package entirely by default. -->
+  </PropertyGroup>
+
+  <!-- SqlClient Packages -->
+  <ItemGroup>
+    <!--
+      Normal apps wouldn't explicitly reference these 2 packages, but we do here to force the
+      desired versions.  This helps detect version conflicts.
+    -->
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Abstractions" Version="$(AbstractionsVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Internal.Logging" Version="$(LoggingVersion)" />
+
+    <!-- These are normal references for apps. -->
+    <PackageVersion Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="$(AkvProviderVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientVersion)" />
+    <PackageVersion Include="Microsoft.SqlServer.Server" Version="$(SqlServerVersion)" />
+
+    <!-- Declare a version for the Azure package if one was specified. -->
+    <PackageVersion
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Version="$(AzureVersion)"
+      Condition="'$(AzureVersion)' != ''" />
+  </ItemGroup>
+
+  <!-- Other Packages -->
+  <ItemGroup>
+    <PackageVersion Include="System.CommandLine" Version="2.0.6" />
+    <PackageVersion Include="xunit.v3" Version="4.0.0-pre.81" />
+  </ItemGroup>
+
+</Project>

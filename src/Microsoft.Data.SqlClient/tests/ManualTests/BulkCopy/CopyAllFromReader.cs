@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class CopyAllFromReader
     {
         private static readonly string destinationTable = null;
@@ -44,10 +45,10 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         using (DbDataReader reader = srcCmd.ExecuteReader())
                         {
                             IDictionary stats;
-                            long expectedIduCount = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 1 : 0;
-                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 12;
-                            long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 14;
-                            long expectedTransactions = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 1 : 0;
+                            long expectedIduCount = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 2 : 0;
+                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 13;
+                            long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
+                            long expectedTransactions = DataTestUtility.IsAzureSynapse || DataTestUtility.IsAtLeastSQL2017() ? 2 : 0;
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                             {
                                 bulkcopy.DestinationTableName = dstTable;

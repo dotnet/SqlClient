@@ -606,6 +606,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>'{0}'에 대한 인증 공급자를 찾을 수 없습니다. Active Directory(Entra ID) 인증 방법을 사용하려면 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 패키지(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)를 설치하세요.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' 매개 변수는 null이거나 비워 둘 수 없습니다.</value>
   </data>
@@ -959,6 +962,9 @@
   </data>
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>이 연결이 제거되기 전에 풀에서 활성화되어 있는 최소 시간(초)입니다.</value>
+  </data>
+  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
+    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>풀에서 허용되는 최대 연결 수입니다.</value>

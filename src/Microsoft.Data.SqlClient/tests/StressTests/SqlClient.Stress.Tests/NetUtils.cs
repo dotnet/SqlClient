@@ -9,7 +9,7 @@ using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Microsoft.Test.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public static class NetUtils
     {
