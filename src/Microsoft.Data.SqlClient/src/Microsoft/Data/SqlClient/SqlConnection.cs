@@ -1406,10 +1406,18 @@ namespace Microsoft.Data.SqlClient
                     Task reconnectTask = _currentReconnectionTask;
                     if (reconnectTask != null && !reconnectTask.IsCompleted)
                     {
-                        CancellationTokenSource cts = _reconnectionCancellationSource;
-                        if (cts != null)
+                        // Only request cancellation here. ReconnectAsync still owns the
+                        // CancellationTokenSource and disposes it in its finally block once it
+                        // has stopped using the token; disposing it here while the reconnect
+                        // task is still running could surface ObjectDisposedException.
+                        try
                         {
-                            cts.Cancel();
+                            _reconnectionCancellationSource?.Cancel();
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            // ReconnectAsync's finally block disposed the source concurrently;
+                            // the reconnect is already completing, so there is nothing to cancel.
                         }
                         AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                         if (State != ConnectionState.Open)
@@ -1651,6 +1659,7 @@ namespace Microsoft.Data.SqlClient
 
         private async Task ReconnectAsync(int timeout)
         {
+            CancellationTokenSource cts = new CancellationTokenSource();
             try
             {
                 long commandTimeoutExpiration = 0;
@@ -1658,7 +1667,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
-                CancellationTokenSource cts = new CancellationTokenSource();
                 _reconnectionCancellationSource = cts;
                 CancellationToken ctoken = cts.Token;
                 int retryCount = _connectRetryCount; // take a snapshot: could be changed by modifying the connection string
@@ -1719,6 +1727,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                _reconnectionCancellationSource = null;
+                cts.Dispose();
                 _recoverySessionData = null;
                 _suppressStateChangeForReconnection = false;
             }
