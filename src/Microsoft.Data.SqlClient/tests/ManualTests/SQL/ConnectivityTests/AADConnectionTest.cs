@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     transaction: null);
                 string customerId = (string)sqlCommand.ExecuteScalar();
                 // SUSER_SNAME() may return "clientId@tenantId" for managed identity principals.
-                string clientIdPart = customerId.Contains('@') ? customerId.Substring(0, customerId.IndexOf('@')) : customerId;
+                string clientIdPart = customerId.Contains("@") ? customerId.Substring(0, customerId.IndexOf('@')) : customerId;
                 Assert.Equal(DataTestUtility.UserManagedIdentityClientId, clientIdPart);
             }
             finally
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
-        public static void ActiveDirectoryPasswordWithNoAuthType()
+        public static void SqlCredentialsWithNoAuthType()
         {
             string connStrWithNoAuthType = DataTestUtility.AzureSqlConnectionString
                 .AddUserToConnString()
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             conn.Open();
         }
 
-        // Test passes locally everytime, but in pipelines fails randomly with uncertainty.
+        // Test passes locally every time, but in pipelines fails randomly with uncertainty.
         // e.g. Second Entra ID connection too slow (802ms)! (More than 30% of the first (576ms).)
         [ActiveIssue("16058")]
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
