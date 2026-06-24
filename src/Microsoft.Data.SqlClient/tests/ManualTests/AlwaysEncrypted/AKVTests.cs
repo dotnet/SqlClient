@@ -30,7 +30,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestEncryptDecryptWithAKV()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            // Select connection string - If an enclave connection string exists, use that, but for
+            // non-enclave test runs, use the standard TCP connection string.
+            string baseConnectionString = string.IsNullOrWhiteSpace(DataTestUtility.TCPConnectionStringHGSVBS)
+                ? DataTestUtility.TCPConnectionString
+                : DataTestUtility.TCPConnectionStringHGSVBS;
+
+            SqlConnectionStringBuilder builder = new(baseConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -71,7 +77,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldFail()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            // Select connection string - If an enclave connection string exists, use that, but for
+            // non-enclave test runs, use the standard TCP connection string.
+            string baseConnectionString = string.IsNullOrWhiteSpace(DataTestUtility.TCPConnectionStringHGSVBS)
+                ? DataTestUtility.TCPConnectionString
+                : DataTestUtility.TCPConnectionStringHGSVBS;
+
+            SqlConnectionStringBuilder builder = new(baseConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -148,7 +160,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            // Select connection string - If an enclave connection string exists, use that, but for
+            // non-enclave test runs, use the standard TCP connection string.
+            string baseConnectionString = string.IsNullOrWhiteSpace(DataTestUtility.TCPConnectionStringHGSVBS)
+                ? DataTestUtility.TCPConnectionString
+                : DataTestUtility.TCPConnectionStringHGSVBS;
+
+            SqlConnectionStringBuilder builder = new(baseConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,

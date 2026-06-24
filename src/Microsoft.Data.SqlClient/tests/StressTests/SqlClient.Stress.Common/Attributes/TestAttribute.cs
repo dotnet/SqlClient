@@ -4,7 +4,7 @@
 
 using System;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public enum TestPriority
     {

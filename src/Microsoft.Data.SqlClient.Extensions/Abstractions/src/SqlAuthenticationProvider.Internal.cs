@@ -59,7 +59,7 @@ public abstract partial class SqlAuthenticationProvider
 
                 // Look for the manager class.
                 const string className = "Microsoft.Data.SqlClient.SqlAuthenticationProviderManager";
-                var manager = assembly.GetType(className);
+                Type? manager = assembly.GetType(className);
 
                 if (manager is null)
                 {

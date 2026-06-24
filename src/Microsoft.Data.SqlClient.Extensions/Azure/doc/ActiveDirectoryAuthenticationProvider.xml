@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 Licensed to the .NET Foundation under one or more agreements.
 The .NET Foundation licenses this file to you under the MIT license.
 See the LICENSE file in the project root for more information.
@@ -14,6 +14,10 @@ See the LICENSE file in the project root for more information.
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class.
       </summary>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor>
     <ctor2>
       <param name="applicationClientId">
@@ -51,6 +55,10 @@ See the LICENSE file in the project root for more information.
           }
         </code>
       </example>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor2>
     <ctor3>
       <param name="deviceCodeFlowCallbackMethod">
@@ -62,7 +70,22 @@ See the LICENSE file in the project root for more information.
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
+      <remarks>
+        New code should prefer the <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.#ctor(Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions)"/>
+        overload to avoid adding more constructor overloads as new options are introduced.
+      </remarks>
     </ctor3>
+    <ctorOptions>
+      <param name="options">
+        A <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> instance whose properties initialize the provider. Must not be <see langword="null" />.
+      </param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class from a <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" /> bag. This is the recommended constructor for new code because new options can be added to <c>ActiveDirectoryAuthenticationProviderOptions</c> without forcing breaking changes on callers.
+      </summary>
+      <exception cref="T:System.ArgumentNullException">
+        Thrown when <paramref name="options" /> is <see langword="null" />.
+      </exception>
+    </ctorOptions>
     <AcquireTokenAsync>
       <param name="parameters">
         The Active Directory authentication parameters passed to authentication providers.
@@ -79,7 +102,12 @@ See the LICENSE file in the project root for more information.
         Clears cached user tokens from the token provider.
       </summary>
       <remarks>
-        This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.
+        <para>
+          This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.
+        </para>
+        <para>
+          The driver's per-pool federated-authentication token cache is also cleared, so subsequent <c>SqlConnection.Open</c> calls will reacquire fed-auth tokens instead of reusing cached entries.
+        </para>
       </remarks>
     </ClearUserTokenCache>
     <SetDeviceCodeFlowCallback>
@@ -126,13 +154,19 @@ See the LICENSE file in the project root for more information.
     </SetDeviceCodeFlowCallback>
     <SetParentActivityOrWindowFunc>
       <param name="parentActivityOrWindowFunc">
-        The parent as an object, in order to be used from shared .NET Standard assemblies.
+        A function that returns the parent window/activity object to be used by MSAL for interactive authentication UI.
+        On Windows, return an <see cref="T:System.IntPtr" /> window handle (or an <see cref="T:System.Windows.Forms.IWin32Window" /> on .NET Framework).
+        On Android, return an Activity; on iOS, return a UIViewController (or the platform equivalent).
+        Pass <see langword="null" /> to clear a previously installed callback and revert to the provider's default behavior.
       </param>
       <summary>
-        Sets a reference to the ViewController (if using Xamarin.iOS), Activity (if using Xamarin.Android) IWin32Window or IntPtr (if using .NET Framework). Used for invoking the browser for Active Directory Interactive authentication.
+        Sets a function to return the parent window handle to be used for WAM (Windows Account Manager) broker authentication prompts.
       </summary>
       <remarks>
-        Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.
+        On Windows, this handle is used to parent the WAM broker dialog. If not set, the provider will attempt to automatically detect the console window handle.
+        On non-Windows platforms, this callback is forwarded to MSAL so interactive flows can parent their UI to the host Activity / UIViewController (or platform equivalent).
+
+        Exceptions thrown by <paramref name="parentActivityOrWindowFunc" /> when it is invoked by MSAL are not caught by the provider; they propagate up to the caller of the originating <c>AcquireToken</c> request so that bugs in the callback surface where they are most diagnosable.
       </remarks>
     </SetParentActivityOrWindowFunc>
     <SetIWin32WindowFunc>
@@ -140,8 +174,11 @@ See the LICENSE file in the project root for more information.
         A function to return the current window.
       </param>
       <summary>
-        Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window."
+        Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window.
       </summary>
+      <remarks>
+        This API exists for .NET Framework callers using the embedded WebView. New code on any framework should prefer <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc(System.Func{System.Object})" />, which works on both .NET Framework and modern .NET and integrates with the WAM broker on Windows.
+      </remarks>
     </SetIWin32WindowFunc>
     <SetAcquireAuthorizationCodeAsyncCallback>
       <param name="acquireAuthorizationCodeAsyncCallback">

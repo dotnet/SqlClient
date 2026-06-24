@@ -98,6 +98,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool? s_isVectorSupported;
         private static bool? s_isVectorFloat16Supported;
 
+        // Login permissions
+        private static bool? s_isSysAdmin;
+        private static bool? s_isSecurityAdmin;
+
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -244,6 +248,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return false;
             }
         }
+
+        public static bool IsSysAdmin =>
+            s_isSysAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("sysadmin");
+
+        public static bool IsSecurityAdmin =>
+            s_isSecurityAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("securityadmin");
+
+        public static bool CanCreateLogins =>
+            IsSysAdmin || IsSecurityAdmin;
+
+        public static bool CanUseSqlAuthentication =>
+            IsSysAdmin && GetAuthenticationMode() == 2;
 
         static DataTestUtility()
         {
@@ -545,6 +563,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             command.Parameters.AddWithValue("@name", typeName);
 
             return (int)command.ExecuteScalar() > 0;
+        }
+
+        public static bool IsServerRoleMember(string roleName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT IS_SRVROLEMEMBER(@role)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@role", roleName);
+
+            // IS_SRVROLEMEMBER returns 1 if the caller is a member of the specified server role, 0 if not, and DBNull.Value if the role is not valid.
+            return command.ExecuteScalar() is int result && result == 1;
+        }
+
+        public static int GetAuthenticationMode()
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+
+            connection.Open();
+            using SqlCommand command = new("EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'LoginMode'", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+
+            reader.Read();
+            return reader.GetInt32(1);
         }
 
         public static bool IsAdmin

@@ -30,16 +30,15 @@ parameters:
   # True to enable debugging steps.
   - name: debug
     type: boolean
-    default: false
 
-  # True to fail the job when stress tests fail.  When false, test failures produce warnings.
-  - name: failOnTestFailure
+  # When true, test failures produce warnings (SucceededWithIssues) but do not fail the job.
+  # When false, test failures fail the job.  All test steps always run regardless of this setting.
+  - name: warnOnTestFailure
     type: boolean
 
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
-    default: normal
     values:
     - quiet
     - minimal
@@ -52,11 +51,15 @@ parameters:
     type: object
     default: [net462]
 
-  # The list of .NET runtimes to test against.  These must align with the TargetFrameworks defined
-  # in the stress test Directory.Build.props and the TFMs that SqlClient ships.
+  # The list of .NET runtimes to test against.  These should include the TFMs that SqlClient ships
+  # as well as any upcoming runtimes being validated (e.g. net10.0 is tested but not yet shipped).
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0]
+    default: [net8.0, net9.0, net10.0]
+
+  # The 1ES pool name for Linux and Windows jobs.  macOS always uses 'Azure Pipelines'.
+  - name: poolName
+    type: string
 
 stages:
   - stage: stress_tests_stage
@@ -80,10 +83,12 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Linux
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-        failOnTestFailure: ${{ parameters.failOnTestFailure }}
+        warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: linux
+        # No .NET Framework runtimes on Linux.
+        netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ADO-CI-1ES-Pool
+        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
@@ -100,12 +105,12 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: Win
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-        failOnTestFailure: ${{ parameters.failOnTestFailure }}
+        warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: windows
         # Note that we include the .NET Framework runtimes for test runs on Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ADO-CI-1ES-Pool
+        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
@@ -124,8 +129,10 @@ stages:
         debug: ${{ parameters.debug }}
         displayNamePrefix: macOS
         dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-        failOnTestFailure: ${{ parameters.failOnTestFailure }}
+        warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
         jobNameSuffix: macos
+        # No .NET Framework runtimes on macOS.
+        netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
         # We don't have any 1ES Hosted Pool images for macOS, so we use a generic one from Azure
         # Pipelines.

@@ -38,6 +38,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseCompatibilityAsyncBehaviour = null;
         switchesHelper.UseCompatibilityProcessSni = null;
         switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
@@ -56,6 +57,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.LegacyVarTimeZeroScaleBehaviour);
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
+        Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
         Assert.False(switchesHelper.UseConnectionPoolV2);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
         Assert.False(switchesHelper.TruncateScaledDecimal);

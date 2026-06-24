@@ -55,7 +55,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             maxPoolSize: maxPoolSize,
             creationTimeout: DefaultCreationTimeoutInMilliseconds,
             loadBalanceTimeout: 0,
-            hasTransactionAffinity: hasTransactionAffinity
+            hasTransactionAffinity: hasTransactionAffinity,
+            idleTimeout: 0
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(

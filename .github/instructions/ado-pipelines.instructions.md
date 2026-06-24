@@ -110,6 +110,20 @@ Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj` and thre
 - `localFeedPath` = `$(Build.SourcesDirectory)/packages` — local NuGet feed for inter-package deps
 - `packagePath` = `$(Build.SourcesDirectory)/output` — NuGet pack output
 
+## Variable Naming — Avoid `{COMMAND}ARGUMENTS` Names
+
+The dotnet CLI (via System.CommandLine) reads environment variables named `{COMMAND}ARGUMENTS` and silently injects their content into the parsed arguments for that subcommand. Because Azure DevOps automatically exposes all pipeline variables as uppercased environment variables, a pipeline variable named `runArguments` becomes `RUNARGUMENTS`, which `dotnet run` reads and injects into the application's `args[]` — bypassing the `--` separator.
+
+**Forbidden variable names** (any casing):
+- `runArguments` — injected into `dotnet run`
+- `buildArguments` — injected into `dotnet build`
+- `testArguments` — injected into `dotnet test`
+- Any name matching `{dotnet-subcommand}Arguments`
+
+**Use instead**: `dotnetBuildOpts`, `dotnetRunOpts`, `stressTestArgs`, or other names that do not match the `{COMMAND}ARGUMENTS` pattern.
+
+This affects ALL .NET SDK versions (8.0+). The injection is invisible in `[command]` log lines, making it extremely hard to diagnose. The only symptom is the application receiving unexpected arguments.
+
 ## Conventions When Editing Pipelines
 
 - Always use templates for reusable logic — do not inline complex steps

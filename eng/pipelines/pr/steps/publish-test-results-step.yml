@@ -1,0 +1,63 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Publishes the test result files from the job to the pipeline and uploads the test results
+# (including code coverage results) to a pipeline artifact.
+
+parameters:
+
+  # Configuration to use to build the project.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Display name of the platform. This will be formatted into the test result name. As such, only
+  # alphanumeric and _ characters are permitted.
+  - name: platformDisplayName
+    type: string
+
+  # Display name of the test target that is being executed. This will be formatted into the test
+  # result name. As such, only alphanumeric and _ characters are permitted.
+  - name: testDisplayName
+    type: string
+
+  # Name of the artifact to upload the test results (including code coverage) to.
+  - name: testResultsArtifactBaseName
+    type: string
+
+  # Absolute path to the test results folder. This folder will be published to the artifact defined
+  # by ${{ testResultsArtifactBaseName }}_$(System.JobId)
+  - name: testResultsPath
+    type: string
+
+steps:
+  - pwsh: New-Item -ItemType Directory -Force -Path "${{ parameters.testResultsPath }}"
+    displayName: Ensure test results directory exists
+    condition: succeededOrFailed()
+
+  # Publish the test results (trx files) to the pipeline
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results'
+    inputs:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      mergeTestResults: true
+      testResultsFiles: |
+        ${{ parameters.testResultsPath }}/*.trx
+        ${{ parameters.testResultsPath }}/**/*.coverage
+      testResultsFormat: VSTest
+      testRunTitle: "${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
+    condition: succeededOrFailed()
+
+  # Publish the test results as artifacts for the pipeline
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Test Artifacts'
+    inputs:
+      artifact: ${{ parameters.testResultsArtifactBaseName }}_$(System.JobId)
+      targetPath: ${{ parameters.testResultsPath }}
+    condition: succeededOrFailed()
+

@@ -4,8 +4,9 @@
     // We currently require the .NET 10 SDK to build and test the project.
     "version": "10.0.300",
 
-    // Lock to the above version so that we can control when we take breaking sdk changes.
-    "rollForward": "disable",
+    // Allow roll-forward within the 10.0.3xx feature band so servicing patches
+    // are picked up automatically without requiring a PR for each bump.
+    "rollForward": "patch",
 
     // Do not allow pre-release versions.
     //

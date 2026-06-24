@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     /// <summary>
     /// Random number generator that tracks information necessary to reproduce a sequence of random numbers.
