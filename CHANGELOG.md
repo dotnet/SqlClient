@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.2] - 2026-06-24
+
+This update brings the following changes since the [7.0.1](release-notes/7.0/7.0.1.md) release.
+See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptions.
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlCommand.Cancel()` when the active connection has already been torn down.
+  ([#4372](https://github.com/dotnet/SqlClient/pull/4372),
+   [#4373](https://github.com/dotnet/SqlClient/pull/4373))
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetBytes`/`GetChars` when called with a `null` destination buffer.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4206](https://github.com/dotnet/SqlClient/pull/4206))
+
+- Fixed Always Encrypted column master key signature verification incorrectly reusing cached results.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4343](https://github.com/dotnet/SqlClient/pull/4343))
+
+### Changed
+
+- Hardened TDS token parsing by adding data-length bounds checks for token and feature-extension-acknowledgement data.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4358](https://github.com/dotnet/SqlClient/pull/4358))
+
+- Released `Microsoft.Data.SqlClient.Extensions.Azure 7.0.2`, adding WAM broker support for interactive Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.0/7.0.2.md).
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4388](https://github.com/dotnet/SqlClient/pull/4388))
+
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.

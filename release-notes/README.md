@@ -49,10 +49,11 @@ The latest release is
 # Microsoft.Data.SqlClient.Extensions.Azure Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0).
+[Microsoft.Data.SqlClient.Extensions.Azure 7.0](Extensions/Azure/7.0).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Azure 7.0](Extensions/Azure/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0)
 
 
