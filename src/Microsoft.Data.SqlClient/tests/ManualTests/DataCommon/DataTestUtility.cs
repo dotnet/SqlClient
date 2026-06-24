@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
-        public static bool IsUserManagedIdentitySupported = true;
+        public static bool IsUserManagedIdentitySupported = false;
         public static string AADAccessToken = null;
         public static bool IsSystemManagedIdentitySupported = false;
         public static string AADSystemIdentityAccessToken = null;
@@ -275,7 +275,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PowerShellPath = c.PowerShellPath;
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
-            IsUserManagedIdentitySupported = c.ManagedIdentitySupported;
+            IsUserManagedIdentitySupported = c.ManagedIdentitySupported && !string.IsNullOrEmpty(UserManagedIdentityClientId);
+            IsSystemManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
 
