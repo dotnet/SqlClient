@@ -13,7 +13,7 @@ See the [full release notes](release-notes/6.1/6.1.6.md) for detailed descriptio
 
 ### Added
 
-- Added Web Account Manager (WAM) broker support for interactive Entra ID authentication (Windows only), including the new `ActiveDirectoryAuthenticationProviderOptions` type with a `UseWamBroker` property, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)` constructor overload, and a cross-platform `SetParentActivityOrWindowFunc(Func<object>)` method.
+- Added Web Account Manager (WAM) broker support for the supported Entra ID authentication modes (Windows only), including the new `ActiveDirectoryAuthenticationProviderOptions` type with a `UseWamBroker` property, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)` constructor overload, and a cross-platform `SetParentActivityOrWindowFunc(Func<object>)` method.
   ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
    [#4387](https://github.com/dotnet/SqlClient/pull/4387))
 
