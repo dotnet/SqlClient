@@ -67,8 +67,11 @@ public class AADConnectionTest
 
         SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
+        // The Azure.Identity surface message can vary across SDK versions and
+        // platforms, so assert on the stable driver-emitted error that proves
+        // the managed-identity auth path was taken and failed.
         Regex expected = new(
-            @"(\[Managed Identity\]|ManagedIdentityCredential) Authentication unavailable",
+            @"Failed to authenticate the user.*Authentication=ActiveDirectoryManagedIdentity",
             RegexOptions.IgnoreCase);
 
         Assert.Matches(expected, e.GetBaseException().Message);
