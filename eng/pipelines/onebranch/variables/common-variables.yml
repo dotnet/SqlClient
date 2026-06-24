@@ -31,7 +31,7 @@ variables:
   - name: Minor
     value: '1'
   - name: Patch
-    value: '5'
+    value: '6'
 
   - name: NugetPackageVersion
     value: '$(Major).$(Minor).$(Patch)'
@@ -41,7 +41,7 @@ variables:
   # maintain this variable such that these testing preview builds receive newer version numbers
   # than previous builds.
   - name: PreviewNugetPackageVersion
-    value: 6.1.6-preview1
+    value: 6.1.7-preview1
 
   # GOTCHA: We're intentionally omitting the '.' between Minor and Patch because the BuildNumber
   # already contains a '.' and assembly file versions must only contain a maximum of three '.'
@@ -68,7 +68,7 @@ variables:
   - name: akvVersionMinor
     value: '1'
   - name: akvVersionPatch
-    value: '2'
+    value: '3'
   - name: akvVersionPreview
     value: ''
 
