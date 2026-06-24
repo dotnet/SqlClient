@@ -30,6 +30,8 @@ public sealed class UnprivilegedLogin : IDisposable
         DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer()
             && DataTestUtility.CanCreateLogins && DataTestUtility.CanUseSqlAuthentication;
 
+    public static bool IsAtLeastSQL2017 => DataTestUtility.IsAtLeastSQL2017();
+
     public UnprivilegedLogin()
     {
         // xUnit will instantiate the class before evaluating the test condition - make sure that we don't
@@ -133,7 +135,7 @@ public sealed class UnprivilegedLogin : IDisposable
         Assert.Equal(BulkCopyRowCount, resultantRowCount);
     }
 
-    [ConditionalFact(nameof(CanRunTests))]
+    [ConditionalFact(nameof(CanRunTests), nameof(IsAtLeastSQL2017))]
     public void BulkCopyWithoutMetadataPermission_FailsWhenUsingAliases()
     {
         AssertEnvironmentCreated();
