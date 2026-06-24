@@ -42,6 +42,9 @@ if: |
 
 engine: copilot
 
+# Setting environment here isolates token access to a protected environment.
+# This restriction prevents threat-detection from functioning.
+# TODO: Re-enable threat-detection once we restore default environment settings.
 environment: issue-triage
 
 permissions:
@@ -68,6 +71,10 @@ safe-outputs:
   remove-labels:
     allowed: ["Auto-Triage: Waiting for Author"]
     max: 1
+  # Threat detection does not work in protected environments
+  # because the Copilot token cannot be read from environment configuration.
+  # Re-enable this when we return to default environment settings.
+  threat-detection: false 
   # Silently skip noop runs (e.g. random author comment with no new env info).
   # Without this, gh-aw auto-creates a tracking issue "[aw] No-Op Runs" and
   # appends a comment to it for every noop.
