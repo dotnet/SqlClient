@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- @TODO: Use full assembly name here -->
     <AssemblyName>ManualTests</AssemblyName>
@@ -45,6 +45,7 @@
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="DataCommon\UsernamePasswordProvider.cs" />
     <Compile Include="DataCommon\XEventScope.cs" />
+    <Compile Include="Extensions\CodeAnalysis.netfx.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
@@ -179,6 +180,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\Transaction3.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\UnprivilegedLogin.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\WriteToServerTest.cs" />
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
   </ItemGroup>
