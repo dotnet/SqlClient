@@ -30,12 +30,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly int _ownerPoolId;
 
         // Optional callback invoked (under _lock) when the state enters the blocking period;
-        // used by the legacy wait-handle pool to signal its error wait handle. Must be cheap
-        // and non-reentrant.
+        // Must be cheap and non-reentrant. Must not throw. If null, no action is taken.
         private readonly Action? _onEnter;
 
         // Optional callback invoked (under _lock) when the state leaves the blocking period
-        // via the exit timer or Clear(). Must be cheap and non-reentrant.
+        // via the exit timer or Clear(). Must be cheap and non-reentrant. Must not throw.
+        // If null, no action is taken.
         private readonly Action? _onExit;
 
         // Time source used to create the exit timer; overridable so tests can drive scheduling
@@ -129,22 +129,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cachedException = ex;
                 wait = _nextWait;
 
-                // Create the exit timer disarmed (infinite due time); it is armed below, still
-                // under the lock. ADP.UnsafeCreateTimer suppresses execution-context flow so the timer
-                // doesn't capture and pin the current ExecutionContext and its AsyncLocals for its
-                // lifetime, while still honoring the injected TimeProvider for testability.
                 ITimer newTimer = ADP.UnsafeCreateTimer(
                     _timeProvider,
                     ExitCallback,
-                    null,
+                    this,
                     wait,
-                    Timeout.InfiniteTimeSpan);
+                    wait);
                 oldTimer = _exitTimer;
                 _exitTimer = newTimer;
 
                 // Bump the backoff for the next failure, capped at MaxWait. FR-008.
                 TimeSpan doubled = _nextWait + _nextWait;
-                _nextWait = doubled >= MaxWait ? MaxWait : doubled;
+                _nextWait = doubled > MaxWait ? MaxWait : doubled;
 
                 // Signal the enter event while still holding the lock so the external signal order
                 // (onEnter/onExit) can never diverge from the internal state transitions under
@@ -201,28 +197,29 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// backoff is left intact so that, if the next attempt fails, the backoff continues
         /// to grow rather than resetting. The backoff is reset only on <see cref="Clear"/>.
         /// </summary>
-        /// <param name="state">The state object passed to the timer callback. Not used,
-        /// but required for the callback signature.
-        /// </param>
-        private void ExitCallback(object? state)
+        private static void ExitCallback(BlockingPeriodErrorState state)
         {
             ITimer? oldTimer;
 
-            lock (_lock)
+            lock (state._lock)
             {
-                _cachedException = null;
-                oldTimer = _exitTimer;
-                _exitTimer = null;
+                state._cachedException = null;
+                oldTimer = state._exitTimer;
+                state._exitTimer = null;
 
-                // Signal and trace under the lock so the exit signal is ordered consistently
+                // Signal under the lock so the exit signal is ordered consistently
                 // with the state transition relative to concurrent Enter/Clear callbacks.
-                _onExit?.Invoke();
+                try {
+                    state._onExit?.Invoke();
+                } catch {
+                    // Ignore exceptions from the exit event.
+                }
             }
 
             oldTimer?.Dispose();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", _ownerPoolId);
+                "<prov.DbConnectionPool.ExitErrorStateCallback|RES|CPOOL> {0}, Exiting blocking period.", state._ownerPoolId);
         }
 
         /// <summary>
@@ -240,7 +237,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return;
                 }
 
-                _disposed = true;
                 _cachedException = null;
                 _inElevatedState = false;
                 timerToDispose = _exitTimer;
@@ -248,6 +244,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             timerToDispose?.Dispose();
+            _disposed = true;
         }
     }
 }

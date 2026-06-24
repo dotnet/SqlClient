@@ -149,9 +149,10 @@ namespace Microsoft.Data.Common
             }
         }
 
+#nullable enable
         internal static Timer UnsafeCreateTimer(
             TimerCallback callback,
-            object state,
+            object? state,
             int dueTimeMilliseconds,
             int periodMilliseconds) =>
             UnsafeCreateTimer(
@@ -160,7 +161,7 @@ namespace Microsoft.Data.Common
                 TimeSpan.FromMilliseconds(dueTimeMilliseconds),
                 TimeSpan.FromMilliseconds(periodMilliseconds));
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto
             // a global timer causing them to live forever
@@ -177,42 +178,37 @@ namespace Microsoft.Data.Common
 
         /// <summary>
         /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
-        /// capturing the current <see cref="ExecutionContext"/>. Suppressing the flow prevents the
-        /// timer from rooting the calling context and its <c>AsyncLocal</c> values for the lifetime
-        /// of the timer, while routing creation through <paramref name="timeProvider"/> so callers
-        /// can inject a test double (e.g. a fake time provider) for deterministic scheduling.
+        /// capturing the current <see cref="ExecutionContext"/>. This overload accepts a
+        /// parameterless <see cref="Action"/> for callbacks that do not require state.
         /// </summary>
         /// <param name="timeProvider">The time provider used to create the timer.</param>
-        /// <param name="callback">The delegate invoked when the timer fires.</param>
-        /// <param name="state">An object passed to <paramref name="callback"/>, or <see langword="null"/>.</param>
+        /// <param name="callback">The parameterless delegate invoked when the timer fires.</param>
+        /// <param name="state"></param>
         /// <param name="dueTime">The amount of time to wait before the first invocation, or
         /// <see cref="Timeout.InfiniteTimeSpan"/> to create the timer disarmed.</param>
         /// <param name="period">The interval between invocations, or
         /// <see cref="Timeout.InfiniteTimeSpan"/> to disable periodic signaling.</param>
         /// <returns>An <see cref="ITimer"/> created by <paramref name="timeProvider"/>.</returns>
-        // TODO: Route the other UnsafeCreateTimer overloads through this method (passing
-        // TimeProvider.System) so execution-context suppression lives in a single place.
-        internal static ITimer UnsafeCreateTimer(
+        internal static ITimer UnsafeCreateTimer<T>(
             TimeProvider timeProvider,
-            TimerCallback callback,
-            object state,
+            Action<T> callback,
+            T state,
             TimeSpan dueTime,
             TimeSpan period)
         {
-            // Don't capture the current ExecutionContext and its AsyncLocals onto
-            // a timer causing them to live forever. Honor the supplied TimeProvider
-            // so callers can inject a test double for deterministic scheduling.
             if (ExecutionContext.IsFlowSuppressed())
             {
-                return timeProvider.CreateTimer(callback, state, dueTime, period);
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
             }
 
             using (ExecutionContext.SuppressFlow())
             {
-                return timeProvider.CreateTimer(callback, state, dueTime, period);
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
             }
         }
 
+
+#nullable restore
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
