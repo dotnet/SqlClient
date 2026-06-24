@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// Runs a test where TDS Server doesn't send encryption info during pre-login response.
-        /// The driver is expected to fail when that happens, and terminate the connection during pre-login phase 
+        /// The driver is expected to fail when that happens, and terminate the connection during pre-login phase
         /// when client enables encryption using Encrypt=true or uses default encryption setting.
         /// </summary>
         [Fact]
@@ -476,7 +476,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
 
-            // Dispose the server to force connection timeout 
+            // Dispose the server to force connection timeout
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
 
-            // Dispose the server to force connection timeout 
+            // Dispose the server to force connection timeout
             server.Dispose();
 
             // Measure the actual time it took to timeout and compare it with configured timeout
@@ -731,7 +731,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection conn = new(connStr);
 
-            Assert.Throws<InvalidOperationException>(() => conn.Open());
+            // SQL Server 7.0 and 2000 are no longer supported, so the simulated
+            // server cannot negotiate a TDS version with the client and the
+            // connection attempt fails with a SqlException.
+            Assert.Throws<SqlException>(() => conn.Open());
         }
 
 

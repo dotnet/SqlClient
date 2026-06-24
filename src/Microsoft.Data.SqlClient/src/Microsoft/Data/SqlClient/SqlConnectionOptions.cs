@@ -53,8 +53,6 @@ namespace Microsoft.Data.SqlClient
 
         internal enum TypeSystem
         {
-            // TODO: Why is 2008 the latest, when we have 2012 defined?
-            Latest = 2008,
             SQLServer2005 = 2005,
             SQLServer2008 = 2008,
             SQLServer2012 = 2012,
@@ -62,6 +60,14 @@ namespace Microsoft.Data.SqlClient
 
         internal static class TYPESYSTEMVERSION
         {
+            // "Latest" is accepted as a connection string value so that applications can
+            // explicitly opt in to (and the driver can default to) a stable, well-known type
+            // system rather than having type behavior shift as new SQL Server versions appear.
+            //
+            // NOTE: The name "Latest" is misleading and has nothing to do with which type system
+            // it maps to - it is NOT the newest type system available. It is simply a badly named
+            // sentinel value that the connection string accepts for historical/compatibility
+            // reasons. The actual type system it resolves to is decided where "Latest" is parsed.
             internal const string Latest = "Latest";
             internal const string SQL_Server_2005 = "SQL Server 2005";
             internal const string SQL_Server_2008 = "SQL Server 2008";
@@ -458,7 +464,12 @@ namespace Microsoft.Data.SqlClient
 
             if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.Latest, StringComparison.OrdinalIgnoreCase))
             {
-                _typeSystemVersion = TypeSystem.Latest;
+                // "Latest" (and the default when no version is specified) intentionally maps to
+                // SQL Server 2008 rather than the newest defined type system. Advancing it would
+                // alter type mappings (e.g. the Microsoft.SqlServer.Types assembly version and how
+                // down-level types are surfaced) for existing applications that rely on the default,
+                // which would be a breaking change. Newer type systems must be requested explicitly.
+                _typeSystemVersion = TypeSystem.SQLServer2008;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
             {
