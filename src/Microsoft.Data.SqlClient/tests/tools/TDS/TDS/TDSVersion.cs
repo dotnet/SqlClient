@@ -12,6 +12,16 @@ namespace Microsoft.SqlServer.TDS
     public static class TDSVersion
     {
         /// <summary>
+        /// 7.0 (Sphinx) TDS version
+        /// </summary>
+        public static Version SqlServer7_0 = new Version(7, 0, 0, 0);
+
+        /// <summary>
+        /// 2000 (Shiloh) TDS version
+        /// </summary>
+        public static Version SqlServer2000 = new Version(7, 1, 0, 1);
+
+        /// <summary>
         /// 2005 (Yukon) TDS version
         /// </summary>
         public static Version SqlServer2005 = new Version(7, 2, 9, 2);
@@ -46,6 +56,20 @@ namespace Microsoft.SqlServer.TDS
             {
                 return SqlServer2005;
             }
+            else if (buildVersion.Major == 8)
+            {
+                // SQL Server 2000. This version is no longer supported by the
+                // client; the simulated server can still emit it so that the
+                // client's rejection of unsupported versions can be exercised.
+                return SqlServer2000;
+            }
+            else if (buildVersion.Major == 7)
+            {
+                // SQL Server 7.0. This version is no longer supported by the
+                // client; the simulated server can still emit it so that the
+                // client's rejection of unsupported versions can be exercised.
+                return SqlServer7_0;
+            }
             else
             {
                 // Not supported TDS version
@@ -79,10 +103,11 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            // Enforce a lower bound so that pre-2005 or otherwise invalid TDS
-            // versions are not treated as supported and cannot be negotiated as
-            // a downgraded version.
-            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2012;
+            // The simulated server can speak any TDS version up to 2012,
+            // including the legacy 7.0/2000 versions. Emitting those legacy
+            // versions lets tests verify that the client rejects servers whose
+            // TDS version is no longer supported.
+            return tdsVersion <= SqlServer2012;
         }
     }
 }

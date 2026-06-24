@@ -711,11 +711,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(simulatedServerVersion, returnedServerVersion);
         }
 
+        // Verifies that the client refuses to connect to a SQL Server whose TDS
+        // protocol version predates the minimum supported version (2005). This is
+        // genuine client-side coverage: the simulated server emits a real legacy
+        // LOGINACK (TDS 7.0 for SQL Server 7.0, TDS 7.1 for SQL Server 2000), and
+        // the driver rejects the negotiated version in TryProcessLoginAck via
+        // SQL.InvalidTDSVersion(), which surfaces as an InvalidOperationException.
         [Theory]
         [InlineData(7, 0, 623)] // SQL Server 7.0
         [InlineData(8, 0, 194)] // SQL Server 2000 RTM
         [InlineData(8, 0, 384)] // SQL Server 2000 SP1
-        public void ConnectionTestDeniedVersion(int major, int minor, int build)
+        public void ConnectionRefusesUnsupportedServerTdsVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new(major, minor, build);
             using TdsServer server = new(
@@ -731,10 +737,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection conn = new(connStr);
 
-            // SQL Server 7.0 and 2000 are no longer supported, so the simulated
-            // server cannot negotiate a TDS version with the client and the
-            // connection attempt fails with a SqlException.
-            Assert.Throws<SqlException>(() => conn.Open());
+            // The driver receives a LOGINACK advertising a pre-2005 TDS version and
+            // refuses it, throwing InvalidOperationException (SQL.InvalidTDSVersion).
+            Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
 
 
