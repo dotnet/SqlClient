@@ -11,6 +11,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 This update brings the following changes since the [7.0.1](release-notes/7.0/7.0.1.md) release.
 See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptions.
 
+> **Important — package version alignment:** Starting with 7.0.2, the `Microsoft.Data.SqlClient` driver and its companion packages share a single aligned version. The following packages now ship together as `7.0.2`:
+>
+> - `Microsoft.Data.SqlClient`
+> - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
+> - `Microsoft.Data.SqlClient.Extensions.Azure`
+> - `Microsoft.Data.SqlClient.Extensions.Abstractions`
+> - `Microsoft.Data.SqlClient.Internal.Logging`
+>
+> (`Microsoft.SqlServer.Server` continues to version independently and remains at `1.0.0`.)
+>
+> Applications must reference the same versions of `Microsoft.Data.SqlClient` and its extensions for best compatibility. In particular, applications that reference `Microsoft.Data.SqlClient.Extensions.Azure` must upgrade it to `7.0.2` when upgrading `Microsoft.Data.SqlClient` to `7.0.2`.
+
 ### Fixed
 
 - Fixed a `NullReferenceException` in `SqlCommand.Cancel()` when the active connection has already been torn down.
@@ -35,7 +47,7 @@ See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptio
   ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
    [#4388](https://github.com/dotnet/SqlClient/pull/4388))
 
-- Version-aligned the SqlClient package family to `7.0.2`. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` were re-shipped as `7.0.2` with no functional changes. See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.2.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.2.md).
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.0.2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.2.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.2.md).
 
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
