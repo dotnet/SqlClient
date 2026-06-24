@@ -68,7 +68,7 @@ variables:
   - name: akvVersionMinor
     value: '1'
   - name: akvVersionPatch
-    value: '2'
+    value: '3'
   - name: akvVersionPreview
     value: ''
 
