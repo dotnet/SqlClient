@@ -243,8 +243,6 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
-        ${{ if parameters.configProperties.AADAuthorityURL }}:
-          AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
           TCPConnectionStringHGSVBS: ${{ parameters.configProperties.TCPConnectionStringHGSVBS }}
         ${{ if parameters.configProperties.TCPConnectionStringNoneVBS }}:

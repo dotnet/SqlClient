@@ -505,7 +505,6 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
-            AADAuthorityURL: $(AADAuthorityURL)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
@@ -536,7 +535,6 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
             AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
-            AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AADServicePrincipalId: $(AADServicePrincipalId)
@@ -587,7 +585,6 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
-            AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AADServicePrincipalId: $(AADServicePrincipalId)
@@ -641,7 +638,6 @@ stages:
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
-              AADAuthorityURL: $(AADAuthorityURL)
               AADServicePrincipalId: $(AADServicePrincipalId)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)

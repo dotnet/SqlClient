@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup))]
         public static async Task AccessTokenConnectionPoolingTest()
         {
             SqlConnection.ClearAllPools();

@@ -41,10 +41,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: AADAuthorityURL
-    type: string
-    default: ''
-
   - name: AzureSqlConnectionString
     type: string
     default: ''
@@ -151,8 +147,6 @@ steps:
           $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
           $p.NPConnectionString="${{parameters.NPConnectionString }}"
-
-          $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
 
           $p.AzureSqlConnectionString="${{parameters.AzureSqlConnectionString }}"
 

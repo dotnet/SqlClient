@@ -38,7 +38,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
-        public static readonly string AADAuthorityURL = null;
         public static readonly string AzureSqlConnectionString = null;
         public static readonly string AADServicePrincipalId = null;
         public static readonly string AADServicePrincipalSecret = null;
@@ -254,7 +253,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-            AADAuthorityURL = c.AADAuthorityURL;
             AzureSqlConnectionString = c.AzureSqlConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
@@ -615,8 +613,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsAzureConnStringSetup() => !string.IsNullOrEmpty(AzureSqlConnectionString);
 
         public static bool IsAADServicePrincipalSetup() => !string.IsNullOrEmpty(AADServicePrincipalId) && !string.IsNullOrEmpty(AADServicePrincipalSecret);
-
-        public static bool IsAADAuthorityURLSetup() => !string.IsNullOrEmpty(AADAuthorityURL);
 
         public static bool IsNotAzureServer() => !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
 
