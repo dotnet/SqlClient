@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 6.1.6] - 2026-06-24
+
+This update brings the following changes since the [6.1.5](release-notes/6.1/6.1.5.md) release.
+See the [full release notes](release-notes/6.1/6.1.6.md) for detailed descriptions.
+
+### Added
+
+- Added Web Account Manager (WAM) broker support for the supported Entra ID authentication modes (Windows only), including the new `ActiveDirectoryAuthenticationProviderOptions` type with a `UseWamBroker` property, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)` constructor overload, and a cross-platform `SetParentActivityOrWindowFunc(Func<object>)` method.
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4387](https://github.com/dotnet/SqlClient/pull/4387))
+
+### Changed
+
+- Hardened TDS token parsing with data-length bounds checks to prevent unbounded memory allocation from a server spoofing length fields.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4359](https://github.com/dotnet/SqlClient/pull/4359))
+
+- Updated dependencies ([#4387](https://github.com/dotnet/SqlClient/pull/4387)):
+  - Updated `Microsoft.Identity.Client` to 4.84.2 (was 4.80.0)
+  - Added `Microsoft.Identity.Client.Broker` 4.84.2
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetChars` on the PLP + `SequentialAccess` path when a `null` buffer was passed with a negative `bufferIndex`; it now throws `ArgumentOutOfRangeException`.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4205](https://github.com/dotnet/SqlClient/pull/4205))
+
+- Fixed column master key (CMK) signature verification caching where a cached verification failure could subsequently be reported as a valid signature.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4356](https://github.com/dotnet/SqlClient/pull/4356))
+
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.
