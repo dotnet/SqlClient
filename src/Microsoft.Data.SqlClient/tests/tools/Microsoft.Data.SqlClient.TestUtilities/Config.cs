@@ -27,7 +27,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string? TCPConnectionStringAASSGX = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
-        public string? AADAuthorityURL = null;
         public string? AzureSqlConnectionString = null;
         public string? AADServicePrincipalId = null;
         public string? AADServicePrincipalSecret = null;
