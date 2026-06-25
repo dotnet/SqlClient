@@ -99,18 +99,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal bool IsBlockingPeriodEnabled()
         {
-            switch (_connectionOptions.PoolBlockingPeriod)
+            return _connectionOptions.PoolBlockingPeriod switch
             {
-                case PoolBlockingPeriod.Auto:
-                    return !ADP.IsAzureSqlServerEndpoint(_connectionOptions.DataSource);
-                case PoolBlockingPeriod.AlwaysBlock:
-                    return true;
-                case PoolBlockingPeriod.NeverBlock:
-                    return false;
-                default:
-                    Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
-                    return true;
-            }
+                PoolBlockingPeriod.Auto => !ADP.IsAzureSqlServerEndpoint(_connectionOptions.DataSource),
+                PoolBlockingPeriod.AlwaysBlock => true,
+                PoolBlockingPeriod.NeverBlock => false
+            };
         }
 
         internal int Clear()
