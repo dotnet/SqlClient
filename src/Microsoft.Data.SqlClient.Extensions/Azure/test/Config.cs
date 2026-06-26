@@ -55,7 +55,7 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasAzureSqlConnectionString() => !TCPConnectionString.IsEmpty() && IsAzureSqlServer();
+    internal static bool IsAzureSqlConnectionString() => !TCPConnectionString.IsEmpty() && IsAzureSqlServer();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
     internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();

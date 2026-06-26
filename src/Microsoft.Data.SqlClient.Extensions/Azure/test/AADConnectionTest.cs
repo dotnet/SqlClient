@@ -30,7 +30,7 @@ public class AADConnectionTest
 
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.HasAzureSqlConnectionString),
+        nameof(Config.IsAzureSqlConnectionString),
         nameof(Config.HasServicePrincipal))]
     public static void NoCredentialsActiveDirectoryServicePrincipal()
     {
@@ -59,7 +59,7 @@ public class AADConnectionTest
     /// </summary>
     [ConditionalTheory(
         typeof(Config),
-        nameof(Config.HasAzureSqlConnectionString),
+        nameof(Config.IsAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     [InlineData("2445343 2343253", false)]
     [InlineData("2445343 2343253", true)]
@@ -86,7 +86,7 @@ public class AADConnectionTest
     [ConditionalFact(
         typeof(Config),
         nameof(Config.OnAdoPool),
-        nameof(Config.HasAzureSqlConnectionString),
+        nameof(Config.IsAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void ActiveDirectoryDefaultMustPass()
     {
@@ -117,7 +117,7 @@ public class AADConnectionTest
         typeof(Config),
         nameof(Config.SupportsManagedIdentity),
         nameof(Config.SupportsSystemAssignedManagedIdentity),
-        nameof(Config.HasAzureSqlConnectionString))]
+        nameof(Config.IsAzureSqlConnectionString))]
     public static void SystemAssigned_ManagedIdentityTest()
     {
         string connStr = Config.TCPConnectionString
@@ -129,7 +129,7 @@ public class AADConnectionTest
     [ConditionalFact(
         typeof(Config),
         nameof(Config.OnAdoPool),
-        nameof(Config.HasAzureSqlConnectionString),
+        nameof(Config.IsAzureSqlConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void UserAssigned_ManagedIdentityTest()
     {
