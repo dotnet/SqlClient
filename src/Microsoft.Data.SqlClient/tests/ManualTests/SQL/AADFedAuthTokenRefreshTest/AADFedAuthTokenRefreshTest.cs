@@ -34,8 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlConnection connection = new(connectionString);
                 connection.Open();
 
-                string oldTokenHash = "";
-                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out oldTokenHash);
+                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out string oldTokenHash);
                 Assert.True(oldExpiryDateTime != null, "Failed to make token expiry to expire in one minute.");
 
                 // Convert and display the old expiry into local time which should be in 1 minute from now

@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(1, dataBases.Rows.Count);
                     Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
 
-                    string nonexistentDatabaseName = CommonUtils.GenerateRandomCharacters("NonExistentDatabase_");
+                    string nonexistentDatabaseName = TestRandomUtilities.GenerateRandomCharacters("NonExistentDatabase_");
                     dataBases = conn.GetSchema("DATABASES", [nonexistentDatabaseName]);
 
                     Assert.Equal(0, dataBases.Rows.Count);
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(1, dataBases.Rows.Count);
                     Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
 
-                    string nonexistentDatabaseName = CommonUtils.GenerateRandomCharacters("NonExistentDatabase_");
+                    string nonexistentDatabaseName = TestRandomUtilities.GenerateRandomCharacters("NonExistentDatabase_");
                     dataBases = await conn.GetSchemaAsync("DATABASES", [nonexistentDatabaseName]);
 
                     Assert.Equal(0, dataBases.Rows.Count);

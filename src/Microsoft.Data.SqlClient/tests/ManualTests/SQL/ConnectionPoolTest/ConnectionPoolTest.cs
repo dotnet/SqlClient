@@ -108,21 +108,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnection.ClearAllPools();
 
-            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection.Open();
             InternalConnectionWrapper internalConnection = new(connection);
             ConnectionPoolWrapper connectionPool = new(connection);
             connection.Close();
 
-            using SqlConnection connection2 = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection2 = new(DataTestUtility.TCPConnectionString);
             connection2.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection2.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
             connection2.Close();
 
-            using SqlConnection connection3 = new(DataTestUtility.AzureSqlConnectionString + ";App=SqlConnectionPoolUnitTest;");
+            string azureConnStrWithApp = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) 
+                { 
+                    ApplicationName = "SqlConnectionPoolUnitTest" 
+                }.ConnectionString;
+            using SqlConnection connection3 = new(azureConnStrWithApp);
             connection3.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection3.Open();
             Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
@@ -131,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             connectionPool.Cleanup();
 
-            using SqlConnection connection4 = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection4 = new(DataTestUtility.TCPConnectionString);
             connection4.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection4.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");

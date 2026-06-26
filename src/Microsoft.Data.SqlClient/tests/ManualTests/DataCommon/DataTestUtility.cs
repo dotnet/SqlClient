@@ -38,7 +38,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
-        public static readonly string AzureSqlConnectionString = null;
         public static readonly string AADServicePrincipalId = null;
         public static readonly string AADServicePrincipalSecret = null;
         public static readonly string AKVOriginalUrl = null;
@@ -253,7 +252,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-            AzureSqlConnectionString = c.AzureSqlConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
             LocalDbAppName = c.LocalDbAppName;
@@ -281,6 +279,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #if NETFRAMEWORK
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 #endif
+
+            if(IsAzureSqlConnectionString(TCPConnectionString))
+            {
+                // TEMP: Remove authentication and credential properties from the connection string
+                // if connection string is fetched from variable group that hasn't been updated with new property requirements.
+                TCPConnectionString = TCPConnectionString.RemoveAuthAndCredsProperties();
+            }
 
             if (TracingEnabled)
             {
@@ -362,42 +367,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-
-        private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
-        {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
-        }
-
-        private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
-        {
-            // The below properties are set specific to test configurations.
-            string scope = "https://database.windows.net//.default";
-            string applicationName = "Microsoft Data SqlClient Manual Tests";
-            string clientVersion = "1.0.0.0";
-            string adoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-
-            IPublicClientApplication app = PublicClientApplicationBuilder.Create(adoClientId)
-                .WithAuthority(authorityURL)
-                .WithClientName(applicationName)
-                .WithClientVersion(clientVersion)
-                .Build();
-
-            AuthenticationResult result;
-            string[] scopes = new string[] { scope };
-
-            // Note: CorrelationId, which existed in ADAL, can not be set in MSAL (yet?).
-            // parameter.ConnectionId was passed as the CorrelationId in ADAL to aid support in troubleshooting.
-            // If/When MSAL adds CorrelationId support, it should be passed from parameters here, too.
-
-            SecureString securePassword = new SecureString();
-
-            securePassword.MakeReadOnly();
-            #pragma warning disable CS0618 // Type or member is obsolete
-            result = app.AcquireTokenByUsernamePassword(scopes, userID, password).ExecuteAsync().Result;
-            #pragma warning restore CS0618 // Type or member is obsolete
-
-            return result.AccessToken;
-        });
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
@@ -610,7 +579,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
-        public static bool IsAzureConnStringSetup() => !string.IsNullOrEmpty(AzureSqlConnectionString);
+        /// <summary>
+        /// Returns <see langword="true"/> if the provided connection string points to an Azure SQL Server endpoint.
+        /// Use this instead of a separate AzureSqlConnectionString config property to detect Azure SQL targets.
+        /// </summary>
+        public static bool IsAzureSqlConnectionString(string connectionString)
+            => !string.IsNullOrEmpty(connectionString)
+                && Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource);
+
+        public static bool IsAzureConnStringSetup() => IsTCPConnStringSetup() && IsAzureSqlConnectionString(TCPConnectionString);
 
         public static bool IsAADServicePrincipalSetup() => !string.IsNullOrEmpty(AADServicePrincipalId) && !string.IsNullOrEmpty(AADServicePrincipalSecret);
 
@@ -628,15 +605,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
-        public static bool IsAKVSetupAvailable() => AKVBaseUri != null && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        public static bool IsAKVSetupAvailable() =>
+            AKVBaseUri != null
+            && !string.IsNullOrEmpty(UserManagedIdentityClientId)
+            && !string.IsNullOrEmpty(AKVTenantId)
+            && IsNotAzureSynapse();
 
         private static readonly DefaultAzureCredential s_defaultCredential = 
             new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
 
         public static string GetUserIdentityConnectionString()
-        => AzureSqlConnectionString
-            .AddManagedIdentityAuthenticationToConnString()
-            .AddUserToConnString(UserManagedIdentityClientId);
+            => TCPConnectionString
+                .RemoveAuthAndCredsProperties()
+                .AddManagedIdentityAuthenticationToConnString()
+                .AddUserToConnString(UserManagedIdentityClientId);
         
         public static TokenCredential GetTokenCredential() => s_defaultCredential;
 
@@ -678,19 +660,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup() && IsNotAzureSynapse())
             {
-                using SqlConnection connection = new SqlConnection(TCPConnectionString);
-                using SqlCommand command = new SqlCommand();
+                using SqlConnection connection = new(TCPConnectionString);
+                using SqlCommand command = new();
                 command.Connection = connection;
                 command.CommandText = "SELECT CONNECTIONPROPERTY('SUPPORT_UTF8')";
                 connection.Open();
 
-                using (SqlDataReader reader = command.ExecuteReader())
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    while (reader.Read())
-                    {
-                        // CONNECTIONPROPERTY('SUPPORT_UTF8') returns NULL in SQLServer versions that don't support UTF-8.
-                        retval = !reader.IsDBNull(0);
-                    }
+                    // CONNECTIONPROPERTY('SUPPORT_UTF8') returns NULL in SQLServer versions that don't support UTF-8.
+                    retval = !reader.IsDBNull(0);
                 }
             }
             return retval;
