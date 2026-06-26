@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient;
@@ -13,16 +14,18 @@ namespace Microsoft.Data.SqlClient;
 /// This type exists to keep OS detection terse and in one place: callers write
 /// <c>OsConstants.IsWindows</c> instead of repeating <c>RuntimeInformation.IsOSPlatform(...)</c>
 /// throughout the codebase.  Centralizing it also gives us a single seam to adjust if a specific
-/// OS ever needs special handling (for example, a different detection mechanism, a finer-grained
+/// OS needs special handling (for example, a different detection mechanism, a finer-grained
 /// flag, or an override for testing) without touching every call site.
 /// </remarks>
 /// <remarks>
-/// Each flag is exposed as a property that directly returns the result of
-/// <see cref="RuntimeInformation.IsOSPlatform"/>.  This is deliberate: the IL trimmer (and the JIT)
-/// recognize these calls as intrinsics and can substitute a constant value for them at
-/// publish/compile time.  Caching the results in static fields (for example, via a static
-/// constructor) would defeat this — the trimmer cannot analyze a static constructor, so it would
-/// be unable to prove which branches are dead and would keep OS-specific code (including
+/// Each flag is exposed as a property that directly returns an OS check.  On .NET, that check is
+/// <c>OperatingSystem.Is*()</c>, which the JIT treats as an intrinsic and constant-folds (and which
+/// the IL trimmer also recognizes).  On .NET Framework — where the <see cref="System.OperatingSystem"/>
+/// platform-check helpers do not exist — the check falls back to
+/// <see cref="RuntimeInformation.IsOSPlatform"/>.  Either way, returning the check directly is
+/// deliberate: caching the results in static fields (for example, via a static constructor) would
+/// defeat both the JIT folding and the trimmer — the trimmer cannot analyze a static constructor,
+/// so it would be unable to prove which branches are dead and would keep OS-specific code (including
 /// Windows-only native dependencies) in apps published for other platforms.
 /// </remarks>
 /// <remarks>
@@ -67,17 +70,29 @@ internal static class OsConstants
     /// <summary>
     /// Gets a value indicating whether the runtime is executing on Windows.
     /// </summary>
+    #if NET
+    internal static bool IsWindows => OperatingSystem.IsWindows();
+    #else
     internal static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+    #endif
 
     /// <summary>
     /// Gets a value indicating whether the runtime is executing on Linux.
     /// </summary>
+    #if NET
+    internal static bool IsLinux => OperatingSystem.IsLinux();
+    #else
     internal static bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+    #endif
 
     /// <summary>
     /// Gets a value indicating whether the runtime is executing on macOS.
     /// </summary>
+    #if NET
+    internal static bool IsMacOS => OperatingSystem.IsMacOS();
+    #else
     internal static bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    #endif
 
     #if NET
     /// <summary>
@@ -87,6 +102,6 @@ internal static class OsConstants
     /// FreeBSD support is only available in .NET 5+ and later. This property will be
     /// <c>false</c> on .NET Framework or if the runtime does not support FreeBSD detection.
     /// </remarks>
-    internal static bool IsFreeBSD => RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD);
+    internal static bool IsFreeBSD => OperatingSystem.IsFreeBSD();
     #endif
 }
