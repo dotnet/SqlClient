@@ -12,7 +12,6 @@ using System.Globalization;
 using System.Reflection;
 using System.Text;
 using Xunit;
-using Microsoft.Data.SqlClient.Tests.Common;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

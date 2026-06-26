@@ -6,7 +6,6 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
