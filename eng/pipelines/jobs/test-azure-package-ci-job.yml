@@ -269,7 +269,6 @@ jobs:
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
           SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-          AzureSqlConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)
           # Avoid exposing secrets to pipeline jobs triggered via forks.  This

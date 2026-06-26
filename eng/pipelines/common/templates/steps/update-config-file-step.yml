@@ -41,10 +41,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: AzureSqlConnectionString
-    type: string
-    default: ''
-
   - name: AADServicePrincipalId
     type: string
     default: ''
@@ -147,8 +143,6 @@ steps:
           $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
           $p.NPConnectionString="${{parameters.NPConnectionString }}"
-
-          $p.AzureSqlConnectionString="${{parameters.AzureSqlConnectionString }}"
 
           $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
 
