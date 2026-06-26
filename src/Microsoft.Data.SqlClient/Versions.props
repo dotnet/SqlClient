@@ -14,10 +14,14 @@
   -->
 
   <!--
+    This is the canonical version file for the entire SqlClient *family* of packages.  All family
+    packages (Internal.Logging, Extensions.Abstractions, Microsoft.Data.SqlClient, Extensions.Azure,
+    and the AlwaysEncrypted.AzureKeyVaultProvider) share these SqlClient* version properties
+    (package, file, and assembly).  Microsoft.SqlServer.Server is versioned separately.
+
     Import guard: set on first import so that subsequent imports of this file are skipped.
-    Directory.Packages.props imports all Versions.props early in Package mode; the guard
-    prevents each csproj's own conditional import from re-importing and re-evaluating
-    version properties.
+    src/Directory.Build.props imports this file for every project; the guard prevents re-importing
+    and re-evaluating version properties.
   -->
   <PropertyGroup>
     <SqlClientVersionsImported>true</SqlClientVersionsImported>
@@ -26,10 +30,11 @@
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
-      This is the *next* version to release of SqlClient. Update this after a version is released.
+      This is the *next* version to release of the SqlClient family.  Update this after a version
+      is released.  Every SqlClient family package uses this version.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlClientVersionDefault>7.1.0-preview2</SqlClientVersionDefault>
+    <SqlClientNextVersion>7.1.0-preview3</SqlClientNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -61,10 +66,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientVersionDefault)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientNextVersion)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientNextVersion)</SqlClientPackageVersion>
 
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -76,8 +81,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion>$(SqlClientVersionDefault)-dev</SqlClientPackageVersion>
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientPackageVersion>$(SqlClientNextVersion)-dev</SqlClientPackageVersion>
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
