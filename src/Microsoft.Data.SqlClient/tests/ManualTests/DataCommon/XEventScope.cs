@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string targetSpecification,
             ushort durationInMinutes = 5)
         {
-            SessionName = CommonUtils.GenerateRandomCharacters(sessionName);
+            SessionName = TestRandomUtilities.GenerateRandomCharacters(sessionName);
 
             _connection = connection;
             if (connection.State is not ConnectionState.Open)

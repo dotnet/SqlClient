@@ -649,7 +649,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MarsConcurrencyTest()
         {
-            var table = CommonUtils.GenerateObjectName();
+            var table = DataTestUtility.GetShortName("MarsConcurrencyTest", withBracket: false);
             using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();

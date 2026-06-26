@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task AccessTokenTest()
         {
-            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             await connection.OpenAsync();
 
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task InvalidAccessTokenTest()
         {
-            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.AccessToken = await DataTestUtility.GetAccessTokenAsync() + "abc";
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
 
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task AccessTokenWithAuthType()
         {
-            using SqlConnection connection = new(DataTestUtility.AzureSqlConnectionString
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString
                 .AddManagedIdentityAuthenticationToConnString());
             InvalidOperationException e = await Assert.ThrowsAsync<InvalidOperationException>
             (async () =>
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task AccessTokenWithCred()
         {
-            string connString = DataTestUtility.AzureSqlConnectionString
+            string connString = DataTestUtility.TCPConnectionString
                 .AddUserToConnString()
                 .AddPasswordToConnString();
 
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenTestWithEmptyToken()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString;
+            string connStr = DataTestUtility.TCPConnectionString;
 
             using SqlConnection connection = new(connStr);
             connection.AccessToken = "";
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenTestWithIntegratedSecurityTrue()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddIntegratedSecurityToConnString();
 
             using SqlConnection connection = new(connStr);
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void InvalidAuthTypeTest()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddInvalidAADAuthenticationToConnString();
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AADPasswordWithIntegratedSecurityTrue()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddAADPasswordAuthenticationToConnString()
                 .AddUserToConnString()
                 .AddPasswordToConnString()
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void SqlCredentialsWithNoAuthType()
         {
-            string connStrWithNoAuthType = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoAuthType = DataTestUtility.TCPConnectionString
                 .AddUserToConnString()
                 .AddPasswordToConnString();
             Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AADIntegratedAuthWithCred()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddAADIntegratedAuthenticationToConnString()
                 .AddUserToConnString()
                 .AddPasswordToConnString();
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void MFAAuthWithPassword()
         {
             // connection fails with expected error message.
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddAADInteractiveAuthenticationToConnString()
                 .AddUserToConnString()
                 .AddPasswordToConnString();
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryDeviceCodeFlowWithUserIdMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithUID = DataTestUtility.AzureSqlConnectionString
+            string connStrWithUID = DataTestUtility.TCPConnectionString
                 .AddAADDeviceCodeFlowAuthenticationToConnString()
                 .AddUserToConnString("someuser");
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithUID));
@@ -227,10 +227,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryDeviceCodeFlowWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADDeviceCodeFlowAuthenticationToConnString();
 
-            using SecureString str = CommonUtils.GenerateRandomSecureString(10);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
             SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
@@ -242,10 +242,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryManagedIdentityWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddManagedIdentityAuthenticationToConnString();
 
-            using SecureString str = CommonUtils.GenerateRandomSecureString(10);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
             SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
@@ -257,10 +257,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryWorkloadIdentityWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADWorkloadIdentityAuthenticationToConnString();
 
-            using SecureString str = CommonUtils.GenerateRandomSecureString(10);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
             SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryManagedIdentityWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddManagedIdentityAuthenticationToConnString()
                 .AddPasswordToConnString("anything");
 
@@ -286,10 +286,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryMSIWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADMSIAuthenticationToConnString();
 
-            using SecureString str = CommonUtils.GenerateRandomSecureString(10);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
             SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>
             (() => ConnectAndDisconnect(connStrWithNoCred, credential));
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryMSIWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADMSIAuthenticationToConnString()
                 .AddPasswordToConnString();
 
@@ -316,10 +316,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryDefaultWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADDefaultAuthenticationToConnString();
 
-            using SecureString str = CommonUtils.GenerateRandomSecureString(10);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
 
             SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>
@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryDefaultWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADDefaultAuthenticationToConnString()
                 .AddPasswordToConnString("anything");
 
@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ActiveDirectoryDefaultWithAccessTokenCallbackMustFail()
         {
             // connection fails with expected error message.
-            string connStrWithNoCred = DataTestUtility.AzureSqlConnectionString
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
                 .AddAADDefaultAuthenticationToConnString();
 
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenCallbackMustOpenPassAndChangePropertyFail()
         {
-            string connStr = DataTestUtility.AzureSqlConnectionString;
+            string connStr = DataTestUtility.TCPConnectionString;
 
             TokenCredential cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
@@ -392,7 +392,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             var userId = "someuser";
             var pwd = "somepassword";
-            string connStr = DataTestUtility.AzureSqlConnectionString
+            string connStr = DataTestUtility.TCPConnectionString
                 .AddUserToConnString(userId)
                 .AddPasswordToConnString(pwd);
 
@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
         public static async Task AccessToken_SystemManagedIdentityTest()
         {
-            using SqlConnection conn = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
             conn.AccessToken = await DataTestUtility.GetSystemIdentityAccessTokenAsync();
             conn.Open();
 
@@ -477,7 +477,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsManagedIdentitySetup))]
         public static async Task AccessToken_UserManagedIdentityTest()
         {
-            using SqlConnection conn = new(DataTestUtility.AzureSqlConnectionString);
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
             conn.AccessToken = await DataTestUtility.GetUserIdentityAccessTokenAsync();
             conn.Open();
 
