@@ -23,9 +23,32 @@ public class VersionRangeTests
     }
 
     [Fact]
-    public void Satisfies_ignores_prerelease_suffix()
+    public void Satisfies_release_outranks_prerelease_of_same_version()
     {
+        // A prerelease is lower precedence than its release, so it falls below a min-inclusive bound.
+        Assert.Equal(false, VersionRange.Satisfies("1.0.0", "1.0.0-alpha"));
+        // A release satisfies a prerelease lower bound.
+        Assert.Equal(true, VersionRange.Satisfies("1.0.0-alpha", "1.0.0"));
+        // A higher release still satisfies even when it carries a prerelease tag.
         Assert.Equal(true, VersionRange.Satisfies("1.0.0", "1.2.3-preview.1"));
+    }
+
+    [Theory]
+    [InlineData("[1.0.0-alpha,1.0.0]", "1.0.0-beta", true)]   // alpha < beta < release
+    [InlineData("[1.0.0-alpha.1,)", "1.0.0-alpha.2", true)]   // numeric identifier ordering
+    [InlineData("[1.0.0-alpha.2,)", "1.0.0-alpha.1", false)]
+    [InlineData("[1.0.0-alpha,)", "1.0.0-alpha.1", true)]     // larger identifier set ranks higher
+    [InlineData("[1.0.0-alpha,)", "1.0.0-1", false)]          // numeric ranks below alphanumeric
+    public void Satisfies_orders_prerelease_identifiers(string range, string version, bool expected)
+    {
+        Assert.Equal(expected, VersionRange.Satisfies(range, version));
+    }
+
+    [Fact]
+    public void Satisfies_ignores_build_metadata()
+    {
+        Assert.Equal(true, VersionRange.Satisfies("[1.0.0]", "1.0.0+abc123"));
+        Assert.Equal(true, VersionRange.Satisfies("1.0.0", "1.0.0+build.5"));
     }
 
     [Fact]

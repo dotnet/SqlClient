@@ -87,11 +87,11 @@ internal static class Validator
         string? expectedAssembly = expectations.AssemblyVersionFor(report.PackageId);
 
         // File and assembly versions are expected to be uniform across every managed assembly the
-        // package ships, so confirm each one.
+        // package ships, so confirm each one. A missing version is also a mismatch when an
+        // expectation is supplied, so the assertion does not silently pass.
         foreach (BinaryReport asm in report.Binaries.Where(b => b.IsManagedAssembly))
         {
             if (expectedFile is not null
-                && asm.FileVersion is not null
                 && !string.Equals(asm.FileVersion, expectedFile, StringComparison.Ordinal))
             {
                 findings.Add(new Finding
@@ -99,12 +99,11 @@ internal static class Validator
                     Severity = Severity.Error,
                     Category = Categories.UnexpectedFileVersion,
                     Target = asm.Path,
-                    Message = $"file version is '{asm.FileVersion}', expected '{expectedFile}'.",
+                    Message = $"file version is '{asm.FileVersion ?? "(none)"}', expected '{expectedFile}'.",
                 });
             }
 
             if (expectedAssembly is not null
-                && asm.AssemblyVersion is not null
                 && !string.Equals(asm.AssemblyVersion, expectedAssembly, StringComparison.Ordinal))
             {
                 findings.Add(new Finding
@@ -112,7 +111,7 @@ internal static class Validator
                     Severity = Severity.Error,
                     Category = Categories.UnexpectedAssemblyVersion,
                     Target = asm.Path,
-                    Message = $"assembly version is '{asm.AssemblyVersion}', expected '{expectedAssembly}'.",
+                    Message = $"assembly version is '{asm.AssemblyVersion ?? "(none)"}', expected '{expectedAssembly}'.",
                 });
             }
         }

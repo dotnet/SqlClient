@@ -1474,10 +1474,15 @@
   <PropertyGroup>
     <AzureSqlConnectorProjectPath>$(RepoRoot)doc/apps/AzureSqlConnector/AzureSqlConnector.csproj</AzureSqlConnectorProjectPath>
     <PackageCompatibilityProjectPath>$(RepoRoot)tools/PackageCompatibility/src/PackageCompatibility.csproj</PackageCompatibilityProjectPath>
+    <PackageCompatibilityTestProjectPath>$(RepoRoot)tools/PackageCompatibility/test/PackageCompatibility.Test.csproj</PackageCompatibilityTestProjectPath>
+    <PackageCompatibilityDir>$(RepoRoot)tools/PackageCompatibility</PackageCompatibilityDir>
+    <PackageValidatorProjectPath>$(RepoRoot)tools/PackageValidator/src/PackageValidator.csproj</PackageValidatorProjectPath>
+    <PackageValidatorTestProjectPath>$(RepoRoot)tools/PackageValidator/test/PackageValidator.Test.csproj</PackageValidatorTestProjectPath>
+    <PackageValidatorDir>$(RepoRoot)tools/PackageValidator</PackageValidatorDir>
   </PropertyGroup>
 
-  <!-- BuildTools: Builds auxiliary tool/app projects. -->
-  <Target Name="BuildTools" DependsOnTargets="BuildAzureSqlConnector;BuildPackageCompatibility" />
+  <!-- BuildTools: Builds auxiliary tool/app projects (including their test projects). -->
+  <Target Name="BuildTools" DependsOnTargets="BuildAzureSqlConnector;BuildPackageCompatibility;BuildPackageCompatibilityTest;BuildPackageValidator;BuildPackageValidatorTest" />
 
   <!-- BuildAzureSqlConnector: Builds the AzureSqlConnector sample app. -->
   <Target Name="BuildAzureSqlConnector">
@@ -1505,6 +1510,86 @@
     <Message Importance="High" Text=">>> Building PackageCompatibility"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildPackageValidator: Builds the PackageValidator tool. -->
+  <Target Name="BuildPackageValidator">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(PackageValidatorProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building PackageValidator"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildPackageCompatibilityTest: Builds the PackageCompatibility test project. -->
+  <Target Name="BuildPackageCompatibilityTest">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(PackageCompatibilityTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building PackageCompatibility tests"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!-- BuildPackageValidatorTest: Builds the PackageValidator test project. -->
+  <Target Name="BuildPackageValidatorTest">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(PackageValidatorTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building PackageValidator tests"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
+  <!--
+    TestPackageCompatibility: Runs the PackageCompatibility tests.
+
+    The Exec runs from the tool directory so the tool's global.json (which opts the xUnit v3
+    test project into the Microsoft.Testing.Platform runner) is discovered.
+  -->
+  <Target Name="TestPackageCompatibility">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(PackageCompatibilityTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Testing PackageCompatibility"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" WorkingDirectory="$(PackageCompatibilityDir)" />
+  </Target>
+
+  <!--
+    TestPackageValidator: Runs the PackageValidator tests.
+
+    The Exec runs from the tool directory so the tool's global.json (which opts the xUnit v3
+    test project into the Microsoft.Testing.Platform runner) is discovered.
+  -->
+  <Target Name="TestPackageValidator">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(PackageValidatorTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Testing PackageValidator"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" WorkingDirectory="$(PackageValidatorDir)" />
   </Target>
 
 </Project>

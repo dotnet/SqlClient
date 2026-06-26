@@ -105,7 +105,7 @@ internal static class PortablePdb
     {
         try
         {
-            var reader = new BinaryReader(new MemoryStream(pdb, writable: false));
+            using var reader = new BinaryReader(new MemoryStream(pdb, writable: false));
 
             if (reader.ReadUInt32() != MetadataSignature)
             {

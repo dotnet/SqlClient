@@ -58,6 +58,41 @@ public class VersionExpectationsTests
     }
 
     [Fact]
+    public void Missing_file_version_is_flagged_against_expectation()
+    {
+        // An assembly with no AssemblyFileVersion must not let --expect-file-version silently pass.
+        VersionExpectations exp = VersionExpectations.Parse([], ["7.1.0.17604"], []);
+        var report = new PackageReport
+        {
+            PackageFile = "MDS.7.1.0.nupkg",
+            PackageId = "MDS",
+            PackageVersion = "7.1.0",
+            IsSigned = true,
+            Binaries =
+            [
+                new BinaryReport
+                {
+                    Path = "lib/net8.0/X.dll",
+                    Kind = BinaryKind.Implementation,
+                    IsManagedAssembly = true,
+                    AssemblyName = "X",
+                    AssemblyVersion = "7.0.0.0",
+                    FileVersion = null,
+                    HasSymbols = true,
+                },
+            ],
+            SymbolPackage = SkippedSymbols(),
+        };
+
+        Validator.Validate(report, exp);
+
+        Assert.Contains(report.Findings!, f =>
+            f.Category == Categories.UnexpectedFileVersion
+                && f.Severity == Severity.Error
+                && f.Message.Contains("(none)"));
+    }
+
+    [Fact]
     public void Package_version_mismatch_is_flagged()
     {
         VersionExpectations exp = VersionExpectations.Parse(["7.1.0-preview1-pr17604"], [], []);

@@ -35,9 +35,9 @@ internal static class NativeVersionReader
             productVersion = NullIfEmpty(info.ProductVersion);
             productName = NullIfEmpty(info.ProductName);
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            // Could not stage the temp file; fall back to architecture only.
+            // Could not stage or read the temp file; fall back to architecture only.
         }
         finally
         {
@@ -102,7 +102,7 @@ internal static class NativeVersionReader
                 File.Delete(path);
             }
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             // Best-effort cleanup.
         }

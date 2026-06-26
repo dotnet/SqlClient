@@ -5,25 +5,18 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
     <RootNamespace>PackageValidator</RootNamespace>
     <AssemblyName>PackageValidator</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
-
-  <!-- The tests project lives under tests/; keep its sources out of this project. -->
-  <ItemGroup>
-    <Compile Remove="tests/**" />
-    <Content Remove="tests/**" />
-    <EmbeddedResource Remove="tests/**" />
-    <None Remove="tests/**" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="PackageValidator.Tests" />
+    <InternalsVisibleTo Include="PackageValidator.Test" />
   </ItemGroup>
 
 </Project>
