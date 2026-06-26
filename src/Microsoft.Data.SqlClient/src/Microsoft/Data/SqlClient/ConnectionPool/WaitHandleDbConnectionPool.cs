@@ -198,7 +198,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private volatile bool _errorOccurred;
 
         private int _errorWait;
-        private Timer _errorTimer;
+        private ITimer _errorTimer;
+
+        // Clock used to create the error backoff timer. Defaults to the system clock in
+        // production; tests inject a fake clock to drive the exit timer deterministically.
+        private readonly TimeProvider _timeProvider;
 
         private Timer _cleanupTimer;
 
@@ -212,7 +216,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
-            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo,
+            TimeProvider timeProvider = null)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -249,6 +254,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
             _identity = identity;
+            _timeProvider = timeProvider ?? TimeProvider.System;
 
             _waitHandles = new PoolWaitHandles();
 
@@ -597,9 +603,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _resError = e;
 
                 // Make sure the timer starts even if ThreadAbort occurs after setting the ErrorEvent.
-                Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
-
-                bool timerIsNotDisposed;
+                // The timer is created through the injected TimeProvider so tests can drive the
+                // exit callback deterministically; in production this is the system clock.
+                TimeSpan errorWait = TimeSpan.FromMilliseconds(_errorWait);
+                ITimer t = ADP.UnsafeCreateTimer(
+                    _timeProvider,
+                    state => state.ErrorCallback(null),
+                    this,
+                    errorWait,
+                    errorWait);
 
                 _waitHandles.ErrorEvent.Set();
                 _errorOccurred = true;
@@ -608,9 +620,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
                 // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
                 _errorTimer = t;
-                timerIsNotDisposed = t.Change(_errorWait, _errorWait);
-
-                Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
 
                 if (30000 < _errorWait)
                 {
@@ -799,7 +808,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _waitHandles.ErrorEvent.Reset();
 
             // the error state is cleaned, destroy the timer to avoid periodic invocation
-            Timer t = _errorTimer;
+            ITimer t = _errorTimer;
             _errorTimer = null;
             if (t != null)
             {
