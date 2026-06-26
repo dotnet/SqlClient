@@ -69,22 +69,31 @@ dotnet build -t:<build_target> [optional_parameters]
 The command-line examples below will assume that `build.proj` is selected by default and will omit
 it from the `dotnet build` command.
 
+If no target is specified, `build.proj` runs the `BuildAll` target by default, which builds all
+projects, tests, samples, and tools for all supported OS combinations. To build only the driver
+projects, specify `-t:BuildDriver` explicitly.
+
 The following build targets can be used to build the following projects. All targets will implicitly build any other
 projects they depend on.
 
-| `<build_target>`            | Description                                                                     |
-|-----------------------------|---------------------------------------------------------------------------------|
-| `Build`                     | Builds all projects for all platforms                                           |
-| `BuildAbstractions`         | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
-| `BuildAkvProvider`          | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
-| `BuildAzure`                | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
-| `BuildLogging`              | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
-| `BuildSqlClient`            | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
-| `BuildSqlClientRef`         | Builds the reference assemblies for Microsoft.Data.SqlClient                    |
-| `BuildSqlClientUnsupported` | Builds the "unsupported platform" assemblies for Microsoft.Data.SqlClient       |
-| `BuildSqlClientUnix`        | Builds the Unix-specific implementation binaries of Microsoft.Data.SqlClient    |
-| `BuildSqlClientWindows`     | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
-| `BuildSqlServer`            | Builds Microsoft.SqlServer.Server                                               |
+| `<build_target>`              | Description                                                                     |
+|-------------------------------|---------------------------------------------------------------------------------|
+| `BuildAbstractions`           | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
+| `BuildAkvProvider`            | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
+| `BuildAll`                    | Builds all projects, tests, samples, and tools for all supported OS combinations (default target) |
+| `BuildAzure`                  | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
+| `BuildDriver`                 | Builds all driver projects for all platforms                                    |
+| `BuildLogging`                | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
+| `BuildSamples`                | Builds the sample projects under `doc/samples/`                                 |
+| `BuildSqlClient`              | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
+| `BuildSqlClientNotSupported`  | Builds the "unsupported platform" assemblies for Microsoft.Data.SqlClient       |
+| `BuildSqlClientRef`           | Builds the reference assemblies for Microsoft.Data.SqlClient                    |
+| `BuildSqlClientUnix`          | Builds the Unix-specific implementation binaries of Microsoft.Data.SqlClient    |
+| `BuildSqlClientWindows`       | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
+| `BuildSqlServer`              | Builds Microsoft.SqlServer.Server                                               |
+| `BuildTests`                  | Builds all test projects for all supported OS combinations                      |
+| `BuildTools`                  | Builds auxiliary tool/app projects                                              |
+| `Clean`                       | Removes build and test output directories                                       |
 
 A selection of parameters for build targets in `build.proj` can be found below:
 
@@ -107,10 +116,16 @@ placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`
 
 #### Examples
 
-Build all projects:
+Build everything (all projects, tests, samples, and tools) using the default target:
 
 ```bash
-dotnet build -t:Build
+dotnet build
+```
+
+Build only the driver projects:
+
+```bash
+dotnet build -t:BuildDriver
 ```
 
 Build Microsoft.Data.SqlClient in Release configuration:
@@ -139,6 +154,7 @@ dotnet build -t:<test_target> [optional_parameters]
 | `<test_target>`            | Description                                                                                                                                         |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
+| `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
 | `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |

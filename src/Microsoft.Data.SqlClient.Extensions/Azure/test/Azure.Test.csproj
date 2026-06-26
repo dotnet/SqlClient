@@ -12,11 +12,11 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 
-    <!--
-      MDS is not built for net462 unless it is built for Windows. Thus, we will not be able to
-      fulfill the MDS for net462 reference unless we are building on Windows.
-    -->
-    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+    <!-- Default TargetOs to host OS if not specified (eg, during IDE development). -->
+    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
+
+    <!-- Add net462 when targeting Windows. Building net462 is supported on any host OS. -->
+    <TargetFrameworks Condition="'$(TargetOs)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
