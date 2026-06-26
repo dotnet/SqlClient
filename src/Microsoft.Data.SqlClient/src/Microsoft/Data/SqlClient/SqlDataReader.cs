@@ -594,19 +594,11 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
                 }
-                else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.IsLargeUdt)
+                else if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005 && col.IsLargeUdt)
                 {
-                    if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
-                    {
-                        schemaRow[providerType] = SqlDbType.VarBinary;
-                    }
-                    else
-                    {
-                        // TypeSystem.SQLServer2000
-                        schemaRow[providerType] = SqlDbType.Image;
-                    }
+                    schemaRow[providerType] = SqlDbType.VarBinary;
                 }
-                else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+                else
                 {
                     // TypeSystem.SQLServer2005 and above
 
@@ -624,13 +616,6 @@ namespace Microsoft.Data.SqlClient
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
                     }
-                }
-                else
-                {
-                    // TypeSystem.SQLServer2000
-
-                    // SqlDbType enum value - variable for certain types when SQLServer2000.
-                    schemaRow[providerType] = GetVersionedMetaType(col.metaType).SqlDbType;
                 }
 
                 if (col.cipherMD != null)
@@ -1208,19 +1193,11 @@ namespace Microsoft.Data.SqlClient
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
-            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
-                {
-                    dataTypeName = MetaType.MetaMaxVarBinary.TypeName;
-                }
-                else
-                {
-                    // TypeSystem.SQLServer2000
-                    dataTypeName = MetaType.MetaImage.TypeName;
-                }
+                dataTypeName = MetaType.MetaMaxVarBinary.TypeName;
             }
-            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+            else
             {
                 // TypeSystem.SQLServer2005 and above
 
@@ -1240,12 +1217,6 @@ namespace Microsoft.Data.SqlClient
                         dataTypeName = metaData.metaType.TypeName;
                     }
                 }
-            }
-            else
-            {
-                // TypeSystem.SQLServer2000
-
-                dataTypeName = GetVersionedMetaType(metaData.metaType).TypeName;
             }
 
             return dataTypeName;
@@ -1297,19 +1268,11 @@ namespace Microsoft.Data.SqlClient
                 // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
-            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
-                {
-                    fieldType = MetaType.MetaMaxVarBinary.ClassType;
-                }
-                else
-                {
-                    // TypeSystem.SQLServer2000
-                    fieldType = MetaType.MetaImage.ClassType;
-                }
+                fieldType = MetaType.MetaMaxVarBinary.ClassType;
             }
-            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+            else
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
@@ -1333,11 +1296,6 @@ namespace Microsoft.Data.SqlClient
                         fieldType = metaData.metaType.ClassType; // Com+ type.
                     }
                 }
-            }
-            else
-            {
-                // TypeSystem.SQLServer2000
-                fieldType = GetVersionedMetaType(metaData.metaType).ClassType; // Com+ type.
             }
 
             return fieldType;
@@ -1429,19 +1387,11 @@ namespace Microsoft.Data.SqlClient
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
-            else if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
+            else if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
-                if (_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2005)
-                {
-                    providerSpecificFieldType = MetaType.MetaMaxVarBinary.SqlType;
-                }
-                else
-                {
-                    // TypeSystem.SQLServer2000
-                    providerSpecificFieldType = MetaType.MetaImage.SqlType;
-                }
+                providerSpecificFieldType = MetaType.MetaMaxVarBinary.SqlType;
             }
-            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+            else
             {
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
@@ -1467,11 +1417,6 @@ namespace Microsoft.Data.SqlClient
                         providerSpecificFieldType = metaData.metaType.SqlType; // SqlType type.
                     }
                 }
-            }
-            else
-            {
-                // TypeSystem.SQLServer2000
-                providerSpecificFieldType = GetVersionedMetaType(metaData.metaType).SqlType; // SqlType type.
             }
 
             return providerSpecificFieldType;
@@ -2589,27 +2534,7 @@ namespace Microsoft.Data.SqlClient
             ReadColumn(i);
             SqlXml sx = null;
 
-            if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
-            {
-                // TypeSystem.SQLServer2005
-
-                sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
-            }
-            else
-            {
-                // TypeSystem.SQLServer2000
-
-                // First, attempt to obtain SqlXml value.  If not SqlXml, we will throw the appropriate
-                // cast exception.
-                sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
-
-                // If the above succeeds, then we received a valid SqlXml instance, now we need to force
-                // an InvalidCastException since SqlXml is not exposed with the version knob in this setting.
-                // To do so, we simply force the exception by casting the string representation of the value
-                // To SqlXml.
-                object temp = (object)_data[i].String;
-                sx = (SqlXml)temp;
-            }
+            sx = _data[i].IsNull ? SqlXml.Null : _data[i].SqlCachedBuffer.ToSqlXml();
 
             return sx;
         }
@@ -2683,40 +2608,22 @@ namespace Microsoft.Data.SqlClient
             {
                 return data.SqlValue;
             }
-            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+            else if (metaData.type == SqlDbType.Udt)
             {
-                // TypeSystem.SQLServer2005 and above
-
-                if (metaData.type == SqlDbType.Udt)
+                SqlConnection connection = _connection;
+                if (connection != null)
                 {
-                    SqlConnection connection = _connection;
-                    if (connection != null)
-                    {
-                        connection.CheckGetExtendedUDTInfo(metaData, true);
-                        return connection.GetUdtValue(data.Value, metaData, false);
-                    }
-                    else
-                    {
-                        throw ADP.DataReaderClosed();
-                    }
+                    connection.CheckGetExtendedUDTInfo(metaData, true);
+                    return connection.GetUdtValue(data.Value, metaData, false);
                 }
                 else
                 {
-                    return data.SqlValue;
+                    throw ADP.DataReaderClosed();
                 }
             }
             else
             {
-                // TypeSystem.SQLServer2000
-
-                if (metaData.type == SqlDbType.Xml)
-                {
-                    return data.SqlString;
-                }
-                else
-                {
-                    return data.SqlValue;
-                }
+                return data.SqlValue;
             }
         }
 
@@ -2878,49 +2785,38 @@ namespace Microsoft.Data.SqlClient
             {
                 return data.Value;
             }
-            else if (_typeSystem != SqlConnectionOptions.TypeSystem.SQLServer2000)
+            else if (metaData.type == SqlDbTypeExtensions.Vector)
             {
-                // TypeSystem.SQLServer2005 and above
-
-                if (metaData.type == SqlDbTypeExtensions.Vector)
+                if (data.IsNull)
                 {
-                    if (data.IsNull)
-                    {
-                        return DBNull.Value;
-                    }
-                    else
-                    {
-                        switch (metaData.scale)
-                        {
-                            case (byte)MetaType.SqlVectorElementType.Float32:
-                                return data.GetSqlVector<float>();
-                            default:
-                                throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
-                        }
-                    }
-                }
-
-                if (metaData.type != SqlDbType.Udt)
-                {
-                    return data.Value;
+                    return DBNull.Value;
                 }
                 else
                 {
-                    SqlConnection connection = _connection;
-                    if (connection != null)
+                    switch (metaData.scale)
                     {
-                        connection.CheckGetExtendedUDTInfo(metaData, true);
-                        return connection.GetUdtValue(data.Value, metaData, true);
+                        case (byte)MetaType.SqlVectorElementType.Float32:
+                            return data.GetSqlVector<float>();
+                        default:
+                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
                     }
-                    else
-                    {
-                        throw ADP.DataReaderClosed();
-                    }
+                }
+            }
+            else if (metaData.type == SqlDbType.Udt)
+            {
+                SqlConnection connection = _connection;
+                if (connection != null)
+                {
+                    connection.CheckGetExtendedUDTInfo(metaData, true);
+                    return connection.GetUdtValue(data.Value, metaData, true);
+                }
+                else
+                {
+                    throw ADP.DataReaderClosed();
                 }
             }
             else
             {
-                // TypeSystem.SQLServer2000
                 return data.Value;
             }
         }
@@ -3237,39 +3133,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private MetaType GetVersionedMetaType(MetaType actualMetaType)
-        {
-            Debug.Assert(_typeSystem == SqlConnectionOptions.TypeSystem.SQLServer2000, "Should not be in this function under anything else but SQLServer2000");
-
-            MetaType metaType = null;
-
-            if (actualMetaType == MetaType.MetaUdt)
-            {
-                metaType = MetaType.MetaVarBinary;
-            }
-            else if (actualMetaType == MetaType.MetaXml)
-            {
-                metaType = MetaType.MetaNText;
-            }
-            else if (actualMetaType == MetaType.MetaMaxVarBinary)
-            {
-                metaType = MetaType.MetaImage;
-            }
-            else if (actualMetaType == MetaType.MetaMaxVarChar)
-            {
-                metaType = MetaType.MetaText;
-            }
-            else if (actualMetaType == MetaType.MetaMaxNVarChar)
-            {
-                metaType = MetaType.MetaNText;
-            }
-            else
-            {
-                metaType = actualMetaType;
-            }
-
-            return metaType;
-        }
 
         private TdsOperationStatus TryHasMoreResults(out bool moreResults)
         {
