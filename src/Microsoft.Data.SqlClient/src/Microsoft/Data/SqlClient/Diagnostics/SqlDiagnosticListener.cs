@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     Stopwatch.GetTimestamp(),
                     sqlConnection.ClientConnectionId,
                     sqlConnection,
-                    ThisAssembly.InformationalVersion,
+                    ThisAssembly.FileVersion,
                     sqlConnection.Statistics?.GetDictionary()
                 )
             );
@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     operation,
                     Stopwatch.GetTimestamp(),
                     sqlConnection,
-                    ThisAssembly.InformationalVersion
+                    ThisAssembly.FileVersion
                 )
             );
 
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     Stopwatch.GetTimestamp(),
                     sqlConnection.ClientConnectionId,
                     sqlConnection,
-                    ThisAssembly.InformationalVersion,
+                    ThisAssembly.FileVersion,
                     ex
                 )
             );
