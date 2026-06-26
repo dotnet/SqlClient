@@ -4,28 +4,27 @@
   <!--
     Versions.props import strategy:
 
-    Each product has a Versions.props that computes its version properties (e.g.
-    SqlClientPackageVersion).  These files can be imported from two places:
+    The SqlClient family shares a single version, defined in
+    src/Microsoft.Data.SqlClient/Versions.props (SqlClientPackageVersion, etc.).
+    src/Directory.Build.props imports that file for every project, so the SqlClient* version
+    properties are always available.
 
-      1. Here, in Directory.Packages.props (Package mode only) — imports ALL
-         Versions.props early so that centrally-managed PackageVersion items can
-         reference the computed version values for sibling package pinning.
+    Microsoft.SqlServer.Server is versioned separately in its own Versions.props.  In Package mode
+    we import that SqlServer canonical file here so that centrally-managed PackageVersion items
+    below can reference its computed version values for sibling package pinning.
 
-      2. In each product's own csproj (conditional) — imports the product's own
-         Versions.props so standalone / Project-mode builds still get versions.
-
-    To prevent double-evaluation when both paths fire, every Versions.props sets
-    an import-guard property (e.g. SqlClientVersionsImported=true) on first load.
-    The csproj-level import checks that guard and becomes a no-op if the file was
-    already imported here.
+    Each Versions.props sets an import-guard property (SqlClientVersionsImported /
+    SqlServerVersionsImported) on first load so that re-imports become no-ops.
+  -->
+  <!--
+    The SqlClient family version (src/Microsoft.Data.SqlClient/Versions.props) is imported for
+    every project by src/Directory.Build.props, which evaluates before this file, so
+    SqlClientPackageVersion is already available below.  We only need to import the separately
+    versioned Microsoft.SqlServer.Server here so its SqlServerPackageVersion is available for
+    sibling package pinning in Package mode.
   -->
   <ImportGroup Condition="'$(ReferenceType)' == 'Package'">
-    <Import Project="src/Microsoft.Data.SqlClient/Versions.props" />
     <Import Project="src/Microsoft.SqlServer.Server/Versions.props" />
-    <Import Project="src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props" />
-    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props" />
-    <Import Project="src/Microsoft.Data.SqlClient.Extensions/Azure/src/Versions.props" />
-    <Import Project="src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props" />
   </ImportGroup>
 
   <PropertyGroup>
@@ -58,36 +57,38 @@
 
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
     <SqlServerVersionCeiling>$([MSBuild]::Add($(SqlServerPackageVersion.Trim().Split('.')[0]), 1)).0.0</SqlServerVersionCeiling>
-    <LoggingVersionCeiling>$([MSBuild]::Add($(LoggingPackageVersion.Trim().Split('.')[0]), 1)).0.0</LoggingVersionCeiling>
-    <AbstractionsVersionCeiling>$([MSBuild]::Add($(AbstractionsPackageVersion.Trim().Split('.')[0]), 1)).0.0</AbstractionsVersionCeiling>
     <SqlClientVersionCeiling>$([MSBuild]::Add($(SqlClientPackageVersion.Trim().Split('.')[0]), 1)).0.0</SqlClientVersionCeiling>
-    <AzureVersionCeiling>$([MSBuild]::Add($(AzurePackageVersion.Trim().Split('.')[0]), 1)).0.0</AzureVersionCeiling>
-    <AkvProviderVersionCeiling>$([MSBuild]::Add($(AkvProviderPackageVersion.Trim().Split('.')[0]), 1)).0.0</AkvProviderVersionCeiling>
   </PropertyGroup>
 
   <!-- ===================================================================== -->
   <!-- Driver Packages -->
 
-  <!-- The driver packages need version numbers when we build via Package references. -->
+  <!--
+    The driver packages need version numbers when we build via Package references.
+
+    All packages in the SqlClient family share the SqlClient version, so they all use
+    SqlClientPackageVersion / SqlClientVersionCeiling.  Microsoft.SqlServer.Server is versioned
+    separately and uses its own SqlServerPackageVersion.
+  -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <PackageVersion
       Include="Microsoft.SqlServer.Server"
       Version="[$(SqlServerPackageVersion), $(SqlServerVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Internal.Logging"
-      Version="[$(LoggingPackageVersion), $(LoggingVersionCeiling))" />
+      Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-      Version="[$(AbstractionsPackageVersion), $(AbstractionsVersionCeiling))" />
+      Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient"
       Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.Extensions.Azure"
-      Version="[$(AzurePackageVersion), $(AzureVersionCeiling))" />
+      Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
     <PackageVersion
       Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
-      Version="[$(AkvProviderPackageVersion), $(AkvProviderVersionCeiling))" />
+      Version="[$(SqlClientPackageVersion), $(SqlClientVersionCeiling))" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
