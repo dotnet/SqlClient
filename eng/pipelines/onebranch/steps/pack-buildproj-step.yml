@@ -20,7 +20,7 @@ parameters:
       - Release
 
   # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
-  # They should be in the form of "-p:PackageVersionFooBar=1.2.3 ..."
+  # They should be in the form of "-p:PackageVersionFooBar=1.2.3 ...".
   - name: dependencyArguments
     type: string
     default: ''
@@ -49,9 +49,18 @@ parameters:
       - SqlClient
       - SqlServer
 
-  #  Version to assign to the project to build. This will be passed into msbuild as
-  #  "-p:PackageVersion(packageShortName)".
-  # @TODO: Make this optional to enable progressively migrating to single-source versioning.
+  #  Suffix appended to "PackageVersion" to form the build.proj msbuild property that stamps this
+  #  package's version.  build.proj recognizes only two such properties: PackageVersionSqlClient
+  #  (shared by the entire SqlClient family: Logging, Abstractions, SqlClient, Azure, and the AKV
+  #  Provider) and PackageVersionSqlServer (Microsoft.SqlServer.Server).  Provided by the caller.
+  #  Examples:  'SqlClient' -> -p:PackageVersionSqlClient=7.1.0-preview3
+  #             'SqlServer' -> -p:PackageVersionSqlServer=1.0.0
+  - name: versionPropertySuffix
+    type: string
+
+  #  Version to stamp on the package.  Combined with versionPropertySuffix to form the msbuild
+  #  argument, e.g. -p:PackageVersionSqlClient=7.1.0-preview3.
+  #  Always required — compute up-front via the compute-versions stage.
   - name: packageVersion
     type: string
 
@@ -67,8 +76,8 @@ steps:
         -p:PackBuild=false
         -p:ReferenceType=Package
         -p:BuildNumber="$(Build.BuildNumber)"
-        -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
         ${{ parameters.dependencyArguments }}
+        -p:PackageVersion${{ parameters.versionPropertySuffix }}="${{ parameters.packageVersion }}"
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree

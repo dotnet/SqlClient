@@ -48,16 +48,18 @@ parameters:
 
   # A list of packages that the package being built with this job depends on. Each entry in the
   # object should have the fields:
-  # * artifactName - Name of the artifact published in a previous job that contains the desired
-  #   version of the dependency.
+  # * artifactName - (Optional) Name of the artifact published in a previous job that contains the
+  #   desired version of the dependency.  Omit to reference a package that is NOT built in this run
+  #   (e.g. a previously published SqlServer package): the version argument is still applied, but no
+  #   artifact is downloaded, so the dependency is restored from NuGet instead of the local feed.
   # * shortName - Short name of the dependency. This name should correspond to the short name used
   #   when building the package via build.proj
-  # * version - the version of the dependency that this package depends on
+  # * version - Pre-computed version of the dependency (from compute-versions stage).
   - name: dependencies
     type: object
     default: []
 
-  # Assembly file version for APIScan (e.g. 1.0.0.12345).
+  # Assembly file version for APIScan (e.g. 1.0.0.12345). Pre-computed by compute-versions stage.
   - name: fileVersion
     type: string
 
@@ -85,7 +87,7 @@ parameters:
       - 'SqlClient'
       - 'SqlServer'
 
-  # The version of the package.
+  # Package version (required). Pre-computed by compute-versions stage.
   - name: packageVersion
     type: string
 
@@ -96,9 +98,9 @@ jobs:
       type: windows
 
     variables:
-      # Placeholder for dependency package arguments. This will be constructed later as it depends
-      # on scripting to decompose parameters.dependencies.
-      dependencyPackageArguments: ''
+      # Placeholder for the Microsoft.SqlServer.Server package-version argument (empty unless this
+      # package depends on SqlServer). Constructed below from parameters.dependencies.
+      sqlServerVersionArgument: ''
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
@@ -109,23 +111,44 @@ jobs:
       ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
       ob_sdl_apiscan_versionNumber: ${{ parameters.fileVersion }}
 
+      # Choose the "PackageVersion" property-name suffix for this job's package.  This is how we
+      # build the build.proj property name that specifies this package's version, either
+      # PackageVersionSqlClient (shared by the entire SqlClient family), or PackageVersionSqlServer.
+      # Deciding the suffix once here keeps the mapping out of the individual build/pack/analysis
+      # templates.
+      ${{ if eq(parameters.packageShortName, 'SqlServer') }}:
+        versionPropertySuffix: SqlServer
+      ${{ else }}:
+        versionPropertySuffix: SqlClient
+
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
-      # Constructs the dependency package version parameters to pass to the build steps. Generates
-      # a string of the form (eg) "-p:PackageVersionAzure=1.2.3"
       - ${{ each package in parameters.dependencies }}:
-          # Append the dependency to the package dependency arguments argument in the form of, eg:
-          # -p:PackageVersionAzure=1.2.3
-          - script: echo "##vso[task.setvariable variable=dependencyPackageArguments]$(dependencyPackageArguments) -p:PackageVersion${{ package.shortName }}=${{ package.version }}
-            displayName: "Append Package Version Argument - ${{ package.shortName }}"
+          # Build the dependency version arguments passed to the build/pack/analysis steps.  The
+          # SqlClient family shares a single version via Central Package Management, and those steps
+          # already pass -p:PackageVersionSqlClient (the package's own version), which pins both the
+          # package being built and every family dependency reference.  Family dependencies
+          # therefore need no extra version argument here -- only a Microsoft.SqlServer.Server
+          # dependency, which is versioned separately, must be pinned explicitly via
+          # -p:PackageVersionSqlServer (this applies whether SqlServer is freshly built this run or
+          # restored from its published NuGet package).
+          - ${{ if eq(package.shortName, 'SqlServer') }}:
+            - pwsh: |
+                Write-Host "##vso[task.setvariable variable=sqlServerVersionArgument]$(sqlServerVersionArgument) -p:PackageVersionSqlServer=${{ package.version }}"
+              displayName: "Append SqlServer Version Argument - ${{ package.shortName }}"
 
-          # Download the pipeline artifact for this dependency package
-          - task: DownloadPipelineArtifact@2
-            displayName: "Download Artifact - ${{ package.shortName }}"
-            inputs:
-              artifactName: ${{ package.artifactName }}
-              targetPath: $(REPO_ROOT)/packages
+          # Download the pipeline artifact for this dependency package, when it was built in this
+          # run.  Dependencies without an artifactName are restored from NuGet instead (e.g. a
+          # previously published SqlServer package), so no download is needed.  Use an explicit
+          # non-empty check (coalesce handles a missing key) rather than relying on a bare string
+          # in the boolean if-expression.
+          - ${{ if ne(coalesce(package.artifactName, ''), '') }}:
+            - task: DownloadPipelineArtifact@2
+              displayName: "Download Artifact - ${{ package.shortName }}"
+              inputs:
+                artifactName: ${{ package.artifactName }}
+                targetPath: $(REPO_ROOT)/packages
 
       # Install the .NET SDK.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
@@ -137,16 +160,18 @@ jobs:
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
-          dependencyArguments: $(dependencyPackageArguments)
+          dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
+          versionPropertySuffix: $(versionPropertySuffix)
           packageVersion: ${{ parameters.packageVersion }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/onebranch/steps/build-buildproj-step.yml@self
         parameters:
           buildConfiguration: Release
-          dependencyArguments: $(dependencyPackageArguments)
+          dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
+          versionPropertySuffix: $(versionPropertySuffix)
           packageVersion: ${{ parameters.packageVersion }}
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
@@ -190,9 +215,10 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/pack-buildproj-step.yml@self
         parameters:
           buildConfiguration: Release
-          dependencyArguments: $(dependencyPackageArguments)
+          dependencyArguments: $(sqlServerVersionArgument)
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
+          versionPropertySuffix: $(versionPropertySuffix)
           packageVersion: ${{ parameters.packageVersion }}
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
