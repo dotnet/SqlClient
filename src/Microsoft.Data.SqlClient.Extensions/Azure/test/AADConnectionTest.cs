@@ -23,7 +23,7 @@ public class AADConnectionTest
     public static void KustoDatabaseTest()
     {
         // This is a sample Kusto database that can be connected by any AD account.
-        using SqlConnection connection = new SqlConnection($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {Config.UserManagedIdentityClientId};");
+        using SqlConnection connection = new($"Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;User ID = {Config.UserManagedIdentityClientId};");
         connection.Open();
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }
@@ -35,7 +35,7 @@ public class AADConnectionTest
     public static void NoCredentialsActiveDirectoryServicePrincipal()
     {
         // test Passes with correct connection string.
-        string connString = Config.AzureSqlConnString
+        string connString = Config.TCPConnectionString
             .AddServicePrincipalAuthenticationToConnString()
             .AddUserToConnString(Config.ServicePrincipalId)
             .AddPasswordToConnString(Config.ServicePrincipalSecret);
@@ -43,7 +43,7 @@ public class AADConnectionTest
         ConnectAndDisconnect(connString);
 
         // connection fails with expected error message.
-        string connStrWithNoCred = Config.AzureSqlConnString
+        string connStrWithNoCred = Config.TCPConnectionString
             .AddServicePrincipalAuthenticationToConnString();
 
         InvalidOperationException e = Assert.Throws<InvalidOperationException>
@@ -67,7 +67,8 @@ public class AADConnectionTest
     [InlineData("2445343$#^@@%2343253", true)]
     public static async Task ActiveDirectoryManagedIdentityWithInvalidUserIdMustFail(string userId, bool async)
     {
-        string connStrWithNoCred = Config.AzureSqlConnString
+        // connection fails with expected error message.
+        string connStrWithNoCred = Config.TCPConnectionString
             .AddManagedIdentityAuthenticationToConnString()
             .AddUserToConnString(userId);
 
@@ -89,7 +90,7 @@ public class AADConnectionTest
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void ActiveDirectoryDefaultMustPass()
     {
-        string connStr = Config.AzureSqlConnString
+        string connStr = Config.TCPConnectionString
             .AddAADDefaultAuthenticationToConnString()
             .AddUserToConnString(Config.UserManagedIdentityClientId);
 
@@ -119,7 +120,7 @@ public class AADConnectionTest
         nameof(Config.HasAzureSqlConnectionString))]
     public static void SystemAssigned_ManagedIdentityTest()
     {
-        string connStr = Config.AzureSqlConnString
+        string connStr = Config.TCPConnectionString
             .AddManagedIdentityAuthenticationToConnString();
 
         ConnectAndDisconnect(connStr);
@@ -132,7 +133,7 @@ public class AADConnectionTest
         nameof(Config.HasUserManagedIdentityClientId))]
     public static void UserAssigned_ManagedIdentityTest()
     {
-        string connStr = Config.AzureSqlConnString
+        string connStr = Config.TCPConnectionString
             .AddManagedIdentityAuthenticationToConnString()
             .AddUserToConnString(Config.UserManagedIdentityClientId);
 
