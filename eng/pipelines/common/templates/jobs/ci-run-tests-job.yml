@@ -8,18 +8,10 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
-  # The version of the Abstractions package to depend on when referenceType is 'Package'.
-  - name: abstractionsPackageVersion
-    type: string
-
   # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
-
-  # The version of the Logging package to depend on when referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
 
   # The configuration properties to set in the config file.
   #
@@ -82,8 +74,9 @@ parameters:
   - name: mdsArtifactsName
     type: string
 
-  # The version of the SqlClient package to depend on when referenceType is 'Package'.
-  - name: mdsPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.
+  - name: packageVersion
     type: string
 
   # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
@@ -374,9 +367,7 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
@@ -390,9 +381,7 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self

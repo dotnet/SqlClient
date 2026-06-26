@@ -26,30 +26,14 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Abstractions package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: abstractionsPackageVersion
-    type: string
-
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
   # The name of the pipeline artifacts to publish.
   - name: azureArtifactsName
     type: string
     default: Azure.Artifacts
 
-  # The assembly file version to stamp into the Azure DLLs.
-  - name: azureAssemblyFileVersion
-    type: string
-
-  # The version to apply to the NuGet package and DLLs.
-  - name: azurePackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.
+  - name: packageVersion
     type: string
 
   # The type of build to test (Release or Debug)
@@ -171,7 +155,9 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: AzurePackageVersion=${{ parameters.azurePackageVersion }};AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }};ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }};AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
+            # BuildNumber supplies the revision component of FileVersion; without
+            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber)
 
       - ${{ else }}:
         - task: DotNetCoreCLI@2
@@ -182,7 +168,11 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: AzurePackageVersion=${{ parameters.azurePackageVersion }};AzureAssemblyFileVersion=${{ parameters.azureAssemblyFileVersion }}
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
+            # inconsistent with the MDS/AKV packages that pass it.
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

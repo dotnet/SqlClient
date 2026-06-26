@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Azure
-#   Version:  <azurePackageVersion> (from parameters)
+#   Version:  <packageVersion> (from the shared SqlClient family version)
 #
 # The following NuGet packages are published:
 #
@@ -34,12 +34,6 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
-  # The Abstractions package verion to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: abstractionsPackageVersion
-    type: string
-
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -62,14 +56,6 @@ parameters:
   - name: azureArtifactsName
     type: string
     default: Azure.Artifacts
-
-  # The assembly file version to stamp into the DLLs.
-  - name: azureAssemblyFileVersion
-    type: string
-
-  # The version to apply to the NuGet package and DLLs.
-  - name: azurePackageVersion
-    type: string
 
   # The name of the general Azure pool to use for jobs that don't require
   # customized VM images.
@@ -108,25 +94,12 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
   # The name of the MDS pipeline artifacts to download.
   #
   # This is used when the referenceType is 'Package'.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
-
-  # The MDS package verion to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: mdsPackageVersion
-    type: string
 
   # The name of the SqlServer pipeline artifacts to download.
   #
@@ -135,13 +108,6 @@ parameters:
   - name: sqlServerArtifactsName
     type: string
     default: SqlServer.Artifacts
-
-  # The SqlServer package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: sqlServerPackageVersion
-    type: string
-    default: ''
 
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
@@ -159,6 +125,7 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
 
@@ -166,6 +133,11 @@ stages:
       # Bring the SA password from the secrets_stage into scope here.
       - name: saPassword
         value: $[stageDependencies.secrets_stage.secrets_job.outputs['SaPassword.Value']]
+      # Package versions from compute-versions stage.
+      - name: packageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
 
@@ -175,18 +147,16 @@ stages:
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -197,18 +167,16 @@ stages:
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux_integration
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -228,18 +196,16 @@ stages:
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -250,18 +216,16 @@ stages:
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows_integration
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -290,18 +254,16 @@ stages:
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -316,10 +278,8 @@ stages:
       - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          packageVersion: $(packageVersion)
           azureArtifactsName: ${{ parameters.azureArtifactsName }}
-          azureAssemblyFileVersion: ${{ parameters.azureAssemblyFileVersion }}
-          azurePackageVersion: ${{ parameters.azurePackageVersion }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dependsOn:
@@ -332,5 +292,4 @@ stages:
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

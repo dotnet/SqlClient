@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Internal.Logging
-#   Version:  <loggingPackageVersion> (from parameter)
+#   Version:  <packageVersion> (from parameter)
 #
 # The following NuGet packages are published:
 #
@@ -34,14 +34,6 @@ parameters:
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
-
-  # The assembly file version to stamp into the DLLs.
-  - name: loggingAssemblyFileVersion
-    type: string
-
-  # The version to apply to the NuGet package and DLLs.
-  - name: loggingPackageVersion
-    type: string
 
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
@@ -74,8 +66,13 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: packageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
 
     jobs:
 
@@ -88,8 +85,8 @@ stages:
       - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
         parameters:
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingAssemblyFileVersion: ${{ parameters.loggingAssemblyFileVersion }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+          # The version is computed by this stage (see the packageVersion variable above).
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

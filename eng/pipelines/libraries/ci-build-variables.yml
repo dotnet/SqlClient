@@ -4,69 +4,13 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This file is only included in PR and CI pipelines for the Abstractions, AKV,
-# Azure, Logging, and MDS projects.
+# Variables for PR and CI pipelines. Package versions are computed by each project's
+# Versions.props using BuildNumber + buildSuffix. No per-package version variables are needed.
+# The buildSuffix itself is set by each pipeline via the core template parameter.
 
 variables:
   - group: ADO Build properties
   - group: ADO Test Configuration Properties
-
-  # C# assembly versions must be in the format: Major.Minor.Build.Revision, but
-  # $(Build.BuildNumber) has the format XXX.YY.  Additionally, each version part
-  # must be a positive 16-bit integer less than 65535.  Simply concatenating
-  # both parts of $(Build.BuildNumber) could produce values larger than 65534,
-  # so we must omit the second part entirely.  Unfortunately, this may result
-  # in multiple subsequent pipline builds using the same C# assembly versions.
-  # The package versions will not be affected and will show the complete
-  # $(Build.BuildNumber) values.
-  - name: assemblyBuildNumber
-    value: $[ split(variables['Build.BuildNumber'], '.')[0] ]
-
-  # Abstractions library assembly file version
-  - name: abstractionsAssemblyFileVersion
-    value: 7.1.0.$(assemblyBuildNumber)
-
-  # Abstractions library NuGet package version
-  - name: abstractionsPackageVersion
-    value: 7.1.0-preview2ci$(Build.BuildNumber)
-
-  # AKV provider assembly file version
-  - name: akvAssemblyFileVersion
-    value: 7.1.0.$(assemblyBuildNumber)
-
-  # AKV provider NuGet package version
-  - name: akvPackageVersion
-    value: 7.1.0-preview2ci$(Build.BuildNumber)
-
-  # Azure library assembly file version
-  - name: azureAssemblyFileVersion
-    value: 7.1.0.$(assemblyBuildNumber)
-
-  # Azure library NuGet package version
-  - name: azurePackageVersion
-    value: 7.1.0-preview2ci$(Build.BuildNumber)
-
-  # Logging library assembly file version
-  - name: loggingAssemblyFileVersion
-    value: 7.1.0.$(assemblyBuildNumber)
-
-  # Logging library NuGet package version
-  - name: loggingPackageVersion
-    value: 7.1.0-preview2ci$(Build.BuildNumber)
-
-  # MDS library NuGet package version
-  # NOTE: This differs from the other structures! MdsVersions.props will deconstruct a provided
-  #    package version and build an assembly version from it. If the build number is included
-  #    before the "-" the build number will be appended again, generating an invalid file version.
-  - name: mdsPackageVersion
-    value: 7.1.0-preview2ci$(AssemblyBuildNumber)
-
-  # SqlServer library NuGet package version
-  # NOTE: SqlServer's version props derive file version from the package version by appending the
-  #    assembly build number, so this must remain a three-part SemVer base with a prerelease
-  #    suffix, not a four-part numeric version.
-  - name: sqlServerPackageVersion
-    value: 1.1.0-preview1ci$(AssemblyBuildNumber)
 
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.

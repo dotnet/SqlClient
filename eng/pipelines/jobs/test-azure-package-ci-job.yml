@@ -26,17 +26,9 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
-  # The Abstractions package verion to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: abstractionsPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.  Used when referenceType is 'Package'.
+  - name: packageVersion
     type: string
 
   # The type of build to test (Release or Debug)
@@ -79,12 +71,6 @@ parameters:
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
-
-  # The MDS package verion to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: mdsPackageVersion
-    type: string
 
   # The name of the SqlServer pipeline artifacts to download.
   #
@@ -174,9 +160,7 @@ jobs:
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:ReferenceType=${{ parameters.referenceType }}
-          -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-          -p:LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
-          -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+          -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
           -p:SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
 
       # Explicitly unset the $PLATFORM environment variable that is set by the

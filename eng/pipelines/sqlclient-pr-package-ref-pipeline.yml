@@ -20,6 +20,9 @@
 # https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2198
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
+# This becomes BuildNumber, used as the revision component of FileVersion
+# (Major.Minor.Patch.Revision). Revision must fit in a 16-bit unsigned int (max 65535).
+# Format $(DayOfYear)$(Rev:rr) yields e.g. 15401 (day 154, run 01) — always < 65535.
 name: $(DayOfYear)$(Rev:rr)
 
 # Trigger PR validation runs for all pushes to PRs that target the specified
@@ -129,6 +132,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
+    buildSuffix: 'pr'
     referenceType: Package
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
