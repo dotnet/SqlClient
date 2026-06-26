@@ -1,5 +1,6 @@
 {
-    // Typical Windows SQL Server on the local host via TCP.
+    // Typical Windows SQL Server on the local host via TCP
+    // or an Azure SQL Database connection string without any authentication or credential properties.
     "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
 
     // Typical Linux SQL Server on the local host, WSL, or a container, via TCP.
@@ -7,16 +8,11 @@
 
     // Typical Windows SQL Server on the local host via Named Pipes.
     "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
-
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringNoneVBS": "",
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
     "TracingEnabled": false,
-    // Typical Azure SQL Database connection string (Server, Initial Catalog) without any credentials or authentication information.
-    // This is used to test the AAD authentication scenarios - credentials and authentication information are provided by the tests, 
-    // configured with other properties, such as AADServicePrincipalId, AADServicePrincipalSecret, UserManagedIdentityClientId, etc.
-    "AzureSqlConnectionString": "",
     "AADServicePrincipalId": "",
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",

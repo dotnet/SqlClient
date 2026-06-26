@@ -6,13 +6,9 @@ using System.Security;
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
-public static class CommonUtils
+public static class TestRandomUtilities
 {
-    // Ensures the base connection string ends with ';' before appending a new keyword.
-    public static string EnsureSeparator(string connectionString)
-        => string.IsNullOrEmpty(connectionString) || connectionString.EndsWith(";", StringComparison.Ordinal) ? connectionString : connectionString + ';';
-
-    // Returns randomly generated characters of specified length.
+    // Returns a randomly generated secure string of specified length using only alphanumeric characters.
     public static SecureString GenerateRandomSecureString(int length = 10)
     {
         const string alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -42,11 +38,6 @@ public static class CommonUtils
         path = path.Replace(".", ""); // Remove period.
         // Clamp length to available characters to avoid ArgumentOutOfRangeException.
         return string.Concat(prefix, path.Substring(0, Math.Min(length, path.Length)));
-    }
-
-    public static string GenerateObjectName()
-    {
-        return string.Format("TEST_{0}{1}{2}", Environment.GetEnvironmentVariable("ComputerName"), Environment.TickCount, Guid.NewGuid()).Replace('-', '_');
     }
 
 }

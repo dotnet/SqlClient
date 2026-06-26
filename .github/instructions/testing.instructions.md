@@ -58,9 +58,8 @@ Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 | Property | Description |
 |----------|-------------|
-| `TCPConnectionString` | Primary TCP connection to on-premises SQL Server |
+| `TCPConnectionString` | Primary TCP connection to SQL Server or Azure SQL — used for all tests. Set to an Azure SQL endpoint for Entra ID auth tests. |
 | `NPConnectionString` | Named Pipes connection to on-premises SQL Server |
-| `AzureSqlConnectionString` | Entra ID connection string to Azure SQL Database |
 | `AzureKeyVaultURL` | AKV for encryption tests |
 | `EnclaveEnabled` | Enable enclave tests |
 | `FileStreamDirectory` | FileStream test path |
@@ -349,10 +348,13 @@ public async Task ExecuteCommand_ReturnsExpectedRows(bool async)
 ### DataTestUtility
 Common test helper class:
 ```csharp
-DataTestUtility.TCPConnectionString  // Get TCP connection
-DataTestUtility.AreConnStringsSetup  // Check if config exists
-DataTestUtility.IsAADPasswordConnStrSetup  // Check Entra ID config
+DataTestUtility.TCPConnectionString    // Get TCP connection string (on-prem or Azure SQL)
+DataTestUtility.AreConnStringsSetup    // Check if TCP/NP connection strings are configured
+DataTestUtility.IsAzureConnStringSetup // Check if TCPConnectionString points to Azure SQL
+DataTestUtility.IsAzureSqlConnectionString(connStr) // Detect whether any connection string targets Azure SQL
 ```
+
+For Azure SQL / Entra ID auth tests, use `TCPConnectionString.RemoveAuthAndCredsProperties()` as the base and gate the test with `IsAzureConnStringSetup`.
 
 ### AssertExtensions
 Extended assertions for SqlClient:

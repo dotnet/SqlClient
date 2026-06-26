@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.Enlist = true;
             ConnectionString = builder.ConnectionString;
 
-            TestTableName = CommonUtils.GenerateObjectName();
+            TestTableName = DataTestUtility.GetShortName("DistributedTransactionTest");
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {
