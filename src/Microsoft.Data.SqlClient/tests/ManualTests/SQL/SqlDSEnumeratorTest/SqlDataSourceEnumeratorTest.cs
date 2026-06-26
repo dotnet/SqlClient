@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
             ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
 
-            return DataTestUtility.IsNotUsingManagedSNIOnWindows() &&
+            return DataTestUtility.IsUsingNativeSNI() &&
                 service != null &&
                 service.Status == ServiceControllerStatus.Running;
         }
