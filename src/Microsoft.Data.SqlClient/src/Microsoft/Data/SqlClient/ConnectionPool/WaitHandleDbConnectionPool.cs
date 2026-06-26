@@ -192,6 +192,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _waitCount;
         private readonly PoolWaitHandles _waitHandles;
 
+        private readonly TimeProvider _timeProvider;
         private readonly BlockingPeriodErrorState _errorState;
 
         private Timer _cleanupTimer;
@@ -206,7 +207,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
-            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo,
+            TimeProvider timeProvider = null)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -243,15 +245,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
             _identity = identity;
+            _timeProvider = timeProvider ?? TimeProvider.System;
 
             _waitHandles = new PoolWaitHandles();
 
             // Hook the wait-handle event so any thread blocked in WaitAny over the pool's
             // handles wakes up immediately when the blocking period is entered/exited.
+            // _timeProvider is the system clock in production; tests inject a fake clock to
+            // drive the exit timer deterministically.
             _errorState = new BlockingPeriodErrorState(
                 Id,
                 onEnter: () => _waitHandles.ErrorEvent.Set(),
-                onExit: () => _waitHandles.ErrorEvent.Reset());
+                onExit: () => _waitHandles.ErrorEvent.Reset(),
+                timeProvider: _timeProvider);
 
             _objectList = new List<DbConnectionInternal>(MaxPoolSize);
 
