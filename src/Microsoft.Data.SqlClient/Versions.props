@@ -42,12 +42,22 @@
     <When Condition="'$(SqlClientPackageVersion)' != ''">
       <!--
         When a package version is provided, it supercedes all other choices. It will be used as the
-        package version and the file version will be based on it. This situation is used for
-        local developer scenarios and (@TODO:) old build pipelines that stored their version
-        information in the pipeline yaml.
+        package version and the file version will be based on it.
       -->
       <PropertyGroup>
-        <SqlClientFileVersion>$(SqlClientPackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientPackageVersionBase>$(SqlClientPackageVersion.Split('-')[0])</SqlClientPackageVersionBase>
+        <!--
+          Package versions cannot be used directly as file versions because a prerelease suffix is
+          not valid in a file version. Start with the suffix-free package base and append the
+          configured file-version build number, which converts a three-part package version such as
+          1.2.3-preview1 to 1.2.3.42.
+
+          A revision-enabled pipeline supplies a four-part package base such as 1.2.3.42. That base
+          is already a complete file version, so the following conditional assignment overrides the
+          fallback instead of producing an invalid five-part version.
+        -->
+        <SqlClientFileVersion>$(SqlClientPackageVersionBase).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientFileVersion Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlClientPackageVersionBase)', '^\d+\.\d+\.\d+\.\d+$'))">$(SqlClientPackageVersionBase)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
