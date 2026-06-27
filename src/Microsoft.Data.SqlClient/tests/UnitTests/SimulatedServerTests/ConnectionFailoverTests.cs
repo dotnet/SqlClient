@@ -12,6 +12,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
     [Collection("SimulatedServerTests")]
     public class ConnectionFailoverTests
     {
@@ -19,8 +21,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
-        [InlineData(42108)]
-        [InlineData(42109)]
+        [InlineData(42108)] // Flaky: [errorcode: 42108] Assert.Equal() Failure: Strings differ | Assert.Equal() Failure: Values differ
+        [InlineData(42109)] // Flaky: [errorcode: 42109] Assert.Equal() Failure: Strings differ
         public void TransientFault_NoFailover_DoesNotClearPool(uint errorCode)
         {
             // When connecting to a server with a configured failover partner,
@@ -67,16 +69,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal(ConnectionState.Open, secondConnection.State);
+
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Strings differ
+                                        ↓ (pos 14)
+                Expected: "localhost,51966"
+                Actual:   "localhost,51965"
+                                        ↑ (pos 14)
+            */
             Assert.Equal($"localhost,{initialServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal($"localhost,{initialServer.EndPoint.Port}", secondConnection.DataSource);
 
             // 1 for the initial connection, 2 for the second connection
+            /* TODO: Fix flaky test failure for errorcode 42108:
+            Assert.Equal() Failure: Values differ
+                Expected: 3
+                Actual:   4
+            */
             Assert.Equal(3, initialServer.PreLoginCount - initialServer.AbandonedPreLoginCount);
             // A failover should not be triggered, so prelogin count to the failover server should be 0
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ | System.ComponentModel.Win32Exception : The wait operation timed out.
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
@@ -115,6 +130,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Open the initial connection to warm up the pool and populate failover partner information
             // for the pool group.
             using SqlConnection connection = new(builder.ConnectionString);
+
+            /* TODO: Fix flaky test failure:
+            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
+                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured 
+                to allow remote connections. (provider: TCP Provider, error: 0 - The wait operation timed out.)
+                ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+            */
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{initialServer.EndPoint.Port}", connection.DataSource);
@@ -131,8 +153,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, secondConnection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", secondConnection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
-            Assert.Equal(1, failoverServer.PreLoginCount);
 
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+             Assert.Equal() Failure: Values differ
+                Expected: 1
+                Actual:   2
+            */
+            Assert.Equal(1, failoverServer.PreLoginCount);
 
             // Act
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
@@ -242,7 +269,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ | System.ComponentModel.Win32Exception : The wait operation timed out
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -277,6 +304,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
+            /* TODO: Fix flaky test failure:
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  
+                The connection could have timed out while waiting for server to complete the login process and respond; 
+                Or it could have timed out while attempting to create multiple active connections.  
+                This failure occurred while attempting to connect to the Principle server.  
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=6; handshake=80; 
+                [Login] initialization=0; authentication=0; [Post-Login] complete=5443;
+                ---- System.ComponentModel.Win32Exception : The wait operation timed out
+            */
             connection.Open();
 
 
@@ -285,12 +321,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Values differ
+                Expected: 1
+                Actual:   2
+            */
             Assert.Equal(1, failoverServer.PreLoginCount);
             Assert.Equal(1, server.PreLoginCount);
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ | System.ComponentModel.Win32Exception : The wait operation timed out
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
             using TdsServer failoverServer = new(
@@ -325,6 +367,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             };
             using SqlConnection connection = new(builder.ConnectionString);
             // Act
+            /* TODO: Fix flaky test failure:
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  
+                The timeout period elapsed during the post-login phase.  
+                The connection could have timed out while waiting for server to complete the login process and respond; 
+                Or it could have timed out while attempting to create multiple active connections.  
+                This failure occurred while attempting to connect to the Principle server.  
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=4; handshake=68; 
+                [Login] initialization=0; authentication=0; [Post-Login] complete=5443; 
+                ---- System.ComponentModel.Win32Exception : The wait operation timed out
+            */
+            /* TODO: Fix flaky test failure:
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  
+                The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  
+                This could be because the pre-login handshake failed or the server was unable to respond back in time.  
+                This failure occurred while attempting to connect to the Principle server.  
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=0; handshake=5285; 
+                ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+            */
             connection.Open();
 
             // Assert
@@ -332,6 +392,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Values differ
+                Expected: 1
+                Actual:   2
+            */
             Assert.Equal(1, server.PreLoginCount);
             Assert.Equal(0, server.Login7Count);
             Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
@@ -448,7 +513,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // [errorcode: 40613] Assert.Equal() Failure: Values differ
         public void TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary(uint errorCode)
         {
             // Arrange
@@ -490,17 +555,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
 
             // Failures should prompt the client to return to the original server, resulting in a login count of 2
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Values differ
+                Expected: 2
+                Actual:   3
+            */
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
             // Login-phase errors must NOT trigger failover alternation
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // [errorcode: 42109] Assert.Fail() Failure
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        [Trait("Category", "flaky")]
         public void TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(uint errorCode)
         {
             // Arrange
@@ -542,12 +611,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal((int)errorCode, e.Number);
                 return;
             }
-
+            // TODO: Fix flaky Assert.Fail() in this test method;
+            // [errorcode: 42109] Assert.Fail() Failure
             Assert.Fail();
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
+        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ | System.ComponentModel.Win32Exception : The wait operation timed out
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
             // Arrange
@@ -585,6 +655,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnection connection = new(builder.ConnectionString);
 
             // Connect once to the primary to trigger it to send the failover partner
+            /* TODO: Fix flaky test failure:
+            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
+                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. 
+                (provider: TCP Provider, error: 0 - The wait operation timed out.)
+                ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+            */
             connection.Open();
             Assert.Equal("invalidhost", (connection.InnerConnection as SqlConnectionInternal)!.ServerProvidedFailoverPartner);
 
@@ -606,8 +682,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, failoverConnection.State);
+
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Strings differ
+                                        ↓ (pos 13)
+                Expected: "localhost,51479"
+                Actual:   "localhost,51480"
+                                        ↑ (pos 13)
+            */
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
             // 1 for the initial connection
+            /* TODO: Fix flaky Assert.Equal() in this test method;
+            Assert.Equal() Failure: Values differ
+                Expected: 1
+                Actual:   2
+            */
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
             // 1 for the failover connection
             Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
@@ -789,6 +878,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// and never attempts failover alternation.
         /// </summary>
         [Theory]
+        [Trait("Category", "flaky")] // Assert.Throws() Failure: No exception was thrown
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
@@ -827,6 +917,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             // No outer connect retry is allowed, so the first transient error should surface.
+            // TODO: Fix flakiness of Assert.Throws() in this test method; currently, if the exception is not thrown as expected,
+            // Assert.Throws will fail the test with an assertion failure ("No exception was thrown").
             SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
             Assert.Equal((int)errorCode, ex.Number);

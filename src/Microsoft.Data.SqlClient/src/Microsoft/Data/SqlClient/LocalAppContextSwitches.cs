@@ -126,6 +126,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
     /// <summary>
+    /// The name of the app context switch that controls whether to preserve
+    /// legacy idle-timeout behavior in connection pooling.
+    /// </summary>
+    private const string UseLegacyIdleTimeoutBehaviorString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior";
+
+    /// <summary>
     /// The name of the app context switch that controls whether pool operations
     /// should count against the caller's overall ConnectTimeout budget.
     /// </summary>
@@ -240,6 +247,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
@@ -575,6 +587,16 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When set to true (the default), pooling preserves historical idle-timeout behavior.
+    /// When set to false, configured Connection Idle Timeout is enforced by the pool.
+    /// </summary>
+    public static bool UseLegacyIdleTimeoutBehavior =>
+        AcquireAndReturn(
+            UseLegacyIdleTimeoutBehaviorString,
+            defaultValue: true,
+            ref s_useLegacyIdleTimeoutBehavior);
 
     /// <summary>
     /// When set to true, pool operations count against the

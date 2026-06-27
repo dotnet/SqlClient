@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class SqlCommandCancelTest
     {
         // Shrink the packet size - this should make timeouts more likely
@@ -374,7 +375,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string errorMessage = SystemDataResourceManager.Instance.SQL_OperationCancelled;
             string errorMessageSevereFailure = SystemDataResourceManager.Instance.SQL_SevereError;
 
-            DataTestUtility.ExpectFailure<SqlException>(() =>
+            // This could fail with either a SqlException or an InvalidOperationException depending on timing,
+            // so we will accept either but require the message to match expected cancellation messages
+            DataTestUtility.ExpectFailure<Exception>(() =>
             {
                 threadsReady.SignalAndWait();
                 using (SqlDataReader r = command.ExecuteReader())
@@ -386,7 +389,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     } while (r.NextResult());
                 }
-            }, new string[] { errorMessage, errorMessageSevereFailure });
+            },
+            new string[] { errorMessage, errorMessageSevereFailure },
+            customExceptionVerifier: (ex) => ex is SqlException or InvalidOperationException);
 
         }
 

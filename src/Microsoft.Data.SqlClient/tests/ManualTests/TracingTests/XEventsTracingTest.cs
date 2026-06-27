@@ -10,7 +10,6 @@ using System.Xml.XPath;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
-using Xunit.Abstractions;
 
 #nullable enable
 
@@ -97,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// even in error scenarios. This is important to ensure that customers can rely on activity IDs being present in
     /// XEvent sessions for troubleshooting and correlation purposes.
     /// </summary>
+    [Trait("Set", "3")]
     [Collection("XEventCleaner")]
     public class XEventsTracingTest
     {
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // Our stored procedure name is an escaped SQL Server object name. This will not match the object_name data
             // in the XEvent XML, which records it as an unescaped name.
-            string unescapedProcedureName = sp.Name.Substring(1, sp.Name.Length - 2).Replace("]]", "]");
+            string unescapedProcedureName = sp.UnescapedName;
 
             VerifyXEventActivityIDConsistentWithTracing(unescapedProcedureName, System.Data.CommandType.StoredProcedure, "rpc_starting");
         }

@@ -10,9 +10,9 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>
 /// This class reads configuration information from environment variables and
-/// the config.json file for use by our tests.
+/// the config.jsonc file for use by our tests.
 ///
-/// Environment variables take precedence over config.json settings.  Note that
+/// Environment variables take precedence over config.jsonc settings.  Note that
 /// variable names are case-sensitive on non-Windows platforms.
 ///
 /// The following variables are supported:
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 ///   TEST_MDS_CONFIG:
 ///     The path to the config file to use instead of the default.  If not
 ///     supplied, the config file is assumed to be located next to the test
-///     assembly and is named config.json.
+///     assembly and is named config.jsonc.
 /// </summary>
 internal static class Config
 {
@@ -40,6 +40,7 @@ internal static class Config
     internal static bool DebugEmit { get; } = false;
     internal static bool IntegratedSecuritySupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
+    // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
     internal static string PasswordConnectionString { get; } = string.Empty;
     internal static string ServicePrincipalId { get; } = string.Empty;
     internal static string ServicePrincipalSecret { get; } = string.Empty;
@@ -86,13 +87,13 @@ internal static class Config
     /// </summary>
     static Config()
     {
-        // Read from the config.json file.  If the TEST_MDS_CONFIG environment
+        // Read from the config.jsonc file.  If the TEST_MDS_CONFIG environment
         // variable is set, use it.  Otherwise, assume the config file is in the
-        // working directory and named config.json.
+        // working directory and named config.jsonc.
         string configPath = GetEnvVar("TEST_MDS_CONFIG");
         if (configPath.IsEmpty())
         {
-            configPath = "config.json";
+            configPath = "config.jsonc";
         }
 
         try
@@ -109,10 +110,10 @@ internal static class Config
             JsonElement root = doc.RootElement;
             // See the sample config file for information about these settings:
             //
-            // src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json
+            // src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc
             //
             // The sample file is copied to the build output directory as
-            // config.json by the TestUtilities project file.
+            // config.jsonc by the TestUtilities project file.
             //
             IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
             ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");

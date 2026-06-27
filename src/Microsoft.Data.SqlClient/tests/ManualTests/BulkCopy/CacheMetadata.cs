@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class CacheMetadata
     {
         private static readonly string sourceTable = "employees";
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataInvalidate
     {
         private static readonly string sourceTable = "employees";
@@ -130,6 +132,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataDestinationChange
     {
         private static readonly string sourceTable = "employees";
@@ -189,6 +192,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataWithoutFlag
     {
         private static readonly string sourceTable = "employees";
@@ -243,6 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataWithDataTable
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
@@ -289,6 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataColumnMappingsChange
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
@@ -364,6 +370,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataColumnSubsetChange
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50), col3 nvarchar(50))";
@@ -427,6 +434,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataAsync
     {
         private static readonly string sourceTable = "employees";
@@ -498,6 +506,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
     }
 
+    [Trait("Set", "2")]
     public class CacheMetadataCombinedWithKeepNulls
     {
         private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(50) default 'DefaultVal', col3 nvarchar(50))";

@@ -10,9 +10,11 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    [Trait("Set", "2")]
     public class CopyAllFromReaderConnectionClosedOnEventAsync
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Trait("Category", "flaky")] // Hangs and crashes on occasion
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = DataTestUtility.TCPConnectionString;

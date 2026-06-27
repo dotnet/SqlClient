@@ -50,8 +50,11 @@ stages:
           vmImage: 'ubuntu-latest'
 
         steps:
-          # Install dotnet SDK and restore tools
-          - template: /eng/pipelines/pr/steps/install-dotnet.yml@self
+          # Install dotnet
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          # Restore dotnet tools
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # ################################################################
           # Build/Pack Microsoft.Data.SqlClient

@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "1")]
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CertificateTest : IDisposable
     {

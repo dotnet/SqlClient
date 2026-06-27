@@ -207,9 +207,16 @@
     <Error Condition="'$(_SqlServerPackageVersionTrimmed)' == ''"
       Text="SqlServerPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionSqlServer=&lt;version&gt;; when packing the project directly, set -p:SqlServerPackageVersion=&lt;version&gt;; otherwise ensure the SqlServer Versions.props import can resolve a value." />
 
-    <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
+    <!-- Expand the SqlClientPackNuspec template with computed version ranges. -->
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$SqlServerPackageVersion$','$(SqlServerPackageVersion)'))</_SqlClientPackNuspecExpandedText>
+      <!-- Compute version ranges: [floor, (floor.Major+1).0.0) — ceiling derived from floor.
+           Use trimmed values to guard against whitespace passed via -p: arguments. -->
+      <_AbstractionsVersionRange>[$(_AbstractionsPackageVersionTrimmed), $([MSBuild]::Add($(_AbstractionsPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_AbstractionsVersionRange>
+      <_LoggingVersionRange>[$(_LoggingPackageVersionTrimmed), $([MSBuild]::Add($(_LoggingPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_LoggingVersionRange>
+      <_SqlServerVersionRange>[$(_SqlServerPackageVersionTrimmed), $([MSBuild]::Add($(_SqlServerPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_SqlServerVersionRange>
+    </PropertyGroup>
+    <PropertyGroup>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsVersionRange$','$(_AbstractionsVersionRange)').Replace('$LoggingVersionRange$','$(_LoggingVersionRange)').Replace('$SqlServerVersionRange$','$(_SqlServerVersionRange)').Replace('$SniVersionRange$','$(SniVersionRange)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"

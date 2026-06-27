@@ -84,6 +84,17 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_PACKET_SIZE = 32768;
         public const int MAX_SERVER_USER_NAME = 256;  // obtained from luxor
 
+        // Maximum allowed data length for token payloads (feature ext ack,
+        // session state, fedauth info). Prevents a malicious server from causing
+        // unbounded memory allocation via spoofed token length fields.
+        internal const int MaxTokenDataLength = 1 << 20; // 1 MB
+
+        // Maximum allowed data length for a DTC promote transaction propagation token.
+        internal const int MaxPromoteTransactionLength = 1 << 16; // 64 KB
+
+        // Maximum valid wire size for datetime types (DateTimeOffset = 5 time + 3 date + 2 offset).
+        internal const int MaxDateTimeLength = 10;
+
         // Severity  0 - 10 indicates informational (non-error) messages
         // Severity 11 - 16 indicates errors that can be corrected by user (syntax errors, etc...)
         // Severity 17 - 19 indicates failure due to insufficient resources in the server
@@ -314,19 +325,13 @@ namespace Microsoft.Data.SqlClient
 
             Client sends:
             0x70000000 -> 7.0
-            0x71000000 -> 2000 RTM
-            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
 
             Server responds:
-            0x07000000 -> 7.0     // Notice server response format is different for bwd compat
-            0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
-            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
         */
 
         // Majors:
-        // For 2000 SP1 and later the versioning schema changed and
         // the high-byte is sufficient to distinguish later versions
         public const int SQL2005_MAJOR = 0x72;
         public const int SQL2008_MAJOR = 0x73;
@@ -448,11 +453,9 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to 2000 (version 8) and later.
+        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
-
-        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLXMLTYPE = 0xf1;
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };

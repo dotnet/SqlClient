@@ -39,6 +39,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseCompatibilityAsyncBehaviour = null;
         switchesHelper.UseCompatibilityProcessSni = null;
         switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
@@ -48,25 +49,26 @@ public class LocalAppContextSwitchesTest
         switchesHelper.DisableTnirByDefault = null;
         #endif
 
-        Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
-        Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
-        Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
-        Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
-        Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
-        Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
-        Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
-        Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
-        Assert.False(LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait);
-        Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
-        Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
-        Assert.False(LocalAppContextSwitches.UseLegacyFailoverAlternationOnLoginSqlErrors);
-        Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        Assert.False(switchesHelper.LegacyRowVersionNullBehavior);
+        Assert.False(switchesHelper.SuppressInsecureTlsWarning);
+        Assert.False(switchesHelper.MakeReadAsyncBlocking);
+        Assert.True(switchesHelper.UseMinimumLoginTimeout);
+        Assert.True(switchesHelper.LegacyVarTimeZeroScaleBehaviour);
+        Assert.True(switchesHelper.UseCompatibilityProcessSni);
+        Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
+        Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
+        Assert.False(switchesHelper.UseConnectionPoolV2);
+        Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
+        Assert.False(switchesHelper.TruncateScaledDecimal);
+        Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
+        Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
+        Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
-        Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
+        Assert.False(switchesHelper.GlobalizationInvariantMode);
+        Assert.Equal(!ADP.IsWindows, switchesHelper.UseManagedNetworking);
         #endif
-        Assert.Equal(!ADP.IsWindows, LocalAppContextSwitches.UseManagedNetworking);
         #if NETFRAMEWORK
-        Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
+        Assert.False(switchesHelper.DisableTnirByDefault);
         #endif
     }
 }

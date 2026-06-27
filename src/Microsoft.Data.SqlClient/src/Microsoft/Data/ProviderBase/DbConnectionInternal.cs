@@ -82,6 +82,11 @@ namespace Microsoft.Data.ProviderBase
             ShouldHidePassword = hidePassword;
             State = state;
             CreateTime = DateTime.UtcNow;
+            // Initialize the returned-to-pool stamp to creation time so that a freshly built connection is treated
+            // as "just used" by the pool's idle-expiry checks until the pool's return path stamps it again on first return.
+            // Without this initialization, ReturnedTime would default to DateTime.MinValue, which would cause
+            // IsLiveConnection to immediately evict every new connection whenever IdleTimeout is configured.
+            ReturnedTime = CreateTime;
         }
 
         #region Properties
@@ -90,6 +95,15 @@ namespace Microsoft.Data.ProviderBase
         /// When the connection was created.
         /// </summary>
         internal DateTime CreateTime { get; }
+
+        /// <summary>
+        /// UTC timestamp of when this connection was last returned to the pool.
+        /// Stamped by <see cref="SetReturnedTime"/>. Initialized to <see cref="CreateTime"/> in the constructor
+        /// so a freshly built connection is treated as "just used" until its first return.
+        /// Internal setter exists to support deterministic unit tests without reflection.
+        /// The pool reads this value to decide whether the connection has sat idle longer than the configured idle timeout.
+        /// </summary>
+        internal DateTime ReturnedTime { get; set; }
 
         /// <summary>
         /// The pool generation at the time this connection was created or added to the pool.
@@ -724,6 +738,17 @@ namespace Microsoft.Data.ProviderBase
         internal virtual void PrepareForReplaceConnection()
         {
             // By default, there is no preparation required
+        }
+
+        /// <summary>
+        /// Stamps <see cref="ReturnedTime"/> with the current UTC time. The pool calls this from its
+        /// return-to-pool path only when it intends the idle-timeout machinery to act on the value;
+        /// the connection owns the mechanism (recording the time) while the pool owns the policy
+        /// (deciding when a stamp is meaningful).
+        /// </summary>
+        internal void SetReturnedTime()
+        {
+            ReturnedTime = DateTime.UtcNow;
         }
 
         internal void PrePush(DbConnection expectedOwner)

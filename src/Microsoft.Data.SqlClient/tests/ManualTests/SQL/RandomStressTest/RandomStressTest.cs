@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class RandomStressTest : IDisposable
     {
         private static readonly TimeSpan TimeLimitDefault = new TimeSpan(0, 0, 10);

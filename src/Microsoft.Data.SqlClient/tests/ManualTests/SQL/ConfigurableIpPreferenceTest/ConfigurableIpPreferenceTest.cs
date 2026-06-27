@@ -18,6 +18,7 @@ using static Microsoft.Data.SqlClient.ManualTesting.Tests.DNSCachingTest;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class ConfigurableIpPreferenceTest
     {
         private const string CnnPrefIPv6 = ";IPAddressPreference=IPv6First";
