@@ -25,7 +25,7 @@ internal sealed partial class SqlMetaDataFactory
         private const string IdentifierPattern = @"(^\[\p{Lo}\p{Lu}\p{Ll}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Nd}@$#_]*$)|(^\[[^\]\0]|\]\]+\]$)|(^\""[^\""\0]|\""\""+\""$)";
         private const IdentifierCase IdentifierCase = IdentifierCase.Insensitive;
         private const bool OrderByColumnsInSelect = false;
-        private const string _parameterMarkerFormat = "{0}";
+        private const string ParameterMarkerFormat = "{0}";
         private const string ParameterMarkerPattern = @"@[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)";
         private const int ParameterNameMaxLength = 128;
         private const string ParameterNamePattern = @"^[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)";
@@ -83,7 +83,7 @@ internal sealed partial class SqlMetaDataFactory
                 IdentifierPattern,
                 IdentifierCase,
                 OrderByColumnsInSelect,
-                _parameterMarkerFormat,
+                ParameterMarkerFormat,
                 ParameterMarkerPattern,
                 ParameterNameMaxLength,
                 ParameterNamePattern,
