@@ -94,6 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SQL Server capabilities
         private static bool? s_isDataClassificationSupported;
         private static bool? s_isVectorSupported;
+        private static bool? s_isSqlAuthenticationSupported;
 
         // Login permissions
         private static bool? s_isSysAdmin;
@@ -171,7 +172,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsSysAdmin || IsSecurityAdmin;
 
         public static bool CanUseSqlAuthentication =>
-            IsSysAdmin && GetAuthenticationMode() == 2;
+            s_isSqlAuthenticationSupported ??= IsTCPConnStringSetup() &&
+                SupportsSqlAuthentication();
 
         static DataTestUtility()
         {
@@ -487,16 +489,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return command.ExecuteScalar() is int result && result == 1;
         }
 
-        public static int GetAuthenticationMode()
+        public static bool SupportsSqlAuthentication()
         {
             using SqlConnection connection = new(TCPConnectionString);
 
             connection.Open();
-            using SqlCommand command = new("EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'LoginMode'", connection);
+            using SqlCommand command = new("select SERVERPROPERTY('IsIntegratedSecurityOnly'), ISNULL(SERVERPROPERTY('IsExternalAuthenticationOnly'), 0)", connection);
             using SqlDataReader reader = command.ExecuteReader();
 
             reader.Read();
-            return reader.GetInt32(1);
+            return reader.GetInt32(0) == 0 && reader.GetInt32(1) == 0;
         }
 
         public static bool IsAdmin
