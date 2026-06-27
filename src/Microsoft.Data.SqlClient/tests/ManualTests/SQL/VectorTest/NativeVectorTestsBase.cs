@@ -413,7 +413,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             sourceConnection.Open();
             using SqlConnection destinationConnection = new(_connectionString);
             destinationConnection.Open();
-            DataTable? table = null;
+
+            using DataTable table = new(_bulkCopySourceTable.Name)
+            {
+                Columns =
+                {
+                    new DataColumn("Id", typeof(int)),
+                    new DataColumn(VectorColumnName, typeof(SqlVector<TElement>))
+                }
+            };
             switch (bulkCopySourceMode)
             {
 
@@ -434,9 +442,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                         break;
                     }
                 case 2:
-                    table = new DataTable(_bulkCopySourceTable.Name);
-                    table.Columns.Add("Id", typeof(int));
-                    table.Columns.Add(VectorColumnName, typeof(SqlVector<TElement>));
                     table.Rows.Add(1, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
                     table.Rows.Add(2, DBNull.Value);
                     break;
@@ -505,7 +510,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using SqlConnection destinationConnection = new(_connectionString);
             await destinationConnection.OpenAsync();
 
-            DataTable? table = null;
+            using DataTable table = new(_bulkCopySourceTable.Name)
+            {
+                Columns =
+                {
+                    new DataColumn("Id", typeof(int)),
+                    new DataColumn(VectorColumnName, typeof(SqlVector<TElement>))
+                }
+            };
             switch (bulkCopySourceMode)
             {
 
@@ -526,9 +538,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                         break;
                     }
                 case 2:
-                    table = new DataTable(_bulkCopySourceTable.Name);
-                    table.Columns.Add("Id", typeof(int));
-                    table.Columns.Add(VectorColumnName, typeof(SqlVector<TElement>));
                     table.Rows.Add(1, new SqlVector<TElement>(TestDataInstance.SampleScalarData));
                     table.Rows.Add(2, DBNull.Value);
                     break;
