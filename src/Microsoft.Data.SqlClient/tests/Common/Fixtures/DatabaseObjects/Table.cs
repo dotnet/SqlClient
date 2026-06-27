@@ -34,7 +34,8 @@ public sealed class Table : DatabaseObject
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF (OBJECT_ID('{Name}') IS NOT NULL) DROP TABLE {Name}", Connection);
+        using SqlCommand dropCommand = new($"IF (OBJECT_ID(@Table_Name) IS NOT NULL) DROP TABLE {Name}", Connection);
+        dropCommand.Parameters.AddWithValue("@Table_Name", Name);
 
         dropCommand.ExecuteNonQuery();
     }
