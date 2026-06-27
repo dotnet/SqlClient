@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClient
             //
             // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
             //
-            // All of this is wrapped in an test against HAS_PERMS_BY_NAME. This test verifies that
+            // All of this is wrapped in a test against HAS_PERMS_BY_NAME. This test verifies that
             // the user possesses the necessary permissions to access sys.all_columns. If they do not
             // @Column_Names will remain NULL (and be coalesced to *) and SqlBulkCopy will degrade
             // gracefully, silently dropping support for hidden columns and column aliases.
