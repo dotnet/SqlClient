@@ -93,7 +93,8 @@ public sealed class ServerLogin : DatabaseObject<string>
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF SUSER_ID('{UnescapedName}') IS NOT NULL DROP LOGIN {Name}", Connection);
+        using SqlCommand dropCommand = new($"IF SUSER_ID(@Login_Name) IS NOT NULL DROP LOGIN {Name}", Connection);
+        dropCommand.Parameters.AddWithValue("@Login_Name", UnescapedName);
 
         dropCommand.ExecuteNonQuery();
     }
