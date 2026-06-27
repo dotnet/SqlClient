@@ -35,7 +35,8 @@ public sealed class DatabaseUser : DatabaseObject<string>
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF USER_ID('{UnescapedName}') IS NOT NULL DROP USER {Name}", Connection);
+        using SqlCommand dropCommand = new($"IF USER_ID(@User_Name) IS NOT NULL DROP USER {Name}", Connection);
+        dropCommand.Parameters.AddWithValue("@User_Name", UnescapedName);
 
         ExecuteCommandInDatabase(dropCommand);
     }
