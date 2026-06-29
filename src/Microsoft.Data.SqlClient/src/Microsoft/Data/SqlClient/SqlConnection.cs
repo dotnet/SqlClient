@@ -1595,8 +1595,8 @@ namespace Microsoft.Data.SqlClient
         public override void Open() =>
             Open(SqlConnectionOverrides.None);
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, false, overrides));
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection,SqlConnectionOverrides overrides)
+            => RetryLogicProvider.Execute(this, () => TryOpen(retry, forceNewConnection, overrides));
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1616,7 +1616,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, false, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, false, overrides) : TryOpen(null, false, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1696,7 +1696,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 await InternalOpenAsync(SqlConnectionOverrides.None, true, ctoken).ConfigureAwait(false);
                             }
-                            
+
                             // On success, increment the reconnect count - we don't really care if it rolls over since it is approx.
                             _reconnectCount = unchecked(_reconnectCount + 1);
 #if DEBUG
