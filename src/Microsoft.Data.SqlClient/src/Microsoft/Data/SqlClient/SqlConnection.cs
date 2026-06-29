@@ -1912,9 +1912,35 @@ namespace Microsoft.Data.SqlClient
                 InternalOpenWithRetryAsync(overrides, false, cancellationToken) :
                 InternalOpenAsync(overrides, false, cancellationToken);
 
+        /// <summary>
+        /// Re-establishes the underlying physical connection for an already-open <see cref="SqlConnection"/>,
+        /// replacing its current (broken) inner connection with a fresh one while preserving the outer
+        /// <see cref="SqlConnection"/> object. Used by the connection-resiliency reconnect path.
+        /// </summary>
+        /// <param name="cancellationToken">A token that cancels the reconnect attempt.</param>
+        /// <returns>A task that completes when the connection has been re-established.</returns>
+        /// <remarks>
+        /// Unlike <see cref="OpenAsync(CancellationToken)"/>, this forces a new underlying connection (it must
+        /// only be called when the connection is already open), so the replacement flows through
+        /// <see cref="TryOpenInner"/> with <c>forceNewConnection</c> set to <see langword="true"/>.
+        /// </remarks>
         internal Task ReconnectAsync(CancellationToken cancellationToken)
             => ReconnectAsync(SqlConnectionOverrides.None, cancellationToken);
 
+        /// <summary>
+        /// Re-establishes the underlying physical connection for an already-open <see cref="SqlConnection"/>,
+        /// replacing its current (broken) inner connection with a fresh one while preserving the outer
+        /// <see cref="SqlConnection"/> object. Used by the connection-resiliency reconnect path.
+        /// </summary>
+        /// <param name="overrides">Options that relax some of the checks performed when opening the connection.</param>
+        /// <param name="cancellationToken">A token that cancels the reconnect attempt.</param>
+        /// <returns>A task that completes when the connection has been re-established.</returns>
+        /// <remarks>
+        /// Unlike <see cref="OpenAsync(SqlConnectionOverrides, CancellationToken)"/>, this forces a new
+        /// underlying connection (it must only be called when the connection is already open), so the
+        /// replacement flows through <see cref="TryOpenInner"/> with <c>forceNewConnection</c> set to
+        /// <see langword="true"/>. The provider retry logic is applied when <see cref="IsProviderRetriable"/>.
+        /// </remarks>
         internal Task ReconnectAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
             => IsProviderRetriable ?
                 InternalOpenWithRetryAsync(overrides, true, cancellationToken) :
@@ -2107,7 +2133,7 @@ namespace Microsoft.Data.SqlClient
                 _result = result;
                 _overrides = overrides;
                 _registration = registration;
-                _forceNewConnection = false;
+                _forceNewConnection = forceNewConnection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
 
