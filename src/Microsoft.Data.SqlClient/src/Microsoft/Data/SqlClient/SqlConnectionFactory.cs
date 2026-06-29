@@ -318,6 +318,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout,
+            bool forceNewConnection,
             out DbConnectionInternal connection)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
@@ -419,7 +420,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (((SqlConnection)owningConnection).ForceNewConnection)
+                    if (forceNewConnection)
                     {
                         Debug.Assert(oldConnection is not DbConnectionClosed, "Force new connection, but there is no old connection");
                         

@@ -64,7 +64,7 @@ namespace Microsoft.Data.ProviderBase
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
             TimeoutTimer timeout) =>
-            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
+            TryOpenConnectionInternal(outerConnection, connectionFactory, retry, forceNewConnection: false,timeout);
 
         /// <inheritdoc/>
         internal override void ResetConnection() => throw ADP.ClosedConnectionError();

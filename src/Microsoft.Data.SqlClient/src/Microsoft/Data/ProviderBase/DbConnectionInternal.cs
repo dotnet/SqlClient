@@ -925,6 +925,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
+            bool forceNewConnection,
             TimeoutTimer timeout)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
@@ -934,7 +935,13 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, timeout, out openConnection))
+                    if (!connectionFactory.TryGetConnection(
+                            outerConnection, 
+                            retry, 
+                            this, 
+                            timeout, 
+                            forceNewConnection, 
+                            out openConnection))
                     {
                         return false;
                     }

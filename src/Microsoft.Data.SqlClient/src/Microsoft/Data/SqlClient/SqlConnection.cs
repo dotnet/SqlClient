@@ -1223,8 +1223,6 @@ namespace Microsoft.Data.SqlClient
             get => _reconnectCount;
         }
 
-        internal bool ForceNewConnection { get; set; }
-
 #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OnStateChange/*' />
         protected override void OnStateChange(StateChangeEventArgs stateChange)
@@ -1598,7 +1596,7 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
 
         private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
+            => RetryLogicProvider.Execute(this, () => TryOpen(retry, false, overrides));
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1618,7 +1616,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, false, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1667,6 +1665,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
+
+                // Calling close will request a cancellation on this token source, cancelling the reconnection.
+                // Ideally, however, the reconnect should be directly awaited, making it impossible to have a
+                // concurrent call to Close.
+                // TODO: Note that we do not respect the command timeout in this context. Instead, the reconnect gets
+                // a full connect timeout. Investigate if this should be changed.
                 _reconnectionCancellationSource = cts;
                 CancellationToken ctoken = cts.Token;
                 int retryCount = _connectRetryCount; // take a snapshot: could be changed by modifying the connection string
@@ -1684,8 +1688,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                         try
                         {
-                            ForceNewConnection = true;
-                            await OpenAsync(ctoken).ConfigureAwait(false);
+                            await ReconnectAsync(ctoken).ConfigureAwait(false);
                             // On success, increment the reconnect count - we don't really care if it rolls over since it is approx.
                             _reconnectCount = unchecked(_reconnectCount + 1);
 #if DEBUG
@@ -1697,7 +1700,6 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                             _impersonateIdentity = null;
 #endif
-                            ForceNewConnection = false;
                         }
 
                         SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Reconnection succeeded. Client Connection Id {0} -> {1}", _originalConnectionId, ClientConnectionId);
@@ -1907,13 +1909,21 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
         public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
             => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(overrides, cancellationToken) :
-                InternalOpenAsync(overrides, cancellationToken);
+                InternalOpenWithRetryAsync(overrides, false, cancellationToken) :
+                InternalOpenAsync(overrides, false, cancellationToken);
 
-        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+        internal Task ReconnectAsync(CancellationToken cancellationToken)
+            => ReconnectAsync(SqlConnectionOverrides.None, cancellationToken);
 
-        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+        internal Task ReconnectAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, true, cancellationToken) :
+                InternalOpenAsync(overrides, true, cancellationToken);
+
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
+
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -1955,7 +1965,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion, overrides);
+                        completed = TryOpen(completion, forceNewConnection, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1975,7 +1985,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(s_openAsyncCancel, completion);
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration, forceNewConnection);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2088,14 +2098,16 @@ namespace Microsoft.Data.SqlClient
             private TaskCompletionSource<object> _result;
             private SqlConnectionOverrides _overrides;
             private CancellationTokenRegistration _registration;
+            private bool _forceNewConnection;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration, bool forceNewConnection)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
                 _overrides = overrides;
                 _registration = registration;
+                _forceNewConnection = false;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
 
@@ -2130,7 +2142,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry, _overrides);
+                                result = _parent.TryOpen(_retry, _forceNewConnection, _overrides);
                             }
                             if (result)
                             {
@@ -2176,7 +2188,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
+        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
             bool result = false;
 
@@ -2206,13 +2218,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_impersonateIdentity.User == identity.User)
                     {
-                        result = TryOpenInner(retry);
+                        result = TryOpenInner(retry, forceNewConnection);
                     }
                     else
                     {
                         using (WindowsImpersonationContext context = _impersonateIdentity.Impersonate())
                         {
-                            result = TryOpenInner(retry);
+                            result = TryOpenInner(retry, forceNewConnection);
                         }
                     }
                 }
@@ -2227,10 +2239,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     _lastIdentity = null;
                 }
-                result = TryOpenInner(retry);
+                result = TryOpenInner(retry, forceNewConnection);
             }
 #else
-            result = TryOpenInner(retry);
+            result = TryOpenInner(retry, forceNewConnection);
 #endif
 
             return result;
@@ -2240,12 +2252,18 @@ namespace Microsoft.Data.SqlClient
         /// Completes the inner open/replace operation and initializes parser state for the active inner connection.
         /// </summary>
         /// <param name="retry">Retry continuation used by async open paths.</param>
+        /// <param name="forceNewConnection">Provide true to forcibly overwrite the existing connection. Provide false if connecting for the first time.</param>
         /// <returns><see langword="true"/> when open initialization completed synchronously; otherwise <see langword="false"/>.</returns>
         /// <remarks>
         /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
         /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
+        /// 
+        /// forceNewConnection may only be true when the connection is already open and needs to be replaced. If the connection has never,
+        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is 
+        /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
+        /// transitions and subclasses for more details.
         /// </remarks>
-        internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
+        internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection)
         {
             // Create a single TimeoutTimer that represents the overall connection-open budget for this
             // attempt. The timer is threaded through every layer (inner connection state transitions,
@@ -2257,7 +2275,7 @@ namespace Microsoft.Data.SqlClient
             TimeoutTimer timeout = TimeoutTimer.StartNew(
                 TimeSpan.FromSeconds(ConnectionOptions?.ConnectTimeout ?? ADP.DefaultConnectionTimeout));
 
-            if (ForceNewConnection)
+            if (forceNewConnection)
             {
                 if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, timeout))
                 {
