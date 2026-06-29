@@ -85,16 +85,16 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSSPIPacketSize));
         }
-        static internal Exception NullEmptyTransactionName()
+        internal static Exception NullEmptyTransactionName()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
         }
 
-        static internal Exception UserInstanceFailoverNotCompatible()
+        internal static Exception UserInstanceFailoverNotCompatible()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
         }
-        static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
+        internal static Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
@@ -636,7 +636,7 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(
+        internal static Exception CannotCompleteDelegatedTransactionWithOpenResults(
             SqlConnectionInternal internalConnection,
             bool marsOn)
         {
@@ -1860,7 +1860,7 @@ namespace Microsoft.Data.SqlClient
         // Merged Provider
         //
 
-        static internal Exception ContextConnectionIsUnsupported()
+        internal static Exception ContextConnectionIsUnsupported()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsUnsupported));
         }
@@ -1909,7 +1909,7 @@ namespace Microsoft.Data.SqlClient
 
     }
 
-    sealed internal class SQLMessage
+    internal sealed class SQLMessage
     {
         private SQLMessage() { /* prevent utility class from being instantiated*/ }
 
