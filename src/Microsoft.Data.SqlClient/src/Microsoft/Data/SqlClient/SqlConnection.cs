@@ -2259,8 +2259,8 @@ namespace Microsoft.Data.SqlClient
         /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
         /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
         /// 
-        /// forceNewConnection may only be true when the connection is already open (or was open) and needs to be replaced. If the connection has never,
-        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is 
+        /// forceNewConnection may only be true when the connection is already open and needs to be replaced. If the connection has never
+        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
 
         /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
         /// transitions and subclasses for more details.
