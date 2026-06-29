@@ -1,0 +1,117 @@
+{
+  "ConcurrentQueueSemaphore.netcore.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "dd3a55befe6d909ab287c1871130d573",
+    "semantic_hash": "dd3a55befe6d909ab287c1871130d573"
+  },
+  "LocalDB.netcore.unix.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "f90991609f433f30911a1e923aba4dd6",
+    "semantic_hash": "f90991609f433f30911a1e923aba4dd6"
+  },
+  "LocalDB.netcore.windows.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "087583e6019feb53012f0645659ceee1",
+    "semantic_hash": "087583e6019feb53012f0645659ceee1"
+  },
+  "ResolvedServerSpn.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "ade5e534642b66bc38e0986d7064362c",
+    "semantic_hash": "ade5e534642b66bc38e0986d7064362c"
+  },
+  "SniAsyncCallback.netcore.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "cad7a40047952cf4f2c2c093572e9182",
+    "semantic_hash": "cad7a40047952cf4f2c2c093572e9182"
+  },
+  "SniCommon.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "2c728df62d55186f85d5f8cde8ba5bbf",
+    "semantic_hash": "2c728df62d55186f85d5f8cde8ba5bbf"
+  },
+  "SniError.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "5514711f4eb01592e12a1979978493c5",
+    "semantic_hash": "5514711f4eb01592e12a1979978493c5"
+  },
+  "SniHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "9e7c3bcb9927029c12c912511dd29c09",
+    "semantic_hash": "9e7c3bcb9927029c12c912511dd29c09"
+  },
+  "SniLoadHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "7a181c5c2e97cdc8adacaf78746864db",
+    "semantic_hash": "7a181c5c2e97cdc8adacaf78746864db"
+  },
+  "SniMarsConnection.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "ec9630423f69395c9a44c24b17011612",
+    "semantic_hash": "ec9630423f69395c9a44c24b17011612"
+  },
+  "SniMarsHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "2d2b8125c78853f52e364d08b2ddab23",
+    "semantic_hash": "2d2b8125c78853f52e364d08b2ddab23"
+  },
+  "SniNetworkStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "707a4ae416cedf229a0d4bafdba34992",
+    "semantic_hash": "707a4ae416cedf229a0d4bafdba34992"
+  },
+  "SniNpHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "89e46a1d18a41c3816c1876afb3d3fe5",
+    "semantic_hash": "89e46a1d18a41c3816c1876afb3d3fe5"
+  },
+  "SniPacket.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "1c599c650f1abb005968b74b1f8fda84",
+    "semantic_hash": "1c599c650f1abb005968b74b1f8fda84"
+  },
+  "SniPhysicalHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "7bd7a4be6469c1cf1ad42124b431bb50",
+    "semantic_hash": "7bd7a4be6469c1cf1ad42124b431bb50"
+  },
+  "SniProviders.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "d98ef4c8bebef40c2f313d2272b4e2fd",
+    "semantic_hash": "d98ef4c8bebef40c2f313d2272b4e2fd"
+  },
+  "SniProxy.netcore.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "2bd9bda5f344a6063a40e965a636e596",
+    "semantic_hash": "2bd9bda5f344a6063a40e965a636e596"
+  },
+  "SniSmuxFlags.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "da821d3a352dada1c4ae14bde98912b5",
+    "semantic_hash": "da821d3a352dada1c4ae14bde98912b5"
+  },
+  "SniSmuxHeader.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "93df48e9d5b2a6f01b8dafe9e81becc1",
+    "semantic_hash": "93df48e9d5b2a6f01b8dafe9e81becc1"
+  },
+  "SniSslStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "4fe7bc01cad4747d4621a65aeb744882",
+    "semantic_hash": "4fe7bc01cad4747d4621a65aeb744882"
+  },
+  "SniTcpHandle.netcore.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "0008db8be8c14c2de04db4241775eef8",
+    "semantic_hash": "0008db8be8c14c2de04db4241775eef8"
+  },
+  "SslOverTdsStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "638fce8608cb61f459e49ba7e21416b8",
+    "semantic_hash": "638fce8608cb61f459e49ba7e21416b8"
+  },
+  "SsrpClient.netcore.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "f02697db9966dcdf629eeec151c3a809",
+    "semantic_hash": "f02697db9966dcdf629eeec151c3a809"
+  }
+}

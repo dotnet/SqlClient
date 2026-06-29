@@ -1,0 +1,1307 @@
+{
+  "AAsyncCallContext.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "7afbcfe6604e084bd638f9ee244d84d9",
+    "semantic_hash": "7afbcfe6604e084bd638f9ee244d84d9"
+  },
+  "ActiveDirectoryAuthenticationTimeoutRetryHelper.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "1a3cb3ef7200ffdcc84926067645a71d",
+    "semantic_hash": "1a3cb3ef7200ffdcc84926067645a71d"
+  },
+  "AlwaysEncrypted/AeadAes256CbcHmac256Factory.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "1fcd0298b704a0250c96f50c491a5abf",
+    "semantic_hash": "1fcd0298b704a0250c96f50c491a5abf"
+  },
+  "AlwaysEncrypted/ColumnMasterKeyMetadata.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "e96d76e4f23bdab956bdab055b181d61",
+    "semantic_hash": "e96d76e4f23bdab956bdab055b181d61"
+  },
+  "AlwaysEncrypted/EncryptedColumnEncryptionKeyParameters.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "97d542bda9f7f3cc6e317025986ead9b",
+    "semantic_hash": "97d542bda9f7f3cc6e317025986ead9b"
+  },
+  "AlwaysEncrypted/EncryptionAlgorithmFactory.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "69d0f795b90f66de85707b38c54ee212",
+    "semantic_hash": "69d0f795b90f66de85707b38c54ee212"
+  },
+  "AlwaysEncrypted/EncryptionAlgorithmFactoryList.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "b2719945173b32c129424a85383aeb28",
+    "semantic_hash": "b2719945173b32c129424a85383aeb28"
+  },
+  "AlwaysEncryptedEnclaveProviderUtils.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "4c3f1f62711629b61a55ff9aebcf1d78",
+    "semantic_hash": "4c3f1f62711629b61a55ff9aebcf1d78"
+  },
+  "AlwaysEncryptedHelperClasses.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "bea4b60f9b876f365377fafc9b94bc48",
+    "semantic_hash": "bea4b60f9b876f365377fafc9b94bc48"
+  },
+  "AlwaysEncryptedKeyConverter.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "088f03442f0d9e5409fc941fa18d5d38",
+    "semantic_hash": "088f03442f0d9e5409fc941fa18d5d38"
+  },
+  "ApplicationIntent.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "9ad9cbab8b91ae9fb38208dee76ef71c",
+    "semantic_hash": "9ad9cbab8b91ae9fb38208dee76ef71c"
+  },
+  "AssemblyRef.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "30cbafca8ec1ba07ad35fec5f11940ae",
+    "semantic_hash": "30cbafca8ec1ba07ad35fec5f11940ae"
+  },
+  "AzureAttestationBasedEnclaveProvider.cs": {
+    "mtime": 1782734789.5608428,
+    "ast_hash": "626e2667d8691db178600eb4c9dc4c64",
+    "semantic_hash": "626e2667d8691db178600eb4c9dc4c64"
+  },
+  "ColumnEncryptionKeyInfo.cs": {
+    "mtime": 1782734789.5648427,
+    "ast_hash": "21cccedb9f74495b25e8d516c3bab882",
+    "semantic_hash": "21cccedb9f74495b25e8d516c3bab882"
+  },
+  "Connection/CachedContexts.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "76508eccefee97219faa1ad9bce2d754",
+    "semantic_hash": "76508eccefee97219faa1ad9bce2d754"
+  },
+  "Connection/ServerInfo.cs": {
+    "mtime": 1782734789.5648427,
+    "ast_hash": "dddc6a77f56084dd4fb256d275c97fba",
+    "semantic_hash": "dddc6a77f56084dd4fb256d275c97fba"
+  },
+  "Connection/SessionData.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "41a8720cc0d635ee82588228b3c656f4",
+    "semantic_hash": "41a8720cc0d635ee82588228b3c656f4"
+  },
+  "Connection/SessionStateRecord.cs": {
+    "mtime": 1774610980.1756096,
+    "ast_hash": "1de7bc1e832efcf04d8fabf327464b5b",
+    "semantic_hash": "1de7bc1e832efcf04d8fabf327464b5b"
+  },
+  "Connection/SqlConnectionInternal.cs": {
+    "mtime": 1782734789.5648427,
+    "ast_hash": "bf2ed07da66e96d31abe1441281cea60",
+    "semantic_hash": "bf2ed07da66e96d31abe1441281cea60"
+  },
+  "ConnectionPool/ChannelDbConnectionPool.cs": {
+    "mtime": 1782734789.5648427,
+    "ast_hash": "3449f9c89d128fe81b5c1ee2f7a9ba93",
+    "semantic_hash": "3449f9c89d128fe81b5c1ee2f7a9ba93"
+  },
+  "ConnectionPool/ConnectionPoolKey.cs": {
+    "mtime": 1782734789.5648427,
+    "ast_hash": "ce561567896f648755906bd35d7d5a8b",
+    "semantic_hash": "ce561567896f648755906bd35d7d5a8b"
+  },
+  "ConnectionPool/ConnectionPoolSlots.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "c46811c93f70b32cda1b1fee052b06c5",
+    "semantic_hash": "c46811c93f70b32cda1b1fee052b06c5"
+  },
+  "ConnectionPool/DbConnectionPoolAuthenticationContext.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "4b84129221fa1c2ea267cf0d30791ce8",
+    "semantic_hash": "4b84129221fa1c2ea267cf0d30791ce8"
+  },
+  "ConnectionPool/DbConnectionPoolAuthenticationContextKey.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "87c826dd8c750247b36ee406fceb3e68",
+    "semantic_hash": "87c826dd8c750247b36ee406fceb3e68"
+  },
+  "ConnectionPool/DbConnectionPoolGroup.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "e55579561924f6ca401ca2ea28e0eb24",
+    "semantic_hash": "e55579561924f6ca401ca2ea28e0eb24"
+  },
+  "ConnectionPool/DbConnectionPoolGroupProviderInfo.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "97360ddc980e19d44b01926d31b6caaf",
+    "semantic_hash": "97360ddc980e19d44b01926d31b6caaf"
+  },
+  "ConnectionPool/DbConnectionPoolIdentity.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "227bd2bbedaf96c34c98f7526133777a",
+    "semantic_hash": "227bd2bbedaf96c34c98f7526133777a"
+  },
+  "ConnectionPool/DbConnectionPoolOptions.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "4eadb20ad49d1c63fa574534eaef8f7b",
+    "semantic_hash": "4eadb20ad49d1c63fa574534eaef8f7b"
+  },
+  "ConnectionPool/DbConnectionPoolProviderInfo.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "c75e4e2158a7fa8c91acf6a76f4dca57",
+    "semantic_hash": "c75e4e2158a7fa8c91acf6a76f4dca57"
+  },
+  "ConnectionPool/DbConnectionPoolState.cs": {
+    "mtime": 1774610980.1796098,
+    "ast_hash": "b4f356cd9549eca4ac8c18a70956a698",
+    "semantic_hash": "b4f356cd9549eca4ac8c18a70956a698"
+  },
+  "ConnectionPool/IDbConnectionPool.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "394321d68c5af768cfbd0e962dd92605",
+    "semantic_hash": "394321d68c5af768cfbd0e962dd92605"
+  },
+  "ConnectionPool/IdleConnectionChannel.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "821358e140964ef926df3a405603d7af",
+    "semantic_hash": "821358e140964ef926df3a405603d7af"
+  },
+  "ConnectionPool/PoolPruner.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "397ad78a67433a4d2084d4808abd4a25",
+    "semantic_hash": "397ad78a67433a4d2084d4808abd4a25"
+  },
+  "ConnectionPool/SqlConnectionPoolGroupProviderInfo.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "5e35c62b696d3fa356a492d0b2ee5dbf",
+    "semantic_hash": "5e35c62b696d3fa356a492d0b2ee5dbf"
+  },
+  "ConnectionPool/SqlConnectionPoolProviderInfo.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "751e9d815d060d08b06f00cdc0c33346",
+    "semantic_hash": "751e9d815d060d08b06f00cdc0c33346"
+  },
+  "ConnectionPool/TransactedConnectionPool.cs": {
+    "mtime": 1782734789.568843,
+    "ast_hash": "d211bbde7c0d1b2e6f1ca91b08816882",
+    "semantic_hash": "d211bbde7c0d1b2e6f1ca91b08816882"
+  },
+  "ConnectionPool/WaitHandleDbConnectionPool.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "c630538cb269e6d4ff8ec90abeb2a24d",
+    "semantic_hash": "c630538cb269e6d4ff8ec90abeb2a24d"
+  },
+  "DataClassification/SensitivityClassification.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "ba99bb9922b7f1475fe4bb7c419811c4",
+    "semantic_hash": "ba99bb9922b7f1475fe4bb7c419811c4"
+  },
+  "Diagnostics/DiagnosticScope.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "9e37a68c28077a607c12153834ca8202",
+    "semantic_hash": "9e37a68c28077a607c12153834ca8202"
+  },
+  "Diagnostics/DiagnosticTransactionScope.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "77b7323dbc21908216a697582cd88259",
+    "semantic_hash": "77b7323dbc21908216a697582cd88259"
+  },
+  "Diagnostics/SqlClientCommandAfter.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "fff0938e52744d48f12dcb86dc1e228c",
+    "semantic_hash": "fff0938e52744d48f12dcb86dc1e228c"
+  },
+  "Diagnostics/SqlClientCommandBefore.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "d59703543f64538a32ee4a25e67121a6",
+    "semantic_hash": "d59703543f64538a32ee4a25e67121a6"
+  },
+  "Diagnostics/SqlClientCommandError.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "407521d41c64827a28dda5f23ac9276e",
+    "semantic_hash": "407521d41c64827a28dda5f23ac9276e"
+  },
+  "Diagnostics/SqlClientConnectionCloseAfter.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "422524cd1b319989280bcc0d5718e272",
+    "semantic_hash": "422524cd1b319989280bcc0d5718e272"
+  },
+  "Diagnostics/SqlClientConnectionCloseBefore.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "1e2210e1a0c3f37d6e02d887dcfc7a65",
+    "semantic_hash": "1e2210e1a0c3f37d6e02d887dcfc7a65"
+  },
+  "Diagnostics/SqlClientConnectionCloseError.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "0d0af8f8b847da6a74019ca58ee2d586",
+    "semantic_hash": "0d0af8f8b847da6a74019ca58ee2d586"
+  },
+  "Diagnostics/SqlClientConnectionOpenAfter.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "8a533c0371bd029582992ce3f8efced5",
+    "semantic_hash": "8a533c0371bd029582992ce3f8efced5"
+  },
+  "Diagnostics/SqlClientConnectionOpenBefore.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "f3fdc415405bf2e927a9b66735ba551b",
+    "semantic_hash": "f3fdc415405bf2e927a9b66735ba551b"
+  },
+  "Diagnostics/SqlClientConnectionOpenError.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "e51ce01359a081890f56aac6d4182cb3",
+    "semantic_hash": "e51ce01359a081890f56aac6d4182cb3"
+  },
+  "Diagnostics/SqlClientMetrics.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "504bec1ef164cd25251757a6d53623f3",
+    "semantic_hash": "504bec1ef164cd25251757a6d53623f3"
+  },
+  "Diagnostics/SqlClientTransactionCommitAfter.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "a71f56ed58e0151a8f7f16deb990cd9b",
+    "semantic_hash": "a71f56ed58e0151a8f7f16deb990cd9b"
+  },
+  "Diagnostics/SqlClientTransactionCommitBefore.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "88d69f8644337b73594370485563d41f",
+    "semantic_hash": "88d69f8644337b73594370485563d41f"
+  },
+  "Diagnostics/SqlClientTransactionCommitError.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "ee1062ba637fcc32d9e24284915d11e7",
+    "semantic_hash": "ee1062ba637fcc32d9e24284915d11e7"
+  },
+  "Diagnostics/SqlClientTransactionRollbackAfter.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "77dd071e1baba20be8ca01985da08d35",
+    "semantic_hash": "77dd071e1baba20be8ca01985da08d35"
+  },
+  "Diagnostics/SqlClientTransactionRollbackBefore.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "6b265d5ff211f6e3b0db99e869d71098",
+    "semantic_hash": "6b265d5ff211f6e3b0db99e869d71098"
+  },
+  "Diagnostics/SqlClientTransactionRollbackError.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "990f8f782da570f3e430f38c2e450280",
+    "semantic_hash": "990f8f782da570f3e430f38c2e450280"
+  },
+  "Diagnostics/SqlDiagnosticListener.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "4c6c62adec96b8b064818885b882fcc0",
+    "semantic_hash": "4c6c62adec96b8b064818885b882fcc0"
+  },
+  "DisposableTemporaryOnStack.cs": {
+    "mtime": 1774610980.1836097,
+    "ast_hash": "f3be2100221252fdc5d5a4868773ffa2",
+    "semantic_hash": "f3be2100221252fdc5d5a4868773ffa2"
+  },
+  "EnclaveDelegate.Crypto.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "50fbe0ac2b5df9a952b28a7e88a4c38d",
+    "semantic_hash": "50fbe0ac2b5df9a952b28a7e88a4c38d"
+  },
+  "EnclaveDelegate.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "d634b66cc52183f561e3fd1ca40f04cb",
+    "semantic_hash": "d634b66cc52183f561e3fd1ca40f04cb"
+  },
+  "EnclavePackage.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "8b1eca3f1edb726d9088af3248b67a04",
+    "semantic_hash": "8b1eca3f1edb726d9088af3248b67a04"
+  },
+  "EnclaveProviderBase.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "8c7baa94412689fc8efe37529b5dec29",
+    "semantic_hash": "8c7baa94412689fc8efe37529b5dec29"
+  },
+  "EnclaveSessionCache.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "ffc6d7841230db4770c2318172813760",
+    "semantic_hash": "ffc6d7841230db4770c2318172813760"
+  },
+  "ISqlVector.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "0f5612d05c1e7ac6e8341f86d133d0c5",
+    "semantic_hash": "0f5612d05c1e7ac6e8341f86d133d0c5"
+  },
+  "LocalAppContextSwitches.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "ceb9b621785b0320d8db5953e73d78fa",
+    "semantic_hash": "ceb9b621785b0320d8db5953e73d78fa"
+  },
+  "LocalDb/LocalDbApi.unix.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "d7722fd9eb4c20e145af7090cc95ae1a",
+    "semantic_hash": "d7722fd9eb4c20e145af7090cc95ae1a"
+  },
+  "LocalDb/LocalDbApi.windows.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "c99a91034f8a7065a32700ca4cc660cd",
+    "semantic_hash": "c99a91034f8a7065a32700ca4cc660cd"
+  },
+  "LocalDb/LocalDbConfigurationSection.netfx.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "9371d99cd620aa92e6202aaa51facaa5",
+    "semantic_hash": "9371d99cd620aa92e6202aaa51facaa5"
+  },
+  "LocalDb/LocalDbInstanceElement.netfx.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "2feedf04cfc72c56ab6a67987e51344b",
+    "semantic_hash": "2feedf04cfc72c56ab6a67987e51344b"
+  },
+  "LocalDb/LocalDbInstancesCollection.netfx.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "f3273a4fd4e24016bb047a8440066b19",
+    "semantic_hash": "f3273a4fd4e24016bb047a8440066b19"
+  },
+  "LocalesHelper.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "4e2fdb554085ec9741c2229eab2887ed",
+    "semantic_hash": "4e2fdb554085ec9741c2229eab2887ed"
+  },
+  "ManagedSni/ConcurrentQueueSemaphore.netcore.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "dd3a55befe6d909ab287c1871130d573",
+    "semantic_hash": "dd3a55befe6d909ab287c1871130d573"
+  },
+  "ManagedSni/LocalDB.netcore.unix.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "f90991609f433f30911a1e923aba4dd6",
+    "semantic_hash": "f90991609f433f30911a1e923aba4dd6"
+  },
+  "ManagedSni/LocalDB.netcore.windows.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "087583e6019feb53012f0645659ceee1",
+    "semantic_hash": "087583e6019feb53012f0645659ceee1"
+  },
+  "ManagedSni/ResolvedServerSpn.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "ade5e534642b66bc38e0986d7064362c",
+    "semantic_hash": "ade5e534642b66bc38e0986d7064362c"
+  },
+  "ManagedSni/SniAsyncCallback.netcore.cs": {
+    "mtime": 1774610980.1876097,
+    "ast_hash": "cad7a40047952cf4f2c2c093572e9182",
+    "semantic_hash": "cad7a40047952cf4f2c2c093572e9182"
+  },
+  "ManagedSni/SniCommon.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "2c728df62d55186f85d5f8cde8ba5bbf",
+    "semantic_hash": "2c728df62d55186f85d5f8cde8ba5bbf"
+  },
+  "ManagedSni/SniError.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "5514711f4eb01592e12a1979978493c5",
+    "semantic_hash": "5514711f4eb01592e12a1979978493c5"
+  },
+  "ManagedSni/SniHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "9e7c3bcb9927029c12c912511dd29c09",
+    "semantic_hash": "9e7c3bcb9927029c12c912511dd29c09"
+  },
+  "ManagedSni/SniLoadHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "7a181c5c2e97cdc8adacaf78746864db",
+    "semantic_hash": "7a181c5c2e97cdc8adacaf78746864db"
+  },
+  "ManagedSni/SniMarsConnection.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "ec9630423f69395c9a44c24b17011612",
+    "semantic_hash": "ec9630423f69395c9a44c24b17011612"
+  },
+  "ManagedSni/SniMarsHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "2d2b8125c78853f52e364d08b2ddab23",
+    "semantic_hash": "2d2b8125c78853f52e364d08b2ddab23"
+  },
+  "ManagedSni/SniNetworkStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "707a4ae416cedf229a0d4bafdba34992",
+    "semantic_hash": "707a4ae416cedf229a0d4bafdba34992"
+  },
+  "ManagedSni/SniNpHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "89e46a1d18a41c3816c1876afb3d3fe5",
+    "semantic_hash": "89e46a1d18a41c3816c1876afb3d3fe5"
+  },
+  "ManagedSni/SniPacket.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "1c599c650f1abb005968b74b1f8fda84",
+    "semantic_hash": "1c599c650f1abb005968b74b1f8fda84"
+  },
+  "ManagedSni/SniPhysicalHandle.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "7bd7a4be6469c1cf1ad42124b431bb50",
+    "semantic_hash": "7bd7a4be6469c1cf1ad42124b431bb50"
+  },
+  "ManagedSni/SniProviders.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "d98ef4c8bebef40c2f313d2272b4e2fd",
+    "semantic_hash": "d98ef4c8bebef40c2f313d2272b4e2fd"
+  },
+  "ManagedSni/SniProxy.netcore.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "2bd9bda5f344a6063a40e965a636e596",
+    "semantic_hash": "2bd9bda5f344a6063a40e965a636e596"
+  },
+  "ManagedSni/SniSmuxFlags.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "da821d3a352dada1c4ae14bde98912b5",
+    "semantic_hash": "da821d3a352dada1c4ae14bde98912b5"
+  },
+  "ManagedSni/SniSmuxHeader.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "93df48e9d5b2a6f01b8dafe9e81becc1",
+    "semantic_hash": "93df48e9d5b2a6f01b8dafe9e81becc1"
+  },
+  "ManagedSni/SniSslStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "4fe7bc01cad4747d4621a65aeb744882",
+    "semantic_hash": "4fe7bc01cad4747d4621a65aeb744882"
+  },
+  "ManagedSni/SniTcpHandle.netcore.cs": {
+    "mtime": 1782734789.5728428,
+    "ast_hash": "0008db8be8c14c2de04db4241775eef8",
+    "semantic_hash": "0008db8be8c14c2de04db4241775eef8"
+  },
+  "ManagedSni/SslOverTdsStream.netcore.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "638fce8608cb61f459e49ba7e21416b8",
+    "semantic_hash": "638fce8608cb61f459e49ba7e21416b8"
+  },
+  "ManagedSni/SsrpClient.netcore.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "f02697db9966dcdf629eeec151c3a809",
+    "semantic_hash": "f02697db9966dcdf629eeec151c3a809"
+  },
+  "NoneAttestationEnclaveProvider.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "f3bd49b164874f0d7e24dfb79be5a4bd",
+    "semantic_hash": "f3bd49b164874f0d7e24dfb79be5a4bd"
+  },
+  "OnChangedEventHandler.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "78387fb1449b4769e721c5ebf91d8107",
+    "semantic_hash": "78387fb1449b4769e721c5ebf91d8107"
+  },
+  "Packet.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "3e0d8b1361b3f827ef169b94f9b75264",
+    "semantic_hash": "3e0d8b1361b3f827ef169b94f9b75264"
+  },
+  "PacketHandle.netcore.unix.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "15ef6e7a5a6edb0aea7d6f2ad1f0818f",
+    "semantic_hash": "15ef6e7a5a6edb0aea7d6f2ad1f0818f"
+  },
+  "PacketHandle.netcore.windows.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "30269959b30c84171ddf407db9176de6",
+    "semantic_hash": "30269959b30c84171ddf407db9176de6"
+  },
+  "PacketHandle.netfx.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "af214b85819e1a428a3b786dd1ba1914",
+    "semantic_hash": "af214b85819e1a428a3b786dd1ba1914"
+  },
+  "ParameterPeekAheadValue.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "ce2f7c81bad777b0cb6fc2dc4a6bcfbb",
+    "semantic_hash": "ce2f7c81bad777b0cb6fc2dc4a6bcfbb"
+  },
+  "PoolBlockingPeriod.cs": {
+    "mtime": 1774610980.1916096,
+    "ast_hash": "abc76f1c981d2012e80a670a44f1b1cd",
+    "semantic_hash": "abc76f1c981d2012e80a670a44f1b1cd"
+  },
+  "Reliability/AppConfigManager.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "7c6185e52006dbad653f5d2c224ea53a",
+    "semantic_hash": "7c6185e52006dbad653f5d2c224ea53a"
+  },
+  "Reliability/Common/SqlRetryIntervalBaseEnumerator.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "683a223f0dcf710f6c66b85c4e4ff693",
+    "semantic_hash": "683a223f0dcf710f6c66b85c4e4ff693"
+  },
+  "Reliability/Common/SqlRetryLogic.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "6e07e48453ce5e17d2565a3852eec5dd",
+    "semantic_hash": "6e07e48453ce5e17d2565a3852eec5dd"
+  },
+  "Reliability/Common/SqlRetryLogicBase.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "0f73b225bddd255d0da8a7cf989871c0",
+    "semantic_hash": "0f73b225bddd255d0da8a7cf989871c0"
+  },
+  "Reliability/Common/SqlRetryLogicBaseProvider.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "ee79072ec3250962c4e682ceb1177159",
+    "semantic_hash": "ee79072ec3250962c4e682ceb1177159"
+  },
+  "Reliability/Common/SqlRetryLogicProvider.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "414397f44ef14afe9aee4eebb6fb17b7",
+    "semantic_hash": "414397f44ef14afe9aee4eebb6fb17b7"
+  },
+  "Reliability/Common/SqlRetryingEventArgs.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "8ee3ae82207442abd732fb4cab0b953d",
+    "semantic_hash": "8ee3ae82207442abd732fb4cab0b953d"
+  },
+  "Reliability/IAppContextSwitchOverridesSection.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "45bb79120d2c6e1000072e24b7967c9f",
+    "semantic_hash": "45bb79120d2c6e1000072e24b7967c9f"
+  },
+  "Reliability/ISqlConfigurableRetryCommandSection.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "bbdf3ea1f3432f55c3d4f91d8beb8ba9",
+    "semantic_hash": "bbdf3ea1f3432f55c3d4f91d8beb8ba9"
+  },
+  "Reliability/ISqlConfigurableRetryConnectionSection.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "615485834587e7ecebf9df22f1350132",
+    "semantic_hash": "615485834587e7ecebf9df22f1350132"
+  },
+  "Reliability/SqlConfigurableRetryFactory.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "f055d5dcb6b216ad8ca83028b6829213",
+    "semantic_hash": "f055d5dcb6b216ad8ca83028b6829213"
+  },
+  "Reliability/SqlConfigurableRetryLogicLoader.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "2d629ec495dd38b2c680a69bcc6fe798",
+    "semantic_hash": "2d629ec495dd38b2c680a69bcc6fe798"
+  },
+  "Reliability/SqlConfigurableRetryLogicManager.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "0c69eee0732313eb6aaaaacfad96ea8c",
+    "semantic_hash": "0c69eee0732313eb6aaaaacfad96ea8c"
+  },
+  "Reliability/SqlRetryIntervalEnumerators.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "99f47c67213115917966c75dfab66306",
+    "semantic_hash": "99f47c67213115917966c75dfab66306"
+  },
+  "RowsCopiedEventArgs.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "9e595665313b54bcfe05d645e289edf9",
+    "semantic_hash": "9e595665313b54bcfe05d645e289edf9"
+  },
+  "RowsCopiedEventHandler.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "8a819364e119d3083538f94b4ccb499e",
+    "semantic_hash": "8a819364e119d3083538f94b4ccb499e"
+  },
+  "SQLFallbackDNSCache.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "9f77092ba60b34c7b32873a655f7e17f",
+    "semantic_hash": "9f77092ba60b34c7b32873a655f7e17f"
+  },
+  "SSPI/NativeSspiContextProvider.windows.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "18dbb1e90f0dd79ab84bc5990e9ec457",
+    "semantic_hash": "18dbb1e90f0dd79ab84bc5990e9ec457"
+  },
+  "SSPI/NegotiateSspiContextProvider.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "b95e74f3f45fbe3a38cb10a94cf816f8",
+    "semantic_hash": "b95e74f3f45fbe3a38cb10a94cf816f8"
+  },
+  "SSPI/SspiAuthenticationParameters.cs": {
+    "mtime": 1774610980.1956096,
+    "ast_hash": "3c10bb118691e5709a4964cac5acece8",
+    "semantic_hash": "3c10bb118691e5709a4964cac5acece8"
+  },
+  "SSPI/SspiContextProvider.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "30ad0cc46a4f01fa074e84b95229b54f",
+    "semantic_hash": "30ad0cc46a4f01fa074e84b95229b54f"
+  },
+  "Server/ExtendedClrTypeCode.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "4d319e29be4b460914b0870093f6fd79",
+    "semantic_hash": "4d319e29be4b460914b0870093f6fd79"
+  },
+  "Server/ITypedGettersV3.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "9426b823e057c013cfad8ef70501fd6d",
+    "semantic_hash": "9426b823e057c013cfad8ef70501fd6d"
+  },
+  "Server/ITypedSettersV3.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "4d4313ceb799d2c0d0929bcb44397077",
+    "semantic_hash": "4d4313ceb799d2c0d0929bcb44397077"
+  },
+  "Server/MemoryRecordBuffer.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "78e10e5598b6af49687c9a73b380241a",
+    "semantic_hash": "78e10e5598b6af49687c9a73b380241a"
+  },
+  "Server/MetadataUtilsSmi.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "817ede878f0b7ef43d83ea97f6d3bda7",
+    "semantic_hash": "817ede878f0b7ef43d83ea97f6d3bda7"
+  },
+  "Server/SmiGettersStream.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "95ef56ae28b10f2c0081bed1dbd7c9b2",
+    "semantic_hash": "95ef56ae28b10f2c0081bed1dbd7c9b2"
+  },
+  "Server/SmiMetaData.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "118ef8c048d6ba1c4760a202b4c44f1f",
+    "semantic_hash": "118ef8c048d6ba1c4760a202b4c44f1f"
+  },
+  "Server/SmiMetaDataProperty.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "e2f2f33b11aa093eed7e86938e74d992",
+    "semantic_hash": "e2f2f33b11aa093eed7e86938e74d992"
+  },
+  "Server/SmiSettersStream.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "ba8bb4f0b819fe1e185af33e2bacc73f",
+    "semantic_hash": "ba8bb4f0b819fe1e185af33e2bacc73f"
+  },
+  "Server/SmiTypedGetterSetter.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "fc37d83b01f5a70238ebddc42c77fd3b",
+    "semantic_hash": "fc37d83b01f5a70238ebddc42c77fd3b"
+  },
+  "Server/SmiXetterAccessMap.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "d22d7f44161f0d21ae185493d33fe32c",
+    "semantic_hash": "d22d7f44161f0d21ae185493d33fe32c"
+  },
+  "Server/SmiXetterTypeCode.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "64566eac857ab733eb1c0a256d11f4ec",
+    "semantic_hash": "64566eac857ab733eb1c0a256d11f4ec"
+  },
+  "Server/SqlDataRecord.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "a57b2f055b91d6f3f0b26ed8b6a67696",
+    "semantic_hash": "a57b2f055b91d6f3f0b26ed8b6a67696"
+  },
+  "Server/SqlMetaData.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "b48b4b044199f1a814026d749a7419fb",
+    "semantic_hash": "b48b4b044199f1a814026d749a7419fb"
+  },
+  "Server/SqlNormalizer.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "bfa223e9863f7dd6630963d511cb7457",
+    "semantic_hash": "bfa223e9863f7dd6630963d511cb7457"
+  },
+  "Server/SqlRecordBuffer.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "873526669a3c51e3cb3b7392e0738b12",
+    "semantic_hash": "873526669a3c51e3cb3b7392e0738b12"
+  },
+  "Server/SqlSer.cs": {
+    "mtime": 1774610980.1996098,
+    "ast_hash": "7da55a3ecfc39130f838663617dbc385",
+    "semantic_hash": "7da55a3ecfc39130f838663617dbc385"
+  },
+  "Server/TriggerAction.netfx.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "2d5ceb0d659eef021b66eddaff65f6fb",
+    "semantic_hash": "2d5ceb0d659eef021b66eddaff65f6fb"
+  },
+  "Server/ValueUtilsSmi.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "f92c8b814df7afbcc2efa92da074867e",
+    "semantic_hash": "f92c8b814df7afbcc2efa92da074867e"
+  },
+  "SessionHandle.netcore.unix.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "d4c5a57c8d4c63d6e07a6e19e78f921b",
+    "semantic_hash": "d4c5a57c8d4c63d6e07a6e19e78f921b"
+  },
+  "SessionHandle.netcore.windows.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "91bd9e4dba094bea11f7eb5981e19426",
+    "semantic_hash": "91bd9e4dba094bea11f7eb5981e19426"
+  },
+  "SessionHandle.netfx.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "0dda305b223e9cd4da4e9833acd131d0",
+    "semantic_hash": "0dda305b223e9cd4da4e9833acd131d0"
+  },
+  "SignatureVerificationCache.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "9059f89453a7848ac3227aac29a72deb",
+    "semantic_hash": "9059f89453a7848ac3227aac29a72deb"
+  },
+  "SortOrder.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "1c6241b28fdcbe0a161a97d3d6a3708c",
+    "semantic_hash": "1c6241b28fdcbe0a161a97d3d6a3708c"
+  },
+  "SqlAeadAes256CbcHmac256Algorithm.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "adcf1acddd2e6137b0876788bda96cda",
+    "semantic_hash": "adcf1acddd2e6137b0876788bda96cda"
+  },
+  "SqlAeadAes256CbcHmac256EncryptionKey.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "d244726ba2e2c200d63d886c6acf2809",
+    "semantic_hash": "d244726ba2e2c200d63d886c6acf2809"
+  },
+  "SqlAppContextSwitchManager.netcore.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "932e3b07996003422e41823f664ff6a4",
+    "semantic_hash": "932e3b07996003422e41823f664ff6a4"
+  },
+  "SqlAuthenticationParametersBuilder.cs": {
+    "mtime": 1774610980.2036097,
+    "ast_hash": "7389663c98f5fae2a20573f8e80e547e",
+    "semantic_hash": "7389663c98f5fae2a20573f8e80e547e"
+  },
+  "SqlAuthenticationProviderManager.cs": {
+    "mtime": 1782734789.5768428,
+    "ast_hash": "b30ad8984173acef9b9bec41742e42e1",
+    "semantic_hash": "b30ad8984173acef9b9bec41742e42e1"
+  },
+  "SqlBatch.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "25d60fedd15adcc2d02cc8dc84df824d",
+    "semantic_hash": "25d60fedd15adcc2d02cc8dc84df824d"
+  },
+  "SqlBatchCommand.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "4d690da1801b0fa2ba7290051dbf9fdd",
+    "semantic_hash": "4d690da1801b0fa2ba7290051dbf9fdd"
+  },
+  "SqlBatchCommandCollection.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "a6ae76448fa9cd6e5a2e7439521f06a9",
+    "semantic_hash": "a6ae76448fa9cd6e5a2e7439521f06a9"
+  },
+  "SqlBuffer.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "24f71cafec72390e81401d97bb69813a",
+    "semantic_hash": "24f71cafec72390e81401d97bb69813a"
+  },
+  "SqlBulkCopy.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "d22cf38fe31e5f61645f49d5da37120d",
+    "semantic_hash": "d22cf38fe31e5f61645f49d5da37120d"
+  },
+  "SqlBulkCopyColumnMapping.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "2df14fa242661001ee528457e8d12aec",
+    "semantic_hash": "2df14fa242661001ee528457e8d12aec"
+  },
+  "SqlBulkCopyColumnMappingCollection.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "9aaea660a36a04cdf0d161cd8dd0f4af",
+    "semantic_hash": "9aaea660a36a04cdf0d161cd8dd0f4af"
+  },
+  "SqlBulkCopyColumnOrderHint.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "f76bdc2397ec584d0f95d8ea8864cc28",
+    "semantic_hash": "f76bdc2397ec584d0f95d8ea8864cc28"
+  },
+  "SqlBulkCopyColumnOrderHintCollection.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "7a9fabe5065f70c97c9b34462e52b62f",
+    "semantic_hash": "7a9fabe5065f70c97c9b34462e52b62f"
+  },
+  "SqlBulkCopyOptions.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "90d6ac531d4a473912799c878970aa09",
+    "semantic_hash": "90d6ac531d4a473912799c878970aa09"
+  },
+  "SqlCachedBuffer.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "bac87ea4f7a53b9f64d65f429982be6e",
+    "semantic_hash": "bac87ea4f7a53b9f64d65f429982be6e"
+  },
+  "SqlClientEncryptionAlgorithm.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "82642be16f95be914ec2c3a8b408d930",
+    "semantic_hash": "82642be16f95be914ec2c3a8b408d930"
+  },
+  "SqlClientEncryptionType.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "4df3a9d221911f7574ab3e23d9a9a40f",
+    "semantic_hash": "4df3a9d221911f7574ab3e23d9a9a40f"
+  },
+  "SqlClientEventSource.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "a2ea0ee7fe7ba62ecce06a86a0cd4b4a",
+    "semantic_hash": "a2ea0ee7fe7ba62ecce06a86a0cd4b4a"
+  },
+  "SqlClientFactory.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "49b3e577241bcd30130dbbc3dbd4ae72",
+    "semantic_hash": "49b3e577241bcd30130dbbc3dbd4ae72"
+  },
+  "SqlClientLogger.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "a7990c456085330dcb7030bc12bec74d",
+    "semantic_hash": "a7990c456085330dcb7030bc12bec74d"
+  },
+  "SqlClientMetaDataCollectionNames.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "3671a4bbf5ceb5621a2759ef0e00a869",
+    "semantic_hash": "3671a4bbf5ceb5621a2759ef0e00a869"
+  },
+  "SqlClientPermission.netfx.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "59443380a3406bc84561bd820ad9e6a2",
+    "semantic_hash": "59443380a3406bc84561bd820ad9e6a2"
+  },
+  "SqlClientPermissionAttribute.netfx.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "319df5dd0293371342c6f21231f2ebe3",
+    "semantic_hash": "319df5dd0293371342c6f21231f2ebe3"
+  },
+  "SqlClientSymmetricKey.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "7370a38df46076518d4995a90c1f5191",
+    "semantic_hash": "7370a38df46076518d4995a90c1f5191"
+  },
+  "SqlCollation.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "280e223aef9c71c91a85001893a8d5be",
+    "semantic_hash": "280e223aef9c71c91a85001893a8d5be"
+  },
+  "SqlColumnEncryptionCertificateStoreProvider.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "0789659d379eca36937ffb671373c72e",
+    "semantic_hash": "0789659d379eca36937ffb671373c72e"
+  },
+  "SqlColumnEncryptionCngProvider.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "b0e3195972f0241098f0790dcd39890e",
+    "semantic_hash": "b0e3195972f0241098f0790dcd39890e"
+  },
+  "SqlColumnEncryptionCspProvider.cs": {
+    "mtime": 1782734789.5808427,
+    "ast_hash": "769b7cd159c7e1c356e409d94ab8c697",
+    "semantic_hash": "769b7cd159c7e1c356e409d94ab8c697"
+  },
+  "SqlColumnEncryptionEnclaveProvider.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "5a7c681105051236f2fbc2edc4d4c2b4",
+    "semantic_hash": "5a7c681105051236f2fbc2edc4d4c2b4"
+  },
+  "SqlColumnEncryptionKeyStoreProvider.cs": {
+    "mtime": 1774610980.2076097,
+    "ast_hash": "d910d7e95e27ca0863f4721ae046a392",
+    "semantic_hash": "d910d7e95e27ca0863f4721ae046a392"
+  },
+  "SqlCommand.Batch.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "5a3faa8abe663572680ce7622c8e27fc",
+    "semantic_hash": "5a3faa8abe663572680ce7622c8e27fc"
+  },
+  "SqlCommand.Encryption.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "7d5400f55e0a5362a227b601385df148",
+    "semantic_hash": "7d5400f55e0a5362a227b601385df148"
+  },
+  "SqlCommand.NonQuery.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "a38eecf4f34ff4d3e64ede50d6de9c99",
+    "semantic_hash": "a38eecf4f34ff4d3e64ede50d6de9c99"
+  },
+  "SqlCommand.Reader.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "d8b0f176ac5d04ed563a77b2dba19925",
+    "semantic_hash": "d8b0f176ac5d04ed563a77b2dba19925"
+  },
+  "SqlCommand.Scalar.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "2f9ccba40cba6680ed501191a1819853",
+    "semantic_hash": "2f9ccba40cba6680ed501191a1819853"
+  },
+  "SqlCommand.Xml.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "77d753ffe699059e3c55ee1273b2f20e",
+    "semantic_hash": "77d753ffe699059e3c55ee1273b2f20e"
+  },
+  "SqlCommand.cs": {
+    "mtime": 1782734789.5848427,
+    "ast_hash": "1bafdee76764e86fa51449f282266141",
+    "semantic_hash": "1bafdee76764e86fa51449f282266141"
+  },
+  "SqlCommandBuilder.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "a16610fcb81f45171b6d841c6e3f91c3",
+    "semantic_hash": "a16610fcb81f45171b6d841c6e3f91c3"
+  },
+  "SqlCommandSet.cs": {
+    "mtime": 1774610980.2116096,
+    "ast_hash": "adab1d2c57987e52adb560b9522a830f",
+    "semantic_hash": "adab1d2c57987e52adb560b9522a830f"
+  },
+  "SqlConnection.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "7f2ce845b20cad17ad4047f747139812",
+    "semantic_hash": "7f2ce845b20cad17ad4047f747139812"
+  },
+  "SqlConnectionEncryptOption.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "72dc842abe38571dc6003dadffb7cafa",
+    "semantic_hash": "72dc842abe38571dc6003dadffb7cafa"
+  },
+  "SqlConnectionEncryptOptionConverter.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "c680d77e99b19a53244ae4640af41a4b",
+    "semantic_hash": "c680d77e99b19a53244ae4640af41a4b"
+  },
+  "SqlConnectionFactory.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "525c80713bd751b505afa1cb3a77dc1f",
+    "semantic_hash": "525c80713bd751b505afa1cb3a77dc1f"
+  },
+  "SqlConnectionOptions.Debug.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "565cdb124e2c98ec5a6367dd9643f496",
+    "semantic_hash": "565cdb124e2c98ec5a6367dd9643f496"
+  },
+  "SqlConnectionOptions.cs": {
+    "mtime": 1782734789.5888429,
+    "ast_hash": "88bacb7273d2c6848beee364c2159981",
+    "semantic_hash": "88bacb7273d2c6848beee364c2159981"
+  },
+  "SqlConnectionStringBuilder.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "5ac67aa014dcc1d6047800d2e41c8e4c",
+    "semantic_hash": "5ac67aa014dcc1d6047800d2e41c8e4c"
+  },
+  "SqlConnectionTimeoutErrorInternal.cs": {
+    "mtime": 1774610980.2156096,
+    "ast_hash": "4f095f79c1b1f4dfe0713e47a6acc250",
+    "semantic_hash": "4f095f79c1b1f4dfe0713e47a6acc250"
+  },
+  "SqlCredential.cs": {
+    "mtime": 1774610980.2156096,
+    "ast_hash": "ba5bda181b06bbe9ebdd7ca550cb1491",
+    "semantic_hash": "ba5bda181b06bbe9ebdd7ca550cb1491"
+  },
+  "SqlDataAdapter.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "448ed7569d753cef93d08374b0739a9f",
+    "semantic_hash": "448ed7569d753cef93d08374b0739a9f"
+  },
+  "SqlDataReader.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "4bcf89f28fc5854193ddcab868ef04ea",
+    "semantic_hash": "4bcf89f28fc5854193ddcab868ef04ea"
+  },
+  "SqlDbColumn.cs": {
+    "mtime": 1774610980.2156096,
+    "ast_hash": "45b2ad1f2855c9a397718949b30b101c",
+    "semantic_hash": "45b2ad1f2855c9a397718949b30b101c"
+  },
+  "SqlDelegatedTransaction.cs": {
+    "mtime": 1774610980.2156096,
+    "ast_hash": "b5487b6fb9041da925bf10a92e7971bb",
+    "semantic_hash": "b5487b6fb9041da925bf10a92e7971bb"
+  },
+  "SqlDependency.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "2776a6e1110e6f8f1ce73cd9e3369fe2",
+    "semantic_hash": "2776a6e1110e6f8f1ce73cd9e3369fe2"
+  },
+  "SqlDependencyListener.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "06756a00dc9c3277eb2b446b08abdea7",
+    "semantic_hash": "06756a00dc9c3277eb2b446b08abdea7"
+  },
+  "SqlDependencyUtils.AppDomain.netcore.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "a8912f1da69ccf506aa138ccfe4cef5b",
+    "semantic_hash": "a8912f1da69ccf506aa138ccfe4cef5b"
+  },
+  "SqlDependencyUtils.AssemblyLoadContext.netcore.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "b70be11b16e9eba450adc2023e80b870",
+    "semantic_hash": "b70be11b16e9eba450adc2023e80b870"
+  },
+  "SqlDependencyUtils.cs": {
+    "mtime": 1782734789.5928428,
+    "ast_hash": "c84e1821037c520e39f909a26e76355d",
+    "semantic_hash": "c84e1821037c520e39f909a26e76355d"
+  },
+  "SqlEnclaveAttestationParameters.Crypto.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "bd9680ec16e230eac857d97cb162b3d6",
+    "semantic_hash": "bd9680ec16e230eac857d97cb162b3d6"
+  },
+  "SqlEnclaveSession.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "2f83acfd5a725b8275692aef758ec053",
+    "semantic_hash": "2f83acfd5a725b8275692aef758ec053"
+  },
+  "SqlEnums.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "d7489ba26d434b2f81c7abec30890267",
+    "semantic_hash": "d7489ba26d434b2f81c7abec30890267"
+  },
+  "SqlEnvChange.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "36e7b7e59e5936ca74711b6234cad30d",
+    "semantic_hash": "36e7b7e59e5936ca74711b6234cad30d"
+  },
+  "SqlError.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "c7229b2cd42a5f73583542f65092b21a",
+    "semantic_hash": "c7229b2cd42a5f73583542f65092b21a"
+  },
+  "SqlErrorCollection.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "2702146d5ac55d8feb1e13f4a7241541",
+    "semantic_hash": "2702146d5ac55d8feb1e13f4a7241541"
+  },
+  "SqlException.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "9ae991e4717f9c38c4c2b3f2a1cf3eca",
+    "semantic_hash": "9ae991e4717f9c38c4c2b3f2a1cf3eca"
+  },
+  "SqlInfoMessageEvent.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "b322a60a17b992a7c7f80c90a258b008",
+    "semantic_hash": "b322a60a17b992a7c7f80c90a258b008"
+  },
+  "SqlInfoMessageEventHandler.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "77d9d919819b8e0bf3d1d70cdc8c6c27",
+    "semantic_hash": "77d9d919819b8e0bf3d1d70cdc8c6c27"
+  },
+  "SqlInternalTransaction.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "79edd6d95aa7dcd65afe10823fef2861",
+    "semantic_hash": "79edd6d95aa7dcd65afe10823fef2861"
+  },
+  "SqlMetaDataFactory.DataTypes.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "b8cefaa04c8e8618e950829584f76b6b",
+    "semantic_hash": "b8cefaa04c8e8618e950829584f76b6b"
+  },
+  "SqlMetaDataFactory.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "3266c2de655def74e9c269bee2c7733c",
+    "semantic_hash": "3266c2de655def74e9c269bee2c7733c"
+  },
+  "SqlNotificationEventArgs.cs": {
+    "mtime": 1774610980.2196097,
+    "ast_hash": "a595f9863e43f203e60a692d78252553",
+    "semantic_hash": "a595f9863e43f203e60a692d78252553"
+  },
+  "SqlNotificationInfo.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "3a058f725cc41bc07086f5b2d1d3f307",
+    "semantic_hash": "3a058f725cc41bc07086f5b2d1d3f307"
+  },
+  "SqlNotificationSource.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "e8b0c2ae1f680316d7e9d75b30bdc04a",
+    "semantic_hash": "e8b0c2ae1f680316d7e9d75b30bdc04a"
+  },
+  "SqlNotificationType.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "6ba4e6bdd6242d53ff2ed88dc7da3108",
+    "semantic_hash": "6ba4e6bdd6242d53ff2ed88dc7da3108"
+  },
+  "SqlParameter.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "b764f1501dcade82d5962679e49d9ae0",
+    "semantic_hash": "b764f1501dcade82d5962679e49d9ae0"
+  },
+  "SqlParameterCollection.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "ed211bb851e94de88a5128828b25ede5",
+    "semantic_hash": "ed211bb851e94de88a5128828b25ede5"
+  },
+  "SqlQueryMetadataCache.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "4485c9cba39de3bef42228a2237c5daf",
+    "semantic_hash": "4485c9cba39de3bef42228a2237c5daf"
+  },
+  "SqlReferenceCollection.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "33f5010ea90561cb7930134389160511",
+    "semantic_hash": "33f5010ea90561cb7930134389160511"
+  },
+  "SqlRowUpdatedEvent.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "c89861d28b02f923265cb5112aaf2a12",
+    "semantic_hash": "c89861d28b02f923265cb5112aaf2a12"
+  },
+  "SqlRowUpdatedEventHandler.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "ace19a584dd43aac21fa0ca2bf791717",
+    "semantic_hash": "ace19a584dd43aac21fa0ca2bf791717"
+  },
+  "SqlRowUpdatingEvent.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "f82435461542990cc4b9bedc4ddfd9af",
+    "semantic_hash": "f82435461542990cc4b9bedc4ddfd9af"
+  },
+  "SqlRowUpdatingEventHandler.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "a7f44a8bd2cc5f7b118a684e48559fc0",
+    "semantic_hash": "a7f44a8bd2cc5f7b118a684e48559fc0"
+  },
+  "SqlSecurityUtility.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "87fda545efbbf47e91dec55e970ff23a",
+    "semantic_hash": "87fda545efbbf47e91dec55e970ff23a"
+  },
+  "SqlSequentialStream.cs": {
+    "mtime": 1782734789.5968428,
+    "ast_hash": "e82ca572cca5d6ca8a75c0251c27834d",
+    "semantic_hash": "e82ca572cca5d6ca8a75c0251c27834d"
+  },
+  "SqlSequentialTextReader.cs": {
+    "mtime": 1782734789.6008427,
+    "ast_hash": "b5316c0b3fa077763d292577c3deb581",
+    "semantic_hash": "b5316c0b3fa077763d292577c3deb581"
+  },
+  "SqlStatistics.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "2243ac0f11c3d7ac08d0ac8d2b99f7f9",
+    "semantic_hash": "2243ac0f11c3d7ac08d0ac8d2b99f7f9"
+  },
+  "SqlStream.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "12b9e2fe05fef0c519d4bd024cb27c10",
+    "semantic_hash": "12b9e2fe05fef0c519d4bd024cb27c10"
+  },
+  "SqlSymmetricKeyCache.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "e17d69e828efe00eb42234ec5722854e",
+    "semantic_hash": "e17d69e828efe00eb42234ec5722854e"
+  },
+  "SqlTransaction.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "5edf76e0d151c22fbe76a4c8702d8d77",
+    "semantic_hash": "5edf76e0d151c22fbe76a4c8702d8d77"
+  },
+  "SqlUdtInfo.cs": {
+    "mtime": 1774610980.2236097,
+    "ast_hash": "8cd294dfd456198333640cf909ae1b74",
+    "semantic_hash": "8cd294dfd456198333640cf909ae1b74"
+  },
+  "SqlUtil.cs": {
+    "mtime": 1782734789.6008427,
+    "ast_hash": "a819ad1e9125cde5930fcbc9f988da9d",
+    "semantic_hash": "a819ad1e9125cde5930fcbc9f988da9d"
+  },
+  "TdsEnums.cs": {
+    "mtime": 1782734789.6008427,
+    "ast_hash": "b98ea2501e1de1883fec73cfbb7f9f0c",
+    "semantic_hash": "b98ea2501e1de1883fec73cfbb7f9f0c"
+  },
+  "TdsParameterSetter.cs": {
+    "mtime": 1774610980.2276096,
+    "ast_hash": "3f3eab5016ab1af0f719395937c1573d",
+    "semantic_hash": "3f3eab5016ab1af0f719395937c1573d"
+  },
+  "TdsParser.cs": {
+    "mtime": 1782734789.6048427,
+    "ast_hash": "23127c0471639752beb8411a2fd74ff6",
+    "semantic_hash": "23127c0471639752beb8411a2fd74ff6"
+  },
+  "TdsParserHelperClasses.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "e41207105158bf571823f42b86664a9b",
+    "semantic_hash": "e41207105158bf571823f42b86664a9b"
+  },
+  "TdsParserSafeHandles.windows.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "2903c4d644f4a79d13f60e3959292c4d",
+    "semantic_hash": "2903c4d644f4a79d13f60e3959292c4d"
+  },
+  "TdsParserSessionPool.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "89a4df1ba513e12e5a6432ca130d0eb9",
+    "semantic_hash": "89a4df1ba513e12e5a6432ca130d0eb9"
+  },
+  "TdsParserStateObject.Multiplexer.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "28c95a9a9e8d4923c73c348142c1e527",
+    "semantic_hash": "28c95a9a9e8d4923c73c348142c1e527"
+  },
+  "TdsParserStateObject.cs": {
+    "mtime": 1782734789.6048427,
+    "ast_hash": "c30f9820afdc9bfa946a7e8f95e10c86",
+    "semantic_hash": "c30f9820afdc9bfa946a7e8f95e10c86"
+  },
+  "TdsParserStateObjectFactory.unix.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "d6bdf8e978681c05f3c0d73f0e096384",
+    "semantic_hash": "d6bdf8e978681c05f3c0d73f0e096384"
+  },
+  "TdsParserStateObjectFactory.windows.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "865c3a14525d83cf3a9db0bb7f417891",
+    "semantic_hash": "865c3a14525d83cf3a9db0bb7f417891"
+  },
+  "TdsParserStateObjectManaged.netcore.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "b9b288bb9c332b5f738b2054d5f62950",
+    "semantic_hash": "b9b288bb9c332b5f738b2054d5f62950"
+  },
+  "TdsParserStateObjectNative.windows.cs": {
+    "mtime": 1774610980.2316096,
+    "ast_hash": "ddf0f117f17a2f8c5d60aff1b97d9882",
+    "semantic_hash": "ddf0f117f17a2f8c5d60aff1b97d9882"
+  },
+  "TdsParserStaticMethods.cs": {
+    "mtime": 1782734789.6048427,
+    "ast_hash": "5cfb530ec43d2408dfbaabcc934ad510",
+    "semantic_hash": "5cfb530ec43d2408dfbaabcc934ad510"
+  },
+  "TdsRecordBufferSetter.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "e277f10baaf885c87c92ad96e687ed24",
+    "semantic_hash": "e277f10baaf885c87c92ad96e687ed24"
+  },
+  "TdsValueSetter.cs": {
+    "mtime": 1782734789.6088428,
+    "ast_hash": "3904d8760ce943a95ff7822f7d3c4b3a",
+    "semantic_hash": "3904d8760ce943a95ff7822f7d3c4b3a"
+  },
+  "TransactionRequest.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "65a6d6af3cd9a861b9b3117a6e7b2a23",
+    "semantic_hash": "65a6d6af3cd9a861b9b3117a6e7b2a23"
+  },
+  "UserAgent.cs": {
+    "mtime": 1782734789.6088428,
+    "ast_hash": "909c626e1a8189882e7c39e61a8ca83f",
+    "semantic_hash": "909c626e1a8189882e7c39e61a8ca83f"
+  },
+  "Utilities/AsyncHelper.cs": {
+    "mtime": 1782734789.6088428,
+    "ast_hash": "35e4314420561ea77d44ba126659a6ee",
+    "semantic_hash": "35e4314420561ea77d44ba126659a6ee"
+  },
+  "Utilities/BufferWriterExtensions.netfx.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "e56ee64d06c310781a662f3bd8007ea5",
+    "semantic_hash": "e56ee64d06c310781a662f3bd8007ea5"
+  },
+  "Utilities/ObjectPool.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "de433abcf6efa5636c5c8292a48cf1ee",
+    "semantic_hash": "de433abcf6efa5636c5c8292a48cf1ee"
+  },
+  "Utilities/ObjectPools.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "129d6a8569734fe61206460bba828fee",
+    "semantic_hash": "129d6a8569734fe61206460bba828fee"
+  },
+  "VirtualSecureModeEnclaveProvider.cs": {
+    "mtime": 1782734789.6088428,
+    "ast_hash": "6193423edd119ee51e2dfcc154fdf284",
+    "semantic_hash": "6193423edd119ee51e2dfcc154fdf284"
+  },
+  "VirtualSecureModeEnclaveProviderBase.cs": {
+    "mtime": 1774610980.2356098,
+    "ast_hash": "176f2e5b8023affa210b102fa2962b26",
+    "semantic_hash": "176f2e5b8023affa210b102fa2962b26"
+  }
+}

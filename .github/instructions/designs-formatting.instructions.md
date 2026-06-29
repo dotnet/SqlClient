@@ -1,18 +1,18 @@
 ---
-applyTo: "plans/**/*.md"
+applyTo: "designs/**/*.md"
 ---
 # Formatting Rules for Plan Documents
 
-All markdown files under `plans/` must follow the rules in `plans/FORMATTING.md` and pass
-`markdownlint-cli2` with the config at `plans/.markdownlint.jsonc`.
+All markdown files under `designs/` must follow the rules in `designs/FORMATTING.md` and pass
+`markdownlint-cli2` with the config at `designs/.markdownlint.jsonc`.
 
 ## Mandatory Workflow
 
-1. Read `plans/FORMATTING.md` before creating or editing any markdown file under `plans/`.
+1. Read `designs/FORMATTING.md` before creating or editing any markdown file under `designs/`.
 2. After making edits, run the linter and fix all errors before finishing:
 
    ```bash
-   markdownlint-cli2 "plans/**/*.md"
+   markdownlint-cli2 "designs/**/*.md"
    ```
 
 ## Key Rules
