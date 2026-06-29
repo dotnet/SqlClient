@@ -1666,7 +1666,7 @@ namespace Microsoft.Data.SqlClient
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
 
-                // Calling close will request a cancellation on this token source, cancelling the reconnection.
+                // Calling Close will request a cancellation on this token source, cancelling the reconnection.
                 // Ideally, however, the reconnect should be directly awaited, making it impossible to have a
                 // concurrent call to Close.
                 // TODO: Note that we do not respect the command timeout in this context. Instead, the reconnect gets
@@ -2258,8 +2258,8 @@ namespace Microsoft.Data.SqlClient
         /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
         /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
         /// 
-        /// forceNewConnection may only be true when the connection is already open and needs to be replaced. If the connection has never,
-        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is 
+        /// forceNewConnection may only be true when the connection is already open and needs to be replaced. If the connection has never
+        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
         /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
         /// transitions and subclasses for more details.
         /// </remarks>
