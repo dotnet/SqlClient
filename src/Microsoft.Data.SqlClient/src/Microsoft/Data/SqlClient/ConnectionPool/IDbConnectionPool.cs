@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
         /// <param name="timeout">The overall timeout budget for this connection request.</param>
         /// <returns>A reference to the new DbConnectionInternal.</returns>
-        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
+        DbConnectionInternal? ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
 
         /// <summary>
         /// Returns an internal connection to the pool.
