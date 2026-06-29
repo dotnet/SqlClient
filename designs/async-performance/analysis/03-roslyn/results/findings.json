@@ -1,0 +1,3984 @@
+{
+  "GeneratedUtc": "2026-06-29 17:51:06Z",
+  "SourceRoot": "src/Microsoft.Data.SqlClient/src",
+  "Configurations": [
+    "net8.0-unix",
+    "net9.0-unix",
+    "net8.0-windows",
+    "net9.0-windows",
+    "net462-windows"
+  ],
+  "TargetMethods": [
+    "TryReadNetworkPacket",
+    "ReadSniSyncOverAsync",
+    "TryProcessDone",
+    "ConsumePreLoginHandshake",
+    "TryConnectParallel",
+    "AuthenticateAsClient",
+    "GetHostAddresses"
+  ],
+  "FilesScanned": 344,
+  "Counts": {
+    "allocation": 106,
+    "blocking-sync": 77,
+    "call-site": 19,
+    "missing-configureawait": 1,
+    "sync-over-async": 35
+  },
+  "Findings": [
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/ConcurrentQueueSemaphore.netcore.cs",
+      "Line": 37,
+      "Column": 27,
+      "Container": "ConcurrentQueueSemaphore.WaitAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "var tcs = new TaskCompletionSource\u003Cbool\u003E();",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 50,
+      "Column": 28,
+      "Container": "SniMarsConnection..ctor",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "_headerBytes = new byte[SniSmuxHeader.HEADER_LENGTH];",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniProxy.netcore.cs",
+      "Line": 67,
+      "Column": 28,
+      "Container": "SniProxy.CreateConnectionHandle",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "instanceName = new byte[1];",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 98,
+      "Column": 40,
+      "Container": "SsrpClient.CreateInstanceInfoRequest",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] requestPacket = new byte[byteCount \u002B 1];",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 150,
+      "Column": 36,
+      "Container": "SsrpClient.CreateDacPortInfoRequest",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] requestPacket = new byte[byteCount \u002B 2];",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 405,
+      "Column": 44,
+      "Container": "SsrpClient.SendBroadcastUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX }; //0x02",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 1500,
+      "Column": 45,
+      "Container": "ValueUtilsSmi.SetCompatibleValue",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] charsValue = new char[] { (char)value };",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2250,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.SetBytes_FromRecord",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] buffer = new byte[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2283,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.SetBytes_FromReader",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] buffer = new byte[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2352,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.SetChars_FromRecord",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] buffer = new char[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2415,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.SetChars_FromReader",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] buffer = new char[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2831,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.GetByteArray_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] buffer = new byte[len];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 2864,
+      "Column": 29,
+      "Container": "ValueUtilsSmi.GetCharArray_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] buffer = new char[len];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 3031,
+      "Column": 27,
+      "Container": "ValueUtilsSmi.SetStream_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] buff = new byte[DefaultBinaryBufferSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 3061,
+      "Column": 27,
+      "Container": "ValueUtilsSmi.SetTextReader_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] buff = new char[DefaultTextBufferSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 3238,
+      "Column": 33,
+      "Container": "ValueUtilsSmi.SetSqlBytes_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] buffer = new byte[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 3284,
+      "Column": 33,
+      "Container": "ValueUtilsSmi.SetSqlChars_Unchecked",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] buffer = new char[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/Server/ValueUtilsSmi.cs",
+      "Line": 3648,
+      "Column": 33,
+      "Container": "ValueUtilsSmi.CopyIntoNewSmiScratchStream",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] copyBuffer = new byte[chunkSize];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Encryption.cs",
+      "Line": 929,
+      "Column": 42,
+      "Container": "SqlCommand.ReadDescribeEncryptionParameterResultsAttestation",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] attestationInfo = new byte[attestationInfoLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Encryption.cs",
+      "Line": 989,
+      "Column": 39,
+      "Container": "SqlCommand.ReadDescribeEncryptionParameterResultsKeys",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] encryptedKey = new byte[encryptedKeyLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Encryption.cs",
+      "Line": 999,
+      "Column": 39,
+      "Container": "SqlCommand.ReadDescribeEncryptionParameterResultsKeys",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] keyMdVersion = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Encryption.cs",
+      "Line": 1054,
+      "Column": 40,
+      "Container": "SqlCommand.ReadDescribeEncryptionParameterResultsKeys",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "keySignature = new byte[keySignatureLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 186,
+      "Column": 61,
+      "Container": "SqlCommand.BeginExecuteNonQueryInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E globalCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 187,
+      "Column": 60,
+      "Container": "SqlCommand.BeginExecuteNonQueryInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E localCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 647,
+      "Column": 48,
+      "Container": "SqlCommand.InternalExecuteNonQueryAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cint\u003E source = new TaskCompletionSource\u003Cint\u003E(_activeConnection);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 756,
+      "Column": 67,
+      "Container": "SqlCommand.RunExecuteNonQueryTds",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 252,
+      "Column": 61,
+      "Container": "SqlCommand.BeginExecuteReaderInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E globalCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 253,
+      "Column": 60,
+      "Container": "SqlCommand.BeginExecuteReaderInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E localCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 955,
+      "Column": 58,
+      "Container": "SqlCommand.InternalExecuteReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003CSqlDataReader\u003E source = new TaskCompletionSource\u003CSqlDataReader\u003E(_activeConnection);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 1261,
+      "Column": 63,
+      "Container": "SqlCommand.RunExecuteReaderTds",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 1716,
+      "Column": 59,
+      "Container": "SqlCommand.RunExecuteReaderTdsWithTransparentParameterEncryption",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 93,
+      "Column": 55,
+      "Container": "SqlCommand.ExecuteScalarBatchAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E source = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 242,
+      "Column": 55,
+      "Container": "SqlCommand.ExecuteScalarAsyncInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E source = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Xml.cs",
+      "Line": 211,
+      "Column": 61,
+      "Container": "SqlCommand.BeginExecuteXmlReaderInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E globalCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Xml.cs",
+      "Line": 212,
+      "Column": 60,
+      "Container": "SqlCommand.BeginExecuteXmlReaderInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cobject\u003E localCompletion = new TaskCompletionSource\u003Cobject\u003E(stateObject);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Xml.cs",
+      "Line": 466,
+      "Column": 54,
+      "Container": "SqlCommand.InternalExecuteXmlReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003CXmlReader\u003E source = new TaskCompletionSource\u003CXmlReader\u003E(_activeConnection);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommandSet.cs",
+      "Line": 147,
+      "Column": 39,
+      "Container": "SqlCommandSet.Append",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] copy = new byte[Math.Max(countOfBytes, 0)];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlCommandSet.cs",
+      "Line": 164,
+      "Column": 43,
+      "Container": "SqlCommandSet.Append",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "char[] copy = new char[Math.Max(countOfChars, 0)];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 4491,
+      "Column": 53,
+      "Container": "SqlDataReader.NextResultAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cbool\u003E source = new TaskCompletionSource\u003Cbool\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 4586,
+      "Column": 52,
+      "Container": "SqlDataReader.GetBytesAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cint\u003E source = new TaskCompletionSource\u003Cint\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 4759,
+      "Column": 30,
+      "Container": "SqlDataReader.GetBytesAsyncReadDataStage",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "source = new TaskCompletionSource\u003Cint\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 4910,
+      "Column": 53,
+      "Container": "SqlDataReader.ReadAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cbool\u003E source = new TaskCompletionSource\u003Cbool\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 5065,
+      "Column": 57,
+      "Container": "SqlDataReader.IsDBNullAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003Cbool\u003E source = new TaskCompletionSource\u003Cbool\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 5199,
+      "Column": 50,
+      "Container": "SqlDataReader.GetFieldValueAsync",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "TaskCompletionSource\u003CT\u003E source = new TaskCompletionSource\u003CT\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 806,
+      "Column": 30,
+      "Container": "TdsParser.SendPreLoginHandshake",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 \u002B TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 1046,
+      "Column": 30,
+      "Container": "TdsParser.ConsumePreLoginHandshake",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] payload = new byte[_physicalStateObj._inBytesPacket];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 1995,
+      "Column": 41,
+      "Container": "TdsParser.SerializeShort",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bShortBytes = new byte[2];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2126,
+      "Column": 39,
+      "Container": "TdsParser.SerializeInt",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bIntBytes = new byte[sizeof(int)];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2175,
+      "Column": 25,
+      "Container": "TdsParser.SerializeFloat",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "var bytes = new byte[4];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2203,
+      "Column": 40,
+      "Container": "TdsParser.SerializeLong",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bLongBytes = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2263,
+      "Column": 28,
+      "Container": "TdsParser.SerializePartialLong",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2326,
+      "Column": 25,
+      "Container": "TdsParser.SerializeDouble",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "var bytes = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 3351,
+      "Column": 44,
+      "Container": "TdsParser.TryProcessEnvChange",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "env._newBinValue = new byte[env._newLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 3853,
+      "Column": 35,
+      "Container": "TdsParser.TryProcessFeatureExtAck",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] data = new byte[dataLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 4238,
+      "Column": 34,
+      "Container": "TdsParser.TryProcessSessionState",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buffer = new byte[stateLen];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 4275,
+      "Column": 42,
+      "Container": "TdsParser.TryProcessSessionState",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buffer = new byte[stateLen];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 4467,
+      "Column": 36,
+      "Container": "TdsParser.TryProcessFedAuthInfo",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] tokenData = new byte[tokenLen];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 5377,
+      "Column": 32,
+      "Container": "TdsParser.TryReadCipherInfoEntry",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "encryptedCek = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 6826,
+      "Column": 44,
+      "Container": "TdsParser.DeserializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[md.baseTI.length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 7383,
+      "Column": 56,
+      "Container": "TdsParser.TryReadSqlValueInternal",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] b = (_tempGuidBytes ??= new byte[GUID_SIZE]);",
+      "Configs": [
+        "net462-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8084,
+      "Column": 40,
+      "Container": "TdsParser.SerializeCurrency",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bLongBytes = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8182,
+      "Column": 28,
+      "Container": "TdsParser.SerializeDateTime2",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8213,
+      "Column": 28,
+      "Container": "TdsParser.SerializeDateTimeOffset",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8316,
+      "Column": 43,
+      "Container": "TdsParser.SerializeSqlDecimal",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bDecimalBytes = new byte[17];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8389,
+      "Column": 43,
+      "Container": "TdsParser.SerializeDecimal",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bDecimalBytes = new byte[17];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8517,
+      "Column": 28,
+      "Container": "TdsParser.SerializeCharArray",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[cBytes];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8538,
+      "Column": 38,
+      "Container": "TdsParser.WriteCharArray",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bTmp = new byte[cBytes];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8549,
+      "Column": 28,
+      "Container": "TdsParser.SerializeString",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bytes = new byte[cBytes];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 8570,
+      "Column": 38,
+      "Container": "TdsParser.WriteString",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bTmp = new byte[cBytes];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 9708,
+      "Column": 35,
+      "Container": "TdsParser.GetDTCAddress",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "dtcAddr = new byte[cb];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 10269,
+      "Column": 54,
+      "Container": "TdsParser.TdsExecuteRPC",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 10325,
+      "Column": 42,
+      "Container": "TdsParser.TdsExecuteRPC",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13341,
+      "Column": 36,
+      "Container": "TdsParser.SerializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] b = new byte[actualLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13391,
+      "Column": 40,
+      "Container": "TdsParser.SerializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] b = new byte[actualLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13410,
+      "Column": 40,
+      "Container": "TdsParser.SerializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] b = new byte[actualLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13438,
+      "Column": 51,
+      "Container": "TdsParser.SerializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bIntBytes = new byte[4];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13457,
+      "Column": 52,
+      "Container": "TdsParser.SerializeUnencryptedValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bLongBytes = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13539,
+      "Column": 36,
+      "Container": "TdsParser.SerializeUnencryptedSqlValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] b = new byte[actualLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13643,
+      "Column": 51,
+      "Container": "TdsParser.SerializeUnencryptedSqlValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bIntBytes = new byte[4];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13662,
+      "Column": 52,
+      "Container": "TdsParser.SerializeUnencryptedSqlValue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bLongBytes = new byte[8];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13935,
+      "Column": 28,
+      "Container": "TdsParser.TryReadPlpUnicodeChars",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "buff = new char[Math.Min(stateLen, len)];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 13984,
+      "Column": 38,
+      "Container": "TdsParser.TryReadPlpUnicodeChars",
+      "ContainerIsAsync": false,
+      "Detail": "new char[]",
+      "Snippet": "newbuf = new char[offst \u002B charsRead \u002B (stateObj.GetPacketSize() * 8)];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 14182,
+      "Column": 38,
+      "Container": "TdsParser.ReadPlpAnsiChars",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "stateObj._bTmp = new byte[bytesRead];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserSafeHandles.windows.cs",
+      "Line": 164,
+      "Column": 28,
+      "Container": "SNIHandle..ctor",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "instanceName = new byte[256]; // Size as specified by netlibs.",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs",
+      "Line": 320,
+      "Column": 38,
+      "Container": "TdsParserStateObject.MultiplexPackets",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "Buffer = new byte[dataBuffer.Length],",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs",
+      "Line": 432,
+      "Column": 42,
+      "Container": "TdsParserStateObject.MultiplexPackets",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "Buffer = new byte[dataBuffer.Length],",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs",
+      "Line": 450,
+      "Column": 42,
+      "Container": "TdsParserStateObject.MultiplexPackets",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "Buffer = new byte[dataBuffer.Length],",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 224,
+      "Column": 33,
+      "Container": "TdsParserStateObject",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 236,
+      "Column": 56,
+      "Container": "TdsParserStateObject",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "private readonly byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 768,
+      "Column": 35,
+      "Container": "TdsParserStateObject.NullBitmap.TryInitialize",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "_nullBitmap = new byte[bitmapArrayLength];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1395,
+      "Column": 43,
+      "Container": "TdsParserStateObject.TrySetBufferSecureStrings",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] data = new byte[_securePasswords[i].Length * 2];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1424,
+      "Column": 23,
+      "Container": "TdsParserStateObject.NewBuffer",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "_inBuff = new byte[size];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1558,
+      "Column": 41,
+      "Container": "TdsParserStateObject.SetPacketSize",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] inBuff = new byte[size];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1572,
+      "Column": 28,
+      "Container": "TdsParserStateObject.SetPacketSize",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "_outBuff = new byte[size];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1726,
+      "Column": 27,
+      "Container": "TdsParserStateObject.TryReadByteArrayWithContinue",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buf = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2186,
+      "Column": 31,
+      "Container": "TdsParserStateObject.TryReadStringWithEncoding",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buf = new byte[length];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2395,
+      "Column": 28,
+      "Container": "TdsParserStateObject.TryReadPlpBytes",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buff = new byte[(Math.Min((int)_longlen, len))];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2419,
+      "Column": 24,
+      "Container": "TdsParserStateObject.TryReadPlpBytes",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "buff = new byte[_longlenleft];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2428,
+      "Column": 37,
+      "Container": "TdsParserStateObject.TryReadPlpBytes",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] newbuf = new byte[offset \u002B bytesToRead];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3108,
+      "Column": 46,
+      "Container": "TdsParserStateObject.SNIWritePacket",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "_writeCompletionSource = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3265,
+      "Column": 38,
+      "Container": "TdsParserStateObject.WaitForAccumulatedWrites",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "_writeCompletionSource = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3493,
+      "Column": 21,
+      "Container": "TdsParserStateObject.TryReadNetworkPacket",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "ReadSni(new TaskCompletionSource\u003Cobject\u003E());",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 4298,
+      "Column": 46,
+      "Container": "TdsParserStateObject.WriteBytes",
+      "ContainerIsAsync": false,
+      "Detail": "new TaskCompletionSource",
+      "Snippet": "completion = new TaskCompletionSource\u003Cobject\u003E();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 4304,
+      "Column": 52,
+      "Container": "TdsParserStateObject.WriteBytes",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] tempArray = new byte[len];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStaticMethods.cs",
+      "Line": 103,
+      "Column": 34,
+      "Container": "TdsParserStaticMethods.ObfuscatePassword",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "byte[] bObfuscated = new byte[password.Length \u003C\u003C 1];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "allocation",
+      "File": "Microsoft/Data/SqlClient/TdsParserStaticMethods.cs",
+      "Line": 210,
+      "Column": 30,
+      "Container": "TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly",
+      "ContainerIsAsync": false,
+      "Detail": "new byte[]",
+      "Snippet": "nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/ConcurrentQueueSemaphore.netcore.cs",
+      "Line": 31,
+      "Column": 17,
+      "Container": "ConcurrentQueueSemaphore.WaitAsync",
+      "ContainerIsAsync": false,
+      "Detail": "_semaphore.Wait() (blocking)",
+      "Snippet": "if (_semaphore.Wait(0, cancellationToken))",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/LocalDB.netcore.windows.cs",
+      "Line": 123,
+      "Column": 17,
+      "Container": "LocalDB.LoadUserInstanceDll",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 62,
+      "Column": 13,
+      "Container": "SniMarsConnection.CreateMarsSession",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 101,
+      "Column": 17,
+      "Container": "SniMarsConnection.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 117,
+      "Column": 17,
+      "Container": "SniMarsConnection.SendAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 142,
+      "Column": 17,
+      "Container": "SniMarsConnection.ReceiveAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 161,
+      "Column": 17,
+      "Container": "SniMarsConnection.CheckConnection",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 217,
+      "Column": 21,
+      "Container": "SniMarsConnection.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 227,
+      "Column": 21,
+      "Container": "SniMarsConnection.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsConnection.netcore.cs",
+      "Line": 342,
+      "Column": 21,
+      "Container": "SniMarsConnection.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (DemuxerSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 107,
+      "Column": 17,
+      "Container": "SniMarsHandle.SendControlPacket",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 166,
+      "Column": 21,
+      "Container": "SniMarsHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 177,
+      "Column": 21,
+      "Container": "SniMarsHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 185,
+      "Column": 17,
+      "Container": "SniMarsHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 204,
+      "Column": 17,
+      "Container": "SniMarsHandle.InternalSendAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 232,
+      "Column": 21,
+      "Container": "SniMarsHandle.SendPendingPackets",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 276,
+      "Column": 17,
+      "Container": "SniMarsHandle.SendAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 297,
+      "Column": 17,
+      "Container": "SniMarsHandle.ReceiveAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_receivedPacketQueue)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 326,
+      "Column": 17,
+      "Container": "SniMarsHandle.ReceiveAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 348,
+      "Column": 17,
+      "Container": "SniMarsHandle.HandleReceiveError",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_receivedPacketQueue)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 368,
+      "Column": 17,
+      "Container": "SniMarsHandle.HandleSendComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 389,
+      "Column": 17,
+      "Container": "SniMarsHandle.HandleAck",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 410,
+      "Column": 17,
+      "Container": "SniMarsHandle.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 418,
+      "Column": 21,
+      "Container": "SniMarsHandle.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_receivedPacketQueue)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 438,
+      "Column": 17,
+      "Container": "SniMarsHandle.HandleReceiveComplete",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 455,
+      "Column": 13,
+      "Container": "SniMarsHandle.SendAckIfNecessary",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 484,
+      "Column": 21,
+      "Container": "SniMarsHandle.Receive",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_receivedPacketQueue)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 511,
+      "Column": 25,
+      "Container": "SniMarsHandle.Receive",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 161,
+      "Column": 13,
+      "Container": "SniNpHandle.Dispose",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 192,
+      "Column": 17,
+      "Container": "SniNpHandle.Receive",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 272,
+      "Column": 25,
+      "Container": "SniNpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.TryEnter",
+      "Snippet": "Monitor.TryEnter(this, ref releaseLock);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 276,
+      "Column": 25,
+      "Container": "SniNpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.Enter",
+      "Snippet": "Monitor.Enter(this);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 283,
+      "Column": 21,
+      "Container": "SniNpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_sendSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 307,
+      "Column": 25,
+      "Container": "SniNpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.Exit",
+      "Snippet": "Monitor.Exit(this);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 54,
+      "Column": 13,
+      "Container": "SniTcpHandle.Dispose",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 824,
+      "Column": 21,
+      "Container": "SniTcpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.TryEnter",
+      "Snippet": "Monitor.TryEnter(this, ref releaseLock);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 828,
+      "Column": 21,
+      "Container": "SniTcpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.Enter",
+      "Snippet": "Monitor.Enter(this);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 835,
+      "Column": 17,
+      "Container": "SniTcpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_sendSync)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 864,
+      "Column": 21,
+      "Container": "SniTcpHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.Exit",
+      "Snippet": "Monitor.Exit(this);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 883,
+      "Column": 13,
+      "Container": "SniTcpHandle.Receive",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 368,
+      "Column": 17,
+      "Container": "SqlCommand.EndExecuteNonQueryAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 677,
+      "Column": 17,
+      "Container": "SqlCommand.EndExecuteReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Xml.cs",
+      "Line": 401,
+      "Column": 17,
+      "Container": "SqlCommand.EndExecuteXmlReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.cs",
+      "Line": 1106,
+      "Column": 17,
+      "Container": "SqlCommand.Cancel",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (connection)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.cs",
+      "Line": 2455,
+      "Column": 25,
+      "Container": "SqlCommand.CreateLocalCompletionTask",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.cs",
+      "Line": 3095,
+      "Column": 17,
+      "Container": "SqlCommand.WaitForAsyncResults",
+      "ContainerIsAsync": false,
+      "Detail": ".WaitOne()",
+      "Snippet": "asyncResult.AsyncWaitHandle.WaitOne();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 881,
+      "Column": 29,
+      "Container": "SqlDataReader.Close",
+      "ContainerIsAsync": false,
+      "Detail": ".WaitOne()",
+      "Snippet": "((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 887,
+      "Column": 33,
+      "Container": "SqlDataReader.Close",
+      "ContainerIsAsync": false,
+      "Detail": ".WaitOne()",
+      "Snippet": "((IAsyncResult)networkPacketTaskSource.Task).AsyncWaitHandle.WaitOne();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 898,
+      "Column": 33,
+      "Container": "SqlDataReader.Close",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 917,
+      "Column": 25,
+      "Container": "SqlDataReader.Close",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 5561,
+      "Column": 21,
+      "Container": "SqlDataReader.ContinueAsyncCall",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 5718,
+      "Column": 21,
+      "Container": "SqlDataReader.CleanupAfterAsyncInvocation",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (stateObj)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 1900,
+      "Column": 54,
+      "Container": "TdsParser.CheckResetConnection",
+      "ContainerIsAsync": false,
+      "Detail": ".WaitOne()",
+      "Snippet": "stateObj._fResetEventOwned = _resetConnectionEvent.WaitOne(stateObj.GetTimeoutRemaining(), exitContext: false);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 4234,
+      "Column": 17,
+      "Container": "TdsParser.TryProcessSessionState",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (sdata._delta)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserSessionPool.cs",
+      "Line": 66,
+      "Column": 17,
+      "Container": "TdsParserSessionPool.Deactivate",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_cache)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserSessionPool.cs",
+      "Line": 96,
+      "Column": 13,
+      "Container": "TdsParserSessionPool.Dispose",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_cache)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserSessionPool.cs",
+      "Line": 135,
+      "Column": 13,
+      "Container": "TdsParserSessionPool.GetSession",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_cache)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserSessionPool.cs",
+      "Line": 172,
+      "Column": 13,
+      "Container": "TdsParserSessionPool.PutSession",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_cache)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 852,
+      "Column": 21,
+      "Container": "TdsParserStateObject.Cancel",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.TryEnter",
+      "Snippet": "Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 898,
+      "Column": 21,
+      "Container": "TdsParserStateObject.Cancel",
+      "ContainerIsAsync": false,
+      "Detail": "Monitor.Exit",
+      "Snippet": "Monitor.Exit(this);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 908,
+      "Column": 13,
+      "Container": "TdsParserStateObject.ResetCancelAndProcessAttention",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1252,
+      "Column": 13,
+      "Container": "TdsParserStateObject.ExecuteFlush",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2648,
+      "Column": 13,
+      "Container": "TdsParserStateObject.AddError",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2673,
+      "Column": 17,
+      "Container": "TdsParserStateObject.get",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2695,
+      "Column": 13,
+      "Container": "TdsParserStateObject.AddWarning",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2718,
+      "Column": 17,
+      "Container": "TdsParserStateObject.get",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2734,
+      "Column": 17,
+      "Container": "TdsParserStateObject.get",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2753,
+      "Column": 17,
+      "Container": "TdsParserStateObject.get",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2774,
+      "Column": 13,
+      "Container": "TdsParserStateObject.GetFullErrorAndWarningCollection",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2811,
+      "Column": 13,
+      "Container": "TdsParserStateObject.StoreErrorAndWarningForAttention",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 2830,
+      "Column": 13,
+      "Container": "TdsParserStateObject.RestoreErrorAndWarningAfterAttention",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_errorAndWarningsLock)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3803,
+      "Column": 17,
+      "Container": "TdsParserStateObject.OnTimeoutCore",
+      "ContainerIsAsync": false,
+      "Detail": "lock(this)",
+      "Snippet": "lock (this)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObjectNative.windows.cs",
+      "Line": 233,
+      "Column": 13,
+      "Container": "TdsParserStateObjectNative.RemovePacketFromPendingList",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_writePacketLockObject)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObjectNative.windows.cs",
+      "Line": 349,
+      "Column": 13,
+      "Container": "TdsParserStateObjectNative.AddPacketToPendingList",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_writePacketLockObject)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObjectNative.windows.cs",
+      "Line": 373,
+      "Column": 17,
+      "Container": "TdsParserStateObjectNative.GetResetWritePacket",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_writePacketLockObject)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObjectNative.windows.cs",
+      "Line": 388,
+      "Column": 13,
+      "Container": "TdsParserStateObjectNative.ClearAllWritePackets",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_writePacketLockObject)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "blocking-sync",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObjectNative.windows.cs",
+      "Line": 466,
+      "Column": 13,
+      "Container": "TdsParserStateObjectNative.DisposePacketCache",
+      "ContainerIsAsync": false,
+      "Detail": "lock",
+      "Snippet": "lock (_writePacketLockObject)",
+      "Configs": [
+        "net462-windows",
+        "net8.0-windows",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniCommon.netcore.cs",
+      "Line": 181,
+      "Column": 24,
+      "Container": "SniCommon.GetDnsIpAddresses",
+      "ContainerIsAsync": false,
+      "Detail": "GetHostAddresses",
+      "Snippet": "return Dns.GetHostAddresses(serverName);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 338,
+      "Column": 25,
+      "Container": "SniNpHandle.EnableSsl",
+      "ContainerIsAsync": false,
+      "Detail": "AuthenticateAsClient",
+      "Snippet": "AuthenticateAsClient(_sslStream, _targetServer, null);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniNpHandle.netcore.cs",
+      "Line": 343,
+      "Column": 25,
+      "Container": "SniNpHandle.EnableSsl",
+      "ContainerIsAsync": false,
+      "Detail": "AuthenticateAsClient",
+      "Snippet": "_sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 167,
+      "Column": 39,
+      "Container": "SniTcpHandle..ctor",
+      "ContainerIsAsync": false,
+      "Detail": "TryConnectParallel",
+      "Snippet": "_socket = TryConnectParallel(serverName, port, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 203,
+      "Column": 43,
+      "Container": "SniTcpHandle..ctor",
+      "ContainerIsAsync": false,
+      "Detail": "TryConnectParallel",
+      "Snippet": "_socket = TryConnectParallel(firstCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 222,
+      "Column": 43,
+      "Container": "SniTcpHandle..ctor",
+      "ContainerIsAsync": false,
+      "Detail": "TryConnectParallel",
+      "Snippet": "_socket = TryConnectParallel(secondCachedIP, portRetry, timeout, ref reportError, cachedFQDN, ref pendingDNSInfo);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 330,
+      "Column": 39,
+      "Container": "SniTcpHandle.GetHostAddressesSortedByPreference",
+      "ContainerIsAsync": false,
+      "Detail": "GetHostAddresses",
+      "Snippet": "IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 735,
+      "Column": 25,
+      "Container": "SniTcpHandle.EnableSsl",
+      "ContainerIsAsync": false,
+      "Detail": "AuthenticateAsClient",
+      "Snippet": "AuthenticateAsClient(_sslStream, _targetServer, null);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "Line": 739,
+      "Column": 25,
+      "Container": "SniTcpHandle.EnableSsl",
+      "ContainerIsAsync": false,
+      "Detail": "AuthenticateAsClient",
+      "Snippet": "_sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 580,
+      "Column": 46,
+      "Container": "TdsParser.Connect",
+      "ContainerIsAsync": false,
+      "Detail": "ConsumePreLoginHandshake",
+      "Snippet": "PreLoginHandshakeStatus status = ConsumePreLoginHandshake(",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 634,
+      "Column": 26,
+      "Container": "TdsParser.Connect",
+      "ContainerIsAsync": false,
+      "Detail": "ConsumePreLoginHandshake",
+      "Snippet": "status = ConsumePreLoginHandshake(",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 1023,
+      "Column": 41,
+      "Container": "TdsParser.ConsumePreLoginHandshake",
+      "ContainerIsAsync": false,
+      "Detail": "TryReadNetworkPacket",
+      "Snippet": "TdsOperationStatus result = _physicalStateObj.TryReadNetworkPacket();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 2627,
+      "Column": 38,
+      "Container": "TdsParser.TryRun",
+      "ContainerIsAsync": false,
+      "Detail": "TryProcessDone",
+      "Snippet": "result = TryProcessDone(cmdHandler, dataStream, ref runBehavior, stateObj);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1330,
+      "Column": 53,
+      "Container": "TdsParserStateObject.TryProcessHeader",
+      "ContainerIsAsync": false,
+      "Detail": "TryReadNetworkPacket",
+      "Snippet": "TdsOperationStatus result = TryReadNetworkPacket();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1455,
+      "Column": 49,
+      "Container": "TdsParserStateObject.TryPrepareBuffer",
+      "ContainerIsAsync": false,
+      "Detail": "TryReadNetworkPacket",
+      "Snippet": "TdsOperationStatus result = TryReadNetworkPacket();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1464,
+      "Column": 49,
+      "Container": "TdsParserStateObject.TryPrepareBuffer",
+      "ContainerIsAsync": false,
+      "Detail": "TryReadNetworkPacket",
+      "Snippet": "TdsOperationStatus result = TryReadNetworkPacket();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 1482,
+      "Column": 34,
+      "Container": "TdsParserStateObject.TryPrepareBuffer",
+      "ContainerIsAsync": false,
+      "Detail": "TryReadNetworkPacket",
+      "Snippet": "result = TryReadNetworkPacket();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3480,
+      "Column": 17,
+      "Container": "TdsParserStateObject.TryReadNetworkPacket",
+      "ContainerIsAsync": false,
+      "Detail": "ReadSniSyncOverAsync",
+      "Snippet": "ReadSniSyncOverAsync();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "call-site",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3488,
+      "Column": 21,
+      "Container": "TdsParserStateObject.TryReadNetworkPacket",
+      "ContainerIsAsync": false,
+      "Detail": "ReadSniSyncOverAsync",
+      "Snippet": "ReadSniSyncOverAsync();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "missing-configureawait",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniHandle.netcore.cs",
+      "Line": 34,
+      "Column": 13,
+      "Container": "SniHandle.AuthenticateAsClientAsync",
+      "ContainerIsAsync": true,
+      "Detail": "await without ConfigureAwait(false)",
+      "Snippet": "await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniHandle.netcore.cs",
+      "Line": 39,
+      "Column": 13,
+      "Container": "SniHandle.AuthenticateAsClient",
+      "ContainerIsAsync": false,
+      "Detail": ".GetAwaiter().GetResult()",
+      "Snippet": "AuthenticateAsClientAsync(sslStream, serverNameIndication, certificate, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 175,
+      "Column": 21,
+      "Container": "SniMarsHandle.Send",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "_ackEvent.Wait();",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniMarsHandle.netcore.cs",
+      "Line": 522,
+      "Column": 26,
+      "Container": "SniMarsHandle.Receive",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "if (!_packetEvent.Wait(timeoutInMilliseconds))",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SniPacket.netcore.cs",
+      "Line": 292,
+      "Column": 38,
+      "Container": "SniPacket.ReadFromStreamAsyncContinuation",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "packet._dataLength = task.Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SslOverTdsStream.netcore.cs",
+      "Line": 191,
+      "Column": 36,
+      "Container": "SslOverTdsStream.ReadAsync",
+      "ContainerIsAsync": true,
+      "Detail": ".Result",
+      "Snippet": "read = readValueTask.Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SslOverTdsStream.netcore.cs",
+      "Line": 212,
+      "Column": 41,
+      "Container": "SslOverTdsStream.ReadAsync",
+      "ContainerIsAsync": true,
+      "Detail": ".Result",
+      "Snippet": "readCount = remainderReadValueTask.Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SslOverTdsStream.netcore.cs",
+      "Line": 240,
+      "Column": 60,
+      "Container": "SslOverTdsStream.ReadAsync",
+      "ContainerIsAsync": true,
+      "Detail": ".Result",
+      "Snippet": "headerBytesReadIteration = headerReadValueTask.Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SslOverTdsStream.netcore.cs",
+      "Line": 267,
+      "Column": 47,
+      "Container": "SslOverTdsStream.ReadAsync",
+      "ContainerIsAsync": true,
+      "Detail": ".Result",
+      "Snippet": "packetBytesRead = packetReadValueTask.Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 313,
+      "Column": 25,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "if (tasks[first].Result.ResponsePacket != null)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 316,
+      "Column": 32,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "return tasks[first].Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 328,
+      "Column": 24,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "return completedTasks[0].Result;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 353,
+      "Column": 25,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "if (sendTask.Wait(sendTimeOutMs) \u0026\u0026 (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 353,
+      "Column": 57,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "if (sendTask.Wait(sendTimeOutMs) \u0026\u0026 (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 356,
+      "Column": 49,
+      "Container": "SsrpClient.SendUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "result.ResponsePacket = receiveTask.Result.Buffer;",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 418,
+      "Column": 28,
+      "Container": "SsrpClient.SendBroadcastUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) \u0026\u0026 sw.ElapsedMilliseconds \u003C= ReceiveMAXTimeoutsForCLNT_BCAST_EX \u0026\u0026 receiveTask != null)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 422,
+      "Column": 29,
+      "Container": "SsrpClient.SendBroadcastUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "if (receiveTask.Result.Buffer.Length \u003C ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 424,
+      "Column": 70,
+      "Container": "SsrpClient.SendBroadcastUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE \u002B SVR_RESP)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "Line": 424,
+      "Column": 139,
+      "Container": "SsrpClient.SendBroadcastUDPRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE \u002B SVR_RESP)",
+      "Configs": [
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.NonQuery.cs",
+      "Line": 337,
+      "Column": 34,
+      "Container": "SqlCommand.CleanupAfterExecuteNonQueryAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "source.SetResult(task.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 237,
+      "Column": 32,
+      "Container": "SqlCommand.ExecuteDbDataReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "return result.Result;",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Reader.cs",
+      "Line": 608,
+      "Column": 38,
+      "Container": "SqlCommand.CleanupExecuteReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "source.SetResult(task.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 110,
+      "Column": 44,
+      "Container": "SqlCommand.ExecuteScalarBatchAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "SqlDataReader reader = executeTask.Result;",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 136,
+      "Column": 46,
+      "Container": "SqlCommand.ExecuteScalarBatchAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "result = readTask.Result;",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 260,
+      "Column": 44,
+      "Container": "SqlCommand.ExecuteScalarAsyncInternal",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "SqlDataReader reader = executeTask.Result;",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Scalar.cs",
+      "Line": 292,
+      "Column": 49,
+      "Container": "SqlCommand.ExecuteScalarAsyncInternal",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "bool more = readTask.Result;",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.Xml.cs",
+      "Line": 371,
+      "Column": 34,
+      "Container": "SqlCommand.CleanupAfterExecuteXmlReaderAsync",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "source.SetResult(task.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.cs",
+      "Line": 2460,
+      "Column": 55,
+      "Container": "SqlCommand.CreateLocalCompletionTask",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "globalCompletion.TrySetResult(task.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlCommand.cs",
+      "Line": 2542,
+      "Column": 71,
+      "Container": "SqlCommand.CreateLocalCompletionTask",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "completionSource.TrySetResult(retryTask.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "Line": 5630,
+      "Column": 37,
+      "Container": "SqlDataReader.CompleteAsyncCall",
+      "ContainerIsAsync": false,
+      "Detail": ".Result",
+      "Snippet": "source.TrySetResult(task.Result);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 1708,
+      "Column": 29,
+      "Container": "TdsParser.ThrowExceptionAndWarning",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "connHandler._parserLock.Wait(canReleaseFromAnyThread: false);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 9767,
+      "Column": 17,
+      "Container": "TdsParser.TdsExecuteTransactionManagerRequest",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "_connHandler._parserLock.Wait(canReleaseFromAnyThread: false);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 10009,
+      "Column": 17,
+      "Container": "TdsParser.TdsExecuteSQLBatch",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "_connHandler._parserLock.Wait(canReleaseFromAnyThread: !sync);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParser.cs",
+      "Line": 10134,
+      "Column": 21,
+      "Container": "TdsParser.TdsExecuteRPC",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "_connHandler._parserLock.Wait(canReleaseFromAnyThread: !sync);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3082,
+      "Column": 25,
+      "Container": "TdsParserStateObject.SNIWritePacket",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "waitForWrites.Wait();",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    },
+    {
+      "Kind": "sync-over-async",
+      "File": "Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "Line": 3358,
+      "Column": 25,
+      "Container": "TdsParserStateObject.SendAttention",
+      "ContainerIsAsync": false,
+      "Detail": ".Wait()",
+      "Snippet": "_parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);",
+      "Configs": [
+        "net462-windows",
+        "net8.0-unix",
+        "net8.0-windows",
+        "net9.0-unix",
+        "net9.0-windows"
+      ]
+    }
+  ]
+}

@@ -326,6 +326,8 @@ edges and class-level hubs that match the known hotspots). `graphify-dotnet`'s o
 Copilot-driven semantic extraction — is unavailable without an interactive GitHub Copilot CLI login,
 and its AST graph is structurally weaker (untyped, file-centric, degenerate hubs). Recommendation
 stands: use Graphify (either flavor) only as a navigation aid, paired with Roslyn-based tooling.
+That Roslyn pairing was subsequently built and run — see [03-roslyn](../03-roslyn/README.md), which
+re-derived every call-site anchor the graph dropped with conditional-compilation correctness.
 
 ---
 
