@@ -1595,8 +1595,8 @@ namespace Microsoft.Data.SqlClient
         public override void Open() =>
             Open(SqlConnectionOverrides.None);
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, forceNewConnection, overrides));
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
+            => RetryLogicProvider.Execute(this, () => TryOpen(retry, false, overrides));
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1616,7 +1616,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, false, overrides) : TryOpen(null, false, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, false, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1688,15 +1688,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                         try
                         {
-                            if (IsProviderRetriable)
-                            {
-                                await InternalOpenWithRetryAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                await InternalOpenAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
-                            }
-
+                            await ReconnectAsync(ctoken).ConfigureAwait(false);
                             // On success, increment the reconnect count - we don't really care if it rolls over since it is approx.
                             _reconnectCount = unchecked(_reconnectCount + 1);
 #if DEBUG
@@ -1917,11 +1909,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
         public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
             => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken) :
-                InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
+                InternalOpenWithRetryAsync(overrides, false, cancellationToken) :
+                InternalOpenAsync(overrides, false, cancellationToken);
+
+        internal Task ReconnectAsync(CancellationToken cancellationToken)
+            => ReconnectAsync(SqlConnectionOverrides.None, cancellationToken);
+
+        internal Task ReconnectAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, true, cancellationToken) :
+                InternalOpenAsync(overrides, true, cancellationToken);
 
         private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
             => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
+
 
         private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
         {
@@ -2107,7 +2108,7 @@ namespace Microsoft.Data.SqlClient
                 _result = result;
                 _overrides = overrides;
                 _registration = registration;
-                _forceNewConnection = forceNewConnection;
+                _forceNewConnection = false;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
 
@@ -2258,8 +2259,9 @@ namespace Microsoft.Data.SqlClient
         /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
         /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
         /// 
-        /// forceNewConnection may only be true when the connection is already open (or was open) and needs to be replaced. If the connection has never
-        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
+        /// forceNewConnection may only be true when the connection is already open (or was open) and needs to be replaced. If the connection has never,
+        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is 
+
         /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
         /// transitions and subclasses for more details.
         /// </remarks>
