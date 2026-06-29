@@ -6,7 +6,6 @@ using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using static System.Net.WebRequestMethods;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -48,7 +47,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         foreach (Restriction restriction in sqlCollection.RestrictionParams)
                         {
-                            DataRow row = table.NewRow();
                             table.Rows.Add([mdc.CollectionName, restriction.RestrictionName, restriction.ParameterName, null, restriction.RestrictionNumber]);
                         }
                     }
