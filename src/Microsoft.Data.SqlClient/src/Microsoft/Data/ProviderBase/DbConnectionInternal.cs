@@ -735,11 +735,6 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal virtual void PrepareForReplaceConnection()
-        {
-            // By default, there is no preparation required
-        }
-
         /// <summary>
         /// Stamps <see cref="ReturnedTime"/> with the current UTC time. The pool calls this from its
         /// return-to-pool path only when it intends the idle-timeout machinery to act on the value;

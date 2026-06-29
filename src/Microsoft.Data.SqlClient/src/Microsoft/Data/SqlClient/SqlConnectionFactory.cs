@@ -777,7 +777,6 @@ namespace Microsoft.Data.SqlClient
                         
                         if (oldConnection?.State == ConnectionState.Open)
                         {
-                            oldConnection.PrepareForReplaceConnection();
                             oldConnection.Dispose();
                         }
                         
