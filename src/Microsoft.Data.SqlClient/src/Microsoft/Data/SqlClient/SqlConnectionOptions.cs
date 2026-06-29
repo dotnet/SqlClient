@@ -984,7 +984,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal Dictionary<string, string> NetlibMapping()
+        internal static Dictionary<string, string> NetlibMapping()
         {
             const int NetLibCount = 8;
 
@@ -1007,7 +1007,7 @@ namespace Microsoft.Data.SqlClient
             }
             return hash;
         }
-        static internal bool ValidProtocol(string protocol)
+        internal static bool ValidProtocol(string protocol)
         {
             return protocol switch
             {

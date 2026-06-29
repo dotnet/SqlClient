@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         Context = 5,     // only valid in proc.
     }
 
-    sealed internal class SqlInternalTransaction
+    internal sealed class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient
             _parent = null;
         }
 
-        internal string TraceString() => string.Format(/*IFormatProvider*/ null, 
+        internal string TraceString() => string.Format(/*IFormatProvider*/ null,
             "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
             ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
 
