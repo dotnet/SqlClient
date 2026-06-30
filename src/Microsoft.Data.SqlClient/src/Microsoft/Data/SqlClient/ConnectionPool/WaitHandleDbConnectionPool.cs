@@ -969,12 +969,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             // Shutdown short-circuit for the async path. The inner TryGetConnection returns false
-            // when it observes State != Running mid-WaitAny. Without this re-check, we would
+            // when it observes State is not Running mid-WaitAny. Without this re-check, we would
             // enqueue a PendingGetConnection and spin up a WaitForPendingOpen background thread
             // against an already-shut-down pool; the caller would eventually surface a misleading
             // PooledOpenTimeout instead of a deterministic shutdown signal. Returning (true, null)
             // matches the sync path and the channel pool's TryGetConnection convention.
-            if (State != Running)
+            if (State is not Running)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool not Running after inner TryGetConnection; short-circuit async path.", Id);
@@ -1054,7 +1054,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // balanced; otherwise the slot would leak and other waiters
                         // (or callers that arrive after Shutdown completes its own
                         // Release loop) would starve.
-                        if (State != Running)
+                        if (State is not Running)
                         {
                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is shutting down; abandoning wait.", Id);
                             if (waitResult == SEMAPHORE_HANDLE || waitResult == WAIT_ABANDONED + SEMAPHORE_HANDLE)
@@ -1660,7 +1660,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // slots as there are recorded waiters. Using _waitCount (rather than MaxPoolSize)
             // avoids ArgumentOutOfRangeException when MaxPoolSize == 0 (unlimited) and ensures
             // we wake every parked waiter even when _waitCount exceeds MaxPoolSize. Waiters
-            // observe State != Running after wake-up and bail.
+            // observe State is not Running after wake-up and bail.
             int waitersToWake = Volatile.Read(ref _waitCount);
             if (waitersToWake > 0)
             {
