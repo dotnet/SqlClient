@@ -376,10 +376,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Startup()
         {
-            // This pool has no background timers today (idle timeout is enforced lazily in
-            // IsLiveConnection on retrieval; pruning is not implemented). State is set to Running
-            // in the constructor, so this is currently the symmetrical counterpart of Shutdown.
-            // Background work (warmup, pruning timers) will be added here when introduced.
+            // Startup is currently a no-op for this pool: State is set to Running in the
+            // constructor, and PoolPruner (when present, i.e. MinPoolSize < MaxPoolSize) is
+            // also constructed eagerly there; its timer arms/disarms via UpdateTimer() calls
+            // from OpenNewInternalConnection and RemoveConnection as the pool grows/shrinks.
+            // This method exists as the symmetrical counterpart of Shutdown and as a hook
+            // for future warmup behavior.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}", Id);
         }
