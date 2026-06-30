@@ -4,6 +4,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -158,6 +159,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // TryGetConnection returns true with a null connection when State != Running.
             Assert.True(completed);
             Assert.Null(conn);
+        }
+
+        // Async overload (taskCompletionSource != null) called after Shutdown must take the
+        // (true, null) short-circuit instead of enqueueing a PendingGetConnection and spinning
+        // up a WaitForPendingOpen background loop. The TCS must be left untouched so the caller
+        // surfaces a deterministic shutdown signal rather than an eventual PooledOpenTimeout.
+        [Fact]
+        public void TryGetConnection_Async_AfterShutdown_ShortCircuits_NoPendingOpenScheduled()
+        {
+            var pool = CreatePool();
+            pool.Shutdown();
+
+            var tcs = new TaskCompletionSource<DbConnectionInternal>();
+            bool completed = pool.TryGetConnection(
+                new SqlConnection(),
+                tcs,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? conn);
+
+            Assert.True(completed);
+            Assert.Null(conn);
+            Assert.False(tcs.Task.IsCompleted);
+            Assert.Equal(0, Volatile.Read(ref pool._waitCount));
         }
 
         // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
