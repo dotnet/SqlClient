@@ -10,11 +10,11 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
 
-    <!--
-      We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if we
-      are building for Windows.
-    -->
-    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+    <!-- Default TargetOs to host OS if not specified (eg, during IDE development). -->
+    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
+
+    <!-- Add net462 when targeting Windows. Building net462 is supported on any host OS. -->
+    <TargetFrameworks Condition="'$(TargetOs)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Links to internal project files ================================= -->
@@ -67,7 +67,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
@@ -92,7 +91,6 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
-    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Data.Odbc" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />

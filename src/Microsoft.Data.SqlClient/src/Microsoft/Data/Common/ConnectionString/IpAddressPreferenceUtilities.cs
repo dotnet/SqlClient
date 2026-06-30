@@ -13,7 +13,7 @@ namespace Microsoft.Data.Common.ConnectionString
         /// <summary>
         /// IP Address Preference.
         /// </summary>
-        private readonly static Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
+        private static readonly Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
 
         static IpAddressPreferenceUtilities()
         {
@@ -27,7 +27,7 @@ namespace Microsoft.Data.Common.ConnectionString
         ///  Convert a string value to the corresponding IPAddressPreference.
         /// </summary>
         /// <param name="value">The string representation of the enumeration name to convert.</param>
-        /// <param name="result">When this method returns, `result` contains an object of type `SqlConnectionIPAddressPreference` whose value is represented by `value` if the operation succeeds. 
+        /// <param name="result">When this method returns, `result` contains an object of type `SqlConnectionIPAddressPreference` whose value is represented by `value` if the operation succeeds.
         /// If the parse operation fails, `result` contains the default value of the `SqlConnectionIPAddressPreference` type.</param>
         /// <returns>`true` if the value parameter was converted successfully; otherwise, `false`.</returns>
         internal static bool TryConvertToIPAddressPreference(string value, out SqlConnectionIPAddressPreference result)

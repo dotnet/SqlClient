@@ -46,250 +46,6 @@ namespace Microsoft.Data.SqlClient
             => new ArgumentOutOfRangeException(minParamName, StringsHelper.GetString(Strings.SqlRetryLogic_InvalidMinMaxPair, minValue, maxValue, minParamName, maxParamName));
     }
 
-    internal static class AsyncHelper
-    {
-        internal static Task CreateContinuationTask(
-            Task task,
-            Action onSuccess,
-            Action<Exception> onFailure = null)
-        {
-            if (task == null)
-            {
-                onSuccess();
-                return null;
-            }
-            else
-            {
-                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                ContinueTaskWithState(
-                    task,
-                    completion,
-                    state: Tuple.Create(onSuccess, onFailure, completion),
-                    onSuccess: static (object state) =>
-                    {
-                        var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
-                        Action success = parameters.Item1;
-                        TaskCompletionSource<object> taskCompletionSource = parameters.Item3;
-                        success();
-                        taskCompletionSource.SetResult(null);
-                    },
-                    onFailure: static (Exception exception, object state) =>
-                    {
-                        var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
-                        Action<Exception> failure = parameters.Item2;
-                        failure?.Invoke(exception);
-                    }
-                );
-                return completion.Task;
-            }
-        }
-
-        internal static Task CreateContinuationTaskWithState(Task task, object state, Action<object> onSuccess, Action<Exception, object> onFailure = null)
-        {
-            if (task == null)
-            {
-                onSuccess(state);
-                return null;
-            }
-            else
-            {
-                var completion = new TaskCompletionSource<object>();
-                ContinueTaskWithState(task, completion, state,
-                    onSuccess: (object continueState) =>
-                    {
-                        onSuccess(continueState);
-                        completion.SetResult(null);
-                    },
-                    onFailure: onFailure
-                );
-                return completion.Task;
-            }
-        }
-
-        internal static Task CreateContinuationTask<T1, T2>(
-            Task task,
-            Action<T1, T2> onSuccess,
-            T1 arg1,
-            T2 arg2,
-            Action<Exception> onFailure = null)
-        {
-            return CreateContinuationTask(task, () => onSuccess(arg1, arg2), onFailure);
-        }
-
-        internal static void ContinueTask(Task task,
-            TaskCompletionSource<object> completion,
-            Action onSuccess,
-            Action<Exception> onFailure = null,
-            Action onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null)
-        {
-            task.ContinueWith(
-                tsk =>
-                {
-                    if (tsk.Exception != null)
-                    {
-                        Exception exc = tsk.Exception.InnerException;
-                        if (exceptionConverter != null)
-                        {
-                            exc = exceptionConverter(exc);
-                        }
-                        try
-                        {
-                            onFailure?.Invoke(exc);
-                        }
-                        finally
-                        {
-                            completion.TrySetException(exc);
-                        }
-                    }
-                    else if (tsk.IsCanceled)
-                    {
-                        try
-                        {
-                            onCancellation?.Invoke();
-                        }
-                        finally
-                        {
-                            completion.TrySetCanceled();
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            onSuccess();
-                        }
-                        // @TODO: CER Exception Handling was removed here (see GH#3581)
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
-                }, TaskScheduler.Default
-            );
-        }
-
-        // the same logic as ContinueTask but with an added state parameter to allow the caller to avoid the use of a closure
-        // the parameter allocation cannot be avoided here and using closure names is clearer than Tuple numbered properties
-        internal static void ContinueTaskWithState(Task task,
-            TaskCompletionSource<object> completion,
-            object state,
-            Action<object> onSuccess,
-            Action<Exception, object> onFailure = null,
-            Action<object> onCancellation = null,
-            Func<Exception, Exception> exceptionConverter = null)
-        {
-            task.ContinueWith(
-                (Task tsk, object state2) =>
-                {
-                    if (tsk.Exception != null)
-                    {
-                        Exception exc = tsk.Exception.InnerException;
-                        if (exceptionConverter != null)
-                        {
-                            exc = exceptionConverter(exc);
-                        }
-
-                        try
-                        {
-                            onFailure?.Invoke(exc, state2);
-                        }
-                        finally
-                        {
-                            completion.TrySetException(exc);
-                        }
-                    }
-                    else if (tsk.IsCanceled)
-                    {
-                        try
-                        {
-                            onCancellation?.Invoke(state2);
-                        }
-                        finally
-                        {
-                            completion.TrySetCanceled();
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            onSuccess(state2);
-                        }
-                        // @TODO: CER Exception Handling was removed here (see GH#3581)
-                        catch (Exception e)
-                        {
-                            completion.SetException(e);
-                        }
-                    }
-                },
-                state: state,
-                scheduler: TaskScheduler.Default
-            );
-        }
-
-        internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
-        {
-            try
-            {
-                task.Wait(timeout > 0 ? (1000 * timeout) : Timeout.Infinite);
-            }
-            catch (AggregateException ae)
-            {
-                if (rethrowExceptions)
-                {
-                    Debug.Assert(ae.InnerExceptions.Count == 1, "There is more than one exception in AggregateException");
-                    ExceptionDispatchInfo.Capture(ae.InnerException).Throw();
-                }
-            }
-            if (!task.IsCompleted)
-            {
-                task.ContinueWith(static t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
-                onTimeout?.Invoke();
-            }
-        }
-
-        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> onFailure, CancellationToken ctoken)
-        {
-            if (timeout > 0)
-            {
-                Task.Delay(timeout * 1000, ctoken).ContinueWith(
-                    (Task task) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure());
-                        }
-                    }
-                );
-            }
-        }
-        
-        internal static void SetTimeoutExceptionWithState(
-            TaskCompletionSource<object> completion,
-            int timeout,
-            object state,
-            Func<object, Exception> onFailure,
-            CancellationToken cancellationToken)
-        {
-            if (timeout <= 0)
-            {
-                return;
-            }
-
-            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                (task, innerState) =>
-                {
-                    if (!task.IsCanceled && !completion.Task.IsCompleted)
-                    {
-                        completion.TrySetException(onFailure(innerState));
-                    }
-                },
-                state: state,
-                cancellationToken: CancellationToken.None);
-        }
-    }
-
     internal static class SQL
     {
         // The class SQL defines the exceptions that are specific to the SQL Adapter.
@@ -329,16 +85,16 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSSPIPacketSize));
         }
-        static internal Exception NullEmptyTransactionName()
+        internal static Exception NullEmptyTransactionName()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
         }
 
-        static internal Exception UserInstanceFailoverNotCompatible()
+        internal static Exception UserInstanceFailoverNotCompatible()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
         }
-        static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
+        internal static Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
@@ -509,6 +265,11 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnsupportedAuthenticationByProvider(string authentication, string type)
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
+        }
+
+        internal static Exception UseWamBrokerRequiresAzureExtensionUpgrade()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UseWamBrokerRequiresAzureExtensionUpgrade));
         }
 
         internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
@@ -731,6 +492,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorLength, ((int)state).ToString(CultureInfo.InvariantCulture), length));
         }
+        internal static Exception ParsingErrorLength(ParsingErrorState state, uint length)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorLength, ((int)state).ToString(CultureInfo.InvariantCulture), length));
+        }
         internal static Exception ParsingErrorStatus(ParsingErrorState state, int status)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorStatus, ((int)state).ToString(CultureInfo.InvariantCulture), status));
@@ -871,7 +636,7 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
-        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(
+        internal static Exception CannotCompleteDelegatedTransactionWithOpenResults(
             SqlConnectionInternal internalConnection,
             bool marsOn)
         {
@@ -2095,7 +1860,7 @@ namespace Microsoft.Data.SqlClient
         // Merged Provider
         //
 
-        static internal Exception ContextConnectionIsUnsupported()
+        internal static Exception ContextConnectionIsUnsupported()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsUnsupported));
         }
@@ -2144,7 +1909,7 @@ namespace Microsoft.Data.SqlClient
 
     }
 
-    sealed internal class SQLMessage
+    internal sealed class SQLMessage
     {
         private SQLMessage() { /* prevent utility class from being instantiated*/ }
 

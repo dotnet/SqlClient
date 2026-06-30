@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Text;
@@ -14,12 +13,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
+using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using Microsoft.Data.Common.ConnectionString;
+#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -400,7 +402,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                // If we want to consider pool operations against the overall connect timeout, 
+                // If we want to consider pool operations against the overall connect timeout,
                 // use the provided timeout. Otherwise, start a fresh timeout to receive the full
                 // connect timeout.
                 _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
@@ -828,8 +830,8 @@ namespace Microsoft.Data.SqlClient.Connection
             ValidateConnectionForExecute(null);
 
             // If a connection has a local transaction outstanding, and you try to enlist in a DTC
-            // transaction, SQL Server will roll back the local transaction and then enlist (7.0 and
-            // 2000). So, if the user tries to do this, throw.
+            // transaction, SQL Server will roll back the local transaction and then enlist.
+            // So, if the user tries to do this, throw.
             if (HasLocalTransaction)
             {
                 throw ADP.LocalTransactionPresent();
@@ -841,12 +843,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 return;
             }
 
-            // If a connection is already enlisted in a DTC transaction, and you try to enlist in
-            // another one, in 7.0 the existing DTC transaction would roll back and then the
-            // connection would enlist in the new one. In SQL 2000 & 2005, when you enlist in a DTC
-            // transaction while the connection is already enlisted in a DTC transaction, the
-            // connection simply switches enlistments. Regardless, simply enlist in the user
-            // specified distributed transaction. This behavior matches OLEDB and ODBC.
+            // If a connection is already enlisted in a DTC transaction and you try to enlist in
+            // another one, the connection simply switches enlistments. This behavior matches
+            // OLEDB and ODBC.
 
             Enlist(transaction);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
@@ -1344,6 +1343,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         else
                         {
                             len = bLen;
+                        }
+
+                        if (len < 0 || len > data.Length - i)
+                        {
+                            throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, len);
                         }
 
                         byte[] stateData = new byte[len];
@@ -2221,7 +2225,6 @@ namespace Microsoft.Data.SqlClient.Connection
         // TODO: if this call timed out, what reason do we have to believe some other call succeeded? why not just fail?
         private bool AttemptRetryADAuthWithTimeoutError(
             SqlException sqlex,
-            SqlConnectionOptions connectionOptions, // @TODO: this is not used
             TimeoutTimer timeout)
         {
             if (!_activeDirectoryAuthTimeoutRetryHelper.CanRetryWithSqlException(sqlex))
@@ -2231,8 +2234,10 @@ namespace Microsoft.Data.SqlClient.Connection
             // Reset client-side timeout.
             timeout.Reset();
 
-            // When server timeout, the auth context key was already created. Clean it up here.
+            // Clear fed-auth state captured by the failed attempt so OnFedAuthInfo's cache-reuse branch starts from null on the retry.
             _dbConnectionPoolAuthenticationContextKey = null;
+            _fedAuthToken = null;
+            _newDbConnectionPoolAuthenticationContext = null;
 
             // When server timeouts, connection is doomed. Reset here to allow reconnection.
             UnDoomThisConnection();
@@ -3330,7 +3335,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
                 catch (SqlException sqlex)
                 {
-                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
                         continue;
                     }
@@ -3643,7 +3648,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
                 catch (SqlException sqlex)
                 {
-                    if (AttemptRetryADAuthWithTimeoutError(sqlex, connectionOptions, timeout))
+                    if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
                         continue;
                     }

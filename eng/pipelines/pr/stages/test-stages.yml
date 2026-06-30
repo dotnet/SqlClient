@@ -9,6 +9,8 @@
 # confidence and expedience of validation.
 
 parameters:
+  # General Parameters =====================================================
+
   # Configuration with which to build the packages and execute the tests.
   - name: buildConfiguration
     type: string
@@ -20,6 +22,21 @@ parameters:
   - name: buildSuffix
     type: string
 
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
   # Name of the build/pack stage that this stage will depend on.
   - name: stageNamePack
     type: string
@@ -28,53 +45,60 @@ parameters:
   - name: stageNameSecrets
     type: string
 
-  # Name of the pool to use for jobs that require customized VM images.
-  - name: poolName
+  # Name of the artifact to upload the test results (including code coverage) to.
+  # Note: This artifact will be used to store results from all jobs. Ensure that the folders used
+  #     to store the results is unique to the test run.
+  - name: testResultsArtifactBaseName
     type: string
 
   # Manual Test Configuration Parameters ==================================
 
-  # Azure Key Vault tenant ID that will be set in the config.json file for sqlclient manual tests.
+  # Azure Key Vault tenant ID that will be set in the config.jsonc file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultTenantId
     type: string
 
-  # Azure Key Vault URL that will be set in the config.json file for sqlclient manual tests.
+  # Azure Key Vault URL that will be set in the config.jsonc file for sqlclient manual tests.
   - name: manualTestAzureKeyVaultUrl
     type: string
 
-  # Connection string to Azure SQL using named pipes that will be set in the config.json file for
+  # Connection string to Azure SQL using named pipes that will be set in the config.jsonc file for
   # sqlclient manual tests against Azure SQL.
   - name: manualTestConnectionStringNpAzure
     type: string
 
-  # Connection string to localhost using named pipes that will be set in the config.json file for
+  # Connection string to localhost using named pipes that will be set in the config.jsonc file for
   # sqlclient manual tests against a local box product.
   - name: manualTestConnectionStringNpLocalhost
     type: string
 
-  # Connection string to Azure SQL using TCP that will be set in the config.json file for sqlclient
+  # Connection string to Azure SQL using TCP that will be set in the config.jsonc file for sqlclient
   # manual tests against Azure SQL.
   - name: manualTestConnectionStringTcpAzure
     type: string
 
-  # Connection string to localhost using TCP that will be set in the config.json file for sqlclient
+  # Connection string to localhost using TCP that will be set in the config.jsonc file for sqlclient
   # manual tests against a local box product.
   - name: manualTestConnectionStringTcpLocalhost
     type: string
 
-  # Path to use for file stream tests, this value will be stored in the config.json for sqlclient
+  # Path to use for file stream tests, this value will be stored in the config.jsonc for sqlclient
   # manual tests.
   - name: manualTestFileStreamDirectory
     type: string
 
   # Name of the local DB application name for localdb tests, this value will be stored in the
-  # config.json for sqlclient manual tests.
+  # config.jsonc for sqlclient manual tests.
   - name: manualTestLocalDbAppName
     type: string
 
   # Name of the local DB shared instance name for localdb tests, this value will be stored in the
-  # config.json for sqlclient manual tests.
+  # config.jsonc for sqlclient manual tests.
   - name: manualTestLocalDbSharedInstanceName
+    type: string
+
+  # Name of the managed identity client ID, this value will be stored in the config.jsonc for
+  # sqlclient manual tests.
+  - name: manualTestUserManagedIdentityClientId
     type: string
 
   # This is an array of objects with the following fields:
@@ -106,10 +130,12 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "Abstractions"
               testDisplayName: "abstractions"
@@ -119,10 +145,12 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "Azure"
               testDisplayName: "azure"
@@ -132,10 +160,12 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_functional"
@@ -146,7 +176,9 @@ stages:
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
@@ -156,41 +188,81 @@ stages:
 
               azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
               azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
-           # @TODO:
-#          # TestSqlClientManual - Azure
-#          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
-#            parameters:
-#              buildConfiguration: ${{ parameters.buildConfiguration }}
-#              buildSuffix: ${{ parameters.buildSuffix }}
-#              platformDisplayName: ${{ platform.displayName }}
-#              platformDotnet: ${{ platform.dotnet }}
-#              platformImage: ${{ platform.image }}
-#              poolName: ${{ parameters.poolName }}
-#
-#              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
-#              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
-#              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
-#              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
-#              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-#              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
-#              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
-#              saPassword: $(manualTestSaPassword)
+          # TestSqlClientManual - Azure
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "azure"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: false
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "123"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - Localhost Always Encrypted
+          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+            parameters:
+              buildConfiguration: "Release"      # AE tests are not stable enough to run in DEBUG mode (as of 5/29/26)
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              stageNameSecrets: ${{ parameters.stageNameSecrets }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              platformOperatingSystem: ${{ platform.operatingSystem }}
+              poolName: ${{ parameters.poolName }}
+
+              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+              configDisplayName: "localhost_ae"
+              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+              isLocalServer: true
+              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              testSet: "AE"
+              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientUnit
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
             parameters:
               buildConfiguration: ${{ parameters.buildConfiguration }}
               buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
               platformImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "SqlClient"
               testDisplayName: "sqlclient_unit"
