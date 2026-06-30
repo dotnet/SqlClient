@@ -1305,10 +1305,7 @@ Database = AdventureWorks
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
-This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
-
-> [!NOTE]
-> This property only applies when using Integrated Security mode, otherwise it is ignored.
+This property corresponds to the "Server Certificate" and "ServerCertificate" keys within the connection string.  
 
 ]]>
         </format>
