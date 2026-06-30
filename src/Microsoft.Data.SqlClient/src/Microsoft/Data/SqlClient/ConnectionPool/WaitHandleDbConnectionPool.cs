@@ -331,10 +331,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal void CleanupCallback(object state)
         {
-            // If the pool is shutting down, skip work. Shutdown disposes the timer, but
+            // If the pool is not Running, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
             // not perform pruning or re-arm pool create requests.
-            if (State == ShuttingDown)
+            if (State is not Running)
             {
                 return;
             }
@@ -772,9 +772,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal void ErrorCallback(object state)
         {
-            // Skip work if the pool is shutting down. The shutdown path disposes the
+            // Skip work if the pool is not Running. The shutdown path disposes the
             // timer; this guard handles the in-flight-callback race.
-            if (State == ShuttingDown)
+            if (State is not Running)
             {
                 return;
             }
@@ -935,6 +935,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             else if (taskCompletionSource == null)
             {
                 // timed out on a sync call
+                return true;
+            }
+
+            // Shutdown short-circuit for the async path. The inner TryGetConnection returns false
+            // when it observes State != Running mid-WaitAny. Without this re-check, we would
+            // enqueue a PendingGetConnection and spin up a WaitForPendingOpen background thread
+            // against an already-shut-down pool; the caller would eventually surface a misleading
+            // PooledOpenTimeout instead of a deterministic shutdown signal. Returning (true, null)
+            // matches the sync path and the channel pool's TryGetConnection convention.
+            if (State != Running)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool not Running after inner TryGetConnection; short-circuit async path.", Id);
+                connection = null;
                 return true;
             }
 
@@ -1549,7 +1563,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Shutdown() would create a fresh _cleanupTimer and queue a PoolCreateRequest
             // against a pool that will never accept connections back, leaking the timer
             // and scheduling background work that immediately short-circuits.
-            if (State is ShuttingDown)
+            if (State is not Running)
             {
                 return;
             }

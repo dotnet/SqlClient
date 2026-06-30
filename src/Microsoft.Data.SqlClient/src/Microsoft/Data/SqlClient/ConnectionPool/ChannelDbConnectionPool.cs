@@ -295,30 +295,64 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // routes returning connections to RemoveConnection.
             State = ShuttingDown;
 
+            // Each cleanup step is independent and best-effort. A failure in one step must not
+            // prevent later steps from running, otherwise the pool can be left half-shut-down
+            // (e.g. timer disposed but channel never completed -> waiters stuck forever).
+
             // Stop the idle-pruning timer before draining so a tick cannot race with
-            // the final drain below. PoolPruner.Dispose is idempotent and non-throwing.
-            Pruner?.Dispose();
+            // the final drain below. PoolPruner.Dispose is idempotent and non-throwing
+            // in normal use; the catch is defense-in-depth.
+            try
+            {
+                Pruner?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
+            }
 
             // Complete the channel writer so:
             //  - no further idle connections can be enqueued (TryWrite returns false), and
             //  - in-flight / future async waiters on ReadAsync fault with ChannelClosedException.
+            // CAS at the top of Shutdown guarantees we are the only caller, so Complete cannot
+            // throw InvalidOperationException for double-completion.
             _idleChannel.Complete();
 
             // Reuse Clear() for the drain. Clear bumps _clearGeneration so any active
             // checked-out connection fails IsLiveConnection on return and is removed, and it
             // drains the idle channel up to its captured IdleCount.
-            Clear();
+            try
+            {
+                Clear();
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Clear threw, continuing shutdown: {1}", Id, ex);
+            }
 
             // Clear() may short-circuit if another caller is already draining. Because the
             // channel is now completed, no new items can be enqueued, so it is safe to do a
             // final unbounded drain to mop up anything Clear() may have skipped.
             while (_idleChannel.TryRead(out DbConnectionInternal? connection))
             {
-                if (connection is not null)
+                if (connection is null)
+                {
+                    // null sentinels are wake-up signals only; nothing to destroy.
+                    continue;
+                }
+
+                // Isolate per-connection failure: one bad Dispose must not strand the rest.
+                try
                 {
                     RemoveConnection(connection);
                 }
-                // null sentinels are wake-up signals only; nothing to destroy.
+                catch (Exception ex)
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, RemoveConnection threw during drain, continuing: {1}", Id, ex);
+                }
             }
         }
 
