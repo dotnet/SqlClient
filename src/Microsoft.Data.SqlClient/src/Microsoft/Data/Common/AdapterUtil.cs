@@ -175,6 +175,28 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
+        /// capturing the current <see cref="ExecutionContext"/>.
+        /// </summary>
+        internal static ITimer UnsafeCreateTimer<T>(
+            TimeProvider timeProvider,
+            Action<T> callback,
+            T state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            if (ExecutionContext.IsFlowSuppressed())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s), state, dueTime, period);
+            }
+
+            using (ExecutionContext.SuppressFlow())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s), state, dueTime, period);
+            }
+        }
+
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
