@@ -327,8 +327,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Complete the channel writer so:
             //  - no further idle connections can be enqueued (TryWrite returns false), and
             //  - in-flight / future async waiters on ReadAsync fault with ChannelClosedException.
-            // CAS at the top of Shutdown guarantees we are the only caller, so Complete cannot
-            // throw InvalidOperationException for double-completion.
+            // IdleConnectionChannel.Complete wraps ChannelWriter.TryComplete and is idempotent
+            // (a second call returns false rather than throwing), so this is safe even if the
+            // shutdown sequence is ever refactored to invoke this step more than once.
             _idleChannel.Complete();
 
             // Reuse Clear() for the drain. Clear bumps _clearGeneration so any active
