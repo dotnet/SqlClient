@@ -262,6 +262,7 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
         // Act: first failure enters the blocking period with the initial 5s wait.
         Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
         Assert.Equal(1, factory.CreateConnectionCallCount);
+        Assert.True(pool.ErrorOccurred);
         fakeTime.Advance(TimeSpan.FromSeconds(5)); // timer fires -> backoff doubles to 10s
         Assert.False(pool.ErrorOccurred);
 
@@ -277,6 +278,7 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
         // A successful create resets the backoff to the initial 5s.
         Assert.True(TryGetConnectionSync(pool, owner, out _)); // create #3 succeeds -> Clear()
         Assert.Equal(3, factory.CreateConnectionCallCount);
+        Assert.False(pool.ErrorOccurred);
 
         // A new failure enters the blocking period again.
         Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _)); // create #4 fails

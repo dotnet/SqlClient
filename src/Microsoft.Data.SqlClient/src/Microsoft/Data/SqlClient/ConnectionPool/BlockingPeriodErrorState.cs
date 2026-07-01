@@ -109,6 +109,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Clone SqlExceptions so stack traces are not shared across callers; other
             // exception types are rethrown as-is.
+            // TODO: Can we create a new exception to wrap the cached exception?
             throw cached is SqlException sqlEx ? sqlEx.InternalClone() : cached;
         }
 
