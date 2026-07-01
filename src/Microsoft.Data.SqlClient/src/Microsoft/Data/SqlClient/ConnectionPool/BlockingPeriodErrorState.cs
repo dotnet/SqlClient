@@ -30,12 +30,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly int _ownerPoolId;
 
         // Optional callback invoked (under _lock) when the state enters the blocking period;
-        // Must be cheap and non-reentrant. Must not throw. If null, no action is taken.
+        // Must be cheap and non-reentrant. Must not throw. Must be idempotent: it may be invoked
+        // more than once without an intervening exit (each failure re-enters via Enter()), so
+        // repeated invocations while already in the blocking period must be harmless. If null,
+        // no action is taken.
         private readonly Action? _onEnter;
 
         // Optional callback invoked (under _lock) when the state leaves the blocking period
         // via the exit timer or Clear(). Must be cheap and non-reentrant. Must not throw.
-        // If null, no action is taken.
+        // Must be idempotent: it may be invoked more than once for a single blocking period
+        // (e.g. the exit timer fires and a later Clear() also signals exit), so redundant
+        // invocations must be harmless. If null, no action is taken.
         private readonly Action? _onExit;
 
         // Time source used to create the exit timer; overridable so tests can drive scheduling
@@ -74,10 +79,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="onEnter">Optional callback invoked (while holding the internal lock) after
         /// the state transitions into the blocking period. Used by the legacy wait-handle pool to
         /// signal its error wait handle. Because it runs under a lock, it must be cheap and
-        /// non-reentrant.</param>
+        /// non-reentrant. It must also be idempotent: consecutive failures re-enter via
+        /// <see cref="Enter"/> without an intervening exit, so repeated invocations while already
+        /// in the blocking period must be harmless.</param>
         /// <param name="onExit">Optional callback invoked (while holding the internal lock) after the
         /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.
-        /// Because it runs under a lock, it must be cheap and non-reentrant.</param>
+        /// Because it runs under a lock, it must be cheap and non-reentrant. It must also be
+        /// idempotent: a single blocking period may signal exit more than once (for example, the
+        /// exit timer fires and a subsequent <see cref="Clear"/> also fires), so redundant
+        /// invocations must be harmless.</param>
         /// <param name="timeProvider">The time provider used to create the exit timer. Defaults to
         /// <see cref="TimeProvider.System"/>. Inject a test double (e.g.
         /// <c>Microsoft.Extensions.Time.Testing.FakeTimeProvider</c>) in unit tests to
