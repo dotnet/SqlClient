@@ -178,12 +178,14 @@ namespace Microsoft.Data.Common
 
         /// <summary>
         /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
-        /// capturing the current <see cref="ExecutionContext"/>. This overload accepts a
-        /// parameterless <see cref="Action"/> for callbacks that do not require state.
+        /// capturing the current <see cref="ExecutionContext"/>. This overload accepts a strongly
+        /// typed <see cref="Action{T}"/> callback that receives the supplied <paramref name="state"/>
+        /// when the timer fires.
         /// </summary>
+        /// <typeparam name="T">The type of the state passed to the callback.</typeparam>
         /// <param name="timeProvider">The time provider used to create the timer.</param>
-        /// <param name="callback">The parameterless delegate invoked when the timer fires.</param>
-        /// <param name="state"></param>
+        /// <param name="callback">The delegate invoked with <paramref name="state"/> when the timer fires.</param>
+        /// <param name="state">The state object passed to <paramref name="callback"/> on each invocation.</param>
         /// <param name="dueTime">The amount of time to wait before the first invocation, or
         /// <see cref="Timeout.InfiniteTimeSpan"/> to create the timer disarmed.</param>
         /// <param name="period">The interval between invocations, or
