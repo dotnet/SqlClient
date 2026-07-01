@@ -199,8 +199,5 @@ dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Da
 dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
 
-# Disables warning for unnamed enum case values
-# e.g. providing an invalid int value for an enum that wraps int
-dotnet_diagnostic.CS8524.severity = none
 # Treat missing enum cases as errors
 dotnet_diagnostic.CS8509.severity = error
