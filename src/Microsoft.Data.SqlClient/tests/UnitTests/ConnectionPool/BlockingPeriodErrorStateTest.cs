@@ -596,15 +596,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that the onEnter callback is invoked after the internal lock is released.
-        /// The callback reads <see cref="BlockingPeriodErrorState.HasError"/> and calls
-        /// <see cref="BlockingPeriodErrorState.ThrowIfActive"/> — operations that are safe only
-        /// when the lock is not held. If the implementation were changed to hold the lock during
-        /// the callback invocation, any re-entrant call from the callback that tries to acquire the
-        /// same lock (on a non-re-entrant lock) would deadlock.
+        /// Verifies that the onEnter callback, which is invoked while the internal lock is held,
+        /// can safely read <see cref="BlockingPeriodErrorState.HasError"/> and call
+        /// <see cref="BlockingPeriodErrorState.ThrowIfActive"/>. Those members only read the
+        /// volatile cached-exception field and never acquire the lock, so they are safe to call
+        /// from a callback. Callbacks must not call <see cref="BlockingPeriodErrorState.Enter"/>
+        /// or <see cref="BlockingPeriodErrorState.Clear"/>, which would deadlock on the
+        /// non-re-entrant lock.
         /// </summary>
         [Fact]
-        public void OnEnter_CalledOutsideLock_CanCallBackIntoState()
+        public void OnEnter_CalledUnderLock_CanSafelyReadState()
         {
             // Arrange
             bool hasErrorObservedInCallback = false;
@@ -631,14 +632,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that the onExit callback is invoked after the internal lock is released.
-        /// The callback reads <see cref="BlockingPeriodErrorState.HasError"/> — confirming it
-        /// observes the cleared state — and calls <see cref="BlockingPeriodErrorState.ThrowIfActive"/>
-        /// without deadlocking. If the implementation were changed to hold the lock during the
-        /// callback, any re-entrant call from the callback would deadlock on a non-re-entrant lock.
+        /// Verifies that the onExit callback, which is invoked while the internal lock is held,
+        /// can safely read <see cref="BlockingPeriodErrorState.HasError"/> — confirming it observes
+        /// the cleared state — and call <see cref="BlockingPeriodErrorState.ThrowIfActive"/>. Those
+        /// members only read the volatile cached-exception field and never acquire the lock, so
+        /// they are safe to call from a callback. Callbacks must not call
+        /// <see cref="BlockingPeriodErrorState.Enter"/> or <see cref="BlockingPeriodErrorState.Clear"/>,
+        /// which would deadlock on the non-re-entrant lock.
         /// </summary>
         [Fact]
-        public void OnExit_CalledOutsideLock_CanCallBackIntoState()
+        public void OnExit_CalledUnderLock_CanSafelyReadState()
         {
             // Arrange
             bool hasErrorObservedInCallback = true; // initialized to true; must be false after Clear
