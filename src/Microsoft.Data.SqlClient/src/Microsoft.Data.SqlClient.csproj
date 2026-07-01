@@ -309,6 +309,7 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.Threading.RateLimiting" />
     <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
@@ -321,6 +322,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Threading.RateLimiting" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

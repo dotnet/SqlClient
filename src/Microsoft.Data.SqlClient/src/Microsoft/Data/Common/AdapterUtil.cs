@@ -175,6 +175,27 @@ namespace Microsoft.Data.Common
             }
         }
 
+        internal static ITimer UnsafeCreateTimer(
+            TimeProvider timeProvider,
+            TimerCallback callback,
+            object state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            // Don't capture the current ExecutionContext and its AsyncLocals onto
+            // a timer causing them to live forever. Honor the supplied TimeProvider
+            // so callers can inject a test double for deterministic scheduling.
+            if (ExecutionContext.IsFlowSuppressed())
+            {
+                return timeProvider.CreateTimer(callback, state, dueTime, period);
+            }
+
+            using (ExecutionContext.SuppressFlow())
+            {
+                return timeProvider.CreateTimer(callback, state, dueTime, period);
+            }
+        }
+
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
