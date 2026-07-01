@@ -1049,13 +1049,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
 
                         // After waking, observe shutdown state and bail out so waiters
-                        // do not spin against a drained pool. WaitAny consumes one slot from
-                        // whichever wait handle signalled (PoolSemaphore or CreationSemaphore);
-                        // release that slot back so the accounting stays balanced. Otherwise
-                        // the slot would leak and other in-flight pool logic could starve.
-                        // The outer finally that normally releases CreationSemaphore on the
-                        // CREATION_HANDLE path is bypassed by this early return, so we have
-                        // to compensate explicitly here.
+                        // do not spin against a drained pool. If WaitAny consumed a
+                        // PoolSemaphore slot, release it back so the accounting stays
+                        // balanced; otherwise the slot would leak and other waiters
+                        // (or callers that arrive after Shutdown completes its own
+                        // Release loop) would starve. CreationSemaphore does NOT need
+                        // compensation here because the outer finally below already
+                        // releases it whenever waitResult == CREATION_HANDLE, and
+                        // that finally runs even on this early return.
                         if (State is not Running)
                         {
                             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is shutting down; abandoning wait.", Id);
@@ -1068,17 +1069,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 catch (SemaphoreFullException)
                                 {
                                     // Pool semaphore was already saturated by Shutdown's bulk release; safe to ignore.
-                                }
-                            }
-                            else if (waitResult == CREATION_HANDLE || waitResult == WAIT_ABANDONED + CREATION_HANDLE)
-                            {
-                                try
-                                {
-                                    _waitHandles.CreationSemaphore.Release(1);
-                                }
-                                catch (SemaphoreFullException)
-                                {
-                                    // CreationSemaphore is already at max; safe to ignore.
                                 }
                             }
                             Interlocked.Decrement(ref _waitCount);
