@@ -1260,7 +1260,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientDiagnostics.Metrics.SoftConnectRequest();
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
-                oldConnection.PrepareForReplaceConnection();
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
             }
