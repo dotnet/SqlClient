@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     // and once no pools remain, change state from Active->Idle->Disabled
     // Once Disabled, factory can remove its reference to the pool entry
 
-    sealed internal class DbConnectionPoolGroup
+    internal sealed class DbConnectionPoolGroup
     {
         private readonly SqlConnectionOptions _connectionOptions;
         private readonly ConnectionPoolKey _poolKey;

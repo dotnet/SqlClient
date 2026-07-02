@@ -410,11 +410,9 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to 2000 (version 8) and later.
+        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
-
-        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLXMLTYPE = 0xf1;
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };

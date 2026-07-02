@@ -31,6 +31,11 @@ public sealed class UnprivilegedLogin : IDisposable
         DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer()
             && DataTestUtility.CanCreateLogins && DataTestUtility.CanUseSqlAuthentication;
 
+    // Graph tables (AS NODE / AS EDGE) were introduced in SQL Server 2017, so tests which rely on
+    // them must be skipped against older servers.
+    public static bool CanRunGraphTests =>
+        CanRunTests && DataTestUtility.IsAtLeastSQL2017();
+
     public UnprivilegedLogin()
     {
         // xUnit will instantiate the class before evaluating the test condition - make sure that we don't
@@ -134,7 +139,7 @@ public sealed class UnprivilegedLogin : IDisposable
         Assert.Equal(BulkCopyRowCount, resultantRowCount);
     }
 
-    [ConditionalFact(nameof(CanRunTests))]
+    [ConditionalFact(nameof(CanRunGraphTests))]
     public void BulkCopyWithoutMetadataPermission_FailsWhenUsingAliases()
     {
         AssertEnvironmentCreated();

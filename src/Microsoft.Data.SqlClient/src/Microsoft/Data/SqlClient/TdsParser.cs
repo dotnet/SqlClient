@@ -626,8 +626,6 @@ namespace Microsoft.Data.SqlClient
                     isTlsFirst,
                     serverCertificateFilename);
 
-                // Don't need to check for 7.0 failure, since we've already consumed
-                // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Prelogin handshake unsuccessful. Login failure");
@@ -965,7 +963,7 @@ namespace Microsoft.Data.SqlClient
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
 #if NET
-            if (OperatingSystem.IsWindows())
+            if (OsConstants.IsWindows)
 #endif
             {
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
@@ -2330,7 +2328,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void PrepareResetConnection(bool preserveTransaction)
         {
-            // Set flag to reset connection upon next use - only for use on 2000!
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
@@ -4720,8 +4717,8 @@ namespace Microsoft.Data.SqlClient
             rec.metaType = MetaType.GetSqlDataType(tdsType, userType, tdsLen);
             rec.type = rec.metaType.SqlDbType;
 
-            // always use the nullable type for parameters if 2000 or later
-            // 7.0 sometimes sends fixed length return values
+            // always use the nullable type for parameters if 2005 or later
+            // older servers sometimes send fixed length return values
             rec.tdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)
@@ -10129,7 +10126,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (rpcext.ProcID != 0)
                             {
-                                // Perf optimization for 2000 and later,
+                                // Perf optimization for 2005 and later,
                                 Debug.Assert(rpcext.ProcID < 255, "rpcExec:ProcID can't be larger than 255");
                                 WriteShort(0xffff, stateObj);
                                 WriteShort((short)(rpcext.ProcID), stateObj);
