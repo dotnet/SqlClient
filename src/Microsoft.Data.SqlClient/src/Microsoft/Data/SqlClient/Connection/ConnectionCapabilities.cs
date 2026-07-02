@@ -20,6 +20,12 @@ internal sealed class ConnectionCapabilities
     /// The TDS version reported by the LoginAck response
     /// from the server.
     /// </summary>
+    /// <remarks>
+    /// <see cref="TdsEnums.SQL2005_VERSION"/> is negotiated for SQL Server 2005.
+    /// <see cref="TdsEnums.SQL2008_VERSION"/> is negotiated for SQL Server 2008.
+    /// <see cref="TdsEnums.TDS7X_VERSION"/> is negotiated for SQL Server 2012 and upwards using TDS 7.x.
+    /// <see cref="TdsEnums.TDS80_VERSION"/> is negotiated for the TDS 8.0 flow in SQL Server 2022 and upwards.
+    /// </remarks>
     public uint TdsVersion { get; set; }
 
     /// <summary>
@@ -52,21 +58,14 @@ internal sealed class ConnectionCapabilities
     /// then the connection is to SQL Server 2008 R2 or newer.
     /// </summary>
     public bool Is2008R2OrNewer =>
-        Is2012OrNewer || TdsVersion == TdsEnums.SQL2008_VERSION;
+        Is2012OrNewer || TdsVersion is TdsEnums.SQL2008_VERSION;
 
     /// <summary>
     /// If true (as determined by the value of <see cref="TdsVersion"/>)
     /// then the connection is to SQL Server 2012 or newer.
     /// </summary>
     public bool Is2012OrNewer =>
-        Is2022OrNewer || TdsVersion == TdsEnums.TDS7X_VERSION;
-
-    /// <summary>
-    /// If true (as determined by the value of <see cref="TdsVersion"/>)
-    /// then the connection is to SQL Server 2022 or newer.
-    /// </summary>
-    public bool Is2022OrNewer =>
-        TdsVersion == TdsEnums.TDS80_VERSION;
+        TdsVersion is TdsEnums.TDS7X_VERSION or TdsEnums.TDS80_VERSION;
 
     /// <summary>
     /// If true, this connection is to an Azure SQL instance. This is determined
