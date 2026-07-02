@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -378,10 +379,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ParameterInOutAndReturn()
         {
-            string create =
-                @"
-CREATE PROCEDURE TestInAndOutParams
-	@Input int,
+            SqlParameter input = CreateParameter("@Input", SqlDbType.Int, 2);
+            SqlParameter inputOutput = CreateParameter("@InOut", SqlDbType.Int, 4, ParameterDirection.InputOutput);
+            SqlParameter output = CreateParameter("@Output", SqlDbType.Int, DBNull.Value, ParameterDirection.Output);
+            SqlParameter returned = CreateParameter("@RETURN_VALUE", SqlDbType.Int, DBNull.Value, ParameterDirection.ReturnValue);
+
+            using (SqlConnection conn = new(DataTestUtility.TCPConnectionString))
+            using (StoredProcedure spTestInAndOutParams = new(conn, "TestInAndOutParams", @"
+	@Input int, 
 	@InOut int OUTPUT,
 	@Output int = default OUTPUT
 AS
@@ -389,26 +394,14 @@ BEGIN
 	SET NOCOUNT ON;
 	SELECT @InOut = 2 * @InOut, @Output = 2 * @Input
 	RETURN @Input
-END";
-            string drop = "DROP PROCEDURE TestInAndOutParams";
-
-            SqlParameter input = CreateParameter("@Input", SqlDbType.Int, 2);
-            SqlParameter inputOutput = CreateParameter("@InOut", SqlDbType.Int, 4, ParameterDirection.InputOutput);
-            SqlParameter output = CreateParameter("@Output", SqlDbType.Int, DBNull.Value, ParameterDirection.Output);
-            SqlParameter returned = CreateParameter("@RETURN_VALUE", SqlDbType.Int, DBNull.Value, ParameterDirection.ReturnValue);
-            try
+END"))
             {
-                TryExecuteNonQueryCommand(drop);
-                ExecuteNonQueryCommand(create);
-
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                 using (SqlBatch batch = new SqlBatch(conn))
                 {
-                    conn.Open();
                     batch.Commands.Add(new SqlBatchCommand("SELECT @@VERSION"));
                     batch.Commands.Add(
                         new SqlBatchCommand(
-                            "TestInAndOutParams",
+                            spTestInAndOutParams.Name,
                             CommandType.StoredProcedure,
                             new[] { input, inputOutput, output, returned }
                         )
@@ -416,10 +409,6 @@ END";
                     batch.Commands.Add(new SqlBatchCommand("SELECT @@SPID"));
                     batch.ExecuteNonQuery();
                 }
-            }
-            finally
-            {
-                TryExecuteNonQueryCommand(drop);
             }
 
             Assert.Equal(8, Convert.ToInt32(inputOutput.Value));
@@ -650,35 +639,128 @@ END";
             Assert.Equal(10, resultRowCount);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReaderCommandCommandBehaviorSchemaOnlyKeyInfo()
+        {
+            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlBatch batch = new SqlBatch(conn))
+            {
+                conn.Open();
+
+                var cmd = new SqlBatchCommand("SELECT * FROM Categories");
+                cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
+                batch.BatchCommands.Add(cmd);
+
+                using var reader = batch.ExecuteReader();
+
+                Assert.False(reader.Read());
+
+                schema = reader.GetColumnSchema();
+            }
+
+            Assert.Equal(4, schema.Count);
+            Assert.True(schema[0].IsKey);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteReaderAsyncCommandCommandBehaviorSchemaOnlyKeyInfo()
+        {
+            System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            await using (SqlBatch batch = new SqlBatch(conn))
+            {
+                await conn.OpenAsync();
+
+                var cmd = new SqlBatchCommand("SELECT * FROM Categories");
+                cmd.CommandBehavior = CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo;
+                batch.BatchCommands.Add(cmd);
+
+                using var reader = await batch.ExecuteReaderAsync();
+
+                Assert.False(await reader.ReadAsync());
+
+                schema = reader.GetColumnSchema();
+            }
+
+            Assert.Equal(4, schema.Count);
+            Assert.True(schema[0].IsKey);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ExecuteReaderCommandBehaviorCloseConnection()
+        {
+            int resultSetCount = 0;
+            int resultRowCount = 0;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlBatch batch = new SqlBatch(conn))
+            {
+                conn.Open();
+
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1"));
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2"));
+
+                using (var reader = batch.ExecuteReader(CommandBehavior.CloseConnection))
+                {
+                    do
+                    {
+                        resultSetCount += 1;
+                        while (reader.Read())
+                        {
+                            resultRowCount += 1;
+                        }
+                    } while (reader.NextResult());
+                }
+
+                Assert.Equal(ConnectionState.Closed, conn.State);
+            }
+
+            Assert.Equal(2, resultSetCount);
+            Assert.Equal(2, resultRowCount);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ExecuteReaderAsyncCommandBehaviorCloseConnection()
+        {
+            int resultSetCount = 0;
+            int resultRowCount = 0;
+
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            await using (SqlBatch batch = new SqlBatch(conn))
+            {
+                await conn.OpenAsync();
+
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1"));
+                batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2"));
+
+                using (var reader = await batch.ExecuteReaderAsync(CommandBehavior.CloseConnection))
+                {
+                    do
+                    {
+                        resultSetCount += 1;
+                        while (await reader.ReadAsync())
+                        {
+                            resultRowCount += 1;
+                        }
+                    } while (await reader.NextResultAsync());
+                }
+
+                Assert.Equal(ConnectionState.Closed, conn.State);
+            }
+
+            Assert.Equal(2, resultSetCount);
+            Assert.Equal(2, resultRowCount);
+        }
+
         private static SqlParameter CreateParameter<T>(string name, SqlDbType type, T value, ParameterDirection direction = ParameterDirection.Input)
         {
             var parameter = new SqlParameter(name, type);
             parameter.Direction = direction;
             parameter.Value = value;
             return parameter;
-        }
-
-        private static void ExecuteNonQueryCommand(string command)
-        {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = conn.CreateCommand())
-            {
-                conn.Open();
-                cmd.CommandText = command;
-                cmd.ExecuteNonQuery();
-            }
-        }
-        private static bool TryExecuteNonQueryCommand(string command)
-        {
-            try
-            {
-                ExecuteNonQueryCommand(command);
-                return true;
-            }
-            catch
-            {
-            }
-            return false;
         }
     }
 }

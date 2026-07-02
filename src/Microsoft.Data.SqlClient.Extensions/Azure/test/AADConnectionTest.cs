@@ -97,7 +97,7 @@ public class AADConnectionTest
     // ActiveIssue tests can be filtered out of test runs on the dotnet CLI
     // using the filter "category != failing".
     //
-    [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/40107")]
+    [ActiveIssue("https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/45941")]
     [ConditionalFact(
         typeof(Config),
         nameof(Config.SupportsIntegratedSecurity),

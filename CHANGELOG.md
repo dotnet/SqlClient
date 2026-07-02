@@ -6,6 +6,82 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.2] - 2026-06-24
+
+This update brings the following changes since the [7.0.1](release-notes/7.0/7.0.1.md) release.
+See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptions.
+
+> **Important — package version alignment:** Starting with 7.0.2, the `Microsoft.Data.SqlClient` driver and its companion packages share a single aligned version. The following packages now ship together as `7.0.2`:
+>
+> - `Microsoft.Data.SqlClient`
+> - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
+> - `Microsoft.Data.SqlClient.Extensions.Azure`
+> - `Microsoft.Data.SqlClient.Extensions.Abstractions`
+> - `Microsoft.Data.SqlClient.Internal.Logging`
+>
+> (`Microsoft.SqlServer.Server` continues to version independently and remains at `1.0.0`.)
+>
+> Applications must reference the same versions of `Microsoft.Data.SqlClient` and its extensions for best compatibility. In particular, applications that reference `Microsoft.Data.SqlClient.Extensions.Azure` must upgrade it to `7.0.2` when upgrading `Microsoft.Data.SqlClient` to `7.0.2`.
+
+> **Breaking change (.NET Framework only):** As part of this alignment, the `AssemblyVersion` of `Microsoft.Data.SqlClient.Extensions.Azure`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` changed from `1.0.0.0` to `7.0.0.0`. On .NET Framework, `AssemblyVersion` is part of the strong-name identity, so applications that drop these assemblies into an existing deployment without rebuilding must rebuild against the 7.0.2 packages (or add binding redirects). Applications on .NET / .NET Core are not affected. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` already used a `7.x` assembly version and is unaffected.
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlCommand.Cancel()` when the active connection has already been torn down.
+  ([#4372](https://github.com/dotnet/SqlClient/pull/4372),
+   [#4373](https://github.com/dotnet/SqlClient/pull/4373))
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetBytes`/`GetChars` when called with a `null` destination buffer.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4206](https://github.com/dotnet/SqlClient/pull/4206))
+
+- Fixed Always Encrypted column master key signature verification incorrectly reusing cached results.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4343](https://github.com/dotnet/SqlClient/pull/4343))
+
+### Changed
+
+- Hardened TDS token parsing by adding data-length bounds checks for token and feature-extension-acknowledgment data.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4358](https://github.com/dotnet/SqlClient/pull/4358))
+
+- Released `Microsoft.Data.SqlClient.Extensions.Azure 7.0.2`, adding WAM broker support for Entra ID authentication modes on Windows. See [release notes](release-notes/Extensions/Azure/7.0/7.0.2.md).
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4388](https://github.com/dotnet/SqlClient/pull/4388))
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.0.2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.2.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.2.md).
+
+## [Stable Release 6.1.6] - 2026-06-24
+
+This update brings the following changes since the [6.1.5](release-notes/6.1/6.1.5.md) release.
+See the [full release notes](release-notes/6.1/6.1.6.md) for detailed descriptions.
+
+### Added
+
+- Added Web Account Manager (WAM) broker support for the supported Entra ID authentication modes (Windows only), including the new `ActiveDirectoryAuthenticationProviderOptions` type with a `UseWamBroker` property, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)` constructor overload, and a cross-platform `SetParentActivityOrWindowFunc(Func<object>)` method.
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4387](https://github.com/dotnet/SqlClient/pull/4387))
+
+### Changed
+
+- Hardened TDS token parsing with data-length bounds checks to prevent unbounded memory allocation from a server spoofing length fields.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4359](https://github.com/dotnet/SqlClient/pull/4359))
+
+- Updated dependencies ([#4387](https://github.com/dotnet/SqlClient/pull/4387)):
+  - Updated `Microsoft.Identity.Client` to 4.84.2 (was 4.80.0)
+  - Added `Microsoft.Identity.Client.Broker` 4.84.2
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetChars` on the PLP + `SequentialAccess` path when a `null` buffer was passed with a negative `bufferIndex`; it now throws `ArgumentOutOfRangeException`.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4205](https://github.com/dotnet/SqlClient/pull/4205))
+
+- Fixed column master key (CMK) signature verification caching where a cached verification failure could subsequently be reported as a valid signature.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4356](https://github.com/dotnet/SqlClient/pull/4356))
+
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.

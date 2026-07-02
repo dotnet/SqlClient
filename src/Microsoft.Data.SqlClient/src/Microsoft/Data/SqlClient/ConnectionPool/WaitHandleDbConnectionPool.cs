@@ -189,13 +189,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private readonly WaitCallback _poolCreateRequest;
 
-        private int _waitCount;
+        internal int _waitCount;
         private readonly PoolWaitHandles _waitHandles;
 
         private readonly TimeProvider _timeProvider;
         private readonly BlockingPeriodErrorState _errorState;
 
-        private Timer _cleanupTimer;
+        internal Timer _cleanupTimer;
 
         private readonly TransactedConnectionPool _transactedConnectionPool;
 
@@ -350,8 +350,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
-        private void CleanupCallback(object state)
+        internal void CleanupCallback(object state)
         {
+            // If the pool is not Running, skip work. Shutdown disposes the timer, but
+            // a callback may already be in-flight when Shutdown runs; this guard ensures it does
+            // not perform pruning or re-arm pool create requests.
+            if (State is not Running)
+            {
+                return;
+            }
+
             // Called when the cleanup-timer ticks over.
 
             // This is the automatic pruning method.  Every period, we will
@@ -879,6 +887,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
+            // Shutdown short-circuit for the async path. The inner TryGetConnection returns false
+            // when it observes State is not Running mid-WaitAny. Without this re-check, we would
+            // enqueue a PendingGetConnection and spin up a WaitForPendingOpen background thread
+            // against an already-shut-down pool; the caller would eventually surface a misleading
+            // PooledOpenTimeout instead of a deterministic shutdown signal. Returning (true, null)
+            // matches the sync path and the channel pool's TryGetConnection convention.
+            if (State is not Running)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool not Running after inner TryGetConnection; short-circuit async path.", Id);
+                connection = null;
+                return true;
+            }
+
             long dueTime;
             if (LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait)
             {
@@ -944,6 +966,34 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     try
                     {
                         waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
+
+                        // After waking, observe shutdown state and bail out so waiters
+                        // do not spin against a drained pool. If WaitAny consumed a
+                        // PoolSemaphore slot, release it back so the accounting stays
+                        // balanced; otherwise the slot would leak and other waiters
+                        // (or callers that arrive after Shutdown completes its own
+                        // Release loop) would starve. CreationSemaphore does NOT need
+                        // compensation here because the outer finally below already
+                        // releases it whenever waitResult == CREATION_HANDLE, and
+                        // that finally runs even on this early return.
+                        if (State is not Running)
+                        {
+                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is shutting down; abandoning wait.", Id);
+                            if (waitResult == SEMAPHORE_HANDLE || waitResult == WAIT_ABANDONED + SEMAPHORE_HANDLE)
+                            {
+                                try
+                                {
+                                    _waitHandles.PoolSemaphore.Release(1);
+                                }
+                                catch (SemaphoreFullException)
+                                {
+                                    // Pool semaphore was already saturated by Shutdown's bulk release; safe to ignore.
+                                }
+                            }
+                            Interlocked.Decrement(ref _waitCount);
+                            connection = null;
+                            return false;
+                        }
 
                         // From the WaitAny docs: "If more than one object became signaled during
                         // the call, this is the array index of the signaled object with the
@@ -1134,7 +1184,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientDiagnostics.Metrics.SoftConnectRequest();
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
-                oldConnection.PrepareForReplaceConnection();
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
             }
@@ -1496,6 +1545,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Startup()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}, CleanupWait={1}", Id, _cleanupWait);
+
+            // Do not resurrect a shut-down pool. Without this guard a Startup() call after
+            // Shutdown() would create a fresh _cleanupTimer and queue a PoolCreateRequest
+            // against a pool that will never accept connections back, leaking the timer
+            // and scheduling background work that immediately short-circuits.
+            if (State is not Running)
+            {
+                return;
+            }
+
             _cleanupTimer = CreateCleanupTimer();
 
             if (NeedToReplenish)
@@ -1507,15 +1566,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
+
+            // Idempotent: subsequent calls observe ShuttingDown and bail.
+            if (State == ShuttingDown)
+            {
+                return;
+            }
             State = ShuttingDown;
 
-            // deactivate timer callbacks
-            Timer t = _cleanupTimer;
-            _cleanupTimer = null;
-            if (t != null)
+            // Dispose all background timers so they no longer schedule new work.
+            // Note that any timer callback already in flight may still observe State == ShuttingDown
+            // and short-circuit (see CleanupCallback / ErrorCallback).
+            Timer cleanup = Interlocked.Exchange(ref _cleanupTimer, null);
+            cleanup?.Dispose();
+            Timer error = Interlocked.Exchange(ref _errorTimer, null);
+            error?.Dispose();
+
+            // Wake any threads parked in WaitHandle.WaitAny by releasing as many semaphore
+            // slots as there are recorded waiters. Using _waitCount (rather than MaxPoolSize)
+            // avoids ArgumentOutOfRangeException when MaxPoolSize == 0 (unlimited) and ensures
+            // we wake every parked waiter even when _waitCount exceeds MaxPoolSize. Waiters
+            // observe State is not Running after wake-up and bail.
+            int waitersToWake = Volatile.Read(ref _waitCount);
+            if (waitersToWake > 0)
             {
-                t.Dispose();
+                try
+                {
+                    _waitHandles.PoolSemaphore.Release(waitersToWake);
+                }
+                catch (SemaphoreFullException)
+                {
+                    // Semaphore already saturated; nothing to do.
+                }
             }
+
+            // Reuse Clear() to doom every connection (including active checked-out ones), drain
+            // both idle stacks, and reclaim emancipated objects. Active connections destroy
+            // themselves on return either via the doom flag or via DeactivateObject's
+            // State == ShuttingDown branch.
+            Clear();
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool
