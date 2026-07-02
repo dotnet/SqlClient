@@ -122,7 +122,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 command.Dispose();
-                connection.Dispose();
+                // Only perform potentially-blocking cleanup if the close
+                // completed. If it deadlocked (closedInTime == false), calling
+                // Dispose() here could also block indefinitely and defeat the
+                // bounded-wait regression signal asserted below.
+                if (closedInTime)
+                {
+                    connection.Dispose();
+                }
             }
 
             Assert.True(

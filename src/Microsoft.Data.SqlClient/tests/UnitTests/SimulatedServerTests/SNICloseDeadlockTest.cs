@@ -32,14 +32,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// stalls after receiving the client's SQL batch. This guarantees that the
 /// client's async read for the response is genuinely in flight at the moment
 /// the connection is closed. The close is performed on a worker thread and
-/// wrapped in a bounded wait: a deadlock manifests as the wait timing out,
-/// which fails the test. After the fix, the close completes promptly.
+/// wrapped in a bounded wait: a healthy close completes promptly, whereas a
+/// deadlock manifests as the wait timing out, which fails the test.
 /// </para>
 ///
 /// <para>
-/// <b>Expected state:</b> these tests are expected to FAIL (time out) against
-/// the current, unfixed close path and PASS once the drain-before-close fix is
-/// implemented.
+/// <b>Expected state:</b> these tests PASS against the current code base.
+/// Microsoft.Data.SqlClient does not suffer from this deadlock: the close path
+/// drains (or cancels) the in-flight async I/O and completes well within the
+/// bounded wait. They therefore serve as regression guards - if a future change
+/// reintroduced the SNIClose deadlock, the bounded wait would time out and the
+/// tests would fail.
 /// </para>
 /// </summary>
 public class SNICloseDeadlockTest
@@ -187,7 +190,11 @@ public class SNICloseDeadlockTest
         finally
         {
             command.Dispose();
-            if (!disposeInsteadOfClose)
+            // Only perform potentially-blocking cleanup if the close completed.
+            // If it deadlocked (closedInTime == false), calling Dispose() here
+            // could also block indefinitely and defeat the bounded-wait
+            // regression signal asserted below.
+            if (closedInTime && !disposeInsteadOfClose)
             {
                 connection.Dispose();
             }
@@ -324,7 +331,11 @@ public class SNICloseDeadlockTest
         }
         finally
         {
-            if (!disposeInsteadOfClose)
+            // Only perform potentially-blocking cleanup if the close completed.
+            // If it deadlocked (closedInTime == false), calling Dispose() here
+            // could also block indefinitely and defeat the bounded-wait
+            // regression signal asserted below.
+            if (closedInTime && !disposeInsteadOfClose)
             {
                 connection.Dispose();
             }
@@ -523,7 +534,11 @@ public class SNICloseDeadlockTest
         }
         finally
         {
-            if (!disposeInsteadOfClose)
+            // Only perform potentially-blocking cleanup if the close completed.
+            // If it deadlocked (closedInTime == false), calling Dispose() here
+            // could also block indefinitely and defeat the bounded-wait
+            // regression signal asserted below.
+            if (closedInTime && !disposeInsteadOfClose)
             {
                 connection.Dispose();
             }
