@@ -120,7 +120,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     /// <summary>
     /// The Entra ID application client id used by this provider instance. Exposed as <c>internal</c> for tests.
-    /// The client id is used in the redirect URI when WAM broker mode is enabled, so it must match the client id configured 
+    /// The client id is used in the redirect URI when WAM broker mode is enabled, so it must match the client id configured
     /// in the app registration for the Entra ID application to successfully broker with WAM on Windows.
     /// </summary>
     internal string ApplicationClientId => _applicationClientId;
@@ -182,7 +182,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     // PublicClientAppKey cache (IWin32WindowFunc is part of its equality), so the same logical
     // identity ends up with two IPublicClientApplication instances depending on which setter
     // the caller used. Mark [Obsolete] in a future release once we have a migration window.
-    
+
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
     public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
@@ -373,7 +373,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 {
                     #pragma warning disable CS0618 // Type or member is obsolete
                     result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, parameters.Password)
-                    #pragma warning disable CS0618 // Type or member is obsolete
+                    #pragma warning restore CS0618 // Type or member is obsolete
                         .WithCorrelationId(parameters.ConnectionId)
                         .ExecuteAsync(cancellationToken: cts.Token)
                         .ConfigureAwait(false);
@@ -900,14 +900,24 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             return new TokenCredentialData(cred, GetHash(secret));
         }
 
-        TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
-
         if (tokenCredentialKey._tokenCredentialType == typeof(ManagedIdentityCredential))
         {
-            return new TokenCredentialData(new ManagedIdentityCredential(tokenCredentialKey._clientId, tokenCredentialOptions), GetHash(secret));
+            // A null or empty client id indicates a system-assigned managed identity; a
+            // non-empty client id selects a specific user-assigned managed identity.
+            ManagedIdentityId managedIdentityId = string.IsNullOrEmpty(tokenCredentialKey._clientId)
+                ? ManagedIdentityId.SystemAssigned
+                : ManagedIdentityId.FromUserAssignedClientId(tokenCredentialKey._clientId);
+            ManagedIdentityCredentialOptions managedIdentityCredentialOptions = new(managedIdentityId)
+            {
+                AuthorityHost = new Uri(tokenCredentialKey._authority)
+            };
+
+            return new TokenCredentialData(new ManagedIdentityCredential(managedIdentityCredentialOptions), GetHash(secret));
         }
         else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
         {
+            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
             return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
         }
         else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
