@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
@@ -141,6 +143,17 @@ public class SNICloseDeadlockTest
             "The server never received the SQL batch, so the async read was " +
             "not in flight; the test cannot exercise the close-with-pending-IO path.");
 
+        // The server is stalled withholding the response, so the client's async
+        // read must still be pending: the Task cannot have completed and the
+        // connection must still be open. If either of these is false, the read
+        // is not actually in flight and the test is not exercising the
+        // close-with-pending-IO path.
+        Assert.False(
+            readTask.IsCompleted,
+            "The async read completed before the server released the response; " +
+            "the read was not in flight at close time.");
+        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+
         // Close/dispose the connection on a worker thread while the async read
         // is in flight. This is the operation that can deadlock in SNIClose.
         Task closeTask = Task.Run(() =>
@@ -185,5 +198,353 @@ public class SNICloseDeadlockTest
             $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
             $"within {CloseBudget.TotalSeconds:N0}s while an async read was in flight. " +
             "This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542).");
+    }
+
+    [Fact]
+    public void CloseConnection_DuringPreLoginHandshake_DoesNotDeadlock()
+    {
+        RunPendingHandshakeCloseScenario(disposeInsteadOfClose: false);
+    }
+
+    [Fact]
+    public void DisposeConnection_DuringPreLoginHandshake_DoesNotDeadlock()
+    {
+        RunPendingHandshakeCloseScenario(disposeInsteadOfClose: true);
+    }
+
+    /// <summary>
+    /// Reproduces the ICM scenario more faithfully: the connection is torn down
+    /// while it is still in the middle of connection establishment (the
+    /// pre-login / TLS handshake), rather than after a successful login.
+    ///
+    /// <para>
+    /// A bare TCP listener accepts the socket and reads the client's pre-login
+    /// packet but deliberately never sends a response. This leaves the client's
+    /// async read for the pre-login/handshake response in flight. The close is
+    /// performed on a worker thread under a bounded wait; a deadlock in the
+    /// handshake-phase close path manifests as the wait timing out.
+    /// </para>
+    /// </summary>
+    private static void RunPendingHandshakeCloseScenario(bool disposeInsteadOfClose)
+    {
+        using ManualResetEventSlim clientConnected = new(false);
+        using ManualResetEventSlim releaseServer = new(false);
+
+        TcpListener listener = new(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        // Server: accept the socket, read the client's pre-login bytes, then
+        // withhold any response so the client's handshake read stays pending.
+        Task serverTask = Task.Run(() =>
+        {
+            using TcpClient acceptedClient = listener.AcceptTcpClient();
+            using NetworkStream stream = acceptedClient.GetStream();
+
+            try
+            {
+                // Read one byte of the client's pre-login packet. Once this
+                // returns the client has sent its pre-login and posted its
+                // async read for the response. We only need to know data
+                // arrived, so a single byte is sufficient.
+                stream.ReadByte();
+            }
+            catch
+            {
+                // The client may tear down the socket; ignore.
+            }
+
+            clientConnected.Set();
+
+            // Hold the socket open (withholding the response) until the test
+            // releases us, so the client's read cannot complete naturally.
+            releaseServer.Wait();
+        });
+
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"127.0.0.1,{port}",
+            // Force TLS negotiation intent during the handshake, matching the
+            // ICM scenario.
+            Encrypt = SqlConnectionEncryptOption.Mandatory,
+            TrustServerCertificate = true,
+            // Long timeout so the connect attempt does not abort on its own
+            // before we get a chance to close it.
+            ConnectTimeout = 60,
+            ConnectRetryCount = 0,
+            Pooling = false,
+#if NETFRAMEWORK
+            TransparentNetworkIPResolution = false,
+#endif
+        };
+
+        SqlConnection connection = new(builder.ConnectionString);
+
+        // Begin connection establishment. This will not complete because the
+        // server never answers the pre-login handshake.
+        Task openTask = connection.OpenAsync();
+
+        // Wait until the server has received the client's pre-login, i.e. the
+        // client's handshake read is in flight.
+        Assert.True(
+            clientConnected.Wait(HandshakeBudget),
+            "The server never received the client's pre-login packet, so the " +
+            "handshake read was not in flight; the test cannot exercise the " +
+            "close-during-handshake path.");
+
+        // Close/dispose the connection on a worker thread while the handshake
+        // read is in flight. This is the operation that can deadlock.
+        Task closeTask = Task.Run(() =>
+        {
+            if (disposeInsteadOfClose)
+            {
+                connection.Dispose();
+            }
+            else
+            {
+                connection.Close();
+            }
+        });
+
+        bool closedInTime = closeTask.Wait(CloseBudget);
+
+        // Release the server thread so it can unwind cleanly regardless of the
+        // outcome above.
+        releaseServer.Set();
+
+        // Observe the open task so its (expected) failure is not unobserved.
+        try
+        {
+            openTask.Wait(CloseBudget);
+        }
+        catch
+        {
+            // OpenAsync is expected to fault or cancel once the connection is
+            // torn down. That is not what this test asserts.
+        }
+        finally
+        {
+            if (!disposeInsteadOfClose)
+            {
+                connection.Dispose();
+            }
+
+            try
+            {
+                serverTask.Wait(CloseBudget);
+            }
+            catch
+            {
+                // Ignore server teardown faults.
+            }
+
+            listener.Stop();
+        }
+
+        Assert.True(
+            closedInTime,
+            $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
+            $"within {CloseBudget.TotalSeconds:N0}s while a pre-login response " +
+            "read was in flight. This indicates the SNIClose deadlock " +
+            "(ADO.Net #43847 / ICM 775308542).");
+    }
+
+    /// <summary>
+    /// A minimal, protocol-valid TDS PRELOGIN response advertising ENCRYPT_ON
+    /// so that a client which requested encryption proceeds into the TLS
+    /// handshake. Offsets are relative to the start of the payload (immediately
+    /// after the 8-byte TDS packet header):
+    ///
+    /// <code>
+    ///   Option table:
+    ///     VERSION     token 0x00, offset 11 (0x000B), length 6
+    ///     ENCRYPTION  token 0x01, offset 17 (0x0011), length 1
+    ///     TERMINATOR  0xFF
+    ///   Data:
+    ///     VERSION     6 bytes (17.0.0.0)
+    ///     ENCRYPTION  1 byte  (0x01 = ENCRYPT_ON)
+    /// </code>
+    /// </summary>
+    private static readonly byte[] s_preLoginEncryptOnResponse =
+    {
+        // ---- TDS packet header (8 bytes) ----
+        0x12,       // Type: PRELOGIN
+        0x01,       // Status: EOM
+        0x00, 0x1A, // Length: 26 (8 header + 18 payload), big-endian
+        0x00, 0x00, // SPID
+        0x01,       // PacketID
+        0x00,       // Window
+        // ---- PRELOGIN option table ----
+        0x00, 0x00, 0x0B, 0x00, 0x06, // VERSION: offset 11, length 6
+        0x01, 0x00, 0x11, 0x00, 0x01, // ENCRYPTION: offset 17, length 1
+        0xFF,                         // TERMINATOR
+        // ---- Option data ----
+        0x11, 0x00, 0x00, 0x00, 0x00, 0x00, // VERSION 17.0.0.0
+        0x01,                               // ENCRYPTION = ENCRYPT_ON
+    };
+
+    [Fact]
+    public void CloseConnection_DuringTlsHandshake_DoesNotDeadlock()
+    {
+        RunPendingTlsHandshakeCloseScenario(disposeInsteadOfClose: false);
+    }
+
+    [Fact]
+    public void DisposeConnection_DuringTlsHandshake_DoesNotDeadlock()
+    {
+        RunPendingTlsHandshakeCloseScenario(disposeInsteadOfClose: true);
+    }
+
+    /// <summary>
+    /// Reproduces the ICM scenario faithfully: the connection is torn down while
+    /// the client is inside the TLS handshake over TDS, with an SNI read pending
+    /// for the server's handshake response.
+    ///
+    /// <para>
+    /// A bare TCP listener speaks just enough of the TDS pre-login exchange to
+    /// drive the client into the TLS handshake: it reads the client's PRELOGIN
+    /// packet, replies with a PRELOGIN response advertising ENCRYPT_ON, then
+    /// reads the client's TLS ClientHello (delivered as a TDS pre-login packet)
+    /// and deliberately never sends a ServerHello. At that point the client is
+    /// blocked inside <c>SslStream.AuthenticateAsClient</c> with an SNI read in
+    /// flight on the SSL-over-TDS transport. The close is performed on a worker
+    /// thread under a bounded wait; a deadlock in the handshake-phase close path
+    /// manifests as the wait timing out.
+    /// </para>
+    /// </summary>
+    private static void RunPendingTlsHandshakeCloseScenario(bool disposeInsteadOfClose)
+    {
+        using ManualResetEventSlim handshakeInFlight = new(false);
+        using ManualResetEventSlim releaseServer = new(false);
+
+        TcpListener listener = new(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+
+        // Server: complete the pre-login exchange advertising encryption, read
+        // the client's TLS ClientHello, then withhold the ServerHello so the
+        // client's handshake read stays pending.
+        Task serverTask = Task.Run(() =>
+        {
+            using TcpClient acceptedClient = listener.AcceptTcpClient();
+            using NetworkStream stream = acceptedClient.GetStream();
+
+            byte[] buffer = new byte[4096];
+            try
+            {
+                // Read the client's PRELOGIN packet.
+                int read = stream.Read(buffer, 0, buffer.Length);
+                if (read <= 0)
+                {
+                    return;
+                }
+
+                // Advertise ENCRYPT_ON so the client begins the TLS handshake.
+                stream.Write(s_preLoginEncryptOnResponse, 0, s_preLoginEncryptOnResponse.Length);
+                stream.Flush();
+
+                // Read the first byte of the client's TLS ClientHello (wrapped
+                // in a TDS pre-login packet). A byte here proves the client
+                // accepted the pre-login response and entered the TLS handshake;
+                // it is now awaiting the ServerHello with its SNI read pending.
+                if (stream.ReadByte() < 0)
+                {
+                    // Client tore down without sending a ClientHello: the
+                    // handshake was never actually in flight.
+                    return;
+                }
+
+                handshakeInFlight.Set();
+
+                // Withhold the ServerHello until the test releases us.
+                releaseServer.Wait();
+            }
+            catch
+            {
+                // The client may tear down the socket mid-handshake; ignore.
+            }
+        });
+
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"127.0.0.1,{port}",
+            // Require encryption so the client performs the TLS handshake.
+            Encrypt = SqlConnectionEncryptOption.Mandatory,
+            TrustServerCertificate = true,
+            ConnectTimeout = 60,
+            ConnectRetryCount = 0,
+            Pooling = false,
+#if NETFRAMEWORK
+            TransparentNetworkIPResolution = false,
+#endif
+        };
+
+        SqlConnection connection = new(builder.ConnectionString);
+
+        // Begin connection establishment. This will not complete because the
+        // server never finishes the TLS handshake.
+        Task openTask = connection.OpenAsync();
+
+        // Wait until the client is inside the TLS handshake with a pending read.
+        Assert.True(
+            handshakeInFlight.Wait(HandshakeBudget),
+            "The client never reached the TLS handshake, so no SNI read was in " +
+            "flight; the test cannot exercise the close-during-TLS-handshake path.");
+
+        // Close/dispose the connection on a worker thread while the TLS
+        // handshake read is in flight. This is the operation that can deadlock.
+        Task closeTask = Task.Run(() =>
+        {
+            if (disposeInsteadOfClose)
+            {
+                connection.Dispose();
+            }
+            else
+            {
+                connection.Close();
+            }
+        });
+
+        bool closedInTime = closeTask.Wait(CloseBudget);
+
+        // Release the server thread so it can unwind cleanly regardless of the
+        // outcome above.
+        releaseServer.Set();
+
+        // Observe the open task so its (expected) failure is not unobserved.
+        try
+        {
+            openTask.Wait(CloseBudget);
+        }
+        catch
+        {
+            // OpenAsync is expected to fault or cancel once the connection is
+            // torn down. That is not what this test asserts.
+        }
+        finally
+        {
+            if (!disposeInsteadOfClose)
+            {
+                connection.Dispose();
+            }
+
+            try
+            {
+                serverTask.Wait(CloseBudget);
+            }
+            catch
+            {
+                // Ignore server teardown faults.
+            }
+
+            listener.Stop();
+        }
+
+        Assert.True(
+            closedInTime,
+            $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
+            $"within {CloseBudget.TotalSeconds:N0}s while a TLS handshake read was " +
+            "in flight. This indicates the SNIClose deadlock " +
+            "(ADO.Net #43847 / ICM 775308542).");
     }
 }
