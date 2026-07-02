@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.OnlineTests</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.OnlineTests</RootNamespace>
+    
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if we
+      are building for Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Links to Resources/etc ========================================== -->
+  <ItemGroup>
+    <None Update="config.jsonc" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  
+  <!-- References ====================================================== -->
+  <!-- Test target references -->
+  <ItemGroup>
+    <!-- If the tests are compiled/running in "Package" mode, the reference to MDS will be to the -->
+    <!-- nuget package. This enables ensuring the tests run successfully against a fully-packaged -->
+    <!-- version of MDS. Package mode is specified by setting the build parameter ReferenceType   -->
+    <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
+    <!-- referencing MDS via the project.                                                         -->
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"
+                      Private="true" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+
+  <!-- References for netfx -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
+  </ItemGroup>
+
+  <!-- References for netcore -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
+  </ItemGroup>
+</Project>
