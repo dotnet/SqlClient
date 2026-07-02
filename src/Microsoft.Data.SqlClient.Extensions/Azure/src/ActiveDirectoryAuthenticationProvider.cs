@@ -873,7 +873,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (tokenCredentialKey._clientId is not null)
             {
                 defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
-                defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
                 defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
             }
 
