@@ -1969,7 +1969,7 @@ namespace Microsoft.Data.SqlClient.Connection
             TaskCompletionSource<DbConnectionInternal> retry,
             TimeoutTimer timeout)
         {
-            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, forceNewConnection: true, timeout);
         }
 
         internal void ValidateConnectionForExecute(SqlCommand command)
