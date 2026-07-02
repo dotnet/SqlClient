@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IncludeTraceHeader => Capabilities.Is2012OrNewer && SqlClientEventSource.Log.IsEnabled();
+        private bool IncludeTraceHeader => Capabilities.TraceHeader && SqlClientEventSource.Log.IsEnabled();
 
         internal int IncrementNonTransactedOpenResultCount()
         {
@@ -10580,7 +10580,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbType.Udt)
                 {
-                    int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
+                    int maxSupportedSize = Capabilities.LargeUserDefinedTypes ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
