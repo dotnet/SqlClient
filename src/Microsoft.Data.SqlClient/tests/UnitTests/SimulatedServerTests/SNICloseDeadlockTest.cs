@@ -122,80 +122,98 @@ public class SNICloseDeadlockTest
         };
 
         SqlConnection connection = new(builder.ConnectionString);
-        connection.Open();
-
-        SqlCommand command = new("SELECT 1", connection);
-
-        // Start an async read that will pend: the server stalls in
-        // CreateQueryResponse, so this Task will not complete until we either
-        // release the server or tear down the connection.
-        Task<SqlDataReader> readTask = command.ExecuteReaderAsync();
-
-        // Ensure the async read is genuinely in flight before we close.
-        Assert.True(
-            batchReceived.Wait(HandshakeBudget),
-            "The server never received the SQL batch, so the async read was " +
-            "not in flight; the test cannot exercise the close-with-pending-IO path.");
-
-        // The server is stalled withholding the response, so the client's async
-        // read must still be pending: the Task cannot have completed and the
-        // connection must still be open. If either of these is false, the read
-        // is not actually in flight and the test is not exercising the
-        // close-with-pending-IO path.
-        Assert.False(
-            readTask.IsCompleted,
-            "The async read completed before the server released the response; " +
-            "the read was not in flight at close time.");
-        Assert.Equal(System.Data.ConnectionState.Open, connection.State);
-
-        // Close/dispose the connection on a worker thread while the async read
-        // is in flight. This is the operation that can deadlock in SNIClose.
-        Task closeTask = Task.Run(() =>
-        {
-            if (disposeInsteadOfClose)
-            {
-                connection.Dispose();
-            }
-            else
-            {
-                connection.Close();
-            }
-        });
-
-        bool closedInTime = closeTask.Wait(CloseBudget);
-
-        // Always release the stalled server thread so it can unwind and the
-        // server can be disposed cleanly, regardless of the outcome above.
-        releaseResponse.Set();
-
-        // Observe the read task so its (expected) failure is not unobserved.
+        SqlCommand? command = null;
+        Task<SqlDataReader>? readTask = null;
+        bool closeAttempted = false;
+        bool closedInTime = false;
         try
         {
-            readTask.Wait(CloseBudget);
-        }
-        catch
-        {
-            // The pending read is expected to fault or cancel once the
-            // connection is torn down. That is not what this test asserts.
+            connection.Open();
+
+            command = new("SELECT 1", connection);
+
+            // Start an async read that will pend: the server stalls in
+            // CreateQueryResponse, so this Task will not complete until we
+            // either release the server or tear down the connection.
+            readTask = command.ExecuteReaderAsync();
+
+            // Ensure the async read is genuinely in flight before we close.
+            Assert.True(
+                batchReceived.Wait(HandshakeBudget),
+                "The server never received the SQL batch, so the async read was " +
+                "not in flight; the test cannot exercise the close-with-pending-IO path.");
+
+            // The server is stalled withholding the response, so the client's
+            // async read must still be pending: the Task cannot have completed
+            // and the connection must still be open. If either of these is
+            // false, the read is not actually in flight and the test is not
+            // exercising the close-with-pending-IO path.
+            Assert.False(
+                readTask.IsCompleted,
+                "The async read completed before the server released the response; " +
+                "the read was not in flight at close time.");
+            Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+
+            // Close/dispose the connection on a dedicated, long-running thread
+            // while the async read is in flight. This is the operation that can
+            // deadlock in SNIClose. A dedicated thread (rather than a
+            // thread-pool thread via Task.Run) ensures a hypothetical regression
+            // parks this one thread instead of starving the shared thread pool.
+            closeAttempted = true;
+            Task closeTask = Task.Factory.StartNew(
+                () =>
+                {
+                    if (disposeInsteadOfClose)
+                    {
+                        connection.Dispose();
+                    }
+                    else
+                    {
+                        connection.Close();
+                    }
+                },
+                TaskCreationOptions.LongRunning);
+
+            closedInTime = closeTask.Wait(CloseBudget);
+
+            Assert.True(
+                closedInTime,
+                $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
+                $"within {CloseBudget.TotalSeconds:N0}s while an async read was in flight. " +
+                "This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542).");
         }
         finally
         {
-            command.Dispose();
-            // Only perform potentially-blocking cleanup if the close completed.
-            // If it deadlocked (closedInTime == false), calling Dispose() here
-            // could also block indefinitely and defeat the bounded-wait
-            // regression signal asserted below.
-            if (closedInTime && !disposeInsteadOfClose)
+            // Always release the stalled server thread, even if a precondition
+            // assert above threw, so the using-scoped server can be disposed
+            // without blocking on the query engine.
+            releaseResponse.Set();
+
+            // Observe the pending read so its (expected) fault is not unobserved.
+            if (readTask != null)
+            {
+                try
+                {
+                    readTask.Wait(CloseBudget);
+                }
+                catch
+                {
+                    // The pending read is expected to fault or cancel once the
+                    // connection is torn down. That is not what this test asserts.
+                }
+            }
+
+            command?.Dispose();
+
+            // Dispose the connection unless a close deadlock was actually
+            // detected (in which case Dispose() could also block indefinitely
+            // and defeat the bounded-wait regression signal). Disposing is safe
+            // when the close worker never started or when it completed.
+            if (!closeAttempted || closedInTime)
             {
                 connection.Dispose();
             }
         }
-
-        Assert.True(
-            closedInTime,
-            $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
-            $"within {CloseBudget.TotalSeconds:N0}s while an async read was in flight. " +
-            "This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542).");
     }
 
     /// <summary>
@@ -268,56 +286,79 @@ public class SNICloseDeadlockTest
         };
 
         SqlConnection connection = new(builder.ConnectionString);
-
-        // Begin connection establishment. This will not complete because the
-        // server never answers the pre-login handshake.
-        Task openTask = connection.OpenAsync();
-
-        // Wait until the server has received the client's pre-login, i.e. the
-        // client's handshake read is in flight.
-        Assert.True(
-            clientConnected.Wait(HandshakeBudget),
-            "The server never received the client's pre-login packet, so the " +
-            "handshake read was not in flight; the test cannot exercise the " +
-            "close-during-handshake path.");
-
-        // Close/dispose the connection on a worker thread while the handshake
-        // read is in flight. This is the operation that can deadlock.
-        Task closeTask = Task.Run(() =>
-        {
-            if (disposeInsteadOfClose)
-            {
-                connection.Dispose();
-            }
-            else
-            {
-                connection.Close();
-            }
-        });
-
-        bool closedInTime = closeTask.Wait(CloseBudget);
-
-        // Release the server thread so it can unwind cleanly regardless of the
-        // outcome above.
-        releaseServer.Set();
-
-        // Observe the open task so its (expected) failure is not unobserved.
+        Task? openTask = null;
+        bool closeAttempted = false;
+        bool closedInTime = false;
         try
         {
-            openTask.Wait(CloseBudget);
-        }
-        catch
-        {
-            // OpenAsync is expected to fault or cancel once the connection is
-            // torn down. That is not what this test asserts.
+            // Begin connection establishment. This will not complete because
+            // the server never answers the pre-login handshake.
+            openTask = connection.OpenAsync();
+
+            // Wait until the server has received the client's pre-login, i.e.
+            // the client's handshake read is in flight.
+            Assert.True(
+                clientConnected.Wait(HandshakeBudget),
+                "The server never received the client's pre-login packet, so the " +
+                "handshake read was not in flight; the test cannot exercise the " +
+                "close-during-handshake path.");
+
+            // Close/dispose the connection on a dedicated, long-running thread
+            // while the handshake read is in flight. This is the operation that
+            // can deadlock. A dedicated thread (rather than a thread-pool thread
+            // via Task.Run) ensures a hypothetical regression parks this one
+            // thread instead of starving the shared thread pool.
+            closeAttempted = true;
+            Task closeTask = Task.Factory.StartNew(
+                () =>
+                {
+                    if (disposeInsteadOfClose)
+                    {
+                        connection.Dispose();
+                    }
+                    else
+                    {
+                        connection.Close();
+                    }
+                },
+                TaskCreationOptions.LongRunning);
+
+            closedInTime = closeTask.Wait(CloseBudget);
+
+            Assert.True(
+                closedInTime,
+                $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
+                $"within {CloseBudget.TotalSeconds:N0}s while a pre-login response " +
+                "read was in flight. This indicates the SNIClose deadlock " +
+                "(ADO.Net #43847 / ICM 775308542).");
         }
         finally
         {
-            // Only perform potentially-blocking cleanup if the close completed.
-            // If it deadlocked (closedInTime == false), calling Dispose() here
-            // could also block indefinitely and defeat the bounded-wait
-            // regression signal asserted below.
-            if (closedInTime && !disposeInsteadOfClose)
+            // Always release the server loop and stop the listener, even if a
+            // precondition assert above threw, so the background server task
+            // cannot stay blocked and the listening socket is not leaked into
+            // subsequent tests.
+            releaseServer.Set();
+            listener.Stop();
+
+            // Observe the open task so its (expected) failure is not unobserved.
+            if (openTask != null)
+            {
+                try
+                {
+                    openTask.Wait(CloseBudget);
+                }
+                catch
+                {
+                    // OpenAsync is expected to fault or cancel once the
+                    // connection is torn down. That is not what this test asserts.
+                }
+            }
+
+            // Dispose the connection unless a close deadlock was actually
+            // detected (in which case Dispose() could also block). Disposing is
+            // safe when the close worker never started or when it completed.
+            if (!closeAttempted || closedInTime)
             {
                 connection.Dispose();
             }
@@ -330,16 +371,7 @@ public class SNICloseDeadlockTest
             {
                 // Ignore server teardown faults.
             }
-
-            listener.Stop();
         }
-
-        Assert.True(
-            closedInTime,
-            $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
-            $"within {CloseBudget.TotalSeconds:N0}s while a pre-login response " +
-            "read was in flight. This indicates the SNIClose deadlock " +
-            "(ADO.Net #43847 / ICM 775308542).");
     }
 
     /// <summary>
@@ -464,54 +496,78 @@ public class SNICloseDeadlockTest
         };
 
         SqlConnection connection = new(builder.ConnectionString);
-
-        // Begin connection establishment. This will not complete because the
-        // server never finishes the TLS handshake.
-        Task openTask = connection.OpenAsync();
-
-        // Wait until the client is inside the TLS handshake with a pending read.
-        Assert.True(
-            handshakeInFlight.Wait(HandshakeBudget),
-            "The client never reached the TLS handshake, so no SNI read was in " +
-            "flight; the test cannot exercise the close-during-TLS-handshake path.");
-
-        // Close/dispose the connection on a worker thread while the TLS
-        // handshake read is in flight. This is the operation that can deadlock.
-        Task closeTask = Task.Run(() =>
-        {
-            if (disposeInsteadOfClose)
-            {
-                connection.Dispose();
-            }
-            else
-            {
-                connection.Close();
-            }
-        });
-
-        bool closedInTime = closeTask.Wait(CloseBudget);
-
-        // Release the server thread so it can unwind cleanly regardless of the
-        // outcome above.
-        releaseServer.Set();
-
-        // Observe the open task so its (expected) failure is not unobserved.
+        Task? openTask = null;
+        bool closeAttempted = false;
+        bool closedInTime = false;
         try
         {
-            openTask.Wait(CloseBudget);
-        }
-        catch
-        {
-            // OpenAsync is expected to fault or cancel once the connection is
-            // torn down. That is not what this test asserts.
+            // Begin connection establishment. This will not complete because
+            // the server never finishes the TLS handshake.
+            openTask = connection.OpenAsync();
+
+            // Wait until the client is inside the TLS handshake with a pending
+            // read.
+            Assert.True(
+                handshakeInFlight.Wait(HandshakeBudget),
+                "The client never reached the TLS handshake, so no SNI read was in " +
+                "flight; the test cannot exercise the close-during-TLS-handshake path.");
+
+            // Close/dispose the connection on a dedicated, long-running thread
+            // while the TLS handshake read is in flight. This is the operation
+            // that can deadlock. A dedicated thread (rather than a thread-pool
+            // thread via Task.Run) ensures a hypothetical regression parks this
+            // one thread instead of starving the shared thread pool.
+            closeAttempted = true;
+            Task closeTask = Task.Factory.StartNew(
+                () =>
+                {
+                    if (disposeInsteadOfClose)
+                    {
+                        connection.Dispose();
+                    }
+                    else
+                    {
+                        connection.Close();
+                    }
+                },
+                TaskCreationOptions.LongRunning);
+
+            closedInTime = closeTask.Wait(CloseBudget);
+
+            Assert.True(
+                closedInTime,
+                $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
+                $"within {CloseBudget.TotalSeconds:N0}s while a TLS handshake read was " +
+                "in flight. This indicates the SNIClose deadlock " +
+                "(ADO.Net #43847 / ICM 775308542).");
         }
         finally
         {
-            // Only perform potentially-blocking cleanup if the close completed.
-            // If it deadlocked (closedInTime == false), calling Dispose() here
-            // could also block indefinitely and defeat the bounded-wait
-            // regression signal asserted below.
-            if (closedInTime && !disposeInsteadOfClose)
+            // Always release the server loop and stop the listener, even if a
+            // precondition assert above threw, so the background server task
+            // cannot stay blocked and the listening socket is not leaked into
+            // subsequent tests.
+            releaseServer.Set();
+            listener.Stop();
+
+            // Observe the open task so its (expected) failure is not unobserved.
+            if (openTask != null)
+            {
+                try
+                {
+                    openTask.Wait(CloseBudget);
+                }
+                catch
+                {
+                    // OpenAsync is expected to fault or cancel once the
+                    // connection is torn down. That is not what this test asserts.
+                }
+            }
+
+            // Dispose the connection unless a close deadlock was actually
+            // detected (in which case Dispose() could also block). Disposing is
+            // safe when the close worker never started or when it completed.
+            if (!closeAttempted || closedInTime)
             {
                 connection.Dispose();
             }
@@ -524,15 +580,6 @@ public class SNICloseDeadlockTest
             {
                 // Ignore server teardown faults.
             }
-
-            listener.Stop();
         }
-
-        Assert.True(
-            closedInTime,
-            $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not complete " +
-            $"within {CloseBudget.TotalSeconds:N0}s while a TLS handshake read was " +
-            "in flight. This indicates the SNIClose deadlock " +
-            "(ADO.Net #43847 / ICM 775308542).");
     }
 }

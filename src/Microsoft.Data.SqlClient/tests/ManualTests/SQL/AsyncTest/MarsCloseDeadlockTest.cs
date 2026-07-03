@@ -74,70 +74,88 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }.ConnectionString;
 
             SqlConnection connection = new(connectionString);
-            connection.Open();
-
-            SqlCommand command =
-                new($"WAITFOR DELAY '{StallDelay}'; SELECT 1;", connection);
-
-            // Start an async read that will pend: the server withholds the
-            // response for StallDelay, so this Task will not complete until we
-            // either wait out the delay or tear down the connection.
-            Task<SqlDataReader> readTask = command.ExecuteReaderAsync();
-
-            // Confirm the read is genuinely in flight before we close: it must
-            // not have completed and the connection must still be open.
-            Assert.False(
-                readTask.Wait(PendingConfirmDelay),
-                "The async read completed before the server released the " +
-                "response; the read was not in flight at close time.");
-            Assert.Equal(ConnectionState.Open, connection.State);
-
-            // Close/dispose the connection on a worker thread while the MARS
-            // async read is in flight. This is the operation that can deadlock
-            // in SNIClose.
-            Task closeTask = Task.Run(() =>
-            {
-                if (disposeInsteadOfClose)
-                {
-                    connection.Dispose();
-                }
-                else
-                {
-                    connection.Close();
-                }
-            });
-
-            bool closedInTime = closeTask.Wait(CloseBudget);
-
-            // Observe the read task so its (expected) failure is not unobserved.
+            SqlCommand command = null;
+            Task<SqlDataReader> readTask = null;
+            bool closeAttempted = false;
+            bool closedInTime = false;
             try
             {
-                readTask.Wait(CloseBudget);
-            }
-            catch
-            {
-                // The pending read is expected to fault or cancel once the
-                // connection is torn down. That is not what this test asserts.
+                connection.Open();
+
+                command = new($"WAITFOR DELAY '{StallDelay}'; SELECT 1;", connection);
+
+                // Start an async read that will pend: the server withholds the
+                // response for StallDelay, so this Task will not complete until
+                // we either wait out the delay or tear down the connection.
+                readTask = command.ExecuteReaderAsync();
+
+                // Confirm the read is genuinely in flight before we close: it
+                // must not have completed and the connection must still be open.
+                Assert.False(
+                    readTask.Wait(PendingConfirmDelay),
+                    "The async read completed before the server released the " +
+                    "response; the read was not in flight at close time.");
+                Assert.Equal(ConnectionState.Open, connection.State);
+
+                // Close/dispose the connection on a dedicated, long-running
+                // thread while the MARS async read is in flight. This is the
+                // operation that can deadlock in SNIClose. A dedicated thread
+                // (rather than a thread-pool thread via Task.Run) ensures a
+                // hypothetical regression parks this one thread instead of
+                // starving the shared thread pool.
+                closeAttempted = true;
+                Task closeTask = Task.Factory.StartNew(
+                    () =>
+                    {
+                        if (disposeInsteadOfClose)
+                        {
+                            connection.Dispose();
+                        }
+                        else
+                        {
+                            connection.Close();
+                        }
+                    },
+                    TaskCreationOptions.LongRunning);
+
+                closedInTime = closeTask.Wait(CloseBudget);
+
+                Assert.True(
+                    closedInTime,
+                    $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not " +
+                    $"complete within {CloseBudget.TotalSeconds:N0}s while a MARS " +
+                    "async read was in flight. This indicates the SNIClose deadlock " +
+                    "(ADO.Net #43847 / ICM 775308542).");
             }
             finally
             {
-                command.Dispose();
-                // Only perform potentially-blocking cleanup if the close
-                // completed. If it deadlocked (closedInTime == false), calling
-                // Dispose() here could also block indefinitely and defeat the
-                // bounded-wait regression signal asserted below.
-                if (closedInTime)
+                // Observe the pending read so its (expected) fault is not
+                // unobserved, even if a precondition assert above threw.
+                if (readTask != null)
+                {
+                    try
+                    {
+                        readTask.Wait(CloseBudget);
+                    }
+                    catch
+                    {
+                        // The pending read is expected to fault or cancel once
+                        // the connection is torn down. That is not what this
+                        // test asserts.
+                    }
+                }
+
+                command?.Dispose();
+
+                // Dispose the connection unless a close deadlock was actually
+                // detected (in which case Dispose() could also block). Disposing
+                // is safe when the close worker never started or when it
+                // completed.
+                if (!closeAttempted || closedInTime)
                 {
                     connection.Dispose();
                 }
             }
-
-            Assert.True(
-                closedInTime,
-                $"{(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not " +
-                $"complete within {CloseBudget.TotalSeconds:N0}s while a MARS " +
-                "async read was in flight. This indicates the SNIClose deadlock " +
-                "(ADO.Net #43847 / ICM 775308542).");
         }
     }
 }
