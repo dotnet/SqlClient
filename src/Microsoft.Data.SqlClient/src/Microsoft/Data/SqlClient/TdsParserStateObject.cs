@@ -25,7 +25,7 @@ using System.Runtime.ConstrainedExecution;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class LastIOTimer
+    internal sealed class LastIOTimer
     {
         internal long _value;
     }

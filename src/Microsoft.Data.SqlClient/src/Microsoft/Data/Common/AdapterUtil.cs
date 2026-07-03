@@ -65,22 +65,6 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
 
-        /// <summary>
-        /// This member returns true if the current OS platform is Windows.
-        /// </summary>
-        /// <remarks>
-        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
-        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
-        /// code when published to non-Windows platforms.
-        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
-        /// rather than in a throw helper.
-        /// </remarks>
-        #if NETFRAMEWORK
-        public const bool IsWindows = true;
-        #else
-        public static bool IsWindows => OperatingSystem.IsWindows();
-        #endif
-
         #region UDT
 
         #if NETFRAMEWORK
@@ -105,7 +89,7 @@ namespace Microsoft.Data.Common
 
         #endregion
 
-        static private void TraceException(string trace, Exception e)
+        private static void TraceException(string trace, Exception e)
         {
             Debug.Assert(e != null, "TraceException: null Exception");
             if (e is not null)
@@ -441,7 +425,7 @@ namespace Microsoft.Data.Common
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NET
-            if (!IsWindows)
+            if (!OsConstants.IsWindows)
             {
                 // No registry in non-Windows environments
                 return null;
@@ -1030,7 +1014,7 @@ namespace Microsoft.Data.Common
 #region Stream
         internal static Exception StreamClosed([CallerMemberName] string method = "") => InvalidOperation(StringsHelper.GetString(Strings.ADP_StreamClosed, method));
 
-        static internal Exception InvalidSeekOrigin(string parameterName) => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_InvalidSeekOrigin), parameterName);
+        internal static Exception InvalidSeekOrigin(string parameterName) => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_InvalidSeekOrigin), parameterName);
 
         internal static IOException ErrorReadingFromStream(Exception internalException) => IO(StringsHelper.GetString(Strings.SqlMisc_StreamErrorMessage), internalException);
 #endregion
@@ -1157,7 +1141,7 @@ namespace Microsoft.Data.Common
 
 #region IDbCommand
         // IDbCommand.CommandType
-        static internal ArgumentOutOfRangeException InvalidCommandType(CommandType value)
+        internal static ArgumentOutOfRangeException InvalidCommandType(CommandType value)
         {
 #if DEBUG
             switch (value)
@@ -1442,16 +1426,16 @@ namespace Microsoft.Data.Common
         internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));
 
-        static internal InvalidOperationException InvalidMixedUsageOfAccessTokenAndUserIDPassword()
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndUserIDPassword()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword));
 
-        static internal InvalidOperationException InvalidMixedUsageOfAccessTokenAndAuthentication()
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndAuthentication()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndAuthentication));
 
-        static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
+        internal static Exception InvalidMixedUsageOfCredentialAndAccessToken()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
 
-        static internal Exception InvalidMixedUsageOfAccessTokenAndTokenCallback()
+        internal static Exception InvalidMixedUsageOfAccessTokenAndTokenCallback()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback));
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndAuthentication()

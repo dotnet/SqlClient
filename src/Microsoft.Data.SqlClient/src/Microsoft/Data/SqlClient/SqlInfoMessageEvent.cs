@@ -29,6 +29,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*' />
         // MDAC 68482
-        override public string ToString() => Message;
+        public override string ToString() => Message;
     }
 }
