@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.Tests.Common;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -42,9 +43,10 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
-        #endif
-        #if NET && _WINDOWS
-        switchesHelper.UseManagedNetworking = null;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            switchesHelper.UseManagedNetworking = null;
+        }
         #endif
         #if NETFRAMEWORK
         switchesHelper.DisableTnirByDefault = null;
@@ -66,9 +68,10 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
-        #endif
-        #if NET && _WINDOWS
-        Assert.False(switchesHelper.UseManagedNetworking);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Assert.False(switchesHelper.UseManagedNetworking);
+        }
         #endif
         #if NETFRAMEWORK
         Assert.False(switchesHelper.DisableTnirByDefault);
