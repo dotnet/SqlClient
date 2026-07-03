@@ -94,19 +94,10 @@ public class SNICloseDeadlockTest
         }
     }
 
-    [Fact]
-    public void CloseConnection_WithPendingAsyncRead_DoesNotDeadlock()
-    {
-        RunPendingAsyncReadCloseScenario(disposeInsteadOfClose: false);
-    }
-
-    [Fact]
-    public void DisposeConnection_WithPendingAsyncRead_DoesNotDeadlock()
-    {
-        RunPendingAsyncReadCloseScenario(disposeInsteadOfClose: true);
-    }
-
-    private static void RunPendingAsyncReadCloseScenario(bool disposeInsteadOfClose)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CloseOrDispose_WithPendingAsyncRead_DoesNotDeadlock(bool disposeInsteadOfClose)
     {
         using ManualResetEventSlim batchReceived = new(false);
         using ManualResetEventSlim releaseResponse = new(false);
@@ -207,18 +198,6 @@ public class SNICloseDeadlockTest
             "This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542).");
     }
 
-    [Fact]
-    public void CloseConnection_DuringPreLoginHandshake_DoesNotDeadlock()
-    {
-        RunPendingHandshakeCloseScenario(disposeInsteadOfClose: false);
-    }
-
-    [Fact]
-    public void DisposeConnection_DuringPreLoginHandshake_DoesNotDeadlock()
-    {
-        RunPendingHandshakeCloseScenario(disposeInsteadOfClose: true);
-    }
-
     /// <summary>
     /// Reproduces the ICM scenario more faithfully: the connection is torn down
     /// while it is still in the middle of connection establishment (the
@@ -232,7 +211,10 @@ public class SNICloseDeadlockTest
     /// handshake-phase close path manifests as the wait timing out.
     /// </para>
     /// </summary>
-    private static void RunPendingHandshakeCloseScenario(bool disposeInsteadOfClose)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CloseOrDispose_DuringPreLoginHandshake_DoesNotDeadlock(bool disposeInsteadOfClose)
     {
         using ManualResetEventSlim clientConnected = new(false);
         using ManualResetEventSlim releaseServer = new(false);
@@ -394,18 +376,6 @@ public class SNICloseDeadlockTest
         0x01,                               // ENCRYPTION = ENCRYPT_ON
     };
 
-    [Fact]
-    public void CloseConnection_DuringTlsHandshake_DoesNotDeadlock()
-    {
-        RunPendingTlsHandshakeCloseScenario(disposeInsteadOfClose: false);
-    }
-
-    [Fact]
-    public void DisposeConnection_DuringTlsHandshake_DoesNotDeadlock()
-    {
-        RunPendingTlsHandshakeCloseScenario(disposeInsteadOfClose: true);
-    }
-
     /// <summary>
     /// Reproduces the ICM scenario faithfully: the connection is torn down while
     /// the client is inside the TLS handshake over TDS, with an SNI read pending
@@ -423,7 +393,10 @@ public class SNICloseDeadlockTest
     /// manifests as the wait timing out.
     /// </para>
     /// </summary>
-    private static void RunPendingTlsHandshakeCloseScenario(bool disposeInsteadOfClose)
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CloseOrDispose_DuringTlsHandshake_DoesNotDeadlock(bool disposeInsteadOfClose)
     {
         using ManualResetEventSlim handshakeInFlight = new(false);
         using ManualResetEventSlim releaseServer = new(false);
