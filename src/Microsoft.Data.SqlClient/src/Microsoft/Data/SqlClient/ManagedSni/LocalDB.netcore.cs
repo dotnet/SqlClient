@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal static string GetLocalDBConnectionString(string localDbInstance)
         {
             // LocalDB is not available for Unix and hence it cannot be supported.
-            if (!ADP.IsWindows)
+            if (!OsConstants.IsWindows)
             {
                 throw new PlatformNotSupportedException(Strings.LocalDBNotSupported);
             }

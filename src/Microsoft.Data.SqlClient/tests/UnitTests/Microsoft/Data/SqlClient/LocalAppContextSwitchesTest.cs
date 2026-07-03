@@ -65,7 +65,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
-        Assert.Equal(!ADP.IsWindows, switchesHelper.UseManagedNetworking);
+        Assert.Equal(!OsConstants.IsWindows, switchesHelper.UseManagedNetworking);
         #endif
         #if NETFRAMEWORK
         Assert.False(switchesHelper.DisableTnirByDefault);
