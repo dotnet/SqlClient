@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.Tests.Common;
+#if NET
 using System.Runtime.InteropServices;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;

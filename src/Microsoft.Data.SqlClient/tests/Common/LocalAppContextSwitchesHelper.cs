@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Reflection;
+#if NET
 using System.Runtime.InteropServices;
+#endif
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
@@ -374,8 +376,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     /// <remarks>
     /// The underlying s_useManagedNetworking field only exists in the SqlClient
-    /// assembly when it is built for .NET on Windows. Callers must only use this
-    /// property when running on Windows (see
+    /// assembly when it is built for .NET on Windows. The getter reads the
+    /// public LocalAppContextSwitches.UseManagedNetworking property, which
+    /// exists on all platforms and is safe to read anywhere. Only the setter
+    /// relies on the s_useManagedNetworking field, so callers must set this
+    /// property only when running on Windows (see
     /// RuntimeInformation.IsOSPlatform(OSPlatform.Windows)); otherwise the
     /// reflection lookup of the field will fail.
     /// </remarks>
