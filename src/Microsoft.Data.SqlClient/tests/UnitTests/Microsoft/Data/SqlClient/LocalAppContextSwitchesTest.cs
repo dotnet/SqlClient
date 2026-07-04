@@ -72,6 +72,12 @@ public class LocalAppContextSwitchesTest
         {
             Assert.False(switchesHelper.UseManagedNetworking);
         }
+        else
+        {
+            // On .NET Unix, native SNI is unavailable, so UseManagedNetworking
+            // is a constant true.
+            Assert.True(switchesHelper.UseManagedNetworking);
+        }
         #endif
         #if NETFRAMEWORK
         Assert.False(switchesHelper.DisableTnirByDefault);
