@@ -8,11 +8,11 @@ using Microsoft.Win32.SafeHandles;
 
 namespace Interop.Windows.Handles
 {
-    sealed internal class SafeLibraryHandle : SafeHandleZeroOrMinusOneIsInvalid
+    internal sealed class SafeLibraryHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         internal SafeLibraryHandle() : base(true) { }
 
-        override protected bool ReleaseHandle()
+        protected override bool ReleaseHandle()
         {
             return Kernel32.Kernel32.FreeLibrary(handle);
         }

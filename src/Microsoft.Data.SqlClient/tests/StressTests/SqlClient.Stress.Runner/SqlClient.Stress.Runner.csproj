@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
 
     <ProjectReference Include="$(StressRoot)/IMonitorLoader/IMonitorLoader.csproj" />

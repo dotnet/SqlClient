@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// <para> Implements a cache of query parameter metadata that is used to avoid the extra roundtrip to the server for every execution of the same query.</para>
     /// </summary>
-    sealed internal class SqlQueryMetadataCache
+    internal sealed class SqlQueryMetadataCache
     {
         private const int CacheSize = 2000; // Cache size in number of entries.
         private const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
@@ -123,29 +123,29 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlSecurityUtility.DecryptSymmetricKey(cipherMdCopy, sqlCommand.Connection, sqlCommand);
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (ex is SqlException or ArgumentException)
                     {
                         // Invalidate the cache entry.
                         InvalidateCacheEntry(sqlCommand);
 
-                        // If we get one of the expected exceptions, just fail the cache lookup, otherwise throw.
-                        if (ex is SqlException or ArgumentException)
+                        foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
                         {
-                            foreach (SqlParameter paramToCleanup in sqlCommand.Parameters)
-                            {
-                                paramToCleanup.CipherMetadata = null;
-                            }
-
-                            IncrementCacheMisses();
-                            return false;
+                            paramToCleanup.CipherMetadata = null;
                         }
 
+                        IncrementCacheMisses();
+                        return false;
+                    }
+                    catch (Exception)
+                    {
+                        // Invalidate the cache entry.
+                        InvalidateCacheEntry(sqlCommand);
                         throw;
                     }
                 }
             }
 
-            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = 
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys =
                 _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey);
             if (enclaveKeys is not null)
             {

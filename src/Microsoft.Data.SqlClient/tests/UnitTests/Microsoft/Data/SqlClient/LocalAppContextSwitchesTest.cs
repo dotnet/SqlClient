@@ -1,8 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -18,25 +18,60 @@ public class LocalAppContextSwitchesTest
     [Fact]
     public void TestDefaultAppContextSwitchValues()
     {
-        Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
-        Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
-        Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
-        Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
-        Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
-        Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
-        Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
-        Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
-        Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
-        Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
-        Assert.False(LocalAppContextSwitches.EnableMultiSubnetFailoverByDefault);
+        // LocalAppContextSwitches caches each switch value on first access for
+        // the lifetime of the process.  Other tests running in parallel may
+        // already have triggered caching, or may use LocalAppContextSwitchesHelper
+        // to mutate the cached fields via reflection.  To make this test
+        // deterministic, acquire the helper (which serializes against every
+        // other helper user via a process-wide semaphore) and reset each
+        // cached field to None so the properties re-read from AppContext.
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+
+        switchesHelper.EnableMultiSubnetFailoverByDefault = null;
+        switchesHelper.IgnoreServerProvidedFailoverPartner = null;
+        switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
+        switchesHelper.LegacyRowVersionNullBehavior = null;
+        switchesHelper.LegacyVarTimeZeroScaleBehaviour = null;
+        switchesHelper.MakeReadAsyncBlocking = null;
+        switchesHelper.SuppressInsecureTlsWarning = null;
+        switchesHelper.TruncateScaledDecimal = null;
+        switchesHelper.UseCompatibilityAsyncBehaviour = null;
+        switchesHelper.UseCompatibilityProcessSni = null;
+        switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseLegacyIdleTimeoutBehavior = null;
+        switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
-        Assert.False(LocalAppContextSwitches.GlobalizationInvariantMode);
+        switchesHelper.GlobalizationInvariantMode = null;
         #endif
         #if NET && _WINDOWS
-        Assert.False(LocalAppContextSwitches.UseManagedNetworking);
+        switchesHelper.UseManagedNetworking = null;
         #endif
         #if NETFRAMEWORK
-        Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
+        switchesHelper.DisableTnirByDefault = null;
+        #endif
+
+        Assert.False(switchesHelper.LegacyRowVersionNullBehavior);
+        Assert.False(switchesHelper.SuppressInsecureTlsWarning);
+        Assert.False(switchesHelper.MakeReadAsyncBlocking);
+        Assert.True(switchesHelper.UseMinimumLoginTimeout);
+        Assert.True(switchesHelper.LegacyVarTimeZeroScaleBehaviour);
+        Assert.True(switchesHelper.UseCompatibilityProcessSni);
+        Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
+        Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
+        Assert.False(switchesHelper.UseConnectionPoolV2);
+        Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
+        Assert.False(switchesHelper.TruncateScaledDecimal);
+        Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
+        Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
+        Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        #if NET
+        Assert.False(switchesHelper.GlobalizationInvariantMode);
+        #endif
+        #if NET && _WINDOWS
+        Assert.False(switchesHelper.UseManagedNetworking);
+        #endif
+        #if NETFRAMEWORK
+        Assert.False(switchesHelper.DisableTnirByDefault);
         #endif
     }
 }

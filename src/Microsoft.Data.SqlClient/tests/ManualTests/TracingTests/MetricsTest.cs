@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class MetricsTest
     {
 #if NETFRAMEWORK
@@ -177,6 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TransactedConnectionPool_VerifyActiveConnectionCounters()
         {

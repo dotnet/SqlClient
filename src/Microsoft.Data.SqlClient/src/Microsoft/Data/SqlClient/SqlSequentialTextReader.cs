@@ -13,7 +13,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlSequentialTextReader : System.IO.TextReader
+    internal sealed class SqlSequentialTextReader : System.IO.TextReader
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
         private readonly int _columnIndex;       // The index of out column in the table
@@ -275,8 +275,15 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                // Set the textreader as closed
-                SetClosed();
+                if (!IsClosed)
+                {
+                    // Set the textreader as closed
+                    SetClosed();
+                }
+                // Safe to call unconditionally: the IsClosed guard above ensures SetClosed()
+                // (and thus Cancel()) runs at most once, and CancellationTokenSource.Dispose()
+                // is idempotent, so repeated Dispose() calls do not throw.
+                _disposalTokenSource.Dispose();
             }
 
             base.Dispose(disposing);
@@ -288,6 +295,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal void SetClosed()
         {
+            // Idempotent: once closed, _reader is null and _disposalTokenSource may already
+            // have been disposed by Dispose(). Calling Cancel() again would throw
+            // ObjectDisposedException, so bail out. SqlDataReader can invoke SetClosed()
+            // after the consumer has already disposed the text reader.
+            if (IsClosed)
+            {
+                return;
+            }
+
             _disposalTokenSource.Cancel();
             _reader = null;
             _peekedChar = -1;
@@ -401,7 +417,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _leftOverByteBufferUsed = inBufferCount - bytesUsed;
                 _leftOverBytes = ArrayPool<byte>.Shared.Rent(_leftOverByteBufferUsed);
-                
+
                 Buffer.BlockCopy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverByteBufferUsed);
             }
             else
@@ -478,7 +494,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlUnicodeEncoding : UnicodeEncoding
+    internal sealed class SqlUnicodeEncoding : UnicodeEncoding
     {
         private static readonly SqlUnicodeEncoding s_singletonEncoding = new();
 
@@ -501,7 +517,7 @@ namespace Microsoft.Data.SqlClient
             get { return s_singletonEncoding; }
         }
 
-        sealed private class SqlUnicodeDecoder : Decoder
+        private sealed class SqlUnicodeDecoder : Decoder
         {
             public override int GetCharCount(byte[] bytes, int index, int count)
             {

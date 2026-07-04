@@ -23,8 +23,10 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
-using Microsoft.SqlServer.Server;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
+using Microsoft.SqlServer.Server;
+
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Security.Permissions;
@@ -163,19 +165,19 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl))]
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled))]
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         [DefaultValue(null)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.TCE_SqlConnection_TrustedColumnMasterKeyPaths))]
         public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
 
@@ -265,7 +267,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider); 
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         /// <summary>
@@ -508,7 +510,7 @@ namespace Microsoft.Data.SqlClient
         //  connect the parser to the object.
         //  if there is no parser at this time we need to connect it after creation.
         [DefaultValue(false)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.SqlConnection_StatisticsEnabled))]
         public bool StatisticsEnabled
         {
@@ -642,9 +644,9 @@ namespace Microsoft.Data.SqlClient
 #pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
         [RecommendedAsConfigurable(true)]
 #pragma warning restore 618
-        [SettingsBindableAttribute(true)]
+        [SettingsBindable(true)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategoryAttribute(nameof(Strings.DataCategory_Data))]
+        [ResCategory(nameof(Strings.DataCategory_Data))]
         [ResDescription(nameof(Strings.SqlConnection_ConnectionString))]
         public override string ConnectionString
         {
@@ -1190,7 +1192,7 @@ namespace Microsoft.Data.SqlClient
         //
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*' />
-        [ResCategoryAttribute(nameof(Strings.DataCategory_InfoMessage))]
+        [ResCategory(nameof(Strings.DataCategory_InfoMessage))]
         [ResDescription(nameof(Strings.DbConnection_InfoMessage))]
 #if NET
         public event SqlInfoMessageEventHandler InfoMessage;
@@ -1221,8 +1223,6 @@ namespace Microsoft.Data.SqlClient
             get => _reconnectCount;
         }
 
-        internal bool ForceNewConnection { get; set; }
-
 #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OnStateChange/*' />
         protected override void OnStateChange(StateChangeEventArgs stateChange)
@@ -1238,14 +1238,14 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         //
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransaction2/*' />
-        new public SqlTransaction BeginTransaction()
+        public new SqlTransaction BeginTransaction()
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(IsolationLevel.Unspecified, null);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*' />
-        new public SqlTransaction BeginTransaction(IsolationLevel iso)
+        public new SqlTransaction BeginTransaction(IsolationLevel iso)
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(iso, null);
@@ -1263,7 +1263,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*' />
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
-        override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+        protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             using (SqlClientEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
@@ -1320,7 +1320,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
-            
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1396,7 +1396,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 Exception e = null;
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1404,10 +1404,18 @@ namespace Microsoft.Data.SqlClient
                     Task reconnectTask = _currentReconnectionTask;
                     if (reconnectTask != null && !reconnectTask.IsCompleted)
                     {
-                        CancellationTokenSource cts = _reconnectionCancellationSource;
-                        if (cts != null)
+                        // Only request cancellation here. ReconnectAsync still owns the
+                        // CancellationTokenSource and disposes it in its finally block once it
+                        // has stopped using the token; disposing it here while the reconnect
+                        // task is still running could surface ObjectDisposedException.
+                        try
                         {
-                            cts.Cancel();
+                            _reconnectionCancellationSource?.Cancel();
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            // ReconnectAsync's finally block disposed the source concurrently;
+                            // the reconnect is already completing, so there is nothing to cancel.
                         }
                         AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                         if (State != ConnectionState.Open)
@@ -1459,7 +1467,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*' />
-        new public SqlCommand CreateCommand()
+        public new SqlCommand CreateCommand()
         {
             return new SqlCommand(null, this);
         }
@@ -1587,8 +1595,8 @@ namespace Microsoft.Data.SqlClient
         public override void Open() =>
             Open(SqlConnectionOverrides.None);
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides)
+            => RetryLogicProvider.Execute(this, () => TryOpen(retry, forceNewConnection, overrides));
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1608,7 +1616,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, false, overrides) : TryOpen(null, false, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1649,6 +1657,7 @@ namespace Microsoft.Data.SqlClient
 
         private async Task ReconnectAsync(int timeout)
         {
+            CancellationTokenSource cts = new CancellationTokenSource();
             try
             {
                 long commandTimeoutExpiration = 0;
@@ -1656,7 +1665,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     commandTimeoutExpiration = ADP.TimerCurrent() + ADP.TimerFromSeconds(timeout);
                 }
-                CancellationTokenSource cts = new CancellationTokenSource();
+
+                // Calling Close will request a cancellation on this token source, cancelling the reconnection.
+                // Ideally, however, the reconnect should be directly awaited, making it impossible to have a
+                // concurrent call to Close.
+                // TODO: Note that we do not respect the command timeout in this context. Instead, the reconnect gets
+                // a full connect timeout. Investigate if this should be changed.
                 _reconnectionCancellationSource = cts;
                 CancellationToken ctoken = cts.Token;
                 int retryCount = _connectRetryCount; // take a snapshot: could be changed by modifying the connection string
@@ -1674,8 +1688,15 @@ namespace Microsoft.Data.SqlClient
 #endif
                         try
                         {
-                            ForceNewConnection = true;
-                            await OpenAsync(ctoken).ConfigureAwait(false);
+                            if (IsProviderRetriable)
+                            {
+                                await InternalOpenWithRetryAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                await InternalOpenAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
+                            }
+
                             // On success, increment the reconnect count - we don't really care if it rolls over since it is approx.
                             _reconnectCount = unchecked(_reconnectCount + 1);
 #if DEBUG
@@ -1687,7 +1708,6 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                             _impersonateIdentity = null;
 #endif
-                            ForceNewConnection = false;
                         }
 
                         SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Reconnection succeeded. Client Connection Id {0} -> {1}", _originalConnectionId, ClientConnectionId);
@@ -1717,6 +1737,8 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+                _reconnectionCancellationSource = null;
+                cts.Dispose();
                 _recoverySessionData = null;
                 _suppressStateChangeForReconnection = false;
             }
@@ -1889,19 +1911,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
         public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
             => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(overrides, cancellationToken) :
-                InternalOpenAsync(overrides, cancellationToken);
+                InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken) :
+                InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
 
-        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
 
-        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -1943,7 +1965,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion, overrides);
+                        completed = TryOpen(completion, forceNewConnection, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1963,7 +1985,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(s_openAsyncCancel, completion);
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration, forceNewConnection);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2076,14 +2098,16 @@ namespace Microsoft.Data.SqlClient
             private TaskCompletionSource<object> _result;
             private SqlConnectionOverrides _overrides;
             private CancellationTokenRegistration _registration;
+            private bool _forceNewConnection;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration, bool forceNewConnection)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
                 _overrides = overrides;
                 _registration = registration;
+                _forceNewConnection = forceNewConnection;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
 
@@ -2118,7 +2142,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry, _overrides);
+                                result = _parent.TryOpen(_retry, _forceNewConnection, _overrides);
                             }
                             if (result)
                             {
@@ -2164,7 +2188,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
+        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
             bool result = false;
 
@@ -2194,13 +2218,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_impersonateIdentity.User == identity.User)
                     {
-                        result = TryOpenInner(retry);
+                        result = TryOpenInner(retry, forceNewConnection);
                     }
                     else
                     {
                         using (WindowsImpersonationContext context = _impersonateIdentity.Impersonate())
                         {
-                            result = TryOpenInner(retry);
+                            result = TryOpenInner(retry, forceNewConnection);
                         }
                     }
                 }
@@ -2215,34 +2239,70 @@ namespace Microsoft.Data.SqlClient
                 {
                     _lastIdentity = null;
                 }
-                result = TryOpenInner(retry);
+                result = TryOpenInner(retry, forceNewConnection);
             }
 #else
-            result = TryOpenInner(retry);
+            result = TryOpenInner(retry, forceNewConnection);
 #endif
 
             return result;
         }
 
-        private bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry)
+        /// <summary>
+        /// Completes the inner open/replace operation and initializes parser state for the active inner connection.
+        /// </summary>
+        /// <param name="retry">Retry continuation used by async open paths.</param>
+        /// <param name="forceNewConnection">Provide true to forcibly overwrite the existing connection. Provide false if connecting for the first time.</param>
+        /// <returns><see langword="true"/> when open initialization completed synchronously; otherwise <see langword="false"/>.</returns>
+        /// <remarks>
+        /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
+        /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
+        /// 
+        /// forceNewConnection may only be true when the connection is already open (or was open) and needs to be replaced. If the connection has never
+        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
+        /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
+        /// transitions and subclasses for more details.
+        /// </remarks>
+        internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection)
         {
-            if (ForceNewConnection)
+            // Create a single TimeoutTimer that represents the overall connection-open budget for this
+            // attempt. The timer is threaded through every layer (inner connection state transitions,
+            // connection factory, pool wait, physical connection establishment) so that all of those
+            // costs are charged against the same budget. This prevents the cumulative wait from exceeding
+            // the configured ConnectTimeout. A fresh timer is created per TryOpen call so that each
+            // retry attempt gets its own budget, matching the existing behavior.
+            // Note: TimeoutTimer treats 0 seconds as infinite timeout, which matches ConnectTimeout=0 semantics.
+            TimeoutTimer timeout = TimeoutTimer.StartNew(
+                TimeSpan.FromSeconds(ConnectionOptions?.ConnectTimeout ?? ADP.DefaultConnectionTimeout));
+
+            if (forceNewConnection)
             {
-                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry))
+                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, timeout))
                 {
                     return false;
                 }
             }
             else
             {
-                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry))
+                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, timeout))
                 {
                     return false;
                 }
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            var tdsInnerConnection = (SqlConnectionInternal)InnerConnection;
+            // Capture InnerConnection once into a local to avoid a TOCTOU race: another thread
+            // concurrently calling Open() on the same SqlConnection instance can change
+            // _innerConnection to DbConnectionClosedConnecting between the TryOpenConnection()
+            // call above and the cast below. Without this local capture the second read of
+            // InnerConnection may return DbConnectionClosedConnecting, which is not assignable
+            // to SqlConnectionInternal and would produce an opaque InvalidCastException.
+            // See GitHub issue #3314.
+            var innerConnection = InnerConnection;
+            if (innerConnection is not SqlConnectionInternal tdsInnerConnection)
+            {
+                throw ADP.ConnectionAlreadyOpen(innerConnection.State);
+            }
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
 
@@ -2375,11 +2435,32 @@ namespace Microsoft.Data.SqlClient
 
         // ClosedBusy->Closed (never opened)
         // Connecting->Closed (exception during open, return to previous closed state)
+        /// <summary>
+        /// Finalizes a non-evented transition from a transitional inner state to a stable closed state.
+        /// </summary>
+        /// <param name="to">The target inner connection state object.</param>
+        /// <remarks>
+        /// This path is restricted to transition sources that intentionally serialize external callers while state is
+        /// being updated. A compare-and-swap prevents stale writers from overwriting a newer inner connection state.
+        /// </remarks>
         internal void SetInnerConnectionTo(DbConnectionInternal to)
         {
             Debug.Assert(_innerConnection != null, "null InnerConnection");
             Debug.Assert(to != null, "to null InnerConnection");
-            _innerConnection = to;
+
+            DbConnectionInternal originalInnerConnection = _innerConnection;
+            if (originalInnerConnection != DbConnectionClosedBusy.SingletonInstance &&
+                originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
+            {
+                // SetInnerConnectionTo is only valid while leaving a known transitional state.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.InvalidSourceStateForSetInnerConnectionTo);
+            }
+
+            if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
+            {
+                // Reject stale writers when another thread already advanced the state machine.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.FailedToCommitSetInnerConnectionTo);
+            }
         }
 
         // Closed->Connecting: prevent set_ConnectionString during Open
@@ -2397,13 +2478,36 @@ namespace Microsoft.Data.SqlClient
 
         // OpenBusy->Closed (previously opened)
         // Connecting->Open
+        /// <summary>
+        /// Finalizes an evented state transition from a transitional inner state to a stable target state.
+        /// </summary>
+        /// <param name="to">The target inner connection state object.</param>
+        /// <remarks>
+        /// This path is intentionally restricted to the expected transition sources (<see cref="DbConnectionOpenBusy"/>
+        /// and <see cref="DbConnectionClosedConnecting"/>). A compare-and-swap enforces that the transition commits only
+        /// if no concurrent writer has already changed <see cref="_innerConnection"/>.
+        /// </remarks>
         internal void SetInnerConnectionEvent(DbConnectionInternal to)
         {
             Debug.Assert(_innerConnection != null, "null InnerConnection");
             Debug.Assert(to != null, "to null InnerConnection");
 
-            ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
+            DbConnectionInternal originalInnerConnection = _innerConnection;
+            if (originalInnerConnection != DbConnectionOpenBusy.SingletonInstance &&
+                originalInnerConnection != DbConnectionClosedConnecting.SingletonInstance)
+            {
+                // Evented transitions are valid only from the two expected transitional sources.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.InvalidSourceStateForSetInnerConnectionEvent);
+            }
+
+            ConnectionState originalState = originalInnerConnection.State & ConnectionState.Open;
             ConnectionState currentState = to.State & ConnectionState.Open;
+
+            if (originalInnerConnection != Interlocked.CompareExchange(ref _innerConnection, to, originalInnerConnection))
+            {
+                // Ensure event and close-count side effects are tied to a committed transition only.
+                throw ADP.InternalConnectionError(ADP.ConnectionError.FailedToCommitSetInnerConnectionEvent);
+            }
 
             if ((originalState != currentState) && (ConnectionState.Closed == currentState))
             {
@@ -2412,8 +2516,6 @@ namespace Microsoft.Data.SqlClient
                     _closeCount++;
                 }
             }
-
-            _innerConnection = to;
 
             if (ConnectionState.Closed == originalState && ConnectionState.Open == currentState)
             {
@@ -2541,9 +2643,10 @@ namespace Microsoft.Data.SqlClient
                 flag = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
                 if (flag)
                 {
+                    // Publish option/pool metadata before releasing the busy state back to a stable closed state.
                     _userConnectionOptions = connectionOptions;
                     _poolGroup = poolGroup;
-                    _innerConnection = DbConnectionClosedNeverOpened.SingletonInstance;
+                    SetInnerConnectionTo(DbConnectionClosedNeverOpened.SingletonInstance);
                 }
             }
             if (!flag)
@@ -2599,13 +2702,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     handler(this, imevent);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     ADP.TraceExceptionWithoutRethrow(e);
                 }
             }
@@ -2729,6 +2827,7 @@ namespace Microsoft.Data.SqlClient
                 con = new SqlConnectionInternal(
                     identity: null,
                     connectionOptions,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectionOptions.ConnectTimeout)),
                     credential,
                     providerInfo: null,
                     newPassword,

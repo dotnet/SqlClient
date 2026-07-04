@@ -26,6 +26,16 @@ Use [build.proj](build.proj) from the repository root:
 dotnet build build.proj -t:<test_target> [optional_parameters]
 ```
 
+Since `build.proj` is the only project file in the repo root, it can be omitted when building from
+the root:
+
+```bash
+dotnet build -t:<test_target> [optional_parameters]
+```
+
+The command-line examples below will assume that `build.proj` is selected by default and will omit
+it from the `dotnet build` command.
+
 Test targets build the projects they depend on, so a separate build step is not required for normal test runs.
 
 ## Test Targets
@@ -45,55 +55,55 @@ Test targets build the projects they depend on, so a separate build step is not 
 Run the SqlClient unit tests:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientUnit
+dotnet build -t:TestSqlClientUnit
 ```
 
 Run the SqlClient functional tests:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientFunctional
+dotnet build -t:TestSqlClientFunctional
 ```
 
 Run the SqlClient manual tests:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual
+dotnet build -t:TestSqlClientManual
 ```
 
 Run only manual test set 2:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run manual test sets 1 and 3:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual -p:TestSet=13
+dotnet build -t:TestSqlClientManual -p:TestSet=13
 ```
 
 Run Always Encrypted manual tests:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual -p:TestSet=AE
+dotnet build -t:TestSqlClientManual -p:TestSet=AE
 ```
 
 Run a specific target framework:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
 ```
 
 Run functional tests against an x86 `dotnet` installation:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+dotnet build -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Azure extension tests, including `interactive` tests, while still excluding tests marked `failing` or `flaky`:
 
 ```bash
-dotnet build build.proj -t:TestAzure -p:TestFilters=category!=failing
+dotnet build -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 ## Test Parameters
@@ -124,15 +134,22 @@ The most commonly used test parameters are:
 
 Examples:
 
+Run a single test by fully-qualified name:
+
 ```bash
-# Run a single test by fully-qualified name.
-dotnet build build.proj -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+dotnet build -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+```
 
-# Run only flaky tests while investigating quarantine failures.
-dotnet build build.proj -t:TestSqlClientManual -p:TestFilters=category=flaky
+Run only flaky tests while investigating quarantine failures:
 
-# Disable the default filter.
-dotnet build build.proj -t:TestSqlClientFunctional -p:TestFilters=none
+```bash
+dotnet build -t:TestSqlClientManual -p:TestFilters=category=flaky
+```
+
+Disable the default filter:
+
+```bash
+dotnet build -t:TestSqlClientFunctional -p:TestFilters=none
 ```
 
 When passing filter expressions that contain shell-sensitive characters such as `&`, quote or escape the value as
@@ -178,22 +195,22 @@ conditional tests are skipped.
 ## Manual Test Configuration
 
 Edit the source configuration file at `src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/
-config.json`. The test utilities project copies that file to the test output directory, where the manual tests load it
+config.jsonc`. The test utilities project copies that file to the test output directory, where the manual tests load it
 by default.
 
 The template file is:
 
-[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json)
+[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc)
 
-`config.json` is git-ignored. If it does not exist, the test utilities project copies `config.default.json` to
-`config.json` before compile. You can also create it manually:
+`config.jsonc` is git-ignored. If it does not exist, the test utilities project copies `config.default.jsonc` to
+`config.jsonc` before compile. You can also create it manually:
 
 ```bash
-cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json \
-  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.json
+cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc \
+  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.jsonc
 ```
 
-Update `config.json` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
+Update `config.jsonc` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
 
 ```jsonc
 {
@@ -213,17 +230,17 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 }
 ```
 
-You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
+You can override the config file path with the `TEST_MDS_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.json dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
+TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
-$env:MDS_TEST_CONFIG = "C:\path\to\config.json"
-dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
+$env:TEST_MDS_CONFIG = "C:\path\to\config.jsonc"
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 ## Configuration Properties
@@ -246,7 +263,6 @@ dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
 | `SupportsIntegratedSecurity`     | Whether the user running tests has integrated-security access to the target SQL Server.     | `true` or `false`.                                                                     |
 | `LocalDbAppName`                 | Optional LocalDB instance name. Empty disables LocalDB testing.                             | `MSSQLLocalDB` or another local instance.                                              |
 | `LocalDbSharedInstanceName`      | Optional shared LocalDB instance name.                                                      | Used only when testing shared LocalDB.                                                 |
-| `SupportsFileStream`             | Whether FileStream tests are supported by the target.                                       | `true` or `false`.                                                                     |
 | `FileStreamDirectory`            | Directory used for FileStream database setup.                                               | Use an escaped absolute path in JSON.                                                  |
 | `UseManagedSNIOnWindows`         | Enables Managed SNI on Windows test coverage.                                               | `true` or `false`.                                                                     |
 | `DNSCachingConnString`           | Optional connection string for DNS caching tests.                                           | Used with DNS caching server settings.                                                 |
@@ -254,7 +270,6 @@ dotnet build build.proj -t:TestSqlClientManual -p:TestSet=2
 | `DNSCachingServerTR`             | Optional DNS caching tenant-ring server.                                                    | Feature-specific tests only.                                                           |
 | `IsDNSCachingSupportedCR`        | Enables DNS caching control-ring tests.                                                     | `true` or `false`.                                                                     |
 | `IsDNSCachingSupportedTR`        | Enables DNS caching tenant-ring tests.                                                      | `true` or `false`.                                                                     |
-| `IsAzureSynapse`                 | Marks the target as Azure Synapse.                                                          | Some SQL Server-specific tests are skipped when `true`.                                |
 | `EnclaveAzureDatabaseConnString` | Optional Azure SQL database connection string for enclave tests.                            | Feature-specific tests only.                                                           |
 | `ManagedIdentitySupported`       | Whether managed identity tests should run.                                                  | Defaults to `true`. Set `false` if unavailable.                                        |
 | `UserManagedIdentityClientId`    | Optional client ID for user-assigned managed identity tests.                                | Feature-specific tests only.                                                           |
@@ -280,26 +295,27 @@ If `TestSet` is omitted, all sets are compiled and run. You can combine sets by 
 
 ## Results and Diagnostics
 
-Test results are written to `test_results` by default. Override the location with `TestResultsFolderPath`:
+Test results are written to the `test_results` directory by default. Override the location with
+`TestResultsFolderPath`:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
+dotnet build -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
 ```
 
 Hang blame collection is enabled by default with a `10m` timeout. To increase the timeout:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual -p:TestBlameTimeout=30m
+dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=30m
 ```
 
 To disable hang blame collection:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientManual -p:TestBlameTimeout=0
+dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=0
 ```
 
 Code coverage is enabled by default. To disable it for a faster local run:
 
 ```bash
-dotnet build build.proj -t:TestSqlClientUnit -p:TestCodeCoverage=false
+dotnet build -t:TestSqlClientUnit -p:TestCodeCoverage=false
 ```

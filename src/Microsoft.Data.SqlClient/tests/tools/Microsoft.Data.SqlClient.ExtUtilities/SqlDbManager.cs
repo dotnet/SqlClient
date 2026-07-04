@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         private const string DB_Northwind = "Northwind";
         private const string DB_Master = "master";
         private const string NorthWindScriptPath = @"../../../../../tools/testsql/createNorthwindDb.sql";
-        private const string ConfigPath = @"../Microsoft.Data.SqlClient.TestUtilities/config.json";
+        private const string ConfigPath = @"../Microsoft.Data.SqlClient.TestUtilities/config.jsonc";
 
         private const string TCPConnectionString = "TCPConnectionString";
         private const string NPConnectionString = "NPConnectionString";
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                                     CreateDatabase(dbName, context);
                                     Console.WriteLine($"Database [{dbName}] created successfully in {builder.DataSource}");
                                 }
-                                // Update Config.json accordingly
+                                // Update config.jsonc accordingly
                                 builder.InitialCatalog = dbName;
                                 UpdateConfig(activeConnString.Key, builder);
                             }
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 }
                 if (args[0] == "CreateDatabase")
                 {
-                    // Update config.json with Initial Catalog = <dbName> for "Active Connection Strings"
+                    // Update config.jsonc with Initial Catalog = <dbName> for "Active Connection Strings"
                     Config.UpdateConfig(s_configJson, ConfigPath);
                 }
             }

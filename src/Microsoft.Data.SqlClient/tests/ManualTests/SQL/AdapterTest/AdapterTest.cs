@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -15,6 +15,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class AdapterTest
     {
         private char[] _appendNewLineIndentBuffer = new char[0];
@@ -107,6 +108,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        // https://github.com/dotnet/SqlClient/issues/4135
+        [Trait("Category", "flaky")]
         public void FillShouldAllowRetryLogicProviderToBeInvoked()
         {
             int maxRetries = 3;

@@ -13,10 +13,10 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -290,15 +290,8 @@ namespace Microsoft.Data.SqlClient
                         isRetry,
                         nameof(BeginExecuteReader));
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
-                    if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                    {
-                        // If not catchable - the connection has already been caught and doomed in
-                        // RunExecuteReader.
-                        throw;
-                    }
-
                     // For async, RunExecuteReader will never put the stateObj back into the pool,
                     // so, do so now.
                     ReliablePutStateObject();
@@ -307,6 +300,7 @@ namespace Microsoft.Data.SqlClient
                         throw;
                     }
                 }
+                // Allow other exceptions to bubble up as-is.
 
                 if (writeTask is not null)
                 {
@@ -442,7 +436,6 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Can we return the RPC here like BuildExecute does?
         private void BuildExecuteSql(
             CommandBehavior behavior,
-            string commandText,
             SqlParameterCollection parameters,
             ref _SqlRPC rpc)
         {
@@ -463,13 +456,13 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam;
 
             // @batch_text
-            commandText ??= GetCommandText(behavior);
+            string text = GetCommandText(behavior);
             sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = (commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+            sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = commandText.Length;
-            sqlParam.Value = commandText;
+            sqlParam.Size = text.Length;
+            sqlParam.Value = text;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_params
@@ -848,28 +841,25 @@ namespace Microsoft.Data.SqlClient
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
+                    if (_inPrepare)
                     {
-                        if (_inPrepare)
-                        {
-                            // The flag is expected to be reset by OnReturnValue. We should receive
-                            // the handle unless command execution failed. If it fails, move back
-                            // to pending state.
-                            _inPrepare = false;                  // reset the flag
-                            IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
-                            _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
-                        }
+                        // The flag is expected to be reset by OnReturnValue. We should receive
+                        // the handle unless command execution failed. If it fails, move back
+                        // to pending state.
+                        _inPrepare = false;                  // reset the flag
+                        IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
+                        _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
+                    }
 
-                        try
-                        {
-                            ds.Close();
-                        }
-                        catch (Exception eClose)
-                        {
-                            Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
-                        }
+                    try
+                    {
+                        ds.Close();
+                    }
+                    catch (Exception eClose)
+                    {
+                        Debug.WriteLine($"Received this exception from SqlDataReader.Close() while in another catch block: {eClose}");
                     }
 
                     throw;
@@ -1455,7 +1445,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         Debug.Assert(_execType is EXECTYPE.UNPREPARED, "Invalid execType!");
-                        BuildExecuteSql(cmdBehavior, commandText: null, _parameters, ref rpc);
+                        BuildExecuteSql(cmdBehavior, _parameters, ref rpc);
                     }
 
                     rpc.options = TdsEnums.RPC_NOMETADATA;
@@ -1608,18 +1598,18 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
+                taskToContinue: writeTask,
                 state: _activeConnection,
-                onSuccess: state =>
+                onSuccess: sqlConnection =>
                 {
                     // This will throw if the connection is closed.
                     // @TODO: So... can we have something that specifically does that?
-                    ((SqlConnection)state).GetOpenTdsConnection();
+                    sqlConnection.GetOpenTdsConnection();
                     CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
-                onFailure: static (exception, state) =>
+                onFailure: static (sqlConnection, _) =>
                 {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
+                    sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
                 });
         }
 
@@ -1641,7 +1631,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.SetTimeoutException(
                 completion,
                 timeout,
-                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
             // @TODO: With an object to pass around we can use the state-based version
@@ -1652,11 +1642,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (completion.Task.IsCompleted)
                     {
+                        timeoutCts.Cancel();
+                        timeoutCts.Dispose();
                         return;
                     }
 
                     Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
                     timeoutCts.Cancel();
+                    timeoutCts.Dispose();
 
                     RunExecuteReaderTds(
                         cmdBehavior,
@@ -1681,6 +1674,16 @@ namespace Microsoft.Data.SqlClient
                             state: completion,
                             onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
                     }
+                },
+                onFailure: _ =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
+                },
+                onCancellation: () =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
                 });
         }
 
@@ -1712,14 +1715,13 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 AsyncHelper.ContinueTaskWithState(
-                    task: describeParameterEncryptionTask,
-                    completion: completion,
+                    taskToContinue: describeParameterEncryptionTask,
+                    taskCompletionSource: completion,
                     state: this,
-                    onSuccess: state =>
+                    onSuccess: sqlCommand =>
                     {
-                        SqlCommand command = (SqlCommand)state;
-                        command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(
+                        sqlCommand.GenerateEnclavePackage();
+                        sqlCommand.RunExecuteReaderTds(
                             cmdBehavior,
                             runBehavior,
                             returnStream,
@@ -1738,23 +1740,23 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             AsyncHelper.ContinueTaskWithState(
-                                task: subTask,
-                                completion: completion,
+                                taskToContinue: subTask,
+                                taskCompletionSource: completion,
                                 state: completion,
-                                onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                                onSuccess: static state => state.SetResult(null));
                         }
                     },
-                    onFailure: static (exception, state) =>
+                    onFailure: static (sqlCommand, exception) =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                         if (exception is not null)
                         {
                             throw exception;
                         }
                     },
-                    onCancellation: static state =>
+                    onCancellation: static sqlCommand =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                     });
 
                 task = completion.Task;

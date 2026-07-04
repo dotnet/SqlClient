@@ -55,7 +55,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             maxPoolSize: maxPoolSize,
             creationTimeout: DefaultCreationTimeoutInMilliseconds,
             loadBalanceTimeout: 0,
-            hasTransactionAffinity: hasTransactionAffinity
+            hasTransactionAffinity: hasTransactionAffinity,
+            idleTimeout: 0
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
@@ -82,6 +83,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: null,
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
             out DbConnectionInternal? connection);
         return connection!;
     }
@@ -94,6 +96,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: tcs,
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
             out DbConnectionInternal? connection);
         return connection ?? await tcs.Task;
     }
@@ -902,7 +905,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection)
+            DbConnection owningConnection,
+            TimeoutTimer timeout)
         {
             return new MockDbConnectionInternal();
         }

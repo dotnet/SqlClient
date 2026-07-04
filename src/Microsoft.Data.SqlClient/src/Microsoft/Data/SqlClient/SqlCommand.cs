@@ -1068,7 +1068,7 @@ namespace Microsoft.Data.SqlClient
                 "SqlCommand.Cancel | API | Correlation | " +
                 $"Object Id {ObjectID}, " +
                 $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
+                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
                 $"Command Text '{CommandText}'");
 
             SqlStatistics statistics = null;
@@ -1829,12 +1829,8 @@ namespace Microsoft.Data.SqlClient
 
                         handler(this, new StatementCompletedEventArgs(recordCount));
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                     {
-                        if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                        {
-                            throw;
-                        }
                     }
                 }
             }

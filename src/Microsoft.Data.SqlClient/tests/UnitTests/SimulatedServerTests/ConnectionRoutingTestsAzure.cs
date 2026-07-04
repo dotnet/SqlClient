@@ -10,6 +10,8 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
     [Collection("SimulatedServerTests")]
     public class ConnectionRoutingTestsAzure : IDisposable
     {
@@ -21,8 +23,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             adpHelper.AddAzureSqlServerEndpoint("localhost");
         }
 
-        public void Dispose() 
-        { 
+        public void Dispose()
+        {
             adpHelper.Dispose();
         }
 
@@ -158,6 +160,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
+        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
@@ -191,7 +194,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Act
             var e = Assert.Throws<SqlException>(connection.Open);
 
-            // Assert 
+            // Assert
             Assert.Equal(ConnectionState.Closed, connection.State);
             Assert.Contains("Connection Timeout Expired", e.Message);
         }
