@@ -250,22 +250,31 @@ public class SNICloseDeadlockTest
 
             try
             {
-                // Read one byte of the client's pre-login packet. Once this
-                // returns the client has sent its pre-login and posted its
-                // async read for the response. We only need to know data
+                // Read one byte of the client's pre-login packet. A byte here
+                // proves the client actually sent its pre-login and posted its
+                // async read for the response; we only need to know data
                 // arrived, so a single byte is sufficient.
-                stream.ReadByte();
+                if (stream.ReadByte() < 0)
+                {
+                    // Client tore down without sending pre-login bytes: the
+                    // handshake read was never actually in flight. Leave
+                    // clientConnected unset so the test's precondition wait
+                    // fails instead of producing a false positive.
+                    return;
+                }
+
+                clientConnected.Set();
+
+                // Hold the socket open (withholding the response) until the test
+                // releases us, so the client's read cannot complete naturally.
+                releaseServer.Wait();
             }
             catch
             {
-                // The client may tear down the socket; ignore.
+                // The client may tear down the socket; ignore. clientConnected
+                // stays unset unless a pre-login byte was actually observed
+                // above, so a failed read cannot masquerade as a pending one.
             }
-
-            clientConnected.Set();
-
-            // Hold the socket open (withholding the response) until the test
-            // releases us, so the client's read cannot complete naturally.
-            releaseServer.Wait();
         });
 
         SqlConnectionStringBuilder builder = new()
