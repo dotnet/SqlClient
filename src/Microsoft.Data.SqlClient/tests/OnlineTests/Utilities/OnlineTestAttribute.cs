@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.OnlineTests.Utilities;
 [XunitTestCaseDiscoverer(
     "Microsoft.Data.SqlClient.OnlineTests.Utilities.OnlineTestDiscoverer",
     "Microsoft.Data.SqlClient.OnlineTests")]
-public class OnlineTestAttribute : TheoryAttribute
+public class OnlineTestAttribute : FactAttribute
 {
     public OnlineTestAttribute(
         ConnectionTraits[]? requiredTraits = null,

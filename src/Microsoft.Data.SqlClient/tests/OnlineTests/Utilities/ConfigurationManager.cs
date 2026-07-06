@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace Microsoft.Data.SqlClient.OnlineTests.Utilities;
 
-public static class ConfigurationManager
+public class ConfigurationManager
 {
     #region Constants
 
@@ -25,20 +25,9 @@ public static class ConfigurationManager
 
     #endregion
 
-    #region Properties
+    private static readonly Lazy<ConfigurationManager> s_instance = new(() => new ConfigurationManager());
 
-    public static Configuration? Configuration { get; private set; }
-
-    #endregion
-
-    #region Methods
-
-    // #if NET
-    // [System.Runtime.CompilerServices.ModuleInitializer]
-    // public static void Initialize()
-    // #else
-    static ConfigurationManager()
-    // #endif
+    private ConfigurationManager()
     {
         // Skip initialization if we're already initialized
         if (Configuration is not null)
@@ -55,6 +44,16 @@ public static class ConfigurationManager
 
         Configuration = new Configuration(connectionMetadata);
     }
+
+    #region Properties
+
+    public static ConfigurationManager Instance => s_instance.Value;
+
+    public Configuration Configuration { get; }
+
+    #endregion
+
+    #region Methods
 
     private static DeserializedConfig LoadConfig()
     {
