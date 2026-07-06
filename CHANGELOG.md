@@ -36,12 +36,12 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - `SqlBatchCommand.CommandBehavior` (a driver-specific property that existed since batching was introduced but was previously ignored) is now honored during `SqlBatch` execution, and `SqlBatch.ExecuteReader` now respects the `CommandBehavior` value passed to it.
   ([#4125](https://github.com/dotnet/SqlClient/pull/4125))
 
-- Added a `Connection Idle Timeout` connection-string keyword and matching `SqlConnectionStringBuilder.IdleTimeout` property to evict idle connections in pool v2 (default `300` seconds; `0` disables). Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior=false`; the default preserves the historical pooling behavior.
+- Added a `Connection Idle Timeout` connection-string keyword and matching `SqlConnectionStringBuilder.IdleTimeout` property to evict idle pooled connections (default `300` seconds; `0` disables). Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior=false`; the default preserves the historical pooling behavior. When enabled, idle-timeout enforcement applies to the existing connection pool as well.
   ([#4295](https://github.com/dotnet/SqlClient/pull/4295))
 
 ### Changed
 
-- The `Connect Timeout` budget is now propagated through pool acquisition via a shared `TimeoutTimer`, so time spent waiting in the pool is deducted from the overall timeout. Adds a dependency on `Microsoft.Bcl.TimeProvider`.
+- The `Connect Timeout` budget can now be propagated through pool acquisition via a shared `TimeoutTimer`, so time spent waiting in the pool is deducted from the overall timeout. Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait=true`; the default (`false`) preserves the historical behavior where pool waits do not count against `Connect Timeout`. Adds a dependency on `Microsoft.Bcl.TimeProvider`.
   ([#4270](https://github.com/dotnet/SqlClient/pull/4270))
 
 - Implemented pool shutdown for `ChannelDbConnectionPool` and added automatic pool size reduction (pruning) for the channel-based pool.
