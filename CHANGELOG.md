@@ -39,9 +39,6 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - Added a `Connection Idle Timeout` connection-string keyword and matching `SqlConnectionStringBuilder.IdleTimeout` property to evict idle connections in pool v2 (default `300` seconds; `0` disables). Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior=false`; the default preserves the historical pooling behavior.
   ([#4295](https://github.com/dotnet/SqlClient/pull/4295))
 
-- Added Windows Account Manager (WAM) broker support for the supported Entra ID authentication modes on Windows, including the new `ActiveDirectoryAuthenticationProviderOptions` type, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions)` constructor, a cross-platform `SetParentActivityOrWindowFunc(Func<object>?)`, and a `useWamBroker` configuration attribute.
-  ([#4288](https://github.com/dotnet/SqlClient/pull/4288))
-
 ### Changed
 
 - The `Connect Timeout` budget is now propagated through pool acquisition via a shared `TimeoutTimer`, so time spent waiting in the pool is deducted from the overall timeout. Adds a dependency on `Microsoft.Bcl.TimeProvider`.
@@ -80,11 +77,12 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - `SqlVector<float>` now serializes and deserializes multibyte values as little-endian explicitly.
   ([#3861](https://github.com/dotnet/SqlClient/pull/3861))
 
-- Updated `Microsoft.Identity.Client` (and added `Microsoft.Identity.Client.Broker`) to `4.84.2` to enable WAM, and updated the bundled .NET 10 SDK to `10.0.300`.
-  ([#4287](https://github.com/dotnet/SqlClient/pull/4287),
-   [#4288](https://github.com/dotnet/SqlClient/pull/4288))
+- Updated the bundled .NET 10 SDK to `10.0.300`.
+  ([#4287](https://github.com/dotnet/SqlClient/pull/4287))
 
-- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Azure`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview2.md), [Azure](release-notes/Extensions/Azure/7.1/7.1.0-preview2.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview2.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview2.md).
+- Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview2`, adding Windows Account Manager (WAM) broker support for Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview2.md).
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview2.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview2.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview2.md).
 
 ### Fixed
 
