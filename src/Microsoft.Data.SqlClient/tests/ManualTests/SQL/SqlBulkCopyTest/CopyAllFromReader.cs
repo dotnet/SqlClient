@@ -40,6 +40,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (DbDataReader reader = srcCmd.ExecuteReader())
                         {
                             IDictionary stats;
+                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 3 : 12;
+                            long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                             {
                                 bulkcopy.DestinationTableName = dstTable;
@@ -61,9 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["IduCount"], "Unexpected IduCount value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)11, stats["SelectCount"], "Unexpected SelectCount value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedSelectCount, stats["SelectCount"], "Unexpected SelectCount value.");
                             DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)14, stats["SelectRows"], "Unexpected SelectRows value.");
+                            DataTestUtility.AssertEqualsWithDescription(expectedSelectRows, stats["SelectRows"], "Unexpected SelectRows value.");
                             DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
                             DataTestUtility.AssertEqualsWithDescription((long)0, stats["Transactions"], "Unexpected Transactions value.");
                         }

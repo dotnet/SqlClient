@@ -94,6 +94,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SQL Server capabilities
         private static bool? s_isDataClassificationSupported;
         private static bool? s_isVectorSupported;
+        private static bool? s_isSqlAuthenticationSupported;
+
+        // Login permissions
+        private static bool? s_isSysAdmin;
+        private static bool? s_isSecurityAdmin;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
@@ -154,6 +159,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsSqlVectorSupported =>
             s_isVectorSupported ??= IsTCPConnStringSetup() &&
                 IsTypePresent("vector");
+
+        public static bool IsSysAdmin =>
+            s_isSysAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("sysadmin");
+
+        public static bool IsSecurityAdmin =>
+            s_isSecurityAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("securityadmin");
+
+        public static bool CanCreateLogins =>
+            IsSysAdmin || IsSecurityAdmin;
+
+        public static bool CanUseSqlAuthentication =>
+            s_isSqlAuthenticationSupported ??= IsTCPConnStringSetup() &&
+                SupportsSqlAuthentication();
 
         static DataTestUtility()
         {
@@ -455,6 +475,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             command.Parameters.AddWithValue("@name", typeName);
 
             return (int)command.ExecuteScalar() > 0;
+        }
+
+        public static bool IsServerRoleMember(string roleName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT IS_SRVROLEMEMBER(@role)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@role", roleName);
+
+            // IS_SRVROLEMEMBER returns 1 if the caller is a member of the specified server role, 0 if not, and DBNull.Value if the role is not valid.
+            return command.ExecuteScalar() is int result && result == 1;
+        }
+
+        public static bool SupportsSqlAuthentication()
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+
+            connection.Open();
+            using SqlCommand command = new("select SERVERPROPERTY('IsIntegratedSecurityOnly'), ISNULL(SERVERPROPERTY('IsExternalAuthenticationOnly'), 0)", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+
+            reader.Read();
+            return reader.GetInt32(0) == 0 && reader.GetInt32(1) == 0;
         }
 
         public static bool IsAdmin
