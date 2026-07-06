@@ -1,12 +1,11 @@
 {
   // Copy this file to config.jsonc, then add the connection strings that online tests should use.
   // config.jsonc is ignored by git. Use MDS_ONLINE_TEST_CONFIG to point at another local file.
-  "connections": [
-    {
-      "name": "default",
-      "description": "Local development SQL Server",
-      "tags": [ "local" ],
-      "connectionString": "Server=(localdb)\\MSSQLLocalDB;Integrated Security=true;Trust Server Certificate=true;"
-    }
+  "connectionStrings": [
+    // Typical Windows SQL Server on the local host via TCP.
+    "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+
+    // Typical Windows SQL Server on the local host via Named Pipes.
+    "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;"
   ]
 }

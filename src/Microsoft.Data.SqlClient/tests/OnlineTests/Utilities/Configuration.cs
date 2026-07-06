@@ -8,5 +8,10 @@ namespace Microsoft.Data.SqlClient.OnlineTests.Utilities;
 
 public class Configuration
 {
-    public IReadOnlyCollection<ConnectionMetadata> Connections { get; set; }
+    public Configuration(IReadOnlyCollection<ConnectionMetadata> connections)
+    {
+        Connections = connections;
+    }
+
+    public IReadOnlyCollection<ConnectionMetadata> Connections { get; private set; }
 }

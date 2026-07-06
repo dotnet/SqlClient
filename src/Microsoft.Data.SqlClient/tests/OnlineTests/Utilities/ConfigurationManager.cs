@@ -33,8 +33,12 @@ public static class ConfigurationManager
 
     #region Methods
 
-    [System.Runtime.CompilerServices.ModuleInitializer]
-    public static void Initialize()
+    // #if NET
+    // [System.Runtime.CompilerServices.ModuleInitializer]
+    // public static void Initialize()
+    // #else
+    static ConfigurationManager()
+    // #endif
     {
         // Skip initialization if we're already initialized
         if (Configuration is not null)
@@ -42,9 +46,14 @@ public static class ConfigurationManager
             return;
         }
 
-        // Deserialize the configuration and cache metadata about the server
+        // Deserialize the configuration
         DeserializedConfig config = LoadConfig();
 
+        // Load metadata for the connection strings
+        ConnectionMetadata[] connectionMetadata = config.ConnectionStrings
+            .Select(cs => new ConnectionMetadata(cs)).ToArray();
+
+        Configuration = new Configuration(connectionMetadata);
     }
 
     private static DeserializedConfig LoadConfig()
@@ -97,6 +106,6 @@ public static class ConfigurationManager
 
     public class DeserializedConfig
     {
-        public string[] ConnectionStrings { get; set; }
+        public string[] ConnectionStrings { get; set; } = [];
     }
 }
