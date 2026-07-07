@@ -44,10 +44,6 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - The `Connect Timeout` budget can now be propagated through pool acquisition via a shared `TimeoutTimer`, so time spent waiting in the pool is deducted from the overall timeout. Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait=true`; the default (`false`) preserves the historical behavior where pool waits do not count against `Connect Timeout`. Adds a dependency on `Microsoft.Bcl.TimeProvider`.
   ([#4270](https://github.com/dotnet/SqlClient/pull/4270))
 
-- Implemented pool shutdown for `ChannelDbConnectionPool` and added automatic pool size reduction (pruning) for the channel-based pool.
-  ([#4302](https://github.com/dotnet/SqlClient/pull/4302),
-   [#4304](https://github.com/dotnet/SqlClient/pull/4304))
-
 - Hardened `SqlConnection` internal state transitions with `Interlocked.CompareExchange` guards.
   ([#4267](https://github.com/dotnet/SqlClient/pull/4267))
 
