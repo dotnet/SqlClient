@@ -5,17 +5,24 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.OnlineTests.Utilities;
 
 public class ConnectionMetadata
 {
+    private static int s_configuredConnections = 0;
+
     private readonly HashSet<string> _cachedTypeNames;
     private readonly Dictionary<ConnectionTraits, Lazy<bool>> _cachedConnectionTraits;
 
-    public ConnectionMetadata(string connectionString)
+    public ConnectionMetadata(string? connectionString, string? name)
     {
-        ConnectionString = connectionString;
+        ConnectionString = connectionString ??
+                           throw new ArgumentNullException("Config contains null connection string.");
+
+        int connectionNumber = Interlocked.Increment(ref s_configuredConnections);
+        Name = name ?? $"Connection {connectionNumber}";
 
         // Verify that the connection is usable by caching the metadata
         using SqlConnection connection = new(connectionString);
@@ -31,7 +38,15 @@ public class ConnectionMetadata
         };
     }
 
+    #region Properties
+
     public string ConnectionString { get; private set; }
+
+    public string Name { get; private set; }
+
+    #endregion
+
+    #region Methods
 
     public bool HasTrait(ConnectionTraits trait) =>
         _cachedConnectionTraits.TryGetValue(trait, out Lazy<bool>? lazyTraitValue)
@@ -54,4 +69,6 @@ public class ConnectionMetadata
 
         return typeNames;
     }
+
+    #endregion
 }

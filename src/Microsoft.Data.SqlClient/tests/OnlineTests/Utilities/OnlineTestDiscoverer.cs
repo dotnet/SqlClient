@@ -144,6 +144,7 @@ public class OnlineTestDiscoverer : IXunitTestCaseDiscoverer
             skipReasons.Add($"Present Blocked: {string.Join(", ", traitNames)}");
         }
 
-        return $"Connection does not meet requirements. {string.Join("; ", skipReasons)}";
+        return $"Connection \"{connectionMetadata.Name}\" does not meet requirements. " +
+               string.Join("; ", skipReasons);
     }
 }

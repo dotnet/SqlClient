@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient.OnlineTests;
 
 public class Test
 {
-    [Fact]
-    public void TestyTest()
+    [OnlineTest]
+    public void TestyTestMissingParam()
     {
         Console.WriteLine("Yo.");
     }
@@ -22,7 +22,7 @@ public class Test
         Console.WriteLine("This should run everywhere.");
     }
 
-    [OnlineTest(requiredTraits:[ConnectionTraits.SupportsVector])]
+    [OnlineTest(requiredTraits: [ConnectionTraits.SupportsVector])]
     public void TestyTestRequireVector(string connectionString)
     {
         Console.WriteLine("This should be skipped.");

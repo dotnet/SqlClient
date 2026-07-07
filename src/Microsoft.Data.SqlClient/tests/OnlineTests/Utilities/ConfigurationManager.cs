@@ -40,7 +40,7 @@ public class ConfigurationManager
 
         // Load metadata for the connection strings
         ConnectionMetadata[] connectionMetadata = config.ConnectionStrings
-            .Select(cs => new ConnectionMetadata(cs)).ToArray();
+            .Select(cs => new ConnectionMetadata(cs.ConnectionString, cs.Name)).ToArray();
 
         Configuration = new Configuration(connectionMetadata);
     }
@@ -105,6 +105,13 @@ public class ConfigurationManager
 
     public class DeserializedConfig
     {
-        public string[] ConnectionStrings { get; set; } = [];
+        public DeserializedConnectionString[] ConnectionStrings { get; set; } = [];
+    }
+
+    public class DeserializedConnectionString
+    {
+        public string? ConnectionString { get; set; } = null;
+
+        public string? Name { get; set; } = null;
     }
 }
