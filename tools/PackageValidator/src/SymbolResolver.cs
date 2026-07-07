@@ -115,6 +115,7 @@ internal static class SymbolResolver
         var pdbByGuid = new Dictionary<Guid, string>();
         var pdbByPathKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var pdbBytes = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+        var pdbGuidByPath = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
         foreach (ZipArchiveEntry entry in archive.Entries)
         {
@@ -130,9 +131,13 @@ internal static class SymbolResolver
             pdbBytes[entry.FullName] = bytes;
 
             Guid? guid = PortablePdb.TryReadGuid(bytes);
-            if (guid is Guid value && !pdbByGuid.ContainsKey(value))
+            if (guid is Guid value)
             {
-                pdbByGuid[value] = entry.FullName;
+                pdbGuidByPath[entry.FullName] = value;
+                if (!pdbByGuid.ContainsKey(value))
+                {
+                    pdbByGuid[value] = entry.FullName;
+                }
             }
         }
 
@@ -159,6 +164,37 @@ internal static class SymbolResolver
             else
             {
                 asm.HasSymbolPackageSymbols = false;
+            }
+        }
+
+        // A package may legitimately ship the same assembly (identical debug GUID) at more than one
+        // path — e.g. .NET Framework SqlClient appears in both lib/net462 and
+        // runtimes/win/lib/net462, and the symbol package mirrors it with an identical PDB in each
+        // spot. Only the first PDB per GUID is indexed above, so every co-located assembly resolves
+        // to that single PDB and the identical duplicate is never consumed, which would misreport it
+        // as an orphan. Re-associate any such unmatched duplicate whose co-located assembly is
+        // present in the package and shares the PDB's debug GUID.
+        var guidByAssemblyPathKey = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (BinaryReport asm in managed)
+        {
+            if (asm.CodeViewGuid is Guid guid)
+            {
+                guidByAssemblyPathKey[StripExtension(asm.Path)] = guid;
+            }
+        }
+
+        foreach (string pdbPath in allPdbPaths)
+        {
+            if (matchedPdbs.Contains(pdbPath))
+            {
+                continue;
+            }
+
+            if (pdbGuidByPath.TryGetValue(pdbPath, out Guid pdbGuid)
+                && guidByAssemblyPathKey.TryGetValue(StripExtension(pdbPath), out Guid asmGuid)
+                && pdbGuid == asmGuid)
+            {
+                matchedPdbs.Add(pdbPath);
             }
         }
     }
