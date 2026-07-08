@@ -607,7 +607,7 @@
     <value>Не удается найти поставщик проверки подлинности для "{0}". Установите пакет NuGet "Microsoft.Data.SqlClient.Extensions.Azure" (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) для использования методов проверки подлинности Active Directory (Entra ID).</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+    <value>Для установки параметра "useWamBroker" требуется, чтобы пакет "Microsoft.Data.SqlClient.Extensions.Azure" предоставлял доступ к "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Обновите пакет "Microsoft.Data.SqlClient.Extensions.Azure" как минимум до версии v1.1.0, в которую входит этот тип.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Параметр «{0}» не может иметь значение NULL или быть пустым.</value>
@@ -964,7 +964,7 @@
     <value>Минимальное время (в секундах), которое это подключение будет оставаться в пуле до уничтожения.</value>
   </data>
   <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
+    <value>Максимальное время (в секундах), в течение которого соединение может оставаться неактивным (в режиме ожидания) в пуле, прежде чем оно будет отклонено при отключенном устаревшем поведении времени ожидания. Значение "0" отключает окончание срока действия неактивности.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Максимально допустимое число подключений в пуле.</value>
