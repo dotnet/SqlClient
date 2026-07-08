@@ -131,7 +131,4 @@ variables:
     value: '1.0.0.$(_assemblyBuildNumber)'
 
   - name: sqlServerPackageVersion
-    ${{ if parameters.isPreview }}:
-      value: '1.0.0-preview1.$(Build.BuildNumber)'
-    ${{ else }}:
-      value: '1.0.0'
+    value: '1.0.0'
