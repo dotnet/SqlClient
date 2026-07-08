@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 PoolBlockingPeriod.Auto => !ADP.IsAzureSqlServerEndpoint(_connectionOptions.DataSource),
                 PoolBlockingPeriod.AlwaysBlock => true,
                 PoolBlockingPeriod.NeverBlock => false,
-                _ => throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)_connectionOptions.PoolBlockingPeriod)
+                _ => true
             };
         }
 
