@@ -1516,6 +1516,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 t.Dispose();
             }
+
+            // Tear down the blocking-period error state so its exit timer/callback
+            // stops running and the pool is not rooted longer than intended.
+            _errorState.Dispose();
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool

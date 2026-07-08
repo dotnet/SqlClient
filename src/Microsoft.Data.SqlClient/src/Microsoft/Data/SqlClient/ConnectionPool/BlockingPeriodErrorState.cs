@@ -69,9 +69,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // and resets to InitialWait on a successful create or Clear().
         private TimeSpan _nextWait = InitialWait;
 
-        // True once Dispose() has run, so repeated disposal and post-teardown work are no-ops.
-        private bool _disposed;
-
         /// <summary>
         /// Creates a new instance.
         /// </summary>
@@ -156,8 +153,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Signal the enter event while still holding the lock so the external signal order
                 // (onEnter/onExit) can never diverge from the internal state transitions under
                 // concurrent Enter/Clear/exit-timer activity. The callbacks are expected to be
-                // cheap, non-reentrant operations.
-                _onEnter?.Invoke();
+                // cheap, non-reentrant operations. Treat the callback as best-effort so a
+                // throwing callback cannot mask the original connection-creation exception.
+                try {
+                    _onEnter?.Invoke();
+                } catch {
+                    // Ignore exceptions from the enter event.
+                }
             }
 
             oldTimer?.Dispose();
@@ -193,7 +195,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Signal and trace under the lock so the exit signal is ordered consistently
                 // with the state transition relative to concurrent Enter/exit-timer callbacks.
-                _onExit?.Invoke();
+                // Treat the callback as best-effort so a throwing callback cannot surface on the
+                // successful connection-create path and break pool recovery.
+                try {
+                    _onExit?.Invoke();
+                } catch {
+                    // Ignore exceptions from the exit event.
+                }
             }
 
             oldTimer?.Dispose();
@@ -240,22 +248,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         public void Dispose()
         {
-            ITimer? timerToDispose;
             lock (_lock)
             {
-                if (_disposed)
-                {
-                    return;
-                }
-
                 _cachedException = null;
                 _inElevatedState = false;
-                timerToDispose = _exitTimer;
+                ITimer? timerToDispose = _exitTimer;
                 _exitTimer = null;
+                timerToDispose?.Dispose();
             }
 
-            timerToDispose?.Dispose();
-            _disposed = true;
         }
     }
 }
