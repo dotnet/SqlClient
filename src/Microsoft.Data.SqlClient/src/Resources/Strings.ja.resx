@@ -607,7 +607,7 @@
     <value>'{0}' の認証プロバイダーが見つかりません。Active Directory (Entra ID) 認証方法を使用するには、'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) をインストールしてください。</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v1.1.0 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>パラメーター '{0}' を null や空にすることはできません。</value>
@@ -964,7 +964,7 @@
     <value>この接続が破棄されるまでにプールに存在できる最低限の時間 (秒) です。</value>
   </data>
   <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
+    <value>レガシのアイドル タイムアウト動作が無効になっている場合に、未使用 (アイドル) 状態の接続をプール内に保持できる最大時間 (秒単位) を指定します。値を 0 にすると、アイドルの有効期限が無効になります。</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>プールに保持できる最大接続数です。</value>
