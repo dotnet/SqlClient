@@ -29,19 +29,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // Identifier of the owning pool, included in trace events for diagnostics.
         private readonly int _ownerPoolId;
 
-        // Optional callback invoked (under _lock) when the state enters the blocking period;
-        // Must be cheap and non-reentrant. Must not throw. Must be idempotent: it may be invoked
-        // more than once without an intervening exit (each failure re-enters via Enter()), so
-        // repeated invocations while already in the blocking period must be harmless. If null,
-        // no action is taken.
-        private readonly Action? _onEnter;
-
-        // Optional callback invoked (under _lock) when the state leaves the blocking period
-        // via the exit timer or Clear(). Must be cheap and non-reentrant. Must not throw.
-        // Must be idempotent: it may be invoked more than once for a single blocking period
-        // (e.g. the exit timer fires and a later Clear() also signals exit), so redundant
-        // invocations must be harmless. If null, no action is taken.
-        private readonly Action? _onExit;
+        // Optional error wait handle owned by the pool. Set() (under _lock) when the state
+        // enters the blocking period and Reset() (under _lock) when it leaves via the exit
+        // timer or Clear(). Set/Reset are inherently idempotent, so the repeated signalling
+        // that occurs across consecutive Enter() calls or an exit-timer/Clear() overlap is
+        // harmless. This instance does NOT own the handle and must never dispose it. If null,
+        // no signalling occurs.
+        private readonly ManualResetEvent? _errorEvent;
 
         // Time source used to create the exit timer; overridable so tests can drive scheduling
         // deterministically. Defaults to TimeProvider.System.
@@ -73,27 +67,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Creates a new instance.
         /// </summary>
         /// <param name="ownerPoolId">Identifier of the owning pool, used in trace events.</param>
-        /// <param name="onEnter">Optional callback invoked (while holding the internal lock) after
-        /// the state transitions into the blocking period. Used by the legacy wait-handle pool to
-        /// signal its error wait handle. Because it runs under a lock, it must be cheap and
-        /// non-reentrant. It must also be idempotent: consecutive failures re-enter via
-        /// <see cref="Enter"/> without an intervening exit, so repeated invocations while already
-        /// in the blocking period must be harmless.</param>
-        /// <param name="onExit">Optional callback invoked (while holding the internal lock) after the
-        /// state transitions out of the blocking period via the exit timer or <see cref="Clear"/>.
-        /// Because it runs under a lock, it must be cheap and non-reentrant. It must also be
-        /// idempotent: a single blocking period may signal exit more than once (for example, the
-        /// exit timer fires and a subsequent <see cref="Clear"/> also fires), so redundant
-        /// invocations must be harmless.</param>
+        /// <param name="errorEvent">Optional error wait handle owned by the pool. It is
+        /// <see cref="EventWaitHandle.Set"/> (while holding the internal lock) when the state
+        /// enters the blocking period and <see cref="EventWaitHandle.Reset"/> when it leaves via
+        /// the exit timer or <see cref="Clear"/>, so a thread parked in <c>WaitHandle.WaitAny</c>
+        /// over the pool's handles wakes immediately on entry/exit. This instance does not own the
+        /// handle and never disposes it; the caller is responsible for its lifetime. Pass
+        /// <see langword="null"/> (the default) to disable signalling.</param>
         /// <param name="timeProvider">The time provider used to create the exit timer. Defaults to
         /// <see cref="TimeProvider.System"/>. Inject a test double (e.g.
         /// <c>Microsoft.Extensions.Time.Testing.FakeTimeProvider</c>) in unit tests to
         /// control timer scheduling deterministically.</param>
-        internal BlockingPeriodErrorState(int ownerPoolId, Action? onEnter = null, Action? onExit = null, TimeProvider? timeProvider = null)
+        internal BlockingPeriodErrorState(int ownerPoolId, ManualResetEvent? errorEvent = null, TimeProvider? timeProvider = null)
         {
             _ownerPoolId = ownerPoolId;
-            _onEnter = onEnter;
-            _onExit = onExit;
+            _errorEvent = errorEvent;
             _timeProvider = timeProvider ?? TimeProvider.System;
         }
 
@@ -150,15 +138,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 TimeSpan doubled = _nextWait + _nextWait;
                 _nextWait = doubled > MaxWait ? MaxWait : doubled;
 
-                // Signal the enter event while still holding the lock so the external signal order
-                // (onEnter/onExit) can never diverge from the internal state transitions under
-                // concurrent Enter/Clear/exit-timer activity. The callbacks are expected to be
-                // cheap, non-reentrant operations. Treat the callback as best-effort so a
-                // throwing callback cannot mask the original connection-creation exception.
-                try {
-                    _onEnter?.Invoke();
-                } catch {
-                    // Ignore exceptions from the enter event.
+                // Signal the error wait handle while still holding the lock so the external signal
+                // order (Set/Reset) can never diverge from the internal state transitions under
+                // concurrent Enter/Clear/exit-timer activity. Set() is idempotent, so re-entering
+                // the blocking period on consecutive failures is harmless. The handle is owned by
+                // the pool, not this instance, so treat signalling as best-effort: it may be
+                // disposed out from under us during teardown, which would throw
+                // ObjectDisposedException. Swallow it so it cannot mask the original
+                // connection-creation exception.
+                try
+                {
+                    _errorEvent?.Set();
+                }
+                catch
+                {
+                    // Ignore: the pool-owned handle may have been disposed during teardown.
                 }
             }
 
@@ -193,14 +187,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 oldTimer = _exitTimer;
                 _exitTimer = null;
 
-                // Signal and trace under the lock so the exit signal is ordered consistently
-                // with the state transition relative to concurrent Enter/exit-timer callbacks.
-                // Treat the callback as best-effort so a throwing callback cannot surface on the
-                // successful connection-create path and break pool recovery.
-                try {
-                    _onExit?.Invoke();
-                } catch {
-                    // Ignore exceptions from the exit event.
+                // Reset the error wait handle under the lock so the exit signal is ordered
+                // consistently with the state transition relative to concurrent Enter/exit-timer
+                // callbacks. Reset() is idempotent, so an overlapping exit-timer/Clear() is harmless.
+                // The handle is owned by the pool, not this instance, so treat signalling as
+                // best-effort: it may be disposed out from under us during teardown, which would
+                // throw ObjectDisposedException. Swallow it so it cannot surface on the successful
+                // connection-create path and break pool recovery.
+                try
+                {
+                    _errorEvent?.Reset();
+                }
+                catch
+                {
+                    // Ignore: the pool-owned handle may have been disposed during teardown.
                 }
             }
 
@@ -226,12 +226,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 oldTimer = state._exitTimer;
                 state._exitTimer = null;
 
-                // Signal under the lock so the exit signal is ordered consistently
-                // with the state transition relative to concurrent Enter/Clear callbacks.
-                try {
-                    state._onExit?.Invoke();
-                } catch {
-                    // Ignore exceptions from the exit event.
+                // Reset the error wait handle under the lock so the exit signal is ordered
+                // consistently with the state transition relative to concurrent Enter/Clear
+                // callbacks. Reset() is idempotent, so an overlapping Clear() is harmless.
+                // The handle is owned by the pool, not this instance, so treat signalling as
+                // best-effort: it may be disposed out from under us during teardown, which would
+                // throw ObjectDisposedException on this ThreadPool timer callback. Swallow it.
+                try
+                {
+                    state._errorEvent?.Reset();
+                }
+                catch
+                {
+                    // Ignore: the pool-owned handle may have been disposed during teardown.
                 }
             }
 

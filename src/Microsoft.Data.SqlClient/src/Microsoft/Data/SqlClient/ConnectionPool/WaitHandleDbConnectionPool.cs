@@ -255,8 +255,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // drive the exit timer deterministically.
             _errorState = new BlockingPeriodErrorState(
                 Id,
-                onEnter: () => _waitHandles.ErrorEvent.Set(),
-                onExit: () => _waitHandles.ErrorEvent.Reset(),
+                errorEvent: _waitHandles.ErrorEvent,
                 timeProvider: _timeProvider);
 
             _objectList = new List<DbConnectionInternal>(MaxPoolSize);

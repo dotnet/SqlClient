@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// - Exponential backoff progression (verified with <see cref="FakeTimeProvider"/>)
     /// - Timer-driven exit behavior (verified with <see cref="FakeTimeProvider"/>)
     /// - <see cref="IDisposable"/> implementation and timer cleanup
-    /// - Callback invocation and re-entrancy safety
+    /// - Error wait-handle (<see cref="ManualResetEvent"/>) signalling on enter/exit
     /// </summary>
     public class BlockingPeriodErrorStateTest
     {
@@ -115,60 +115,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Enter"/> invokes the optional
-        /// onEnter callback after entering the blocking period.
+        /// Verifies that <see cref="BlockingPeriodErrorState.Enter"/> signals the error wait
+        /// handle after entering the blocking period.
         /// </summary>
         [Fact]
-        public void Enter_InvokesOnEnterCallback()
+        public void Enter_SignalsErrorEvent()
         {
             // Arrange
-            int callCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onEnter: () => callCount++);
+            using var errorEvent = new ManualResetEvent(false);
+            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
 
             // Act
             state.Enter(new Exception());
 
             // Assert
-            Assert.Equal(1, callCount);
+            Assert.True(errorEvent.WaitOne(0));
         }
 
         /// <summary>
         /// Verifies that calling <see cref="BlockingPeriodErrorState.Enter"/> a second time
-        /// replaces the cached exception, invokes the callback again, and the new exception is thrown.
+        /// replaces the cached exception, leaves the error wait handle signaled, and the new
+        /// exception is thrown.
         /// </summary>
         [Fact]
-        public void Enter_CalledTwice_ReplacesExceptionAndInvokesOnEnterAgain()
+        public void Enter_CalledTwice_ReplacesExceptionAndKeepsErrorEventSignaled()
         {
             // Arrange
-            int enterCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onEnter: () => enterCount++);
+            using var errorEvent = new ManualResetEvent(false);
+            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
 
             // Act
             state.Enter(new InvalidOperationException("first"));
             state.Enter(new ArgumentException("second"));
 
             // Assert
-            Assert.Equal(2, enterCount);
+            Assert.True(errorEvent.WaitOne(0));
             var ex = Assert.Throws<ArgumentException>(() => state.ThrowIfActive());
             Assert.Equal("second", ex.Message);
-        }
-
-        /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Enter"/> does not invoke
-        /// the onExit callback (only the onEnter callback or the timer should trigger onExit).
-        /// </summary>
-        [Fact]
-        public void Enter_DoesNotInvokeOnExitCallback()
-        {
-            // Arrange
-            int exitCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onExit: () => exitCount++);
-
-            // Act
-            state.Enter(new Exception());
-
-            // Assert
-            Assert.Equal(0, exitCount);
         }
 
         #endregion
@@ -212,52 +195,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Clear"/> invokes the optional
-        /// onExit callback after clearing the error state.
+        /// Verifies that <see cref="BlockingPeriodErrorState.Clear"/> resets the error wait
+        /// handle after clearing the error state.
         /// </summary>
         [Fact]
-        public void Clear_AfterEnter_InvokesOnExitCallback()
+        public void Clear_AfterEnter_ResetsErrorEvent()
         {
             // Arrange
-            int exitCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onExit: () => exitCount++);
+            using var errorEvent = new ManualResetEvent(false);
+            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
             state.Enter(new Exception());
+            Assert.True(errorEvent.WaitOne(0));
 
             // Act
             state.Clear();
 
             // Assert
-            Assert.Equal(1, exitCount);
+            Assert.False(errorEvent.WaitOne(0));
         }
 
         /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Clear"/> on an initial (no-error) state
-        /// does not invoke the onExit callback because there is nothing to clear.
+        /// Verifies that calling <see cref="BlockingPeriodErrorState.Clear"/> twice leaves the
+        /// error wait handle reset (Reset is idempotent).
         /// </summary>
         [Fact]
-        public void Clear_OnInitialState_DoesNotInvokeOnExitCallback()
+        public void Clear_CalledTwice_LeavesErrorEventReset()
         {
             // Arrange
-            int exitCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onExit: () => exitCount++);
-
-            // Act
-            state.Clear();
-
-            // Assert
-            Assert.Equal(0, exitCount);
-        }
-
-        /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Clear"/> is idempotent:
-        /// calling it a second time does not invoke the onExit callback again.
-        /// </summary>
-        [Fact]
-        public void Clear_CalledTwice_OnExitInvokedOnce()
-        {
-            // Arrange
-            int exitCount = 0;
-            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, onExit: () => exitCount++);
+            using var errorEvent = new ManualResetEvent(false);
+            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
             state.Enter(new Exception());
 
             // Act
@@ -265,7 +231,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             state.Clear();
 
             // Assert
-            Assert.Equal(1, exitCount);
+            Assert.False(errorEvent.WaitOne(0));
         }
 
         /// <summary>
@@ -417,26 +383,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #region Timer behavior
 
         /// <summary>
-        /// Verifies that the timer-driven exit invokes the onExit callback, the same
-        /// callback path used by <see cref="BlockingPeriodErrorState.Clear"/>.
+        /// Verifies that the timer-driven exit resets the error wait handle, the same
+        /// signalling path used by <see cref="BlockingPeriodErrorState.Clear"/>.
         /// </summary>
         [Fact]
-        public void Enter_WhenTimerFires_InvokesOnExitCallback()
+        public void Enter_WhenTimerFires_ResetsErrorEvent()
         {
             // Arrange
             var fakeTime = new FakeTimeProvider();
-            int exitCount = 0;
+            using var errorEvent = new ManualResetEvent(false);
             using var state = new BlockingPeriodErrorState(
                 ownerPoolId: 1,
-                onExit: () => exitCount++,
+                errorEvent: errorEvent,
                 timeProvider: fakeTime);
             state.Enter(new Exception());
+            Assert.True(errorEvent.WaitOne(0));
 
             // Act
             fakeTime.Advance(TimeSpan.FromSeconds(5));
 
             // Assert
-            Assert.Equal(1, exitCount);
+            Assert.False(errorEvent.WaitOne(0));
             Assert.False(state.HasError);
         }
 
@@ -511,23 +478,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that <see cref="BlockingPeriodErrorState.Dispose"/> does not invoke
-        /// the onExit callback because disposal is a resource-cleanup path, not a logical
+        /// Verifies that <see cref="BlockingPeriodErrorState.Dispose"/> does not reset the
+        /// error wait handle because disposal is a resource-cleanup path, not a logical
         /// "exit blocking period" event.
         /// </summary>
         [Fact]
-        public void Dispose_DoesNotInvokeOnExitCallback()
+        public void Dispose_DoesNotResetErrorEvent()
         {
             // Arrange
-            int exitCount = 0;
-            var state = new BlockingPeriodErrorState(ownerPoolId: 1, onExit: () => exitCount++);
+            using var errorEvent = new ManualResetEvent(false);
+            var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
             state.Enter(new Exception());
 
             // Act
             state.Dispose();
 
             // Assert
-            Assert.Equal(0, exitCount);
+            Assert.True(errorEvent.WaitOne(0));
         }
 
         /// <summary>
@@ -541,21 +508,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var fakeTime = new FakeTimeProvider();
-            int exitCount = 0;
+            using var errorEvent = new ManualResetEvent(false);
             var state = new BlockingPeriodErrorState(
                 ownerPoolId: 1,
-                onExit: () => Interlocked.Increment(ref exitCount),
+                errorEvent: errorEvent,
                 timeProvider: fakeTime);
             state.Enter(new Exception());
 
             // Act: dispose cancels the pending timer
             state.Dispose();
 
-            // Advance well past the 5s due time — the cancelled timer must not fire
+            // Advance well past the 5s due time — the cancelled timer must not fire (which would
+            // reset the event).
             fakeTime.Advance(TimeSpan.FromSeconds(60));
 
-            // Assert
-            Assert.Equal(0, exitCount);
+            // Assert: the event remains in the state Enter left it (signaled); the timer never fired.
+            Assert.True(errorEvent.WaitOne(0));
         }
 
         /// <summary>
@@ -578,93 +546,68 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Callback behaviour
+        #region Error wait handle
 
         /// <summary>
-        /// Verifies that both onEnter and onExit callbacks are optional (nullable)
-        /// and the instance works correctly when neither is provided.
+        /// Verifies that the error wait handle is optional (nullable) and the instance works
+        /// correctly when none is provided.
         /// </summary>
         [Fact]
-        public void Callbacks_AreNotRequiredAndDefaultToNull()
+        public void ErrorEvent_IsNotRequiredAndDefaultsToNull()
         {
             // Arrange & Act
             using var state = new BlockingPeriodErrorState(ownerPoolId: 42);
             state.Enter(new Exception());
 
             // Assert
-            state.Clear(); // Should work without callbacks
+            state.Clear(); // Should work without an error wait handle
         }
 
         /// <summary>
-        /// Verifies that the onEnter callback, which is invoked while the internal lock is held,
-        /// can safely read <see cref="BlockingPeriodErrorState.HasError"/> and call
-        /// <see cref="BlockingPeriodErrorState.ThrowIfActive"/>. Those members only read the
-        /// volatile cached-exception field and never acquire the lock, so they are safe to call
-        /// from a callback. Callbacks must not call <see cref="BlockingPeriodErrorState.Enter"/>
-        /// or <see cref="BlockingPeriodErrorState.Clear"/>, which would deadlock on the
-        /// non-re-entrant lock.
+        /// Verifies that the error wait handle is set on <see cref="BlockingPeriodErrorState.Enter"/>
+        /// and reset on <see cref="BlockingPeriodErrorState.Clear"/>, and that the instance never
+        /// disposes the caller-owned handle (it remains usable after the state is disposed).
         /// </summary>
         [Fact]
-        public void OnEnter_CalledUnderLock_CanSafelyReadState()
+        public void ErrorEvent_IsSetOnEnterAndResetOnClear_AndNotDisposedByState()
         {
             // Arrange
-            bool hasErrorObservedInCallback = false;
-            BlockingPeriodErrorState? state = null;
-            using (state = new BlockingPeriodErrorState(
-                ownerPoolId: 1,
-                onEnter: () =>
-                {
-                    // Observe state from inside the callback.
-                    // HasError must already be true at this point.
-                    hasErrorObservedInCallback = state!.HasError;
+            using var errorEvent = new ManualResetEvent(false);
+            var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
 
-                    // Calling ThrowIfActive from the callback must not deadlock.
-                    Assert.Throws<InvalidOperationException>(() => state.ThrowIfActive());
-                }))
-            {
+            // Act & Assert: set on enter
+            state.Enter(new Exception());
+            Assert.True(errorEvent.WaitOne(0));
 
-                // Act
-                state.Enter(new InvalidOperationException("test"));
-            }
+            // reset on clear
+            state.Clear();
+            Assert.False(errorEvent.WaitOne(0));
 
-            // Assert
-            Assert.True(hasErrorObservedInCallback);
+            // The state does not own the handle, so disposing the state must leave it usable.
+            state.Dispose();
+            Assert.False(errorEvent.WaitOne(0)); // no ObjectDisposedException
         }
 
         /// <summary>
-        /// Verifies that the onExit callback, which is invoked while the internal lock is held,
-        /// can safely read <see cref="BlockingPeriodErrorState.HasError"/> — confirming it observes
-        /// the cleared state — and call <see cref="BlockingPeriodErrorState.ThrowIfActive"/>. Those
-        /// members only read the volatile cached-exception field and never acquire the lock, so
-        /// they are safe to call from a callback. Callbacks must not call
-        /// <see cref="BlockingPeriodErrorState.Enter"/> or <see cref="BlockingPeriodErrorState.Clear"/>,
-        /// which would deadlock on the non-re-entrant lock.
+        /// Verifies that signalling the error wait handle is best-effort: because the pool owns
+        /// the handle's lifecycle, it may be disposed out from under the state during teardown.
+        /// <see cref="BlockingPeriodErrorState.Enter"/> and <see cref="BlockingPeriodErrorState.Clear"/>
+        /// must swallow the resulting <see cref="ObjectDisposedException"/> rather than surfacing it.
         /// </summary>
         [Fact]
-        public void OnExit_CalledUnderLock_CanSafelyReadState()
+        public void ErrorEvent_WhenDisposed_SignallingDoesNotThrow()
         {
-            // Arrange
-            bool hasErrorObservedInCallback = true; // initialized to true; must be false after Clear
-            BlockingPeriodErrorState? state = null;
-            using (state = new BlockingPeriodErrorState(
-                ownerPoolId: 1,
-                onExit: () =>
-                {
-                    // HasError must already be false when onExit is called.
-                    hasErrorObservedInCallback = state!.HasError;
+            // Arrange: hand the state a handle and then dispose it out from under the state.
+            var errorEvent = new ManualResetEvent(false);
+            using var state = new BlockingPeriodErrorState(ownerPoolId: 1, errorEvent: errorEvent);
+            errorEvent.Dispose();
 
-                    // Calling ThrowIfActive from the callback must not deadlock.
-                    state.ThrowIfActive(); // must not throw
-                }))
-            {
+            // Act & Assert: Enter (Set) and Clear (Reset) must not throw despite the disposed handle.
+            state.Enter(new Exception()); // best-effort Set() on disposed handle
+            Assert.True(state.HasError);
 
-                // Act
-                state.Enter(new Exception());
-                state.Clear();
-            }
-
-            // Assert
-            Assert.False(hasErrorObservedInCallback);
+            state.Clear(); // best-effort Reset() on disposed handle
+            Assert.False(state.HasError);
         }
 
         #endregion
