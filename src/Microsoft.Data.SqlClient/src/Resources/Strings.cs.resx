@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Nepodařilo se přečíst konfigurační oddíl zprostředkovatelů ověřování.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
   </data>
@@ -3188,6 +3191,9 @@
   </data>
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Minimální doba (v sekundách), po jakou má být toto připojení uchováváno ve fondu, než bude zrušeno.</value>
+  </data>
+  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
+    <value>Maximální doba (v sekundách), po kterou může být připojení ve fondu nevyužité (nečinné), než se zahodí, když je zakázané starší chování při vypršení časového limitu nečinnosti. Hodnota 0 zakáže vypršení platnosti při nečinnosti.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Maximální počet připojení povolených ve fondu.</value>
