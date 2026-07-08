@@ -483,5 +483,156 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(connection2);
             Assert.Equal(1, poolSlots.ReservationCount);
         }
+
+        /// <summary>
+        /// Verifies that replacing an existing connection returns <see langword="true"/> and leaves
+        /// the reservation count unchanged, since the replacement reuses the same slot.
+        /// </summary>
+        [Fact]
+        public void TryReplace_ExistingConnection_ReturnsTrueAndKeepsReservationCount()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var oldConnection = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var newConnection = new MockDbConnectionInternal();
+            var reservationCountBeforeReplace = poolSlots.ReservationCount;
+
+            // Act
+            var replaced = poolSlots.TryReplace(oldConnection!, newConnection);
+
+            // Assert - the slot is reused, so the reservation count is unchanged
+            Assert.True(replaced);
+            Assert.Equal(1, reservationCountBeforeReplace);
+            Assert.Equal(1, poolSlots.ReservationCount);
+        }
+
+        /// <summary>
+        /// Verifies that after a successful replace, the new connection occupies the slot (and can
+        /// be removed) while the old connection is no longer present in the collection.
+        /// </summary>
+        [Fact]
+        public void TryReplace_ExistingConnection_NewConnectionOccupiesSlot()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var oldConnection = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var newConnection = new MockDbConnectionInternal();
+
+            // Act
+            poolSlots.TryReplace(oldConnection!, newConnection);
+
+            // Assert - the new connection now occupies the slot and can be removed,
+            // while the old connection is no longer present.
+            Assert.False(poolSlots.TryRemove(oldConnection!));
+            Assert.True(poolSlots.TryRemove(newConnection));
+            Assert.Equal(0, poolSlots.ReservationCount);
+        }
+
+        /// <summary>
+        /// Verifies that attempting to replace a connection that is not in the collection returns
+        /// <see langword="false"/>, does not change the reservation count, and does not insert the
+        /// new connection.
+        /// </summary>
+        [Fact]
+        public void TryReplace_NonExistentConnection_ReturnsFalseAndDoesNotAddNewConnection()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var existingConnection = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var missingConnection = new MockDbConnectionInternal();
+            var newConnection = new MockDbConnectionInternal();
+            var reservationCountBeforeReplace = poolSlots.ReservationCount;
+
+            // Act
+            var replaced = poolSlots.TryReplace(missingConnection, newConnection);
+
+            // Assert - nothing was replaced and the new connection was not inserted
+            Assert.False(replaced);
+            Assert.Equal(1, reservationCountBeforeReplace);
+            Assert.Equal(1, poolSlots.ReservationCount);
+            Assert.False(poolSlots.TryRemove(newConnection));
+        }
+
+        /// <summary>
+        /// Verifies that replacing a connection in an empty collection returns <see langword="false"/>
+        /// and leaves the reservation count at zero.
+        /// </summary>
+        [Fact]
+        public void TryReplace_EmptyCollection_ReturnsFalse()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var oldConnection = new MockDbConnectionInternal();
+            var newConnection = new MockDbConnectionInternal();
+
+            // Act
+            var replaced = poolSlots.TryReplace(oldConnection, newConnection);
+
+            // Assert
+            Assert.False(replaced);
+            Assert.Equal(0, poolSlots.ReservationCount);
+        }
+
+        /// <summary>
+        /// Verifies that when multiple connections are present, replace swaps only the targeted
+        /// connection and leaves the others untouched.
+        /// </summary>
+        [Fact]
+        public void TryReplace_MultipleConnections_ReplacesOnlyTargetConnection()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var connection1 = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var connection2 = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var newConnection = new MockDbConnectionInternal();
+
+            // Act - replace only connection2
+            var replaced = poolSlots.TryReplace(connection2!, newConnection);
+
+            // Assert - the untouched connection remains, the target was swapped out
+            Assert.True(replaced);
+            Assert.Equal(2, poolSlots.ReservationCount);
+            Assert.True(poolSlots.TryRemove(connection1!));
+            Assert.False(poolSlots.TryRemove(connection2!));
+            Assert.True(poolSlots.TryRemove(newConnection));
+            Assert.Equal(0, poolSlots.ReservationCount);
+        }
+
+        /// <summary>
+        /// Verifies that replacing the same connection twice succeeds on the first attempt but
+        /// fails on the second, because the original connection is no longer in the slot.
+        /// </summary>
+        [Fact]
+        public void TryReplace_SameConnectionTwice_ReturnsFalseOnSecondAttempt()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var oldConnection = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { });
+            var newConnection = new MockDbConnectionInternal();
+            var newerConnection = new MockDbConnectionInternal();
+
+            // Act
+            var firstReplace = poolSlots.TryReplace(oldConnection!, newConnection);
+            var secondReplace = poolSlots.TryReplace(oldConnection!, newerConnection);
+
+            // Assert - the old connection is gone after the first replace, so the second fails
+            Assert.True(firstReplace);
+            Assert.False(secondReplace);
+            Assert.Equal(1, poolSlots.ReservationCount);
+            Assert.True(poolSlots.TryRemove(newConnection));
+            Assert.False(poolSlots.TryRemove(newerConnection));
+        }
     }
 }

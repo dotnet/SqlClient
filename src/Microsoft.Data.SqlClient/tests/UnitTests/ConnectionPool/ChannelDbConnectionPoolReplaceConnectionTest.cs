@@ -47,6 +47,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 1 — Transparent Replacement
 
+        /// <summary>
+        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection"/> returns a
+        /// non-null connection that is a different instance from the one being replaced.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_ReturnsNewConnection()
         {
@@ -73,6 +77,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotSame(oldConnection, newConnection);
         }
 
+        /// <summary>
+        /// Verifies that after a replacement the old connection is disposed and can no longer
+        /// be pooled.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_OldConnectionIsDisposed()
         {
@@ -102,6 +110,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 3 — Pool Capacity Preservation (new physical connection path)
 
+        /// <summary>
+        /// Verifies that replacing a connection when no idle connections are available reuses
+        /// the old connection's slot so the pool's total count remains unchanged.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_NewPhysicalConnection_PoolCountUnchanged()
         {
@@ -129,6 +141,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(countBefore, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that replacing a connection in a pool that is already filled to its maximum
+        /// capacity succeeds without exceeding the maximum pool size.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_AtMaxCapacity_PoolCountUnchanged()
         {
@@ -169,6 +185,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 4 — Replacement Failure Propagation
 
+        /// <summary>
+        /// Verifies that when creating the replacement connection fails, the exception thrown by
+        /// the connection factory is propagated to the caller.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_CreationFails_ExceptionPropagated()
         {
@@ -196,6 +216,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
         }
 
+        /// <summary>
+        /// Verifies FR-006: when creating the replacement connection fails, the old connection's
+        /// slot is released (no capacity leak), the old connection is disposed, the pool is not
+        /// left in an error state, and the freed slot can be reused by a subsequent request.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_CreationFails_OldSlotReleased()
         {
@@ -248,6 +273,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 5 — Activation Failure Rollback
 
+        /// <summary>
+        /// Verifies that when activating the replacement connection fails, the exception is
+        /// propagated to the caller.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_ActivationFails_ExceptionPropagated()
         {
@@ -276,6 +305,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
         }
 
+        /// <summary>
+        /// Verifies that when activating the replacement connection fails, the newly created
+        /// connection is returned to the pool rather than leaked, keeping the pool count stable.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_ActivationFails_NewConnectionReturnedToPool()
         {
@@ -320,6 +353,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 6 — Prefer Idle Connection
 
+        /// <summary>
+        /// Verifies that when an idle connection is available, replacement reuses that idle
+        /// connection instead of creating a new physical connection.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_PrefersIdleOverNewConnection()
         {
@@ -350,6 +387,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.IdleCount);
         }
 
+        /// <summary>
+        /// Verifies that when no idle connection is available, replacement creates a new
+        /// physical connection distinct from the one being replaced.
+        /// </summary>
         [Fact]
         public void ReplaceConnection_NoIdleConnection_CreatesNew()
         {
