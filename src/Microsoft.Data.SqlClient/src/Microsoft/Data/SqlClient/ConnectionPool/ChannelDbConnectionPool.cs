@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionInternal? idleConnection = GetIdleConnection();
             if (idleConnection is not null)
             {
-                // The idle connection already holds its own slot, so just release the broken connection's
+                // The idle connection already holds its own slot, so release the broken connection's
                 // slot to keep the pool count correct (FR-005 / Story 6).
                 _connectionSlots.TryRemove(oldConnection);
                 return idleConnection;
