@@ -4,7 +4,6 @@
 
 using System;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -17,7 +16,7 @@ namespace Microsoft.Data.SqlClient
         // Static methods
         //
 
-        static internal void AliasRegistryLookup(ref string host, ref string protocol)
+        internal static void AliasRegistryLookup(ref string host, ref string protocol)
         {
             if (!string.IsNullOrEmpty(host))
             {
@@ -86,12 +85,12 @@ namespace Microsoft.Data.SqlClient
 
         // Obfuscate password to be sent to SQL Server
         // Blurb from the TDS spec at https://msdn.microsoft.com/en-us/library/dd304523.aspx
-        // "Before submitting a password from the client to the server, for every byte in the password buffer 
-        // starting with the position pointed to by IbPassword, the client SHOULD first swap the four high bits 
-        // with the four low bits and then do a bit-XOR with 0xA5 (10100101). After reading a submitted password, 
-        // for every byte in the password buffer starting with the position pointed to by IbPassword, the server SHOULD 
+        // "Before submitting a password from the client to the server, for every byte in the password buffer
+        // starting with the position pointed to by IbPassword, the client SHOULD first swap the four high bits
+        // with the four low bits and then do a bit-XOR with 0xA5 (10100101). After reading a submitted password,
+        // for every byte in the password buffer starting with the position pointed to by IbPassword, the server SHOULD
         // first do a bit-XOR with 0xA5 (10100101) and then swap the four high bits with the four low bits."
-        // The password exchange during Login phase happens over a secure channel i.e. SSL/TLS 
+        // The password exchange during Login phase happens over a secure channel i.e. SSL/TLS
         // Note: The same logic is used in SNIPacketSetData (SniManagedWrapper) to encrypt passwords stored in SecureString
         //       If this logic changed, SNIPacketSetData needs to be changed as well
         internal static byte[] ObfuscatePassword(string password)
@@ -164,7 +163,7 @@ namespace Microsoft.Data.SqlClient
 
         private static byte[] s_nicAddress = null;
 
-        static internal byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
+        internal static byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
         {
             if (s_nicAddress != null)
             {
@@ -173,7 +172,7 @@ namespace Microsoft.Data.SqlClient
 
             byte[] nicAddress = null;
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (OsConstants.IsWindows)
             {
                 // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
                 // has a value that is not zero, then we cannot use the NetworkAddress key and must

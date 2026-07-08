@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
@@ -227,6 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
                  && DataTestUtility.IsUsingManagedSNI()
+                 && RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                  && DataTestUtility.IsNotAzureServer()
                  && DataTestUtility.IsNotAzureSynapse());
         }

@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Security;
 using System.Text;
@@ -14,12 +13,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
+using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using Microsoft.Data.Common.ConnectionString;
+#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -828,8 +830,8 @@ namespace Microsoft.Data.SqlClient.Connection
             ValidateConnectionForExecute(null);
 
             // If a connection has a local transaction outstanding, and you try to enlist in a DTC
-            // transaction, SQL Server will roll back the local transaction and then enlist (7.0 and
-            // 2000). So, if the user tries to do this, throw.
+            // transaction, SQL Server will roll back the local transaction and then enlist.
+            // So, if the user tries to do this, throw.
             if (HasLocalTransaction)
             {
                 throw ADP.LocalTransactionPresent();
@@ -841,12 +843,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 return;
             }
 
-            // If a connection is already enlisted in a DTC transaction, and you try to enlist in
-            // another one, in 7.0 the existing DTC transaction would roll back and then the
-            // connection would enlist in the new one. In SQL 2000 & 2005, when you enlist in a DTC
-            // transaction while the connection is already enlisted in a DTC transaction, the
-            // connection simply switches enlistments. Regardless, simply enlist in the user
-            // specified distributed transaction. This behavior matches OLEDB and ODBC.
+            // If a connection is already enlisted in a DTC transaction and you try to enlist in
+            // another one, the connection simply switches enlistments. This behavior matches
+            // OLEDB and ODBC.
 
             Enlist(transaction);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
@@ -1970,7 +1969,7 @@ namespace Microsoft.Data.SqlClient.Connection
             TaskCompletionSource<DbConnectionInternal> retry,
             TimeoutTimer timeout)
         {
-            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, timeout);
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, forceNewConnection: true, timeout);
         }
 
         internal void ValidateConnectionForExecute(SqlCommand command)
