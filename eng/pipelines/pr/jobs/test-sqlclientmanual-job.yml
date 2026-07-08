@@ -180,7 +180,7 @@ jobs:
           $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = $true
-          $config.SupportsIntegratedSecurity = $false
+          $config.SupportsIntegratedSecurity = $true
           $config.UserManagedIdentityClientId = "${{ parameters.userManagedIdentityClientId }}"
 
           if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
