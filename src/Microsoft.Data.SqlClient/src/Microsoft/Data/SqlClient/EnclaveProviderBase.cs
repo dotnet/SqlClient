@@ -181,12 +181,12 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
+                sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
                 if (sqlEnclaveSession == null)
                 {
                     // Add session to cache
                     sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
-                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
+                    SessionCache.CreateSession(enclaveSessionParameters, sqlEnclaveSession, out counter);
                 }
             }
             finally
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+            SessionCache.InvalidateSession(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
 
         // Reset the session lock status
@@ -227,23 +227,6 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
 
-        // Helper method to remove the enclave session from the cache
-        protected void InvalidateEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            SessionCache.InvalidateSession(enclaveSessionParameters, enclaveSessionToInvalidate);
-        }
-
-        // Helper method for getting the enclave session from the session cache
-        protected SqlEnclaveSession GetEnclaveSessionFromCache(EnclaveSessionParameters enclaveSessionParameters, out long counter)
-        {
-            return SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
-        }
-
-        // Helper method for adding the enclave session to the session cache
-        protected void AddEnclaveSessionToCache(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSession, out long counter)
-        {
-            SessionCache.CreateSession(enclaveSessionParameters, enclaveSession, out counter);
-        }
     }
     #endregion
 }
