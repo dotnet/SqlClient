@@ -141,6 +141,10 @@ SELECT 1 AS Result;";
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
+                    // Ensure the CTS actually fired — guards against false positives
+                    // from unrelated SqlExceptions.
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
                     // The key assertion: cancellation should complete well before the
                     // 60-second WAITFOR. Allow up to 30 seconds for CI variability.
                     Assert.True(stopwatch.ElapsedMilliseconds < 30000,
@@ -197,6 +201,8 @@ SELECT 1 AS Result;";
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
                     Assert.True(stopwatch.ElapsedMilliseconds < 30000,
                         $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
                         "Attention signal may not have been sent during ExecuteReaderAsync.");

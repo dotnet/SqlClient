@@ -2302,9 +2302,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Use the same CommandText for both warmup and cancellation test so the
                 // query metadata cache key matches and the second execution goes through
                 // the CreateLocalCompletionTask internal-end path.
-                string commandText = $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY @Delay;";
+                // WAITFOR is placed BEFORE SELECT so that EndExecuteReaderInternal blocks
+                // waiting for result-set metadata — this is the exact CreateLocalCompletionTask
+                // code path we need to exercise.
+                string commandText = $"WAITFOR DELAY @Delay; SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId;";
 
-                // Warmup: execute with a short delay to populate the metadata cache.
+                // Warmup: execute with zero delay to populate the metadata cache.
                 using (SqlCommand warmupCmd = new SqlCommand(
                     commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -2315,13 +2318,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     using (var reader = await warmupCmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync()) { }
-                        // Consume all result sets to complete cleanly
                         while (await reader.NextResultAsync()) { }
                     }
                 }
 
                 // Now execute the same command with a long delay and cancel it.
                 // With cached metadata, this goes through CreateLocalCompletionTask's internal-end path.
+                // The WAITFOR blocks before any result-set metadata is returned, so
+                // ExecuteReaderAsync should be cancelled before a reader is produced.
                 using (SqlCommand sqlCommand = new SqlCommand(
                     commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -2339,9 +2343,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         {
                             using (SqlDataReader reader = await sqlCommand.ExecuteReaderAsync(cts.Token))
                             {
-                                while (await reader.ReadAsync(cts.Token)) { }
-                                // NextResultAsync will block on WAITFOR — cancellation should abort it
-                                await reader.NextResultAsync(cts.Token);
+                                // If we reach here, cancellation failed during EndExecuteReaderInternal.
+                                Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
                             }
                         }
                         catch (OperationCanceledException ex)
@@ -2357,7 +2360,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         stopwatch.Stop();
 
                         Assert.NotNull(caughtException);
-                        // Cancellation should complete well before the 60-second WAITFOR.
+                        Assert.True(cts.IsCancellationRequested,
+                            "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
                         Assert.True(stopwatch.ElapsedMilliseconds < 30000,
                             $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
                             "Attention signal may not have been sent during AE async execution.");
