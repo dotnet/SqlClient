@@ -123,12 +123,9 @@ SELECT 1 AS Result;";
                     {
                         using (var reader = await command.ExecuteReaderAsync(cts.Token))
                         {
-                            // The RAISERROR result is consumed as an informational message.
-                            // ReadAsync will block waiting for WAITFOR to complete (next result).
-                            // Cancellation should interrupt this via attention signal.
-                            while (await reader.ReadAsync(cts.Token))
-                            { }
-                            await reader.NextResultAsync(cts.Token);
+                            // If we reach here, cancellation failed to abort ExecuteReaderAsync while it was waiting
+                            // for metadata after a partial response (e.g., RAISERROR WITH NOWAIT).
+                            Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
                         }
                     }
                     catch (System.OperationCanceledException ex)
