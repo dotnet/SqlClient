@@ -360,17 +360,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             ThrowIfReconnectionHasBeenCanceled();
-            // lock on _stateObj prevents races with close/cancel.
-            // If we have already initiated the End call internally, we have already done that, so
-            // no point doing it again.
-            if (!_internalEndExecuteInitiated)
-            {
-                lock (_stateObj)
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
-            }
 
+            // Note: We intentionally do NOT lock on _stateObj here.
+            // See comment in EndExecuteReaderAsync and GitHub issue #4424 for details.
             return EndExecuteNonQueryInternal(asyncResult);
         }
 
