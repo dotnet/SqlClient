@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Reset the session lock status
-        protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
+        private void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
         {
             // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
             // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happens.
@@ -226,7 +226,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
-
     }
     #endregion
 }
