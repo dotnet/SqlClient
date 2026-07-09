@@ -107,24 +107,40 @@ SELECT 1 AS Result;";
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.CommandTimeout = 90;
+
+                    // Schedule cancellation BEFORE ExecuteReaderAsync so it fires while
+                    // the async completion path may still be consuming metadata or while
+                    // ReadAsync/NextResultAsync is blocked waiting for the server.
+                    cts.CancelAfter(System.TimeSpan.FromSeconds(2));
+
                     Stopwatch stopwatch = Stopwatch.StartNew();
 
-                    await Assert.ThrowsAnyAsync<System.OperationCanceledException>(async () =>
+                    // Cancellation during async read may surface as either
+                    // OperationCanceledException or SqlException (attention ack).
+                    System.Exception caughtException = null;
+                    try
                     {
                         using (var reader = await command.ExecuteReaderAsync(cts.Token))
                         {
-                            // Cancel after a short delay to ensure the server has sent
-                            // the RAISERROR partial result and is blocked on WAITFOR.
-                            cts.CancelAfter(System.TimeSpan.FromSeconds(2));
-                            // ReadAsync should be cancelled by the token sending attention
                             while (await reader.ReadAsync(cts.Token))
                             { }
                             // Advance to next result set (blocked by WAITFOR)
                             await reader.NextResultAsync(cts.Token);
                         }
-                    });
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        // Attention acknowledgment from server manifests as SqlException
+                        caughtException = ex;
+                    }
 
                     stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
                     // The key assertion: cancellation should complete well before the
                     // 60-second WAITFOR. Allow up to 30 seconds for CI variability.
                     Assert.True(stopwatch.ElapsedMilliseconds < 30000,
