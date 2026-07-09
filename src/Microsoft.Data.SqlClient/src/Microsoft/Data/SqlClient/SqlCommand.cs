@@ -2451,9 +2451,15 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(!_internalEndExecuteInitiated);
                         _internalEndExecuteInitiated = true;
 
-                        // Note: We intentionally do NOT lock on _stateObj here.
-                        // See comment in EndExecuteReaderAsync and GitHub issue #4424.
-                        endFunc(this, task, /*isInternal:*/ true, endMethod);
+                        // Lock on _stateObj prevents races with close/cancel during the
+                        // internal-end path (AE retry/cache). Unlike the user-facing
+                        // EndExecute* methods, this path is invoked internally after the
+                        // first async operation completes and cancellation is handled via
+                        // the localCompletion task state (IsCanceled check above).
+                        lock (_stateObj)
+                        {
+                            endFunc(this, task, /*isInternal:*/ true, endMethod);
+                        }
 
                         globalCompletion.TrySetResult(task.Result);
                     }

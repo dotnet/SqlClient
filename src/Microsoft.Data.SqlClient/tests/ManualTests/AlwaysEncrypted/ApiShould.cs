@@ -2279,9 +2279,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Validates that async cancellation via CancellationToken sends a TDS attention signal
         /// when an AE-enabled command is blocked on a server-side wait (e.g., WAITFOR DELAY).
-        /// This covers the internal-end path in CreateLocalCompletionTask where the lock on
-        /// _stateObj previously prevented Cancel() from sending attention.
-        /// See GitHub issue #4424.
+        /// This exercises the EndExecuteReaderAsync path where the lock on _stateObj previously
+        /// prevented Cancel() from sending attention. See GitHub issue #4424.
         /// Synapse: Incompatible query.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
