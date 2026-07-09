@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             // for None attestation: enclave does not send public key, and sends an empty attestation info
             // The only non-trivial content it sends is the session setup info (DH pubkey of enclave)
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
 
                     byte[] sharedSecret;
                     using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
-                    sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
+                    sharedSecret = KeyConverter.DeriveKey(attestationParameters.ClientDiffieHellmanKey, ecdh.PublicKey);
                     long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
                     sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
 

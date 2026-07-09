@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
                         VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
 
                         // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
 
                         // add session to cache
                         sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
