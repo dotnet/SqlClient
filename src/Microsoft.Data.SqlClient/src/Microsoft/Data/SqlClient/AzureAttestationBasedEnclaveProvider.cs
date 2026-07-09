@@ -109,32 +109,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
-        {
-            sqlEnclaveSession = null;
-            counter = 0;
-            try
-            {
-                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
-                if (sqlEnclaveSession == null)
-                {
-                    // Add session to cache
-                    sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
-                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
-                }
-            }
-            finally
-            {
-                // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
-                // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happen.
-                // Case 1: When the first request successfully creates the session, then all outstanding GetEnclaveSession will use the current session.
-                // Case 2: When the first request unable to create the enclave session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
-                UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
-            }
-        }
-
         // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {

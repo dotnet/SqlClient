@@ -78,29 +78,6 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveSession(sharedSecret, sessionId);
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
-        {
-            sqlEnclaveSession = null;
-            counter = 0;
-            try
-            {
-                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
-
-                if (sqlEnclaveSession == null)
-                {
-                    sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
-
-                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
-                }
-            }
-            finally
-            {
-                UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
-            }
-        }
-
         /// <summary>
         /// When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
         /// </summary>
