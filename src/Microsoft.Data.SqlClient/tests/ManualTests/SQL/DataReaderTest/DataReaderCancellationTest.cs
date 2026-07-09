@@ -244,7 +244,21 @@ END";
                     System.Exception caughtException = null;
                     try
                     {
-                        await command.ExecuteNonQueryAsync(cts.Token);
+                        // Watchdog: if cancellation regresses, don't hang the test suite.
+                        // Use Task.WhenAny with a 45s delay as a hard timeout.
+                        Task execTask = command.ExecuteNonQueryAsync(cts.Token);
+                        Task completed = await Task.WhenAny(execTask, Task.Delay(System.TimeSpan.FromSeconds(45)));
+
+                        if (completed != execTask)
+                        {
+                            // Watchdog fired — best-effort cleanup
+                            command.Cancel();
+                            connection.Close();
+                            Assert.Fail("ExecuteNonQueryAsync did not complete within 45s watchdog timeout. " +
+                                "Cancellation via attention signal likely failed.");
+                        }
+
+                        await execTask; // Propagate any exception
                         Assert.Fail("ExecuteNonQueryAsync should have been cancelled.");
                     }
                     catch (System.OperationCanceledException ex)

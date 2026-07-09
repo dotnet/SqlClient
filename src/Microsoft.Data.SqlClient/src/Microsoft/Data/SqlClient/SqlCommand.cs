@@ -2451,14 +2451,14 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(!_internalEndExecuteInitiated);
                         _internalEndExecuteInitiated = true;
 
-                        // Lock on _stateObj prevents races with close/cancel during the
-                        // internal-end path (AE retry/cache). This lock is retained here
-                        // because cancellation in the user-facing path (EndExecute*Async)
-                        // sends attention via stateObj.Cancel(), which can proceed without
-                        // this lock since it only contends with the user-facing EndExecute*
-                        // methods (where the lock was removed). The internal-end path runs
-                        // on a ContinueWith continuation after the initial async operation
-                        // completes, so the timing differs from the user-facing path.
+                        // Lock on _stateObj serializes this internal-end path with
+                        // close/cancel. Note: stateObj.Cancel() also acquires this monitor,
+                        // so this lock CAN block Cancel() while endFunc is executing.
+                        // This is retained here (unlike the user-facing EndExecute* methods)
+                        // because this continuation runs after the initial async I/O has
+                        // already completed — the blocking metadata read that caused #4424
+                        // in the user-facing path does not apply here since the data is
+                        // already buffered by the time this continuation fires.
                         lock (_stateObj)
                         {
                             endFunc(this, task, /*isInternal:*/ true, endMethod);
