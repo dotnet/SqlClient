@@ -273,100 +273,59 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
 
-            // Acquire a replacement that reuses the broken connection's pool slot so capacity is preserved
-            // (FR-005). Prefers an idle connection (Story 6); otherwise establishes a new one. Throws (after
-            // disposing the old connection and freeing its slot) if establishing a new connection fails (FR-006).
-            DbConnectionInternal? newConnection = GetReplacementConnection(owningObject, oldConnection, timeout);
-            if (newConnection is null)
+            // We replace oldConnection with a brand-new physical connection. oldConnection is left completely
+            // untouched until the replacement has been successfully activated, so any failure leaves it reusable
+            // by the caller's reconnect retry loop (SqlConnection.ReconnectAsync). oldConnection is checked out,
+            // so its pool slot is stable: nothing else can remove or steal it (Clear/Shutdown/Prune only drain
+            // idle connections). We only touch the slots once the replacement is live. While the new connection
+            // is activating the pool may briefly hold one physical connection over MaxPoolSize (the dead old one
+            // plus the new one), but oldConnection is dead anyway and the reserved slot count never exceeds the
+            // maximum.
+            // TODO: Prefer reusing an idle connection before establishing a new one
+            DbConnectionInternal newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+
+            try
             {
-                // No slot could be secured for a new connection; let the caller's retry logic handle it.
-                return null;
+                // Stamp with the current generation so a later Clear() can discard it.
+                newConnection.ClearGeneration = _clearGeneration;
+
+                lock (newConnection)
+                {
+                    // PostPop requires a lock on the connection.
+                    newConnection.PostPop(owningObject);
+                }
+
+                // Activate under the old connection's ambient transaction (FR-002/FR-003).
+                // TODO: Full transaction enlistment support (Story 2).
+                newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
+
+                bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
+
+                if (!replaced)
+                {
+                    // This should never happen because oldConnection is checked out and its slot is stable.
+                    // Still, we need to check or we could vend a connection that is not tracked by the pool.
+                    // TODO: error types and localization
+                    throw new InvalidOperationException("Connection is no longer in the pool and cannot be replaced.");
+                }
+            }
+            catch
+            {
+                // Dispose the brand-new connection; it never took a slot. oldConnection is untouched.
+                newConnection.DeactivateConnection();
+                newConnection.Dispose();
+                throw;
             }
 
-            // Activate the replacement under the old connection's ambient transaction (FR-002/FR-003). If
-            // activation fails, PrepareConnection returns the new connection to the pool and rethrows (FR-007).
-            // TODO: Full transaction enlistment support (Story 2).
-            PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
-
-            // FR-004: Deactivate and dispose the old connection now that the replacement is active.
             oldConnection.DeactivateConnection();
             oldConnection.Dispose();
 
-            // FR-008: Record a soft connect metric since the caller's connection object is reused.
+            // A hard connect is already recorded by the connection factory.
             SqlClientDiagnostics.Metrics.SoftConnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, connection replaced successfully.", Id);
-
-            return newConnection;
-        }
-
-        /// <summary>
-        /// Obtains a connection to replace <paramref name="oldConnection"/>, reusing its pool slot so the
-        /// pool's connection count is unchanged (FR-005). An idle connection is preferred (Story 6);
-        /// otherwise a new physical connection is established.
-        /// </summary>
-        /// <param name="owningObject">The connection that will own the replacement.</param>
-        /// <param name="oldConnection">The broken connection being replaced.</param>
-        /// <param name="timeout">The overall timeout budget for establishing a new connection.</param>
-        /// <returns>
-        /// The replacement connection, already placed in a pool slot, or <see langword="null"/> if a new
-        /// connection was established but no slot could be secured for it.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Propagated when establishing a new connection fails. Before rethrowing, the old connection is
-        /// deactivated and removed from the pool so its slot is not leaked (FR-006 / Story 4).
-        /// </exception>
-        private DbConnectionInternal? GetReplacementConnection(
-            DbConnection owningObject,
-            DbConnectionInternal oldConnection,
-            TimeoutTimer timeout)
-        {
-            // Story 6: prefer an idle connection over establishing a new physical one.
-            DbConnectionInternal? idleConnection = GetIdleConnection();
-            if (idleConnection is not null)
-            {
-                // The idle connection already holds its own slot, so release the broken connection's
-                // slot to keep the pool count correct (FR-005 / Story 6).
-                _connectionSlots.TryRemove(oldConnection);
-                return idleConnection;
-            }
-
-            DbConnectionInternal newConnection;
-            try
-            {
-                newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
-            }
-            catch
-            {
-                // FR-006 / Story 4: Establishing the replacement failed (e.g., the server is still
-                // unreachable). Deactivate and remove the broken connection so its slot is not leaked, then
-                // propagate. RemoveConnection disposes it and clears its Pool reference, so the caller's
-                // eventual Close() follows the non-pooled path and will not touch the freed slot again.
-                oldConnection.DeactivateConnection();
-                RemoveConnection(oldConnection);
-                throw;
-            }
-
-            // Stamp the new connection with the current generation so a later Clear() can discard it. (Idle
-            // connections already carry their birth generation, so only newly established ones are stamped.)
-            newConnection.ClearGeneration = _clearGeneration;
-
-            // Atomically swap the new connection into the broken connection's slot so the reservation count
-            // is unchanged (FR-005).
-            if (!_connectionSlots.TryReplace(oldConnection, newConnection))
-            {
-                // The old slot was already removed (e.g., by a concurrent Clear). Reserve a fresh slot
-                // instead; if the pool is now full, give up and dispose the orphaned connection.
-                if (_connectionSlots.Add(
-                        createCallback: () => newConnection,
-                        cleanupCallback: (conn) => conn?.Dispose()) is null)
-                {
-                    newConnection.Dispose();
-                    return null;
-                }
-            }
-
+                
             return newConnection;
         }
 

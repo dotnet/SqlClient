@@ -217,14 +217,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies FR-006: when creating the replacement connection fails, the old connection's
-        /// slot is released (no capacity leak), the old connection is disposed, the pool is not
-        /// left in an error state, and the freed slot can be reused by a subsequent request.
+        /// Verifies that when creating the replacement connection fails, the old connection is left fully
+        /// intact - it keeps its pool slot and stays poolable - so the caller's reconnect retry loop can reuse
+        /// it on a subsequent attempt. The pool count is unchanged and the pool is not left in an error state.
         /// </summary>
         [Fact]
-        public void ReplaceConnection_CreationFails_OldSlotReleased()
+        public void ReplaceConnection_CreationFails_OldConnectionRetainedForRetry()
         {
-            // Arrange — fill the pool to capacity so a leaked slot would be observable.
+            // Arrange — fill the pool to capacity so a leaked or prematurely released slot would be observable.
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -255,17 +255,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     oldConnection!,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
 
-            // Assert — FR-006: the old connection's slot was released (no capacity leak).
-            Assert.Equal(1, pool.Count);
-            // Old connection was disposed as part of the failure cleanup.
-            Assert.False(oldConnection!.CanBePooled);
-            // FR-006 scenario 3: the pool is not left in an error state.
+            // Assert — the old connection is left intact so the caller can retry with it: its slot is retained
+            // (no premature release) ...
+            Assert.Equal(2, pool.Count);
+            // ... it is not disposed and remains poolable ...
+            Assert.True(oldConnection!.CanBePooled);
+            // ... and the pool is not left in an error state.
             Assert.False(pool.ErrorOccurred);
 
-            // The freed slot is usable again — a fresh request can succeed.
+            // The reconnect retry loop reuses the SAME old connection: a subsequent successful replacement
+            // succeeds, reusing the retained slot and keeping the pool count unchanged.
             switchableFactory.ShouldFail = false;
-            pool.TryGetConnection(new SqlConnection(), null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? replacementForSlot);
-            Assert.NotNull(replacementForSlot);
+            var newConnection = pool.ReplaceConnection(
+                owner1,
+                oldConnection!,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            Assert.NotNull(newConnection);
+            Assert.NotSame(oldConnection, newConnection);
             Assert.Equal(2, pool.Count);
         }
 
@@ -351,41 +357,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Story 6 — Prefer Idle Connection
+        #region Story 6 — New Physical Connection
 
-        /// <summary>
-        /// Verifies that when an idle connection is available, replacement reuses that idle
-        /// connection instead of creating a new physical connection.
-        /// </summary>
-        [Fact]
-        public void ReplaceConnection_PrefersIdleOverNewConnection()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            SqlConnection owner1 = new();
-            SqlConnection owner2 = new();
-
-            pool.TryGetConnection(owner1, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
-            pool.TryGetConnection(owner2, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn2);
-
-            Assert.NotNull(conn1);
-            Assert.NotNull(conn2);
-
-            // Return conn2 to make it idle
-            pool.ReturnInternalConnection(conn2, owner2);
-            Assert.Equal(1, pool.IdleCount);
-
-            // Act — replace conn1; should prefer the idle conn2
-            var newConnection = pool.ReplaceConnection(
-                owner1,
-                conn1,
-                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
-
-            // Assert — should reuse the idle connection
-            Assert.NotNull(newConnection);
-            Assert.Same(conn2, newConnection);
-            Assert.Equal(0, pool.IdleCount);
-        }
+        // NOTE: Preferring an idle connection over a new physical one is being added in a follow-up PR
+        // (branch dev/automation/replace-conn-idle-path), along with its ReplaceConnection_PrefersIdleOverNewConnection test.
 
         /// <summary>
         /// Verifies that when no idle connection is available, replacement creates a new
