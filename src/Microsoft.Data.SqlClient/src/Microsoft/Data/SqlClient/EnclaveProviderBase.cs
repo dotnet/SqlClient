@@ -194,6 +194,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
+
         // Helper method to remove the enclave session from the cache
         protected void InvalidateEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {

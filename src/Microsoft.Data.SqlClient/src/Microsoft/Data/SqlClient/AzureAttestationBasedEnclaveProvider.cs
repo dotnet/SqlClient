@@ -79,6 +79,16 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
+        protected override SqlEnclaveSession CreateEnclaveSessionCore(
+            byte[] enclaveAttestationInfo,
+            SqlEnclaveAttestationParameters attestationParameters,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength)
+        {
+            throw new NotImplementedException();
+        }
+
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
         internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
