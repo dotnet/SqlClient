@@ -168,10 +168,14 @@ SELECT 1 AS Result;";
             // completes. ExecuteReaderAsync will be blocked in the async completion path.
             const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
 
-            using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(2)))
+            using (var cts = new CancellationTokenSource())
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
+
+                // Start cancellation timer AFTER connection is open to avoid
+                // false positives if OpenAsync is slow.
+                cts.CancelAfter(System.TimeSpan.FromSeconds(2));
 
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -206,6 +210,68 @@ SELECT 1 AS Result;";
                     Assert.True(stopwatch.ElapsedMilliseconds < 30000,
                         $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
                         "Attention signal may not have been sent during ExecuteReaderAsync.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates that cancelling an infinite WHILE loop via CancellationToken does not
+        /// hang forever. This is the exact repro from GitHub issue #44.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationOfInfiniteWhileLoop_DoesNotHang()
+        {
+            // Infinite loop that never completes — only cancellation via attention can stop it.
+            const string query = @"
+WHILE 1 = 1
+BEGIN
+    DECLARE @x INT = 1
+END";
+
+            using (var cts = new CancellationTokenSource())
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+                cts.CancelAfter(System.TimeSpan.FromSeconds(2));
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 0; // No timeout — rely solely on cancellation
+
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    System.Exception caughtException = null;
+                    try
+                    {
+                        await command.ExecuteNonQueryAsync(cts.Token);
+                        Assert.Fail("ExecuteNonQueryAsync should have been cancelled.");
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        caughtException = ex;
+                    }
+
+                    stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
+                    // Must complete well within 30s — without the fix this hangs forever.
+                    Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                        $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent for infinite WHILE loop.");
+                }
+
+                // Verify the connection is still usable after cancellation.
+                using (var verifyCmd = new SqlCommand("SELECT 1", connection))
+                {
+                    object result = await verifyCmd.ExecuteScalarAsync();
+                    Assert.Equal(1, (int)result);
                 }
             }
         }
