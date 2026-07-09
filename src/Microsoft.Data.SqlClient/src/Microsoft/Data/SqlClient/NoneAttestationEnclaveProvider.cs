@@ -79,12 +79,9 @@ namespace Microsoft.Data.SqlClient
                     using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
                     sharedSecret = KeyConverter.DeriveKey(attestationParameters.ClientDiffieHellmanKey, ecdh.PublicKey);
                     long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
-                    sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
 
-                    if (sqlEnclaveSession is null)
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
+                    sqlEnclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
+                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
                 }
             }
             finally

@@ -106,7 +106,8 @@ namespace Microsoft.Data.SqlClient
                         byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
 
                         // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out counter);
+                        sqlEnclaveSession = new SqlEnclaveSession(sharedSecret, attestInfo.SessionId);
+                        AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
                     }
                     else
                     {
