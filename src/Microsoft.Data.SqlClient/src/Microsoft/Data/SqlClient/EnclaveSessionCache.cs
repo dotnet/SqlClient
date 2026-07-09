@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Creates a new SqlEnclaveSession and adds it to the cache
+        // Adds a new SqlEnclaveSession to the cache
         internal void CreateSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSession, out long counter)
         {
             string cacheKey = GenerateCacheKey(enclaveSessionParameters);

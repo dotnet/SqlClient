@@ -88,6 +88,9 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region protected methods
+        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session and creates an enclave session.
+        protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
+
         // Helper method to get the enclave session from the cache if present
         protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
@@ -173,7 +176,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
+        // When overridden in a derived class, calls CreateEnclaveSessionCore to create an enclave session and stores the session information in the cache.
         internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
@@ -224,8 +227,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
-        protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
     }
     #endregion
 }
