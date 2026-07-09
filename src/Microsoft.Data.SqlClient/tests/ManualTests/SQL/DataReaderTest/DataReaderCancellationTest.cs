@@ -149,5 +149,58 @@ SELECT 1 AS Result;";
                 }
             }
         }
+
+        /// <summary>
+        /// Validates that cancellation during ExecuteReaderAsync itself (not just ReadAsync)
+        /// sends a TDS attention signal. This covers the case where the async completion path
+        /// in EndExecuteReaderInternal is blocked on synchronous metadata consumption while
+        /// the server is still processing (e.g., a long-running batch where initial metadata
+        /// is delayed). This also covers the internal-end path used by Always Encrypted retry.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationDuringExecuteReaderAsync_SendsAttention()
+        {
+            // Use a query that blocks immediately so cancellation must fire during
+            // ExecuteReaderAsync's async completion (before any reader is returned).
+            const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
+
+            using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(2)))
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 90;
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    System.Exception caughtException = null;
+                    try
+                    {
+                        // ExecuteReaderAsync itself should be cancelled via attention
+                        using (var reader = await command.ExecuteReaderAsync(cts.Token))
+                        {
+                            await reader.ReadAsync(cts.Token);
+                        }
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        caughtException = ex;
+                    }
+
+                    stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
+                    Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                        $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent during ExecuteReaderAsync.");
+                }
+            }
+        }
     }
 }

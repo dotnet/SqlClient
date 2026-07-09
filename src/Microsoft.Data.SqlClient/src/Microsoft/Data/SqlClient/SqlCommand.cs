@@ -2451,11 +2451,9 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(!_internalEndExecuteInitiated);
                         _internalEndExecuteInitiated = true;
 
-                        // Lock on _stateObj prevents races with close/cancel
-                        lock (_stateObj)
-                        {
-                            endFunc(this, task, /*isInternal:*/ true, endMethod);
-                        }
+                        // Note: We intentionally do NOT lock on _stateObj here.
+                        // See comment in EndExecuteReaderAsync and GitHub issue #4424.
+                        endFunc(this, task, /*isInternal:*/ true, endMethod);
 
                         globalCompletion.TrySetResult(task.Result);
                     }

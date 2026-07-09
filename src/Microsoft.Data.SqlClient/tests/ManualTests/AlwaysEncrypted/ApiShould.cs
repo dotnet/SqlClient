@@ -2276,6 +2276,98 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
 
+        /// <summary>
+        /// Validates that async cancellation via CancellationToken sends a TDS attention signal
+        /// when an AE-enabled command is blocked on a server-side wait (e.g., WAITFOR DELAY).
+        /// This covers the internal-end path in CreateLocalCompletionTask where the lock on
+        /// _stateObj previously prevented Cancel() from sending attention.
+        /// See GitHub issue #4424.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task TestAsyncCancellationSendsAttention_WithAlwaysEncryptedCommand(string connection)
+        {
+            CleanUpTable(connection, _tableName);
+
+            IList<object> values = GetValues(dataHint: 60);
+            int numberOfRows = 10;
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                await sqlConnection.OpenAsync();
+
+                // First query to warm the metadata cache (so subsequent calls use the internal-end path)
+                using (SqlCommand warmupCmd = new SqlCommand(
+                    $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    warmupCmd.Parameters.AddWithValue("@CustomerId", values[0]);
+                    warmupCmd.Parameters.AddWithValue("@FirstName", values[1]);
+
+                    using (var reader = await warmupCmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync()) { }
+                    }
+                }
+
+                // Now execute a long-running query with AE enabled and cancel it.
+                // The WAITFOR ensures the server blocks after initial metadata/results are sent.
+                // With cached metadata, this goes through CreateLocalCompletionTask's internal-end path.
+                using (SqlCommand sqlCommand = new SqlCommand(
+                    $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY '00:01:00';",
+                    sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.AddWithValue("@CustomerId", values[0]);
+                    sqlCommand.Parameters.AddWithValue("@FirstName", values[1]);
+                    sqlCommand.CommandTimeout = 90;
+
+                    using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+                    {
+                        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                        Exception caughtException = null;
+                        try
+                        {
+                            using (SqlDataReader reader = await sqlCommand.ExecuteReaderAsync(cts.Token))
+                            {
+                                while (await reader.ReadAsync(cts.Token)) { }
+                                // NextResultAsync will block on WAITFOR — cancellation should abort it
+                                await reader.NextResultAsync(cts.Token);
+                            }
+                        }
+                        catch (OperationCanceledException ex)
+                        {
+                            caughtException = ex;
+                        }
+                        catch (SqlException ex)
+                        {
+                            // Attention ack from server manifests as SqlException
+                            caughtException = ex;
+                        }
+
+                        stopwatch.Stop();
+
+                        Assert.NotNull(caughtException);
+                        // Cancellation should complete well before the 60-second WAITFOR.
+                        Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                            $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                            "Attention signal may not have been sent during AE async execution.");
+                    }
+                }
+
+                // Verify the connection is still usable after cancellation.
+                using (SqlCommand verifyCmd = new SqlCommand(
+                    $"SELECT COUNT(*) FROM [{_tableName}]", sqlConnection))
+                {
+                    object result = await verifyCmd.ExecuteScalarAsync();
+                    Assert.Equal(numberOfRows, (int)result);
+                }
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSGXEnclaveConnStringSetup))]
         public void TestNoneAttestationProtocolWithSGXEnclave()
         {
