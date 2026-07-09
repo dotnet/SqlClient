@@ -107,7 +107,27 @@ namespace Microsoft.Data.SqlClient
             byte[] customData,
             int customDataLength)
         {
-            throw new NotImplementedException();
+            if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
+            {
+                // Deserialize the payload
+                AttestationInfo info = new AttestationInfo(enclaveAttestationInfo);
+
+                // Verify enclave policy matches expected policy
+                VerifyEnclavePolicy(info.EnclaveReportPackage);
+
+                // Perform Attestation per VSM protocol
+                VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
+
+                // Set up shared secret and validate signature
+                byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
+
+                // add session to cache
+                return new SqlEnclaveSession(sharedSecret, info.SessionId);
+            }
+            else
+            {
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+            }
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
@@ -121,28 +141,9 @@ namespace Microsoft.Data.SqlClient
                 sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
                 if (sqlEnclaveSession == null)
                 {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
-                    {
-                        // Deserialize the payload
-                        AttestationInfo info = new AttestationInfo(attestationInfo);
+                    sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
 
-                        // Verify enclave policy matches expected policy
-                        VerifyEnclavePolicy(info.EnclaveReportPackage);
-
-                        // Perform Attestation per VSM protocol
-                        VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
-
-                        // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
-
-                        // add session to cache
-                        sqlEnclaveSession = new SqlEnclaveSession(sharedSecret, info.SessionId);
-                        AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
-                    }
-                    else
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
+                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
                 }
             }
             finally

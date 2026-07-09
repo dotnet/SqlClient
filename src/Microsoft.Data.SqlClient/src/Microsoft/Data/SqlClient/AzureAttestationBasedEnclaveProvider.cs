@@ -86,7 +86,27 @@ namespace Microsoft.Data.SqlClient
             byte[] customData,
             int customDataLength)
         {
-            throw new NotImplementedException();
+            if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
+            {
+                byte[] nonce = customData;
+
+                IdentityModelEventSource.ShowPII = true;
+
+                // Deserialize the payload
+                AzureAttestationInfo attestInfo = new AzureAttestationInfo(enclaveAttestationInfo);
+
+                // Validate the attestation info
+                VerifyAzureAttestationInfo(enclaveSessionParameters.AttestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
+
+                // Set up shared secret and validate signature
+                byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
+
+                return new SqlEnclaveSession(sharedSecret, attestInfo.SessionId);
+            }
+            else
+            {
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+            }
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
@@ -100,29 +120,9 @@ namespace Microsoft.Data.SqlClient
                 sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
                 if (sqlEnclaveSession == null)
                 {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
-                    {
-                        byte[] nonce = customData;
-
-                        IdentityModelEventSource.ShowPII = true;
-
-                        // Deserialize the payload
-                        AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
-
-                        // Validate the attestation info
-                        VerifyAzureAttestationInfo(enclaveSessionParameters.AttestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
-
-                        // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
-
-                        // add session to cache
-                        sqlEnclaveSession = new SqlEnclaveSession(sharedSecret, attestInfo.SessionId);
-                        AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
-                    }
-                    else
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
+                    // Add session to cache
+                    sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
+                    AddEnclaveSessionToCache(enclaveSessionParameters, sqlEnclaveSession, out counter);
                 }
             }
             finally
