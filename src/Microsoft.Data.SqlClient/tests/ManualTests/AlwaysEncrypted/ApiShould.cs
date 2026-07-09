@@ -2299,29 +2299,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 await sqlConnection.OpenAsync();
 
-                // First query to warm the metadata cache (so subsequent calls use the internal-end path)
+                // Use the same CommandText for both warmup and cancellation test so the
+                // query metadata cache key matches and the second execution goes through
+                // the CreateLocalCompletionTask internal-end path.
+                string commandText = $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY @Delay;";
+
+                // Warmup: execute with a short delay to populate the metadata cache.
                 using (SqlCommand warmupCmd = new SqlCommand(
-                    $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
-                    sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     warmupCmd.Parameters.AddWithValue("@CustomerId", values[0]);
                     warmupCmd.Parameters.AddWithValue("@FirstName", values[1]);
+                    warmupCmd.Parameters.AddWithValue("@Delay", "00:00:00");
 
                     using (var reader = await warmupCmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync()) { }
+                        // Consume all result sets to complete cleanly
+                        while (await reader.NextResultAsync()) { }
                     }
                 }
 
-                // Now execute a long-running query with AE enabled and cancel it.
-                // The WAITFOR ensures the server blocks after initial metadata/results are sent.
+                // Now execute the same command with a long delay and cancel it.
                 // With cached metadata, this goes through CreateLocalCompletionTask's internal-end path.
                 using (SqlCommand sqlCommand = new SqlCommand(
-                    $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY '00:01:00';",
-                    sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.AddWithValue("@CustomerId", values[0]);
                     sqlCommand.Parameters.AddWithValue("@FirstName", values[1]);
+                    sqlCommand.Parameters.AddWithValue("@Delay", "00:01:00");
                     sqlCommand.CommandTimeout = 90;
 
                     using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))

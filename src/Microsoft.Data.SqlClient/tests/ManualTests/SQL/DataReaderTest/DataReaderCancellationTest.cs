@@ -84,18 +84,19 @@ from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
         }
         /// <summary>
         /// Validates that async cancellation sends a TDS attention signal to SQL Server
-        /// when the server has sent partial results (RAISERROR WITH NOWAIT) followed by
-        /// a blocking operation (WAITFOR). Without the fix for GitHub issue #4424,
+        /// when the server has sent partial results (RAISERROR WITH NOWAIT at severity 10)
+        /// followed by a blocking operation (WAITFOR). Without the fix for GitHub issue #4424,
         /// cancellation would hang until WAITFOR completed naturally.
         /// Synapse: Incompatible query.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationSendsAttention_WhenPartialResultsReceived()
         {
-            // This query sends a partial response (RAISERROR WITH NOWAIT), then blocks
-            // for 60 seconds. Cancellation should send attention and abort within seconds.
+            // Severity 10 informational message flushed via NOWAIT sends a partial TDS
+            // response, then WAITFOR blocks for 60s. Cancellation should send attention
+            // and abort within seconds.
             const string query = @"
-RAISERROR('partial result', 0, 1) WITH NOWAIT;
+RAISERROR('partial result', 10, 1) WITH NOWAIT;
 WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result;";
 
@@ -122,9 +123,11 @@ SELECT 1 AS Result;";
                     {
                         using (var reader = await command.ExecuteReaderAsync(cts.Token))
                         {
+                            // The RAISERROR result is consumed as an informational message.
+                            // ReadAsync will block waiting for WAITFOR to complete (next result).
+                            // Cancellation should interrupt this via attention signal.
                             while (await reader.ReadAsync(cts.Token))
                             { }
-                            // Advance to next result set (blocked by WAITFOR)
                             await reader.NextResultAsync(cts.Token);
                         }
                     }
@@ -151,18 +154,17 @@ SELECT 1 AS Result;";
         }
 
         /// <summary>
-        /// Validates that cancellation during ExecuteReaderAsync itself (not just ReadAsync)
-        /// sends a TDS attention signal. This covers the case where the async completion path
-        /// in EndExecuteReaderInternal is blocked on synchronous metadata consumption while
-        /// the server is still processing (e.g., a long-running batch where initial metadata
-        /// is delayed). This also covers the internal-end path used by Always Encrypted retry.
+        /// Validates that cancellation during ExecuteReaderAsync itself sends a TDS attention
+        /// signal when the server is blocked before returning any result set metadata.
+        /// With WAITFOR as the first statement, ExecuteReaderAsync should never return a
+        /// reader — cancellation must abort the operation during the await.
         /// Synapse: Incompatible query.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationDuringExecuteReaderAsync_SendsAttention()
         {
-            // Use a query that blocks immediately so cancellation must fire during
-            // ExecuteReaderAsync's async completion (before any reader is returned).
+            // WAITFOR as the first statement means no metadata is returned until it
+            // completes. ExecuteReaderAsync will be blocked in the async completion path.
             const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
 
             using (var cts = new CancellationTokenSource(System.TimeSpan.FromSeconds(2)))
@@ -178,10 +180,12 @@ SELECT 1 AS Result;";
                     System.Exception caughtException = null;
                     try
                     {
-                        // ExecuteReaderAsync itself should be cancelled via attention
+                        // ExecuteReaderAsync should be cancelled via attention before
+                        // a reader is ever returned.
                         using (var reader = await command.ExecuteReaderAsync(cts.Token))
                         {
-                            await reader.ReadAsync(cts.Token);
+                            // If we reach here, cancellation failed to abort ExecuteReaderAsync.
+                            Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
                         }
                     }
                     catch (System.OperationCanceledException ex)
