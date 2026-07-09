@@ -77,15 +77,5 @@ namespace Microsoft.Data.SqlClient
 
             return new SqlEnclaveSession(sharedSecret, sessionId);
         }
-
-        /// <summary>
-        /// When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        /// </summary>
-        /// <param name="enclaveSessionParameters">The set of parameters required for enclave session.</param>
-        /// <param name="enclaveSessionToInvalidate">The session to be invalidated.</param>
-        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
-        }
     }
 }

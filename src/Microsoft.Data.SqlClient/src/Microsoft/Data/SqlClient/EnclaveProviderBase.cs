@@ -199,6 +199,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
+        {
+            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+        }
+
         // Reset the session lock status
         protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
         {

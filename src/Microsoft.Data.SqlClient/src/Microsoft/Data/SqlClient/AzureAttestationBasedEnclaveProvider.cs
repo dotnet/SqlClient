@@ -108,12 +108,6 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
             }
         }
-
-        // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
-        }
         #endregion
 
         #region Internal Class
