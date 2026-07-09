@@ -85,9 +85,9 @@ As a third-party developer who has implemented a custom `SqlColumnEncryptionKeyS
 
 ### Decision 2: `CancellationToken` on All Async Methods
 
-**Chosen**: Add `CancellationToken cancellationToken = default` to all 4 new async methods.
+**Chosen**: Provide two overloads per async method: a `virtual` overload accepting an explicit `CancellationToken` parameter, and a non-virtual convenience overload (without `CancellationToken`) that delegates to the first passing `CancellationToken.None`. The default implementation checks the token for cancellation before invoking the synchronous method.
 
-**Rationale**: Standard .NET async API pattern. Critical for AKV timeout scenarios where HTTP calls may hang. Omitting it would require a breaking API change later. Since PR #3673 hasn't shipped, now is the time.
+**Rationale**: This follows the standard .NET library overload pattern for async APIs. It is critical for AKV timeout scenarios where HTTP calls may hang. The explicit token overload allows derived classes to honor cancellation. Since PR #3673 hasn't shipped, now is the time.
 
 ### Decision 3: Certificate/CNG/CSP Providers Keep Default Fallback
 
@@ -174,7 +174,7 @@ Two threads may independently fetch the same key on a concurrent miss; the secon
 
 **FR-001**: System MUST add `virtual async` counterparts for `DecryptColumnEncryptionKey`, `EncryptColumnEncryptionKey`, `SignColumnMasterKeyMetadata`, and `VerifyColumnMasterKeyMetadata` to the public `SqlColumnEncryptionKeyStoreProvider` base class.
 
-**FR-002**: All new async public methods MUST accept `CancellationToken cancellationToken = default` as a parameter.
+**FR-002**: All new async public methods MUST provide two overloads: one accepting `CancellationToken cancellationToken` (virtual, overridable) and one without (non-virtual, delegates to the first with `CancellationToken.None`). The default implementation MUST check the token for cancellation before executing the synchronous fallback.
 
 **FR-003**: Default implementations of async methods in the base class MUST wrap the sync counterpart via `Task.FromResult`, and MUST return faulted Tasks (not throw synchronously) when the sync method throws.
 
