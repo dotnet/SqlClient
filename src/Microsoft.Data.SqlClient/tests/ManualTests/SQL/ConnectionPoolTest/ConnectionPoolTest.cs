@@ -14,12 +14,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionPoolConnectionStringProvider : IEnumerable<object[]>
     {
-        private static readonly string s_tcpConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = false,
-            Pooling = true}.ConnectionString;
-        private static readonly string s_tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = true,
-            Pooling = true }.ConnectionString;
+        private static readonly string s_tcpConnectionString = BuildConnectionString(mars: false);
+        private static readonly string s_tcpMarsConnStr = BuildConnectionString(mars: true);
+
+        private static string BuildConnectionString(bool mars)
+        {
+            if (string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
+            {
+                return string.Empty;
+            }
+
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                MultipleActiveResultSets = mars,
+                Pooling = true
+            };
+
+            // When targeting Azure SQL, add ActiveDirectoryDefault so the connection
+            // authenticates via DefaultAzureCredential (managed identity on CI agents).
+            if (DataTestUtility.IsAzureConnStringSetup())
+            {
+                builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryDefault;
+            }
+
+            return builder.ConnectionString;
+        }
 
         public IEnumerator<object[]> GetEnumerator()
         {
@@ -35,12 +54,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class ConnectionPoolConnectionStringAndPoolVersionProvider : IEnumerable<object[]>
     {
-        private static readonly string s_tcpConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = false,
-            Pooling = true }.ConnectionString;
-        private static readonly string s_tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = true,
-            Pooling = true }.ConnectionString;
+        private static readonly string s_tcpConnectionString = BuildConnectionString(mars: false);
+        private static readonly string s_tcpMarsConnStr = BuildConnectionString(mars: true);
+
+        private static string BuildConnectionString(bool mars)
+        {
+            if (string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
+            {
+                return string.Empty;
+            }
+
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                MultipleActiveResultSets = mars,
+                Pooling = true
+            };
+
+            if (DataTestUtility.IsAzureConnStringSetup())
+            {
+                builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryDefault;
+            }
+
+            return builder.ConnectionString;
+        }
 
         public IEnumerator<object[]> GetEnumerator()
         {
