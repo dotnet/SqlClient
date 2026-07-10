@@ -31,8 +31,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsAzure() => !DataTestUtility.IsNotAzureServer();
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenAsyncSetup().GetAwaiter().GetResult();
         private static bool IsAzureSqlConnStringSetup() => DataTestUtility.IsAzureConnStringSetup();
-        private static bool IsManagedIdentitySetup() => DataTestUtility.IsUserManagedIdentitySupported;
-        private static bool SupportsSystemAssignedManagedIdentity() => DataTestUtility.IsSystemManagedIdentitySupported;
+        private static bool IsUserManagedIdentitySupported() => DataTestUtility.IsUserManagedIdentitySupported;
+        private static bool IsSystemAssignedManagedIdentitySupported() => DataTestUtility.IsSystemManagedIdentitySupported;
 
 
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryManagedIdentityWithPasswordMustFail()
         {
             // connection fails with expected error message.
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryMSIWithCredentialsMustFail()
         {
             // connection fails with expected error message.
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryMSIWithPasswordMustFail()
         {
             // connection fails with expected error message.
@@ -464,7 +464,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Managed Identity Authentication tests
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static async Task AccessToken_SystemManagedIdentityTest()
         {
             using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsUserManagedIdentitySupported))]
         public static async Task AccessToken_UserManagedIdentityTest()
         {
             using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
@@ -484,7 +484,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static async Task Azure_AccessToken_SystemManagedIdentityTest()
         {
             string connectionString = DataTestUtility.TCPConnectionString
@@ -497,7 +497,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsUserManagedIdentitySupported))]
         public static async Task Azure_AccessToken_UserManagedIdentityTest()
         {
             string connectionString = DataTestUtility.TCPConnectionString
