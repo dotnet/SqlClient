@@ -1800,15 +1800,5 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             // Force observation of any exception
             _ = taskToRun.Exception;
         }
-
-        private class ObservableException : Exception
-        {
-            public ObservableException(Guid id)
-            {
-                Identifier = id;
-            }
-
-            public Guid Identifier { get; set; }
-        }
     }
 }
