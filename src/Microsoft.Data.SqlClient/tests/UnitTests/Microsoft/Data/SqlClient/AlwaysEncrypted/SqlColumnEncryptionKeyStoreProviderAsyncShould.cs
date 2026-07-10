@@ -194,13 +194,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
         #endregion
 
-        #region Convenience overloads (no CancellationToken)
+        #region Default CancellationToken parameter
 
         /// <summary>
-        /// Verifies the no-CancellationToken convenience overload delegates correctly for decrypt.
+        /// Verifies calling without CancellationToken (uses default) works for decrypt.
         /// </summary>
         [Fact]
-        public async Task DecryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
+        public async Task DecryptColumnEncryptionKeyAsync_DefaultCancellationToken_Works()
         {
             var provider = new TestKeyStoreProvider();
             byte[] result = await provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 1, 2, 3 });
@@ -209,10 +209,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies the no-CancellationToken convenience overload delegates correctly for encrypt.
+        /// Verifies calling without CancellationToken (uses default) works for encrypt.
         /// </summary>
         [Fact]
-        public async Task EncryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
+        public async Task EncryptColumnEncryptionKeyAsync_DefaultCancellationToken_Works()
         {
             var provider = new TestKeyStoreProvider();
             byte[] result = await provider.EncryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 4, 5, 6 });
@@ -221,11 +221,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies the no-CancellationToken convenience overload for sign returns a faulted Task
+        /// Verifies calling sign without CancellationToken returns a faulted Task
         /// (base class throws NotImplementedException).
         /// </summary>
         [Fact]
-        public async Task SignColumnMasterKeyMetadataAsync_NoCancellationOverload_ReturnsFaultedTask()
+        public async Task SignColumnMasterKeyMetadataAsync_DefaultCancellationToken_ReturnsFaultedTask()
         {
             var provider = new TestKeyStoreProvider();
             Task<byte[]> task = provider.SignColumnMasterKeyMetadataAsync("path", true);
@@ -235,11 +235,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies the no-CancellationToken convenience overload for verify returns a faulted Task
+        /// Verifies calling verify without CancellationToken returns a faulted Task
         /// (base class throws NotImplementedException).
         /// </summary>
         [Fact]
-        public async Task VerifyColumnMasterKeyMetadataAsync_NoCancellationOverload_ReturnsFaultedTask()
+        public async Task VerifyColumnMasterKeyMetadataAsync_DefaultCancellationToken_ReturnsFaultedTask()
         {
             var provider = new TestKeyStoreProvider();
             Task<bool> task = provider.VerifyColumnMasterKeyMetadataAsync("path", true, new byte[] { 1 });

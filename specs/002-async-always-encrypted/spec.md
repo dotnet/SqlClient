@@ -54,9 +54,9 @@ Custom providers that only implement sync `DecryptColumnEncryptionKey` continue 
 
 Public virtual methods use `Task<T>`, not `ValueTask<T>`. The primary beneficiary (AKV) always allocates a Task due to HTTP I/O. `ValueTask<T>` has stricter usage rules that would be error-prone for third-party implementers.
 
-### 2. Two Overloads Per Async Method
+### 2. `CancellationToken` with Default Value
 
-Each async method provides: a `virtual` overload accepting `CancellationToken` (overridable), and a non-virtual convenience overload that delegates with `CancellationToken.None`. Follows the standard .NET library pattern.
+Each async method accepts a `CancellationToken cancellationToken = default` parameter. This is a single `virtual` overload — callers can omit the token for convenience, and derived classes override a single method. The default implementation checks the token for cancellation before invoking the synchronous method.
 
 ### 3. Certificate/CNG/CSP Providers Keep Default Fallback
 
@@ -120,7 +120,7 @@ Remove the `Task.Run(() => { ... })` wrapper entirely. The method must `await` e
 | ID | Requirement |
 |----|-------------|
 | FR-001 | Add `virtual` async counterparts for `DecryptColumnEncryptionKey`, `EncryptColumnEncryptionKey`, `SignColumnMasterKeyMetadata`, and `VerifyColumnMasterKeyMetadata` to `SqlColumnEncryptionKeyStoreProvider`. |
-| FR-002 | Each async method provides two overloads: `virtual` with `CancellationToken` + non-virtual without. Default checks token before sync fallback. |
+| FR-002 | Each async method accepts `CancellationToken cancellationToken = default` as a single virtual overload. Default checks token before sync fallback. |
 | FR-003 | Default async implementations wrap sync via `Task.FromResult`; return faulted Tasks (not synchronous throws) on exception. |
 | FR-004 | `SqlColumnEncryptionAzureKeyVaultProvider` overrides all 4 async methods with truly async Azure SDK calls. |
 | FR-005 | AKV provider propagates `CancellationToken` to all Azure SDK calls. |
@@ -139,7 +139,7 @@ Remove the `Task.Run(() => { ... })` wrapper entirely. The method must `await` e
 
 | Entity | Scope | Changes |
 |--------|-------|---------|
-| `SqlColumnEncryptionKeyStoreProvider` | public abstract | +4 virtual async methods, +4 non-virtual convenience overloads |
+| `SqlColumnEncryptionKeyStoreProvider` | public abstract | +4 virtual async methods with `CancellationToken = default` |
 | `SqlColumnEncryptionAzureKeyVaultProvider` | public (separate package) | Overrides all 4 async methods with Azure SDK async calls |
 | `AzureSqlKeyCryptographer` | internal (AKV package) | +async counterparts for `AddKey`, `UnwrapKey`, `WrapKey`, `SignData`, `VerifyData` |
 | `SqlColumnEncryptionEnclaveProvider` | internal abstract | +4 abstract async methods with tuple returns |
@@ -242,17 +242,11 @@ public abstract class SqlColumnEncryptionKeyStoreProvider
     public virtual bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature);
     public virtual TimeSpan? ColumnEncryptionKeyCacheTtl { get; set; }
 
-    // NEW: Async with CancellationToken (virtual, overridable)
-    public virtual Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken);
-    public virtual Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey, CancellationToken cancellationToken);
-    public virtual Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, CancellationToken cancellationToken);
-    public virtual Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, CancellationToken cancellationToken);
-
-    // NEW: Convenience overloads (non-virtual, delegate with CancellationToken.None)
-    public Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey);
-    public Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey);
-    public Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations);
-    public Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature);
+    // NEW: Async with optional CancellationToken (virtual, overridable)
+    public virtual Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken = default);
+    public virtual Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey, CancellationToken cancellationToken = default);
+    public virtual Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, CancellationToken cancellationToken = default);
+    public virtual Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, CancellationToken cancellationToken = default);
 }
 ```
 
@@ -262,10 +256,10 @@ public abstract class SqlColumnEncryptionKeyStoreProvider
 public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
 {
     // Overrides — truly async via Azure SDK
-    public override Task<byte[]> DecryptColumnEncryptionKeyAsync(..., CancellationToken cancellationToken);
-    public override Task<byte[]> EncryptColumnEncryptionKeyAsync(..., CancellationToken cancellationToken);
-    public override Task<byte[]> SignColumnMasterKeyMetadataAsync(..., CancellationToken cancellationToken);
-    public override Task<bool> VerifyColumnMasterKeyMetadataAsync(..., CancellationToken cancellationToken);
+    public override Task<byte[]> DecryptColumnEncryptionKeyAsync(..., CancellationToken cancellationToken = default);
+    public override Task<byte[]> EncryptColumnEncryptionKeyAsync(..., CancellationToken cancellationToken = default);
+    public override Task<byte[]> SignColumnMasterKeyMetadataAsync(..., CancellationToken cancellationToken = default);
+    public override Task<bool> VerifyColumnMasterKeyMetadataAsync(..., CancellationToken cancellationToken = default);
 }
 ```
 
