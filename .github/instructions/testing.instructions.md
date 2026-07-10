@@ -354,8 +354,6 @@ DataTestUtility.IsAzureConnStringSetup // Check if TCPConnectionString points to
 DataTestUtility.IsAzureSqlConnectionString(connStr) // Detect whether any connection string targets Azure SQL
 ```
 
-For Azure SQL / Entra ID auth tests, use `TCPConnectionString.RemoveAuthAndCredsProperties()` as the base and gate the test with `IsAzureConnStringSetup`.
-
 ### AssertExtensions
 Extended assertions for SqlClient:
 ```csharp

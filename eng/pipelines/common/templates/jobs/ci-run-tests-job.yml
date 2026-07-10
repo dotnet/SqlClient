@@ -253,8 +253,6 @@ jobs:
           EnclaveEnabled: ${{ eq(parameters.configProperties.EnclaveEnabled, 'true') }}
         ${{ if parameters.configProperties.TracingEnabled }}:
           TracingEnabled: ${{ eq(parameters.configProperties.TracingEnabled, 'true') }}
-        ${{ if parameters.configProperties.AzureSqlConnectionString }}:
-          AzureSqlConnectionString: ${{ parameters.configProperties.AzureSqlConnectionString }}
         ${{ if parameters.configProperties.AADServicePrincipalId }}:
           AADServicePrincipalId: ${{ parameters.configProperties.AADServicePrincipalId }}
         ${{ if parameters.configProperties.AADServicePrincipalSecret }}:
