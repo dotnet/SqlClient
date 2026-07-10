@@ -282,8 +282,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if(IsAzureSqlConnectionString(TCPConnectionString))
             {
-                // TEMP: Remove authentication and credential properties from the connection string
-                // if connection string is fetched from variable group that hasn't been updated with new property requirements.
+                // Remove legacy authentication/credential properties from the connection string.
+                // Tests should add their own auth method (e.g., AccessToken, Authentication keyword).
                 TCPConnectionString = TCPConnectionString.RemoveAuthAndCredsProperties();
             }
 
