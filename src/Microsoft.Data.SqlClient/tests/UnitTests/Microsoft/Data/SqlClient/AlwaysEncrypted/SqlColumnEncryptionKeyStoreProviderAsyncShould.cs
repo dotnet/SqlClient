@@ -9,8 +9,15 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 {
+    /// <summary>
+    /// Tests for the async virtual methods on <see cref="SqlColumnEncryptionKeyStoreProvider"/>,
+    /// verifying default fallback behavior, cancellation, faulted tasks, and convenience overloads.
+    /// </summary>
     public class SqlColumnEncryptionKeyStoreProviderAsyncShould
     {
+        /// <summary>
+        /// Verifies DecryptColumnEncryptionKeyAsync default returns the same result as the sync method.
+        /// </summary>
         [Fact]
         public async Task DecryptColumnEncryptionKeyAsync_DefaultFallback_ReturnsSameResultAsSyncMethod()
         {
