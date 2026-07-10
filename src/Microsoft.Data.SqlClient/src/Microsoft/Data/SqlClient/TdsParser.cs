@@ -450,7 +450,7 @@ namespace Microsoft.Data.SqlClient
                 trustServerCert = false;
             }
 
-            byte[] instanceName = null;
+            string instanceName = null;
 
             Debug.Assert(_connHandler != null, "SqlConnectionInternalTds handler can not be null at this point.");
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
@@ -491,6 +491,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _connHandler.pendingSQLDNSObject = null;
+            _connHandler.InstanceName = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
@@ -570,7 +571,7 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
+            SendPreLoginHandshake(encrypt, integratedSecurity, serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -630,7 +631,7 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
                 }
 
-                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
+                SendPreLoginHandshake(encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
                     encrypt,
                     trustServerCert,
@@ -648,6 +649,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
+            _connHandler.InstanceName = instanceName;
             if (_authenticationProvider is { })
             {
                 _authenticationProvider.Initialize(serverInfo, _physicalStateObj, this, resolvedServerSpn.Primary, resolvedServerSpn.Secondary);
@@ -772,7 +774,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         private void SendPreLoginHandshake(
-            byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
             string serverCertificateFilename)
@@ -867,21 +868,12 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
-                        int i = 0;
+                        // Always send an empty null-terminated string
+                        payload[payloadLength] = 0;
 
-                        while (instanceName[i] != 0)
-                        {
-                            payload[payloadLength] = instanceName[i];
-                            payloadLength++;
-                            i++;
-                        }
-
-                        payload[payloadLength] = 0; // null terminate
                         payloadLength++;
-                        i++;
-
-                        offset += i;
-                        optionDataSize = i;
+                        offset += 1;
+                        optionDataSize = 1;
                         break;
 
                     case (int)PreLoginOptions.THREADID:
@@ -4420,7 +4412,7 @@ namespace Microsoft.Data.SqlClient
 
             // Fail if SSE UserInstance and we have not received this info.
             if (_connHandler.ConnectionOptions.UserInstance &&
-                string.IsNullOrEmpty(_connHandler.InstanceName))
+                string.IsNullOrEmpty(_connHandler.UserInstanceName))
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, Server, SQLMessage.UserInstanceFailure(), "", 0));
                 ThrowExceptionAndWarning(stateObj);

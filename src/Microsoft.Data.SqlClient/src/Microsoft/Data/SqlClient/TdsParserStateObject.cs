@@ -554,7 +554,7 @@ namespace Microsoft.Data.SqlClient
         internal abstract void CreatePhysicalSNIHandle(
             string serverName,
             TimeoutTimer timeout,
-            out byte[] instanceName,
+            out string instanceName,
             out ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
