@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public DbConnectionInternal? ReplaceConnection(
+        public DbConnectionInternal ReplaceConnection(
             DbConnection owningObject,
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout)
@@ -325,7 +325,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, connection replaced successfully.", Id);
-                
+
             return newConnection;
         }
 

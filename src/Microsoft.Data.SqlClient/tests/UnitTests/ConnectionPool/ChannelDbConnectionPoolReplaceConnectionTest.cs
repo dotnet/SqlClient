@@ -4,13 +4,11 @@
 
 using System;
 using System.Data.Common;
-using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -258,8 +256,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert — the old connection is left intact so the caller can retry with it: its slot is retained
             // (no premature release) ...
             Assert.Equal(2, pool.Count);
-            // ... it is not disposed and remains poolable ...
-            Assert.True(oldConnection!.CanBePooled);
+            // ... it is not doomed, so it remains usable for the retry ...
+            Assert.False(oldConnection!.IsConnectionDoomed);
+            // ... it is still owned by the same caller (not released back to the pool) ...
+            Assert.Same(owner1, oldConnection!.Owner);
+            // ... it keeps its reference to the pool, which is what enables the caller's retry ...
+            Assert.Same(pool, oldConnection!.Pool);
             // ... and the pool is not left in an error state.
             Assert.False(pool.ErrorOccurred);
 
