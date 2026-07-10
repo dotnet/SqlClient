@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
+namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 {
     public class SqlColumnEncryptionKeyStoreProviderAsyncShould
     {
@@ -136,6 +136,27 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             byte[] result = await provider.EncryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 4, 5, 6 });
             Assert.NotNull(result);
             Assert.Equal(new byte[] { 4, 5, 6 }, result);
+        }
+
+        [Fact]
+        public async Task DecryptColumnEncryptionKeyAsync_LiveToken_CompletesSuccessfully()
+        {
+            var provider = new TestKeyStoreProvider();
+            using var cts = new CancellationTokenSource();
+
+            // A non-cancelled token should not interfere with the operation
+            byte[] result = await provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 7, 8, 9 }, cts.Token);
+            Assert.Equal(new byte[] { 7, 8, 9 }, result);
+        }
+
+        [Fact]
+        public async Task EncryptColumnEncryptionKeyAsync_LiveToken_CompletesSuccessfully()
+        {
+            var provider = new TestKeyStoreProvider();
+            using var cts = new CancellationTokenSource();
+
+            byte[] result = await provider.EncryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 7, 8, 9 }, cts.Token);
+            Assert.Equal(new byte[] { 7, 8, 9 }, result);
         }
 
         /// <summary>
