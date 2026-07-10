@@ -5,6 +5,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -30,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return Task.FromResult(DecryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, encryptedColumnEncryptionKey));
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 return Task.FromException<byte[]>(e);
             }
@@ -51,7 +52,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return Task.FromResult(EncryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, columnEncryptionKey));
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 return Task.FromException<byte[]>(e);
             }
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return Task.FromResult(SignColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations));
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 return Task.FromException<byte[]>(e);
             }
@@ -99,7 +100,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return Task.FromResult(VerifyColumnMasterKeyMetadata(masterKeyPath, allowEnclaveComputations, signature));
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 return Task.FromException<bool>(e);
             }
