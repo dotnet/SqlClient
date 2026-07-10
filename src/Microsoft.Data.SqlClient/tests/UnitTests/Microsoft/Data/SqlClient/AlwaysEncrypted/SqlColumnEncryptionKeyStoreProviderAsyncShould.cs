@@ -5,6 +5,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
@@ -15,8 +16,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
     /// </summary>
     public class SqlColumnEncryptionKeyStoreProviderAsyncShould
     {
+        #region Default fallback behavior
+
         /// <summary>
-        /// Verifies DecryptColumnEncryptionKeyAsync default returns the same result as the sync method.
+        /// Verifies that the default async decrypt implementation wraps the sync result via Task.FromResult.
         /// </summary>
         [Fact]
         public async Task DecryptColumnEncryptionKeyAsync_DefaultFallback_ReturnsSameResultAsSyncMethod()
@@ -27,6 +30,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.Equal(expected, actual);
         }
 
+        /// <summary>
+        /// Verifies that the default async encrypt implementation wraps the sync result via Task.FromResult.
+        /// </summary>
         [Fact]
         public async Task EncryptColumnEncryptionKeyAsync_DefaultFallback_ReturnsSameResultAsSyncMethod()
         {
@@ -36,17 +42,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.Equal(expected, actual);
         }
 
+        #endregion
+
+        #region Faulted task behavior
+
+        /// <summary>
+        /// Verifies that when the sync decrypt method throws, the async version returns a faulted Task
+        /// rather than throwing synchronously.
+        /// </summary>
         [Fact]
         public async Task DecryptColumnEncryptionKeyAsync_WhenSyncThrows_ReturnsFaultedTask()
         {
             var provider = new ThrowingKeyStoreProvider();
             Task<byte[]> task = provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 1 }, CancellationToken.None);
 
-            // Must not throw synchronously — the Task itself should be faulted
             Assert.True(task.IsFaulted);
             await Assert.ThrowsAsync<InvalidOperationException>(() => task);
         }
 
+        /// <summary>
+        /// Verifies that when the sync encrypt method throws, the async version returns a faulted Task
+        /// rather than throwing synchronously.
+        /// </summary>
         [Fact]
         public async Task EncryptColumnEncryptionKeyAsync_WhenSyncThrows_ReturnsFaultedTask()
         {
@@ -57,18 +74,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             await Assert.ThrowsAsync<InvalidOperationException>(() => task);
         }
 
+        /// <summary>
+        /// Verifies that the base class SignColumnMasterKeyMetadata throws NotImplementedException,
+        /// and the async version surfaces this as a faulted Task.
+        /// </summary>
         [Fact]
         public async Task SignColumnMasterKeyMetadataAsync_DefaultImplementation_ReturnsFaultedTask()
         {
             var provider = new TestKeyStoreProvider();
             Task<byte[]> task = provider.SignColumnMasterKeyMetadataAsync("path", true, CancellationToken.None);
 
-            // The base sync method throws NotImplementedException; the async version
-            // must surface this as a faulted Task, not a synchronous throw.
             Assert.True(task.IsFaulted);
             await Assert.ThrowsAsync<NotImplementedException>(() => task);
         }
 
+        /// <summary>
+        /// Verifies that the base class VerifyColumnMasterKeyMetadata throws NotImplementedException,
+        /// and the async version surfaces this as a faulted Task.
+        /// </summary>
         [Fact]
         public async Task VerifyColumnMasterKeyMetadataAsync_DefaultImplementation_ReturnsFaultedTask()
         {
@@ -79,6 +102,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             await Assert.ThrowsAsync<NotImplementedException>(() => task);
         }
 
+        #endregion
+
+        #region Cancellation behavior
+
+        /// <summary>
+        /// Verifies that passing an already-cancelled token returns a cancelled Task immediately.
+        /// </summary>
         [Fact]
         public void DecryptColumnEncryptionKeyAsync_CancelledToken_ReturnsCancelledTask()
         {
@@ -91,6 +121,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(task.IsCanceled);
         }
 
+        /// <summary>
+        /// Verifies that passing an already-cancelled token returns a cancelled Task immediately.
+        /// </summary>
         [Fact]
         public void EncryptColumnEncryptionKeyAsync_CancelledToken_ReturnsCancelledTask()
         {
@@ -103,6 +136,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(task.IsCanceled);
         }
 
+        /// <summary>
+        /// Verifies that passing an already-cancelled token returns a cancelled Task immediately.
+        /// </summary>
         [Fact]
         public void SignColumnMasterKeyMetadataAsync_CancelledToken_ReturnsCancelledTask()
         {
@@ -115,6 +151,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(task.IsCanceled);
         }
 
+        /// <summary>
+        /// Verifies that passing an already-cancelled token returns a cancelled Task immediately.
+        /// </summary>
         [Fact]
         public void VerifyColumnMasterKeyMetadataAsync_CancelledToken_ReturnsCancelledTask()
         {
@@ -127,35 +166,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(task.IsCanceled);
         }
 
-        [Fact]
-        public async Task DecryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
-        {
-            var provider = new TestKeyStoreProvider();
-            byte[] result = await provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 1, 2, 3 });
-            Assert.NotNull(result);
-            Assert.Equal(new byte[] { 1, 2, 3 }, result);
-        }
-
-        [Fact]
-        public async Task EncryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
-        {
-            var provider = new TestKeyStoreProvider();
-            byte[] result = await provider.EncryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 4, 5, 6 });
-            Assert.NotNull(result);
-            Assert.Equal(new byte[] { 4, 5, 6 }, result);
-        }
-
+        /// <summary>
+        /// Verifies that a non-cancelled (live) token does not interfere with successful decrypt.
+        /// </summary>
         [Fact]
         public async Task DecryptColumnEncryptionKeyAsync_LiveToken_CompletesSuccessfully()
         {
             var provider = new TestKeyStoreProvider();
             using var cts = new CancellationTokenSource();
 
-            // A non-cancelled token should not interfere with the operation
             byte[] result = await provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 7, 8, 9 }, cts.Token);
             Assert.Equal(new byte[] { 7, 8, 9 }, result);
         }
 
+        /// <summary>
+        /// Verifies that a non-cancelled (live) token does not interfere with successful encrypt.
+        /// </summary>
         [Fact]
         public async Task EncryptColumnEncryptionKeyAsync_LiveToken_CompletesSuccessfully()
         {
@@ -166,8 +192,68 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.Equal(new byte[] { 7, 8, 9 }, result);
         }
 
+        #endregion
+
+        #region Convenience overloads (no CancellationToken)
+
         /// <summary>
-        /// A test provider that implements sync methods with real (non-throwing) behavior.
+        /// Verifies the no-CancellationToken convenience overload delegates correctly for decrypt.
+        /// </summary>
+        [Fact]
+        public async Task DecryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
+        {
+            var provider = new TestKeyStoreProvider();
+            byte[] result = await provider.DecryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 1, 2, 3 });
+            Assert.NotNull(result);
+            Assert.Equal(new byte[] { 1, 2, 3 }, result);
+        }
+
+        /// <summary>
+        /// Verifies the no-CancellationToken convenience overload delegates correctly for encrypt.
+        /// </summary>
+        [Fact]
+        public async Task EncryptColumnEncryptionKeyAsync_NoCancellationOverload_Works()
+        {
+            var provider = new TestKeyStoreProvider();
+            byte[] result = await provider.EncryptColumnEncryptionKeyAsync("path", "algo", new byte[] { 4, 5, 6 });
+            Assert.NotNull(result);
+            Assert.Equal(new byte[] { 4, 5, 6 }, result);
+        }
+
+        /// <summary>
+        /// Verifies the no-CancellationToken convenience overload for sign returns a faulted Task
+        /// (base class throws NotImplementedException).
+        /// </summary>
+        [Fact]
+        public async Task SignColumnMasterKeyMetadataAsync_NoCancellationOverload_ReturnsFaultedTask()
+        {
+            var provider = new TestKeyStoreProvider();
+            Task<byte[]> task = provider.SignColumnMasterKeyMetadataAsync("path", true);
+
+            Assert.True(task.IsFaulted);
+            await Assert.ThrowsAsync<NotImplementedException>(() => task);
+        }
+
+        /// <summary>
+        /// Verifies the no-CancellationToken convenience overload for verify returns a faulted Task
+        /// (base class throws NotImplementedException).
+        /// </summary>
+        [Fact]
+        public async Task VerifyColumnMasterKeyMetadataAsync_NoCancellationOverload_ReturnsFaultedTask()
+        {
+            var provider = new TestKeyStoreProvider();
+            Task<bool> task = provider.VerifyColumnMasterKeyMetadataAsync("path", true, new byte[] { 1 });
+
+            Assert.True(task.IsFaulted);
+            await Assert.ThrowsAsync<NotImplementedException>(() => task);
+        }
+
+        #endregion
+
+        #region Test helpers
+
+        /// <summary>
+        /// A test provider that implements sync methods with pass-through behavior (returns input as-is).
         /// </summary>
         private class TestKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
         {
@@ -183,7 +269,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// A test provider whose sync methods throw exceptions.
+        /// A test provider whose sync methods always throw <see cref="InvalidOperationException"/>.
         /// </summary>
         private class ThrowingKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
         {
@@ -197,5 +283,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 throw new InvalidOperationException("Encrypt failed");
             }
         }
+
+        #endregion
     }
 }
