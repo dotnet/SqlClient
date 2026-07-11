@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // When overridden in a derived class, calls CreateEnclaveSessionCore to create an enclave session and stores the session information in the cache.
+        // Calls CreateEnclaveSessionCore to create an enclave session and stores the session information in the cache.
         internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;

@@ -121,7 +121,6 @@ namespace Microsoft.Data.SqlClient
                 // Set up shared secret and validate signature
                 byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
 
-                // add session to cache
                 return new SqlEnclaveSession(sharedSecret, info.SessionId);
             }
             else
