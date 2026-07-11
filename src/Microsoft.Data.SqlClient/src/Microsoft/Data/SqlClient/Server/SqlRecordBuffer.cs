@@ -463,7 +463,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             set
             {
-                Debug.Assert(value != null && (value.SqlDbType == SqlDbType.Money || value.SqlDbType == SqlDbType.NVarChar),
+                Debug.Assert(value != null && (value.SqlDbType == SqlDbType.Money || value.SqlDbType == SqlDbType.NVarChar || value.SqlDbType == SqlDbType.Date),
                     "Invalid metadata");
 
                 _metadata = value;

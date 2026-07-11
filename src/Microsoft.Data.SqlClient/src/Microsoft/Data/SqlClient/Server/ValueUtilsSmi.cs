@@ -1044,6 +1044,10 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetSqlValue200(getters, ordinal, metaData);
                         break;
                     case SqlDbType.Date:
+                    #if NET
+                        result = DateOnly.FromDateTime(GetDateTime_Unchecked(getters, ordinal));
+                        break;
+                    #endif
                     case SqlDbType.DateTime2:
                         result = GetDateTime_Unchecked(getters, ordinal);
                         break;
@@ -1504,7 +1508,7 @@ namespace Microsoft.Data.SqlClient.Server
                     }
 #if NET
                 case ExtendedClrTypeCode.DateOnly:
-                    SetDateTime_Checked(setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
+                    SetDate_Checked(setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
                     break;
                 case ExtendedClrTypeCode.TimeOnly:
                     SetTimeSpan_Checked(setters, ordinal, metaData, ((TimeOnly)value).ToTimeSpan());
@@ -3135,8 +3139,11 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetDate_Unchecked(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
         {
-            Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
-            setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
+            if (metaData.SqlDbType == SqlDbType.Variant)
+            {
+                setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
+            }
+
             setters.SetDateTime(ordinal, value);
         }
 
