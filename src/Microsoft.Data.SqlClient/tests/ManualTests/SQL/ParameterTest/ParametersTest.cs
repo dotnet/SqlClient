@@ -485,7 +485,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<OverflowException>(() => rdr.GetDecimal(0));
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)
         {
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalParameter_BulkCopy(string connectionString, bool truncateScaledDecimal)
         {
