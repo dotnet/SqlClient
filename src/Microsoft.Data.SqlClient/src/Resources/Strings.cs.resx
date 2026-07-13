@@ -3192,9 +3192,6 @@
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Minimální doba (v sekundách), po jakou má být toto připojení uchováváno ve fondu, než bude zrušeno.</value>
   </data>
-  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>Maximální doba (v sekundách), po kterou může být připojení ve fondu nevyužité (nečinné), než se zahodí, když je zakázané starší chování při vypršení časového limitu nečinnosti. Hodnota 0 zakáže vypršení platnosti při nečinnosti.</value>
-  </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Maximální počet připojení povolených ve fondu.</value>
   </data>

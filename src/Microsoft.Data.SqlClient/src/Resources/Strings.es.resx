@@ -3192,9 +3192,6 @@
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Periodo mínimo de tiempo (en segundos) que residirá esta conexión en el grupo antes de ser destruida.</value>
   </data>
-  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>La cantidad máxima de tiempo (en segundos) que una conexión puede permanecer sin usar (inactiva) en el grupo antes de descartarse cuando se deshabilita el comportamiento heredado de tiempo de espera de inactividad. Un valor de 0 deshabilita la expiración por inactividad.</value>
-  </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Número máximo de conexiones permitidas en el grupo.</value>
   </data>

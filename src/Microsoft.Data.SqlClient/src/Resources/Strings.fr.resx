@@ -3192,9 +3192,6 @@
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Durée minimale de conservation (en secondes) de cette connexion avant sa destruction.</value>
   </data>
-  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>Durée maximale (en secondes) pendant laquelle une connexion peut rester inutilisée (inactive) dans le pool avant d’être supprimée lorsque le comportement hérité du délai d’inactivité est désactivé. Une valeur de 0 désactive l’expiration d’inactivité.</value>
-  </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Nombre maximal de connexions autorisé dans le pool.</value>
   </data>

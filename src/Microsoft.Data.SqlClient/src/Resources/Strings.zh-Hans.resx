@@ -3192,9 +3192,6 @@
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>此连接在池中存活直至被销毁的最短时间(以秒为单位)。</value>
   </data>
-  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>在禁用传统空闲超时行为时，连接在池中保持未使用(空闲)状态的最长时间(以秒为单位)，之后将被丢弃。值为 0 表示禁用空闲过期。</value>
-  </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>池中所允许连接的最大数目。</value>
   </data>

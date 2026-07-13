@@ -3192,9 +3192,6 @@
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Die Mindestdauer (in Sekunden), die diese Verbindung im Pool verbleibt, bevor sie gelöscht wird.</value>
   </data>
-  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>Die maximale Zeitspanne in Sekunden, die eine Verbindung im Pool ungenutzt bleiben kann, bevor sie verworfen wird, wenn das Verhalten des alten Leerlaufzeitlimits deaktiviert ist. Der Wert 0 deaktiviert den Ablauf des Leerlaufs.</value>
-  </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Die maximal zulässige Anzahl von Verbindungen im Pool.</value>
   </data>
