@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Indicates whether an error has occurred in the pool.
         /// Primarily used to support the pool blocking period feature.
         /// </summary>
+        /// TODO: rename to indicate that this relates to the blocking period
         bool ErrorOccurred { get; }
 
         /// <summary>

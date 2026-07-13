@@ -67,19 +67,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(pool._cleanupTimer);
         }
 
-        // Error timer is disposed when present.
-        [Fact]
-        public void Shutdown_DisposesErrorTimer_WhenPresent()
-        {
-            var pool = CreatePool();
-            // Inject a real Timer into _errorTimer to mimic an error-state pool.
-            pool._errorTimer = new Timer(_ => { }, null, Timeout.Infinite, Timeout.Infinite);
-
-            pool.Shutdown();
-
-            Assert.Null(pool._errorTimer);
-        }
-
         // Drains idle stacks.
         [Fact]
         public void Shutdown_DrainsIdleStacks()
@@ -128,17 +115,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var ex = Record.Exception(() => pool.CleanupCallback(state: null));
             Assert.Null(ex);
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
-        }
-
-        // Error callback after shutdown is a no-op.
-        [Fact]
-        public void ErrorCallback_AfterShutdown_IsNoOp()
-        {
-            var pool = CreatePool();
-            pool.Shutdown();
-
-            var ex = Record.Exception(() => pool.ErrorCallback(state: null));
-            Assert.Null(ex);
         }
 
         // Sync caller arriving after shutdown gets a null connection (factory will

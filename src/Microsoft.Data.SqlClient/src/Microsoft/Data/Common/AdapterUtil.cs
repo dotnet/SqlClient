@@ -133,9 +133,10 @@ namespace Microsoft.Data.Common
             }
         }
 
+#nullable enable
         internal static Timer UnsafeCreateTimer(
             TimerCallback callback,
-            object state,
+            object? state,
             int dueTimeMilliseconds,
             int periodMilliseconds) =>
             UnsafeCreateTimer(
@@ -144,7 +145,7 @@ namespace Microsoft.Data.Common
                 TimeSpan.FromMilliseconds(dueTimeMilliseconds),
                 TimeSpan.FromMilliseconds(periodMilliseconds));
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto
             // a global timer causing them to live forever
@@ -159,6 +160,41 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
+        /// capturing the current <see cref="ExecutionContext"/>. This overload accepts a strongly
+        /// typed <see cref="Action{T}"/> callback that receives the supplied <paramref name="state"/>
+        /// when the timer fires.
+        /// </summary>
+        /// <typeparam name="T">The type of the state passed to the callback.</typeparam>
+        /// <param name="timeProvider">The time provider used to create the timer.</param>
+        /// <param name="callback">The delegate invoked with <paramref name="state"/> when the timer fires.</param>
+        /// <param name="state">The state object passed to <paramref name="callback"/> on each invocation.</param>
+        /// <param name="dueTime">The amount of time to wait before the first invocation, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to create the timer disarmed.</param>
+        /// <param name="period">The interval between invocations, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to disable periodic signaling.</param>
+        /// <returns>An <see cref="ITimer"/> created by <paramref name="timeProvider"/>.</returns>
+        internal static ITimer UnsafeCreateTimer<T>(
+            TimeProvider timeProvider,
+            Action<T> callback,
+            T state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            if (ExecutionContext.IsFlowSuppressed())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
+            }
+
+            using (ExecutionContext.SuppressFlow())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
+            }
+        }
+
+
+#nullable restore
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
