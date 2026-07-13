@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string inputProcedureName = DataTestUtility.GetShortName("InputProc").ToString();
             string outputProcedureName = DataTestUtility.GetShortName("OutputProc").ToString();
             const int charColumnSize = 100;
-            const int decimalColumnPrecision = 10;
+            const int decimalColumnPrecision = 38;
             const int decimalColumnScale = 4;
             const int timeColumnScale = 5;
 

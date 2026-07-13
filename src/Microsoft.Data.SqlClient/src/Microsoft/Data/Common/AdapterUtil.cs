@@ -1349,9 +1349,6 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidSizeValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidSizeValue, value.ToString(CultureInfo.InvariantCulture)));
 
-        internal static ArgumentException ParameterValueOutOfRange(decimal value)
-            => ADP.Argument(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, value.ToString((IFormatProvider)null)));
-
         internal static ArgumentException ParameterValueOutOfRange(SqlDecimal value) => ADP.Argument(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, value.ToString()));
 
         internal static ArgumentException ParameterValueOutOfRange(string value) => ADP.Argument(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, value));

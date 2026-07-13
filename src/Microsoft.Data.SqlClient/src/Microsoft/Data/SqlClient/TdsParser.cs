@@ -8306,7 +8306,7 @@ namespace Microsoft.Data.SqlClient
             return d;
         }
 
-        internal static decimal AdjustDecimalScale(decimal value, int newScale)
+        internal static SqlDecimal AdjustDecimalScale(decimal value, int newScale)
         {
 #if NET
             Span<int> decimalBits = stackalloc int[4];
@@ -8315,16 +8315,15 @@ namespace Microsoft.Data.SqlClient
             int[] decimalBits = decimal.GetBits(value);
 #endif
             int oldScale = (decimalBits[3] & 0x00ff0000) >> 0x10;
+            SqlDecimal num = new SqlDecimal(value);
 
             if (newScale != oldScale)
             {
                 bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
-                SqlDecimal num = new SqlDecimal(value);
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
-                return num.Value;
             }
 
-            return value;
+            return num;
         }
 
         internal byte[] SerializeSqlDecimal(SqlDecimal d, TdsParserStateObject stateObj)
@@ -10457,34 +10456,31 @@ namespace Microsoft.Data.SqlClient
                 // bug 49512, make sure the value matches the scale the user enters
                 if (!isNull)
                 {
+                    SqlDecimal adjustedValue;
+
                     if (isSqlVal)
                     {
-                        value = AdjustSqlDecimalScale((SqlDecimal)value, scale);
-
-                        // If Precision is specified, verify value precision vs param precision
-                        if (precision != 0)
-                        {
-                            if (precision < ((SqlDecimal)value).Precision)
-                            {
-                                throw ADP.ParameterValueOutOfRange((SqlDecimal)value);
-                            }
-                        }
+                        adjustedValue = AdjustSqlDecimalScale((SqlDecimal)value, scale);
                     }
                     else
                     {
-                        value = AdjustDecimalScale((Decimal)value, scale);
+                        // If we encounter a System.Decimal at this point, we always convert it to
+                        // a SqlDecimal. It's necessary in order to adjust the scale and to be able
+                        // to transport the full range of numeric(38,X) values without overflowing.
+                        adjustedValue = AdjustDecimalScale((decimal)value, scale);
+                        isSqlVal = true;
+                    }
 
-                        SqlDecimal sqlValue = new SqlDecimal((Decimal)value);
-
-                        // If Precision is specified, verify value precision vs param precision
-                        if (precision != 0)
+                    // If Precision is specified, verify value precision vs param precision
+                    if (precision != 0)
+                    {
+                        if (precision < adjustedValue.Precision)
                         {
-                            if (precision < sqlValue.Precision)
-                            {
-                                throw ADP.ParameterValueOutOfRange((Decimal)value);
-                            }
+                            throw ADP.ParameterValueOutOfRange(adjustedValue);
                         }
                     }
+
+                    value = adjustedValue;
                 }
             }
 
