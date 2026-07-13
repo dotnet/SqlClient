@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Reflection;
+#if NET
+using System.Runtime.InteropServices;
+#endif
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
@@ -56,9 +59,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useConnectionPoolV2Original;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
-    #if NET && _WINDOWS
+    #if NET
+    // The s_useManagedNetworking field only exists in the SqlClient assembly
+    // when it is built for .NET on Windows, so it is captured/restored at
+    // runtime only when running on Windows. See UseManagedNetworking below.
     private readonly bool? _useManagedNetworkingOriginal;
-    #endif    
+    #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
 
     #endregion
@@ -121,9 +127,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
-            #if NET && _WINDOWS
-            _useManagedNetworkingOriginal =
-                GetSwitchValue("s_useManagedNetworking");
+            #if NET
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                _useManagedNetworkingOriginal =
+                    GetSwitchValue("s_useManagedNetworking");
+            }
             #endif
             _useMinimumLoginTimeoutOriginal =
                 GetSwitchValue("s_useMinimumLoginTimeout");
@@ -194,10 +203,13 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
-            #if NET && _WINDOWS
-            SetSwitchValue(
-                "s_useManagedNetworking",
-                _useManagedNetworkingOriginal);
+            #if NET
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                SetSwitchValue(
+                    "s_useManagedNetworking",
+                    _useManagedNetworkingOriginal);
+            }
             #endif
             SetSwitchValue(
                 "s_useMinimumLoginTimeout",
@@ -358,10 +370,20 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
     }
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// Get or set the UseManagedNetworking switch value.
     /// </summary>
+    /// <remarks>
+    /// The underlying s_useManagedNetworking field only exists in the SqlClient
+    /// assembly when it is built for .NET on Windows. The getter reads the
+    /// public LocalAppContextSwitches.UseManagedNetworking property, which
+    /// exists on all platforms and is safe to read anywhere. Only the setter
+    /// relies on the s_useManagedNetworking field, so callers must set this
+    /// property only when running on Windows (see
+    /// RuntimeInformation.IsOSPlatform(OSPlatform.Windows)); otherwise the
+    /// reflection lookup of the field will fail.
+    /// </remarks>
     public bool? UseManagedNetworking
     {
         get => GetSwitchPropertyValue(nameof(UseManagedNetworking));
