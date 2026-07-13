@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionStrings))]
+        [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialStream_DisposedBeforeReaderClose_DoesNotThrow(string connectionString)
         {
             using SqlConnection connection = new SqlConnection(connectionString);
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionStrings))]
+        [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialTextReader_DisposedBeforeReaderClose_DoesNotThrow(string connectionString)
         {
             using SqlConnection connection = new SqlConnection(connectionString);
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionStrings))]
+        [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialStream_DisposedThenReaderAdvanced_DoesNotThrow(string connectionString)
         {
             using SqlConnection connection = new SqlConnection(connectionString);
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionStrings))]
+        [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void DataReader_MultipleCloseAndDispose_DoesNotThrow(string connectionString)
         {
             using SqlConnection connection = new SqlConnection(connectionString);
