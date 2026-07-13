@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void RowBuffer_ReadsBufferCorrectly(string connectionString)
@@ -46,6 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RowBuffer(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void InvalidRead_ThrowsInvalidOperationException(string connectionString)
@@ -53,6 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             InvalidRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void VariantRead_ReadsVariantDataCorrectly(string connectionString)
@@ -60,6 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VariantRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void TypeRead_ReadsTypedDataCorrectly(string connectionString)
@@ -67,6 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TypeRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SqlTypeRead_ReadsSqlTypesCorrectly(string connectionString)
@@ -74,6 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SQLTypeRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void GetValueOfTRead_ReadsGenericTypesCorrectly(string connectionString)
@@ -81,6 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             GetValueOfTRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void MultipleResults_ReadsMultipleBatchesCorrectly(string connectionString)
@@ -88,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MultipleResults(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void NumericRead_ReadsLargeNumericValues(string connectionString)
@@ -95,6 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NumericRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void TimestampRead_ReadsBinaryTimestamp(string connectionString)
@@ -102,6 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimestampRead(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void OrphanReader_HandlesConnectionCloseCorrectly(string connectionString)
@@ -109,6 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             OrphanReader(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void BufferSize_HandlesVariableBufferSizes(string connectionString)
@@ -116,6 +127,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             BufferSize(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void ExecuteXmlReader_ReadsXmlDataCorrectly(string connectionString)
@@ -123,6 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ExecuteXmlReaderTest(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialAccess_ReadsDataSequentially(string connectionString)
@@ -130,6 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SequentialAccess(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void HasRows_ReportsCorrectly(string connectionString)
@@ -137,6 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             HasRowsTest(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void CloseConnection_ClosesReaderWithConnection(string connectionString)
@@ -144,6 +159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CloseConnection(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void OpenConnection_OpensSuccessfully(string connectionString)
@@ -151,6 +167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             OpenConnection(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SqlCharsBytes_QueriesWithSqlTypes(string connectionString)
@@ -158,6 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlCharsBytesTest(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void GetStream_ReturnsStreamCorrectly(string connectionString)
@@ -172,6 +190,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             GetTextReader(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void GetXmlReader_ReturnsXmlReaderCorrectly(string connectionString)
@@ -179,6 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             GetXmlReader(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         [Trait("Category", "flaky")]
@@ -187,6 +207,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ReadStream(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void ReadTextReader_ReadsTextCorrectly(string connectionString)
@@ -194,6 +215,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ReadTextReader(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void StreamingBlobDataTypes_ReadsAllBlobTypes(string connectionString)
@@ -201,6 +223,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             StreamingBlobDataTypes(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void OutOfOrderGetChars_ReadsColumnsOutOfOrder(string connectionString)
@@ -208,6 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             OutOfOrderGetChars(connectionString);
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public void TestXEventsStreaming_StreamsXEventsCorrectly(string connectionString)

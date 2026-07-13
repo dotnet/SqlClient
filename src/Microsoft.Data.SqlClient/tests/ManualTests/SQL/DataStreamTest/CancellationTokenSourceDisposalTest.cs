@@ -31,6 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialStream_DisposedBeforeReaderClose_DoesNotThrow(string connectionString)
@@ -58,6 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             reader.Close();
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialTextReader_DisposedBeforeReaderClose_DoesNotThrow(string connectionString)
@@ -84,6 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             reader.Close();
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void SequentialStream_DisposedThenReaderAdvanced_DoesNotThrow(string connectionString)
@@ -108,6 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(reader.Read());
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
         public static void DataReader_MultipleCloseAndDispose_DoesNotThrow(string connectionString)

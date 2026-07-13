@@ -500,6 +500,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)
@@ -531,6 +532,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalParameter_BulkCopy(string connectionString, bool truncateScaledDecimal)
@@ -563,6 +565,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(TestScaledDecimalParameter_Data))]
