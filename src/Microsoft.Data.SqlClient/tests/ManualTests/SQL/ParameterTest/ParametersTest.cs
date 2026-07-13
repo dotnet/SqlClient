@@ -568,7 +568,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(TestScaledDecimalParameter_Data))]
+        [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
