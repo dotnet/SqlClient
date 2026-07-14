@@ -1897,6 +1897,92 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies the FR-004 wake path: a caller blocked purely because the rate limiter denied
+        /// its permit is woken when a different caller releases its lease, and then creates its own
+        /// physical connection (rather than reusing one, since the permit holder never returns its
+        /// connection). Exercises both the sync and async idle-channel wait mechanisms.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task RateLimiter_LeaseReleaseWakesRateLimitedWaiter_CreatesPhysicalConnection(bool async)
+        {
+            // Arrange
+            using var createGate = new ManualResetEventSlim(initialState: false);
+            var factory = new GatedSuccessfulConnectionFactory(createGate);
+            var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                // Room to grow so the release actually pokes a waiter (ReservationCount < MaxPoolSize).
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(
+                factory,
+                poolGroupOptions: poolGroupOptions,
+                connectionCreationRateLimiter: rateLimiter);
+
+            Task<DbConnectionInternal?> Open(SqlConnection owner)
+            {
+                if (async)
+                {
+                    // The async path dispatches the open onto the thread pool and completes the TCS,
+                    // so this returns immediately while creation proceeds on another thread.
+                    var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                    pool.TryGetConnection(owner, tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _);
+                    return tcs.Task!;
+                }
+
+                return Task.Run(() =>
+                {
+                    pool.TryGetConnection(
+                        owner,
+                        taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                        out DbConnectionInternal? c);
+                    return c;
+                });
+            }
+
+            // Act
+            // Caller A acquires the only permit and blocks inside creation, holding the permit.
+            SqlConnection ownerA = new();
+            Task<DbConnectionInternal?> requestA = Open(ownerA);
+            Assert.True(
+                factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
+                "Timed out waiting for the first open to begin physical creation.");
+
+            // Caller B is denied a permit (A holds it) and must fall back to the idle-channel wait.
+            long failedLeasesBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
+            Task<DbConnectionInternal?> requestB = Open(new SqlConnection());
+            Assert.True(
+                SpinWait.SpinUntil(
+                    () => rateLimiter.GetStatistics()!.TotalFailedLeases > failedLeasesBefore,
+                    TimeSpan.FromSeconds(5)),
+                "Timed out waiting for the second request to be denied by the rate limiter.");
+
+            // Releasing A's create lets it finish and dispose its lease, which pokes the idle
+            // channel to wake B. B then finds the permit available and creates its own connection.
+            createGate.Set();
+
+            DbConnectionInternal? connectionA = await requestA;
+            DbConnectionInternal? connectionB = await requestB;
+
+            // Assert
+            Assert.NotNull(connectionA);
+            Assert.NotNull(connectionB);
+            // B was woken by the lease-release poke and created a fresh connection; A never returned
+            // its connection, so this cannot be reuse.
+            Assert.NotSame(connectionA, connectionB);
+            Assert.Equal(2, factory.CreateCount);
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
         /// Verifies that when the rate limiter denies a new physical open, the caller falls back
         /// to waiting for an existing connection to be returned instead of forcing a second create.
         /// </summary>
@@ -2095,6 +2181,54 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CreateCount++;
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        /// <summary>
+        /// Test connection factory that blocks inside its first physical creation until an external
+        /// gate is released, so a test can hold a rate-limiter permit in-flight while orchestrating
+        /// a second caller. Counts creations and signals when the first creation begins.
+        /// </summary>
+        internal sealed class GatedSuccessfulConnectionFactory : SqlConnectionFactory
+        {
+            private readonly ManualResetEventSlim _createGate;
+            private int _createCount;
+
+            internal GatedSuccessfulConnectionFactory(ManualResetEventSlim createGate)
+            {
+                _createGate = createGate;
+            }
+
+            /// <summary>
+            /// Gets the number of times the pool asked the factory to create a physical connection.
+            /// </summary>
+            internal int CreateCount => Volatile.Read(ref _createCount);
+
+            /// <summary>
+            /// Signaled when the first physical creation begins, before it blocks on the gate.
+            /// </summary>
+            internal ManualResetEventSlim FirstCreateStarted { get; } = new(initialState: false);
+
+            /// <summary>
+            /// Creates a successful stub connection. The first creation signals that it has started
+            /// and then blocks on the gate, holding whatever rate-limiter permit it acquired until
+            /// the test releases it; subsequent creations complete immediately.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                if (Interlocked.Increment(ref _createCount) == 1)
+                {
+                    FirstCreateStarted.Set();
+                    _createGate.Wait();
+                }
+
                 return new StubDbConnectionInternal();
             }
         }
