@@ -578,10 +578,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // FR-001, FR-002, FR-003.
 
                         RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
-                        bool leaseAcquired = lease.IsAcquired;
                         try
                         {
-                            if (!leaseAcquired)
+                            if (!lease.IsAcquired)
                             {
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
                                 // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
@@ -628,7 +627,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             // return can satisfy a waiter. FR-004. This is best-effort; releasing a
                             // lease doesn't guarantee the rate limiter immediately has an available
                             // permit, but the waiter we wake will fall back to waiting again if not.
-                            if (leaseAcquired &&
+                            if (lease.IsAcquired &&
                                 _connectionCreationRateLimiter is not null &&
                                 _connectionSlots.ReservationCount < MaxPoolSize)
                             {
