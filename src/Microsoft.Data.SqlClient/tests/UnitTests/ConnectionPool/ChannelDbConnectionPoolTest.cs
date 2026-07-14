@@ -1156,6 +1156,119 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Pump behavior
+
+        [Fact]
+        public async Task Pump_ConcurrentAsyncRequests_CreateConnectionsInParallelUpToMax()
+        {
+            // Empty pool, many simultaneous async requests. The pump should create one connection
+            // per unmet waiter (in parallel on background tasks), up to MaxPoolSize.
+            const int count = 10;
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            var tasks = new Task<DbConnectionInternal>[count];
+            for (int i = 0; i < count; i++)
+            {
+                var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    tcs,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                    out _);
+                tasks[i] = tcs.Task;
+            }
+
+            var connections = await Task.WhenAll(tasks);
+
+            foreach (var connection in connections)
+            {
+                Assert.NotNull(connection);
+            }
+            // Count distinct physical connections created.
+            Assert.Equal(count, pool.Count);
+        }
+
+        [Fact]
+        public void Pump_CreationError_IsDeliveredToCaller()
+        {
+            // A background create failure must surface as a real exception on a waiting caller, not
+            // just a timeout. This matters when the pool blocking period is off (e.g. Azure), where
+            // each failed open should reach a caller. Verified on the synchronous path.
+            var pool = ConstructPool(new ThrowingSqlConnectionFactory());
+
+            var ex = Assert.Throws<CustomPumpException>(() =>
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                    out _));
+
+            Assert.Equal(CustomPumpException.Sentinel, ex.Message);
+        }
+
+        [Fact]
+        public async Task Pump_CreationErrorAsync_IsDeliveredToCaller()
+        {
+            var pool = ConstructPool(new ThrowingSqlConnectionFactory());
+            var tcs = new TaskCompletionSource<DbConnectionInternal>();
+
+            pool.TryGetConnection(
+                new SqlConnection(),
+                tcs,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out _);
+
+            var ex = await Assert.ThrowsAsync<CustomPumpException>(() => tcs.Task);
+            Assert.Equal(CustomPumpException.Sentinel, ex.Message);
+        }
+
+        [Fact]
+        public async Task Pump_MaxPoolDoomedReturn_UnblocksWaiter()
+        {
+            // A request parked at max capacity must be unblocked when a slot frees up because a
+            // dead connection was removed. This exercises the bare-wake -> re-pump -> create path.
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15_000,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            // Caller A takes the pool's only connection.
+            var ownerA = new SqlConnection();
+            pool.TryGetConnection(
+                ownerA,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connectionA);
+            Assert.NotNull(connectionA);
+
+            // Caller B requests while the pool is at max with nothing idle, so it parks.
+            var tcsB = new TaskCompletionSource<DbConnectionInternal>();
+            pool.TryGetConnection(
+                new SqlConnection(),
+                tcsB,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out _);
+
+            // Give B a moment to park on the channel; it cannot complete yet.
+            await Task.Delay(100);
+            Assert.False(tcsB.Task.IsCompleted);
+
+            // Doom A's connection (Clear bumps the generation) and return it. The return fails the
+            // liveness check, so the connection is removed, freeing the slot and waking B.
+            pool.Clear();
+            pool.ReturnInternalConnection(connectionA!, ownerA);
+
+            var connectionB = await tcsB.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.NotNull(connectionB);
+        }
+
+        #endregion
+
         #region Test classes
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
@@ -1185,6 +1298,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 throw ADP.PooledOpenTimeout();
+            }
+        }
+
+        internal sealed class CustomPumpException : Exception
+        {
+            internal const string Sentinel = "pump-create-failure-sentinel";
+
+            internal CustomPumpException() : base(Sentinel) { }
+        }
+
+        internal class ThrowingSqlConnectionFactory : SqlConnectionFactory
+        {
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                throw new CustomPumpException();
             }
         }
 
@@ -1444,39 +1578,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that the <see cref="TimeoutTimer"/> the pool hands to the
-        /// connection factory reports a reduced remaining-time budget once the
-        /// timer's clock has advanced. This guarantees the factory observes the
-        /// actual remaining budget at the moment of the call rather than a
-        /// fresh, full timeout.
+        /// Verifies that connection creation is decoupled from the requesting caller's timeout
+        /// budget. In the pump model a background create task opens the physical connection using a
+        /// fresh timer built from the pool's configured <c>CreationTimeout</c>, not the caller's
+        /// remaining budget. The caller's own timer only bounds how long it waits on the channel.
         /// </summary>
-        /// <remarks>
-        /// Drives elapsed time deterministically with a
-        /// <see cref="FakeTimeProvider"/> so the test does not depend on real
-        /// wall-clock waits or thread sleeps.
-        /// </remarks>
         [Fact]
-        public void GetConnection_TimeoutTimerReflectsPoolWaitTime()
+        public void GetConnection_CreatesConnectionWithFreshCreationTimeout()
         {
-            // Arrange: a capturing factory and a fake-time-backed timer with a
-            // 30-second budget anchored at virtual time t = 0.
+            // Arrange: a capturing factory and a pool whose CreationTimeout is a distinctive,
+            // comfortably large value so we can tell it apart from the caller's budget.
+            const int creationTimeoutMs = 30_000;
             var factory = new SuccessfulSqlConnectionFactory();
-            var pool = ConstructPool(factory);
-            var owner = new SqlConnection("Timeout=30");
-            var fakeTime = new FakeTimeProvider();
-            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: creationTimeoutMs,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(factory, poolGroupOptions: poolGroupOptions);
 
-            // Act: advance virtual time by 5 seconds before invoking the pool,
-            // simulating budget that was consumed elsewhere (e.g., waiting on a
-            // pool slot) before the factory was called.
-            fakeTime.Advance(TimeSpan.FromSeconds(5));
-            pool.TryGetConnection(owner, taskCompletionSource: null, timer, out DbConnectionInternal? connection);
+            // The caller's timer carries a different, much smaller budget than CreationTimeout.
+            var owner = new SqlConnection("Timeout=5");
+            TimeoutTimer callerTimer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(5));
 
-            // Assert: factory received the same timer, and it reports the
-            // reduced 25-second remaining budget.
+            // Act
+            pool.TryGetConnection(owner, taskCompletionSource: null, callerTimer, out DbConnectionInternal? connection);
+
+            // Assert: the factory did NOT receive the caller's timer; it received a fresh timer
+            // whose budget matches the pool's CreationTimeout.
             Assert.NotNull(connection);
-            Assert.Same(timer, factory.CapturedTimeout);
-            Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
+            Assert.NotNull(factory.CapturedTimeout);
+            Assert.NotSame(callerTimer, factory.CapturedTimeout);
+            // Only a few milliseconds can elapse between the pump starting the timer and the factory
+            // reading it, so the remaining budget stays very close to the configured CreationTimeout.
+            Assert.InRange(factory.CapturedTimeout!.MillisecondsRemainingInt, creationTimeoutMs - 5_000, creationTimeoutMs);
         }
 
         #endregion

@@ -4,27 +4,27 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Channels;
-using Microsoft.Data.ProviderBase;
 
 #nullable enable
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
-    /// Wraps an unbounded <see cref="Channel{T}"/> of idle connections and tracks the number of
-    /// non-null connections it contains. Unbounded channels do not support
-    /// <see cref="ChannelReader{T}.Count"/>, so this class maintains the count via
-    /// <see cref="Interlocked"/> operations on every read and write of a non-null value.
+    /// Wraps an unbounded <see cref="Channel{T}"/> of <see cref="CreateOutcome"/> values and tracks
+    /// the number of connection-bearing outcomes it currently holds (i.e. idle connections).
+    /// Unbounded channels do not support <see cref="ChannelReader{T}.Count"/>, so this class
+    /// maintains the count via <see cref="Interlocked"/> operations on every read and write of a
+    /// connection-bearing outcome. Bare-wake and error outcomes do not affect the count.
     /// </summary>
     internal sealed class IdleConnectionChannel
     {
-        private readonly ChannelReader<DbConnectionInternal?> _reader;
-        private readonly ChannelWriter<DbConnectionInternal?> _writer;
+        private readonly ChannelReader<CreateOutcome> _reader;
+        private readonly ChannelWriter<CreateOutcome> _writer;
         private volatile int _count;
 
         internal IdleConnectionChannel()
         {
-            var channel = Channel.CreateUnbounded<DbConnectionInternal?>();
+            var channel = Channel.CreateUnbounded<CreateOutcome>();
             _reader = channel.Reader;
             _writer = channel.Writer;
         }
@@ -40,20 +40,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal bool Complete() => _writer.TryComplete();
 
         /// <summary>
-        /// The number of non-null connections currently in the channel.
+        /// The number of connection-bearing outcomes (idle connections) currently in the channel.
         /// </summary>
         internal int Count => _count;
 
         /// <summary>
-        /// Writes a connection (or null wake-up signal) to the channel.
-        /// Increments the idle count when <paramref name="connection"/> is not null.
+        /// Writes an outcome to the channel. Increments the idle count when the outcome carries a
+        /// connection.
         /// </summary>
         /// <returns><see langword="true"/> if the value was written; otherwise <see langword="false"/>.</returns>
-        internal bool TryWrite(DbConnectionInternal? connection)
+        internal bool TryWrite(CreateOutcome outcome)
         {
-            if (_writer.TryWrite(connection))
+            if (_writer.TryWrite(outcome))
             {
-                if (connection is not null)
+                if (outcome.HasConnection)
                 {
                     Interlocked.Increment(ref _count);
                 }
@@ -64,14 +64,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Tries to read a value from the channel without blocking.
-        /// Decrements the idle count when a non-null connection is read.
+        /// Tries to read an outcome from the channel without blocking.
+        /// Decrements the idle count when a connection-bearing outcome is read.
         /// </summary>
-        internal bool TryRead(out DbConnectionInternal? connection)
+        internal bool TryRead(out CreateOutcome outcome)
         {
-            if (_reader.TryRead(out connection))
+            if (_reader.TryRead(out outcome))
             {
-                if (connection is not null)
+                if (outcome.HasConnection)
                 {
                     Interlocked.Decrement(ref _count);
                 }
@@ -83,19 +83,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Asynchronously reads a value from the channel.
-        /// Decrements the idle count when a non-null connection is read.
+        /// Asynchronously reads an outcome from the channel.
+        /// Decrements the idle count when a connection-bearing outcome is read.
         /// </summary>
-        internal async ValueTask<DbConnectionInternal?> ReadAsync(CancellationToken cancellationToken)
+        internal async ValueTask<CreateOutcome> ReadAsync(CancellationToken cancellationToken)
         {
-            var connection = await _reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            var outcome = await _reader.ReadAsync(cancellationToken).ConfigureAwait(false);
 
-            if (connection is not null)
+            if (outcome.HasConnection)
             {
                 Interlocked.Decrement(ref _count);
             }
 
-            return connection;
+            return outcome;
         }
     }
 }

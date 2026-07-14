@@ -19,23 +19,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     public class IdleConnectionChannelTest
     {
+        private static CreateOutcome Conn() => new CreateOutcome(new StubDbConnectionInternal());
+
         #region TryWrite
 
         [Fact]
-        public void TryWrite_NonNullConnection_IncrementsCount()
+        public void TryWrite_ConnectionOutcome_IncrementsCount()
         {
             var channel = new IdleConnectionChannel();
 
-            Assert.True(channel.TryWrite(new StubDbConnectionInternal()));
+            Assert.True(channel.TryWrite(Conn()));
             Assert.Equal(1, channel.Count);
         }
 
         [Fact]
-        public void TryWrite_NullConnection_DoesNotIncrementCount()
+        public void TryWrite_BareWake_DoesNotIncrementCount()
         {
             var channel = new IdleConnectionChannel();
 
-            Assert.True(channel.TryWrite(null));
+            Assert.True(channel.TryWrite(default));
             Assert.Equal(0, channel.Count);
         }
 
@@ -44,10 +46,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var channel = new IdleConnectionChannel();
 
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(null);
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
+            channel.TryWrite(Conn());
+            channel.TryWrite(default);
+            channel.TryWrite(Conn());
 
             Assert.Equal(3, channel.Count);
         }
@@ -57,33 +59,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #region TryRead
 
         [Fact]
-        public void TryRead_NonNullConnection_DecrementsCount()
+        public void TryRead_ConnectionOutcome_DecrementsCount()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
             Assert.Equal(1, channel.Count);
 
-            Assert.True(channel.TryRead(out var connection));
-            Assert.NotNull(connection);
+            Assert.True(channel.TryRead(out var outcome));
+            Assert.NotNull(outcome.Connection);
             Assert.Equal(0, channel.Count);
         }
 
         [Fact]
-        public void TryRead_NullConnection_DoesNotDecrementCount()
+        public void TryRead_BareWake_DoesNotDecrementCount()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(null);
+            channel.TryWrite(Conn());
+            channel.TryWrite(default);
             Assert.Equal(1, channel.Count);
 
-            // Read the non-null connection first (FIFO)
+            // Read the connection outcome first (FIFO)
             Assert.True(channel.TryRead(out var first));
-            Assert.NotNull(first);
+            Assert.NotNull(first.Connection);
             Assert.Equal(0, channel.Count);
 
-            // Read the null
+            // Read the bare wake
             Assert.True(channel.TryRead(out var second));
-            Assert.Null(second);
+            Assert.Null(second.Connection);
             Assert.Equal(0, channel.Count);
         }
 
@@ -92,8 +94,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             var channel = new IdleConnectionChannel();
 
-            Assert.False(channel.TryRead(out var connection));
-            Assert.Null(connection);
+            Assert.False(channel.TryRead(out var outcome));
+            Assert.Null(outcome.Connection);
             Assert.Equal(0, channel.Count);
         }
 
@@ -102,34 +104,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #region ReadAsync
 
         [Fact]
-        public async Task ReadAsync_NonNullConnection_DecrementsCount()
+        public async Task ReadAsync_ConnectionOutcome_DecrementsCount()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
             Assert.Equal(1, channel.Count);
 
-            var connection = await channel.ReadAsync(CancellationToken.None);
+            var outcome = await channel.ReadAsync(CancellationToken.None);
 
-            Assert.NotNull(connection);
+            Assert.NotNull(outcome.Connection);
             Assert.Equal(0, channel.Count);
         }
 
         [Fact]
-        public async Task ReadAsync_NullConnection_DoesNotDecrementCount()
+        public async Task ReadAsync_BareWake_DoesNotDecrementCount()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(null);
+            channel.TryWrite(Conn());
+            channel.TryWrite(default);
             Assert.Equal(1, channel.Count);
 
-            // First read returns the non-null connection (FIFO)
+            // First read returns the connection outcome (FIFO)
             var first = await channel.ReadAsync(CancellationToken.None);
-            Assert.NotNull(first);
+            Assert.NotNull(first.Connection);
             Assert.Equal(0, channel.Count);
 
-            // Second read returns null
+            // Second read returns the bare wake
             var second = await channel.ReadAsync(CancellationToken.None);
-            Assert.Null(second);
+            Assert.Null(second.Connection);
             Assert.Equal(0, channel.Count);
         }
 
@@ -142,10 +144,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var readTask = channel.ReadAsync(CancellationToken.None);
             Assert.False(readTask.IsCompleted);
 
-            channel.TryWrite(expected);
+            channel.TryWrite(new CreateOutcome(expected));
 
-            var connection = await readTask;
-            Assert.Same(expected, connection);
+            var outcome = await readTask;
+            Assert.Same(expected, outcome.Connection);
             Assert.Equal(0, channel.Count);
         }
 
@@ -188,8 +190,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var channel = new IdleConnectionChannel();
             channel.Complete();
 
-            Assert.False(channel.TryWrite(new StubDbConnectionInternal()));
-            Assert.False(channel.TryWrite(null));
+            Assert.False(channel.TryWrite(Conn()));
+            Assert.False(channel.TryWrite(default));
             Assert.Equal(0, channel.Count);
         }
 
@@ -197,17 +199,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TryRead_AfterComplete_DrainsBufferedItems()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
+            channel.TryWrite(Conn());
             Assert.Equal(2, channel.Count);
 
             channel.Complete();
 
             // Completion only stops new writes; already-buffered items remain readable.
             Assert.True(channel.TryRead(out var first));
-            Assert.NotNull(first);
+            Assert.NotNull(first.Connection);
             Assert.True(channel.TryRead(out var second));
-            Assert.NotNull(second);
+            Assert.NotNull(second.Connection);
             Assert.Equal(0, channel.Count);
 
             // Once drained, further reads return false.
@@ -218,12 +220,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public async Task ReadAsync_AfterCompleteAndDrain_ThrowsChannelClosedException()
         {
             var channel = new IdleConnectionChannel();
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
             channel.Complete();
 
             // Buffered item is still readable.
             var buffered = await channel.ReadAsync(CancellationToken.None);
-            Assert.NotNull(buffered);
+            Assert.NotNull(buffered.Connection);
 
             // After the channel is drained, ReadAsync faults with ChannelClosedException.
             await Assert.ThrowsAsync<ChannelClosedException>(
@@ -255,9 +257,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var channel = new IdleConnectionChannel();
 
             // Write 3
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(new StubDbConnectionInternal());
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
+            channel.TryWrite(Conn());
+            channel.TryWrite(Conn());
             Assert.Equal(3, channel.Count);
 
             // Read 2
@@ -266,7 +268,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(1, channel.Count);
 
             // Write 1 more
-            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(Conn());
             Assert.Equal(2, channel.Count);
 
             // Read remaining 2
@@ -296,7 +298,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
                 for (int i = 0; i < iterations; i++)
                 {
-                    channel.TryWrite(new StubDbConnectionInternal());
+                    channel.TryWrite(Conn());
                     await channel.ReadAsync(CancellationToken.None);
                 }
             }

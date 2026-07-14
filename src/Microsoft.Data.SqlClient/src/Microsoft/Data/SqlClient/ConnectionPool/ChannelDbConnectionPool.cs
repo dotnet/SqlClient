@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -71,10 +72,34 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly ConnectionPoolSlots _connectionSlots;
 
         /// <summary>
-        /// The idle connection channel. Contains nulls in order to release waiting attempts after
-        /// a connection has been physically closed/broken. Also tracks the count of non-null idle connections.
+        /// The idle/creation channel. Every connection request queues here (there is no optimistic
+        /// fast path around it), which gives strict FIFO ordering to parked waiters. It carries
+        /// <see cref="CreateOutcome"/> values: a connection (idle or freshly pumped), a captured
+        /// creation error to rethrow on a waiter, or a bare wake ("capacity changed, re-evaluate").
+        /// Also tracks the count of connection-bearing outcomes (idle connections).
         /// </summary>
         private readonly IdleConnectionChannel _idleChannel;
+
+        /// <summary>
+        /// The number of requests currently parked waiting for an outcome on <see cref="_idleChannel"/>.
+        /// Incremented immediately before a request pumps and parks, and decremented once its wait
+        /// completes. The pump reads this to decide whether there is unmet demand worth creating a
+        /// connection for, and slot-freeing events read it to decide whether a bare wake is needed.
+        ///
+        /// Ordering hinge: a waiter increments this <em>before</em> it evaluates pool capacity and
+        /// parks. Combined with the fact that a slot-freeing event frees its slot before it reads
+        /// this counter, that guarantees no lost wake-up: either the waiter observes the freed slot
+        /// and creates a connection itself, or the freeing event observes the waiter and wakes it.
+        /// Updated via <see cref="Interlocked"/>.
+        /// </summary>
+        private int _waiterCount;
+
+        /// <summary>
+        /// The number of background create ("pump") tasks currently in flight. Used by the pump's
+        /// demand/capacity gate so it launches at most one create per unit of unmet demand and never
+        /// over-commits past <see cref="MaxPoolSize"/>. Updated via <see cref="Interlocked"/>.
+        /// </summary>
+        private int _pendingCreates;
 
         /// <summary>
         /// The current generation of the pool. Incremented atomically on each <see cref="Clear"/> call.
@@ -212,11 +237,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Any connections from a previous generation that are returned to the pool
                 // after we start draining will fail the _clearCounter comparison and will be closed.
                 int numToDrain = IdleCount;
-                while (numToDrain > 0 && _idleChannel.TryRead(out DbConnectionInternal? connection))
+                while (numToDrain > 0 && _idleChannel.TryRead(out CreateOutcome outcome))
                 {
-                    if (connection is not null)
+                    if (outcome.Connection is not null)
                     {
-                        RemoveConnection(connection);
+                        RemoveConnection(outcome.Connection);
                         numToDrain--;
                     }
                 }
@@ -282,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                if (!_idleChannel.TryWrite(connection))
+                if (!_idleChannel.TryWrite(new CreateOutcome(connection)))
                 {
                     // The channel has been completed (pool is shutting down). Race window
                     // between the State check above and TryWrite: destroy instead of pooling.
@@ -348,11 +373,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Clear() may short-circuit if another caller is already draining. Because the
             // channel is now completed, no new items can be enqueued, so it is safe to do a
             // final unbounded drain to mop up anything Clear() may have skipped.
-            while (_idleChannel.TryRead(out DbConnectionInternal? connection))
+            while (_idleChannel.TryRead(out CreateOutcome outcome))
             {
+                DbConnectionInternal? connection = outcome.Connection;
                 if (connection is null)
                 {
-                    // null sentinels are wake-up signals only; nothing to destroy.
+                    // Bare-wake and error outcomes carry no connection; nothing to destroy.
                     continue;
                 }
 
@@ -543,9 +569,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 },
                 cleanupCallback: (newConnection) =>
                 {
-                    // If we fail to open a connection, we need to write a null to the idle channel to
-                    // wake up any waiters
-                    _idleChannel?.TryWrite(null);
+                    // Creation failed or produced no slot. Error propagation and re-driving of
+                    // remaining waiters are handled by the pump task (LaunchCreate); here we only
+                    // dispose whatever partial connection may have been produced.
                     newConnection?.Dispose();
                 });
 
@@ -611,10 +637,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             _connectionSlots.TryRemove(connection);
 
-            // Removing a connection from the pool opens a free slot.
-            // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-            // connection. Statement order is important since we have synchronous completions on the channel.
-            _idleChannel.TryWrite(null);
+            // Removing a connection frees a slot. If a request is currently parked waiting for a
+            // connection, wake one so it can re-pump and create a replacement using its own owning
+            // connection. The bare-wake outcome carries neither a connection nor an error.
+            //
+            // The wake is skipped when no request is waiting: there is no one to notify, and the
+            // freed slot will be observed by the next request's own pump. This also prevents stale
+            // wakes from accumulating in the channel. See _waiterCount for the ordering argument
+            // that guarantees a genuinely-parked waiter is never missed.
+            if (Volatile.Read(ref _waiterCount) > 0)
+            {
+                _idleChannel.TryWrite(default);
+            }
 
             connection.Dispose();
 
@@ -623,38 +657,124 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Tries to read a connection from the idle connection channel.
+        /// The pump: signals demand and, when there is unmet demand and free capacity, launches
+        /// background create tasks to grow the pool. Called by a request that is about to park (so
+        /// its demand is reflected in <see cref="_waiterCount"/> first) and whenever a create task
+        /// completes and frees its accounting.
+        ///
+        /// The gate is a cheap synchronous check, so most calls are near-free. Each launched task
+        /// reserves a slot and opens one physical connection, so multiple waiters are served in
+        /// parallel (bounded by <see cref="MaxPoolSize"/> and, once rate limiting lands, by the
+        /// limiter inside the create task).
         /// </summary>
-        /// <returns>A connection from the idle channel, or null if the channel is empty.</returns>
-        private DbConnectionInternal? GetIdleConnection()
+        /// <param name="owningConnection">A live requesting connection whose creation options seed the
+        /// physical open. Every pump is triggered by a request that is actively waiting, so this is
+        /// always a real, in-use connection.</param>
+        private void TryPumpCreate(DbConnection owningConnection)
         {
-            // The channel may contain nulls. Read until we find a non-null connection or exhaust the channel.
-            while (_idleChannel.TryRead(out DbConnectionInternal? connection))
+            while (true)
             {
-                if (connection is null)
+                int waiters = Volatile.Read(ref _waiterCount);
+                int pending = Volatile.Read(ref _pendingCreates);
+
+                // Demand already covered by in-flight creates plus connections sitting in the
+                // channel? Then nothing to do.
+                if (pending + _idleChannel.Count >= waiters)
                 {
-                    continue;
+                    return;
                 }
 
-                if (!IsLiveConnection(connection))
+                // Any capacity to create? ReservationCount counts slots already held by live
+                // connections; adding pending creates (each of which will reserve a slot) gives the
+                // projected occupancy. This is advisory - ConnectionPoolSlots.Add re-checks
+                // atomically - but it prevents a busy loop of no-slot creates when the pool is full.
+                if (_connectionSlots.ReservationCount + pending >= MaxPoolSize)
                 {
-                    RemoveConnection(connection);
-                    continue;
+                    return;
                 }
 
-                return connection;
+                // Reserve a create optimistically, then launch it. If we lose a race the create
+                // task will find no slot and no-op, which is harmless.
+                Interlocked.Increment(ref _pendingCreates);
+                LaunchCreate(owningConnection);
             }
-
-            return null;
         }
 
         /// <summary>
-        /// Gets an internal connection from the pool, either by retrieving an idle connection or opening a new one.
+        /// Runs a single background connection create and publishes the result to the channel for
+        /// whichever waiter is at the FIFO head:
+        /// <list type="bullet">
+        /// <item><description>success: the connection is written as a connection outcome;</description></item>
+        /// <item><description>failure: the captured error is written as an error outcome so a waiter
+        /// rethrows it (one failure is consumed by one waiter);</description></item>
+        /// <item><description>no slot available: nothing is written (capacity is unchanged).</description></item>
+        /// </list>
         /// </summary>
-        /// <param name="owningConnection">The DbConnection that will own this internal connection</param>
+        private void LaunchCreate(DbConnection owningConnection)
+        {
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    // Creation is decoupled from any specific caller, so it uses the pool's
+                    // configured CreationTimeout for the physical open rather than a caller's
+                    // remaining budget. A caller's own ConnectTimeout governs only how long it waits
+                    // on the channel. CreationTimeout of 0 maps to an infinite timer (TimeSpan.Zero
+                    // has zero ticks, which TimeoutTimer treats as infinite).
+                    TimeoutTimer timeout = TimeoutTimer.StartNew(
+                        TimeSpan.FromMilliseconds(PoolGroupOptions.CreationTimeout));
+
+                    DbConnectionInternal? connection =
+                        OpenNewInternalConnection(owningConnection, CancellationToken.None, timeout);
+
+                    if (connection is not null && !_idleChannel.TryWrite(new CreateOutcome(connection)))
+                    {
+                        // The channel was completed (pool shutting down) between creation and
+                        // publish. Destroy the orphan rather than leaking it.
+                        RemoveConnection(connection);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Deliver the error to a waiter so the originating request surface sees a real
+                    // failure instead of only timing out. The linger guard avoids leaving a stale
+                    // error in the channel for an unrelated future caller when nobody is waiting.
+                    if (Volatile.Read(ref _waiterCount) > 0)
+                    {
+                        _idleChannel.TryWrite(new CreateOutcome(ExceptionDispatchInfo.Capture(ex)));
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TryPoolerTraceEvent(
+                            "<prov.DbConnectionPool.LaunchCreate|RES|CPOOL> {0}, create failed with no waiter to receive it: {1}", Id, ex);
+                    }
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref _pendingCreates);
+
+                    // Re-drive remaining waiters. A failed create frees its slot and a no-slot
+                    // create may run once capacity opens, so nudge a parked waiter to re-evaluate.
+                    // Guarded so stale wakes don't accumulate when nobody is waiting.
+                    if (Volatile.Read(ref _waiterCount) > 0)
+                    {
+                        _idleChannel.TryWrite(default);
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// Gets an internal connection from the pool. Every request queues on the idle/creation
+        /// channel - there is no optimistic fast path around it - which gives strict FIFO ordering
+        /// to parked waiters. A request signals demand via the pump, which creates connections on
+        /// background tasks as capacity allows, then blocks on the channel until an outcome arrives.
+        /// </summary>
+        /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
-        /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting
-        /// in the pool is deducted from the budget available for physical connection creation.</param>
+        /// <param name="timeout">The overall timeout budget for this request. It bounds only how long
+        /// the request waits on the channel; physical connection creation uses the pool's
+        /// CreationTimeout instead.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when an OperationCanceledException is caught, indicating that the timeout period
@@ -662,7 +782,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         /// <exception cref="Exception">
         /// Thrown when a ChannelClosedException is caught, indicating that the connection pool
-        /// has been shut down.
+        /// has been shut down. Also rethrows a background creation error delivered to this waiter.
         /// </exception>
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection,
@@ -676,46 +796,58 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             using CancellationTokenSource cancellationTokenSource = timeout.CreateCancellationTokenSource();
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
-            // Continue looping until we create or retrieve a connection
+            // Continue looping until we retrieve a live connection.
             do
             {
-                try
+                CreateOutcome outcome;
+
+                // Fast check for an immediately-available outcome. This is FIFO-safe: a buffered
+                // item only exists when no reader is parked (the channel hands writes directly to
+                // parked readers), so this cannot barge ahead of a waiting request.
+                if (!_idleChannel.TryRead(out outcome))
                 {
-                    // Optimistically try to get an idle connection from the channel
-                    // Doesn't wait if the channel is empty, just returns null.
-                    connection ??= GetIdleConnection();
-
-
-                    // If we didn't find an idle connection, try to open a new one.
-                    connection ??= OpenNewInternalConnection(
-                        owningConnection,
-                        cancellationToken,
-                        timeout);
-
-                    // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
-                    // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
-                    // (first-come, first-served), which is crucial to us.
-                    if (async)
+                    // Nothing buffered. Register demand *before* pumping and parking so the pump and
+                    // any concurrent slot-freeing event both observe this waiter (see _waiterCount).
+                    Interlocked.Increment(ref _waiterCount);
+                    try
                     {
-                        connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
+                        TryPumpCreate(owningConnection);
+
+                        // Block until an outcome arrives. Channels guarantee FIFO delivery to parked
+                        // ReadAsync callers, which is what preserves fair ordering here.
+                        if (async)
+                        {
+                            outcome = await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            outcome = ReadChannelSyncOverAsync(cancellationToken);
+                        }
                     }
-                    else
+                    catch (OperationCanceledException)
                     {
-                        connection ??= ReadChannelSyncOverAsync(cancellationToken);
+                        throw ADP.PooledOpenTimeout();
+                    }
+                    catch (ChannelClosedException)
+                    {
+                        throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _waiterCount);
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                    throw ADP.PooledOpenTimeout();
-                }
-                catch (ChannelClosedException)
-                {
-                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
-                }
+
+                // A background create failed; propagate its error to this waiter.
+                outcome.Error?.Throw();
+
+                connection = outcome.Connection;
 
                 if (connection is not null && !IsLiveConnection(connection))
                 {
-                    // If the connection is not live, we need to remove it from the pool and try again.
+                    // Stale or dead connection: remove it (which frees its slot and re-drives
+                    // waiters) and loop to try again. A bare-wake outcome (no connection, no error)
+                    // also lands here as null and simply loops.
                     RemoveConnection(connection);
                     connection = null;
                 }
@@ -727,13 +859,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Performs a blocking synchronous read from the idle connection channel.
+        /// Performs a blocking synchronous read from the idle/creation channel.
         /// </summary>
         /// <param name="cancellationToken">Cancels the read operation.</param>
-        /// <returns>The connection read from the channel.</returns>
-        private DbConnectionInternal? ReadChannelSyncOverAsync(CancellationToken cancellationToken)
+        /// <returns>The outcome read from the channel.</returns>
+        private CreateOutcome ReadChannelSyncOverAsync(CancellationToken cancellationToken)
         {
-            // If there are no connections in the channel, then ReadAsync will block until one is available.
+            // If there are no outcomes in the channel, then ReadAsync will block until one is available.
             // Channels doesn't offer a sync API, so running ReadAsync synchronously on this thread may spawn
             // additional new async work items in the managed thread pool if there are no items available in the
             // channel. We need to ensure that we don't block all available managed threads with these child
@@ -743,7 +875,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _syncOverAsyncSemaphore.Wait(cancellationToken);
             try
             {
-                ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
+                ConfiguredValueTaskAwaitable<CreateOutcome>.ConfiguredValueTaskAwaiter awaiter =
                     _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
                 using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
 
@@ -827,14 +959,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             while (count > 0
                 && IsRunning
                 && _connectionSlots.ReservationCount > MinPoolSize
-                && _idleChannel.TryRead(out var connection))
+                && _idleChannel.TryRead(out var outcome))
             {
-                if (connection is null)
+                if (outcome.Connection is null)
                 {
                     continue;
                 }
 
-                RemoveConnection(connection);
+                RemoveConnection(outcome.Connection);
                 count--;
             }
         }
