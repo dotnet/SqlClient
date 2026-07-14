@@ -577,9 +577,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // configured we substitute a no-op acquired lease.
                         // FR-001, FR-002, FR-003.
 
-                        //TODO: some other options to consider:
-                        // 1. fail immediately and surface an error to the caller
-                        // 2. block on acquire (subject to overall timeout) - this would be the simplest
+                        // We chose non-blocking fast-fail over the two alternatives:
+                        //  1. Fail immediately and surface an error to the caller. Rejected because
+                        //     a denied permit doesn't mean the pool can't serve the request - an
+                        //     in-use connection may be returned momentarily, so falling back to the
+                        //     idle-channel wait recycles that connection instead of erroring out.
+                        //  2. Block on AttemptAcquireAsync (subject to the overall timeout). Simpler,
+                        //     but it queues the caller on the limiter and forces a brand-new physical
+                        //     open even when a returning connection would satisfy it sooner; it also
+                        //     couples the caller's wait to limiter capacity rather than to the pool's
+                        //     existing "wake on returned/created connection" signaling. Fast-fail plus
+                        //     the idle-channel fallback prefers connection reuse and reuses one wait
+                        //     path for both sources of capacity.
                         RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
                         bool leaseAcquired = lease.IsAcquired;
                         try
