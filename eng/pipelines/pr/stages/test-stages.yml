@@ -201,6 +201,11 @@ stages:
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - LocalDB
+          # Note: connection strings are explicitly set to empty to only allow the localDB tests to
+          # run. LocalDB tests require the localdb app name to be provided and supportsIntegratedSecurity
+          # to be true. If the connection strings (from the library, which as of 7/26 does not use
+          # integrated auth) are provided with supportsIntegratedSecurity set to true, other tests
+          # will fail.
           - ${{ if eq(platform.operatingSystem, 'Windows') }}:
             - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
               parameters:
