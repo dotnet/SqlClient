@@ -26,8 +26,11 @@ creation failure) with exponential backoff recovery, matching the existing
 ### User Story 1 — Throttled Connection Creation Under Burst Demand (P1)
 
 The pool limits the number of simultaneous physical connection creation attempts. Callers that
-cannot immediately create a connection wait in FIFO order until the limiter allows them to
-proceed, subject to their `ConnectTimeout`.
+cannot immediately create a connection do not queue on the limiter; they fall back to waiting on
+the idle channel, where they are satisfied either by a returned connection or by a best-effort
+wake when another caller releases its permit. The idle channel preserves FIFO order for returned
+connections, but rate-limit retries are best-effort rather than strictly ordered. All waiting is
+subject to the caller's `ConnectTimeout`.
 
 **Acceptance Scenarios**:
 
@@ -119,8 +122,10 @@ concrete need arises. When no limiter is supplied (`null`), no rate limiting is 
 
 - **FR-001**: The pool MUST limit the number of concurrent physical connection creation attempts
   to a configurable maximum.
-- **FR-002**: Callers that cannot immediately create a connection due to rate limiting MUST wait
-  in FIFO order until capacity is available or their timeout expires.
+- **FR-002**: Callers that cannot immediately create a connection due to rate limiting MUST fall
+  back to waiting on the idle channel until capacity becomes available (via a returned connection
+  or a best-effort wake when a permit is released) or their timeout expires. Rate-limit retries are
+  best-effort and not strictly FIFO-ordered.
 - **FR-003**: Time spent waiting for rate limiter capacity MUST count against the caller's
   overall connection timeout budget.
 - **FR-004**: When a connection creation attempt completes (success or failure), the

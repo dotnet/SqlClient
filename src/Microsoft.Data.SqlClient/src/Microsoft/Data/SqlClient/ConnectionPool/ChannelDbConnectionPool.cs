@@ -105,6 +105,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// creation attempts. When null, no rate limiting is applied. A non-null limiter is
         /// supplied at pool construction time; there is no default. Callers fast-fail against
         /// the limiter and fall back to the idle-channel wait when no permit is available.
+        /// Lifetime note: the pool does not own this limiter and never disposes it. The caller that
+        /// constructs the limiter owns its lifetime, since a single limiter may be shared across
+        /// pools or outlive any one pool.
         /// </summary>
         private readonly ConcurrencyLimiter? _connectionCreationRateLimiter;
 
@@ -572,12 +575,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // We deliberately do not block here so the caller can fall back to
                         // waiting on the idle channel, where it can be satisfied either by a
                         // returning connection or by a null poke from another caller releasing
-                        // its rate-limit lease (see finally below). We prefer to recycle existing 
-                        // connections rather then queue on the rate limit. When no limiter is
+                        // its rate-limit lease (see finally below). We prefer to recycle existing
+                        // connections rather than queue on the rate limit. When no limiter is
                         // configured we substitute a no-op acquired lease.
                         // FR-001, FR-002, FR-003.
 
                         RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
+                        bool faulted = true;
                         try
                         {
                             if (!lease.IsAcquired)
@@ -585,6 +589,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
                                 // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
                                 // path so the user can identify why the lease was denied.
+                                faulted = false;
                                 return null;
                             }
 
@@ -609,6 +614,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 newConnection.ClearGeneration = _clearGeneration;
                             }
 
+                            faulted = false;
                             return newConnection;
                         }
                         finally
@@ -621,13 +627,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             lease.Dispose();
 
                             // After releasing, signal a waiter on the idle channel that they may now
-                            // retry an open. We only poke when a limiter is configured (a waiter only
-                            // falls back to the idle channel due to rate limiting in that case) and
-                            // the pool can still grow; if we're at MaxPoolSize, only a connection
-                            // return can satisfy a waiter. FR-004. This is best-effort; releasing a
-                            // lease doesn't guarantee the rate limiter immediately has an available
-                            // permit, but the waiter we wake will fall back to waiting again if not.
-                            if (lease.IsAcquired &&
+                            // retry an open. We only poke on non-faulted completion: on exception paths
+                            // the cleanupCallback below already writes a wake, so poking here too would
+                            // produce a redundant double wake. We also only poke when a limiter is
+                            // configured (a waiter only falls back to the idle channel due to rate
+                            // limiting in that case) and the pool can still grow; if we're at
+                            // MaxPoolSize, only a connection return can satisfy a waiter. FR-004. This
+                            // is best-effort; releasing a lease doesn't guarantee the rate limiter
+                            // immediately has an available permit, but the waiter we wake will fall
+                            // back to waiting again if not.
+                            if (!faulted &&
+                                lease.IsAcquired &&
                                 _connectionCreationRateLimiter is not null &&
                                 _connectionSlots.ReservationCount < MaxPoolSize)
                             {
@@ -656,9 +666,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 return connection;
             }
-            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
             {
                 // Enter the blocking period error state on creation failure if configured.
+                // We deliberately exclude OperationCanceledException: that is thrown when the
+                // caller's own timeout/cancellation budget expires while waiting, which is
+                // client-side contention rather than a physical connection creation failure and
+                // must not poison the pool into fast-fail/backoff for other callers.
                 // FR-006, FR-007.
                 _errorState?.Enter(ex);
 

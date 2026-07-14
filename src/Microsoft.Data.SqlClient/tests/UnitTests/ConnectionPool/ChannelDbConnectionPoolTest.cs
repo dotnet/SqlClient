@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Threading;
@@ -1824,7 +1823,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var factory = new CountingSuccessfulConnectionFactory();
-            var rateLimiter = new ConcurrencyLimiter(
+            using var rateLimiter = new ConcurrencyLimiter(
                 new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var pool = ConstructPool(
                 factory,
@@ -1856,7 +1855,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var factory = new CountingSuccessfulConnectionFactory();
-            var rateLimiter = new ConcurrencyLimiter(
+            using var rateLimiter = new ConcurrencyLimiter(
                 new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -1910,7 +1909,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             using var createGate = new ManualResetEventSlim(initialState: false);
             var factory = new GatedSuccessfulConnectionFactory(createGate);
-            var rateLimiter = new ConcurrencyLimiter(
+            using var rateLimiter = new ConcurrencyLimiter(
                 new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -1991,7 +1990,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var factory = new CountingSuccessfulConnectionFactory();
-            var rateLimiter = new ConcurrencyLimiter(
+            using var rateLimiter = new ConcurrencyLimiter(
                 new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -2059,7 +2058,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // If the rate limiter lease were not disposed on failure, after N failures (where N is
             // the limiter's permit count) every subsequent request would deadlock. Verify that we
             // can keep getting failures back without ever blocking the thread pool.
-            var rateLimiter = new ConcurrencyLimiter(
+            using var rateLimiter = new ConcurrencyLimiter(
                 new ConcurrencyLimiterOptions { PermitLimit = 4, QueueLimit = 0 });
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=NeverBlock;"),
