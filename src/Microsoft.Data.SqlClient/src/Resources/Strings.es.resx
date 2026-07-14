@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>No se pudo leer la sección de configuración para los proveedores de autenticación.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>La configuración "useWamBroker" requiere que el paquete "Microsoft.Data.SqlClient.Extensions.Azure" exponga "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Actualice el paquete "Microsoft.Data.SqlClient.Extensions.Azure" a, como mínimo, la versión 1.1.0, que incluye este tipo.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>El parámetro "{0}" no puede ser nulo ni estar vacío.</value>
   </data>

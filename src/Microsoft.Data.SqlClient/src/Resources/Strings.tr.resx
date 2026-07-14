@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Kimlik doğrulama sağlayıcıları için yapılandırma bölümü okunamadı.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>'useWamBroker' ayarı, 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' türünü kullanıma sunmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini gerektirir. Bu türü içeren en az v1.1.0 sürümüne ulaşmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini yükseltin.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' parametresi null veya boş olamaz.</value>
   </data>

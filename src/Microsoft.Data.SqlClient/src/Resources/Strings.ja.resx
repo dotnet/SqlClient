@@ -2381,7 +2381,7 @@
   </data>
   <data name="OleDb_PropertyBadValue" xml:space="preserve">
     <value>次のいずれかの理由により、'{0}' プロパティを初期化できませんでした。
-	値のデータ型が、プロパティのデータ型ではないか、Null ではありません。たとえば、プロパティが DBPROP_MEMORYUSAGE で、このプロパティのデータ型は Int32 でしたが、値のデータ型は Int64 でした。 
+	値のデータ型が、プロパティのデータ型ではないか、Null ではありません。たとえば、プロパティが DBPROP_MEMORYUSAGE で、このプロパティのデータ型は Int32 でしたが、値のデータ型は Int64 でした。
 	値が無効な値です。たとえば、プロパティが DBPROP_MEMORYUSAGE でしたが、値が負の値でした。
 	値はプロパティの有効な値で、プロバイダーはプロパティを値の設定可能なプロパティとしてサポートしていますが、プロバイダーが指定された値をサポートしていません。これは、プロバイダーの作成後に OLE DB のこのプロパティに値が追加された場合などが挙げられます。</value>
   </data>
@@ -2588,6 +2588,9 @@
   </data>
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>認証プロバイダーの構成セクションを読み取ることができませんでした。</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v1.1.0 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>パラメーター '{0}' を null や空にすることはできません。</value>

@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>無法讀取驗證提供者的組態區段。</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。請將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v1.1.0，其中包含此類型。</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>
   </data>

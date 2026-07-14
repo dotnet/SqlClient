@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>Nepodařilo se přečíst konfigurační oddíl zprostředkovatelů ověřování.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
   </data>

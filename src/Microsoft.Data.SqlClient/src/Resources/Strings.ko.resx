@@ -2589,6 +2589,9 @@
   <data name="SQL_CannotGetAuthProviderConfig" xml:space="preserve">
     <value>인증 공급자에 대한 구성 섹션을 읽지 못했습니다.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>'useWamBroker'를 설정하려면 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지가 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'를 노출해야 합니다. 이 형식을 포함하는 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지를 v1.1.0 이상으로 업그레이드하세요.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' 매개 변수는 null이거나 비워 둘 수 없습니다.</value>
   </data>
