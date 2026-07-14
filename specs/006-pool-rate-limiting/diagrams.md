@@ -26,7 +26,7 @@ flowchart TD
     Start([Open request]) --> Idle["Idle channel<br/>TryRead<br/>(non-blocking)"]
 
     Idle -->|got connection| Done([Return connection])
-    Idle -->|empty| Limiter["RateLimiter<br/>AttemptAcquire 1<br/>(non-blocking)"]
+    Idle -->|empty| Limiter["ConcurrencyLimiter<br/>AttemptAcquire 1<br/>(non-blocking)"]
 
     Limiter -->|acquired lease| Open["Open physical connection"]
     Limiter -->|not acquired| Channel["Idle channel<br/>await ReadAsync <br/>(FIFO queued)"]

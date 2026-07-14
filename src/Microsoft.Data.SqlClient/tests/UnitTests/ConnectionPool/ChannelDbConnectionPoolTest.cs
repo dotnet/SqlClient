@@ -38,14 +38,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <param name="dbConnectionPoolGroup">Optional pool group override.</param>
         /// <param name="poolGroupOptions">Optional pool options override.</param>
         /// <param name="connectionPoolProviderInfo">Optional provider info override.</param>
-        /// <param name="connectionCreationRateLimiter">Optional rate limiter controlling physical connection creation.</param>
+        /// <param name="connectionCreationRateLimiter">Optional concurrency limiter controlling physical connection creation.</param>
         /// <returns>A configured <see cref="ChannelDbConnectionPool"/> instance for testing.</returns>
         private ChannelDbConnectionPool ConstructPool(SqlConnectionFactory connectionFactory,
             DbConnectionPoolIdentity? identity = null,
             DbConnectionPoolGroup? dbConnectionPoolGroup = null,
             DbConnectionPoolGroupOptions? poolGroupOptions = null,
             DbConnectionPoolProviderInfo? connectionPoolProviderInfo = null,
-            RateLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null)
         {
             poolGroupOptions ??= new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1824,7 +1824,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var factory = new CountingSuccessfulConnectionFactory();
-            var rateLimiter = new TestRateLimiter();
+            var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var pool = ConstructPool(
                 factory,
                 connectionCreationRateLimiter: rateLimiter);
@@ -1840,8 +1841,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(completed);
             Assert.NotNull(connection);
             Assert.Equal(1, factory.CreateCount);
-            Assert.Equal(1, rateLimiter.AttemptAcquireCount);
-            Assert.Equal(0, rateLimiter.OutstandingPermitCount);
+            // The single permit was acquired for the open and released afterwards, so it is
+            // available again once the connection has been handed back to the caller.
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
         }
 
         /// <summary>
@@ -1853,7 +1855,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var factory = new CountingSuccessfulConnectionFactory();
-            var rateLimiter = new TestRateLimiter(true, false);
+            var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -1868,11 +1871,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 connectionCreationRateLimiter: rateLimiter);
             SqlConnection firstOwner = new();
 
+            // The first open acquires and releases the single permit, creating a physical
+            // connection that the second request can later reuse.
             pool.TryGetConnection(
                 firstOwner,
                 taskCompletionSource: null,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+            Assert.Equal(1, factory.CreateCount);
+
+            // Externally hold the only permit so the pool's next AttemptAcquire is denied and the
+            // waiting request must fall back to waiting for a returned connection.
+            using RateLimitLease heldLease = rateLimiter.AttemptAcquire(1);
+            Assert.True(heldLease.IsAcquired);
+            long failedLeasesBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
 
             // Act
             Task<DbConnectionInternal?> waitingRequest = Task.Run(() =>
@@ -1886,8 +1899,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             });
 
             Assert.True(
-                SpinWait.SpinUntil(() => rateLimiter.AttemptAcquireCount == 2, TimeSpan.FromSeconds(5)),
-                "Timed out waiting for the second request to reach the rate limiter.");
+                SpinWait.SpinUntil(
+                    () => rateLimiter.GetStatistics()!.TotalFailedLeases > failedLeasesBefore,
+                    TimeSpan.FromSeconds(5)),
+                "Timed out waiting for the second request to be denied by the rate limiter.");
 
             pool.ReturnInternalConnection(firstConnection!, firstOwner);
             DbConnectionInternal? reusedConnection = await waitingRequest;
@@ -1895,8 +1910,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Same(firstConnection, reusedConnection);
             Assert.Equal(1, factory.CreateCount);
-            Assert.Equal(2, rateLimiter.AttemptAcquireCount);
-            Assert.Equal(0, rateLimiter.OutstandingPermitCount);
         }
 
         /// <summary>
@@ -1910,7 +1923,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // If the rate limiter lease were not disposed on failure, after N failures (where N is
             // the limiter's permit count) every subsequent request would deadlock. Verify that we
             // can keep getting failures back without ever blocking the thread pool.
-            var rateLimiter = new TestRateLimiter();
+            var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 4, QueueLimit = 0 });
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=NeverBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
@@ -1938,8 +1952,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 });
             }
 
-            Assert.Equal(8, rateLimiter.AttemptAcquireCount);
-            Assert.Equal(0, rateLimiter.OutstandingPermitCount);
+            // Every failed open must have released its permit; otherwise the pool would starve.
+            Assert.True(
+                SpinWait.SpinUntil(
+                    () => rateLimiter.GetStatistics()!.CurrentAvailablePermits == 4,
+                    TimeSpan.FromSeconds(5)),
+                "Rate limiter did not release all permits after failed opens.");
         }
 
         /// <summary>
@@ -2028,146 +2046,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 CreateCount++;
                 return new StubDbConnectionInternal();
-            }
-        }
-
-        /// <summary>
-        /// Minimal rate limiter test double that supports scripted allow/deny results while also
-        /// enforcing a single outstanding permit so lease disposal behavior can be verified.
-        /// </summary>
-        internal sealed class TestRateLimiter : RateLimiter
-        {
-            private readonly Queue<bool> _scriptedResults;
-            private int _outstandingPermitCount;
-
-            /// <summary>
-            /// Initializes the limiter with an optional script of acquisition outcomes.
-            /// </summary>
-            /// <param name="scriptedResults">Ordered allow/deny results for successive acquire attempts.</param>
-            internal TestRateLimiter(params bool[] scriptedResults)
-            {
-                _scriptedResults = new Queue<bool>(scriptedResults);
-            }
-
-            /// <summary>
-            /// Gets the number of synchronous acquire attempts made by the pool.
-            /// </summary>
-            internal int AttemptAcquireCount { get; private set; }
-
-            /// <summary>
-            /// Gets the number of permits currently held by undisposed leases.
-            /// </summary>
-            internal int OutstandingPermitCount => Volatile.Read(ref _outstandingPermitCount);
-
-            /// <summary>
-            /// Gets the idle duration for the test limiter. This limiter never tracks idle time.
-            /// </summary>
-            public override TimeSpan? IdleDuration => null;
-
-            /// <summary>
-            /// Attempts to acquire a permit synchronously according to the scripted outcome and
-            /// current outstanding lease count.
-            /// </summary>
-            /// <param name="permitCount">The requested permit count.</param>
-            /// <returns>An acquired or denied lease for the requested permit.</returns>
-            protected override RateLimitLease AttemptAcquireCore(int permitCount)
-            {
-                AttemptAcquireCount++;
-
-                if (permitCount != 1)
-                {
-                    throw new NotSupportedException("Tests only support single-permit acquisition.");
-                }
-
-                if (OutstandingPermitCount > 0)
-                {
-                    return DeniedTestLease.Instance;
-                }
-
-                if (_scriptedResults.Count > 0 && !_scriptedResults.Dequeue())
-                {
-                    return DeniedTestLease.Instance;
-                }
-
-                Interlocked.Increment(ref _outstandingPermitCount);
-                return new AcquiredTestLease(this);
-            }
-
-            /// <summary>
-            /// Attempts to acquire a permit asynchronously by delegating to the synchronous test
-            /// behavior.
-            /// </summary>
-            /// <param name="permitCount">The requested permit count.</param>
-            /// <param name="cancellationToken">Ignored because this test limiter never queues.</param>
-            /// <returns>A completed task containing the acquired or denied lease.</returns>
-            protected override ValueTask<RateLimitLease> AcquireAsyncCore(int permitCount, CancellationToken cancellationToken)
-                => new(AttemptAcquireCore(permitCount));
-
-            /// <summary>
-            /// Gets statistics for the test limiter. Tests assert behavior through explicit counters
-            /// instead of the framework statistics object.
-            /// </summary>
-            /// <returns><see langword="null"/> because this test limiter does not expose framework statistics.</returns>
-            public override RateLimiterStatistics? GetStatistics() => null;
-
-            private void ReleasePermit()
-            {
-                Interlocked.Decrement(ref _outstandingPermitCount);
-            }
-
-            /// <summary>
-            /// Lease representing a successful single-permit acquisition.
-            /// </summary>
-            private sealed class AcquiredTestLease : RateLimitLease
-            {
-                private readonly TestRateLimiter _owner;
-                private int _disposed;
-
-                internal AcquiredTestLease(TestRateLimiter owner)
-                {
-                    _owner = owner;
-                }
-
-                public override bool IsAcquired => true;
-
-                public override IEnumerable<string> MetadataNames => Array.Empty<string>();
-
-                public override bool TryGetMetadata(string metadataName, out object? metadata)
-                {
-                    metadata = null;
-                    return false;
-                }
-
-                protected override void Dispose(bool disposing)
-                {
-                    if (disposing && Interlocked.Exchange(ref _disposed, 1) == 0)
-                    {
-                        _owner.ReleasePermit();
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Shared denied lease used when the test limiter refuses an acquisition.
-            /// </summary>
-            private sealed class DeniedTestLease : RateLimitLease
-            {
-                internal static readonly DeniedTestLease Instance = new();
-
-                public override bool IsAcquired => false;
-
-                public override IEnumerable<string> MetadataNames => Array.Empty<string>();
-
-                public override bool TryGetMetadata(string metadataName, out object? metadata)
-                {
-                    metadata = null;
-                    return false;
-                }
-
-                protected override void Dispose(bool disposing)
-                {
-                    // No resources to release.
-                }
             }
         }
 

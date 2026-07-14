@@ -101,12 +101,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _shutdownInitiated;
 
         /// <summary>
-        /// Optional rate limiter that throttles the number of concurrent physical connection
+        /// Optional concurrency limiter that throttles the number of concurrent physical connection
         /// creation attempts. When null, no rate limiting is applied. A non-null limiter is
         /// supplied at pool construction time; there is no default. Callers fast-fail against
         /// the limiter and fall back to the idle-channel wait when no permit is available.
         /// </summary>
-        private readonly RateLimiter? _connectionCreationRateLimiter;
+        private readonly ConcurrencyLimiter? _connectionCreationRateLimiter;
 
         /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
-            RateLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null)
         {
             ConnectionFactory = connectionFactory;
             PoolGroup = connectionPoolGroup;

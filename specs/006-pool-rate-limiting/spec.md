@@ -98,19 +98,20 @@ Time spent waiting for rate limiter capacity counts against the caller's overall
 
 ---
 
-### User Story 5 — Rate Limiter Built on System.Threading.RateLimiting (P3)
+### User Story 5 — Rate Limiting Built on a Concurrency Limiter (P3)
 
-The pool uses `System.Threading.RateLimiting.RateLimiter` as the base abstraction and
-`ConcurrencyLimiter` as the initial implementation. No custom rate limiting primitives are
-defined.
+The pool supports an optional `System.Threading.RateLimiting.ConcurrencyLimiter` to throttle
+concurrent physical connection creation. This is the only limiter type the pool currently needs
+(pooling against on-prem SQL Server), so the pool takes a concrete `ConcurrencyLimiter?` rather
+than the abstract `RateLimiter` base. Support for other limiter types can be added later if a
+concrete need arises. When no limiter is supplied (`null`), no rate limiting is applied.
 
 **Acceptance Scenarios**:
 
-1. **Given** the pool is configured with the default `ConcurrencyLimiter`, **When** connections
+1. **Given** the pool is configured with a `ConcurrencyLimiter`, **When** connections
    are created, **Then** the limiter throttles concurrent creation to the configured maximum.
-2. **Given** a different `RateLimiter` implementation is substituted, **When** connections are
-   created, **Then** the pool delegates throttling to the substituted implementation without
-   code changes to pool logic.
+2. **Given** no limiter is supplied (`null`), **When** connections are created, **Then** the
+   pool applies no rate limiting.
 
 ---
 
@@ -138,9 +139,9 @@ defined.
   `false` otherwise.
 - **FR-011**: `ClearPool` MUST clear the error state in addition to invalidating pooled
   connections.
-- **FR-012**: The rate limiter MUST use `System.Threading.RateLimiting.RateLimiter` as the base
-  abstraction so that any `RateLimiter` implementation can be substituted without modifying
-  pool acquisition logic.
-- **FR-013**: The initial implementation MUST use
+- **FR-012**: The rate limiter MUST be an optional `System.Threading.RateLimiting.ConcurrencyLimiter`.
+  When no limiter is supplied (`null`), the pool MUST apply no rate limiting. Support for other
+  `RateLimiter` types is intentionally out of scope for now and may be added later if needed.
+- **FR-013**: When a limiter is supplied, it MUST be a
   `System.Threading.RateLimiting.ConcurrencyLimiter` configured with the desired maximum number
   of concurrent connection creation attempts.
