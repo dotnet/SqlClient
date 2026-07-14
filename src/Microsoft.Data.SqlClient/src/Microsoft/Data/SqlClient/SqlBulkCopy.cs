@@ -1356,20 +1356,9 @@ DROP TABLE #Column_Aliases
                 {
                     _hasMoreRowToCopy = ReadFromRowSource(); // Synchronous calls for DataRows and DataTable won't block. For IDataReader, it may block.
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (_isAsyncBulkCopy && ADP.IsCatchableExceptionType(ex))
                 {
-                    if (_isAsyncBulkCopy)
-                    {
-                        if (!ADP.IsCatchableExceptionType(ex))
-                        {
-                            throw;
-                        }
-                        return Task.FromException<bool>(ex);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return Task.FromException<bool>(ex);
                 }
                 finally
                 {
