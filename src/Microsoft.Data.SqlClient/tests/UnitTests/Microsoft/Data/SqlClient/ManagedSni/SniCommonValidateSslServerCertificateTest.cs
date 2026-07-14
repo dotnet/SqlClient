@@ -114,6 +114,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// When a ServerCertificate pin is supplied but the server did not present a
+        /// certificate at all (<see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>,
+        /// <c>serverCert == null</c>), the helper must fail with an
+        /// <see cref="AuthenticationException"/> — not a <see cref="NullReferenceException"/>
+        /// from attempting to dereference the missing server certificate during pin
+        /// comparison.
+        /// </summary>
+        [Fact]
+        public void ValidateSslServerCertificate_Pin_NullServerCert_NotAvailable_Throws()
+        {
+            using X509Certificate2 pinCert = CreateSelfSignedCertificate("server.contoso.com");
+
+            string pinPath = WriteCertToTempFile(pinCert);
+            try
+            {
+                Assert.Throws<AuthenticationException>(() =>
+                    SniCommon.ValidateSslServerCertificate(
+                        connectionId: Guid.NewGuid(),
+                        targetServerName: "server.contoso.com",
+                        hostNameInCertificate: null,
+                        serverCert: null,
+                        validationCertFileName: pinPath,
+                        policyErrors: SslPolicyErrors.RemoteCertificateNotAvailable));
+            }
+            finally
+            {
+                File.Delete(pinPath);
+            }
+        }
+
+        /// <summary>
         /// When no ServerCertificate pin is supplied, the historical short-circuit is
         /// preserved: <see cref="SslPolicyErrors.None"/> means the platform already
         /// validated the certificate, so the helper returns true.  This guards against

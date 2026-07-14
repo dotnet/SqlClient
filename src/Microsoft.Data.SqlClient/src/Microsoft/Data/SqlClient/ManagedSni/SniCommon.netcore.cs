@@ -104,22 +104,32 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         {
                             // Fail closed: the caller explicitly asked us to pin against a specific
                             // certificate, so if we cannot load / parse that pin we must not accept the
-                            // server certificate on the basis of platform trust alone.
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, Exception occurred loading specified ServerCertificate: {1}. Failing certificate validation.", args0: connectionId, args1: e.Message);
-                            throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ServerCertificateFileLoadFailed, e.Message));
+                            // server certificate on the basis of platform trust alone. The exception
+                            // details are traced separately; the user-facing message identifies the
+                            // configured pin file path so operators can locate the misconfiguration.
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, Exception occurred loading specified ServerCertificate '{1}': {2}. Failing certificate validation.", args0: connectionId, args1: validationCertFileName, args2: e.Message);
+                            throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ServerCertificateFileLoadFailed, validationCertFileName));
                         }
 
-                        // Enforce the pin: the presented server certificate must be a byte-for-byte
-                        // match of the pinned certificate. On mismatch, fail immediately.
-                        if (!serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
+                        // If the server did not present a certificate (e.g. SslPolicyErrors
+                        // .RemoteCertificateNotAvailable), there is nothing to compare the pin
+                        // against. Skip the byte comparison and fall through to the policy-error
+                        // handler below, which will report the missing-certificate condition with
+                        // the appropriate AuthenticationException instead of a NullReferenceException.
+                        if (serverCert != null)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate doesn't match the certificate provided by the server. Certificate validation failed.", args0: connectionId);
-                            throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateDoesNotMatchServerCertificate);
-                        }
+                            // Enforce the pin: the presented server certificate must be a byte-for-byte
+                            // match of the pinned certificate. On mismatch, fail immediately.
+                            if (!serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
+                            {
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate doesn't match the certificate provided by the server. Certificate validation failed.", args0: connectionId);
+                                throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateDoesNotMatchServerCertificate);
+                            }
 
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Continuing with chain / name validation.", args0: connectionId);
-                        // Pin matched. Fall through so that chain / name validation is still
-                        // enforced additively; a matching pin must never mask a policy error.
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Continuing with chain / name validation.", args0: connectionId);
+                            // Pin matched. Fall through so that chain / name validation is still
+                            // enforced additively; a matching pin must never mask a policy error.
+                        }
                     }
 
                     // If the platform reported no policy errors, validation succeeds. When a pin
