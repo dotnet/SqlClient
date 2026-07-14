@@ -1847,6 +1847,56 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies that a successful physical open releases its rate-limiter lease so that a
+        /// subsequent open can acquire the same permit. With a single-permit limiter, a leaked
+        /// lease would deny the second open and force connection reuse, leaving CreateCount at 1.
+        /// </summary>
+        [Fact]
+        public void RateLimiter_SuccessfulCreate_ReleasesLeaseForNextCreate()
+        {
+            // Arrange
+            var factory = new CountingSuccessfulConnectionFactory();
+            var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(
+                factory,
+                poolGroupOptions: poolGroupOptions,
+                connectionCreationRateLimiter: rateLimiter);
+
+            // Act
+            // Two distinct owners so neither open can be satisfied by reusing the other's
+            // connection - each must acquire a fresh permit and create a physical connection.
+            bool firstCompleted = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? firstConnection);
+            bool secondCompleted = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? secondConnection);
+
+            // Assert
+            Assert.True(firstCompleted);
+            Assert.True(secondCompleted);
+            Assert.NotNull(firstConnection);
+            Assert.NotNull(secondConnection);
+            Assert.NotSame(firstConnection, secondConnection);
+            // The second create only succeeds if the first release returned the single permit.
+            Assert.Equal(2, factory.CreateCount);
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
         /// Verifies that when the rate limiter denies a new physical open, the caller falls back
         /// to waiting for an existing connection to be returned instead of forcing a second create.
         /// </summary>
