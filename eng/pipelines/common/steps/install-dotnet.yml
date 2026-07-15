@@ -8,21 +8,19 @@
 # SDK version is always read from the root global.json file.  The Runtimes to
 # install, if any, may be provided as an array of version strings.
 #
-# Special handling is required for ARM64 due to a bug in UseDotNet@2:
-#
-# [BUG]: UseDotNet@2 task installs x86 build
-# https://github.com/microsoft/azure-pipelines-tasks/issues/20300
+# The UseDotNet@2 task installs the SDK/Runtimes for the agent's native
+# architecture, including ARM64.  (The historical ARM64 workaround for
+# https://github.com/microsoft/azure-pipelines-tasks/issues/20300 is no longer
+# needed now that the task correctly detects win-arm64 in v271+.)
 
 parameters:
 
-  # The architecture to install for.
-  - name: architecture
-    type: string
-    values:
-      - x64
-      - x86
-      - arm64
-    default: x64
+  # True to force installation of the x86 build (e.g. for x86 test runs on an
+  # x64 host).  When false, UseDotNet@2 installs for the agent's native
+  # architecture.
+  - name: forceX86
+    type: boolean
+    default: false
 
   # True to emit debug information and steps.
   - name: debug
@@ -34,14 +32,8 @@ parameters:
     type: string
     default: $(Agent.ToolsDirectory)/dotnet
 
-  # The list of .NET Runtimes to install, if any.
-  #
-  # When architecture is arm64, these must adhere to the format expected by the
-  # dotnet-install.ps1 script's -Channel option:
-  #
-  # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script
-  #
-  # Otherwise, these must adhere to the format expected by the UseDotNet@2 task:
+  # The list of .NET Runtimes to install, if any.  These must adhere to the
+  # format expected by the UseDotNet@2 task:
   #
   # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2
   #
@@ -51,85 +43,33 @@ parameters:
 
 steps:
 
-  # Use the UseDotNet@2 task for all architectures except ARM64.
-  - ${{ if ne(parameters.architecture, 'arm64') }}:
+  # Install the SDK listed in the global.json file.
+  #
+  # retryCountOnTaskFailure is set because UseDotNet@2 fails intermittently
+  # in CI due to transient network/CDN issues when downloading the SDK.
+  - task: UseDotNet@2
+    displayName: Install .NET SDK (global.json)
+    retryCountOnTaskFailure: 3
+    inputs:
+      installationPath: ${{ parameters.installDir }}
+      packageType: sdk
+      useGlobalJson: true
+    ${{ if parameters.forceX86 }}:
+      env:
+        PROCESSOR_ARCHITECTURE: x86
 
-    # Install the SDK listed in the global.json file.
-    #
-    # retryCountOnTaskFailure is set because UseDotNet@2 fails intermittently
-    # in CI due to transient network/CDN issues when downloading the SDK.
+  # Install the desired Runtimes, if any.
+  - ${{ each version in parameters.runtimes }}:
     - task: UseDotNet@2
-      displayName: Install .NET SDK (global.json)
+      displayName: Install .NET ${{ version }} Runtime
       retryCountOnTaskFailure: 3
       inputs:
         installationPath: ${{ parameters.installDir }}
-        packageType: sdk
-        useGlobalJson: true
-      ${{ if eq(parameters.architecture, 'x86') }}:
+        packageType: runtime
+        version: ${{ version }}
+      ${{ if parameters.forceX86 }}:
         env:
           PROCESSOR_ARCHITECTURE: x86
-
-
-    # Install the desired Runtimes, if any.
-    - ${{ each version in parameters.runtimes }}:
-      - task: UseDotNet@2
-        displayName: Install .NET ${{ version }} Runtime
-        retryCountOnTaskFailure: 3
-        inputs:
-          installationPath: ${{ parameters.installDir }}
-          packageType: runtime
-          version: ${{ version }}
-        ${{ if eq(parameters.architecture, 'x86') }}:
-          env:
-            PROCESSOR_ARCHITECTURE: x86
-
-  # Special handling for ARM64.
-  - ${{ else }}:
-
-    # Use the install script for ARM64.
-    #
-    # retryCountOnTaskFailure provides an outer retry around the script's
-    # internal retry loop, in case the script download itself or the entire
-    # step fails due to transient issues.
-    - task: PowerShell@2
-      displayName: Install .NET SDK and Runtimes for ARM64
-      retryCountOnTaskFailure: 3
-      inputs:
-        targetType: filePath
-        pwsh: true
-        filePath: $(Build.SourcesDirectory)/eng/pipelines/common/steps/install-dotnet-arm64.ps1
-        # Arguments:
-        #
-        # -Debug:
-        #    This must be a PowerShell $true/$false value.  The first '$' is not
-        #    expanded.  The ${{ }} evaluates to the string "true" or "false",
-        #    and the whole value then becomes either $true or $false.
-        #
-        # -GlobalJson:
-        #    The path to the global.json file to read the SDK version from.
-        #    Double-quoted in case there are spaces in the path.
-        #
-        # -InstallDir:
-        #    The directory to install to.  Double-quoted in case there are
-        #    spaces in the path.
-        #
-        # -Runtimes:
-        #    The list of runtimes to install.  This must be a single string with
-        #    each runtime quoted and separated by commas.  If the runtimes are
-        #    8.0 and 9.0, the ${{ join() }} function will result in:
-        #
-        #      8.0","9.0
-        #
-        #    We enclose the join() in double-quotes to get the exact string we
-        #    want:
-        #
-        #      "8.0","9.0"
-        #
-        arguments: >
-          -Debug:$${{ parameters.debug }}
-          -GlobalJson "$(Build.SourcesDirectory)/global.json"
-          -InstallDir "${{ parameters.installDir }}"
-          -Runtimes "${{ join('","', parameters.runtimes) }}"
 
   # Report what was installed.
   - pwsh: dotnet --info
