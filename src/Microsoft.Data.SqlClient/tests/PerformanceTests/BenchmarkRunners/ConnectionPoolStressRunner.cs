@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -46,8 +45,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             // Create a small table for query workloads.
             // Hash the machine name instead of using it verbatim: hostnames can be long enough
-            // to push the identifier past SQL Server's 128-character limit.
-            string machineHash = Math.Abs(Environment.MachineName.GetHashCode()).ToString("x8");
+            // to push the identifier past SQL Server's 128-character limit. Cast to uint rather
+            // than using Math.Abs, which throws OverflowException when the hash is int.MinValue.
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
             _tableName = $"[perf_PoolStress_{machineHash}_{Guid.NewGuid():N}]";
             using var conn = new SqlConnection(_connectionString);
             conn.Open();

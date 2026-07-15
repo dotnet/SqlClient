@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -85,10 +84,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         {
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
+
             using (var cmd = new SqlCommand($"DROP TABLE IF EXISTS {_jsonTableName}", conn))
+            {
                 cmd.ExecuteNonQuery();
+            }
+            
             using (var cmd = new SqlCommand($"DROP TABLE IF EXISTS {_varcharTableName}", conn))
+            {
                 cmd.ExecuteNonQuery();
+            }
+            
             SqlConnection.ClearAllPools();
         }
 

@@ -466,6 +466,9 @@ settings:
 {
   "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
   "UseManagedSniOnWindows": false,
+  "UseOptimizedAsyncBehaviour": true,
+  "WaitForProfiler": false,
+  "UseNativeMemoryAndETWProfiler": false,
   "Benchmarks":
   {
     "SqlConnectionRunnerConfig":
@@ -485,6 +488,20 @@ settings:
 Individual benchmarks may be enabled or disabled, and each has several
 benchmarking options for fine tuning.
 
+The top-level flags control global runner behavior:
+
+| Flag | Description |
+| --- | --- |
+| `UseManagedSniOnWindows` | Enables the managed SNI implementation on Windows instead of native SNI. |
+| `UseOptimizedAsyncBehaviour` | Enables packet multiplexing and other async optimizations in SqlClient. |
+| `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. Not needed on Windows, since ETW is attached automatically there. |
+| `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
+
+Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also
+read per-type test values from `datatypes.json` in the `PerformanceTests`
+directory. Like `runnerconfig.jsonc`, this file's location can be overridden
+with the `DATATYPES_CONFIG` environment variable.
+
 After making edits to `runnerconfig.jsonc` you must perform a build which will
 copy the file into the `artifacts` directory alongside the benchmark DLL.  By
 default, the benchmarks look for `runnerconfig.jsonc` in the same directory as
@@ -493,7 +510,8 @@ the DLL.
 Optionally, to avoid polluting your git workspace and requiring a build after
 each config change, copy `runnerconfig.jsonc` to a new file, make your edits
 there, and then specify the new file with the RUNNER_CONFIG environment
-variable.
+variable. The same approach works for `datatypes.json` via the
+`DATATYPES_CONFIG` environment variable.
 
 PowerShell:
 

@@ -7,6 +7,9 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
+#if WINDOWS
+using BenchmarkDotNet.Diagnostics.Windows.Configs;
+#endif
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {

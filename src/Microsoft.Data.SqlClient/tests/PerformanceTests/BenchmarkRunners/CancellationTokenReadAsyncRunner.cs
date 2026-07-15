@@ -75,10 +75,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using var cts = UseCancellationToken ? new CancellationTokenSource() : null;
             var token = cts?.Token ?? CancellationToken.None;
 
+            // Only the ReadAsync loop below should observe the CancellationToken overhead
+            // this benchmark is measuring, so Open/ExecuteReaderAsync intentionally run
+            // without a token here.
             using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync(token);
+            await conn.OpenAsync();
             using var cmd = new SqlCommand(_query, conn);
-            using var reader = await cmd.ExecuteReaderAsync(token);
+            using var reader = await cmd.ExecuteReaderAsync();
 
             if (UseCancellationToken)
             {
