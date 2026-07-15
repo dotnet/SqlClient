@@ -359,10 +359,94 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Story 6 — New Physical Connection
+        #region Story 6 — Prefer Idle Connection Reuse
 
-        // NOTE: Preferring an idle connection over a new physical one is being added in a follow-up PR
-        // (branch dev/automation/replace-conn-idle-path), along with its ReplaceConnection_PrefersIdleOverNewConnection test.
+        /// <summary>
+        /// Verifies that when a live idle connection is available, replacement reuses it instead of
+        /// establishing a new physical connection. The reused connection keeps its own pool slot and
+        /// the replaced connection's slot is freed, so the pool's physical connection count drops by
+        /// one and never exceeds the maximum.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_PrefersIdleOverNewConnection()
+        {
+            // Arrange — open two connections, then return one so it becomes an idle connection.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owner1 = new();
+            SqlConnection owner2 = new();
+
+            pool.TryGetConnection(owner1, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
+            pool.TryGetConnection(owner2, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn2);
+            Assert.NotNull(conn1);
+            Assert.NotNull(conn2);
+
+            pool.ReturnInternalConnection(conn2!, owner2);
+            Assert.Equal(1, pool.IdleCount);
+            Assert.Equal(2, pool.Count);
+
+            // Act — replace conn1. The idle conn2 should be reused rather than creating a new connection.
+            var newConnection = pool.ReplaceConnection(
+                owner1,
+                conn1!,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+
+            // Assert — the replacement is the previously idle connection ...
+            Assert.Same(conn2, newConnection);
+            // ... the idle channel was drained ...
+            Assert.Equal(0, pool.IdleCount);
+            // ... the replaced connection was disposed ...
+            Assert.False(conn1!.CanBePooled);
+            // ... and its slot was freed, so the pool now holds a single physical connection.
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that reusing an idle connection while the pool is at maximum capacity succeeds and
+        /// frees the replaced connection's slot, so the pool count never exceeds the maximum.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_IdleReuse_AtMaxCapacity_FreesOldSlot()
+        {
+            // Arrange — fill the pool to max capacity, then return one connection so it is idle.
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 3,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0
+            );
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions);
+
+            SqlConnection owner1 = new();
+            SqlConnection owner2 = new();
+            SqlConnection owner3 = new();
+
+            pool.TryGetConnection(owner1, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
+            pool.TryGetConnection(owner2, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn2);
+            pool.TryGetConnection(owner3, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn3);
+            Assert.Equal(3, pool.Count);
+
+            pool.ReturnInternalConnection(conn3!, owner3);
+            Assert.Equal(1, pool.IdleCount);
+            Assert.Equal(3, pool.Count);
+
+            // Act — replace conn1 while at max capacity; the idle conn3 should be reused.
+            var newConnection = pool.ReplaceConnection(
+                owner1,
+                conn1!,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+
+            // Assert — the idle connection was reused and conn1's slot was freed, dropping below max.
+            Assert.Same(conn3, newConnection);
+            Assert.Equal(0, pool.IdleCount);
+            Assert.Equal(2, pool.Count);
+        }
+
+        #endregion
+
+        #region Story 7 — New Physical Connection Fallback
 
         /// <summary>
         /// Verifies that when no idle connection is available, replacement creates a new

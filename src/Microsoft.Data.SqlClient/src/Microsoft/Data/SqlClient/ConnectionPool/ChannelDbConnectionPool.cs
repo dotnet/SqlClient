@@ -273,54 +273,97 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
 
-            // We replace oldConnection with a brand-new physical connection. oldConnection is left completely
-            // untouched until the replacement has been successfully activated, so any failure leaves it reusable
-            // by the caller's reconnect retry loop (SqlConnection.ReconnectAsync). oldConnection is checked out,
-            // so its pool slot is stable: nothing else can remove or steal it (Clear/Shutdown/Prune only drain
-            // idle connections). We only touch the slots once the replacement is live. While the new connection
-            // is activating the pool may briefly hold one physical connection over MaxPoolSize (the dead old one
-            // plus the new one), but oldConnection is dead anyway and the reserved slot count never exceeds the
-            // maximum.
-            // TODO: Prefer reusing an idle connection before establishing a new one
-            DbConnectionInternal newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+            // Prefer reusing a live idle connection before paying for a brand-new physical connect.
+            // GetIdleConnection() is non-blocking: it returns an already-pooled, validated connection
+            // that holds its own slot, or null if none is immediately available.
+            DbConnectionInternal? newConnection = GetIdleConnection();
 
-            try
+            if (newConnection is not null)
             {
-                // Stamp with the current generation so a later Clear() can discard it.
-                newConnection.ClearGeneration = _clearGeneration;
-
-                lock (newConnection)
+                // Reuse path. The idle connection already occupies its own pool slot, so we do not
+                // reserve a new one. oldConnection keeps its own slot until the replacement is live, so
+                // any failure here leaves oldConnection untouched and reusable by the caller's reconnect
+                // retry loop (SqlConnection.ReconnectAsync). Once the replacement is activated we free
+                // oldConnection's slot, so the reserved slot count strictly decreases and the pool is
+                // never left over MaxPoolSize.
+                try
                 {
-                    // PostPop requires a lock on the connection.
-                    newConnection.PostPop(owningObject);
+                    lock (newConnection)
+                    {
+                        // PostPop requires a lock on the connection.
+                        newConnection.PostPop(owningObject);
+                    }
+
+                    // Activate under the old connection's ambient transaction (FR-002/FR-003).
+                    // TODO: Full transaction enlistment support (Story 2).
+                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
+                }
+                catch
+                {
+                    // The reused connection was checked out (PostPop) but could not be activated.
+                    // Deactivate and remove it from the pool, freeing its slot and disposing it.
+                    // oldConnection is untouched.
+                    newConnection.DeactivateConnection();
+                    RemoveConnection(newConnection);
+                    throw;
                 }
 
-                // Activate under the old connection's ambient transaction (FR-002/FR-003).
-                // TODO: Full transaction enlistment support (Story 2).
-                newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
-
-                bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
-
-                if (!replaced)
-                {
-                    // This should never happen because oldConnection is checked out and its slot is stable.
-                    // Still, we need to check or we could vend a connection that is not tracked by the pool.
-                    // TODO: error types and localization
-                    throw new InvalidOperationException("Connection is no longer in the pool and cannot be replaced.");
-                }
+                // Replacement is live. Free oldConnection's slot and dispose it.
+                oldConnection.DeactivateConnection();
+                RemoveConnection(oldConnection);
             }
-            catch
+            else
             {
-                // Dispose the brand-new connection; it never took a slot. oldConnection is untouched.
-                newConnection.DeactivateConnection();
-                newConnection.Dispose();
-                throw;
+                // Create path. No idle connection was available, so establish a brand-new physical
+                // connection. oldConnection is left completely untouched until the replacement has been
+                // successfully activated, so any failure leaves it reusable by the caller's reconnect
+                // retry loop (SqlConnection.ReconnectAsync). oldConnection is checked out, so its pool
+                // slot is stable: nothing else can remove or steal it (Clear/Shutdown/Prune only drain
+                // idle connections). We only touch the slots once the replacement is live. While the new
+                // connection is activating the pool may briefly hold one physical connection over
+                // MaxPoolSize (the dead old one plus the new one), but oldConnection is dead anyway and
+                // the reserved slot count never exceeds the maximum.
+                newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+
+                try
+                {
+                    // Stamp with the current generation so a later Clear() can discard it.
+                    newConnection.ClearGeneration = _clearGeneration;
+
+                    lock (newConnection)
+                    {
+                        // PostPop requires a lock on the connection.
+                        newConnection.PostPop(owningObject);
+                    }
+
+                    // Activate under the old connection's ambient transaction (FR-002/FR-003).
+                    // TODO: Full transaction enlistment support (Story 2).
+                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
+
+                    bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
+
+                    if (!replaced)
+                    {
+                        // This should never happen because oldConnection is checked out and its slot is stable.
+                        // Still, we need to check or we could vend a connection that is not tracked by the pool.
+                        // TODO: error types and localization
+                        throw new InvalidOperationException("Connection is no longer in the pool and cannot be replaced.");
+                    }
+                }
+                catch
+                {
+                    // Dispose the brand-new connection; it never took a slot. oldConnection is untouched.
+                    newConnection.DeactivateConnection();
+                    newConnection.Dispose();
+                    throw;
+                }
+
+                oldConnection.DeactivateConnection();
+                oldConnection.Dispose();
             }
 
-            oldConnection.DeactivateConnection();
-            oldConnection.Dispose();
-
-            // A hard connect is already recorded by the connection factory.
+            // We vended a connection from the pool. In the create path a hard connect was already
+            // recorded by the connection factory; the reuse path performs no physical connect.
             SqlClientDiagnostics.Metrics.SoftConnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
