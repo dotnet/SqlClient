@@ -1616,7 +1616,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, false, overrides) : TryOpen(null, false, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, forceNewConnection: false, overrides) : TryOpen(null, forceNewConnection: false, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1690,11 +1690,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (IsProviderRetriable)
                             {
-                                await InternalOpenWithRetryAsync(SqlConnectionOverrides.None, true, ctoken).ConfigureAwait(false);
+                                await InternalOpenWithRetryAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
                             }
                             else
                             {
-                                await InternalOpenAsync(SqlConnectionOverrides.None, true, ctoken).ConfigureAwait(false);
+                                await InternalOpenAsync(SqlConnectionOverrides.None, forceNewConnection: true, ctoken).ConfigureAwait(false);
                             }
 
                             // On success, increment the reconnect count - we don't really care if it rolls over since it is approx.
@@ -1917,8 +1917,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
         public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
             => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(overrides, false, cancellationToken) :
-                InternalOpenAsync(overrides, false, cancellationToken);
+                InternalOpenWithRetryAsync(overrides, forceNewConnection: false, cancellationToken) :
+                InternalOpenAsync(overrides, forceNewConnection: false, cancellationToken);
 
         private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
             => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
