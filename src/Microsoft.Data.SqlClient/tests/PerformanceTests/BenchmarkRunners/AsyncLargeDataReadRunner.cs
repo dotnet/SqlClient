@@ -86,13 +86,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
             while (await reader.ReadAsync())
             {
+                using var stream = reader.GetStream(0);
                 byte[] buffer = new byte[8192];
-                long offset = 0;
-                long bytesRead;
+                int bytesRead;
                 do
                 {
-                    bytesRead = reader.GetBytes(0, offset, buffer, 0, buffer.Length);
-                    offset += bytesRead;
+                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                 } while (bytesRead > 0);
             }
         }

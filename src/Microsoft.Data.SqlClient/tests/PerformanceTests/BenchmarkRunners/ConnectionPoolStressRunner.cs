@@ -44,8 +44,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             _connectionString = s_config.ConnectionString +
                 $";Pooling=True;Max Pool Size={MaxPoolSize};Min Pool Size=5;Connect Timeout=60";
 
-            // Create a small table for query workloads
-            _tableName = $"[perf_PoolStress_{Environment.MachineName}_{Guid.NewGuid():N}]";
+            // Create a small table for query workloads.
+            // Hash the machine name instead of using it verbatim: hostnames can be long enough
+            // to push the identifier past SQL Server's 128-character limit.
+            string machineHash = Math.Abs(Environment.MachineName.GetHashCode()).ToString("x8");
+            _tableName = $"[perf_PoolStress_{machineHash}_{Guid.NewGuid():N}]";
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
             using var cmd = new SqlCommand(

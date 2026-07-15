@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         /// If the environment variable "RUNNER_CONFIG" is set, it will be used
         /// as the path to the config file.  Otherwise, the file
-        /// "runnerconfig.json" in the current working directory will be used.
+        /// "runnerconfig.jsonc" in the current working directory will be used.
         /// </summary>
         ///
         /// <returns>
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public static Config Load()
         {
             return Loader.FromJsonFile<Config>(
-                "runnerconfig.json", "RUNNER_CONFIG");
+                "runnerconfig.jsonc", "RUNNER_CONFIG");
         }
     }
 

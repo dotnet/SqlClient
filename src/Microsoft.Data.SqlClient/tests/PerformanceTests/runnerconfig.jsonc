@@ -1,11 +1,19 @@
 ﻿{
     "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
+    // Enable this flag to enable managed SNI on Windows.
     "UseManagedSniOnWindows": false,
+    // Enable this flag to enable optimized async behavior in SqlClient. 
+    // This is useful for benchmarking packet multiplexing and async performance improvements.
     "UseOptimizedAsyncBehaviour": true,
+    // Enable this flag to get prompted to attach a profiler when running the performance tests.
+    // This is useful for capturing event source traces when running a performance test.
     "WaitForProfiler": false,
+    // This section contains the configuration for each benchmark.
+    // You can enable/disable benchmarks and configure the number of iterations, invocations, 
+    // warmup runs, and row count for each benchmark.
     "Benchmarks": {
         "SqlConnectionRunnerConfig": {
-            "Enabled": false,
+            "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 50,
             "InvocationCount":30,
@@ -13,23 +21,23 @@
             "RowCount": 0
         },
         "SqlCommandRunnerConfig": {
-            "Enabled": false,
+            "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 2,
             "WarmupCount": 1,
             "RowCount": 10000
         },
         "SqlBulkCopyRunnerConfig": {
-            "Enabled": false,
+            "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 10000
         },
         "DataTypeReaderRunnerConfig": {
-            "Enabled": false,
+            "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 20,
             "InvocationCount": 2,
@@ -37,7 +45,7 @@
             "RowCount": 1000
         },
         "DataTypeReaderAsyncRunnerConfig": {
-            "Enabled": false,
+            "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 20,
             "InvocationCount": 2,
@@ -47,7 +55,7 @@
         "AsyncLargeDataReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
@@ -55,7 +63,7 @@
         "MarsOverheadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 1000
@@ -63,7 +71,7 @@
         "ParallelAsyncConnectionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
@@ -71,7 +79,7 @@
         "CancellationTokenReadAsyncRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 10000
@@ -79,7 +87,7 @@
         "SequentialXmlReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
@@ -87,15 +95,15 @@
         "JsonVsVarcharReadRunnerConfig": {
             "Enabled": false,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 100,
             "InvocationCount": 1,
-            "WarmupCount": 1,
+            "WarmupCount": 5,
             "RowCount": 10000
         },
         "BeginTransactionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 10,
+            "IterationCount": 20,
             "InvocationCount": 2,
             "WarmupCount": 1,
             "RowCount": 0
@@ -103,7 +111,7 @@
         "ConnectionPoolStressRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 5,
+            "IterationCount": 20,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0

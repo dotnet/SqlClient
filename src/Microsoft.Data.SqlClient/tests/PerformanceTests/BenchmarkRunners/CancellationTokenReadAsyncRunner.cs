@@ -48,12 +48,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             };
 
             var dt = new System.Data.DataTable();
-            dt.Columns.Add("Id", typeof(int));
             dt.Columns.Add("Value", typeof(int));
             for (int i = 0; i < s_rowCount; i++)
             {
-                dt.Rows.Add(i, i * 2);
+                dt.Rows.Add(i * 2);
             }
+            bulkCopy.ColumnMappings.Add("Value", "Value");
             bulkCopy.WriteToServer(dt);
 
             _query = $"SELECT Id, Value FROM {_tableName}";

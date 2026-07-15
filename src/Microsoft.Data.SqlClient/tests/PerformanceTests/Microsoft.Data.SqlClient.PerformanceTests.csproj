@@ -17,7 +17,7 @@
   <!-- Content files to copy to output directory -->
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="runnerconfig.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="runnerconfig.jsonc" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- References ====================================================== -->

@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// Benchmarks comparing read performance of JSON vs VARCHAR(MAX) columns.
     /// Reproduces issue #3499.
     /// Note: JSON column type requires SQL Server 2025+ or Azure SQL.
-    /// This runner is disabled by default in runnerconfig.json.
+    /// This runner is disabled by default in runnerconfig.jsonc.
     /// </summary>
     public class JsonVsVarcharReadRunner : BaseRunner
     {
@@ -61,20 +61,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             // Bulk insert identical data into both tables
             var dt = new System.Data.DataTable();
-            dt.Columns.Add("Id", typeof(int));
             dt.Columns.Add("Data", typeof(string));
             for (int i = 0; i < s_rowCount; i++)
             {
-                dt.Rows.Add(i, sampleJson);
+                dt.Rows.Add(sampleJson);
             }
 
             using (var bulkCopy = new SqlBulkCopy(conn) { DestinationTableName = _jsonTableName, BatchSize = 10000 })
             {
+                bulkCopy.ColumnMappings.Add("Data", "Data");
                 bulkCopy.WriteToServer(dt);
             }
 
             using (var bulkCopy = new SqlBulkCopy(conn) { DestinationTableName = _varcharTableName, BatchSize = 10000 })
             {
+                bulkCopy.ColumnMappings.Add("Data", "Data");
                 bulkCopy.WriteToServer(dt);
             }
         }
