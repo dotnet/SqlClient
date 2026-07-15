@@ -98,6 +98,9 @@ public class VersionRangeTests
     [InlineData("1.0.0", "1..0")]         // empty release component in the version
     [InlineData("1.0.0", "1.0.0-")]       // trailing hyphen: empty prerelease
     [InlineData("1.0.0", "1.0.0-alpha..1")] // empty prerelease identifier
+    [InlineData("(1.0.0)", "1.0.0")]     // exact pin must be [..]; (..) is malformed
+    [InlineData("(1.0.0]", "1.0.0")]     // mismatched exact-pin delimiters
+    [InlineData("[1.0.0)", "1.0.0")]     // mismatched exact-pin delimiters
     public void Satisfies_returns_null_for_malformed_input(string range, string version)
     {
         Assert.Null(VersionRange.Satisfies(range, version));

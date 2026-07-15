@@ -55,7 +55,13 @@ internal static class VersionRange
         int comma = inner.IndexOf(',');
         if (comma < 0)
         {
-            // "[1.0.0]" denotes an exact version.
+            // Only "[1.0.0]" (both delimiters inclusive) is a valid exact pin; any other bracket
+            // combination such as "(1.0.0)" or "(1.0.0]" is malformed and unparseable.
+            if (!minInclusive || !maxInclusive)
+            {
+                return null;
+            }
+
             SemanticVersion? exact = Parse(inner);
             return exact is null ? null : Compare(target, exact) == 0;
         }
