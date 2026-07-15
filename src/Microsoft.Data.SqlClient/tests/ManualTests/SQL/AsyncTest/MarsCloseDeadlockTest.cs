@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
+
 using System;
 using System.Data;
 using System.Threading.Tasks;
@@ -74,8 +76,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }.ConnectionString;
 
             SqlConnection connection = new(connectionString);
-            SqlCommand command = null;
-            Task<SqlDataReader> readTask = null;
+            SqlCommand? command = null;
+            Task<SqlDataReader>? readTask = null;
             bool closeAttempted = false;
             bool closedInTime = false;
             try
