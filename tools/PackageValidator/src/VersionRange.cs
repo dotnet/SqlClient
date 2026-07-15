@@ -119,8 +119,24 @@ internal static class VersionRange
         {
             release = text[..hyphen];
             string pre = text[(hyphen + 1)..];
-            // An empty prerelease (a trailing hyphen) is treated as no prerelease.
-            prerelease = pre.Length == 0 ? null : pre.Split('.');
+
+            // A hyphen introduces a prerelease, so a trailing hyphen (empty prerelease) is malformed
+            // per SemVer/NuGet rather than "no prerelease"; reject it.
+            if (pre.Length == 0)
+            {
+                return null;
+            }
+
+            prerelease = pre.Split('.');
+
+            // Every prerelease identifier must be non-empty (e.g. "alpha..1" is malformed).
+            foreach (string identifier in prerelease)
+            {
+                if (identifier.Length == 0)
+                {
+                    return null;
+                }
+            }
         }
         else
         {
