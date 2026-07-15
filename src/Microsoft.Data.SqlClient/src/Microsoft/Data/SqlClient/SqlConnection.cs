@@ -1595,7 +1595,7 @@ namespace Microsoft.Data.SqlClient
         public override void Open() =>
             Open(SqlConnectionOverrides.None);
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection,SqlConnectionOverrides overrides)
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection, SqlConnectionOverrides overrides)
             => RetryLogicProvider.Execute(this, () => TryOpen(retry, forceNewConnection, overrides));
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />

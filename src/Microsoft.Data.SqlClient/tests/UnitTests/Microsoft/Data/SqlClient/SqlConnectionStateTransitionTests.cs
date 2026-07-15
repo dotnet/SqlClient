@@ -27,7 +27,7 @@ public class SqlConnectionStateTransitionTests
         bool initialized = connection.SetInnerConnectionFrom(new TestRaceDbConnectionInternal(), DbConnectionClosedNeverOpened.SingletonInstance);
         Assert.True(initialized);
 
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null, false));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null, forceNewConnection: false));
         Assert.NotNull(exception);
         Assert.Same(DbConnectionClosedPreviouslyOpened.SingletonInstance, connection.InnerConnection);
     }
@@ -42,7 +42,7 @@ public class SqlConnectionStateTransitionTests
         bool initialized = connection.SetInnerConnectionFrom(new TestRaceDbConnectionInternal(), DbConnectionClosedNeverOpened.SingletonInstance);
         Assert.True(initialized);
 
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null, true));
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => connection.TryOpenInner(null, forceNewConnection: true));
         Assert.NotNull(exception);
         Assert.Same(DbConnectionClosedPreviouslyOpened.SingletonInstance, connection.InnerConnection);
     }
