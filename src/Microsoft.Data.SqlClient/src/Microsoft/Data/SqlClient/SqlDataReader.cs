@@ -5476,7 +5476,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     task = context.Execute(null, context);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
                 {
                     task = Task.FromException<T>(ex);
                 }
