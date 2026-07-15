@@ -2333,14 +2333,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlCommand.Parameters.AddWithValue("@Delay", "00:01:00");
                     sqlCommand.CommandTimeout = 90;
 
-                    using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+                    using (CancellationTokenSource cts = new CancellationTokenSource())
                     {
                         System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                        // Start ExecuteReaderAsync without awaiting so we can trigger
+                        // cancellation from a separate thread once the query is in flight.
+                        // The 60-second WAITFOR gives a wide window during which
+                        // cancellation must send a TDS attention signal to the server.
+                        Task<SqlDataReader> execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
+
+                        // Cancel from another thread after briefly yielding to ensure the
+                        // async operation has been dispatched and reached the server-side
+                        // WAITFOR. This avoids the flakiness of a preemptive timer that
+                        // could fire before the query is actually in flight.
+                        Task cancelTask = Task.Run(async () =>
+                        {
+                            await Task.Delay(TimeSpan.FromMilliseconds(500));
+                            cts.Cancel();
+                        });
 
                         Exception caughtException = null;
                         try
                         {
-                            using (SqlDataReader reader = await sqlCommand.ExecuteReaderAsync(cts.Token))
+                            using (SqlDataReader reader = await execTask)
                             {
                                 // If we reach here, cancellation failed during EndExecuteReaderInternal.
                                 Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
@@ -2356,6 +2372,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             caughtException = ex;
                         }
 
+                        await cancelTask;
                         stopwatch.Stop();
 
                         Assert.NotNull(caughtException);

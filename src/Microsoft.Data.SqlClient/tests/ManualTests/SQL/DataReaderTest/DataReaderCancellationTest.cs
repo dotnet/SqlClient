@@ -109,19 +109,30 @@ SELECT 1 AS Result;";
                 {
                     command.CommandTimeout = 90;
 
-                    // Schedule cancellation BEFORE ExecuteReaderAsync so it fires while
-                    // the async completion path may still be consuming metadata or while
-                    // ReadAsync/NextResultAsync is blocked waiting for the server.
-                    cts.CancelAfter(System.TimeSpan.FromSeconds(2));
-
                     Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    // Start ExecuteReaderAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // The 60-second WAITFOR gives a wide window during which
+                    // cancellation must send a TDS attention signal to the server.
+                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WAITFOR. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
 
                     // Cancellation during async read may surface as either
                     // OperationCanceledException or SqlException (attention ack).
                     System.Exception caughtException = null;
                     try
                     {
-                        using (var reader = await command.ExecuteReaderAsync(cts.Token))
+                        using (var reader = await execTask)
                         {
                             // If we reach here, cancellation failed to abort ExecuteReaderAsync while it was waiting
                             // for metadata after a partial response (e.g., RAISERROR WITH NOWAIT).
@@ -138,6 +149,7 @@ SELECT 1 AS Result;";
                         caughtException = ex;
                     }
 
+                    await cancelTask;
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
@@ -173,21 +185,33 @@ SELECT 1 AS Result;";
             {
                 await connection.OpenAsync();
 
-                // Start cancellation timer AFTER connection is open to avoid
-                // false positives if OpenAsync is slow.
-                cts.CancelAfter(System.TimeSpan.FromSeconds(2));
-
                 using (var command = new SqlCommand(query, connection))
                 {
                     command.CommandTimeout = 90;
                     Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    // Start ExecuteReaderAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // WAITFOR as the first statement blocks for 60s, giving a wide
+                    // window during which cancellation must send TDS attention.
+                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WAITFOR. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
 
                     System.Exception caughtException = null;
                     try
                     {
                         // ExecuteReaderAsync should be cancelled via attention before
                         // a reader is ever returned.
-                        using (var reader = await command.ExecuteReaderAsync(cts.Token))
+                        using (var reader = await execTask)
                         {
                             // If we reach here, cancellation failed to abort ExecuteReaderAsync.
                             Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
@@ -202,6 +226,7 @@ SELECT 1 AS Result;";
                         caughtException = ex;
                     }
 
+                    await cancelTask;
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
@@ -233,7 +258,6 @@ END";
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 await connection.OpenAsync();
-                cts.CancelAfter(System.TimeSpan.FromSeconds(2));
 
                 using (var command = new SqlCommand(query, connection))
                 {
@@ -241,12 +265,27 @@ END";
 
                     Stopwatch stopwatch = Stopwatch.StartNew();
 
+                    // Start ExecuteNonQueryAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // The infinite WHILE loop guarantees the server will remain busy
+                    // until an attention signal aborts it.
+                    Task execTask = command.ExecuteNonQueryAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WHILE loop. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
+
                     System.Exception caughtException = null;
                     try
                     {
                         // Watchdog: if cancellation regresses, don't hang the test suite.
                         // Use Task.WhenAny with a 45s delay as a hard timeout.
-                        Task execTask = command.ExecuteNonQueryAsync(cts.Token);
                         Task completed = await Task.WhenAny(execTask, Task.Delay(System.TimeSpan.FromSeconds(45)));
 
                         if (completed != execTask)
@@ -270,6 +309,7 @@ END";
                         caughtException = ex;
                     }
 
+                    await cancelTask;
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
