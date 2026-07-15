@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public bool UseManagedSniOnWindows;
         public bool UseOptimizedAsyncBehaviour;
         public bool WaitForProfiler;
+        public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
 
         /// <summary>

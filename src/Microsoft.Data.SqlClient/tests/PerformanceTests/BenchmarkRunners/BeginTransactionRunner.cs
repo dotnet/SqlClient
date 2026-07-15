@@ -40,6 +40,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearAllPools();
         }
 
+        // Truncate the table between iterations so every iteration inserts into an empty
+        // table. Without this, the table grows across iterations (and across benchmarks,
+        // since they share the same connection/table), which would skew the measured
+        // BeginTransaction overhead as row count increases.
+        [IterationCleanup]
+        public void IterationCleanup()
+        {
+            using var cmd = new SqlCommand($"TRUNCATE TABLE {_tableName}", _connection);
+            cmd.ExecuteNonQuery();
+        }
+
         [Benchmark]
         public void WithTransaction()
         {

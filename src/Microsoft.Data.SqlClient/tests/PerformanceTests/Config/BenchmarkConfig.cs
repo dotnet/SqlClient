@@ -12,23 +12,45 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     public static class BenchmarkConfig
     {
-        public static ManualConfig s_instance(RunnerJob runnerJob) => 
-            DefaultConfig.Instance
-            .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
-            .WithOption(ConfigOptions.DontOverwriteResults, true)
-            .AddDiagnoser(MemoryDiagnoser.Default)
-            .AddDiagnoser(ThreadingDiagnoser.Default)
-            .AddExporter(MarkdownExporter.GitHub)
-            .AddJob(
-                Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
-                .WithLaunchCount(runnerJob.LaunchCount)
-                .WithInvocationCount(runnerJob.InvocationCount)
-                .WithIterationCount(runnerJob.IterationCount)
-                .WithWarmupCount(runnerJob.WarmupCount)
-                .WithUnrollFactor(1)
-                .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
-                .WithEnvironmentVariable("COMPlus_gcServer", "1")
-            )
-            .WithOptions(ConfigOptions.JoinSummary);
+        /// <summary>
+        /// When set to true, attaches the NativeMemoryProfiler and EtwProfiler diagnosers
+        /// so native memory allocations and ETW traces are captured for each benchmark run.
+        /// This is only supported on Windows; the value is ignored on other OSes since the
+        /// underlying diagnosers are compiled out (see the "WINDOWS" compile constant, which
+        /// is only set when building on Windows in the PerformanceTests.csproj file).
+        /// </summary>
+        public static bool UseNativeMemoryAndEtwProfiler { get; set; }
+
+        public static ManualConfig s_instance(RunnerJob runnerJob)
+        {
+            ManualConfig config = DefaultConfig.Instance
+                .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
+                .WithOption(ConfigOptions.DontOverwriteResults, true)
+                .AddDiagnoser(MemoryDiagnoser.Default)
+                .AddDiagnoser(ThreadingDiagnoser.Default)
+                .AddExporter(MarkdownExporter.GitHub)
+                .AddJob(
+                    Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
+                    .WithLaunchCount(runnerJob.LaunchCount)
+                    .WithInvocationCount(runnerJob.InvocationCount)
+                    .WithIterationCount(runnerJob.IterationCount)
+                    .WithWarmupCount(runnerJob.WarmupCount)
+                    .WithUnrollFactor(1)
+                    .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
+                    .WithEnvironmentVariable("COMPlus_gcServer", "1")
+                )
+                .WithOptions(ConfigOptions.JoinSummary);
+
+#if WINDOWS
+            if (UseNativeMemoryAndEtwProfiler)
+            {
+                config = config
+                    .AddDiagnoser(NativeMemoryProfiler.Default)
+                    .AddDiagnoser(new EtwProfiler());
+            }
+#endif
+
+            return config;
+        }
     }
 }

@@ -452,8 +452,9 @@ $ sqlcmd -S localhost -U sa -P password
 ```
 
 The default `runnerconfig.jsonc` expects a database named `sqlclient-perf-db`,
-but you may change the config to use any existing database.  All tables in
-the database will be dropped when running the benchmarks.
+but you may change the config to use any existing database.  The benchmarks
+create and drop their own tables (typically prefixed with `perf_`) in this
+database; other existing tables are left untouched.
 
 ### Configure Runner
 

@@ -6,8 +6,14 @@
     // This is useful for benchmarking packet multiplexing and async performance improvements.
     "UseOptimizedAsyncBehaviour": true,
     // Enable this flag to get prompted to attach a profiler when running the performance tests.
-    // This is useful for capturing event source traces when running a performance test.
+    // This is useful for capturing event source traces when running a performance test on all OSes.
+    // Note: This flag is not required on Windows as the ETW profiler is automatically attached 
+    // when running the performance tests on Windows.
     "WaitForProfiler": false,
+    // Enable this flag to enable the NativeMemoryProfiler and ETW profiler on Windows (only).
+    // This is useful for capturing native memory allocation traces when running a performance test on Windows.
+    // Note: This flag cannot be enabled on non-Windows OSes as the NativeMemoryProfiler is not supported on non-Windows OSes.
+    "UseNativeMemoryAndETWProfiler": false,
     // This section contains the configuration for each benchmark.
     // You can enable/disable benchmarks and configure the number of iterations, invocations, 
     // warmup runs, and row count for each benchmark.
