@@ -273,56 +273,42 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
 
-            // Swaps the physical connection backing an already-open SqlConnection during
-            // reconnection (idle connection resiliency); the outer SqlConnection stays open
-            // throughout. Two invariants drive the design and keep the two branches from
-            // collapsing into a single PrepareConnection call:
+            // Two invariants drive the design and keep the two branches from
+            // collapsing into a single shared path:
             //
-            // 1. Progress under saturation. This runs synchronously and never waits for a slot.
-            //    It reuses oldConnection's existing reservation, handing it to the replacement
-            //    via an atomic TryReplace (the reservation count is unchanged), so a reconnect
-            //    always gets its replacement even when the pool is full (MaxPoolSize-1 checked
-            //    out and busy). Releasing old's slot and re-reserving could let another thread
+            // 1. Progress under saturation. Releasing old's slot and re-reserving could let another thread
             //    steal the freed slot and stall the reconnect until timeout.
             //
-            // 2. oldConnection is the failure anchor. On any failure it must stay slotted and
-            //    usable, because the outer reconnect loop retries against it; it is retired only
-            //    after the replacement is fully activated.
+            // 2. the outer reconnect loop retries assuming oldConnection is not disposed; it may be retired only
+            //    after the replacement is fully activated and we know we won't fail.
             //
-            // Reuse branch (an idle connection is available): it already owns a slot, so it goes
+            // Reuse branch: the idle connection already owns a slot, so it goes
             // through PrepareConnection like a normal checkout -- if activation throws,
             // PrepareConnection safely returns it to the pool. We then free old's slot, so the
-            // net slot count drops (never over max).
+            // net slot count drops.
             //
-            // Create branch (no idle connection): we open a new connection directly, bypassing
+            // Create branch: we open a new connection directly, bypassing
             // the reserve-a-slot path, and leave it UNSLOTTED until TryReplace swaps it into old's
-            // slot *after* activation succeeds. This is why the branch cannot delegate to
-            // PrepareConnection: PrepareConnection returns a failed connection to the idle channel,
+            // slot *after* activation succeeds. PrepareConnection returns a failed connection to the idle channel,
             // but one that never took a slot would be published untracked -- letting another caller
             // vend a connection the pool isn't counting (over max / accounting skew). Staying
             // unslotted keeps failure trivial: dispose only the new connection and leave old intact.
 
-            // Prefer reusing a live idle connection (non-blocking) before opening a new physical one.
             DbConnectionInternal? newConnection = GetIdleConnection();
 
             if (newConnection is not null)
             {
-                // Reuse branch (see header): newConnection already owns its slot.
                 // TODO: Full transaction enlistment support (Story 2).
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
-
-                // Replacement is live; retire oldConnection's slot.
                 oldConnection.DeactivateConnection();
                 RemoveConnection(oldConnection);
             }
             else
             {
-                // Create branch (see header): open unslotted, swap into old's slot on success.
                 newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
 
                 try
                 {
-                    // Stamp with the current generation so a later Clear() can discard it.
                     newConnection.ClearGeneration = _clearGeneration;
 
                     lock (newConnection)
@@ -331,7 +317,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         newConnection.PostPop(owningObject);
                     }
 
-                    // Activate under the old connection's ambient transaction.
                     // TODO: Full transaction enlistment support (Story 2).
                     newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
 
@@ -347,7 +332,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch
                 {
-                    // Dispose the brand-new connection; it never took a slot. oldConnection is untouched.
                     newConnection.DeactivateConnection();
                     newConnection.Dispose();
                     throw;
@@ -357,7 +341,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 oldConnection.Dispose();
             }
 
-            // Vended a connection from the pool (the create path already recorded a hard connect).
             SqlClientDiagnostics.Metrics.SoftConnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
