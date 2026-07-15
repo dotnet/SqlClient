@@ -83,4 +83,27 @@ public class PortablePdbTests
     {
         Assert.Null(PortablePdb.TryReadGuid([0, 1, 2, 3]));
     }
+
+    /// <summary>
+    /// Verifies that a malformed portable-PDB header encoding a negative version length is treated as
+    /// unparseable (checksum verification returns <see langword="null"/>) rather than throwing and
+    /// failing the whole run.
+    /// </summary>
+    [Fact]
+    public void TryVerifyChecksum_returns_null_for_malformed_version_length()
+    {
+        // A metadata header ("BSJB" + major/minor/reserved) followed by a negative version length,
+        // which would otherwise make the seek throw.
+        byte[] malformed =
+        [
+            0x42, 0x53, 0x4A, 0x42, // signature "BSJB"
+            0x00, 0x00,             // major version
+            0x00, 0x00,             // minor version
+            0x00, 0x00, 0x00, 0x00, // reserved
+            0xFF, 0xFF, 0xFF, 0xFF, // version length = -1
+        ];
+        var checksum = new PdbChecksum { Algorithm = "SHA256", Hash = new byte[32] };
+
+        Assert.Null(PortablePdb.TryVerifyChecksum(malformed, checksum));
+    }
 }

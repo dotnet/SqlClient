@@ -117,6 +117,14 @@ internal static class PortablePdb
             reader.ReadUInt32(); // Reserved.
 
             int versionLength = reader.ReadInt32();
+
+            // A malformed or hostile PDB can encode a negative or oversized length; treat it as
+            // unparseable rather than letting the seek below throw and fail the whole run.
+            if (versionLength < 0 || versionLength > pdb.Length)
+            {
+                return -1;
+            }
+
             reader.BaseStream.Position += versionLength; // Version string (padded to a 4-byte boundary).
 
             // ECMA-335 rounds the recorded version length up to a multiple of four, so the position is
@@ -138,9 +146,9 @@ internal static class PortablePdb
                 }
             }
         }
-        catch (EndOfStreamException)
+        catch (Exception ex) when (ex is EndOfStreamException or IOException or ArgumentOutOfRangeException)
         {
-            // Truncated or malformed PDB; treat as unlocatable.
+            // Truncated, malformed, or hostile PDB; treat as unlocatable.
         }
 
         return -1;
