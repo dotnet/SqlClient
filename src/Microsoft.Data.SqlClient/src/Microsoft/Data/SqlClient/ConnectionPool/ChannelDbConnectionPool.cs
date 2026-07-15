@@ -281,34 +281,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (newConnection is not null)
             {
                 // Reuse path. The idle connection already occupies its own pool slot, so we do not
-                // reserve a new one. oldConnection keeps its own slot until the replacement is live, so
-                // any failure here leaves oldConnection untouched and reusable by the caller's reconnect
-                // retry loop (SqlConnection.ReconnectAsync). Once the replacement is activated we free
-                // oldConnection's slot, so the reserved slot count strictly decreases and the pool is
-                // never left over MaxPoolSize.
-                try
-                {
-                    lock (newConnection)
-                    {
-                        // PostPop requires a lock on the connection.
-                        newConnection.PostPop(owningObject);
-                    }
+                // reserve a new one. PrepareConnection checks it out and activates it under the old
+                // connection's ambient transaction, exactly like the normal get path; on failure it
+                // returns the connection to the pool (re-pooling it when still healthy) and rethrows,
+                // leaving oldConnection untouched and reusable by the caller's reconnect retry loop
+                // (SqlConnection.ReconnectAsync).
+                // TODO: Full transaction enlistment support (Story 2).
+                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
 
-                    // Activate under the old connection's ambient transaction (FR-002/FR-003).
-                    // TODO: Full transaction enlistment support (Story 2).
-                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
-                }
-                catch
-                {
-                    // The reused connection was checked out (PostPop) but could not be activated.
-                    // Deactivate and remove it from the pool, freeing its slot and disposing it.
-                    // oldConnection is untouched.
-                    newConnection.DeactivateConnection();
-                    RemoveConnection(newConnection);
-                    throw;
-                }
-
-                // Replacement is live. Free oldConnection's slot and dispose it.
+                // Replacement is live. Free oldConnection's slot and dispose it. The reserved slot
+                // count strictly decreases, so the pool is never left over MaxPoolSize.
                 oldConnection.DeactivateConnection();
                 RemoveConnection(oldConnection);
             }

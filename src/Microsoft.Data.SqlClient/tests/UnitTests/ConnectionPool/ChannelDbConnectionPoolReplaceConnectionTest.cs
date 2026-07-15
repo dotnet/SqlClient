@@ -444,6 +444,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that when activating a reused idle connection fails, the connection is returned to
+        /// the pool (not leaked or discarded) and the connection being replaced is left untouched, so
+        /// the caller's reconnect retry loop can try again.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_IdleReuse_ActivationFails_ReturnedToPool()
+        {
+            // Arrange — open two connections, then return one so it becomes an idle connection.
+            var factory = new ActivationFailSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            SqlConnection owner1 = new();
+            SqlConnection owner2 = new();
+
+            factory.FailOnActivate = false;
+            pool.TryGetConnection(owner1, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
+            pool.TryGetConnection(owner2, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn2);
+            Assert.NotNull(conn1);
+            Assert.NotNull(conn2);
+
+            pool.ReturnInternalConnection(conn2!, owner2);
+            Assert.Equal(1, pool.IdleCount);
+            Assert.Equal(2, pool.Count);
+
+            // Make the idle-reuse activation fail.
+            factory.FailOnActivate = true;
+
+            // Act — ReplaceConnection pulls the idle conn2 and fails to activate it.
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.ReplaceConnection(
+                    owner1,
+                    conn1!,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+
+            // Assert — the reused connection was returned to the idle pool (not leaked or discarded) ...
+            Assert.Equal(1, pool.IdleCount);
+            // ... nothing was removed, so both connections still hold their slots ...
+            Assert.Equal(2, pool.Count);
+            // ... and the connection being replaced was left untouched and still healthy.
+            Assert.False(conn1!.IsConnectionDoomed);
+        }
+
         #endregion
 
         #region Story 7 — New Physical Connection Fallback
