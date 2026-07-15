@@ -122,6 +122,9 @@ namespace Microsoft.Data.SqlClient
                         // Perform Attestation per VSM protocol
                         VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
 
+                        // Verify the enclave public key is bound to the signed report, before it is used for key exchange
+                        VerifyEnclavePublicKeyBinding(info.EnclaveReportPackage, info.Identity);
+
                         // Set up shared secret and validate signature
                         byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
 
@@ -337,6 +340,41 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw new ArgumentException(Strings.VerifyEnclaveReportFailed);
                 }
+            }
+        }
+
+        // Verifies that the enclave's public key is bound to the signed report. A genuine VBS enclave places
+        // SHA-256(public key) in the first 32 bytes of the report's EnclaveData, which the report signature covers.
+        // Confirming this match ensures the key used to derive the session secret is the one committed to by the
+        // attested report. Mirrors the aas-ehd key binding on the AAS path.
+        private void VerifyEnclavePublicKeyBinding(EnclaveReportPackage enclaveReportPackage, EnclavePublicKey enclavePublicKey)
+        {
+            const int reportDataLength = 32; // SHA-256 digest length
+
+            // The first 32 bytes of EnclaveData must equal SHA-256 of the key we will use to derive the session secret.
+            byte[] reportData = enclaveReportPackage.Report.EnclaveData;
+            byte[] expectedBinding;
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                expectedBinding = sha256.ComputeHash(enclavePublicKey.PublicKey);
+            }
+
+            bool bound = reportData != null && reportData.Length >= reportDataLength;
+            if (bound)
+            {
+                for (int index = 0; index < reportDataLength; index++)
+                {
+                    if (reportData[index] != expectedBinding[index])
+                    {
+                        bound = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!bound)
+            {
+                throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
             }
         }
 
