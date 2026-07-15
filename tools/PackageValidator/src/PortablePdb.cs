@@ -117,7 +117,12 @@ internal static class PortablePdb
             reader.ReadUInt32(); // Reserved.
 
             int versionLength = reader.ReadInt32();
-            reader.BaseStream.Position += versionLength; // Version string, already 4-byte aligned.
+            reader.BaseStream.Position += versionLength; // Version string (padded to a 4-byte boundary).
+
+            // ECMA-335 rounds the recorded version length up to a multiple of four, so the position is
+            // normally already aligned; align defensively in case a producer records an unrounded
+            // length, otherwise the following flags/stream-header reads would be misaligned.
+            reader.BaseStream.Position = (reader.BaseStream.Position + 3) & ~3L;
 
             reader.ReadUInt16(); // Flags.
             ushort streamCount = reader.ReadUInt16();

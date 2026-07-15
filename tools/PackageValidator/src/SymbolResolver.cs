@@ -110,11 +110,11 @@ internal static class SymbolResolver
         using ZipArchive archive = ZipFile.OpenRead(snupkgPath);
 
         // Index every PDB by its GUID (authoritative identity match) and by its path with the
-        // extension stripped (fallback to detect a present-but-mismatched symbol file). The bytes are
-        // retained so a GUID match can be further verified against the assembly's PDB checksum.
+        // extension stripped (fallback to detect a present-but-mismatched symbol file). Each PDB is
+        // read only transiently to compute its GUID; the bytes are not retained, so only the small
+        // subset that matches an assembly by GUID is re-read on demand for checksum verification.
         var pdbByGuid = new Dictionary<Guid, string>();
         var pdbByPathKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var pdbBytes = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
         var pdbGuidByPath = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
 
         foreach (ZipArchiveEntry entry in archive.Entries)
@@ -127,10 +127,7 @@ internal static class SymbolResolver
             allPdbPaths.Add(entry.FullName);
             pdbByPathKey[StripExtension(entry.FullName)] = entry.FullName;
 
-            byte[] bytes = ReadEntry(entry);
-            pdbBytes[entry.FullName] = bytes;
-
-            Guid? guid = PortablePdb.TryReadGuid(bytes);
+            Guid? guid = PortablePdb.TryReadGuid(ReadEntry(entry));
             if (guid is Guid value)
             {
                 pdbGuidByPath[entry.FullName] = value;
@@ -149,7 +146,7 @@ internal static class SymbolResolver
                 asm.HasSymbolPackageSymbols = true;
                 asm.SymbolPackageSymbolsMatch = true;
                 asm.SymbolPackageFile = byGuid;
-                asm.SymbolPackageVerifiedByChecksum = VerifyChecksum(asm, pdbBytes[byGuid]);
+                asm.SymbolPackageVerifiedByChecksum = VerifyMatchedChecksum(archive, byGuid, asm);
                 matchedPdbs.Add(byGuid);
             }
             else if (pdbByPathKey.TryGetValue(StripExtension(asm.Path), out string? byPath))
@@ -197,6 +194,21 @@ internal static class SymbolResolver
                 matchedPdbs.Add(pdbPath);
             }
         }
+    }
+
+    /// <summary>
+    /// Re-reads a GUID-matched PDB from the symbol package on demand and verifies it against the
+    /// assembly's recorded PDB checksums. Loading the bytes here (rather than retaining every PDB
+    /// during indexing) keeps peak memory to a single PDB.
+    /// </summary>
+    /// <param name="archive">The open symbol-package archive.</param>
+    /// <param name="pdbFullName">The full archive path of the matched PDB.</param>
+    /// <param name="asm">The assembly whose checksums drive verification.</param>
+    /// <returns>The checksum verification result, or <see langword="null"/> if the entry cannot be read.</returns>
+    private static bool? VerifyMatchedChecksum(ZipArchive archive, string pdbFullName, BinaryReport asm)
+    {
+        ZipArchiveEntry? entry = archive.GetEntry(pdbFullName);
+        return entry is null ? null : VerifyChecksum(asm, ReadEntry(entry));
     }
 
     /// <summary>
