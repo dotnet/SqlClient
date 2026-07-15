@@ -38,8 +38,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// How long each server-side batch withholds its response. Must comfortably
         /// exceed <see cref="CloseBudget"/> so a prompt close is attributable to the
         /// close path aborting the command, not the query completing on its own.
+        /// Kept at 4x <see cref="CloseBudget"/> so the boundary is unambiguous.
         /// </summary>
-        private const string StallDelay = "00:00:30";
+        private const string StallDelay = "00:02:00";
 
         /// <summary>
         /// Upper bound for how long a batch of concurrent, non-deadlocked closes

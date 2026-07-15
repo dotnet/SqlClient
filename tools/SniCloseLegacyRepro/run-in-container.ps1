@@ -1,3 +1,7 @@
+# Licensed to the .NET Foundation under one or more agreements.
+# The .NET Foundation licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+
 # Runs the net47 build of this harness inside a .NET Framework Windows container,
 # so the tests bind the container's OLD in-box System.Data.dll (e.g. 4.7.4081.0)
 # instead of the host's. The framework container has no dotnet CLI, so we run the
