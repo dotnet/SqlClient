@@ -2261,7 +2261,7 @@ namespace Microsoft.Data.SqlClient
         /// 
         /// forceNewConnection may only be true when the connection is already open and needs to be replaced. If the connection has never
         /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
-
+        ///
         /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
         /// transitions and subclasses for more details.
         /// </remarks>
