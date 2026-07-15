@@ -236,6 +236,25 @@ from a plain client-side ordering bug reachable from managed timing alone, and
 toward something more environment-specific in the original incident (e.g. exact
 network/timing conditions, or a native-layer interaction not exercised here).
 
+### Additional reproduction attempts (`ReproAttempts.cs`)
+
+Harness-only, exploratory variants targeting conditions the shared tests do not
+create. On the exact 4.7.4081.0 bits at 4 CPUs, **none reproduces the issue**:
+
+- **Close under thread-pool starvation** → no deadlock.
+- **Sync-over-async on a single-threaded `SynchronizationContext`** (classic
+  ASP.NET shape) → no captured-context deadlock.
+- **Cancel `OpenAsync` during the TLS handshake** (internal abort/close path)
+  → settles promptly, no deadlock.
+- **`Open()` under client thread-pool starvation** (real, out-of-process server;
+  plain and TLS) → **`Open()` succeeds**. Starvation is *not* the reproduction.
+
+> A note on a false lead: an *in-process* TDS test server shares the client's
+> thread pool, so saturating the pool starves the **server** and makes `Open()`
+> time out - a test artifact. Against a real out-of-process server the driver's
+> `Open()` is robust under the same starvation, so the timeout does not indicate
+> a driver defect.
+
 ---
 
 ## Isolation notes
