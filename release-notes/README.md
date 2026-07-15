@@ -27,6 +27,7 @@ The latest stable release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1](add-ons/AzureKeyVaultProvider/7.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0](add-ons/AzureKeyVaultProvider/7.0)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 6.1](add-ons/AzureKeyVaultProvider/6.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 6.0](add-ons/AzureKeyVaultProvider/6.0)
@@ -44,6 +45,7 @@ The latest release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1](Extensions/Abstractions/7.1)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0](Extensions/Abstractions/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0)
 
@@ -54,6 +56,7 @@ The latest release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Azure 7.1](Extensions/Azure/7.1)
 - [Microsoft.Data.SqlClient.Extensions.Azure 7.0](Extensions/Azure/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0)
 
@@ -65,6 +68,7 @@ The latest release is
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Internal.Logging 7.1](Internal/Logging/7.1)
 - [Microsoft.Data.SqlClient.Internal.Logging 7.0](Internal/Logging/7.0)
 - [Microsoft.Data.SqlClient.Internal.Logging 1.0](Internal/Logging/1.0)
 

@@ -4,6 +4,9 @@
 
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Tests.Common;
+#if NET
+using System.Runtime.InteropServices;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -43,7 +46,10 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
-        switchesHelper.UseManagedNetworking = null;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            switchesHelper.UseManagedNetworking = null;
+        }
         #endif
         #if NETFRAMEWORK
         switchesHelper.DisableTnirByDefault = null;
@@ -65,7 +71,16 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
-        Assert.Equal(!OsConstants.IsWindows, switchesHelper.UseManagedNetworking);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Assert.False(switchesHelper.UseManagedNetworking);
+        }
+        else
+        {
+            // On .NET Unix, native SNI is unavailable, so UseManagedNetworking
+            // is a constant true.
+            Assert.True(switchesHelper.UseManagedNetworking);
+        }
         #endif
         #if NETFRAMEWORK
         Assert.False(switchesHelper.DisableTnirByDefault);
