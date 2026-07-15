@@ -22,6 +22,7 @@ public class BinaryClassifierTests
     [InlineData("lib/net8.0/de/Foo.resources.dll", "Satellite")]
     [InlineData("lib/net8.0/fr/Foo.resources.dll", "Satellite")]
     [InlineData("build/Foo.dll", "Other")]
+    [InlineData("build/lib/Foo.dll", "Other")]     // nested lib/ outside runtimes/ is not implementation
     [InlineData("tools/Foo.dll", "Other")]
     public void Classify_maps_paths_to_kinds(string path, string expected)
     {

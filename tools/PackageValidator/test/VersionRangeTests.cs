@@ -84,6 +84,24 @@ public class VersionRangeTests
     }
 
     /// <summary>
+    /// Verifies that malformed or unparseable ranges/versions return <see langword="null"/> rather
+    /// than throwing, so callers can safely skip them.
+    /// </summary>
+    /// <param name="range">The declared version range.</param>
+    /// <param name="version">The concrete version under test.</param>
+    [Theory]
+    [InlineData("[", "1.0.0")]            // opening bracket with no closing delimiter
+    [InlineData("(", "1.0.0")]            // opening paren with no closing delimiter
+    [InlineData("[1.0.0", "1.0.0")]       // missing closing delimiter
+    [InlineData("(1.0.0", "1.0.0")]       // missing closing delimiter
+    [InlineData("[1..0]", "1.0.0")]       // empty release component in the range
+    [InlineData("1.0.0", "1..0")]         // empty release component in the version
+    public void Satisfies_returns_null_for_malformed_input(string range, string version)
+    {
+        Assert.Null(VersionRange.Satisfies(range, version));
+    }
+
+    /// <summary>
     /// Verifies that an absent range is treated as "no constraint" by returning <see langword="null"/>
     /// (the caller must not treat this as a failure).
     /// </summary>

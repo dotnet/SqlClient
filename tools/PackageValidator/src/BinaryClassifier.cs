@@ -29,9 +29,12 @@ internal static class BinaryClassifier
             return BinaryKind.Reference;
         }
 
-        // Implementation assemblies live under lib/ or runtimes/<rid>/lib/.
+        // Implementation assemblies live under lib/ or runtimes/<rid>/lib/. Restrict the nested
+        // match to runtimes/ paths so unrelated folders (for example build/lib/) are not treated
+        // as implementation assemblies.
         if (normalized.StartsWith("lib/", StringComparison.OrdinalIgnoreCase)
-            || normalized.Contains("/lib/", StringComparison.OrdinalIgnoreCase))
+            || (normalized.StartsWith("runtimes/", StringComparison.OrdinalIgnoreCase)
+                && normalized.Contains("/lib/", StringComparison.OrdinalIgnoreCase)))
         {
             return BinaryKind.Implementation;
         }

@@ -41,8 +41,15 @@ internal static class VersionRange
             return min is null ? null : Compare(target, min) >= 0;
         }
 
+        // A bracketed range must have a matching closing delimiter; otherwise it is unparseable.
+        char last = range[^1];
+        if (range.Length < 2 || (last != ']' && last != ')'))
+        {
+            return null;
+        }
+
         bool minInclusive = range[0] == '[';
-        bool maxInclusive = range[^1] == ']';
+        bool maxInclusive = last == ']';
         string inner = range[1..^1];
 
         int comma = inner.IndexOf(',');
@@ -120,7 +127,9 @@ internal static class VersionRange
             release = text;
         }
 
-        string[] parts = release.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        // Keep empty components (do not use RemoveEmptyEntries) so malformed inputs such as "1..0"
+        // are rejected below by the numeric parse rather than silently collapsing to "1.0".
+        string[] parts = release.Split('.');
         if (parts.Length == 0)
         {
             return null;
