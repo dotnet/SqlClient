@@ -104,6 +104,8 @@
              Link="Shared/SNICloseDeadlockTest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/SNICloseRaceDeadlockTest.cs"
              Link="Shared/SNICloseRaceDeadlockTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/SNICloseHandshakeCancellationTest.cs"
+             Link="Shared/SNICloseHandshakeCancellationTest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/AsyncTest/MarsCloseDeadlockTest.cs"
              Link="Shared/MarsCloseDeadlockTest.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/AsyncTest/MarsCloseStressTest.cs"

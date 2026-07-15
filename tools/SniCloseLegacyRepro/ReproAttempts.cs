@@ -22,11 +22,32 @@
 //      if the driver captures the context for a continuation, it deadlocks.
 //   3. CancelOpenDuringTls   - OpenAsync is cancelled while the TLS handshake
 //      read is in flight, driving the driver's INTERNAL abort/close path
-//      (rather than an external Close on another thread).
+//      (rather than an external Close on another thread). PROMOTED to the driver
+//      test suite as SNICloseHandshakeCancellationTest (linked in via the
+//      harness csproj), so it also runs against the legacy driver here.
 //   4. OpenUnderStarvation   - does client thread-pool starvation cause a
 //      connection/handshake failure? Against a REAL server it does NOT: the
 //      driver's Open() is robust. (An in-process test server shares the pool
 //      and would be co-starved - a test artifact, not driver behavior.)
+//
+// After the ICM dump was obtained, the real mechanism was identified: a
+// RE-ENTRANT SNIClose (Close() called synchronously from within
+// ReadAsyncCallback via the command-timeout -> failed-attention-write path, so
+// SNIClose spins in WaitForActiveCallbacks waiting for the callback it runs in).
+// Two further attempts target that mechanism:
+//
+//   5. CallbackReentrancy    - async read + short command timeout + a proxy that
+//      breaks the client's write. A regression guard for the MDS asyncClose fix;
+//      does not deterministically force the legacy re-entrancy (see its notes).
+//   6. ReentrantSNICloseSoak - many concurrent workers RST connections at ~the
+//      command-timeout instant, hunting the race probabilistically. OPT-IN
+//      (set SNICLOSE_SOAK_ENABLE) because it is heavy and, when it fires, poisons
+//      the process. It fired ONCE in a full-suite run on the legacy in-box driver
+//      (net462/47x/48x) but NOT on the Core NuGet lineage (net10.0) - a clean
+//      driver-lineage split consistent with the real bug - yet it did not recur
+//      in subsequent runs. So it confirms the mechanism is reachable but is not a
+//      reliable reproduction (matching the SQL EE's "very difficult to capture").
+//      The definitive evidence remains the dump + the asyncClose code review.
 //
 // All waits are bounded, so a genuine deadlock is reported as a failed
 // bounded-wait rather than hanging the run.
@@ -34,6 +55,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -81,20 +103,6 @@ namespace SniCloseLegacyRepro
                 return base.CreateQueryResponse(session, batchRequest);
             }
         }
-
-        /// <summary>
-        /// A minimal, protocol-valid TDS PRELOGIN response advertising ENCRYPT_ON
-        /// so a client that requested encryption proceeds into the TLS handshake.
-        /// </summary>
-        public static readonly byte[] PreLoginEncryptOnResponse =
-        {
-            0x12, 0x01, 0x00, 0x1A, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x00, 0x0B, 0x00, 0x06,
-            0x01, 0x00, 0x11, 0x00, 0x01,
-            0xFF,
-            0x11, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01,
-        };
     }
 
     /// <summary>
@@ -371,122 +379,6 @@ namespace SniCloseLegacyRepro
     }
 
     /// <summary>
-    /// Attempt 3: cancel <c>OpenAsync</c> while the TLS handshake read is in
-    /// flight, exercising the driver's INTERNAL abort/close path concurrently
-    /// with the handshake I/O (rather than an external Close on another thread).
-    /// </summary>
-    public class HandshakeCancellationReproTests
-    {
-        [Fact]
-        public void CancelOpenAsyncDuringTlsHandshake_DoesNotDeadlock()
-        {
-            using ManualResetEventSlim handshakeInFlight = new(false);
-            using ManualResetEventSlim releaseServer = new(false);
-
-            TcpListener listener = new(IPAddress.Loopback, 0);
-            listener.Start();
-            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-
-            Task serverTask = Task.Run(() =>
-            {
-                using TcpClient acceptedClient = listener.AcceptTcpClient();
-                using NetworkStream stream = acceptedClient.GetStream();
-                byte[] buffer = new byte[4096];
-                try
-                {
-                    int read = stream.Read(buffer, 0, buffer.Length);
-                    if (read <= 0)
-                    {
-                        return;
-                    }
-
-                    stream.Write(ReproSupport.PreLoginEncryptOnResponse, 0, ReproSupport.PreLoginEncryptOnResponse.Length);
-                    stream.Flush();
-
-                    // Read the first byte of the client's TLS ClientHello, then
-                    // withhold the ServerHello so the handshake read stays pending.
-                    if (stream.ReadByte() < 0)
-                    {
-                        return;
-                    }
-
-                    handshakeInFlight.Set();
-                    releaseServer.Wait();
-                }
-                catch
-                {
-                    // Client may tear down mid-handshake; ignore.
-                }
-            });
-
-            SqlConnectionStringBuilder builder = new()
-            {
-                DataSource = $"127.0.0.1,{port}",
-                Encrypt = SqlConnectionEncryptOption.Mandatory,
-                TrustServerCertificate = true,
-                ConnectTimeout = 60,
-                ConnectRetryCount = 0,
-                Pooling = false,
-#if NETFRAMEWORK
-                TransparentNetworkIPResolution = false,
-#endif
-            };
-
-            SqlConnection connection = new(builder.ConnectionString);
-            using CancellationTokenSource cts = new();
-            Task? openTask = null;
-            bool cancelAttempted = false;
-            bool settledInTime = false;
-            try
-            {
-                openTask = connection.OpenAsync(cts.Token);
-
-                Assert.True(
-                    handshakeInFlight.Wait(ReproSupport.HandshakeBudget),
-                    "The client never reached the TLS handshake; no read was in flight to cancel.");
-
-                // Cancel while the handshake read is pending: this drives the
-                // driver's internal abort/close path against the in-flight I/O.
-                cancelAttempted = true;
-                cts.Cancel();
-
-                try
-                {
-                    settledInTime = openTask.Wait(ReproSupport.CloseBudget);
-                }
-                catch (AggregateException)
-                {
-                    // OpenAsync faulting/cancelling is the expected outcome; what
-                    // matters is that it *settled* rather than hanging.
-                    settledInTime = true;
-                }
-
-                Assert.True(
-                    settledInTime,
-                    $"OpenAsync did not settle within {ReproSupport.CloseBudget.TotalSeconds:N0}s after " +
-                    "cancellation while a TLS handshake read was in flight (possible SNIClose deadlock).");
-            }
-            finally
-            {
-                releaseServer.Set();
-                listener.Stop();
-
-                if (openTask != null)
-                {
-                    try { openTask.Wait(ReproSupport.CloseBudget); } catch { /* expected fault/cancel */ }
-                }
-
-                if (!cancelAttempted || settledInTime)
-                {
-                    connection.Dispose();
-                }
-
-                try { serverTask.Wait(ReproSupport.CloseBudget); } catch { /* ignore */ }
-            }
-        }
-    }
-
-    /// <summary>
     /// Attempt 4: does client-side thread-pool starvation cause a CONNECTION
     /// failure? This checks the hypothesis that the reported "connection/
     /// handshake failure under load" is thread starvation rather than an
@@ -590,6 +482,484 @@ namespace SniCloseLegacyRepro
                 ThreadPool.SetMinThreads(minW, minIo);
                 ThreadPool.SetMaxThreads(maxW, maxIo);
             }
+        }
+    }
+
+    /// <summary>
+    /// A transparent TCP proxy that forwards bytes between a client and a backend
+    /// TDS server, and can - on demand - break the CLIENT's write path while
+    /// leaving its pending read outstanding. It does this via
+    /// <c>Shutdown(SocketShutdown.Receive)</c> on the client-facing socket: the
+    /// client's next write (the timeout attention) then arrives at a
+    /// receive-shutdown socket and is answered with a TCP RST, so the client's
+    /// <c>SNIWritePacket</c> fails - the exact condition from the ICM dump.
+    /// </summary>
+    internal sealed class AttentionBreakingProxy : IDisposable
+    {
+        private readonly TcpListener _listener;
+        private readonly IPEndPoint _backend;
+        private Socket? _clientSocket;
+        private Socket? _backendSocket;
+        private volatile bool _broken;
+
+        public int Port { get; }
+
+        public AttentionBreakingProxy(IPEndPoint backend)
+        {
+            _backend = backend;
+            _listener = new TcpListener(IPAddress.Loopback, 0);
+            _listener.Start();
+            Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
+            Task.Run(AcceptAndPump);
+        }
+
+        /// <summary>
+        /// Break the client's write direction: subsequent client writes RST while
+        /// its pending read stays outstanding (the backend sends nothing).
+        /// </summary>
+        public void BreakClientWrites()
+        {
+            _broken = true;
+            try
+            {
+                // SD_RECEIVE: data the client sends afterwards (the attention) is
+                // answered with a TCP RST, failing the client's write, while the
+                // client's pending read remains outstanding.
+                _clientSocket?.Shutdown(SocketShutdown.Receive);
+            }
+            catch
+            {
+                // best effort
+            }
+        }
+
+        private void AcceptAndPump()
+        {
+            try
+            {
+                _clientSocket = _listener.AcceptSocket();
+                _backendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _backendSocket.Connect(_backend);
+
+                // client -> backend on a worker; backend -> client on this thread.
+                Task.Run(() => Pump(_clientSocket, _backendSocket, clientToBackend: true));
+                Pump(_backendSocket, _clientSocket, clientToBackend: false);
+            }
+            catch
+            {
+                // Teardown races are expected; ignore.
+            }
+        }
+
+        private void Pump(Socket from, Socket to, bool clientToBackend)
+        {
+            byte[] buffer = new byte[8192];
+            try
+            {
+                while (true)
+                {
+                    int n = from.Receive(buffer);
+                    if (n <= 0)
+                    {
+                        break;
+                    }
+
+                    // Once broken, stop forwarding client bytes to the backend; the
+                    // client's write will RST on its receive-shutdown socket.
+                    if (clientToBackend && _broken)
+                    {
+                        break;
+                    }
+
+                    to.Send(buffer, 0, n, SocketFlags.None);
+                }
+            }
+            catch
+            {
+                // Expected on RST / teardown.
+            }
+        }
+
+        public void Dispose()
+        {
+            try { _listener.Stop(); } catch { /* ignore */ }
+            try { _clientSocket?.Dispose(); } catch { /* ignore */ }
+            try { _backendSocket?.Dispose(); } catch { /* ignore */ }
+        }
+    }
+
+    /// <summary>
+    /// Attempt 5 (matches the ICM dump's mechanism): the reported deadlock is a
+    /// RE-ENTRANT SNIClose. An async read times out; the driver sends an
+    /// attention from within <c>ReadAsyncCallback</c>; the attention
+    /// <c>SNIWritePacket</c> fails; the legacy driver then calls
+    /// <c>SqlConnection.Close()</c> SYNCHRONOUSLY on the callback thread, so
+    /// <c>SNIClose</c> spins in <c>SNI_Conn::WaitForActiveCallbacks()</c> waiting
+    /// for the very callback it is running within - a self-deadlock.
+    ///
+    /// <para>
+    /// Microsoft.Data.SqlClient defers the close off the callback thread via its
+    /// <c>asyncClose</c> path (ThrowExceptionAndWarning wraps the close in
+    /// <c>Task.Factory.StartNew</c>), so the read settles promptly and this test
+    /// passes - a regression guard for that fix.
+    /// </para>
+    ///
+    /// <para>
+    /// NOTE: this exercises the async-read-timeout + broken-write path and asserts
+    /// no deadlock, but it does NOT deterministically force the re-entrant close
+    /// on the legacy driver: that requires the exact TCP state from the dump
+    /// (the attention write fails while the read stays pending - a half-broken
+    /// connection), which is very hard to synthesize (a RST kills both
+    /// directions; the SQL EE analysis likewise noted it is "very difficult to
+    /// capture"). The definitive evidence is the dump plus the code review of the
+    /// <c>asyncClose</c> deferral in Microsoft.Data.SqlClient.
+    /// </para>
+    /// </summary>
+    public class SNICloseCallbackReentrancyReproTests
+    {
+        private static readonly TimeSpan SettleBudget = TimeSpan.FromSeconds(45);
+        private static readonly TimeSpan BatchBudget = TimeSpan.FromSeconds(30);
+
+        [Fact]
+        public void CloseFromReadCallbackOnAttentionFailure_DoesNotDeadlock()
+        {
+            using ManualResetEventSlim batchReceived = new(false);
+            using ManualResetEventSlim releaseResponse = new(false);
+
+            TdsServerArguments arguments = new();
+            using TdsServer server = new(
+                new ReproSupport.StallingQueryEngine(arguments, batchReceived, releaseResponse),
+                arguments);
+            server.Start();
+
+            using AttentionBreakingProxy proxy = new(new IPEndPoint(IPAddress.Loopback, server.EndPoint.Port));
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{proxy.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                // MARS off and pooling off, matching the reported configuration and
+                // ensuring Close() tears down the physical connection (reaching SNIClose).
+                Pooling = false,
+#if NETFRAMEWORK
+                TransparentNetworkIPResolution = false,
+#endif
+            };
+
+            SqlConnection connection = new(builder.ConnectionString);
+            SqlCommand? command = null;
+            Task<SqlDataReader>? readTask = null;
+            bool settledInTime = false;
+            try
+            {
+                connection.Open();
+
+                // Short command timeout so the pending async read times out, which
+                // drives OnTimeoutCore -> SendAttention from within ReadAsyncCallback.
+                command = new("SELECT 1", connection) { CommandTimeout = 2 };
+                readTask = command.ExecuteReaderAsync();
+
+                Assert.True(
+                    batchReceived.Wait(BatchBudget),
+                    "The server never received the batch; the async read was not in flight.");
+
+                // Break the client's write path so the timeout attention's
+                // SNIWritePacket fails, forcing Close() from within ReadAsyncCallback.
+                proxy.BreakClientWrites();
+
+                try
+                {
+                    settledInTime = readTask.Wait(SettleBudget);
+                }
+                catch (AggregateException)
+                {
+                    // Faulting/cancelling is the healthy outcome; what matters is it settled.
+                    settledInTime = true;
+                }
+
+                Assert.True(
+                    settledInTime,
+                    $"ExecuteReaderAsync did not settle within {SettleBudget.TotalSeconds:N0}s after the " +
+                    "command-timeout attention write failed. This indicates the re-entrant SNIClose " +
+                    "deadlock: Close() called from within ReadAsyncCallback -> SNIClose -> " +
+                    "WaitForActiveCallbacks (ADO.Net #43847 / ICM 775308542).");
+            }
+            finally
+            {
+                releaseResponse.Set();
+                command?.Dispose();
+                // Only dispose the connection if we did NOT deadlock; a deadlocked
+                // connection's Dispose() would also hang in SNIClose.
+                if (settledInTime)
+                {
+                    try { connection.Dispose(); } catch { /* ignore */ }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// A transparent TCP proxy that relays bytes between a client and a backend
+    /// TDS server and can hard-RST the client connection on demand
+    /// (LingerState 0 + Close), used by the soak to break the connection at a
+    /// timed offset relative to the async read's command timeout.
+    /// </summary>
+    internal sealed class RstProxy : IDisposable
+    {
+        private readonly TcpListener _listener;
+        private readonly IPEndPoint _backend;
+        private Socket? _clientSocket;
+        private Socket? _backendSocket;
+
+        public int Port { get; }
+
+        public RstProxy(IPEndPoint backend)
+        {
+            _backend = backend;
+            _listener = new TcpListener(IPAddress.Loopback, 0);
+            _listener.Start();
+            Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
+            Task.Run(AcceptAndPump);
+        }
+
+        /// <summary>Hard-reset the client connection (sends a TCP RST).</summary>
+        public void Rst()
+        {
+            try
+            {
+                Socket? s = _clientSocket;
+                if (s != null)
+                {
+                    s.LingerState = new LingerOption(true, 0);
+                    s.Close();
+                }
+            }
+            catch
+            {
+                // best effort
+            }
+        }
+
+        private void AcceptAndPump()
+        {
+            try
+            {
+                _clientSocket = _listener.AcceptSocket();
+                _backendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _backendSocket.Connect(_backend);
+                Task.Run(() => Pump(_clientSocket, _backendSocket));
+                Pump(_backendSocket, _clientSocket);
+            }
+            catch
+            {
+                // Teardown races are expected; ignore.
+            }
+        }
+
+        private static void Pump(Socket from, Socket to)
+        {
+            byte[] buffer = new byte[8192];
+            try
+            {
+                while (true)
+                {
+                    int n = from.Receive(buffer);
+                    if (n <= 0)
+                    {
+                        break;
+                    }
+                    to.Send(buffer, 0, n, SocketFlags.None);
+                }
+            }
+            catch
+            {
+                // Expected on RST / teardown.
+            }
+        }
+
+        public void Dispose()
+        {
+            try { _listener.Stop(); } catch { /* ignore */ }
+            try { _clientSocket?.Dispose(); } catch { /* ignore */ }
+            try { _backendSocket?.Dispose(); } catch { /* ignore */ }
+        }
+    }
+
+    /// <summary>
+    /// Soak that hunts for the re-entrant SNIClose deadlock probabilistically.
+    /// Many concurrent workers repeatedly open a connection, start an async read
+    /// that the server stalls, and RST the connection at ~the command-timeout
+    /// instant (with jitter), trying to land in the tiny window where the SNI
+    /// read timeout has fired but the timeout attention has not yet been written -
+    /// so the attention <c>SNIWritePacket</c> fails and the legacy driver closes
+    /// synchronously from within <c>ReadAsyncCallback</c>. A hang (a read that
+    /// never settles) means the re-entrant <c>SNIClose</c> was hit.
+    ///
+    /// <para>
+    /// Tunable via environment variables:
+    ///   SNICLOSE_SOAK_WORKERS (default 16; the ICM saw a "~36-thread" condition),
+    ///   SNICLOSE_SOAK_SECONDS (default 60).
+    /// The test fails if it reproduces (green = did not reproduce this run).
+    /// </para>
+    /// </summary>
+    public class ReentrantSNICloseSoakTests
+    {
+        private sealed class BoundedStallQueryEngine : QueryEngine
+        {
+            private readonly int _stallMs;
+
+            public BoundedStallQueryEngine(TdsServerArguments arguments, int stallMs)
+                : base(arguments)
+            {
+                _stallMs = stallMs;
+            }
+
+            protected override TDSMessageCollection CreateQueryResponse(
+                ITDSServerSession session,
+                TDSSQLBatchToken batchRequest)
+            {
+                // Stall every query long enough that the client's short command
+                // timeout fires first; the (eventual) response goes to an already
+                // RST-torn-down connection and the handler thread unwinds.
+                Thread.Sleep(_stallMs);
+                return base.CreateQueryResponse(session, batchRequest);
+            }
+        }
+
+        private static int EnvInt(string name, int fallback) =>
+            int.TryParse(Environment.GetEnvironmentVariable(name), out int v) && v > 0 ? v : fallback;
+
+        /// <summary>
+        /// Gate: the soak is opt-in (set SNICLOSE_SOAK_ENABLE) because it is
+        /// heavy, rarely fires, and - when it DOES reproduce - poisons the
+        /// process (hung SNIClose threads cascade into later tests). Skipped by
+        /// default so normal harness runs stay clean and deterministic.
+        /// </summary>
+        public static bool SoakEnabled() =>
+            !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SNICLOSE_SOAK_ENABLE"));
+
+        [ConditionalFact(typeof(ReentrantSNICloseSoakTests), nameof(SoakEnabled))]
+        public void ConcurrentTimeoutWithRstNearTimeout_DoesNotReentrantlyDeadlock()
+        {
+            int workers = EnvInt("SNICLOSE_SOAK_WORKERS", 16);
+            TimeSpan soak = TimeSpan.FromSeconds(EnvInt("SNICLOSE_SOAK_SECONDS", 60));
+            const int commandTimeoutSec = 1;
+            const int stallMs = 6000;
+            TimeSpan perOpBudget = TimeSpan.FromSeconds(20);
+
+            TdsServerArguments arguments = new();
+            using TdsServer server = new(new BoundedStallQueryEngine(arguments, stallMs), arguments);
+            server.Start();
+            IPEndPoint backend = new(IPAddress.Loopback, server.EndPoint.Port);
+
+            using CancellationTokenSource cts = new(soak);
+            long attempts = 0;
+            string? hangInfo = null;
+            object gate = new();
+
+            void Worker(int id)
+            {
+                Random rng = new(unchecked(id * 397 ^ Environment.TickCount));
+                while (!cts.IsCancellationRequested && Volatile.Read(ref hangInfo) is null)
+                {
+                    RstProxy? proxy = null;
+                    SqlConnection? conn = null;
+                    SqlCommand? cmd = null;
+                    Task<SqlDataReader>? readTask = null;
+                    bool settled = false;
+                    try
+                    {
+                        proxy = new RstProxy(backend);
+                        string cs = new SqlConnectionStringBuilder
+                        {
+                            DataSource = $"127.0.0.1,{proxy.Port}",
+                            Encrypt = SqlConnectionEncryptOption.Optional,
+                            Pooling = false,
+                            ConnectTimeout = 15,
+#if NETFRAMEWORK
+                            TransparentNetworkIPResolution = false,
+#endif
+                        }.ConnectionString;
+
+                        conn = new SqlConnection(cs);
+                        conn.Open();
+                        cmd = new SqlCommand("SELECT 1", conn) { CommandTimeout = commandTimeoutSec };
+                        readTask = cmd.ExecuteReaderAsync();
+                        Interlocked.Increment(ref attempts);
+
+                        // Fire the RST at ~the command-timeout instant, with jitter,
+                        // trying to land just after the SNI read timeout but before
+                        // (or during) the attention write.
+                        int rstDelayMs = commandTimeoutSec * 1000 + rng.Next(-40, 100);
+                        RstProxy captured = proxy;
+                        _ = Task.Delay(rstDelayMs).ContinueWith(_ =>
+                        {
+                            try { captured.Rst(); } catch { /* ignore */ }
+                        });
+
+                        try
+                        {
+                            settled = readTask.Wait(perOpBudget);
+                        }
+                        catch (AggregateException)
+                        {
+                            settled = true; // faulted/cancelled = healthy
+                        }
+
+                        if (!settled)
+                        {
+                            lock (gate)
+                            {
+                                hangInfo ??= $"worker {id}: ExecuteReaderAsync did not settle within " +
+                                    $"{perOpBudget.TotalSeconds:N0}s (attempt #{Interlocked.Read(ref attempts)})";
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Per-iteration connect/read failures under the RST storm are expected.
+                    }
+                    finally
+                    {
+                        cmd?.Dispose();
+                        // Only tear down if this iteration settled; a hung connection's
+                        // Dispose() would also block in SNIClose.
+                        if (settled)
+                        {
+                            try { conn?.Dispose(); } catch { /* ignore */ }
+                            try { proxy?.Dispose(); } catch { /* ignore */ }
+                        }
+                    }
+                }
+            }
+
+            Thread[] threads = new Thread[workers];
+            for (int i = 0; i < workers; i++)
+            {
+                int id = i;
+                threads[i] = new Thread(() => Worker(id)) { IsBackground = true, Name = $"SoakWorker{id}" };
+                threads[i].Start();
+            }
+
+            // Wait until the soak window elapses or a hang is detected, then give
+            // workers a moment to unwind.
+            DateTime deadline = DateTime.UtcNow + soak + perOpBudget + TimeSpan.FromSeconds(10);
+            while (DateTime.UtcNow < deadline
+                   && Volatile.Read(ref hangInfo) is null
+                   && threads.Any(t => t.IsAlive))
+            {
+                Thread.Sleep(500);
+            }
+            foreach (Thread t in threads)
+            {
+                t.Join(TimeSpan.FromSeconds(2));
+            }
+
+            Assert.True(
+                Volatile.Read(ref hangInfo) is null,
+                $"Reproduced the re-entrant SNIClose deadlock: {hangInfo}. Total attempts: " +
+                $"{Interlocked.Read(ref attempts)}. (close from within ReadAsyncCallback -> SNIClose -> " +
+                "WaitForActiveCallbacks; ADO.Net #43847 / ICM 775308542).");
         }
     }
 }

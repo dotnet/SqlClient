@@ -90,6 +90,12 @@ else {
     Write-Host "No connection string: live MARS + stress tests will be skipped." -ForegroundColor Yellow
 }
 
+# Forward soak tuning knobs if set on the host.
+foreach ($name in 'SNICLOSE_SOAK_WORKERS', 'SNICLOSE_SOAK_SECONDS') {
+    $val = [Environment]::GetEnvironmentVariable($name)
+    if ($val) { $envArgs += @('-e', "$name=$val") }
+}
+
 Write-Host "Running tests in $Image (isolation=hyperv) ..." -ForegroundColor Cyan
 $cpuArgs = @()
 if ($Cpus -gt 0) {
