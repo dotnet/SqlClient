@@ -494,7 +494,7 @@ The top-level flags control global runner behavior:
 | --- | --- |
 | `UseManagedSniOnWindows` | Enables the managed SNI implementation on Windows instead of native SNI. |
 | `UseOptimizedAsyncBehaviour` | Enables packet multiplexing and other async optimizations in SqlClient. |
-| `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. Not needed on Windows, since ETW is attached automatically there. |
+| `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. |
 | `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
 
 Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also

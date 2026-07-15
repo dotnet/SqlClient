@@ -35,7 +35,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             s_rowCount = s_config.Benchmarks.JsonVsVarcharReadRunnerConfig.RowCount;
             _connectionString = s_config.ConnectionString;
 
-            string suffix = $"{Environment.MachineName}_{Guid.NewGuid():N}";
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
+            string suffix = $"{machineHash}_{Guid.NewGuid():N}";
             _jsonTableName = $"[perf_Json_{suffix}]";
             _varcharTableName = $"[perf_Varchar_{suffix}]";
 

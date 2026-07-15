@@ -23,8 +23,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             _connection = new SqlConnection(s_config.ConnectionString);
             _connection.Open();
 
-            _tableName = $"[perf_TxnBench_{Environment.MachineName}_{Guid.NewGuid():N}]";
-
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
+            _tableName = $"[perf_TxnBench_{machineHash}_{Guid.NewGuid():N}]";
             using var cmd = new SqlCommand(
                 $"CREATE TABLE {_tableName} (Id INT IDENTITY PRIMARY KEY, Value INT)", _connection);
             cmd.ExecuteNonQuery();

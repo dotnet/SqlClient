@@ -36,8 +36,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public void Setup()
         {
             _connectionString = s_config.ConnectionString;
-            _tableName = $"[perf_SeqXml_{Environment.MachineName}_{Guid.NewGuid():N}]";
-
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
+            _tableName = $"[perf_SeqXml_{machineHash}_{Guid.NewGuid():N}]";
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
 

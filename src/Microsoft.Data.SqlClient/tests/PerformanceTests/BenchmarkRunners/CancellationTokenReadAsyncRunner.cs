@@ -31,8 +31,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         {
             s_rowCount = s_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig.RowCount;
             _connectionString = s_config.ConnectionString;
-            _tableName = $"[perf_CancelToken_{Environment.MachineName}_{Guid.NewGuid():N}]";
-
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
+            _tableName = $"[perf_CancelToken_{machineHash}_{Guid.NewGuid():N}]";
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
 
@@ -75,9 +75,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using var cts = UseCancellationToken ? new CancellationTokenSource() : null;
             var token = cts?.Token ?? CancellationToken.None;
 
-            // Only the ReadAsync loop below should observe the CancellationToken overhead
-            // this benchmark is measuring, so Open/ExecuteReaderAsync intentionally run
-            // without a token here.
+            // Note: When UseCancellationToken=true, this benchmark includes the cost of
+            // allocating/disposing a CancellationTokenSource in addition to the per-row
+            // ReadAsync(CancellationToken) overhead being measured.
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             using var cmd = new SqlCommand(_query, conn);
