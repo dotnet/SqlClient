@@ -518,6 +518,47 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Blocking Period
+
+        /// <summary>
+        /// Verifies that the new-physical-connection branch of
+        /// <see cref="ChannelDbConnectionPool.ReplaceConnection"/> respects the pool's blocking period:
+        /// while the pool is in the blocking-period error state it fast-fails with the cached exception
+        /// instead of opening another physical connection, and it leaves the old connection intact for
+        /// the caller's reconnect retry. Idle reuse is intentionally exempt, matching the normal acquire path.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_NewPhysicalConnection_RespectsBlockingPeriod()
+        {
+            // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
+            var factory = new SwitchableSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            SqlConnection owner = new();
+
+            // Check out a connection to later replace (creation succeeds).
+            factory.ShouldFail = false;
+            pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection);
+            Assert.NotNull(oldConnection);
+
+            // Drive the pool into the blocking-period error state with a failed physical create.
+            factory.ShouldFail = true;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Act & Assert — a replacement that must open a new physical connection (no idle available)
+            // fast-fails during the blocking period rather than hammering the unhealthy server.
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+
+            // The pool is still blocking and the old connection is untouched, so the caller can retry with it.
+            Assert.True(pool.ErrorOccurred);
+            Assert.False(oldConnection!.IsConnectionDoomed);
+            Assert.Same(pool, oldConnection!.Pool);
+        }
+
+        #endregion
+
         #region Test Helper Classes
 
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory

@@ -305,6 +305,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
+                // Respect the pool's blocking period: a replacement in this branch opens a brand-new
+                // physical connection, so honor the same backoff the normal create path does
+                // (OpenNewInternalConnection) and fast-fail instead of hammering an unhealthy server.
+                // Idle reuse above is deliberately exempt, matching the normal acquire path.
+                _errorState?.ThrowIfActive();
+
                 newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
 
                 try
@@ -336,6 +342,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     newConnection.Dispose();
                     throw;
                 }
+
+                // A successful physical open proves the server is reachable, so clear any
+                // blocking-period backoff (resetting its ramp) exactly as OpenNewInternalConnection
+                // does, letting other callers stop fast-failing sooner.
+                _errorState?.Clear();
 
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
