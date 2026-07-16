@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private string _tableName;
         private string _connectionString;
         private string _query;
+        private CancellationTokenSource _cts;
+        private CancellationToken _token;
 
         /// <summary>
         /// Whether to pass a CancellationToken to ReadAsync.
@@ -69,15 +71,34 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearAllPools();
         }
 
+        // Allocate the CancellationTokenSource in [IterationSetup] / dispose it in
+        // [IterationCleanup] so the CTS alloc/dispose cost is excluded from the measurement
+        // and only the per-row ReadAsync(CancellationToken) overhead is captured.
+        [IterationSetup]
+        public void IterationSetup()
+        {
+            if (UseCancellationToken)
+            {
+                _cts = new CancellationTokenSource();
+                _token = _cts.Token;
+            }
+            else
+            {
+                _cts = null;
+                _token = CancellationToken.None;
+            }
+        }
+
+        [IterationCleanup]
+        public void IterationCleanup()
+        {
+            _cts?.Dispose();
+            _cts = null;
+        }
+
         [Benchmark]
         public async Task ReadAsyncWithOrWithoutToken()
         {
-            using var cts = UseCancellationToken ? new CancellationTokenSource() : null;
-            var token = cts?.Token ?? CancellationToken.None;
-
-            // Note: When UseCancellationToken=true, this benchmark includes the cost of
-            // allocating/disposing a CancellationTokenSource in addition to the per-row
-            // ReadAsync(CancellationToken) overhead being measured.
             using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             using var cmd = new SqlCommand(_query, conn);
@@ -85,7 +106,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             if (UseCancellationToken)
             {
-                while (await reader.ReadAsync(token))
+                while (await reader.ReadAsync(_token))
                 { }
             }
             else

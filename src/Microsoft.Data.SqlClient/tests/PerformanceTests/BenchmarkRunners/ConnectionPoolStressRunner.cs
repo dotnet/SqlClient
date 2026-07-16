@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -81,16 +80,19 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Pure open/close churn — every task opens a pooled connection, immediately closes it,
         /// and repeats. Measures raw pool checkout/return throughput under contention.
+        /// The per-task loop count scales with MaxPoolSize so total checkouts stay proportional
+        /// to pool capacity regardless of how the [Params] values change.
         /// </summary>
         [Benchmark]
         public async Task RapidFireOpenClose()
         {
+            int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
                 tasks[i] = Task.Run(async () =>
                 {
-                    for (int j = 0; j < 20; j++)
+                    for (int j = 0; j < iterationsPerTask; j++)
                     {
                         using var conn = new SqlConnection(_connectionString);
                         await conn.OpenAsync();

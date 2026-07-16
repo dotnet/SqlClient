@@ -24,6 +24,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Params(1_048_576, 5_242_880, 10_485_760, 20_971_520)]
         public int DataSizeBytes { get; set; }
 
+        /// <summary>
+        /// Size of the client-side read buffer used to drain the VARBINARY(MAX) column.
+        /// Kept small (8 KB) and large (1 MB) to observe whether buffer size relative to
+        /// the payload materially changes throughput.
+        /// </summary>
+        [Params(8_192, 1_048_576)]
+        public int ReadBufferBytes { get; set; }
+
         [GlobalSetup]
         public void Setup()
         {
@@ -38,13 +46,24 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 $"CREATE TABLE {_tableName} (Id INT IDENTITY PRIMARY KEY, Data VARBINARY(MAX))", conn);
             createCmd.ExecuteNonQuery();
 
-            // Insert a single row with random bytes of the specified size
-            byte[] data = new byte[DataSizeBytes];
-            Random.Shared.NextBytes(data);
-
+            // Generate the payload entirely server-side via CRYPT_GEN_RANDOM so we don't
+            // allocate a multi-megabyte byte[] on the client and don't ship the payload
+            // over the wire just to seed the benchmark.
             using var insertCmd = new SqlCommand(
-                $"INSERT INTO {_tableName} (Data) VALUES (@data)", conn);
-            insertCmd.Parameters.Add("@data", SqlDbType.VarBinary, -1).Value = data;
+                $@"INSERT INTO {_tableName} (Data)
+                   SELECT SUBSTRING(
+                       CONVERT(
+                           varbinary(max),
+                           REPLICATE(
+                               CONVERT(varchar(max), CRYPT_GEN_RANDOM(8000), 2),
+                               (@dataSizeBytes + 7999) / 8000
+                           ),
+                           2
+                       ),
+                       1,
+                       @dataSizeBytes
+                   );", conn);
+            insertCmd.Parameters.Add("@dataSizeBytes", SqlDbType.Int).Value = DataSizeBytes;
             insertCmd.ExecuteNonQuery();
         }
 
@@ -67,7 +86,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
             while (reader.Read())
             {
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[ReadBufferBytes];
                 long offset = 0;
                 long bytesRead;
                 do
@@ -88,7 +107,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             while (await reader.ReadAsync())
             {
                 using var stream = reader.GetStream(0);
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[ReadBufferBytes];
                 int bytesRead;
                 do
                 {
