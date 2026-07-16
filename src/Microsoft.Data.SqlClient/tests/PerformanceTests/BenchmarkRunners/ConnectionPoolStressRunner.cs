@@ -11,37 +11,47 @@ using BenchmarkDotNet.Attributes;
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     /// <summary>
-    /// Captures benchmarks for SqlConnection pool checkout throughput across a matrix of:
-    /// - Warm vs. cold pools
-    /// - Sync vs. async callers
-    /// - Native vs. managed SNI (Windows-only distinction)
-    /// - Disabled, new (V2), and legacy pooling implementations
+    /// Measures the throughput of opening connections in parallel — the core scenario
+    /// the channel-based connection pool (ChannelDbConnectionPool / UseConnectionPoolV2)
+    /// is designed to improve (see issue #3356). The design goals are parallel connection
+    /// opening, reduced thread contention, and lower managed threadpool pressure, so this
+    /// runner sweeps the dimensions that expose those characteristics:
+    ///
+    /// - <see cref="PoolIsWarm"/>: cold pool (physical connects dominate) vs. warm pool
+    ///   (checkout throughput dominates). The warm-pool case is where the new pool shows
+    ///   the largest wins.
+    /// - <see cref="Async"/>: sync vs. async callers. The new pool follows async best
+    ///   practices, so async checkout is a primary target for improvement.
+    /// - <see cref="Pooling"/>: pooling on vs. off. Pooling off is the no-pool baseline.
+    /// - <see cref="NumConnectionsToOpen"/>: how many connections are opened in parallel.
+    ///
+    /// The pool implementation itself (legacy WaitHandleDbConnectionPool vs. new
+    /// ChannelDbConnectionPool) is NOT a benchmark parameter. The UseConnectionPoolV2
+    /// AppContext switch is read and cached the first time a pool is created, and every
+    /// benchmark case runs in the same process under the in-process toolchain, so the
+    /// implementation cannot be toggled per iteration. It is selected once per process via
+    /// the "UseConnectionPoolV2" flag in runnerconfig.jsonc. To compare the two pools, run
+    /// the benchmark twice: once with UseConnectionPoolV2=false (legacy) and once with
+    /// UseConnectionPoolV2=true (new). Likewise, native vs. managed SNI is selected once
+    /// per process via the "UseManagedSniOnWindows" config flag (Windows-only).
+    ///
+    /// Pair this with the ThreadingDiagnoser (enabled in BenchmarkConfig) to observe
+    /// threadpool completed-work-item counts and lock contention across the two pools.
     ///
     /// Related issues: #601, #979, #3356
     /// </summary>
     public class ConnectionPoolStressRunner : BaseRunner
     {
-        public enum PoolBehavior
-        {
-            Disabled,
-            New,
-            Legacy
-        }
-
         public enum AsyncBehavior
         {
             Sync,
             Async
         }
 
-        public enum SniBehavior
-        {
-            Native,
-            Managed
-        }
-
         /// <summary>
-        /// Whether the pool is pre-warmed before the measured run.
+        /// Whether the pool is pre-warmed (connections opened and returned) before the
+        /// measured run. A warm pool isolates checkout/return throughput; a cold pool
+        /// includes the cost of establishing physical connections.
         /// </summary>
         [ParamsAllValues]
         public bool PoolIsWarm { get; set; }
@@ -53,61 +63,63 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public AsyncBehavior Async { get; set; }
 
         /// <summary>
-        /// Whether to use native or managed SNI. Only meaningful on Windows;
-        /// managed SNI is always used on non-Windows platforms.
+        /// Whether connection pooling is enabled. When disabled, every open establishes a
+        /// new physical connection — the no-pool baseline.
         /// </summary>
-        [ParamsAllValues]
-        public SniBehavior Sni { get; set; }
+        [Params(true, false)]
+        public bool Pooling { get; set; }
 
         /// <summary>
-        /// Number of connections opened in parallel per iteration.
+        /// Number of connections opened in parallel per measured invocation.
         /// </summary>
         [Params(100)]
         public int NumConnectionsToOpen { get; set; }
 
-        /// <summary>
-        /// Which pooling implementation to exercise.
-        /// </summary>
-        [ParamsAllValues]
-        public PoolBehavior Pooling { get; set; }
-
         private string _connectionString;
-        private SqlConnectionStringBuilder _connectionStringBuilder = new();
         private IProducerConsumerCollection<SqlConnection> _connections = new ConcurrentBag<SqlConnection>();
 
         [GlobalSetup]
         public void Setup()
         {
-            _connectionString = s_config.ConnectionString;
+            // Report which pool implementation is active for this process so the results
+            // summary is self-describing (the implementation is a process-level choice,
+            // not a benchmark parameter — see the class remarks).
+            Console.WriteLine(
+                "[ConnectionPoolStressRunner] Pool implementation: " +
+                (s_config.UseConnectionPoolV2
+                    ? "ChannelDbConnectionPool (V2)"
+                    : "WaitHandleDbConnectionPool (legacy)"));
         }
 
         [IterationSetup]
         public void IterationSetup()
         {
             _connections = new ConcurrentBag<SqlConnection>();
-            _connectionStringBuilder = new SqlConnectionStringBuilder(_connectionString)
+
+            // A fresh WorkstationID per iteration produces a distinct connection string,
+            // and therefore a fresh, isolated pool — so a "cold" iteration truly starts
+            // with an empty pool and iterations don't share pooled connections.
+            var builder = new SqlConnectionStringBuilder(s_config.ConnectionString)
             {
                 MaxPoolSize = 1000,
                 WorkstationID = Guid.NewGuid().ToString(),
-                Pooling = Pooling is not PoolBehavior.Disabled
+                Pooling = Pooling
             };
+            _connectionString = builder.ConnectionString;
 
-            // PoolBehavior.New opts into the ChannelDbConnectionPool (V2) implementation;
-            // the default (false) uses the legacy pool.
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2", Pooling is PoolBehavior.New);
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", Sni is SniBehavior.Managed);
-
-            if (PoolIsWarm)
+            if (PoolIsWarm && Pooling)
             {
-                OpenConnectionsInParallel(_connectionStringBuilder.ConnectionString, NumConnectionsToOpen);
+                // Open and return NumConnectionsToOpen connections so the measured run is
+                // served from a warm pool.
+                OpenConnectionsCore(_connectionString, NumConnectionsToOpen, returnToPool: true);
             }
         }
 
         [IterationCleanup]
         public void Cleanup()
         {
-            // Shut down the pool so that connections are physically closed
-            // when they are returned to the pool.
+            // Close every connection opened during setup and the measured run, then clear
+            // the pool so pooled connections are physically closed before the next iteration.
             if (_connections.TryTake(out var first))
             {
                 first.Close();
@@ -121,21 +133,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
         }
 
+        /// <summary>
+        /// Opens <see cref="NumConnectionsToOpen"/> connections in parallel and holds them
+        /// open (does not return them to the pool) so the measurement captures the cost of
+        /// acquiring that many connections concurrently.
+        /// </summary>
         [Benchmark]
-        public int ConnectionPoolWarmupBenchmark()
+        public int OpenConnectionsInParallel()
         {
-            return OpenConnectionsInParallel(
-                _connectionStringBuilder.ConnectionString,
-                NumConnectionsToOpen,
-                runCommand: false,
-                returnToPool: false);
+            return OpenConnectionsCore(_connectionString, NumConnectionsToOpen, returnToPool: false);
         }
 
-        private int OpenConnectionsInParallel(
+        private int OpenConnectionsCore(
             string connectionString,
             int numConnectionsToOpen,
-            bool runCommand = false,
-            bool returnToPool = true)
+            bool returnToPool)
         {
             var tasks = new Task[numConnectionsToOpen];
 
@@ -152,22 +164,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     else
                     {
                         conn.Open(SqlConnectionOverrides.OpenWithoutRetry);
-                    }
-
-                    if (runCommand)
-                    {
-                        using var command = conn.CreateCommand();
-                        command.CommandText = "SELECT 1";
-                        command.CommandType = System.Data.CommandType.Text;
-
-                        int result = Async is AsyncBehavior.Async
-                            ? (int)(await command.ExecuteScalarAsync() ?? 0)
-                            : (int)(command.ExecuteScalar() ?? 0);
-
-                        if (result != 1)
-                        {
-                            throw new Exception("Unexpected result from command");
-                        }
                     }
 
                     _connections.TryAdd(conn);

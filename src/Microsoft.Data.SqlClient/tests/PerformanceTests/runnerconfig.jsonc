@@ -2,6 +2,12 @@
     "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
     // Enable this flag to enable managed SNI on Windows.
     "UseManagedSniOnWindows": false,
+    // Enable this flag to select the new channel-based connection pool
+    // (ChannelDbConnectionPool) instead of the legacy WaitHandleDbConnectionPool.
+    // This is a process-level setting (the pool implementation switch is cached the
+    // first time a pool is created), so comparing the two pools requires two runs:
+    // once with this flag false (legacy) and once true (new). See issue #3356.
+    "UseConnectionPoolV2": false,
     // Enable this flag to enable optimized async behavior in SqlClient. 
     // This is useful for benchmarking packet multiplexing and async performance improvements.
     "UseOptimizedAsyncBehaviour": true,
