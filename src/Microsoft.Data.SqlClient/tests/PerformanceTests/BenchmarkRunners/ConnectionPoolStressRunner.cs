@@ -241,24 +241,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         /// <summary>
         /// Bursty traffic pattern — sends waves of connections with pauses between bursts,
-        /// simulating real web server traffic patterns where requests cluster.
+        /// simulating real web server traffic patterns where requests cluster. Each burst
+        /// spins up <see cref="Parallelism"/> concurrent tasks so the configured parallelism
+        /// level actually drives the observed concurrency.
         /// </summary>
         [Benchmark]
         public async Task BurstyTrafficPattern()
         {
-            int burstCount = 5;
-            int tasksPerBurst = Parallelism / burstCount;
-            if (tasksPerBurst < 1)
-            {
-                tasksPerBurst = 1;
-            }
+            const int burstCount = 5;
 
             for (int burst = 0; burst < burstCount; burst++)
             {
-                var tasks = new Task[tasksPerBurst];
-                for (int i = 0; i < tasksPerBurst; i++)
+                var tasks = new Task[Parallelism];
+                for (int i = 0; i < Parallelism; i++)
                 {
-                    int seed = burst * tasksPerBurst + i;
+                    int seed = burst * Parallelism + i;
                     tasks[i] = Task.Run(async () =>
                     {
                         var rng = new Random(seed);

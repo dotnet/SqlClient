@@ -106,9 +106,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             conn.Open();
             using var cmd = new SqlCommand($"SELECT Data FROM {ActiveTableName}", conn);
             using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            if (ColumnType == "JSON")
             {
-                _ = reader.GetString(0);
+                // Exercise the SqlJson accessor path so the JSON case captures
+                // JSON-type handling overhead rather than the shared string path.
+                while (reader.Read())
+                {
+                    _ = reader.GetSqlJson(0).Value;
+                }
+            }
+            else
+            {
+                while (reader.Read())
+                {
+                    _ = reader.GetString(0);
+                }
             }
         }
 
@@ -119,9 +131,19 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             await conn.OpenAsync();
             using var cmd = new SqlCommand($"SELECT Data FROM {ActiveTableName}", conn);
             using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            if (ColumnType == "JSON")
             {
-                _ = await reader.GetFieldValueAsync<string>(0);
+                while (await reader.ReadAsync())
+                {
+                    _ = reader.GetSqlJson(0).Value;
+                }
+            }
+            else
+            {
+                while (await reader.ReadAsync())
+                {
+                    _ = await reader.GetFieldValueAsync<string>(0);
+                }
             }
         }
     }
