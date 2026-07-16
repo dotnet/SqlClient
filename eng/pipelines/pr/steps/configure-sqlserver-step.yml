@@ -6,8 +6,17 @@
 
 parameters:
 
+  - name: enableLocalDB
+    type: boolean
+
   # Path to use for file stream tests. This only applies to Windows test runs.
   - name: fileStreamDirectory
+    type: string
+
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
     type: string
 
   - name: operatingSystem
@@ -21,7 +30,10 @@ steps:
   - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
       - template: /eng/pipelines/pr/steps/configure-sqlserver-windows-step.yml@self
         parameters:
+          enableLocalDB: ${{ parameters.enableLocalDB }}
           fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+          localDbAppName: ${{ parameters.localDbAppName }}
+          localDbSharedInstanceName: ${{ parameters.localDbSharedInstanceName }}
           saPassword: ${{ parameters.saPassword }}
 
   - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
