@@ -1610,15 +1610,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Verifies that a connection creation failure enters the blocking-period error state when
-        /// blocking is enabled for the pool.
+        /// blocking is enabled for the pool, and stays out of it when blocking is disabled. The
+        /// blocking policy is driven by the connection string's Pool Blocking Period:
+        /// Default/Auto enable blocking for a non-Azure host (localhost), AlwaysBlock forces it on,
+        /// and NeverBlock suppresses it. FR-006, FR-007.
         /// </summary>
-        [Fact]
-        public void ErrorOccurred_FailureWithBlockingEnabled_BecomesTrue()
+        [Theory]
+        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for localhost
+        [InlineData("Pool Blocking Period=Auto;", true)]      // Auto => blocks for non-Azure host
+        [InlineData("Pool Blocking Period=NeverBlock;", false)]
+        [InlineData("Pool Blocking Period=AlwaysBlock;", true)]
+        public void ErrorOccurred_OnFailure_FollowsBlockingPeriod(string blockingPeriodClause, bool expectErrorOccurred)
         {
             // Arrange
-            // Default PoolBlockingPeriod is Auto; localhost is non-Azure so blocking is enabled.
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions($"Data Source=localhost;{blockingPeriodClause}"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1637,65 +1643,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
 
             // Assert
-            Assert.True(pool.ErrorOccurred);
-        }
-
-        /// <summary>
-        /// Verifies that a connection creation failure does not enter the blocking-period error state
-        /// when the connection string disables blocking with NeverBlock.
-        /// </summary>
-        [Fact]
-        public void ErrorOccurred_FailureWithNeverBlock_StaysFalse()
-        {
-            // Arrange
-            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=NeverBlock;"),
-                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
-                new DbConnectionPoolGroupOptions(
-                    poolByIdentity: false,
-                    minPoolSize: 0,
-                    maxPoolSize: 4,
-                    creationTimeout: 15,
-                    loadBalanceTimeout: 0,
-                    hasTransactionAffinity: true,
-                    idleTimeout: 0));
-            var pool = ConstructPool(TimeoutConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
-
-            // Act
-            Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
-
-            // Assert - FR-007: NeverBlock must not enter the error state.
-            Assert.False(pool.ErrorOccurred);
-        }
-
-        /// <summary>
-        /// Verifies that a connection creation failure enters the blocking-period error state when
-        /// the connection string explicitly enables AlwaysBlock.
-        /// </summary>
-        [Fact]
-        public void ErrorOccurred_FailureWithAlwaysBlock_BecomesTrue()
-        {
-            // Arrange
-            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
-                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
-                new DbConnectionPoolGroupOptions(
-                    poolByIdentity: false,
-                    minPoolSize: 0,
-                    maxPoolSize: 4,
-                    creationTimeout: 15,
-                    loadBalanceTimeout: 0,
-                    hasTransactionAffinity: true,
-                    idleTimeout: 0));
-            var pool = ConstructPool(TimeoutConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
-
-            // Act
-            Assert.Throws<InvalidOperationException>(() =>
-                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
-
-            // Assert
-            Assert.True(pool.ErrorOccurred);
+            Assert.Equal(expectErrorOccurred, pool.ErrorOccurred);
         }
 
         /// <summary>
@@ -1956,6 +1904,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 "Timed out waiting for the first open to begin physical creation.");
 
             // Caller B is denied a permit (A holds it) and must fall back to the idle-channel wait.
+            // A denied AttemptAcquire increments the limiter's TotalFailedLeases, so watching that
+            // counter rise is how we confirm B was refused a permit and is now parked on the idle
+            // channel waiting for a wakeup (rather than still racing to acquire).
             long failedLeasesBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
             Task<DbConnectionInternal?> requestB = Open(new SqlConnection());
             Assert.True(

@@ -19,7 +19,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class NoOpAcquiredLease : RateLimitLease
     {
         /// <summary>
-        /// The shared singleton instance.
+        /// The shared singleton instance. Because it is stateless and its <see cref="Dispose"/>
+        /// releases nothing, the same instance is handed to every caller that opens without a
+        /// configured limiter and may be disposed any number of times, on any thread, without
+        /// affecting other callers.
         /// </summary>
         public static readonly NoOpAcquiredLease Instance = new();
 
@@ -39,7 +42,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         protected override void Dispose(bool disposing)
         {
-            // No resources to release.
+            // No resources to release. This is intentionally idempotent: the shared Instance is
+            // handed to every no-limiter open, so Dispose may be called repeatedly and
+            // concurrently with no effect.
         }
     }
 }

@@ -48,6 +48,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     ///
     /// The trade-off is slightly higher memory overhead per pool instance due to the channel infrastructure,
     /// but this is generally offset by the performance benefits in async-heavy workloads.
+    ///
+    /// <para>
+    /// Comments in this file reference requirements by tag (e.g. <c>FR-001</c>). These tags are
+    /// defined in the feature spec at <c>specs/006-pool-rate-limiting/spec.md</c> (see the
+    /// "Functional Requirements" section); consult it for the authoritative description of each
+    /// requirement.
+    /// </para>
     /// </summary>
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool, IDisposable
     {
@@ -581,6 +588,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // FR-001, FR-002, FR-003.
 
                         RateLimitLease lease = _connectionCreationRateLimiter?.AttemptAcquire(1) ?? NoOpAcquiredLease.Instance;
+
+                        // Tracks whether we are leaving this block via an exception rather than a
+                        // normal return. It is read in the finally below to decide whether to poke
+                        // the idle channel: every return path sets it to false first, so by the time
+                        // the finally runs it is true only when an exception is propagating. This
+                        // lets us skip the wake on exception paths, where cleanupCallback already
+                        // pokes, and avoid a redundant double wake.
                         bool faulted = true;
                         try
                         {
@@ -624,6 +638,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             // null poke and retry its acquire before the permit is actually returned,
                             // fail to acquire, and fall back to waiting with no subsequent signal -
                             // stalling connection creation even though the limiter has capacity.
+                            // When no limiter is configured this is NoOpAcquiredLease.Instance, whose
+                            // Dispose is an idempotent no-op, so disposing the shared singleton here
+                            // is safe.
                             lease.Dispose();
 
                             // After releasing, signal a waiter on the idle channel that they may now
