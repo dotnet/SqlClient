@@ -112,9 +112,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// creation attempts. When null, no rate limiting is applied. A non-null limiter is
         /// supplied at pool construction time; there is no default. Callers fast-fail against
         /// the limiter and fall back to the idle-channel wait when no permit is available.
-        /// Lifetime note: the pool does not own this limiter and never disposes it. The caller that
-        /// constructs the limiter owns its lifetime, since a single limiter may be shared across
-        /// pools or outlive any one pool.
+        /// Scope note: the permit-release wake is signaled on this pool's own idle channel, so a
+        /// limiter is expected to be scoped to a single pool. Sharing one limiter across multiple
+        /// pools is not supported, because a permit released by another pool would not wake waiters
+        /// parked here and they could stall until their timeout expires.
+        /// Lifetime note: the pool does not own this limiter and never disposes it; the caller that
+        /// constructs the limiter owns its lifetime (it may outlive the pool).
         /// </summary>
         private readonly ConcurrencyLimiter? _connectionCreationRateLimiter;
 
