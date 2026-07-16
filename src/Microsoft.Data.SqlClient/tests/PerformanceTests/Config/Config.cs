@@ -68,6 +68,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob JsonVsVarcharReadRunnerConfig;
         public RunnerJob BeginTransactionRunnerConfig;
         public RunnerJob ConnectionPoolStressRunnerConfig;
+        public RunnerJob ConnectionPoolContentionRunnerConfig;
+        public RunnerJob ConnectionPoolChurnRunnerConfig;
     }
 
     public class RunnerJob

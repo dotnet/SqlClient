@@ -126,6 +126,22 @@
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
+        },
+        "ConnectionPoolContentionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 15,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "ConnectionPoolChurnRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 15,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
         }
     }
 }
