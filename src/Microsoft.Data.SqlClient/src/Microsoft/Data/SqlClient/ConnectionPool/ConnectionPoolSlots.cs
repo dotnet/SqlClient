@@ -171,6 +171,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Atomically replaces an existing connection with a new one in the same slot.
+        /// The reservation count is unchanged because the slot is reused.
+        /// </summary>
+        /// <param name="oldConnection">The connection currently occupying the slot.</param>
+        /// <param name="newConnection">The connection to place into the slot.</param>
+        /// <returns>True if the old connection was found and replaced; otherwise, false.</returns>
+        internal bool TryReplace(DbConnectionInternal oldConnection, DbConnectionInternal newConnection)
+        {
+            for (int i = 0; i < _connections.Length; i++)
+            {
+                if (Interlocked.CompareExchange(ref _connections[i], newConnection, oldConnection) == oldConnection)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Attempts to reserve a spot in the collection.
         /// </summary>
         /// <returns>A Reservation if successful, otherwise returns null.</returns>

@@ -858,6 +858,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Replace Connection Tests
+
+        /// <summary>
+        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
+        /// replaces a checked-out connection with a new, distinct connection instance.
+        /// </summary>
+        [Fact]
+        public void TestReplaceConnection()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owner = new();
+
+            pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? oldConnection);
+
+            Assert.NotNull(oldConnection);
+
+            var newConnection = pool.ReplaceConnection(owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            Assert.NotNull(newConnection);
+            Assert.NotSame(oldConnection, newConnection);
+        }
+
+        #endregion
+
         #region Not Implemented Method Tests
 
         /// <summary>
@@ -872,20 +900,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act & Assert
             Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestReplaceConnection()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
         }
 
         /// <summary>
