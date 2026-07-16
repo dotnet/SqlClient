@@ -132,11 +132,12 @@ namespace Microsoft.Data.SqlClient
 
         private readonly string _serverVersion;
 
-        public SqlMetaDataFactory(string serverVersion)
+        public SqlMetaDataFactory(ConnectionCapabilities connectionCapabilities)
         {
-            ADP.CheckArgumentNull(serverVersion, nameof(serverVersion));
+            ADP.CheckArgumentNull(connectionCapabilities, nameof(connectionCapabilities));
+            ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
-            _serverVersion = serverVersion;
+            _serverVersion = connectionCapabilities.ServerVersion;
         }
 
         public DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions) =>

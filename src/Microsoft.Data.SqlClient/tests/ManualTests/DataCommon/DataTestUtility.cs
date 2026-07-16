@@ -98,6 +98,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool? s_isVectorSupported;
         private static bool? s_isVectorFloat16Supported;
 
+        // Login permissions
+        private static bool? s_isSysAdmin;
+        private static bool? s_isSecurityAdmin;
+
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -188,6 +192,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IsSqlVectorSupported &&
                 CheckVectorFloat16Supported();
 
+        public static bool IsDebugBuild
+        {
+            get
+            {
+                #if DEBUG
+                return true;
+                #else
+                return false;
+                #endif
+            }
+        }
+
+        public static bool IsNotDebugBuild() => !IsDebugBuild;
+
         private static bool CheckVectorFloat16Supported()
         {
             try
@@ -230,6 +248,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return false;
             }
         }
+
+        public static bool IsSysAdmin =>
+            s_isSysAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("sysadmin");
+
+        public static bool IsSecurityAdmin =>
+            s_isSecurityAdmin ??= IsTCPConnStringSetup() &&
+                IsServerRoleMember("securityadmin");
+
+        public static bool CanCreateLogins =>
+            IsSysAdmin || IsSecurityAdmin;
+
+        public static bool CanUseSqlAuthentication =>
+            IsSysAdmin && GetAuthenticationMode() == 2;
 
         static DataTestUtility()
         {
@@ -533,6 +565,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return (int)command.ExecuteScalar() > 0;
         }
 
+        public static bool IsServerRoleMember(string roleName)
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+            using SqlCommand command = new("SELECT IS_SRVROLEMEMBER(@role)", connection);
+
+            connection.Open();
+            command.Parameters.AddWithValue("@role", roleName);
+
+            // IS_SRVROLEMEMBER returns 1 if the caller is a member of the specified server role, 0 if not, and DBNull.Value if the role is not valid.
+            return command.ExecuteScalar() is int result && result == 1;
+        }
+
+        public static int GetAuthenticationMode()
+        {
+            using SqlConnection connection = new(TCPConnectionString);
+
+            connection.Open();
+            using SqlCommand command = new("EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'LoginMode'", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+
+            reader.Read();
+            return reader.GetInt32(1);
+        }
+
         public static bool IsAdmin
         {
             get
@@ -626,6 +682,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
         }
 
+        public static bool IsNamedInstanceSetup()
+        {
+            return IsTCPConnStringSetup() &&
+                ParseDataSource(new SqlConnectionStringBuilder(TCPConnectionString).DataSource,
+                    out _, out _, out string instanceName) &&
+                !string.IsNullOrEmpty(instanceName);
+        }
+
+        public static bool HasExplicitPortInTCPConnString()
+        {
+            return IsTCPConnStringSetup() &&
+                ParseDataSource(new SqlConnectionStringBuilder(TCPConnectionString).DataSource,
+                    out _, out int port, out _) &&
+                port > 0;
+        }
+
         public static bool IsLocalHost()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -667,15 +739,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
         }
 
-        public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
-
-        public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
-
-        public static bool IsUsingNativeSNI() =>
-#if !NETFRAMEWORK
-            IsNotUsingManagedSNIOnWindows();
+        /// <summary>
+        /// Returns <see langword="true"/> when the managed SNI implementation is active.
+        /// On .NET (non-Framework), managed SNI is always used on non-Windows platforms
+        /// (native SNI does not exist there) and is used on Windows when the
+        /// <c>Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows</c> AppContext
+        /// switch is enabled (which is what the product code checks at runtime).
+        /// On .NET Framework, native SNI is always used.
+        /// </summary>
+        public static bool IsUsingManagedSNI() =>
+#if NETFRAMEWORK
+            false;
 #else
+            !OperatingSystem.IsWindows() || (AppContext.TryGetSwitch(ManagedNetworkingAppContextSwitch, out bool enabled) && enabled);
+#endif
+
+        /// <summary>
+        /// Returns <see langword="true"/> when the native SNI implementation is active.
+        /// Native SNI is only available on Windows: always on .NET Framework, and on .NET
+        /// only when the <c>Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows</c>
+        /// AppContext switch is not enabled.
+        /// </summary>
+        public static bool IsUsingNativeSNI() =>
+#if NETFRAMEWORK
             true;
+#else
+            OperatingSystem.IsWindows() && !(AppContext.TryGetSwitch(ManagedNetworkingAppContextSwitch, out bool enabled) && enabled);
 #endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna

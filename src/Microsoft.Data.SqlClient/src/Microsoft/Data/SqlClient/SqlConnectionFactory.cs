@@ -316,6 +316,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout,
+            bool forceNewConnection,
             out DbConnectionInternal connection)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
@@ -417,7 +418,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (((SqlConnection)owningConnection).ForceNewConnection)
+                    if (forceNewConnection)
                     {
                         Debug.Assert(oldConnection is not DbConnectionClosed, "Force new connection, but there is no old connection");
                         
@@ -738,7 +739,8 @@ namespace Microsoft.Data.SqlClient
                     opt.MaxPoolSize,
                     connectionTimeout,
                     opt.LoadBalanceTimeout,
-                    opt.Enlist);
+                    opt.Enlist,
+                    opt.IdleTimeout);
             }
             return poolingOptions;
         }
@@ -747,7 +749,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
 
-            return new SqlMetaDataFactory(internalConnection.ServerVersion);
+            return new SqlMetaDataFactory(internalConnection.Capabilities);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
@@ -771,7 +773,6 @@ namespace Microsoft.Data.SqlClient
                         
                         if (oldConnection?.State == ConnectionState.Open)
                         {
-                            oldConnection.PrepareForReplaceConnection();
                             oldConnection.Dispose();
                         }
                         

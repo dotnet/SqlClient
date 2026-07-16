@@ -127,13 +127,13 @@ stages:
             fetchDepth: 1
             fetchTags: false
 
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
 
           # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
           # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
-          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
@@ -141,16 +141,16 @@ stages:
           # requires compile-time parameters.
           - pwsh: |
               $managedSni = [System.Convert]::ToBoolean($env:MANAGED_SNI)
-              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+              $jdata = Get-Content -Raw "config.default.jsonc" | ConvertFrom-Json
               foreach ($p in $jdata) {
                   $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
                   $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $managedSni
               }
-              $jdata | ConvertTo-Json | Set-Content "config.json"
+              $jdata | ConvertTo-Json | Set-Content "config.jsonc"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-            displayName: Update test config.json
+            displayName: Update test config.jsonc
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
@@ -224,17 +224,17 @@ stages:
             fetchTags: false
 
           # --- Install .NET SDK and runtimes ---
-          - template: /eng/pipelines/steps/install-dotnet.yml@self
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
               runtimes: [8.x, 9.x]
 
           # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
           # such as _CheckPwshToolRestored that run during the SqlClient ref project build.
-          - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
-              $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+              $jdata = Get-Content -Raw "config.default.jsonc" | ConvertFrom-Json
               foreach ($p in $jdata) {
                   $p.TCPConnectionString       = $env:REMOTE_TCP_CONN_STRING
                   $p.NPConnectionString        = $env:REMOTE_NP_CONN_STRING
@@ -242,9 +242,9 @@ stages:
               }
               $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
               $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
-              $jdata | ConvertTo-Json | Set-Content "config.json"
+              $jdata | ConvertTo-Json | Set-Content "config.jsonc"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
-            displayName: Update test config.json (Kerberos)
+            displayName: Update test config.jsonc (Kerberos)
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)

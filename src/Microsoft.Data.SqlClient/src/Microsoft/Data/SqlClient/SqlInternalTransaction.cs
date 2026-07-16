@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         Context = 5,     // only valid in proc.
     }
 
-    sealed internal class SqlInternalTransaction
+    internal sealed class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 
@@ -211,10 +211,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (processFinallyBlock)
                 {
-                    // Always ensure we're zombied; 2005 will send an EnvChange that
-                    // will cause the zombie, but only if we actually go to the wire;
-                    // 7.0 and 2000 won't send the env change, so we have to handle
-                    // them ourselves.
+                    // Always ensure we're zombied; the server will send an EnvChange
+                    // that will cause the zombie, but only if we actually go to the wire.
                     Zombie();
                 }
             }
@@ -458,7 +456,7 @@ namespace Microsoft.Data.SqlClient
             _parent = null;
         }
 
-        internal string TraceString() => string.Format(/*IFormatProvider*/ null, 
+        internal string TraceString() => string.Format(/*IFormatProvider*/ null,
             "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
             ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
 

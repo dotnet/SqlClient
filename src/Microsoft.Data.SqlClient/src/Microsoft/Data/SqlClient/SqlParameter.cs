@@ -2129,9 +2129,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
-                    // it fails in sql server 2000
+                    // Non-NChar types are measured in bytes, so compare the size in characters
+                    // against the actual size in bytes and keep the larger of the two.
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }
 

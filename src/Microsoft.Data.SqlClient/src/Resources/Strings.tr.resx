@@ -591,6 +591,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. Active Directory (Entra ID) kimlik doğrulaması yöntemlerini kullanmak için ‘Microsoft.Data.SqlClient.Extensions.Azure’ NuGet paketini (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) yükleyin.</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>'useWamBroker' ayarı, 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' türünü kullanıma sunmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini gerektirir. Bu türü içeren en az v1.1.0 sürümüne ulaşmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini yükseltin.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' parametresi null veya boş olamaz.</value>
   </data>
@@ -944,6 +947,9 @@
   </data>
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Bu bağlantının, yok edilmeden önce havuzda en az ne süreyle (saniye olarak) etkin kalacağı.</value>
+  </data>
+  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
+    <value>Eski boşta kalma zaman aşımı davranışı devre dışı bırakıldığında, bir bağlantının havuzda kullanılmadan boşta kalabileceği ve atılmadan önce geçebileceği en fazla süreyi saniye cinsinden belirtir. 0 değeri, boşta kalma süresi sonunu devre dışı bırakır.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Havuzda izin verilen en çok bağlantı sayısı.</value>

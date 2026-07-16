@@ -55,7 +55,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             maxPoolSize: maxPoolSize,
             creationTimeout: DefaultCreationTimeoutInMilliseconds,
             loadBalanceTimeout: 0,
-            hasTransactionAffinity: hasTransactionAffinity
+            hasTransactionAffinity: hasTransactionAffinity,
+            idleTimeout: 0
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
@@ -917,6 +918,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         public int MockId { get; } = Interlocked.Increment(ref s_nextId);
 
         public override string ServerVersion => "Mock";
+
+        public override ConnectionCapabilities Capabilities => new();
 
         public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {

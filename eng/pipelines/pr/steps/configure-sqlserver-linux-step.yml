@@ -1,0 +1,127 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This step configures an existing SQL Server running on the local Linux host. For example, our 1ES
+# Hosted Pool has images like ADO-UB20-SQL22 that come with SQL Server 2022 pre-installed and
+# running.
+
+parameters:
+
+  # The SA password to set when configuring SQL Server.
+  - name: saPassword
+    type: string
+
+steps:
+
+  # Configure SQL Server.
+  - bash: |
+      set -u
+
+      if ! command -v sudo >/dev/null 2>&1; then
+        echo "ERROR: 'sudo' is required to configure SQL Server on Linux."
+        exit 1
+      fi
+
+      if [ ! -x /opt/mssql/bin/mssql-conf ]; then
+        echo "ERROR: '/opt/mssql/bin/mssql-conf' was not found."
+        exit 1
+      fi
+
+      SQLCMD_BIN=""
+      if command -v sqlcmd >/dev/null 2>&1; then
+        SQLCMD_BIN="$(command -v sqlcmd)"
+      elif [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+        SQLCMD_BIN="/opt/mssql-tools18/bin/sqlcmd"
+      elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+        SQLCMD_BIN="/opt/mssql-tools/bin/sqlcmd"
+      else
+        echo "ERROR: 'sqlcmd' was not found on PATH or in the standard mssql-tools locations."
+        exit 1
+      fi
+
+      sudo systemctl stop mssql-server
+      errstatus=$?
+      if [ $errstatus -ne 0 ]
+      then
+        echo "ERROR: stopping mssql-server failed with exit code $errstatus."
+        exit $errstatus
+      fi
+
+      # Password for the SA user (required)
+      MSSQL_SA_PW="${{ parameters.saPassword }}"
+
+      # Product ID of the version of SQL server you're installing
+      # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
+      MSSQL_PID="enterprise"
+
+      echo Running mssql-conf setup...
+      sudo MSSQL_SA_PASSWORD="$MSSQL_SA_PW" \
+            MSSQL_PID="$MSSQL_PID" \
+            /opt/mssql/bin/mssql-conf -n setup accept-eula
+      errstatus=$?
+      if [ $errstatus -ne 0 ]
+      then
+        echo "ERROR: mssql-conf setup failed with exit code $errstatus."
+        exit $errstatus
+      fi
+
+      # Connect to server and get the version:
+      counter=1
+      errstatus=1
+      while [ $counter -le 5 ] && [ $errstatus -ne 0 ]
+      do
+        echo Waiting for SQL Server to start...
+        sleep 3s
+        "$SQLCMD_BIN" \
+          -S localhost \
+          -U SA \
+          -P "$MSSQL_SA_PW" \
+          -Q "SELECT @@VERSION" 2>/dev/null
+        errstatus=$?
+        ((counter++))
+      done
+
+      # Display error if connection failed:
+      if [ $errstatus -ne 0 ]
+      then
+        echo Cannot connect to SQL Server, installation aborted
+        exit $errstatus
+      fi
+    displayName: 'Configure SQL Server [Linux]'
+
+  - bash: |
+      set -u
+
+      SCRIPT_PATH="$(Build.SourcesDirectory)/tools/testsql/createNorthwindDb.sql"
+      MSSQL_SA_PW="${{ parameters.saPassword }}"
+
+      SQLCMD_BIN=""
+      if command -v sqlcmd >/dev/null 2>&1; then
+        SQLCMD_BIN="$(command -v sqlcmd)"
+      elif [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
+        SQLCMD_BIN="/opt/mssql-tools18/bin/sqlcmd"
+      elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then
+        SQLCMD_BIN="/opt/mssql-tools/bin/sqlcmd"
+      else
+        echo "ERROR: 'sqlcmd' was not found on PATH or in the standard mssql-tools locations."
+        exit 1
+      fi
+
+      "$SQLCMD_BIN" \
+        -S localhost \
+        -U SA \
+        -P "$MSSQL_SA_PW" \
+        -Q "IF DB_ID(N'Northwind') IS NOT NULL BEGIN ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [Northwind]; END" \
+        -b
+
+      "$SQLCMD_BIN" \
+        -S localhost \
+        -U SA \
+        -P "$MSSQL_SA_PW" \
+        -i "$SCRIPT_PATH" \
+        -b
+    displayName: 'Create Northwind Database [Linux]'
+    retryCountOnTaskFailure: 1
