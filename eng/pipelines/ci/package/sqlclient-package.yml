@@ -117,12 +117,12 @@ jobs:
           displayName: '[Debug] Print Environment Variables'
 
       # Install the .NET SDK from global.json.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
 
       # Restore dotnet local tools (pwsh, apicompat, etc.).
-      - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
       # Clean any pre-existing .nupkg / .snupkg files from the packages/ directory
       # to ensure we only publish packages produced by this run.
