@@ -1,0 +1,127 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # General Parameters =====================================================
+
+  # Configuration with which to build the packages and execute the tests.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # Suffix to append to the package version to indicate it is a pre-release/development build.
+  - name: buildSuffix
+    type: string
+
+  # Name of the artifact to upload the test results (including code coverage) to.
+  - name: testResultsArtifactBaseName
+    type: string
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # Platform Parameters ====================================================
+
+  # Display name of the platform. This will be formatted into the job's official name as well as
+  # the display name for the job. As such, only alphanumeric and _ characters are permitted.
+  - name: platformDisplayName
+    type: string
+
+  # TFM name of the version of dotnet to run this test with.
+  - name: platformDotnet
+    type: string
+
+  # Name of the image in the customized ADO pool to use to execute this job.
+  - name: platformImage
+    type: string
+
+  # Name of the pool to use for jobs that require customized VM images.
+  - name: poolName
+    type: string
+
+  # Test Parameters ========================================================
+
+  # Name of the project to run tests for. This will be used to generate the build.proj target to
+  # execute: Test{packageShortName}{testProject}
+  - name: packageShortName
+    type: string
+    values:
+      - Azure
+      - AkvProvider
+      - Abstractions
+      - Logging
+      - SqlClient
+      - SqlServer
+
+  # Display name of the test target that is being executed. This will be formatted into the job's
+  # official name as well as the display name for the job. As such, only alphanumeric and _
+  # characters are permitted.
+  - name: testDisplayName
+    type: string
+
+  # Optional test project name to execute. This only applies to packages that have >1 test target.
+  # eg, for TestSqlClientManual, this should be "Manual"
+  - name: testProject
+    type: string
+    default: ''
+
+jobs:
+  - job: "test_${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
+    displayName: "${{ parameters.testDisplayName }}_${{ parameters.platformDisplayName }}"
+
+    variables:
+      - name: testResultsPath
+        value: "$(REPO_ROOT)/test_results/${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
+
+    pool:
+      name: ${{ parameters.poolName }}
+      demands:
+        - imageOverride -equals ${{ parameters.platformImage }}
+
+    steps:
+      # Install dotnet and the runtime that will run the tests (if it is not netframework)
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          ${{ if not(contains(parameters.platformDotnet, 'net4')) }}:
+            runtimes:
+              - "${{ replace(parameters.platformDotnet, 'net', '') }}.x"
+
+      # Restore dotnet tools
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+      # Execute the test target
+      - task: DotNetCoreCLI@2
+        displayName: 'Test: ${{ parameters.packageShortName }}${{ parameters.testProject }}'
+        inputs:
+          command: build
+          projects: build.proj
+          verbosity: ${{ parameters.dotnetVerbosity }}
+          arguments: >-
+            -t:Test${{ parameters.packageShortName }}${{ parameters.testProject }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:BuildNumber='$(Build.BuildNumber)'
+            -p:BuildSuffix='${{ parameters.buildSuffix }}'
+            -p:TestFramework=${{ parameters.platformDotnet }}
+            -p:TestResultsFolderPath=${{ variables.testResultsPath }}
+
+      # Publish test results
+      - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          platformDisplayName: ${{ parameters.platformDisplayName }}
+          testDisplayName: ${{ parameters.testDisplayName }}
+          testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+          testResultsPath: ${{ variables.testResultsPath }}

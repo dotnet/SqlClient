@@ -12,6 +12,8 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -33,7 +35,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 0,
-                    hasTransactionAffinity: true
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0
             );
             dbConnectionPoolGroup ??= new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -63,6 +66,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -92,6 +96,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     tcs,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -117,6 +122,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -124,23 +130,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(internalConnection);
             }
 
-            try
-            {
-                // Act
-                var exceeded = pool.TryGetConnection(
-                    new SqlConnection("Timeout=1"),
-                    taskCompletionSource: null,
-                    out DbConnectionInternal? extraConnection
-                );
-            }
-            catch (Exception ex)
-            {
-                // Assert
-                Assert.IsType<InvalidOperationException>(ex);
-                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
-            }
+            // Build a timer backed by a fake time provider, then advance virtual time past
+            // the timer's expiration so the pool's CancellationTokenSource is created
+            // already-cancelled and the timeout path fires deterministically without any
+            // wall-clock wait.
+            var fakeTime = new FakeTimeProvider();
+            TimeoutTimer expiredTimer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fakeTime);
+            fakeTime.Advance(TimeSpan.FromSeconds(2));
 
-            // Assert
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    expiredTimer,
+                    out DbConnectionInternal? extraConnection);
+            });
+
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                ex.Message);
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
@@ -155,6 +165,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -162,25 +173,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(internalConnection);
             }
 
-            try
-            {
-                // Act
-                TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
-                var exceeded = pool.TryGetConnection(
-                    new SqlConnection("Timeout=1"),
-                    taskCompletionSource,
-                    out DbConnectionInternal? extraConnection
-                );
-                await taskCompletionSource.Task;
-            }
-            catch (Exception ex)
-            {
-                // Assert
-                Assert.IsType<InvalidOperationException>(ex);
-                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
-            }
+            // Build a timer backed by a fake time provider then advance past expiration so
+            // the pool's CTS is created already-cancelled.
+            var fakeTime = new FakeTimeProvider();
+            TimeoutTimer expiredTimer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fakeTime);
+            fakeTime.Advance(TimeSpan.FromSeconds(2));
 
-            // Assert
+            // Act & Assert
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource,
+                expiredTimer,
+                out _);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => taskCompletionSource.Task);
+
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                ex.Message);
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
@@ -194,6 +205,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -202,6 +214,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -217,6 +230,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var exceeded = pool.TryGetConnection(
                     new SqlConnection(""),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? extraConnection
                 );
                 return extraConnection;
@@ -238,6 +252,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -246,6 +261,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -259,6 +275,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded = pool.TryGetConnection(
                 new SqlConnection(""),
                 taskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? recycledConnection
             );
             pool.ReturnInternalConnection(firstConnection!, firstOwningConnection);
@@ -279,6 +296,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -287,6 +305,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -307,6 +326,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     new SqlConnection(""),
                     null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? recycledConnection
                 );
                 return recycledConnection;
@@ -319,6 +339,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(1)),
                     out DbConnectionInternal? failedConnection
                 );
                 return failedConnection;
@@ -344,6 +365,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 firstOwningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? firstConnection
             );
 
@@ -352,6 +374,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
@@ -366,6 +389,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded = pool.TryGetConnection(
                 new SqlConnection(""),
                 recycledTaskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? recycledConnection
             );
 
@@ -375,6 +399,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var exceeded2 = pool.TryGetConnection(
                 new SqlConnection("Timeout=1"),
                 failedCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(1)),
                 out DbConnectionInternal? failedConnection
             );
 
@@ -397,6 +422,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var completed1 = pool.TryGetConnection(
                 owningConnection,
                 null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? internalConnection1
             );
 
@@ -411,6 +437,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var completed2 = pool.TryGetConnection(
                 owningConnection,
                 null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? internalConnection2
             );
 
@@ -432,11 +459,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            // Use the resource-backed message rather than a hardcoded English
+            // string so the assertion stays meaningful under any localized build.
+            Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
         [Fact]
@@ -452,13 +482,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 var completed = pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
                 await taskCompletionSource.Task;
             });
 
-            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            // Use the resource-backed message rather than a hardcoded English
+            // string so the assertion stays meaningful under any localized build.
+            Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
         [Fact]
@@ -476,6 +509,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     var completed = pool.TryGetConnection(
                         owningObject,
                         taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
                     if (completed)
@@ -509,6 +543,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     var completed = pool.TryGetConnection(
                         owningObject,
                         taskCompletionSource,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
                     internalConnection = await taskCompletionSource.Task;
@@ -578,7 +613,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 500,
-                    hasTransactionAffinity: true
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0
             );
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions.LoadBalanceTimeout, pool.LoadBalanceTimeout);
@@ -596,7 +632,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     maxPoolSize: 50,
                     creationTimeout: 15,
                     loadBalanceTimeout: 500,
-                    hasTransactionAffinity: true));
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
             var pool = ConstructPool(SuccessfulConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
             Assert.Equal(dbConnectionPoolGroup, pool.PoolGroup);
         }
@@ -610,7 +647,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 50,
                 creationTimeout: 15,
                 loadBalanceTimeout: 500,
-                hasTransactionAffinity: true);
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions, pool.PoolGroupOptions);
         }
@@ -646,7 +684,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 50,
                 creationTimeout: 15,
                 loadBalanceTimeout: 500,
-                hasTransactionAffinity: true);
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
             Assert.Equal(poolGroupOptions.UseLoadBalancing, pool.UseLoadBalancing);
         }
@@ -666,7 +705,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestReplaceConnection()
         {
             var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!));
+            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
         }
 
         [Fact]
@@ -705,6 +744,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pool.TryGetConnection(
                     owningConnections[i],
                     taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out internalConnections[i]
                 );
                 Assert.Equal(0, internalConnections[i]!.ClearGeneration);
@@ -733,6 +773,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
@@ -756,6 +797,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? busyConnection
             );
             Assert.NotNull(busyConnection);
@@ -785,11 +827,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 busyOwner,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? busyConnection
             );
             pool.TryGetConnection(
                 idleOwner,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? idleConnection
             );
             Assert.NotNull(busyConnection);
@@ -822,6 +866,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? oldConnection
             );
             Assert.Equal(0, oldConnection!.ClearGeneration);
@@ -835,6 +880,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 newOwner,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? newConnection
             );
             Assert.NotNull(newConnection);
@@ -852,6 +898,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 reuseOwner,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? reusedConnection
             );
             Assert.Same(newConnection, reusedConnection);
@@ -868,6 +915,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 owningConnection,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? connection
             );
             Assert.Equal(0, connection!.ClearGeneration);
@@ -886,6 +934,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.TryGetConnection(
                 newOwner,
                 taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? newConnection
             );
             Assert.NotNull(newConnection);
@@ -895,16 +944,232 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Idle Timeout Tests
+
+        // Helper: build a pool whose IdleTimeout is the given number of seconds.
+        private ChannelDbConnectionPool ConstructPoolWithIdleTimeout(int idleTimeoutSeconds)
+        {
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: idleTimeoutSeconds);
+            return ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+        }
+
+        [Fact]
+        public void IdleTimeout_PoolGroupOptions_ConvertsSecondsToTimeSpan()
+        {
+            // 30 seconds in -> TimeSpan(0, 0, 30) out.
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 50,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 30);
+
+            Assert.Equal(TimeSpan.FromSeconds(30), poolGroupOptions.IdleTimeout);
+        }
+
+        [Fact]
+        public void IdleTimeout_StampedOnReturn()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // Arrange - long idle timeout so the return path stamps (not evicts).
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 3600);
+            SqlConnection owningConnection = new();
+            pool.TryGetConnection(owningConnection, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection);
+            Assert.NotNull(connection);
+
+            // Backdate by a small amount that's still well inside the idle window so the return path
+            // doesn't decide to evict instead of stamp.
+            BackdateReturnedTime(connection, TimeSpan.FromSeconds(5));
+            DateTime stampedBack = connection.ReturnedTime;
+
+            // Act
+            DateTime before = DateTime.UtcNow;
+            pool.ReturnInternalConnection(connection, owningConnection);
+            DateTime after = DateTime.UtcNow;
+
+            // Assert: stamp falls within the return window and is strictly newer than the backdated value.
+            Assert.InRange(connection.ReturnedTime, before, after);
+            Assert.True(connection.ReturnedTime > stampedBack);
+        }
+
+        [Fact]
+        public void IdleTimeout_Zero_DoesNotExpire()
+        {
+            // Arrange - pool with idle expiry disabled
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 0);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date ReturnedTime to simulate a long sit.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateReturnedTime(first, TimeSpan.FromHours(1));
+
+            // Act
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? second);
+
+            // Assert - same instance, idle expiry disabled
+            Assert.Same(first, second);
+            Assert.Equal(1, pool.Count);
+        }
+
+        [Fact]
+        public void IdleTimeout_Set_ExpiresOldConnection()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // Arrange - pool with 1-second idle timeout
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date ReturnedTime beyond the timeout.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateReturnedTime(first, TimeSpan.FromSeconds(5));
+
+            // Act - request another connection
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? second);
+
+            // Assert - the expired one is discarded; a new one is minted.
+            Assert.NotNull(second);
+            Assert.NotSame(first, second);
+            Assert.Equal(1, pool.Count);
+        }
+
+        [Fact]
+        public void IdleTimeout_Set_KeepsFreshConnection()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // Arrange - 60-second idle timeout, connection just returned
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 60);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+            pool.ReturnInternalConnection(first, owner);
+
+            // Act - immediately request another connection
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? second);
+
+            // Assert - same instance reused, well within idle window
+            Assert.Same(first, second);
+        }
+
+        [Fact]
+        public void IdleTimeout_LegacySwitch_SuppressesEviction()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = true;
+
+            // Arrange - 1-second idle timeout, but legacy switch suppresses the new eviction path.
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? first);
+            Assert.NotNull(first);
+
+            // Return + back-date well past the configured timeout.
+            pool.ReturnInternalConnection(first, owner);
+            BackdateReturnedTime(first, TimeSpan.FromMinutes(5));
+
+            // Act - request another connection.
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? second);
+
+            // Assert - with the legacy switch on, the stale connection is still reused.
+            Assert.Same(first, second);
+        }
+
+        [Fact]
+        public void IdleTimeout_LongCheckout_ReturnedConnectionIsPreserved()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // 1-second idle timeout: tight enough that a 5-second "checkout" backdate exceeds it.
+            var pool = ConstructPoolWithIdleTimeout(idleTimeoutSeconds: 1);
+            SqlConnection owner = new();
+            pool.TryGetConnection(owner, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection);
+            Assert.NotNull(connection);
+
+            // Simulate a long-running query: ReturnedTime (initialised to CreateTime when minted) is
+            // backdated past the idle window while the connection is still checked out and busy on
+            // the wire.
+            BackdateReturnedTime(connection, TimeSpan.FromSeconds(5));
+
+            // Act - return the actively-used connection.
+            pool.ReturnInternalConnection(connection, owner);
+
+            // Assert - the connection must be re-stamped and preserved, not evicted as idle-expired.
+            // If IsLiveConnection runs before SetReturnedTime in ReturnInternalConnection, it sees
+            // the stale stamp and wrongly destroys a healthy in-use connection.
+            Assert.Equal(1, pool.Count);
+
+            SqlConnection owner2 = new();
+            pool.TryGetConnection(owner2, taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? reused);
+            Assert.Same(connection, reused);
+        }
+
+        // Forcibly rewinds a connection's ReturnedTime by the given amount so tests don't have to sleep.
+        private static void BackdateReturnedTime(DbConnectionInternal connection, TimeSpan delta)
+        {
+            connection.ReturnedTime = DateTime.UtcNow - delta;
+        }
+
+        #endregion
+
         #region Test classes
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
+            internal TimeoutTimer? CapturedTimeout { get; private set; }
+
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
             {
+                CapturedTimeout = timeout;
                 return new StubDbConnectionInternal();
             }
         }
@@ -916,7 +1181,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
                 IDbConnectionPool pool,
-                DbConnection owningConnection)
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
             {
                 throw ADP.PooledOpenTimeout();
             }
@@ -926,6 +1192,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
+
+            public override ConnectionCapabilities Capabilities => throw new NotImplementedException();
 
             public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
             {
@@ -965,7 +1233,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 0, // This should cause an exception
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -996,7 +1265,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 10000,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1037,7 +1307,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 1,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup1 = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1063,7 +1334,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 2,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
-                hasTransactionAffinity: true
+                hasTransactionAffinity: true,
+                idleTimeout: 0
             );
             var dbConnectionPoolGroup2 = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -1081,5 +1353,132 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(pool2);
             Assert.Equal(0, pool2.Count);
         }
+
+        #region Connection Timeout Awareness Tests
+
+        /// <summary>
+        /// Verifies that two concurrent callers waiting for the same exhausted
+        /// pool observe their own per-caller <see cref="TimeoutTimer"/> deadlines
+        /// independently: the caller with the shorter timeout fails with the
+        /// pool-timeout error while the caller with the longer timeout continues
+        /// to wait and eventually succeeds when a connection is returned.
+        /// </summary>
+        /// <remarks>
+        /// Both callers share a single <see cref="FakeTimeProvider"/> so that
+        /// advancing virtual time deterministically expires only the short-timeout
+        /// caller's CTS without consuming any wall-clock time.
+        /// </remarks>
+        [Fact]
+        public async Task ConcurrentCallers_ShouldTimeoutIndependently()
+        {
+            // Arrange: pool at max capacity so both callers must wait
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0
+            );
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            SqlConnection firstOwner = new();
+            pool.TryGetConnection(firstOwner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+
+            // Use a single fake time provider shared by both callers so we can independently
+            // expire each caller's timeout via virtual time without any wall-clock waits.
+            // Build the timers up-front so they are anchored at virtual time t=0.
+            var fakeTime = new FakeTimeProvider();
+            TimeoutTimer timerA = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fakeTime);
+            TimeoutTimer timerB = TimeoutTimer.StartNew(TimeSpan.FromSeconds(10), fakeTime);
+
+            // Caller A: 1s virtual timeout, Caller B: 10s virtual timeout. Both run in
+            // background tasks so the sync pool path can block on the channel as in production.
+            var callerATask = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    timerA,
+                    out DbConnectionInternal? connectionA);
+                return connectionA;
+            });
+
+            var callerBTask = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    timerB,
+                    out DbConnectionInternal? connectionB);
+                return connectionB;
+            });
+
+            // Act: advance virtual time past A's 1s timeout but well within B's 10s timeout.
+            // A's CancellationTokenSource fires (cancelling its channel wait), B's does not.
+            fakeTime.Advance(TimeSpan.FromSeconds(2));
+
+            // Assert: Caller A should observe the timeout
+            var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
+            Assert.Equal(
+                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
+                exA.Message);
+
+            // Caller B should still be waiting (8s of virtual budget remain)
+            Assert.False(callerBTask.IsCompleted, "Caller B should still be waiting");
+
+            // Release the connection so caller B can succeed
+            pool.ReturnInternalConnection(firstConnection, firstOwner);
+
+            // Bound the wait so a regression in the pool can't hang the test suite
+            // indefinitely; a real success completes well under this budget.
+            Task completed = await Task.WhenAny(callerBTask, Task.Delay(TimeSpan.FromSeconds(30)));
+            Assert.Same(callerBTask, completed);
+            var resultB = await callerBTask;
+
+            // Caller B got the connection
+            Assert.NotNull(resultB);
+            Assert.Same(firstConnection, resultB);
+        }
+
+        /// <summary>
+        /// Verifies that the <see cref="TimeoutTimer"/> the pool hands to the
+        /// connection factory reports a reduced remaining-time budget once the
+        /// timer's clock has advanced. This guarantees the factory observes the
+        /// actual remaining budget at the moment of the call rather than a
+        /// fresh, full timeout.
+        /// </summary>
+        /// <remarks>
+        /// Drives elapsed time deterministically with a
+        /// <see cref="FakeTimeProvider"/> so the test does not depend on real
+        /// wall-clock waits or thread sleeps.
+        /// </remarks>
+        [Fact]
+        public void GetConnection_TimeoutTimerReflectsPoolWaitTime()
+        {
+            // Arrange: a capturing factory and a fake-time-backed timer with a
+            // 30-second budget anchored at virtual time t = 0.
+            var factory = new SuccessfulSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            var owner = new SqlConnection("Timeout=30");
+            var fakeTime = new FakeTimeProvider();
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
+
+            // Act: advance virtual time by 5 seconds before invoking the pool,
+            // simulating budget that was consumed elsewhere (e.g., waiting on a
+            // pool slot) before the factory was called.
+            fakeTime.Advance(TimeSpan.FromSeconds(5));
+            pool.TryGetConnection(owner, taskCompletionSource: null, timer, out DbConnectionInternal? connection);
+
+            // Assert: factory received the same timer, and it reports the
+            // reduced 25-second remaining budget.
+            Assert.NotNull(connection);
+            Assert.Same(timer, factory.CapturedTimeout);
+            Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
+        }
+
+        #endregion
     }
 }

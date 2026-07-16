@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Indicates whether an error has occurred in the pool.
         /// Primarily used to support the pool blocking period feature.
         /// </summary>
+        /// TODO: rename to indicate that this relates to the blocking period
         bool ErrorOccurred { get; }
 
         /// <summary>
@@ -119,17 +120,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">The SqlConnection that will own this internal connection.</param>
         /// <param name="taskCompletionSource">Used when calling this method in an async context. 
         /// The internal connection will be set on completion source rather than passed out via the out parameter.</param>
+        /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting in
+        /// the pool is deducted from the budget available for physical connection creation.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
         /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
-        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, out DbConnectionInternal? connection);
+        bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal? connection);
 
         /// <summary>
         /// Replaces the internal connection currently associated with owningObject with a new internal connection from the pool.
         /// </summary>
         /// <param name="owningObject">The connection whose internal connection should be replaced.</param>
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
+        /// <param name="timeout">The overall timeout budget for this connection request.</param>
         /// <returns>A reference to the new DbConnectionInternal.</returns>
-        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection);
+        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
 
         /// <summary>
         /// Returns an internal connection to the pool.

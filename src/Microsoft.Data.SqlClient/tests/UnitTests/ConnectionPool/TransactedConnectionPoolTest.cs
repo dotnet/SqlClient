@@ -676,12 +676,12 @@ public class TransactedConnectionPoolTest
 
         public void Clear() => throw new NotImplementedException();
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, out DbConnectionInternal? connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal>? taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal? connection)
         {
             throw new NotImplementedException();
         }
 
-        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             throw new NotImplementedException();
         }
@@ -712,6 +712,8 @@ public class TransactedConnectionPoolTest
         public int MockId { get; } = Interlocked.Increment(ref s_nextId);
 
         public override string ServerVersion => "Mock";
+
+        public override ConnectionCapabilities Capabilities => new();
 
         public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {

@@ -17,7 +17,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlMetaDataFactory : IDisposable
+    internal sealed partial class SqlMetaDataFactory : IDisposable
     {
         // Well-known column names
         private const string CollectionNameKey = "CollectionName";
@@ -40,12 +40,13 @@ namespace Microsoft.Data.SqlClient
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
 
-        public SqlMetaDataFactory(Stream xmlStream, string serverVersion)
+        public SqlMetaDataFactory(Stream xmlStream, ConnectionCapabilities connectionCapabilities)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
-            ADP.CheckArgumentNull(serverVersion, nameof(serverVersion));
+            ADP.CheckArgumentNull(connectionCapabilities, nameof(connectionCapabilities));
+            ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
-            _serverVersion = serverVersion;
+            _serverVersion = connectionCapabilities.ServerVersion;
 
             _collectionDataSet = LoadDataSetFromXml(xmlStream);
         }
@@ -422,12 +423,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken) : command.ExecuteReader();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
                     throw ADP.QueryFailed(collectionName, e);
                 }
 
@@ -713,6 +710,9 @@ namespace Microsoft.Data.SqlClient
             {
                 Locale = CultureInfo.InvariantCulture
             };
+
+            LoadDataTypesDataTables(metaDataCollectionsDataSet);
+
             XmlReaderSettings settings = new()
             {
                 XmlResolver = null,
@@ -761,9 +761,6 @@ namespace Microsoft.Data.SqlClient
                     case "DataSourceInformationTable":
                         dataTable = CreateDataSourceInformationDataTable();
                         rowFixup = FixUpDataSourceInformationRow;
-                        break;
-                    case "DataTypesTable":
-                        dataTable = CreateDataTypesDataTable();
                         break;
                     case "ReservedWordsTable":
                         dataTable = CreateReservedWordsDataTable();
@@ -895,38 +892,6 @@ namespace Microsoft.Data.SqlClient
                     new DataColumn(DbMetaDataColumnNames.StatementSeparatorPattern, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.StringLiteralPattern, typeof(string)),
                     new DataColumn(DbMetaDataColumnNames.SupportedJoinOperators, typeof(SupportedJoinOperators))
-                }
-            };
-
-        private static DataTable CreateDataTypesDataTable()
-            => new(DbMetaDataCollectionNames.DataTypes)
-            {
-                Columns =
-                {
-                    new DataColumn(DbMetaDataColumnNames.TypeName, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.ProviderDbType, typeof(int)),
-                    new DataColumn(DbMetaDataColumnNames.ColumnSize, typeof(long)),
-                    new DataColumn(DbMetaDataColumnNames.CreateFormat, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.CreateParameters, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.DataType, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.IsAutoIncrementable, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsBestMatch, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsCaseSensitive, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsFixedLength, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsFixedPrecisionScale, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsLong, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsNullable, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsSearchable, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsSearchableWithLike, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.IsUnsigned, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.MaximumScale, typeof(short)),
-                    new DataColumn(DbMetaDataColumnNames.MinimumScale, typeof(short)),
-                    new DataColumn(DbMetaDataColumnNames.IsConcurrencyType, typeof(bool)),
-                    new DataColumn(MaximumVersionKey, typeof(string)),
-                    new DataColumn(MinimumVersionKey, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.IsLiteralSupported, typeof(bool)),
-                    new DataColumn(DbMetaDataColumnNames.LiteralPrefix, typeof(string)),
-                    new DataColumn(DbMetaDataColumnNames.LiteralSuffix, typeof(string))
                 }
             };
 

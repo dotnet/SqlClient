@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="Versions.props" Condition="'$(AzureVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(AzureAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(AzureFileVersion)</FileVersion>
@@ -91,6 +94,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
     <PackageReference Include="Microsoft.Identity.Client" />
+    <PackageReference Include="Microsoft.Identity.Client.Broker" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

@@ -10,6 +10,14 @@ Generate release notes for the milestone "${input:milestone}" on the branch "${i
 
 This repository ships multiple packages. Only generate release notes for packages that have relevant PRs in the milestone. All packages use the same template: [release-notes/template/release-notes-template.md](release-notes/template/release-notes-template.md).
 
+## Branch Model
+
+The release notes content and the source code it describes live on different branches:
+
+- **Release notes files are maintained on `main`.** Every release's notes (for all branches/versions) are committed under `release-notes/` on `main`. Create and edit the release notes Markdown files on `main` (or a PR targeting `main`), not on the release branch.
+- **The source code for the release lives only on the target branch `${input:branch}`.** Version sources (`Versions.props`), project files (`*.csproj`), and dependency files (`Directory.Packages.props`) reflect the released bits *as they exist on `${input:branch}`*, which can differ from `main`. When you look up versions, dependencies, TFM/OS scope, or verify API names (Steps 2.1, 2.2, 4, and the Version and Dependency Lookup table), read those source files from `${input:branch}` — not from your current `main` checkout.
+- **Practical implication:** Do not assume a `...VersionDefault` or dependency version read from `main` matches what shipped on `${input:branch}`. Confirm against `${input:branch}` (e.g., `git show ${input:branch}:<path>`), or against the milestone/release artifacts.
+
 ## Package Registry
 
 | Package | Release Notes Directory | How to Identify PRs |
@@ -21,20 +29,28 @@ This repository ships multiple packages. Only generate release notes for package
 | `Microsoft.Data.SqlClient.Extensions.Azure` | `release-notes/Extensions/Azure/<Major.Minor>/` | PR titles/bodies/files referencing `Extensions.Azure` |
 | `Microsoft.Data.SqlClient.Internal.Logging` | `release-notes/Internal/Logging/<Major.Minor>/` | PR titles/bodies/files referencing `Internal.Logging` |
 
+> **Not all packages exist on every branch.** This table is the full, current package set. Older release branches ship a subset — for example, `release/6.1` and earlier have no extension packages (`Extensions.Abstractions`, `Extensions.Azure`) and no `Internal.Logging`; the companion-package set and even the `AzureKeyVaultProvider` source location vary by branch. Before generating notes for a package, confirm it actually exists on the target branch `${input:branch}` (e.g., `git ls-tree -r --name-only ${input:branch} | grep -i "<package path fragment>"`). Skip any package that does not exist on `${input:branch}`, even if the table lists it.
+
 ## Version and Dependency Lookup
 
-Each package has its own versioning and dependency sources. Use these to determine package versions and dependency lists:
+Each package's version and dependency information comes from MSBuild props/project files **on the target branch `${input:branch}`** (see Branch Model). The exact file paths, file names, and property names that hold versions **differ by branch**, because the versioning layout was refactored over time. Do not assume the layout of your current checkout — discover the version source on `${input:branch}`.
 
-| Package | Version Source | Dependency Source |
-| ------- | -------------- | ----------------- |
-| `Microsoft.Data.SqlClient` | [tools/props/Versions.props](tools/props/Versions.props) (`MdsVersionDefault`) | [Directory.Packages.props](Directory.Packages.props) and the [project file](src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj) |
-| `AzureKeyVaultProvider` | [tools/props/Versions.props](tools/props/Versions.props) (`AkvVersionDefault`) | [AKV project file](src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj) and [Directory.Packages.props](Directory.Packages.props) |
-| `Microsoft.SqlServer.Server` | [tools/props/Versions.props](tools/props/Versions.props) (`SqlServerPackageVersion`) | [SqlServer project file](src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj) |
-| `Extensions.Abstractions` | [AbstractionsVersions.props](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/AbstractionsVersions.props) | [Abstractions.csproj](src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj) |
-| `Extensions.Azure` | [AzureVersions.props](src/Microsoft.Data.SqlClient.Extensions/Azure/src/AzureVersions.props) | [Azure.csproj](src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj) |
-| `Internal.Logging` | [LoggingVersions.props](src/Microsoft.Data.SqlClient.Internal/Logging/src/LoggingVersions.props) | [Logging.csproj](src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj) |
+Two known layouts:
 
-Concrete dependency versions (e.g., `Azure.Core 1.49.0`) are centrally managed in [Directory.Packages.props](Directory.Packages.props). Framework-conditional versions (e.g., `net9.0` vs everything else) are handled by `Condition` attributes in the same file.
+| Layout | Branches | MDS version source | Companion/extension version sources |
+| ------ | -------- | ------------------ | ----------------------------------- |
+| **Centralized** | `release/7.0` (and earlier 7.0.x) | `tools/props/Versions.props` (`MdsVersionDefault`) | `tools/props/Versions.props` imports per-package props with the older names: `…/Extensions/Abstractions/src/AbstractionsVersions.props`, `…/Extensions/Azure/src/AzureVersions.props`, `…/Internal/Logging/src/LoggingVersions.props`, `…/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider/AkvProviderVersions.props` |
+| **Per-package** | `main`, `7.1+` | `src/Microsoft.Data.SqlClient/Versions.props` (`SqlClientVersionDefault`) | Each package has its own `Versions.props`: `…/Extensions/Abstractions/src/Versions.props` (`AbstractionsVersionDefault`), `…/Extensions/Azure/src/Versions.props` (`AzureVersionDefault`), `…/Internal/Logging/src/Versions.props` (`LoggingVersionDefault`), `…/AlwaysEncrypted.AzureKeyVaultProvider/src/Versions.props` (`AkvProviderVersionDefault`), `…/Microsoft.SqlServer.Server/Versions.props` (`SqlServerVersionDefault`) |
+
+Discovery approach (works regardless of layout):
+
+1. List the version props on the target branch, e.g. `git ls-tree -r --name-only ${input:branch} | grep -i "Versions.props$"`.
+2. Read the relevant file from the target branch, e.g. `git show ${input:branch}:<path>`, and find the package's default/`PackageVersion` property.
+3. Prefer the explicit shipped version: on a release branch the actual version may be supplied by the pipeline (`...PackageVersion`) rather than the `...VersionDefault` fallback, so confirm against the milestone/release artifacts rather than assuming the default.
+
+Dependency sources (read from `${input:branch}`): the per-package project file (`src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, the AKV `.csproj`, `Abstractions.csproj`, `Azure.csproj`, `Logging.csproj`, `Microsoft.SqlServer.Server.csproj`) plus the centrally-managed concrete versions in `Directory.Packages.props`. Framework-conditional versions (e.g., `net9.0` vs everything else) are handled by `Condition` attributes there.
+
+> **Companion package version alignment (7.0.2 and later):** Starting with 7.0.2, the companion packages (`AzureKeyVaultProvider`, `Extensions.Azure`, `Extensions.Abstractions`, `Internal.Logging`) ship version-aligned with the core `Microsoft.Data.SqlClient` driver. When generating notes for an aligned release, use the core MDS version (read from the target branch) for these companion packages — their per-package default version on `main` may point at a different next version and must not be assumed to be the shipped version. `Microsoft.SqlServer.Server` continues to version independently.
 
 ## Skills
 
@@ -122,7 +138,7 @@ When release notes reference a public API (property, method, class):
 
 ### 5. Generate Release Notes for Each Package
 
-For each package that has relevant PRs in the milestone:
+For each package that ships in this milestone — i.e., it has relevant PRs, **or** it is a version-aligned companion package (7.0.2+) bumping to match the core `Microsoft.Data.SqlClient` release even without its own changes (see item 2):
 
 1. **Determine the package version** using the Version Source from the lookup table above. Read the actual props/project file to find the version.
 
@@ -138,6 +154,7 @@ For each package that has relevant PRs in the milestone:
      1. **"Changes Since [last preview]"** — only the delta since the most recent preview of this package.
      2. **"Cumulative Changes Since [last stable]"** — all changes since the last stable release of this package, synthesized from all preview release notes plus the GA milestone. This applies to every package (MDS, AKV, Extensions.Azure, Abstractions, Internal.Logging, etc.), not just the core driver. Apply the cross-referencing from Step 3 to eliminate items already shipped in prior stable patch releases.
    - **Preview releases:** Only include the delta since the previous release (preview or stable). No cumulative section is needed.
+   - **Version-alignment-only releases (7.0.2+ companion packages):** Starting with 7.0.2, the companion packages (`AzureKeyVaultProvider`, `Extensions.Azure`, `Extensions.Abstractions`, `Internal.Logging`) ship a new version aligned with the core driver on every core release — **even when they have no functional or API changes**. In that case, still create the package's release notes file using a version-alignment-only style: state that there are no functional or API changes, note the version alignment with the core driver, link to the core `Microsoft.Data.SqlClient <Version>` notes, and (for .NET Framework) call out any `AssemblyVersion` strong-name change. Use the shipped 7.0.2 companion notes as the reference pattern (e.g., [release-notes/Extensions/Abstractions/7.0/7.0.2.md](release-notes/Extensions/Abstractions/7.0/7.0.2.md), [release-notes/Internal/Logging/7.0/7.0.2.md](release-notes/Internal/Logging/7.0/7.0.2.md), [release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md)). For the `Internal.Logging` package, retain its internal-use note. `Microsoft.SqlServer.Server` is **not** version-aligned and follows the normal skip rule.
 
 3. **Create or update the version README** at `<Directory>/README.md`. Follow the existing format — see [release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md](release-notes/add-ons/AzureKeyVaultProvider/6.1/README.md) for reference:
 
@@ -152,7 +169,9 @@ For each package that has relevant PRs in the milestone:
    | <Date> | <Version> | [Release Notes](<Version>.md) |
    ```
 
-4. **Skip packages without changes.** If a package has no relevant PRs in the milestone, do not create release notes for it. Report which packages had changes and which did not.
+4. **Skip packages without changes (or that don't exist on the branch).** If a package has no relevant PRs in the milestone, or the package does not exist on the target branch `${input:branch}` (see the Package Registry note — older branches like `release/6.1` have no extension or `Internal.Logging` packages), do not create release notes for it. **Exception (7.0.2+):** version-aligned companion packages (`AzureKeyVaultProvider`, `Extensions.Azure`, `Extensions.Abstractions`, `Internal.Logging`) still get a release notes file when they bump to the aligned core version, even with no functional changes — use the version-alignment-only style from item 2. Report which packages had changes, which shipped alignment-only notes, which did not, and which are not present on the branch.
+
+5. **Cross-link companion packages from the core release notes.** When one or more companion packages (`AzureKeyVaultProvider`, `Extensions.Azure`, `Extensions.Abstractions`, `Internal.Logging`, `Microsoft.SqlServer.Server`) also ship in this milestone, add a `### Companion package release notes` section to the core `Microsoft.Data.SqlClient` release notes file that links to each companion package's release notes for the same version. This preserves context for the companion packages when the core release notes are used as the published GitHub release body. Use relative links (e.g., `../Extensions/Azure/<Major.Minor>/<Version>.md`). Only list packages that actually shipped release notes in this milestone.
 
 ### 6. Update CHANGELOG.md
 
@@ -177,6 +196,7 @@ For each package that has relevant PRs in the milestone:
 
 ## Notes
 
-- Packages may ship as preview or stable independently. Use the actual version from the project/spec files.
-- The directory structure mirrors existing conventions: `add-ons/AzureKeyVaultProvider/` for AKV, `MSqlServerServer/` for SqlServer, and `Extensions/<PackageName>/` for the new extension packages.
+- Release notes are maintained on `main` for all branches/releases, while the corresponding source code lives only on the target branch `${input:branch}` (see Branch Model above). Read version/dependency/source files from `${input:branch}`; write release notes files on `main`.
+- Packages may ship as preview or stable independently. Use the actual version from the project/spec files on the target branch.
+- The directory structure mirrors existing conventions: `add-ons/AzureKeyVaultProvider/` for AKV, `MSqlServerServer/` for SqlServer, `Extensions/<PackageName>/` for the extension packages (e.g., `Extensions/Abstractions/`, `Extensions/Azure/`), and `Internal/Logging/` for the internal logging package.
 - When referencing code samples, link to files in the `doc/samples/` directory if a relevant sample exists.

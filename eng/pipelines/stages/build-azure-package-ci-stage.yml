@@ -101,6 +101,20 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the Logging pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingArtifactsName
+    type: string
+    default: Logging.Artifacts
+
+  # The Logging package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: loggingPackageVersion
+    type: string
+    default: ''
+
   # The name of the MDS pipeline artifacts to download.
   #
   # This is used when the referenceType is 'Package'.
@@ -113,6 +127,21 @@ parameters:
   # This is used when the referenceType is 'Package'.
   - name: mdsPackageVersion
     type: string
+
+  # The name of the SqlServer pipeline artifacts to download.
+  #
+  # This is used when the referenceType is 'Package'.  MDS depends on
+  # SqlServer.Server, so the package must be available for transitive restore.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The SqlServer package version to depend on.
+  #
+  # This is used when the referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: ''
 
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
@@ -152,8 +181,12 @@ stages:
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -170,8 +203,12 @@ stages:
           displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux_integration
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -197,8 +234,12 @@ stages:
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -215,8 +256,12 @@ stages:
           displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows_integration
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
@@ -251,8 +296,12 @@ stages:
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.azurePoolName }}
@@ -282,4 +331,6 @@ stages:
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

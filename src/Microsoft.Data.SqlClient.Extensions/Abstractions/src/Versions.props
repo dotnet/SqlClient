@@ -13,6 +13,16 @@
       naming. It must be in the form: (Major).0.0.0
   -->
 
+  <!--
+    Import guard: set on first import so that subsequent imports of this file are skipped.
+    Directory.Packages.props imports all Versions.props early in Package mode; the guard
+    prevents each csproj's own conditional import from re-importing and re-evaluating
+    version properties.
+  -->
+  <PropertyGroup>
+    <AbstractionsVersionsImported>true</AbstractionsVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
@@ -20,7 +30,7 @@
       decided.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <AbstractionsVersionDefault>1.0.0</AbstractionsVersionDefault>
+    <AbstractionsVersionDefault>7.1.0-preview2</AbstractionsVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

@@ -24,49 +24,49 @@ variables:
 
   # Abstractions library assembly file version
   - name: abstractionsAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.1.0.$(assemblyBuildNumber)
 
   # Abstractions library NuGet package version
   - name: abstractionsPackageVersion
-    value: 1.0.0-ci$(Build.BuildNumber)
+    value: 7.1.0-preview2ci$(Build.BuildNumber)
 
   # AKV provider assembly file version
   - name: akvAssemblyFileVersion
-    value: 7.0.0.$(assemblyBuildNumber)
+    value: 7.1.0.$(assemblyBuildNumber)
 
   # AKV provider NuGet package version
   - name: akvPackageVersion
-    value: 7.0.0-ci$(Build.BuildNumber)
+    value: 7.1.0-preview2ci$(Build.BuildNumber)
 
   # Azure library assembly file version
   - name: azureAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.1.0.$(assemblyBuildNumber)
 
   # Azure library NuGet package version
   - name: azurePackageVersion
-    value: 1.0.0-ci$(Build.BuildNumber)
+    value: 7.1.0-preview2ci$(Build.BuildNumber)
 
   # Logging library assembly file version
   - name: loggingAssemblyFileVersion
-    value: 1.0.0.$(assemblyBuildNumber)
+    value: 7.1.0.$(assemblyBuildNumber)
 
   # Logging library NuGet package version
   - name: loggingPackageVersion
-    value: 1.0.0-ci$(Build.BuildNumber)
+    value: 7.1.0-preview2ci$(Build.BuildNumber)
 
   # MDS library NuGet package version
   # NOTE: This differs from the other structures! MdsVersions.props will deconstruct a provided
   #    package version and build an assembly version from it. If the build number is included
   #    before the "-" the build number will be appended again, generating an invalid file version.
   - name: mdsPackageVersion
-    value: 7.1.0-preview1ci$(AssemblyBuildNumber)
+    value: 7.1.0-preview2ci$(AssemblyBuildNumber)
 
   # SqlServer library NuGet package version
   # NOTE: SqlServer's version props derive file version from the package version by appending the
   #    assembly build number, so this must remain a three-part SemVer base with a prerelease
   #    suffix, not a four-part numeric version.
   - name: sqlServerPackageVersion
-    value: 1.0.0-ci$(AssemblyBuildNumber)
+    value: 1.1.0-preview1ci$(AssemblyBuildNumber)
 
   # Local NuGet feed directory where downloaded pipeline artifacts are placed.
   # NuGet.config references this as a local package source for restore.

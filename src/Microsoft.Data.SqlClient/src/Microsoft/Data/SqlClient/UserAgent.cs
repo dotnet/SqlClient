@@ -120,25 +120,24 @@ internal static class UserAgent
         // specific values.
         //
         string osType = Unknown;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (OsConstants.IsWindows)
         {
             osType = Windows;
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (OsConstants.IsLinux)
         {
             osType = Linux;
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        else if (OsConstants.IsMacOS)
         {
             osType = macOS;
         }
-        // The FreeBSD platform doesn't exist in .NET Framework at all.
-        #if NET
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+#if NET
+        else if (OsConstants.IsFreeBSD)
         {
             osType = FreeBSD;
         }
-        #endif
+#endif
 
         // Build it!
         Value = Build(

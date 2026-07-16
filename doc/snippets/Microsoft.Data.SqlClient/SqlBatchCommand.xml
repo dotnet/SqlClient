@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlBatchCommand">
     <SqlBatchCommand>
       <summary>
@@ -87,7 +87,8 @@
     </Parameters>
     <CommandBehavior>
       <summary>
-        One of the <see cref="T:System.Data.CommandBehavior" /> values, indicating options for statement execution and data retrieval.
+        An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for statement execution and data retrieval.
+        Only <see cref="F:System.Data.CommandBehavior.SchemaOnly"/> and <see cref="F:System.Data.CommandBehavior.KeyInfo"/> are supported at the statement level.
       </summary>
     </CommandBehavior>
     <ColumnEncryptionSetting>
