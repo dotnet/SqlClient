@@ -13,6 +13,11 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
+    /// <summary>
+    /// Unit tests for <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>,
+    /// covering idle reuse, new-connection creation, pool-slot accounting at and below capacity, and the
+    /// failure paths that keep the old connection available for the caller's reconnect retry loop.
+    /// </summary>
     public class ChannelDbConnectionPoolReplaceConnectionTest
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
@@ -339,17 +344,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             factory.FailOnActivate = true;
 
             // Act
-            try
-            {
+            Assert.Throws<InvalidOperationException>(() =>
                 pool.ReplaceConnection(
                     owner,
                     oldConnection,
-                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
-            }
-            catch (InvalidOperationException)
-            {
-                // Expected
-            }
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
 
             // Assert — the new connection was returned to pool (not leaked).
             // Pool count stays same because the new connection replaced the old one's slot
