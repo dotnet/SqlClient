@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
         private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
         private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
-        private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions()); 
+        private static readonly MemoryCache s_accountPwCache = new MemoryCache(new MemoryCacheOptions());
         private static readonly int s_accountPwCacheTtlInHours = 2;
 
         // MSAL redirect URI used when WAM brokered authentication is in effect on Windows. MSAL
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient
              * - `organizations` for a multitenant application
              * - `consumers` to sign in users only with their personal accounts
              * - `common` to sign in users with their work and school accounts or their personal Microsoft accounts
-             * 
+             *
              * MSAL will throw a meaningful exception if you specify both the Azure AD authority audience and the tenant ID.
              * If you don't specify an audience, your app will target Azure AD and personal Microsoft accounts as an audience. (That is, it will behave as though `common` were specified.)
              * More information: https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
@@ -701,9 +701,6 @@ namespace Microsoft.Data.SqlClient
                 if (tokenCredentialKey._clientId is not null)
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
-                    #pragma warning disable CS0618 // Type or member is obsolete
-                    defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
-                    #pragma warning restore CS0618 // Type or member is obsolete
                     defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
                 }
 
@@ -731,14 +728,24 @@ namespace Microsoft.Data.SqlClient
                 return new TokenCredentialData(cred, GetHash(secret));
             }
 
-            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
-
             if (tokenCredentialKey._tokenCredentialType == typeof(ManagedIdentityCredential))
             {
-                return new TokenCredentialData(new ManagedIdentityCredential(tokenCredentialKey._clientId, tokenCredentialOptions), GetHash(secret));
+                // A null or empty client id indicates a system-assigned managed identity; a
+                // non-empty client id selects a specific user-assigned managed identity.
+                ManagedIdentityId managedIdentityId = string.IsNullOrEmpty(tokenCredentialKey._clientId)
+                    ? ManagedIdentityId.SystemAssigned
+                    : ManagedIdentityId.FromUserAssignedClientId(tokenCredentialKey._clientId);
+                ManagedIdentityCredentialOptions managedIdentityCredentialOptions = new(managedIdentityId)
+                {
+                    AuthorityHost = new Uri(tokenCredentialKey._authority)
+                };
+
+                return new TokenCredentialData(new ManagedIdentityCredential(managedIdentityCredentialOptions), GetHash(secret));
             }
             else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
             {
+                TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
                 return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
             }
             else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
