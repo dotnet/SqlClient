@@ -855,25 +855,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Not Implemented Method Tests
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.PutObjectFromTransactedPool"/> remains
-        /// unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestPutObjectFromTransactedPool()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
+        #region Replace Connection Tests
 
         /// <summary>
         /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
+        /// replaces a checked-out connection with a new, distinct connection instance.
         /// </summary>
         [Fact]
         public void TestReplaceConnection()
@@ -893,6 +879,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var newConnection = pool.ReplaceConnection(owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
             Assert.NotNull(newConnection);
             Assert.NotSame(oldConnection, newConnection);
+        }
+
+        #endregion
+
+        #region Not Implemented Method Tests
+
+        /// <summary>
+        /// Verifies that <see cref="ChannelDbConnectionPool.PutObjectFromTransactedPool"/> remains
+        /// unimplemented and throws <see cref="NotImplementedException"/>.
+        /// </summary>
+        [Fact]
+        public void TestPutObjectFromTransactedPool()
+        {
+            // Arrange
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
+            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
         }
 
         /// <summary>
