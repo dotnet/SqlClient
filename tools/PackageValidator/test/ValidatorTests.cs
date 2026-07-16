@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System.Linq;
 using Xunit;
 
@@ -69,10 +73,14 @@ public class ValidatorTests
         // Act.
         Validator.Validate(report);
 
-        // Assert: an Error version-inconsistency finding is produced.
-        Assert.NotNull(report.Findings);
-        Assert.Contains(report.Findings!, f =>
-            f.Category == Categories.VersionInconsistency && f.Severity == Severity.Error);
+        // Assert: exactly one Error version-inconsistency finding with the expected target and message.
+        Finding finding = Assert.Single(
+            report.Findings!, f => f.Category == Categories.VersionInconsistency);
+        Assert.Equal(Severity.Error, finding.Severity);
+        Assert.Equal("Test.1.0.0.nupkg:Foo", finding.Target);
+        Assert.Equal(
+            "assembly 'Foo' ships with multiple assembly versions: 1.0.0.0, 2.0.0.0.",
+            finding.Message);
     }
 
     /// <summary>
@@ -110,8 +118,19 @@ public class ValidatorTests
         Validator.Validate(report);
 
         // Assert: the mismatch surfaces as a Warning rather than an Error.
-        Assert.Contains(report.Findings!, f =>
-            f.Category == Categories.VersionInconsistency && f.Severity == Severity.Warning);
+        //
+        // A differing file version alone is only an advisory signal: without an explicit
+        // expectation the validator cannot know which value is authoritative, so it warns instead of
+        // failing. When a caller supplies an expected file version via --expect,
+        // CheckExpectedVersions instead treats any mismatch as an Error (the UnexpectedFileVersion
+        // rule), so desired outcomes can still be enforced hard.
+        Finding finding = Assert.Single(
+            report.Findings!, f => f.Category == Categories.VersionInconsistency);
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Equal("Test.1.0.0.nupkg:Foo", finding.Target);
+        Assert.Equal(
+            "assembly 'Foo' ships with multiple file versions: 1.0.0.0, 1.0.0.17603.",
+            finding.Message);
     }
 
     /// <summary>
@@ -147,11 +166,13 @@ public class ValidatorTests
         Validator.Validate(report);
 
         // Assert: only the implementation assembly is flagged; the reference assembly is exempt.
-        List<Finding> missing = report.Findings!
-            .Where(f => f.Category == Categories.MissingSymbols)
-            .ToList();
-        Assert.Single(missing);
-        Assert.Equal("lib/net8.0/Foo.dll", missing[0].Target);
+        Finding missing = Assert.Single(
+            report.Findings!, f => f.Category == Categories.MissingSymbols);
+        Assert.Equal(Severity.Warning, missing.Severity);
+        Assert.Equal("lib/net8.0/Foo.dll", missing.Target);
+        Assert.Equal(
+            "implementation assembly has no embedded or symbol-package symbols.",
+            missing.Message);
     }
 
     /// <summary>
@@ -162,6 +183,11 @@ public class ValidatorTests
     public void Flags_delay_signed_assembly()
     {
         // Arrange: an assembly that carries a public key but reports DelaySigned.
+        //
+        // Delay-signed binaries only appear in local developer builds and non-official CI builds,
+        // where the real strong-name key is unavailable so the assembly is signed with its public
+        // key alone. Official release builds complete strong-name signing, so this state should never
+        // ship; flagging it guards against accidentally publishing a not-actually-signed DLL.
         PackageReport report = Package(new BinaryReport
         {
             Path = "lib/net8.0/Foo.dll",
@@ -178,8 +204,13 @@ public class ValidatorTests
         Validator.Validate(report);
 
         // Assert.
-        Assert.Contains(report.Findings!, f =>
-            f.Category == Categories.DelaySigned && f.Severity == Severity.Warning);
+        Finding finding = Assert.Single(
+            report.Findings!, f => f.Category == Categories.DelaySigned);
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Equal("lib/net8.0/Foo.dll", finding.Target);
+        Assert.Equal(
+            "assembly carries a public key but is delay-signed (strong-name flag not set).",
+            finding.Message);
     }
 
     /// <summary>
@@ -208,8 +239,13 @@ public class ValidatorTests
         Validator.Validate(report);
 
         // Assert.
-        Assert.Contains(report.Findings!, f =>
-            f.Category == Categories.SymbolChecksumMismatch && f.Severity == Severity.Error);
+        Finding finding = Assert.Single(
+            report.Findings!, f => f.Category == Categories.SymbolChecksumMismatch);
+        Assert.Equal(Severity.Error, finding.Severity);
+        Assert.Equal("lib/net8.0/Foo.dll", finding.Target);
+        Assert.Equal(
+            "symbol-package PDB 'lib/net8.0/Foo.pdb' matched by GUID but failed checksum verification.",
+            finding.Message);
     }
 
     /// <summary>
@@ -242,7 +278,11 @@ public class ValidatorTests
         Validator.Validate(report);
 
         // Assert.
-        Assert.Contains(report.Findings!, f => f.Category == Categories.PackageUnsigned);
+        Finding finding = Assert.Single(
+            report.Findings!, f => f.Category == Categories.PackageUnsigned);
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Equal("Test.1.0.0.nupkg", finding.Target);
+        Assert.Equal("package is not signed (no .signature.p7s entry).", finding.Message);
     }
 
     /// <summary>
@@ -284,7 +324,14 @@ public class ValidatorTests
         List<Finding> findings = Validator.ValidateBatch([consumer, lib]);
 
         // Assert.
-        Assert.Contains(findings, f => f.Category == Categories.DependencyInconsistency);
+        Finding finding = Assert.Single(
+            findings, f => f.Category == Categories.DependencyInconsistency);
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Equal("Consumer.1.0.0.nupkg", finding.Target);
+        Assert.Equal(
+            "depends on Lib [2.0.0,), but the Lib " +
+            "package in this run is version 1.0.0, which is outside that range.",
+            finding.Message);
     }
 
     /// <summary>
@@ -311,8 +358,8 @@ public class ValidatorTests
         // Act.
         Validator.Validate(report);
 
-        // Assert: nothing rises to Error severity (info-level findings such as package-unsigned may
-        // still exist, but none here since the package is signed).
-        Assert.DoesNotContain(report.Findings ?? [], f => f.Severity == Severity.Error);
+        // Assert: a fully consistent, signed, strong-named package with symbols produces no findings
+        // at all. Validator leaves Findings null when the finding list is empty.
+        Assert.Null(report.Findings);
     }
 }
