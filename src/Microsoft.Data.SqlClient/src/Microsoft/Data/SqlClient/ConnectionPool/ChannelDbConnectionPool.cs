@@ -134,7 +134,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
-            ConcurrencyLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null,
+            TimeProvider? timeProvider = null)
         {
             ConnectionFactory = connectionFactory;
             PoolGroup = connectionPoolGroup;
@@ -150,7 +151,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel = new();
             if (PoolGroup.IsBlockingPeriodEnabled())
             {
-                _errorState = new BlockingPeriodErrorState(_instanceId);
+                // timeProvider is injected only by tests so the blocking-period exit timer can be
+                // driven deterministically; in production it is null and the error state falls back
+                // to TimeProvider.System.
+                _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: timeProvider);
             }
 
             // Pruning is only useful when the pool can grow beyond MinPoolSize.

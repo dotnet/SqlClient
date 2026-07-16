@@ -38,13 +38,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <param name="poolGroupOptions">Optional pool options override.</param>
         /// <param name="connectionPoolProviderInfo">Optional provider info override.</param>
         /// <param name="connectionCreationRateLimiter">Optional concurrency limiter controlling physical connection creation.</param>
+        /// <param name="timeProvider">Optional time provider so tests can drive the blocking-period exit timer deterministically.</param>
         /// <returns>A configured <see cref="ChannelDbConnectionPool"/> instance for testing.</returns>
         private ChannelDbConnectionPool ConstructPool(SqlConnectionFactory connectionFactory,
             DbConnectionPoolIdentity? identity = null,
             DbConnectionPoolGroup? dbConnectionPoolGroup = null,
             DbConnectionPoolGroupOptions? poolGroupOptions = null,
             DbConnectionPoolProviderInfo? connectionPoolProviderInfo = null,
-            ConcurrencyLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null,
+            TimeProvider? timeProvider = null)
         {
             poolGroupOptions ??= new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -65,7 +67,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 dbConnectionPoolGroup,
                 identity ?? DbConnectionPoolIdentity.NoIdentity,
                 connectionPoolProviderInfo ?? new DbConnectionPoolProviderInfo(),
-                connectionCreationRateLimiter
+                connectionCreationRateLimiter,
+                timeProvider
             );
         }
 
@@ -1719,14 +1722,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that a successful connection creation after a prior failure leaves the pool out
-        /// of the blocking-period error state.
+        /// Verifies the pool's blocking-period recovery path end-to-end: a creation failure enters
+        /// the blocking period (fast-failing subsequent requests without touching the factory), and
+        /// once the backoff interval elapses the pool leaves the blocking period so a later create
+        /// succeeds and clears the error state. The blocking-period exit timer is driven with a
+        /// <see cref="FakeTimeProvider"/> so the test is deterministic and does not wait on
+        /// wall-clock time. FR-006, FR-009.
         /// </summary>
         [Fact]
-        public void SuccessfulCreate_AfterFailure_ClearsErrorState()
+        public void Failure_ThenBlockingPeriodExpiry_AllowsSuccessfulCreate()
         {
             // Arrange
             var factory = new ToggleFailureConnectionFactory();
+            var fakeTime = new FakeTimeProvider();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
@@ -1738,22 +1746,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     loadBalanceTimeout: 0,
                     hasTransactionAffinity: true,
                     idleTimeout: 0));
-            var pool = ConstructPool(factory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+            var pool = ConstructPool(factory, dbConnectionPoolGroup: dbConnectionPoolGroup, timeProvider: fakeTime);
 
-            // First call fails and enters the error state.
+            // The first create fails and enters the blocking period.
             factory.FailNextCreate = true;
             Assert.Throws<InvalidOperationException>(() =>
                 pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
 
-            // Manually clear the error flag (simulating the backoff timer firing) and then
-            // verify that a subsequent successful create clears the cached error state. FR-009.
-            pool.Clear();
+            // Even though creates would now succeed, requests issued inside the blocking window
+            // still fast-fail with the cached exception without reaching the factory. Flipping the
+            // factory to succeed and still observing a throw proves the create path never ran.
+            factory.FailNextCreate = false;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Advancing past the initial backoff fires the exit timer, ending the blocking period.
+            // FakeTimeProvider invokes the timer callback synchronously, so the error state clears
+            // before the next line runs.
+            fakeTime.Advance(TimeSpan.FromSeconds(5));
             Assert.False(pool.ErrorOccurred);
 
-            factory.FailNextCreate = false;
-
-            // Act
+            // Act - a create after the blocking period succeeds and leaves the pool healthy.
             var completed = pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out var conn);
 
             // Assert
