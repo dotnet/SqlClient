@@ -640,6 +640,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         finally
                         {
+                            // Capture the acquired state before disposing: the poke condition below
+                            // reads it, and accessing a lease after Dispose is fragile even if the
+                            // current ConcurrencyLimiter lease happens to keep IsAcquired stable.
+                            bool leaseAcquired = lease.IsAcquired;
+
                             // Release the permit back to the limiter (no-op for the default lease)
                             // BEFORE signaling a waiter. Otherwise a woken waiter could consume the
                             // null poke and retry its acquire before the permit is actually returned,
@@ -661,7 +666,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             // immediately has an available permit, but the waiter we wake will fall
                             // back to waiting again if not.
                             if (!faulted &&
-                                lease.IsAcquired &&
+                                leaseAcquired &&
                                 _connectionCreationRateLimiter is not null &&
                                 _connectionSlots.ReservationCount < MaxPoolSize)
                             {
