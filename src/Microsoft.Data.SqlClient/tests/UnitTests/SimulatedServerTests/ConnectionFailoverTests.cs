@@ -173,6 +173,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(2, failoverServer.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkTimeout_ShouldFail [1 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //   Expected: 1
+        //   Actual:   0
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkTimeout_ShouldFail() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 220
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
         [Fact]
         public void NetworkTimeout_ShouldFail()
         {
