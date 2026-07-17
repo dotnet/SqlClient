@@ -54,12 +54,40 @@ steps:
       # Requires macOS >= 13 (Ventura).
       colima start --vm-type vz --cpu 4 --memory 4
       docker --version
-      docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2025-latest
+
+      # Pull the SQL Server image with retries.  The macOS agents intermittently
+      # fail to resolve or reach mcr.microsoft.com (DNS lookups or registry i/o
+      # time out), which previously failed the whole step on the first attempt.
+      # Retry a handful of times with a back-off before giving up.
+      pullAttempts=5
+      pullDelay=15
+      pulled=0
+      for ((p=1; p<=pullAttempts; p++))
+      do
+        echo "Pulling SQL Server image (attempt #$p of $pullAttempts)..."
+        if docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2025-latest; then
+          pulled=1
+          break
+        fi
+        echo "docker pull failed (attempt #$p of $pullAttempts). Retrying in ${pullDelay}s..."
+        sleep $pullDelay
+      done
+
+      if [ $pulled -ne 1 ]; then
+        echo "ERROR: Unable to pull mcr.microsoft.com/mssql/server:2025-latest after $pullAttempts attempts (registry/DNS unreachable)."
+        exit 1
+      fi
 
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
 
-      docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
+      # Start the container and fail fast (with diagnostics) if it does not launch,
+      # rather than silently falling through to the connection-wait loop.
+      if ! docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest; then
+        echo "ERROR: Failed to start the sql1 container."
+        docker ps -a --filter "name=^/sql1$"
+        exit 1
+      fi
 
       sleep 10
 
