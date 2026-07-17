@@ -1,0 +1,42 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+
+  - name: enableLocalDB
+    type: boolean
+
+  # Path to use for file stream tests. This only applies to Windows test runs.
+  - name: fileStreamDirectory
+    type: string
+
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
+    type: string
+
+  - name: operatingSystem
+    type: string
+
+  # Password to use for the SA account. This should be generated from the generate-secrets-stage.
+  - name: saPassword
+    type: string
+
+steps:
+  - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
+      - template: /eng/pipelines/pr/steps/configure-sqlserver-windows-step.yml@self
+        parameters:
+          enableLocalDB: ${{ parameters.enableLocalDB }}
+          fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+          localDbAppName: ${{ parameters.localDbAppName }}
+          localDbSharedInstanceName: ${{ parameters.localDbSharedInstanceName }}
+          saPassword: ${{ parameters.saPassword }}
+
+  - ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
+      - template: /eng/pipelines/pr/steps/configure-sqlserver-linux-step.yml@self
+        parameters:
+          saPassword: ${{ parameters.saPassword }}

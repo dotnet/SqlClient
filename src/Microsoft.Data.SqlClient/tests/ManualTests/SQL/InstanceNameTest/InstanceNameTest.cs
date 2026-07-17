@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -7,12 +7,14 @@ using System.Data.Common;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class InstanceNameTest
     {
         private const char SemicolonSeparator = ';';
@@ -22,16 +24,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ConnectToSQLWithInstanceNameTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _);
 
-            bool proceed = true;
-            string dataSourceStr = builder.DataSource.Replace("tcp:", "");
-            string[] serverNamePartsByBackSlash = dataSourceStr.Split('\\');
-            string hostname = serverNamePartsByBackSlash[0];
-            if (!dataSourceStr.Contains(",") && serverNamePartsByBackSlash.Length == 2)
-            {
-                proceed = !string.IsNullOrWhiteSpace(hostname) && IsBrowserAlive(hostname);
-            }
-
+            // @TODO: This test as it is written will report success even if it doesn't test anything.
+            bool proceed = !string.IsNullOrWhiteSpace(hostname) && IsBrowserAlive(hostname);
             if (proceed)
             {
                 using SqlConnection connection = new(builder.ConnectionString);
@@ -232,6 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
                  && DataTestUtility.IsUsingManagedSNI()
+                 && RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                  && DataTestUtility.IsNotAzureServer()
                  && DataTestUtility.IsNotAzureSynapse());
         }

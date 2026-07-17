@@ -7,7 +7,7 @@ using System.IO;
 using System.Xml;
 using System.Diagnostics;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class Logger
     {

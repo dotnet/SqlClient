@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
-        private readonly static object s_syncObject = new();
+        private static readonly object s_syncObject = new();
 
         /// Default known transient error numbers.
         // We use a HashSet internally for O(1) lookup performance in the hot path. The public API exposes a ReadOnlyCollection.
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
                     1222,   // Lock request time out period exceeded.
                     4060,   // Cannot open database "%.*ls" requested by the login. The login failed.
                     4221,   // Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
-                    10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)    
+                    10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
                     40143,  // The service has encountered an error processing your request. Please try again.
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient
                                            retryLogicOption != null ? new SqlExponentialIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
-        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(SqlRetryLogicOption retryLogicOption) 
+        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(SqlRetryLogicOption retryLogicOption)
             => InternalCreateRetryProvider(retryLogicOption,
                                             retryLogicOption != null ? new SqlIncrementalIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verifies the provider which is not null and doesn't include SqlNoneIntervalEnumerator enumerator object.
         /// </summary>
-        internal static bool IsRetriable(SqlRetryLogicBaseProvider provider) 
+        internal static bool IsRetriable(SqlRetryLogicBaseProvider provider)
             => provider is not null && (provider.RetryLogic is null || provider.RetryLogic.RetryIntervalEnumerator is not SqlNoneIntervalEnumerator);
 
         /// Return true if the exception is a transient fault.

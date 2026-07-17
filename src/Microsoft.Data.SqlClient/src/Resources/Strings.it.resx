@@ -606,6 +606,9 @@
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Non è possibile trovare un provider di autenticazione per '{0}'. Installare il pacchetto NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) per usare i metodi di autenticazione di Active Directory (Entra ID).</value>
   </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>L'impostazione ''useWamBroker'' richiede che il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' esponga ''Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions''. Aggiorna il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' almeno alla versione 1.1.0, che include questo tipo.</value>
+  </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Il parametro '{0}' non può essere Null o vuoto.</value>
   </data>
@@ -959,6 +962,9 @@
   </data>
   <data name="DbConnectionString_LoadBalanceTimeout" xml:space="preserve">
     <value>Tempo minimo di attesa (in secondi) perché la connessione sia attiva nel pool prima di essere eliminata.</value>
+  </data>
+  <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
+    <value>Il periodo massimo di tempo (in secondi) durante il quale una connessione può rimanere inutilizzata (inattiva) nel pool prima di essere eliminata quando il comportamento legacy del timeout di inattività è disabilitato. Un valore di 0 disabilita la scadenza per inattività.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Numero massimo di connessioni consentite nel pool.</value>
