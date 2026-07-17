@@ -621,10 +621,9 @@ internal static class LocalAppContextSwitches
     /// trimmed away when the corresponding AppContext switch is set at compile
     /// time. In such cases, this property will return a constant value, even if
     /// the AppContext switch is set or reset at runtime. See the
-    /// ILLink.Substitutions.Windows.xml and ILLink.Substitutions.Unix.xml
-    /// resource files for details.
+    /// ILLink.Substitutions.xml resource file for details.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is false on Windows and true on non-Windows platforms.
     /// </summary>
     public static bool UseManagedNetworking
     {
