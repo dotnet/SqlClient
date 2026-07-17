@@ -871,6 +871,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Verifies pooled connections are not cleared and failover is not attempted when a
         /// login-phase transient SQL error occurs with a user-provided failover partner.
         /// </summary>
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(errorCode: 40613) [2 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Strings differ
+        //                            Γåô (pos 14)
+        //   Expected: "localhost,50152"
+        //   Actual:   "localhost,50151"
+        //                            Γåæ (pos 14)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 920
+        //      at InvokeStub_ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(Object, Span`1)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
