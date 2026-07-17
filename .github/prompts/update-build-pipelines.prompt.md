@@ -22,7 +22,7 @@ Follow this workflow step-by-step:
   - `sqlclient-pr-package-ref-pipeline.yml` — PR validation (package references)
   - `onebranch/sqlclient-official.yml` — official OneBranch build/release pipeline
   - `onebranch/sqlclient-non-official.yml` — non-official OneBranch build/release pipeline
-  - `stress/stress-tests-pipeline.yml` — stress test pipeline
+  - `ci/stress/sqlclient-ci-stress-pipeline.yml` — stress test pipeline
 - Shared templates live in `eng/pipelines/common/templates/` (jobs/, stages/, steps/).
 - CI variables are defined in `eng/pipelines/libraries/`; OneBranch variables are defined in `eng/pipelines/onebranch/variables/`.
 
@@ -57,7 +57,7 @@ Follow this workflow step-by-step:
 - Test filters by platform: `nonnetfxtests`, `nonnetcoreapptests`, `nonwindowstests`, `nonlinuxtests`.
 - SNI testing matrix: both Native (`useManagedSNI=false`) and Managed (`useManagedSNI=true`).
 - Always Encrypted tests controlled by `runAlwaysEncryptedTests` parameter.
-- Stress coverage is maintained under `eng/pipelines/stress/`, not as a stage inside `dotnet-sqlclient-ci-core.yml`.
+- Stress coverage is maintained under `eng/pipelines/ci/stress/`, not as a stage inside `dotnet-sqlclient-ci-core.yml`.
 
 ## 5. Validate
 - Verify YAML syntax is valid.

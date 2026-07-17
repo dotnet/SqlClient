@@ -5,8 +5,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+    <!-- In "Package" mode the references to MDS and the Azure extension resolve to their NuGet   -->
+    <!-- packages, so the stress tests build against a fully-packaged driver. Package mode is       -->
+    <!-- selected by setting the build parameter ReferenceType to "Package". Otherwise the build    -->
+    <!-- defaults to referencing the projects directly.                                            -->
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure"
+                      Condition="'$(ReferenceType)' == 'Package'" />
 
     <ProjectReference Include="$(StressRoot)/SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />
   </ItemGroup>
