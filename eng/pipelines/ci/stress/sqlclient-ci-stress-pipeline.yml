@@ -29,16 +29,21 @@ trigger: none
 resources:
   pipelines:
 
-    # The sqlclient-ci-package pipeline in the Public project.
-    - pipeline: Public-sqlclient-ci-package
-      project: Public
-      source: /ADO/CI/sqlclient-ci-package
-      trigger: true
-
-    # The sqlclient-ci-package pipeline in the ADO.Net project.
-    - pipeline: ADO-Net-sqlclient-ci-package
-      project: ADO.Net
-      source: /CI/sqlclient-ci-package
+    # Trigger this pipeline when the sqlclient-ci-package pipeline completes successfully.
+    #
+    # 'project' is omitted so the resource resolves to the sqlclient-ci-package pipeline in the
+    # *current* ADO project.  This scopes the trigger per project automatically: the Public
+    # registration is triggered only by Public's sqlclient-ci-package, and the ADO.Net registration
+    # only by ADO.Net's.
+    #
+    # IMPORTANT: 'source' is the bare pipeline name with no folder path.  This REQUIRES the
+    # sqlclient-ci-package name to be UNIQUE within BOTH the Public and ADO.Net projects.  Azure
+    # DevOps only allows omitting the folder when the name is unambiguous; if a second pipeline with
+    # this name is ever added to either project, this resource will fail to resolve and the folder
+    # path must be added back (which, because the folders differ per project, would then require a
+    # per-project approach instead of this single shared definition).
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
       trigger: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.

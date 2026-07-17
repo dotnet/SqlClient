@@ -100,13 +100,9 @@ jobs:
       - group: ADO Test Configuration Properties
 
       # The directory where the "- download:" step places the SqlClient-Driver-Packages artifact
-      # published by the triggering sqlclient-ci-package pipeline.  The resource alias differs by
-      # ADO project, so select the matching path at compile time.
+      # published by the triggering sqlclient-ci-package pipeline.
       - name: packageArtifactDir
-        ${{ if eq(variables.isInternalBuild, true) }}:
-          value: $(Pipeline.Workspace)/ADO-Net-sqlclient-ci-package/SqlClient-Driver-Packages
-        ${{ else }}:
-          value: $(Pipeline.Workspace)/Public-sqlclient-ci-package/SqlClient-Driver-Packages
+        value: $(Pipeline.Workspace)/sqlclient-ci-package/SqlClient-Driver-Packages
 
       # The top-level project file to build and run.
       - name: project
@@ -209,15 +205,10 @@ jobs:
             $content | Out-File -FilePath "config.jsonc"
 
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
-      # pipeline.  The resource alias differs by ADO project, so select it at compile time.
-      - ${{ if eq(variables.isInternalBuild, true) }}:
-        - download: ADO-Net-sqlclient-ci-package
-          artifact: SqlClient-Driver-Packages
-          displayName: Download SqlClient Driver Packages
-      - ${{ else }}:
-        - download: Public-sqlclient-ci-package
-          artifact: SqlClient-Driver-Packages
-          displayName: Download SqlClient Driver Packages
+      # pipeline into the pipeline workspace.
+      - download: sqlclient-ci-package
+        artifact: SqlClient-Driver-Packages
+        displayName: Download SqlClient Driver Packages
 
       # Copy the downloaded packages into the local NuGet feed (packages/) and resolve the exact
       # Microsoft.Data.SqlClient and Microsoft.Data.SqlClient.Extensions.Azure versions from the
