@@ -40,7 +40,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     .WithWarmupCount(runnerJob.WarmupCount)
                     .WithUnrollFactor(1)
                     .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
-                    .WithEnvironmentVariable("COMPlus_gcServer", "1")
+                    // Server GC is configured at the host-process level via the
+                    // <ServerGarbageCollection> csproj property (COMPlus_gcServer is
+                    // startup-only and would be ignored here under InProcessEmitToolchain).
                 )
                 .WithOptions(ConfigOptions.JoinSummary);
 

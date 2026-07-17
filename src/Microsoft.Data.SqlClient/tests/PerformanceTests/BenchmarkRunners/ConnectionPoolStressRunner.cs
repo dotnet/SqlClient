@@ -32,8 +32,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Max pool size — controls how many physical connections the pool can hold.
         /// When Parallelism exceeds this, tasks must wait for a free connection.
+        /// The larger values exercise pool bookkeeping under high capacity; SQL Server
+        /// itself must be able to accept that many concurrent connections for the
+        /// higher values to be meaningful.
         /// </summary>
-        [Params(50, 100)]
+        [Params(50, 100, 500, 1000)]
         public int MaxPoolSize { get; set; }
 
         [GlobalSetup]
@@ -145,18 +148,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Mixed sync and async — half the tasks use sync Open/ExecuteReader,
         /// the other half use async. Stresses the pool lock paths that differ
-        /// between sync and async checkout.
+        /// between sync and async checkout. Per-task iteration count scales with
+        /// MaxPoolSize/Parallelism so total checkouts stay proportional to pool
+        /// capacity regardless of how the [Params] values change.
         /// </summary>
         [Benchmark]
         public async Task MixedSyncAsyncContention()
         {
+            int iterationsPerTask = Math.Max(10, MaxPoolSize / Math.Max(1, Parallelism) * 2);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
                 bool useAsync = i % 2 == 0;
                 tasks[i] = Task.Run(async () =>
                 {
-                    for (int j = 0; j < 10; j++)
+                    for (int j = 0; j < iterationsPerTask; j++)
                     {
                         using var conn = new SqlConnection(_connectionString);
                         if (useAsync)
@@ -181,10 +187,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// Connection reuse with multiple commands — each task opens one connection and
         /// executes many sequential queries before returning it. Measures pool efficiency
         /// when connections are held for multi-step operations (like EF SaveChanges).
+        /// Command burst size scales with MaxPoolSize so the workload per checkout grows
+        /// with pool capacity.
         /// </summary>
         [Benchmark]
         public async Task MultiCommandReuse()
         {
+            int minCommands = Math.Max(5, MaxPoolSize / 20);
+            int maxCommandsExclusive = Math.Max(minCommands + 1, MaxPoolSize / 5);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
@@ -195,8 +205,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     using var conn = new SqlConnection(_connectionString);
                     await conn.OpenAsync();
 
-                    // Execute a burst of 5-15 commands on the same connection
-                    int commandCount = rng.Next(5, 16);
+                    int commandCount = rng.Next(minCommands, maxCommandsExclusive);
                     for (int c = 0; c < commandCount; c++)
                     {
                         using var cmd = new SqlCommand($"SELECT Val FROM {_tableName} WHERE Id = @id", conn);

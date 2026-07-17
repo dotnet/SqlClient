@@ -5,6 +5,11 @@
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <Configurations>Debug;Release;</Configurations>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
+    <!-- The perf test host process runs benchmarks in-process via InProcessEmitToolchain,
+         so GC mode must be configured up-front on the host. COMPlus_gcServer is a
+         startup-only runtime knob and won't apply if set after the host has started. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
 
   <!-- Items to remove -->
