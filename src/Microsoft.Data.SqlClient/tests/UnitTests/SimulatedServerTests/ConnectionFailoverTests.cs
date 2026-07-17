@@ -1070,6 +1070,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Verifies opt-in legacy behavior: login-phase SQL errors can alternate to the
         /// failover partner when UseLegacyFailoverAlternationOnLoginSqlErrors is enabled.
         /// </summary>
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner [2 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Strings differ
+        //                            Γåô (pos 14)
+        //   Expected: "localhost,60991"
+        //   Actual:   "localhost,60992"
+        //                            Γåæ (pos 14)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 1114
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
         [Fact]
         public void NonFatalTransientLoginError_WithLegacySwitch_ShouldAlternateToFailoverPartner()
         {
