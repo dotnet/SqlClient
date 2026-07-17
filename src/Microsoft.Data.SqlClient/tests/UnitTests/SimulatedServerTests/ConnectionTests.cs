@@ -483,6 +483,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
 
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.ConnectionTimeoutTest(timeout: 60) [10 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [/mnt/vss/_work/1/s/build.proj]
+        //      Timer must be stopped.
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.ConnectionTimeoutTest(Int32 timeout) in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/ConnectionTests.cs:line 523
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
         [Theory]
         [InlineData(60)]
         [InlineData(10)]

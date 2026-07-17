@@ -221,6 +221,42 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkDelay_ShouldConnectToPrimary [4 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.  The duration spent while attempting to connect to this server was - [Pre-Login] initialization=0; handshake=17; [Login] initialization=0; authentication=0; [Post-Login] complete=3999;
+        //   ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 1241
+        //      at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParser.cs:line 1721
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning(Boolean callerHasConnectionLock, Boolean asyncClose) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 1243
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 4168
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 3581
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadNetworkPacket() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 3480
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.TryPrepareBuffer() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 1464
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadByte(Byte& value) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 1780
+        //      at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParser.cs:line 2456
+        //      at Microsoft.Data.SqlClient.TdsParser.Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParser.cs:line 2343
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 2208
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 2170
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 3214
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionOptions connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 3793
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal..ctor(DbConnectionPoolIdentity identity, SqlConnectionOptions connectionOptions, TimeoutTimer timeout, SqlCredential credential, DbConnectionPoolGroupProviderInfo providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, IDbConnectionPool pool, Func`3 accessTokenCallback, SspiContextProvider sspiContextProvider) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 399
+        //      at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(SqlConnectionOptions options, ConnectionPoolKey poolKey, DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnectionFactory.cs:line 687
+        //      at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnectionFactory.cs:line 124
+        //      at Microsoft.Data.SqlClient.SqlConnectionFactory.TryGetConnection(DbConnection owningConnection, TaskCompletionSource`1 retry, DbConnectionInternal oldConnection, TimeoutTimer timeout, Boolean forceNewConnection, DbConnectionInternal& connection) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnectionFactory.cs:line 417
+        //      at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, SqlConnectionFactory connectionFactory, TaskCompletionSource`1 retry, Boolean forceNewConnection, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\ProviderBase\DbConnectionInternal.cs:line 940
+        //      at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory, TaskCompletionSource`1 retry, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\ProviderBase\DbConnectionClosed.cs:line 69
+        //      at Microsoft.Data.SqlClient.SqlConnection.TryOpenInner(TaskCompletionSource`1 retry, Boolean forceNewConnection) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnection.cs:line 2287
+        //      at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, Boolean forceNewConnection, SqlConnectionOverrides overrides) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnection.cs:line 2245
+        //      at Microsoft.Data.SqlClient.SqlConnection.Open(SqlConnectionOverrides overrides) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnection.cs:line 1619
+        //      at Microsoft.Data.SqlClient.SqlConnection.Open() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnection.cs:line 1596
+        //      at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkDelay_ShouldConnectToPrimary() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 260
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+        //   ----- Inner Stack Trace -----
         [Fact]
         public void NetworkDelay_ShouldConnectToPrimary()
         {
@@ -960,6 +996,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Isolates the parser-state guard by using a non-fatal login error token: without the
         /// guard, LoginWithFailover alternates to partner; with the guard, retry stays on primary.
         /// </summary>
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NonFatalTransientLoginError_WithUserProvidedPartner_ShouldRetryPrimary_NotFailover [1 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [/mnt/vss/_work/1/s/build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //   Expected: 0
+        //   Actual:   1
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NonFatalTransientLoginError_WithUserProvidedPartner_ShouldRetryPrimary_NotFailover() in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/ConnectionFailoverTests.cs:line 1006
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
         [Fact]
         public void NonFatalTransientLoginError_WithUserProvidedPartner_ShouldRetryPrimary_NotFailover()
         {
