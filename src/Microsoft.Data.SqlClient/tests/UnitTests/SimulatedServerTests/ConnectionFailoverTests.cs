@@ -132,8 +132,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
 
             /* TODO: Fix flaky test failure:
-            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
-                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured 
+            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server.
+                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured
                 to allow remote connections. (provider: TCP Provider, error: 0 - The wait operation timed out.)
                 ---- System.ComponentModel.Win32Exception : The wait operation timed out.
             */
@@ -305,11 +305,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Act
             /* TODO: Fix flaky test failure:
-            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  
-                The connection could have timed out while waiting for server to complete the login process and respond; 
-                Or it could have timed out while attempting to create multiple active connections.  
-                This failure occurred while attempting to connect to the Principle server.  
-                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=6; handshake=80; 
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.
+                The connection could have timed out while waiting for server to complete the login process and respond;
+                Or it could have timed out while attempting to create multiple active connections.
+                This failure occurred while attempting to connect to the Principle server.
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=6; handshake=80;
                 [Login] initialization=0; authentication=0; [Post-Login] complete=5443;
                 ---- System.ComponentModel.Win32Exception : The wait operation timed out
             */
@@ -368,21 +368,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new(builder.ConnectionString);
             // Act
             /* TODO: Fix flaky test failure:
-            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  
-                The timeout period elapsed during the post-login phase.  
-                The connection could have timed out while waiting for server to complete the login process and respond; 
-                Or it could have timed out while attempting to create multiple active connections.  
-                This failure occurred while attempting to connect to the Principle server.  
-                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=4; handshake=68; 
-                [Login] initialization=0; authentication=0; [Post-Login] complete=5443; 
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.
+                The timeout period elapsed during the post-login phase.
+                The connection could have timed out while waiting for server to complete the login process and respond;
+                Or it could have timed out while attempting to create multiple active connections.
+                This failure occurred while attempting to connect to the Principle server.
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=4; handshake=68;
+                [Login] initialization=0; authentication=0; [Post-Login] complete=5443;
                 ---- System.ComponentModel.Win32Exception : The wait operation timed out
             */
             /* TODO: Fix flaky test failure:
-            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  
-                The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  
-                This could be because the pre-login handshake failed or the server was unable to respond back in time.  
-                This failure occurred while attempting to connect to the Principle server.  
-                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=0; handshake=5285; 
+            Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.
+                The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.
+                This could be because the pre-login handshake failed or the server was unable to respond back in time.
+                This failure occurred while attempting to connect to the Principle server.
+                The duration spent while attempting to connect to this server was - [Pre-Login] initialization=0; handshake=5285;
                 ---- System.ComponentModel.Win32Exception : The wait operation timed out.
             */
             connection.Open();
@@ -406,6 +406,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Verifies login-phase transient SQL errors are retried on the primary endpoint and
         /// do not trigger failover-partner alternation.
         /// </summary>
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_ShouldConnectToPrimary(errorCode: 42109) [6 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //   Expected: 2
+        //   Actual:   3
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_ShouldConnectToPrimary(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 451
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -565,7 +574,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        [Trait("Category", "flaky")] // [errorcode: 42109] Assert.Fail() Failure
+        [Trait("Category", "flaky")]
+        //              Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(errorCode: 42109) [2 s]
+        // EXEC : error Message:  [/Users/runner/work/1/s/build2.proj]
+        //      Assert.Fail() Failure
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_RetryDisabled_ShouldFail(UInt32 errorCode) in /Users/runner/work/1/s/src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/ConnectionFailoverTests.cs:line 526
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -656,8 +672,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Connect once to the primary to trigger it to send the failover partner
             /* TODO: Fix flaky test failure:
-            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server. 
-                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. 
+            Microsoft.Data.SqlClient.SqlException : A network-related or instance-specific error occurred while establishing a connection to SQL Server.
+                The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.
                 (provider: TCP Provider, error: 0 - The wait operation timed out.)
                 ---- System.ComponentModel.Win32Exception : The wait operation timed out.
             */
