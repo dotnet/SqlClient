@@ -772,6 +772,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Async parity with user-provided partner: login-phase transient SQL errors should
         /// still retry on primary without failover alternation.
         /// </summary>
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(errorCode: 42109) [4 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Strings differ
+        //                            Γåô (pos 14)
+        //   Expected: "localhost,60625"
+        //   Actual:   "localhost,60624"
+        //                            Γåæ (pos 14)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 816
+        //   --- End of stack trace from previous location ---
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
