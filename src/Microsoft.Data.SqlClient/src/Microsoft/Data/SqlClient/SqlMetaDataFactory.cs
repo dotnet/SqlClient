@@ -121,8 +121,6 @@ namespace Microsoft.Data.SqlClient
 
 
         // Well-known column names
-        private const string MaximumVersionKey = "MaximumVersion";
-        private const string MinimumVersionKey = "MinimumVersion";
         private const string RestrictionDefaultKey = "RestrictionDefault";
         private const string RestrictionNumberKey = "RestrictionNumber";
         private const string RestrictionNameKey = "RestrictionName";
@@ -130,14 +128,8 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly HashSet<int> s_assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
-        private readonly string _serverVersion;
-
-        public SqlMetaDataFactory(ConnectionCapabilities connectionCapabilities)
+        public SqlMetaDataFactory()
         {
-            ADP.CheckArgumentNull(connectionCapabilities, nameof(connectionCapabilities));
-            ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
-
-            _serverVersion = connectionCapabilities.ServerVersion;
         }
 
         public DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions) =>
@@ -153,30 +145,26 @@ namespace Microsoft.Data.SqlClient
             MetaDataCollection? metadataRoot = s_metaDataCollection[0] as MetaDataCollection;
             // We expect first element of s_metaDataCollection to be an instance of MetaDataCollection
             Debug.Assert(metadataRoot != null);
-            DataTable schema = await metadataRoot!.GetMetadata(collectionName, new MetaDataContext(_serverVersion, restrictions, connection, isAsync, cancellationToken));
+            DataTable schema = await metadataRoot!.GetMetadata(collectionName, new MetaDataContext(restrictions, connection, isAsync, cancellationToken));
 
             return schema;
         }
 
-        internal interface ISupported
-        {
-            string? MinimumVersion { get; }
-            string? MaximumVersion { get; }
-        }
-
         internal sealed class MetaDataContext
         {
-            public string ServerVersion { get; init; }
+            public ConnectionCapabilities Caps { get; init; }
             public string[] RestrictionValues { get; init; }
             public DbConnection Connection { get; init; }
             public bool IsAsync { get; init; }
             public CancellationToken CancellationToken { get; init; }
 
-            internal MetaDataContext(string serverVersion, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
+            internal MetaDataContext(string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
             {
-                ServerVersion = serverVersion;
+                Debug.Assert(connection is SqlConnection);
+
                 RestrictionValues = restrictions;
                 Connection = connection;
+                Caps = ((SqlConnection)connection).InnerConnection.Capabilities;
                 IsAsync = isAsync;
                 CancellationToken = cancellationToken;
             }
@@ -225,7 +213,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (string.Equals(metaData.CollectionName, collectionName, StringComparison.InvariantCultureIgnoreCase))
                     {
-                        if (!SupportedByCurrentVersion(context))
+                        if (!metaData.SupportedByCurrentVersion(context))
                         {
                             versionFailure = true;
                         }
@@ -272,23 +260,6 @@ namespace Microsoft.Data.SqlClient
 
                 return requestedCollection;
             }
-        }
-    }
-
-    internal static class SqlMetaDataFactoryExtensions
-    {
-        internal static bool SupportedByCurrentVersion(this SqlMetaDataFactory.ISupported item, SqlMetaDataFactory.MetaDataContext context)
-        {
-            bool isAzure = ADP.IsAzureSqlServerEndpoint(context.Connection.DataSource);
-            // Azure SQL always returns v12.00.XXXX (TDS returns 12.00.9114, SERVERPROPERTY('ProductVersion') returns 12.0.2000.8, SERVERPROPERTY('ResourceVersion') returns 17.00.9114),
-            // but in fact it has latest stable version. For Azure SQL only item where MaximumVersion=null should be valid.
-            if (isAzure)
-            {
-                return item.MaximumVersion == null;
-            }
-
-            return (item.MinimumVersion == null || string.Compare(context.ServerVersion, item.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
-                   (item.MaximumVersion == null || string.Compare(context.ServerVersion, item.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0);
         }
     }
 }

@@ -262,15 +262,13 @@ namespace Microsoft.Data.SqlClient
             return connectionPoolGroup;
         }
 
-        internal SqlMetaDataFactory GetMetaDataFactory(
-            DbConnectionPoolGroup poolGroup,
-            DbConnectionInternal internalConnection)
+        internal SqlMetaDataFactory GetMetaDataFactory(DbConnectionPoolGroup poolGroup)
         {
             Debug.Assert(poolGroup is not null, "connectionPoolGroup may not be null.");
 
             // Get the metadata factory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory(internalConnection);
+            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory();
         }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
@@ -745,11 +743,9 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        private static SqlMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection)
+        private static SqlMetaDataFactory CreateMetaDataFactory()
         {
-            Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
-
-            return new SqlMetaDataFactory(internalConnection.Capabilities);
+            return new SqlMetaDataFactory();
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(

@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SqlMetaDataFactory
     {
-        private sealed class SupportedQuery : ISupported
+        private sealed class SupportedQuery
         {
             public string? MinimumVersion { get; init; }
             public string? MaximumVersion { get; init; }
@@ -53,9 +53,13 @@ namespace Microsoft.Data.SqlClient
                 SupportedQuery? validQuery = null;
                 foreach (SupportedQuery query in Queries)
                 {
-                    if (query.SupportedByCurrentVersion(context))
+                    // Since Azure DB always has latest stable version of SQL Server engine, take latest query 
+                    if ((context.Caps.IsAzureSql && query.MaximumVersion == null) ||
+                        // ..or if it's not Azure, check if the current version is within the supported range
+                        (query.MinimumVersion == null || string.Compare(context.Caps.ServerVersion, query.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
+                        (query.MaximumVersion == null || string.Compare(context.Caps.ServerVersion, query.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0))
                     {
-                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.ServerVersion} in collection {CollectionName}");
+                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.Caps.ServerVersion} in collection {CollectionName}");
                         validQuery = query;
                     }
                 }
