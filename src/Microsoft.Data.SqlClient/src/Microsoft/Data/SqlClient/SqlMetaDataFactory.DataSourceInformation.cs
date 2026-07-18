@@ -39,7 +39,7 @@ internal sealed partial class SqlMetaDataFactory
                                                                      | SupportedJoinOperators.FullOuter;
 
         internal DataSourceInformationCollection()
-            : base(DbMetaDataCollectionNames.DataSourceInformation, 0, 0)
+            : base(DbMetaDataCollectionNames.DataSourceInformation, 0)
         {
         }
 

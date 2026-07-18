@@ -38,9 +38,10 @@ namespace Microsoft.Data.SqlClient
         {
             private readonly SupportedQuery[] Queries;
             public Restriction[] RestrictionParams { get; init; }
+            public override int NumberOfRestrictions => RestrictionParams.Length;
 
-            public SqlCommandCollection(string collectionName, int numberOfRestrictions, int numberOfIdentifierParts, SupportedQuery[] queries, Restriction[] restrictions)
-                : base(collectionName, numberOfRestrictions, numberOfIdentifierParts)
+            public SqlCommandCollection(string collectionName, int numberOfIdentifierParts, SupportedQuery[] queries, Restriction[] restrictions)
+                : base(collectionName, numberOfIdentifierParts)
             {
                 RestrictionParams = restrictions;
                 Queries = queries;
@@ -75,13 +76,11 @@ namespace Microsoft.Data.SqlClient
 
             public async override ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable? accumulator = null)
             {
-                Debug.Assert(NumberOfRestrictions >= (context.RestrictionValues?.Length ?? 0));
-
                 context.CancellationToken.ThrowIfCancellationRequested();
 
                 DataTable resultTable;
 
-                if ((context.RestrictionValues is not null) && (context.RestrictionValues.Length > NumberOfRestrictions))
+                if ((context.RestrictionValues is not null) && (context.RestrictionValues.Length > RestrictionParams.Length))
                 {
                     throw ADP.TooManyRestrictions(CollectionName);
                 }
@@ -106,7 +105,7 @@ namespace Microsoft.Data.SqlClient
                 command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
                 command.Transaction = castConnection?.GetOpenTdsConnection()?.CurrentTransaction?.Parent;
 
-                for (int i = 0; i < NumberOfRestrictions; i++)
+                for (int i = 0; i < RestrictionParams.Length; i++)
                 {
                     SqlParameter restrictionParameter = command.CreateParameter();
 

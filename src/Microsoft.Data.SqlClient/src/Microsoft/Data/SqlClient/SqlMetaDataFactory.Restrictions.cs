@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private sealed class RestrictionsCollection : MetaDataCollectionBase
         {
-            internal RestrictionsCollection() : base(DbMetaDataCollectionNames.Restrictions, 0, 0)
+            internal RestrictionsCollection() : base(DbMetaDataCollectionNames.Restrictions, 0)
             {
             }
 
@@ -45,9 +45,10 @@ namespace Microsoft.Data.SqlClient
                         sqlCollection.RestrictionParams != null &&
                         sqlCollection.SupportedByCurrentVersion(context))
                     {
+                        int i = 1;
                         foreach (Restriction restriction in sqlCollection.RestrictionParams)
                         {
-                            table.Rows.Add([mdc.CollectionName, restriction.RestrictionName, restriction.ParameterName, null, restriction.RestrictionNumber]);
+                            table.Rows.Add([mdc.CollectionName, restriction.RestrictionName, restriction.ParameterName, null, i++]);
                         }
                     }
                 }

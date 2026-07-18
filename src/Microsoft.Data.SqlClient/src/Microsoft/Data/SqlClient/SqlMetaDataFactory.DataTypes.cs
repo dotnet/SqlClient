@@ -66,7 +66,7 @@ internal sealed partial class SqlMetaDataFactory
         #pragma warning restore format
 
         internal DataTypesCollection()
-            : base(DbMetaDataCollectionNames.DataTypes, 0, 0)
+            : base(DbMetaDataCollectionNames.DataTypes, 0)
         {
         }
 

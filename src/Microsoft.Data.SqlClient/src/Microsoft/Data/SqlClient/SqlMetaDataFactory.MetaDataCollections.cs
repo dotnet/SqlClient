@@ -22,7 +22,7 @@ internal sealed partial class SqlMetaDataFactory
     private class MetaDataCollection : MetaDataCollectionBase
     {
         internal MetaDataCollection()
-            : base(DbMetaDataCollectionNames.MetaDataCollections, 0, 0)
+            : base(DbMetaDataCollectionNames.MetaDataCollections, 0)
         {
         }
 

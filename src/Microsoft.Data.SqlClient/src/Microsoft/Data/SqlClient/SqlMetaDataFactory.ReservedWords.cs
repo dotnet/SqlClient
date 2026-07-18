@@ -129,7 +129,7 @@ internal sealed partial class SqlMetaDataFactory
             ];
 
         internal ReservedWordsCollection()
-            : base(DbMetaDataCollectionNames.ReservedWords, 0, 0)
+            : base(DbMetaDataCollectionNames.ReservedWords, 0)
         {
         }
 
