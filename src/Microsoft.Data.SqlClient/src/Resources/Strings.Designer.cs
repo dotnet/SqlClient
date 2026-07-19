@@ -3337,6 +3337,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID..
+        /// </summary>
+        internal static string SQL_GlobalizationInvariantModeRequiresLcid {
+            get {
+                return ResourceManager.GetString("SQL_GlobalizationInvariantModeRequiresLcid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Instance failure..
         /// </summary>
         internal static string SQL_InstanceFailure {

@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -227,6 +228,43 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
             Assert.Equal(0, metaData.SortOrdinal);
         }
+
+        #if NET
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithDefaultLocale_ThrowsInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, true, true, SortOrder.Ascending, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0, true, true, SortOrder.Ascending, 0));
+        }
+
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        public void ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthAndLocale(dbType);
+        }
+
+        [Theory]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthTextAndLocale(dbType);
+        }
+        #endif
 
         [Fact]
         public void ConstructorWithDefaultLocaleInvalidType_Throws()
