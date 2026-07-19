@@ -44,12 +44,8 @@ parameters:
     type: string
 
 steps:
-  # Download the strong name signing key from secure file storage
-  - task: DownloadSecureFile@1
-    displayName: 'Download Signing Key'
-    inputs:
-      secureFile: 'netfxKeypair.snk'
-    name: keyFile
+  # Download the assembly signing key from secure file storage.
+  - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
   - task: DotNetCoreCLI@2
     displayName: 'build.proj - Build${{ parameters.packageShortName }}'
@@ -61,7 +57,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:ReferenceType=Package
         -p:SkipDependencyPack=true
-        -p:SigningKeyPath="$(keyFile.secureFilePath)"
+        -p:SigningKeyPath="$(driverKeyFile.secureFilePath)"
         -p:BuildNumber="$(Build.BuildNumber)"
         -p:PackageVersion${{ parameters.packageShortName }}="${{ parameters.packageVersion }}"
         ${{ parameters.dependencyArguments }}

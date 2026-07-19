@@ -61,6 +61,20 @@ parameters:
   - name: poolName
     type: string
 
+  # True when building on the internal ADO.Net project.  When set, assemblies
+  # are signed with the driver key and tests are signed with the test key.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
+  # The C# project reference type to use when building.
+  - name: referenceType
+    type: string
+    default: Project
+    values:
+      - Package
+      - Project
+
   # The pool VM image to use.
   - name: vmImage
     type: string
@@ -89,10 +103,20 @@ jobs:
         value: src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/Abstractions.Test.csproj
 
       # dotnet CLI arguments for build/test/pack commands
-      - name: buildArguments
+      - name: dotnetBuildOpts
         value: >-
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
+
+      # Signing arguments — only set for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - name: signingArguments
+          value: >-
+            -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
+            -p:TestSigningKeyPath=$(testKeyFile.secureFilePath)
+      - ${{ else }}:
+        - name: signingArguments
+          value: ''
 
       # Explicitly unset the $PLATFORM environment variable that is set by the
       # 'ADO Build properties' Library in the ADO SqlClientDrivers public project.
@@ -121,6 +145,13 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
+      # Download the assembly signing keys for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+          parameters:
+            isTest: true
+
       # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
@@ -136,7 +167,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: $(dotnetBuildOpts) $(signingArguments)
 
       # Run the tests for each .NET runtime.
       - ${{ each runtime in parameters.netRuntimes }}:
@@ -146,7 +177,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -157,7 +188,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
@@ -170,7 +201,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -181,7 +212,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
