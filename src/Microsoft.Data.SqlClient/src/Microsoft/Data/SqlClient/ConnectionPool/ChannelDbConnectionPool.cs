@@ -130,8 +130,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Cancels in-flight background warmup/replenishment when the pool shuts down so no new
-        /// connections are created after shutdown begins (Story 4). The token is also passed to
-        /// physical connection creation so a blocked open is unwound promptly on shutdown.
+        /// connections are created after shutdown begins (Story 4). The token is observed at the
+        /// warmup loop's await points and before each creation attempt, so it stops the loop and
+        /// prevents further attempts promptly. It cannot abort an already in-progress physical open:
+        /// that path is synchronous and the connection factory does not yet accept a cancellation
+        /// token (see the TODO in <see cref="OpenNewInternalConnection"/>).
         /// </summary>
         private readonly CancellationTokenSource _warmupCts = new();
 
@@ -373,8 +376,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Cancel any in-flight background warmup/replenishment so no new connections are
             // created after shutdown begins (Story 4). The warmup loop also observes the
-            // State transition above, but cancelling here unwinds a create that is currently
-            // blocked and stops the loop promptly. Cancel is non-throwing and idempotent.
+            // State transition above; cancelling here stops the loop promptly by tripping its
+            // await points and pre-create checks. It does not abort an already in-progress
+            // synchronous physical open (see _warmupCts field docs). Cancel is idempotent.
             try
             {
                 _warmupCts.Cancel();
