@@ -1,0 +1,15 @@
+{
+  "test": {
+    // xUnit v3 runs on Microsoft.Testing.Platform rather than the older VSTest runner.
+    // On .NET 10, dotnet test must therefore be opted into MTP mode for this test project.
+    "runner": "Microsoft.Testing.Platform"
+  },
+  "sdk": {
+    // global.json lookup stops at the nearest file and does not merge with the repo-root file.
+    // This subtree therefore needs to repeat the root SDK settings so commands run from
+    // tools/PackageValidator keep using the same SDK behavior.
+    "version": "10.0.300",
+    "rollForward": "patch",
+    "allowPrerelease": false
+  }
+}

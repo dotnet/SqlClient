@@ -92,7 +92,7 @@ projects they depend on.
 | `BuildSqlClientWindows`       | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
 | `BuildSqlServer`              | Builds Microsoft.SqlServer.Server                                               |
 | `BuildTests`                  | Builds all test projects for all supported OS combinations                      |
-| `BuildTools`                  | Builds auxiliary tool/app projects                                              |
+| `BuildTools`                  | Builds auxiliary tool/app projects and their test projects                      |
 | `Clean`                       | Removes build and test output directories                                       |
 
 A selection of parameters for build targets in `build.proj` can be found below:
