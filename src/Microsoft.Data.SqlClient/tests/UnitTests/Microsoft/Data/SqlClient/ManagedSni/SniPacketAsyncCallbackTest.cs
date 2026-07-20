@@ -6,7 +6,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManagedSni;
@@ -21,15 +20,64 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         public async Task ReadFromStreamAsync_WhenAsyncIoCallbackThrows_CreatesUnobservedTaskException()
         {
             // Arrange
+            // - Create ID for our special test exception
+            ObservableException testException = new ObservableException(Guid.NewGuid());
 
+            // - Set up unobserved exception handler that only observes our special test exception.
+            Exception? unobservedException = null;
+            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
+                (_, args) =>
+                {
+                    if (args.Exception.InnerExceptions.Contains(testException))
+                    {
+                        unobservedException = args.Exception;
+                        args.SetObserved();
+                    }
+                };
+            TaskScheduler.UnobservedTaskException += handleUnobservedException;
+
+            // - Set up task completion source to signal end of async IO completion callback
+            TaskCompletionSource<object?> callbackStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            // - Set up packet around the test handle, wire up callback
+            TestSniHandle testHandle = new TestSniHandle();
+            SniPacket testPacket = new SniPacket(testHandle, id: 1);
+
+            testPacket.Allocate(headerLength: 0, dataLength: 1);
+            testPacket.SetAsyncIOCompletionCallback((_, _) =>
+            {
+                // Throw our special test exception, then before finishing complete the TCS so
+                // we know the exception was thrown.
+                try
+                {
+                    throw testException;
+                }
+                finally
+                {
+                    callbackStarted.SetResult(null);
+                }
+            });
 
             try
             {
                 // Act
+                // - Read some bytes from the test asynchronously. This will cause the async IO
+                //   completion callback to fire, which will throw our test exception.
+                using MemoryStream emptyStream = new();
+                testPacket.ReadFromStreamAsync(emptyStream);
 
+                // - Wait for it to complete (should be more or less instantaneous)
+                await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
+                // - Force GC cleanup that will trigger unobserved exception
+                testPacket.Release();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
 
                 // Assert
+                // @TODO: Fix issue such that this is null
+                Assert.NotNull(unobservedException);
             }
             finally
             {
@@ -37,59 +85,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 // - Unregister unobserved exception handler
                 TaskScheduler.UnobservedTaskException -= handleUnobservedException;
             }
-
-
-            // Assert
-
-            Guid exceptionId = Guid.NewGuid();
-            Exception? unobservedException = null;
-
-            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
-                (_, args) =>
-                {
-                    if (args.Exception.InnerExceptions.OfType<ObservableException>().Any(e => e.Identifier == exceptionId))
-                    {
-                        unobservedException = args.Exception;
-                        args.SetObserved();
-                    }
-                };
-
-            TaskScheduler.UnobservedTaskException += handleUnobservedException;
-
-            try
-            {
-                await RunReadWithThrowingCallbackAsync(exceptionId);
-
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                Assert.NotNull(unobservedException);
-            }
-            finally
-            {
-
-            }
-        }
-
-        private static async Task RunReadWithThrowingCallbackAsync(Guid exceptionId)
-        {
-            TaskCompletionSource<object?> callbackStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            SniPacket packet = new(new TestSniHandle(), id: 1);
-            packet.Allocate(headerLength: 0, dataLength: 1);
-            packet.SetAsyncIOCompletionCallback((_, _) =>
-            {
-                callbackStarted.SetResult(null);
-                throw new ObservableException(exceptionId);
-            });
-
-            using MemoryStream emptyStream = new();
-            packet.ReadFromStreamAsync(emptyStream);
-
-            await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-
-            packet.Release();
-            GC.SuppressFinalize(packet);
         }
 
         private sealed class TestSniHandle : SniHandle
@@ -153,11 +148,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             {
             }
 
-#if DEBUG
+            #if DEBUG
             public override void KillConnection()
             {
             }
-#endif
+            #endif
         }
     }
 }
