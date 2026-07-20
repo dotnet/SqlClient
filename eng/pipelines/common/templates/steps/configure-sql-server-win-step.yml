@@ -147,7 +147,7 @@ steps:
       while ($true) {
           $tries++
           try {
-              Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
+              Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 -ErrorAction Stop @"
                   CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
                   DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
                   CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
@@ -293,7 +293,7 @@ steps:
       while ($true) {
           $tries++
           try {
-              Invoke-Sqlcmd -ServerInstance "$machineName" -Query "SELECT @@VERSION" -ConnectionTimeout 5
+              Invoke-Sqlcmd -ServerInstance "$machineName" -Query "SELECT @@VERSION" -ConnectionTimeout 5 -ErrorAction Stop
               Write-Host "SQL Server is ready after restart (attempt $tries)."
               break
           } catch {
@@ -328,7 +328,7 @@ steps:
         while ($true) {
             $tries++
             try {
-                Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 -Query "EXEC sp_configure filestream_access_level, 2; RECONFIGURE;"
+                Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 -Query "EXEC sp_configure filestream_access_level, 2; RECONFIGURE;" -ErrorAction Stop
                 Write-Host "FileStream access level configured successfully (attempt $tries)."
                 break
             } catch {
