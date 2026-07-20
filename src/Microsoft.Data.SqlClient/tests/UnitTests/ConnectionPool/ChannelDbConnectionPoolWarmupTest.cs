@@ -32,7 +32,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int maxPoolSize = 50,
             int idleTimeout = 0,
             int loadBalanceTimeout = 0,
-            ConcurrencyLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null,
+            Action<Func<Task>>? warmupLoopScheduler = null)
         {
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -53,7 +54,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 dbConnectionPoolGroup,
                 DbConnectionPoolIdentity.NoIdentity,
                 new DbConnectionPoolProviderInfo(),
-                connectionCreationRateLimiter);
+                connectionCreationRateLimiter,
+                timeProvider: null,
+                warmupLoopScheduler: warmupLoopScheduler);
         }
 
         /// <summary>
@@ -77,6 +80,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(connection);
             return connection!;
         }
+
+        /// <summary>
+        /// Generous upper bound for waits that guard a background handshake which, in correct code,
+        /// completes in milliseconds. It is only ever hit on a genuine failure/hang, so it does not
+        /// make passing runs slow or introduce timing races.
+        /// </summary>
+        private static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Runs the warmup loop on a dedicated foreground-of-its-own background thread rather than a
+        /// shared thread-pool worker.
+        /// <para>
+        /// The gated test factory blocks warmup's first physical create synchronously. In production
+        /// warmup runs via <c>Task.Run</c>, so that blocking would occupy a thread-pool worker; under
+        /// xUnit's parallel execution the shared pool can be momentarily starved and the warmup work
+        /// item may not be scheduled for seconds, making handshake-based assertions flaky. Giving the
+        /// loop its own thread removes that dependency on thread-pool scheduling entirely - without
+        /// mutating any global thread-pool configuration that other tests share.
+        /// </para>
+        /// </summary>
+        private static readonly Action<Func<Task>> DedicatedThreadWarmupScheduler = loop =>
+        {
+            var thread = new Thread(() => loop().GetAwaiter().GetResult())
+            {
+                IsBackground = true,
+                Name = "WarmupTest.WarmupLoop",
+            };
+            thread.Start();
+        };
 
         #endregion
 
@@ -132,23 +164,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             using var createGate = new ManualResetEventSlim(initialState: false);
             var factory = new ChannelDbConnectionPoolTest.GatedSuccessfulConnectionFactory(createGate);
-            using var pool = ConstructPool(factory, minPoolSize: 3, maxPoolSize: 10);
+            // Run warmup on its own thread so its gated first create can't be delayed by thread-pool
+            // starvation, making the handshake below deterministic.
+            using var pool = ConstructPool(
+                factory, minPoolSize: 3, maxPoolSize: 10,
+                warmupLoopScheduler: DedicatedThreadWarmupScheduler);
 
-            // Warmup begins and its single, serial creation blocks on the gate.
+            // Warmup begins and its single, serial creation blocks on the gate. Waiting on this
+            // explicit signal (not a sleep) establishes a deterministic happens-before: warmup is now
+            // parked inside its first create.
             pool.Startup();
             Assert.True(
-                factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
+                factory.FirstCreateStarted.Wait(HandshakeTimeout),
                 "Timed out waiting for warmup to begin its first creation.");
 
-            // A user request runs while warmup is still blocked. It must complete promptly by
-            // creating its own (second) connection rather than waiting for warmup.
-            Task<DbConnectionInternal> userOpen = Task.Run(() => CheckOut(pool));
-            Task completed = await Task.WhenAny(userOpen, Task.Delay(TimeSpan.FromSeconds(5)));
+            // Exactly one creation - warmup's - is in flight and parked on the closed gate. The
+            // warmup loop is serial, so it cannot advance to a second create until the gate opens.
+            Assert.Equal(1, factory.CreateCount);
+
+            // Issue a user request while warmup is parked. Run it on a dedicated (LongRunning) thread
+            // so it never competes with warmup for the same pool worker. Because warmup does not block
+            // user requests, it must complete promptly by creating its own connection. A generous
+            // upper bound converts a hypothetical "user blocked behind warmup" regression into a clean
+            // failure instead of an indefinite hang; correct code completes in milliseconds.
+            Task<DbConnectionInternal> userOpen = Task.Factory.StartNew(
+                () => CheckOut(pool),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+
+            Task completed = await Task.WhenAny(userOpen, Task.Delay(HandshakeTimeout));
             Assert.True(completed == userOpen, "User request was blocked behind warmup.");
             Assert.NotNull(await userOpen);
 
-            // Warmup is still parked on its single in-flight creation (serial, not parallel): only
-            // warmup's first creation (count 1) and the user's creation (count 2) have occurred.
+            // Seriality: warmup is still parked on its single in-flight create (the gate is closed),
+            // so the only additional creation is the user's. CreateCount == 2 proves warmup did not
+            // create connections in parallel. This is deterministic: nothing can advance warmup's
+            // loop until the gate is set below.
             Assert.Equal(2, factory.CreateCount);
 
             createGate.Set();
@@ -195,12 +247,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 factory,
                 minPoolSize: 2,
                 maxPoolSize: 5,
-                connectionCreationRateLimiter: rateLimiter);
+                connectionCreationRateLimiter: rateLimiter,
+                warmupLoopScheduler: DedicatedThreadWarmupScheduler);
 
             // Warmup begins, acquires the only permit, and blocks in creation while holding it.
             pool.Startup();
             Assert.True(
-                factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
+                factory.FirstCreateStarted.Wait(HandshakeTimeout),
                 "Timed out waiting for warmup to begin its first creation.");
 
             // A concurrent user request competes for the same limiter and is denied a permit,
@@ -297,12 +350,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             using var createGate = new ManualResetEventSlim(initialState: false);
             var factory = new ChannelDbConnectionPoolTest.GatedSuccessfulConnectionFactory(createGate);
-            using var pool = ConstructPool(factory, minPoolSize: 3, maxPoolSize: 10);
+            using var pool = ConstructPool(
+                factory, minPoolSize: 3, maxPoolSize: 10,
+                warmupLoopScheduler: DedicatedThreadWarmupScheduler);
 
             // Warmup begins and blocks on its first serial creation.
             pool.Startup();
             Assert.True(
-                factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
+                factory.FirstCreateStarted.Wait(HandshakeTimeout),
                 "Timed out waiting for warmup to begin its first creation.");
 
             // Shut down while warmup is parked. This cancels warmup and completes the idle channel.

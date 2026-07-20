@@ -152,6 +152,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// loops.
         /// </summary>
         private int _warmupRequested;
+
+        /// <summary>
+        /// Optional test seam controlling how the warmup loop is launched. When null (production),
+        /// the loop runs via <see cref="Task.Run(Func{Task})"/> on the thread pool. Tests inject a
+        /// scheduler that runs the loop on a dedicated thread so warmup's first (synchronous,
+        /// possibly gated) physical open cannot be delayed by thread-pool starvation, keeping
+        /// timing-sensitive assertions deterministic without mutating global thread-pool state.
+        /// </summary>
+        private readonly Action<Func<Task>>? _warmupLoopScheduler;
         #endregion
 
         /// <summary>
@@ -163,7 +172,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
-            TimeProvider? timeProvider = null)
+            TimeProvider? timeProvider = null,
+            Action<Func<Task>>? warmupLoopScheduler = null)
         {
             ConnectionFactory = connectionFactory;
             PoolGroup = connectionPoolGroup;
@@ -174,6 +184,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
+            _warmupLoopScheduler = warmupLoopScheduler;
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
@@ -1116,8 +1127,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Run on the thread pool so warmup never blocks the caller (Startup or a returning
             // connection). Fire-and-forget: the loop absorbs its own exceptions and always releases
-            // the single-loop guard on exit.
-            _ = Task.Run(RunWarmupLoopAsync);
+            // the single-loop guard on exit. Tests may supply an alternate scheduler (e.g. a
+            // dedicated thread) so warmup startup is not subject to thread-pool scheduling latency.
+            if (_warmupLoopScheduler is not null)
+            {
+                _warmupLoopScheduler(RunWarmupLoopAsync);
+            }
+            else
+            {
+                _ = Task.Run(RunWarmupLoopAsync);
+            }
         }
 
         /// <summary>
