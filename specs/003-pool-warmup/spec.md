@@ -73,7 +73,7 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 ## Implementation Notes
 
 - Warmup starts automatically when the pool's `Startup()` is called.
-- Uses async connection creation — no blocking the caller, no sync-over-async.
+- Warmup runs on a background task, so it never blocks the caller (`Startup`/connection return) and uses no sync-over-async in the loop. The physical connection open itself is currently synchronous (executed on the background task); the connection factory does not yet expose an async open.
 - Creates connections serially (one at a time) through the shared rate limiter.
 - Warmup failures are traced/logged but do not propagate or trigger error state.
 - Warmup stops if the pool is cleared (generation change) to avoid creating stale-generation connections.
@@ -84,7 +84,7 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 
 - When a pool starts with Min Pool Size > 0, background warmup begins immediately.
 - After warmup completes, the pool contains Min Pool Size idle connections.
-- Warmup uses async I/O throughout — no sync-over-async.
+- Warmup runs on a background task without blocking callers and without sync-over-async in the loop (the physical open is currently synchronous, executed on the background task, pending async-open support in the factory).
 - Warmup connections are created serially through the shared rate limiter.
 - Warmup errors are traced/logged and do not crash the application or trigger error state.
 - If the pool is shut down or cleared during warmup, warmup stops gracefully.
