@@ -239,6 +239,33 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Fact]
+        public void ConstructorWithJsonType_Succeeds()
+        {
+            // JSON is a valid column type for a table-valued parameter / SqlDataRecord.
+            SqlMetaData metaData = new SqlMetaData("col1", SqlDbTypeExtensions.Json);
+            Assert.Equal("col1", metaData.Name);
+            Assert.Equal(SqlDbTypeExtensions.Json, metaData.SqlDbType);
+            Assert.Equal(DbType.String, metaData.DbType);
+            Assert.Equal(SqlMetaData.Max, metaData.MaxLength);
+        }
+
+        [Fact]
+        public void SqlDataRecord_JsonColumn_RoundTripsInMemory()
+        {
+            // Validates the client-side SMI plumbing for a JSON column without a server.
+            const string json = "{\"a\":1,\"b\":[1,2,3]}";
+            SqlMetaData[] metadata = { new SqlMetaData("Data", SqlDbTypeExtensions.Json) };
+            SqlDataRecord record = new SqlDataRecord(metadata);
+
+            record.SetString(0, json);
+            Assert.Equal(json, record.GetString(0));
+            Assert.Equal(SqlDbTypeExtensions.Json, record.GetSqlMetaData(0).SqlDbType);
+
+            record.SetDBNull(0);
+            Assert.True(record.IsDBNull(0));
+        }
+
         public static IEnumerable<object[]> ConstructorCharData()
         {
             return new object[][]

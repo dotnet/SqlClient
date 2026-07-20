@@ -92,7 +92,8 @@ namespace Microsoft.Data.SqlClient.Server
             DbType.Date,            // SqlDbType.Date
             DbType.Time,            // SqlDbType.Time
             DbType.DateTime2,       // SqlDbType.DateTime2
-            DbType.DateTimeOffset   // SqlDbType.DateTimeOffset
+            DbType.DateTimeOffset,  // SqlDbType.DateTimeOffset
+            DbType.String,          // SqlDbTypeExtensions.Json (value 35)
         };
 
 
@@ -134,6 +135,7 @@ namespace Microsoft.Data.SqlClient.Server
             new SqlMetaData("time", SqlDbType.Time, 5, 0, 7, 0, SqlCompareOptions.None),
             new SqlMetaData("datetime2", SqlDbType.DateTime2, 8, 0, 7, 0, SqlCompareOptions.None),
             new SqlMetaData("datetimeoffset", SqlDbType.DateTimeOffset, 10, 0, 7, 0, SqlCompareOptions.None),
+            new SqlMetaData("json", SqlDbTypeExtensions.Json, UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions),
         };
 
         private string _name;
@@ -378,6 +380,7 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.SmallInt:
                 case SqlDbType.TinyInt:
                 case SqlDbType.Xml:
+                case SqlDbTypeExtensions.Json:
                 case SqlDbType.Date:
                     Construct(name, dbType, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
@@ -563,7 +566,8 @@ namespace Microsoft.Data.SqlClient.Server
                     SqlDbType.TinyInt == dbType ||
                     SqlDbType.UniqueIdentifier == dbType ||
                     SqlDbType.Variant == dbType ||
-                    SqlDbType.Xml == dbType)
+                    SqlDbType.Xml == dbType ||
+                    SqlDbTypeExtensions.Json == dbType)
             )
             {
                 throw SQL.InvalidSqlDbTypeForConstructor(dbType);
@@ -2036,7 +2040,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private void SetDefaultsForType(SqlDbType dbType)
         {
-            if (SqlDbType.BigInt <= dbType && SqlDbType.DateTimeOffset >= dbType)
+            if ((SqlDbType.BigInt <= dbType && SqlDbType.DateTimeOffset >= dbType) || SqlDbTypeExtensions.Json == dbType)
             {
                 SqlMetaData smdDflt = s_defaults[(int)dbType];
                 _sqlDbType = dbType;

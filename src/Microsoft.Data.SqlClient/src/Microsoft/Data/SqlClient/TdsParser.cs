@@ -11188,6 +11188,15 @@ namespace Microsoft.Data.SqlClient
                     stateObj.WriteByte(TdsEnums.SQLVARIANT);
                     WriteInt(checked((int)metaData.MaxLength), stateObj);
                     break;
+                case SqlDbTypeExtensions.Json:
+                    // The SQL Server TVP protocol carries a JSON column as NVARCHAR(max) + collation,
+                    // with the value sent as UTF-16 (the server converts it to JSON on insert). This
+                    // matches the Microsoft JDBC driver's TVP/bulk representation of JSON columns.
+                    stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
+                    WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    stateObj.WriteByte(_defaultCollation._sortId);
+                    break;
                 case SqlDbType.Xml:
                     stateObj.WriteByte(TdsEnums.SQLXMLTYPE);
                     // Is there a schema

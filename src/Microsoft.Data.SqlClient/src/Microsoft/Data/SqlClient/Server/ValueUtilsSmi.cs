@@ -1004,6 +1004,9 @@ namespace Microsoft.Data.SqlClient.Server
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue(getters, ordinal, metaData);
                         break;
+                    case SqlDbTypeExtensions.Json:
+                        result = GetString_Unchecked(getters, ordinal);
+                        break;
                     case SqlDbType.Xml:
                         result = GetSqlXml_Unchecked(getters, ordinal).Value;
                         break;
@@ -1158,6 +1161,9 @@ namespace Microsoft.Data.SqlClient.Server
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue(getters, ordinal, metaData);
                         break;
+                    case SqlDbTypeExtensions.Json:
+                        result = new SqlString(GetString_Unchecked(getters, ordinal));
+                        break;
                     case SqlDbType.Xml:
                         result = GetSqlXml_Unchecked(getters, ordinal);
                         break;
@@ -1207,6 +1213,7 @@ namespace Microsoft.Data.SqlClient.Server
             DBNull.Value,       // SqlDbType.Time
             DBNull.Value,       // SqlDbType.DateTime2
             DBNull.Value,       // SqlDbType.DateTimeOffset
+            SqlString.Null,     // SqlDbTypeExtensions.Json (value 35)
         };
 
         internal static object NullUdtInstance(SmiMetaData metaData)
@@ -1827,6 +1834,14 @@ namespace Microsoft.Data.SqlClient.Server
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
                             SetCharsOrString_FromReader(setters, i, metaData[i], reader, 0);
                             break;
+                        case SqlDbTypeExtensions.Json:
+                            {
+                                Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
+                                // JSON travels as a single UTF-8 PLP value (see TdsValueSetter.SetString).
+                                string jsonValue = reader.GetString(i);
+                                SetString_Unchecked(setters, i, jsonValue, 0, jsonValue.Length);
+                            }
+                            break;
                         case SqlDbType.Xml:
                             {
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
@@ -2027,6 +2042,14 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.VarChar:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
                             SetChars_FromRecord(setters, i, metaData[i], record, 0);
+                            break;
+                        case SqlDbTypeExtensions.Json:
+                            {
+                                Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
+                                // JSON travels as a single UTF-8 PLP value (see TdsValueSetter.SetString).
+                                string jsonValue = record.GetString(i);
+                                SetString_Unchecked(setters, i, jsonValue, 0, jsonValue.Length);
+                            }
                             break;
                         case SqlDbType.Xml:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
@@ -2522,9 +2545,12 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(ExtendedClrTypeCode.First == 0 && (int)ExtendedClrTypeCode.Last == s_canAccessGetterDirectly.GetLength(0) - 1, "ExtendedClrTypeCodes does not match with __canAccessGetterDirectly");
             Debug.Assert(SqlDbType.BigInt == 0 && (int)SqlDbType.DateTimeOffset == s_canAccessGetterDirectly.GetLength(1) - 1, "SqlDbType does not match with __canAccessGetterDirectly");
             Debug.Assert(ExtendedClrTypeCode.First <= setterTypeCode && ExtendedClrTypeCode.Last >= setterTypeCode);
-            Debug.Assert(SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType);
+            Debug.Assert((SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType) || SqlDbTypeExtensions.Json == metaData.SqlDbType);
 
-            bool returnValue = s_canAccessGetterDirectly[(int)setterTypeCode, (int)metaData.SqlDbType];
+            // JSON is outside the contiguous SqlDbType range covered by the access map; it accepts the
+            // same accessors as NVarChar (string-based value transfer).
+            SqlDbType effectiveGetterType = SqlDbTypeExtensions.Json == metaData.SqlDbType ? SqlDbType.NVarChar : metaData.SqlDbType;
+            bool returnValue = s_canAccessGetterDirectly[(int)setterTypeCode, (int)effectiveGetterType];
 
             // Additional restrictions to distinguish TVPs and Structured UDTs
             if (
@@ -2548,9 +2574,12 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(ExtendedClrTypeCode.First == 0 && (int)ExtendedClrTypeCode.Last == s_canAccessSetterDirectly.GetLength(0) - 1, "ExtendedClrTypeCodes does not match with __canAccessSetterDirectly");
             Debug.Assert(SqlDbType.BigInt == 0 && (int)SqlDbType.DateTimeOffset == s_canAccessSetterDirectly.GetLength(1) - 1, "SqlDbType does not match with __canAccessSetterDirectly");
             Debug.Assert(ExtendedClrTypeCode.First <= setterTypeCode && ExtendedClrTypeCode.Last >= setterTypeCode);
-            Debug.Assert(SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType);
+            Debug.Assert((SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType) || SqlDbTypeExtensions.Json == metaData.SqlDbType);
 
-            bool returnValue = s_canAccessSetterDirectly[(int)setterTypeCode, (int)metaData.SqlDbType];
+            // JSON is outside the contiguous SqlDbType range covered by the access map; it accepts the
+            // same accessors as NVarChar (string-based value transfer).
+            SqlDbType effectiveSetterType = SqlDbTypeExtensions.Json == metaData.SqlDbType ? SqlDbType.NVarChar : metaData.SqlDbType;
+            bool returnValue = s_canAccessSetterDirectly[(int)setterTypeCode, (int)effectiveSetterType];
 
             // Additional restrictions to distinguish TVPs and Structured UDTs
             if (

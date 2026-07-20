@@ -253,6 +253,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.NVarChar:
                     case SqlDbType.Text:
                     case SqlDbType.VarChar:
+                    case SqlDbTypeExtensions.Json:
                         if (value.GetType() == typeof(string))
                         {
                             extendedCode = ExtendedClrTypeCode.String;
@@ -877,6 +878,7 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.TinyInt:
                 case SqlDbType.Variant:
                 case SqlDbType.Xml:
+                case SqlDbTypeExtensions.Json:
                 case SqlDbType.Date:
                     // These types require no  metadata modifies
                     break;
