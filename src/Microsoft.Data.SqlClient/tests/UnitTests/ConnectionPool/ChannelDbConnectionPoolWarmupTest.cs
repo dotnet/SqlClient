@@ -22,8 +22,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class ChannelDbConnectionPoolWarmupTest
     {
-        private const int DefaultTimeoutMs = 5000;
-
         #region Helpers
 
         private static ChannelDbConnectionPool ConstructPool(
@@ -54,28 +52,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnectionPoolIdentity.NoIdentity,
                 new DbConnectionPoolProviderInfo(),
                 connectionCreationRateLimiter);
-        }
-
-        /// <summary>
-        /// Spins until <paramref name="condition"/> is true or the timeout elapses. Warmup runs on
-        /// background tasks, so tests observe its effects by polling pool counters.
-        /// </summary>
-        private static bool WaitFor(Func<bool> condition, int timeoutMs = DefaultTimeoutMs)
-            => SpinWait.SpinUntil(condition, timeoutMs);
-
-        /// <summary>
-        /// Checks out a single connection from the pool synchronously.
-        /// </summary>
-        private static DbConnectionInternal CheckOut(ChannelDbConnectionPool pool)
-        {
-            bool completed = pool.TryGetConnection(
-                new SqlConnection(),
-                taskCompletionSource: null,
-                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                out DbConnectionInternal? connection);
-            Assert.True(completed);
-            Assert.NotNull(connection);
-            return connection!;
         }
 
         /// <summary>
@@ -183,7 +159,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // upper bound converts a hypothetical "user blocked behind warmup" regression into a clean
             // failure instead of an indefinite hang; correct code completes in milliseconds.
             Task<DbConnectionInternal> userOpen = Task.Factory.StartNew(
-                () => CheckOut(pool),
+                () =>
+                {
+                    bool completed = pool.TryGetConnection(
+                        new SqlConnection(),
+                        taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                        out DbConnectionInternal? connection);
+                    Assert.True(completed);
+                    Assert.NotNull(connection);
+                    return connection!;
+                },
                 CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default);
@@ -268,15 +254,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.False(completedSynchronously, "Async request unexpectedly completed synchronously.");
             Assert.Null(immediateConnection);
 
-            Assert.True(
-                WaitFor(() => rateLimiter.GetStatistics()!.TotalFailedLeases > failedBefore),
-                "User request was not denied by the shared rate limiter while warmup held the permit.");
-
             // Release warmup. With rate-limit retry removed, warmup's pass may end early if the
             // user request grabs the freed permit first - but the pool must still converge to
             // MinPoolSize: whichever creations win the permit (warmup's or the user's) fill it.
             createGate.Set();
 
+            // Await the deferred user request directly rather than spin-polling limiter statistics.
             // Bound the wait so a regression that never completes the async request fails fast
             // instead of hanging the whole test run.
             Task<DbConnectionInternal> userRequest = tcs.Task;
@@ -291,6 +274,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // warmup connections one of which the user took).
             await AwaitWarmupToMinimum(pool, 2);
             Assert.Equal(2, pool.Count);
+
+            // The user request was denied a permit by the shared limiter while warmup held it, then
+            // completed once warmup released it. By now that denial has definitely been recorded, so
+            // this is a deterministic post-settle assertion, not a race.
+            Assert.True(
+                rateLimiter.GetStatistics()!.TotalFailedLeases > failedBefore,
+                "User request was not denied by the shared rate limiter while warmup held the permit.");
         }
 
         #endregion
@@ -347,7 +337,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(pool.ErrorOccurred, "Warmup failure did not enter the pool error state.");
 
             // A user request while the pool is blocking fast-fails with the cached exception.
-            Assert.ThrowsAny<Exception>(() => CheckOut(pool));
+            Assert.ThrowsAny<Exception>(() => pool.TryGetConnection(
+                new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
         }
 
         /// <summary>
@@ -367,7 +358,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Drive the pool into the blocking-period error state with a failing user request. We do
             // NOT call Startup here: that would kick off a *successful* warmup and fill the pool,
             // which is not the behavior under test.
-            Assert.ThrowsAny<Exception>(() => CheckOut(pool));
+            Assert.ThrowsAny<Exception>(() => pool.TryGetConnection(
+                new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred, "Failing user request did not enter the pool error state.");
 
             // Now request warmup directly. Because the pool is blocking, the loop's error-state guard

@@ -144,23 +144,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// requester to start the loop, and reset to 0 by the loop when it drains.
         /// </summary>
         private int _warmupLoopRunning;
-
-        /// <summary>
-        /// The most recently launched warmup/replenishment loop, or null if warmup has never been
-        /// requested (e.g. MinPoolSize == 0 or the pool was already at the minimum). Because
-        /// concurrent requests are coalesced (see <see cref="_warmupLoopRunning"/>), this may
-        /// reference an already-completed loop rather than one started by the latest trigger.
-        /// </summary>
-        private Task? _warmupLoopTask;
         #endregion
-
-        /// <summary>
-        /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
-        /// warmup pass to a deterministic completion instead of polling pool counters. May be null
-        /// (warmup never requested) or reference an already-completed pass (requests are coalesced);
-        /// a caller that only needs "some warmup pass has finished" can await it regardless.
-        /// </summary>
-        internal Task? WarmupLoopTask => Volatile.Read(ref _warmupLoopTask);
 
         /// <summary>
         /// Initializes a new PoolingDataSource.
@@ -254,6 +238,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private uint MaxPoolSize { get; }
 
         private int MinPoolSize => PoolGroupOptions.MinPoolSize;
+
+        /// <summary>
+        /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
+        /// warmup pass to a deterministic completion instead of polling pool counters. May be null
+        /// (warmup never requested) or reference an already-completed pass (requests are coalesced);
+        /// a caller that only needs "some warmup pass has finished" can await it regardless. Only
+        /// consumed by unit tests, which read it after synchronously triggering warmup on their own
+        /// thread, so a plain auto-property is sufficient.
+        /// </summary>
+        internal Task? WarmupLoopTask { get; private set; }
         #endregion
 
         #region Methods
@@ -1096,14 +1090,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
-                _warmupLoopTask = Task.Run(RunWarmupLoopAsync);
+                WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
             }
             catch (Exception ex)
             {
                 // Scheduling the loop failed (e.g. the thread pool refused the work item). Release the
                 // guard so warmup isn't permanently pinned off for the life of the pool; the next
                 // below-minimum trigger will try again.
-                Volatile.Write(ref _warmupLoopRunning, 0);
+                Interlocked.Exchange(ref _warmupLoopRunning, 0);
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
             }
@@ -1227,8 +1221,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             finally
             {
                 // Always release the single-loop guard, whatever exit path we took, so a future
-                // below-minimum trigger can start a new loop.
-                Volatile.Write(ref _warmupLoopRunning, 0);
+                // below-minimum trigger can start a new loop. Interlocked.Exchange mirrors the
+                // Interlocked.CompareExchange acquire in RequestWarmup.
+                Interlocked.Exchange(ref _warmupLoopRunning, 0);
             }
         }
         #endregion
