@@ -186,6 +186,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.TransientFault_RetryDisabled_ShouldFail(errorCode: 42109) [3 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Throws() Failure: No exception was thrown
+        //   Expected: typeof(Microsoft.Data.SqlClient.SqlException)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.TransientFault_RetryDisabled_ShouldFail(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionTests.cs:line 237
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
