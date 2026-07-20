@@ -114,7 +114,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 1 - Background warmup on pool creation
 
-        // Warmup is a no-op when MinPoolSize == 0: no connections are ever created in the background.
+        /// <summary>
+        /// Warmup is a no-op when MinPoolSize == 0: no connections are ever created in the background.
+        /// </summary>
         [Fact]
         public void Startup_MinPoolSizeZero_DoesNotWarmUp()
         {
@@ -130,7 +132,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
-        // Warmup pre-creates connections up to MinPoolSize for various sizes (1 and N).
+        /// <summary>
+        /// Warmup pre-creates connections up to MinPoolSize for various sizes (1 and N).
+        /// </summary>
         [Theory]
         [InlineData(1)]
         [InlineData(3)]
@@ -155,10 +159,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(minPoolSize, factory.CreateCount);
         }
 
-        // A user request during warmup is served immediately and does not wait for warmup to finish.
-        // The gated factory blocks warmup's first (serial) creation, yet a user open still completes
-        // by creating its own connection, proving warmup does not block user requests and does not
-        // create connections in parallel.
+        /// <summary>
+        /// A user request during warmup is served immediately and does not wait for warmup to finish.
+        /// The gated factory blocks warmup's first (serial) creation, yet a user open still completes
+        /// by creating its own connection, proving warmup does not block user requests and does not
+        /// create connections in parallel.
+        /// </summary>
         [Fact]
         public async Task Startup_UserRequestDuringWarmup_ServedImmediately()
         {
@@ -210,7 +216,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 2 - Warmup through the shared rate limiter
 
-        // Warmup creates connections through the shared rate limiter and still reaches MinPoolSize.
+        /// <summary>
+        /// Warmup creates connections through the shared rate limiter and still reaches MinPoolSize.
+        /// </summary>
         [Fact]
         public void Warmup_ThroughSharedRateLimiter_ReachesMinimum()
         {
@@ -233,9 +241,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(rateLimiter.GetStatistics()!.TotalSuccessfulLeases >= 3);
         }
 
-        // When the shared rate limiter is saturated by a user request, warmup waits its turn rather
-        // than bypassing the limiter: the user request that arrives while warmup holds the only
-        // permit is denied by the same limiter.
+        /// <summary>
+        /// When the shared rate limiter is saturated by a user request, warmup waits its turn rather
+        /// than bypassing the limiter: the user request that arrives while warmup holds the only
+        /// permit is denied by the same limiter.
+        /// </summary>
         [Fact]
         public async Task Warmup_RateLimiterSaturated_UserSharesSameLimiter()
         {
@@ -286,8 +296,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 3 - Warmup failure resilience
 
-        // Warmup creation failures are absorbed: no exception surfaces, the pool stays empty, and the
-        // pool is NOT put into the blocking-period error state.
+        /// <summary>
+        /// Warmup creation failures are absorbed: no exception surfaces, the pool stays empty, and the
+        /// pool is NOT put into the blocking-period error state.
+        /// </summary>
         [Fact]
         public void Warmup_AllCreationsFail_AbsorbedAndNoErrorState()
         {
@@ -321,9 +333,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 $"Warmup spun on a persistent failure: {factory.WarmupAttemptCount} attempts observed.");
         }
 
-        // After warmup fails, a subsequent user request creates a connection on demand and succeeds.
-        // The factory fails only warmup creations (owning connection is null) and succeeds for user
-        // requests, so the two paths are cleanly separated.
+        /// <summary>
+        /// After warmup fails, a subsequent user request creates a connection on demand and succeeds.
+        /// The factory fails only warmup creations (owning connection is null) and succeeds for user
+        /// requests, so the two paths are cleanly separated.
+        /// </summary>
         [Fact]
         public void Warmup_Fails_UserRequestStillSucceeds()
         {
@@ -339,12 +353,55 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.False(pool.ErrorOccurred);
         }
 
+        /// <summary>
+        /// Warmup respects the pool's blocking-period error state: once user requests have driven the
+        /// pool into the error state, warmup stands down instead of continuing to replenish (mirroring
+        /// the legacy WaitHandle pool), even though warmup itself never enters or clears that state.
+        /// </summary>
+        [Fact]
+        public void Warmup_RespectsErrorState_StandsDownWhileBlocking()
+        {
+            using var firstWarmupGate = new ManualResetEventSlim(initialState: false);
+            var factory = new ErrorRespectingConnectionFactory(firstWarmupGate);
+            // Run warmup on its own thread so it parks inside its first create deterministically.
+            using var pool = ConstructPool(
+                factory, minPoolSize: 3, maxPoolSize: 10,
+                warmupLoopScheduler: DedicatedThreadWarmupScheduler);
+
+            // Warmup starts and parks inside its first (successful) create on the gate.
+            pool.Startup();
+            Assert.True(
+                factory.FirstWarmupStarted.Wait(HandshakeTimeout),
+                "Timed out waiting for warmup to begin its first creation.");
+
+            // While warmup is parked, a user request fails and drives the pool into the error state.
+            Assert.ThrowsAny<Exception>(() => CheckOut(pool));
+            Assert.True(WaitFor(() => pool.ErrorOccurred), "User failure did not enter the pool error state.");
+
+            // Release warmup's in-flight create. It completes and is pooled, but the loop must then
+            // stand down because the pool is in the error state - it must NOT keep creating up to
+            // MinPoolSize while user requests are still being blocked.
+            firstWarmupGate.Set();
+
+            Assert.True(
+                WaitFor(() => pool.IdleCount == 1),
+                $"Warmup's in-flight connection was not pooled; IdleCount={pool.IdleCount}.");
+            Assert.False(
+                WaitFor(() => factory.WarmupCreateCount > 1, timeoutMs: 500),
+                $"Warmup kept creating while the pool was in the error state; WarmupCreateCount={factory.WarmupCreateCount}.");
+            Assert.Equal(1, factory.WarmupCreateCount);
+            // Warmup must not clear the error state it merely deferred to.
+            Assert.True(pool.ErrorOccurred);
+        }
+
         #endregion
 
         #region Story 4 - Warmup cancellation on shutdown
 
-        // When the pool is shut down mid-warmup, warmup stops promptly: no connections created after
-        // shutdown begins, and any in-flight connection is cleaned up.
+        /// <summary>
+        /// When the pool is shut down mid-warmup, warmup stops promptly: no connections created after
+        /// shutdown begins, and any in-flight connection is cleaned up.
+        /// </summary>
         [Fact]
         public void Shutdown_DuringWarmup_StopsAndCleansUp()
         {
@@ -380,8 +437,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Story 5 - Replenishment on any below-minimum event
 
-        // Destroying a connection on return (non-poolable/broken) drops the pool below MinPoolSize and
-        // triggers replenishment back to the minimum.
+        /// <summary>
+        /// Destroying a connection on return (non-poolable/broken) drops the pool below MinPoolSize and
+        /// triggers replenishment back to the minimum.
+        /// </summary>
         [Fact]
         public void Replenish_AfterDoomedReturn_RefillsToMinimum()
         {
@@ -405,8 +464,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.Count);
         }
 
-        // Clearing the pool drops it to zero (below MinPoolSize) and triggers replenishment back to
-        // the minimum with fresh-generation connections.
+        /// <summary>
+        /// Clearing the pool drops it to zero (below MinPoolSize) and triggers replenishment back to
+        /// the minimum with fresh-generation connections.
+        /// </summary>
         [Fact]
         public void Replenish_AfterClear_RefillsToMinimum()
         {
@@ -424,8 +485,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(3, pool.Count);
         }
 
-        // Destroying a connection while still at/above the minimum does NOT trigger replenishment
-        // beyond the minimum: the pool stays at MinPoolSize.
+        /// <summary>
+        /// Destroying a connection while still at/above the minimum does NOT trigger replenishment
+        /// beyond the minimum: the pool stays at MinPoolSize.
+        /// </summary>
         [Fact]
         public void Replenish_DestroyWhileAtMinimum_NoOvershoot()
         {
@@ -534,6 +597,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 {
                     Interlocked.Increment(ref _warmupAttemptCount);
                     throw ADP.PooledOpenTimeout();
+                }
+
+                return new DoomableStubConnection();
+            }
+        }
+
+        /// <summary>
+        /// Fails user requests (non-null owning connection) so the pool enters its blocking-period
+        /// error state, while succeeding for warmup creations (null owning connection). The first
+        /// warmup creation blocks on a caller-supplied gate so a test can drive the pool into the
+        /// error state while warmup is parked mid-create, then observe whether warmup stands down.
+        /// </summary>
+        private sealed class ErrorRespectingConnectionFactory : SqlConnectionFactory
+        {
+            private readonly ManualResetEventSlim _firstWarmupGate;
+            private int _warmupCreateCount;
+
+            internal ManualResetEventSlim FirstWarmupStarted { get; } = new(initialState: false);
+
+            internal int WarmupCreateCount => Volatile.Read(ref _warmupCreateCount);
+
+            internal ErrorRespectingConnectionFactory(ManualResetEventSlim firstWarmupGate)
+                => _firstWarmupGate = firstWarmupGate;
+
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                if (owningConnection is not null)
+                {
+                    // User request: fail so the pool enters the blocking-period error state.
+                    throw ADP.PooledOpenTimeout();
+                }
+
+                // Warmup creation: block the first one so the test can set the error state while
+                // warmup is parked, then let it complete and be pooled.
+                if (Interlocked.Increment(ref _warmupCreateCount) == 1)
+                {
+                    FirstWarmupStarted.Set();
+                    _firstWarmupGate.Wait();
                 }
 
                 return new DoomableStubConnection();

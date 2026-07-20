@@ -44,6 +44,7 @@ If a connection fails to open during warmup, the failure is silently absorbed. T
 1. **Given** warmup is in progress, **When** a connection fails to open, **Then** the failure is traced/logged but not propagated as an exception.
 2. **Given** warmup fails for all connections, **When** a user subsequently opens a connection, **Then** the user request creates a connection on demand and succeeds normally.
 3. **Given** warmup fails, **When** the pool's error state is checked, **Then** the pool is NOT in error state — warmup failures do not trigger the pool-level blocking-period mechanism.
+4. **Given** the pool is already in the blocking-period error state (driven there by failing user requests), **When** warmup would otherwise replenish, **Then** warmup stands down while the error state is active rather than piling more doomed opens onto a struggling server. Warmup respects the error state but never enters or clears it (mirroring the legacy WaitHandle pool).
 
 ---
 
@@ -75,8 +76,8 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 - Warmup starts automatically when the pool's `Startup()` is called.
 - Warmup runs on a background task, so it never blocks the caller (`Startup`/connection return) and uses no sync-over-async in the loop. The physical connection open itself is currently synchronous (executed on the background task); the connection factory does not yet expose an async open.
 - Creates connections serially (one at a time) through the shared rate limiter.
-- Warmup failures are traced/logged but do not propagate or trigger error state.
-- Warmup stops if the pool is cleared (generation change) to avoid creating stale-generation connections.
+- Warmup failures are traced/logged but do not propagate or trigger error state. Warmup does, however, respect an already-active blocking-period error state and stands down while it is active.
+- If a `Clear` races with an in-flight warmup creation, the freshly created (now stale-generation) connection is not special-cased by warmup; it is harmlessly discarded by the liveness/generation check on its next retrieval. After a `Clear`, replenishment refills the pool to the minimum with fresh-generation connections.
 - Concurrent warmup/replenishment requests are coalesced — only one warmup loop executes at a time.
 - Warmup is a no-op when Min Pool Size = 0.
 
