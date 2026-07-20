@@ -52,8 +52,33 @@ steps:
       # Colima >= 0.8 when using --vm-type vz, which is dramatically faster than
       # --arch x86_64 (full QEMU VM emulation).
       # Requires macOS >= 13 (Ventura).
-      colima start --vm-type vz --cpu 4 --memory 4
+      if ! colima start --vm-type vz --cpu 4 --memory 4; then
+        echo "ERROR: colima failed to start."
+        colima status || true
+        exit 1
+      fi
+
+      # Point the docker CLI at Colima's daemon socket.  Colima normally sets an
+      # active docker context, but the standalone docker CLI (installed above via
+      # 'brew install docker') can default to unix:///var/run/docker.sock, which
+      # does not exist on macOS without Docker Desktop.  This caused every
+      # 'docker pull' to fail instantly with:
+      #   failed to connect to the docker API at unix:///var/run/docker.sock
+      # Export DOCKER_HOST explicitly so all docker commands reach Colima.
+      export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
       docker --version
+
+      # Verify the docker daemon is actually reachable before attempting to pull.
+      # This fails fast with useful diagnostics instead of looping through the
+      # pull retries when the socket is misconfigured.
+      if ! docker info >/dev/null 2>&1; then
+        echo "ERROR: docker daemon is not reachable at $DOCKER_HOST."
+        echo "--- colima status ---"
+        colima status || true
+        echo "--- docker context ls ---"
+        docker context ls || true
+        exit 1
+      fi
 
       # Pull the SQL Server image with retries.  The macOS agents intermittently
       # fail to resolve or reach mcr.microsoft.com (DNS lookups or registry i/o
