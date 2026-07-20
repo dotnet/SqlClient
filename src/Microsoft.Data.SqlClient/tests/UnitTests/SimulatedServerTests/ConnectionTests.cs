@@ -356,6 +356,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkDelay_RetryDisabled(multiSubnetFailoverEnabled: False) [4 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.  The duration spent while attempting to connect to this server was - [Pre-Login] initialization=0; handshake=25; [Login] initialization=0; authentication=0; [Post-Login] complete=4004;
+        //   ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 1241
+        //      at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParser.cs:line 1721
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 4168
+        //      at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\TdsParserStateObject.cs:line 3581
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 2208
+        //      at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\Connection\SqlConnectionInternal.cs:line 3214
+        //      at Microsoft.Data.SqlClient.SqlConnection.Open() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SqlConnection.cs:line 1596
+        //      at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkDelay_RetryDisabled(Boolean multiSubnetFailoverEnabled) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionTests.cs:line 387
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
