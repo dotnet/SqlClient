@@ -146,14 +146,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int _warmupLoopRunning;
 
         /// <summary>
-        /// Test seam controlling how the warmup loop is launched. Defaults to
-        /// <see cref="Task.Run(Func{Task})"/> on the thread pool in production. Tests inject a
-        /// scheduler that runs the loop on a dedicated thread so warmup's first (synchronous,
-        /// possibly gated) physical open cannot be delayed by thread-pool starvation, keeping
-        /// timing-sensitive assertions deterministic without mutating global thread-pool state.
+        /// The most recently launched warmup/replenishment loop, or null if warmup has never been
+        /// requested (e.g. MinPoolSize == 0 or the pool was already at the minimum). Because
+        /// concurrent requests are coalesced (see <see cref="_warmupLoopRunning"/>), this may
+        /// reference an already-completed loop rather than one started by the latest trigger.
         /// </summary>
-        private readonly Action<Func<Task>> _warmupLoopScheduler;
+        private Task? _warmupLoopTask;
         #endregion
+
+        /// <summary>
+        /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
+        /// warmup pass to a deterministic completion instead of polling pool counters. May be null
+        /// (warmup never requested) or reference an already-completed pass (requests are coalesced);
+        /// a caller that only needs "some warmup pass has finished" can await it regardless.
+        /// </summary>
+        internal Task? WarmupLoopTask => Volatile.Read(ref _warmupLoopTask);
 
         /// <summary>
         /// Initializes a new PoolingDataSource.
@@ -164,8 +171,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
-            TimeProvider? timeProvider = null,
-            Action<Func<Task>>? warmupLoopScheduler = null)
+            TimeProvider? timeProvider = null)
         {
             ConnectionFactory = connectionFactory;
             PoolGroup = connectionPoolGroup;
@@ -176,7 +182,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
-            _warmupLoopScheduler = warmupLoopScheduler ?? (static loop => Task.Run(loop));
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
@@ -1048,25 +1053,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         #region Warmup
         /// <summary>
-        /// Delay before retrying a warmup creation that was denied by the shared rate limiter, so
-        /// warmup waits its turn instead of bypassing the limiter or spinning (Story 2).
-        /// </summary>
-        private static readonly TimeSpan s_warmupRateLimitRetryDelay = TimeSpan.FromMilliseconds(50);
-
-        /// <summary>
         /// Requests background warmup/replenishment: the pool asynchronously pre-creates connections
         /// up to <see cref="MinPoolSize"/>, serially and through the shared rate limiter. Safe to
         /// call from any thread and from hot paths; it is cheap and non-blocking.
         ///
         /// This is the single entry point for every warmup trigger: pool startup and any event that
         /// drops the pool below <see cref="MinPoolSize"/> (connection destruction on return, idle
-        /// timeout eviction, pruning). Concurrent requests are coalesced by the
+        /// timeout eviction, pruning). It is also invoked directly by tests to exercise the loop
+        /// deterministically. Concurrent requests are coalesced by the
         /// <see cref="_warmupLoopRunning"/> guard so that only one warmup loop ever runs at a time: a
         /// request that arrives while a loop is already running is simply dropped, because that loop
         /// re-reads <see cref="Count"/> on every iteration and will drive the pool to
         /// <see cref="MinPoolSize"/> regardless.
         /// </summary>
-        private void RequestWarmup()
+        internal void RequestWarmup()
         {
             // No-op when there is nothing to pre-create (MinPoolSize == 0), the pool is not running,
             // or shutdown has cancelled background activity.
@@ -1093,16 +1093,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                // Fire-and-forget on the thread pool (or an injected test scheduler) so warmup never
-                // blocks the caller. The loop absorbs its own exceptions and always releases the
-                // single-loop guard on exit.
-                _warmupLoopScheduler(RunWarmupLoopAsync);
+                // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
+                // absorbs its own exceptions and always releases the single-loop guard on exit. The
+                // task is published so tests can await a warmup pass to a deterministic completion.
+                _warmupLoopTask = Task.Run(RunWarmupLoopAsync);
             }
             catch (Exception ex)
             {
-                // Scheduling the loop failed (e.g. an injected scheduler threw, or the thread pool
-                // refused the work item). Release the guard so warmup isn't permanently pinned off
-                // for the life of the pool; the next below-minimum trigger will try again.
+                // Scheduling the loop failed (e.g. the thread pool refused the work item). Release the
+                // guard so warmup isn't permanently pinned off for the life of the pool; the next
+                // below-minimum trigger will try again.
                 Volatile.Write(ref _warmupLoopRunning, 0);
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
@@ -1188,20 +1188,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     if (connection is null)
                     {
                         // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize),
-                        // and creation failures throw rather than return null, so a null return
-                        // means the shared rate limiter is currently saturated. Wait our turn
-                        // rather than bypassing it (Story 2), then retry. Capacity frees up as user
-                        // requests release their permits.
-                        try
-                        {
-                            await Task.Delay(s_warmupRateLimitRetryDelay, token).ConfigureAwait(false);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            break;
-                        }
-
-                        continue;
+                        // and creation failures throw rather than return null, so a null return means
+                        // the shared rate limiter is currently saturated. Rather than bypassing the
+                        // limiter or spinning on it (Story 2), end this warmup pass. Saturation only
+                        // happens while user requests are actively creating connections - those very
+                        // creations fill the pool toward MinPoolSize, and any later drop below the
+                        // minimum re-triggers warmup through RemoveConnection - so warmup does not need
+                        // to compete for a permit here.
+                        break;
                     }
 
                     // Publish the freshly created connection as idle. It was PrePush'd at creation
