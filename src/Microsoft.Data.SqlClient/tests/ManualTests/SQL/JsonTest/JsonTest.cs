@@ -11,6 +11,7 @@ using Xunit;
 using Xunit.Abstractions;
 using System.Text.Json;
 using Microsoft.Data.SqlTypes;
+using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests

@@ -11197,6 +11197,14 @@ namespace Microsoft.Data.SqlClient
                     WriteUnsignedInt(_defaultCollation._info, stateObj);
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
+                case SqlDbTypeExtensions.Vector:
+                    // Vector TVP column TYPE_INFO: type token + total byte length (8-byte header +
+                    // payload) + element-type/scale byte (0 = float32). The value is sent as the raw
+                    // vector bytes with a ushort length prefix (non-PLP), matching the JDBC driver.
+                    stateObj.WriteByte(TdsEnums.SQLVECTOR);
+                    WriteUnsignedShort(checked((ushort)metaData.MaxLength), stateObj);
+                    stateObj.WriteByte(metaData.Scale);
+                    break;
                 case SqlDbType.Xml:
                     stateObj.WriteByte(TdsEnums.SQLXMLTYPE);
                     // Is there a schema

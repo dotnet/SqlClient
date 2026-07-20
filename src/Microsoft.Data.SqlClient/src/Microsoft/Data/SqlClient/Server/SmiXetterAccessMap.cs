@@ -110,9 +110,17 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType &&
                     SmiXetterTypeCode.GetVariantMetaData != xetterType);
 
-            // JSON is outside the contiguous SqlDbType range covered by this map; it accepts the same
-            // setters as NVarChar (string-based value transfer).
-            SqlDbType effectiveType = SqlDbTypeExtensions.Json == metaData.SqlDbType ? SqlDbType.NVarChar : metaData.SqlDbType;
+            // JSON and Vector are outside the contiguous SqlDbType range covered by this map;
+            // JSON accepts the same setters as NVarChar (string) and Vector the same as VarBinary (bytes).
+            SqlDbType effectiveType = metaData.SqlDbType;
+            if (SqlDbTypeExtensions.Json == effectiveType)
+            {
+                effectiveType = SqlDbType.NVarChar;
+            }
+            else if (SqlDbTypeExtensions.Vector == effectiveType)
+            {
+                effectiveType = SqlDbType.VarBinary;
+            }
             return s_isSetterAccessValid[(int)effectiveType, (int)xetterType];
         }
     }

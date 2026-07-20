@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -263,6 +264,35 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SqlDbTypeExtensions.Json, record.GetSqlMetaData(0).SqlDbType);
 
             record.SetDBNull(0);
+            Assert.True(record.IsDBNull(0));
+        }
+
+        [Fact]
+        public void ConstructorWithVectorType_Succeeds()
+        {
+            // Vector column max length = 8-byte header + 4 bytes per float32 dimension (3 dims => 20).
+            SqlMetaData metaData = new SqlMetaData("col1", SqlDbTypeExtensions.Vector, 20);
+            Assert.Equal("col1", metaData.Name);
+            Assert.Equal(SqlDbTypeExtensions.Vector, metaData.SqlDbType);
+            Assert.Equal(DbType.Binary, metaData.DbType);
+            Assert.Equal(20, metaData.MaxLength);
+        }
+
+        [Fact]
+        public void SqlDataRecord_VectorColumn_RoundTripsInMemory()
+        {
+            // Validates the client-side SMI plumbing for a Vector column without a server.
+            float[] values = new float[] { 1.1f, 2.2f, 3.3f };
+            int byteLength = 8 + sizeof(float) * values.Length;
+            SqlMetaData[] metadata = { new SqlMetaData("V", SqlDbTypeExtensions.Vector, byteLength) };
+            SqlDataRecord record = new SqlDataRecord(metadata);
+
+            record.SetValue(0, new SqlVector<float>(values));
+            Assert.Equal(SqlDbTypeExtensions.Vector, record.GetSqlMetaData(0).SqlDbType);
+            SqlVector<float> read = Assert.IsType<SqlVector<float>>(record.GetValue(0));
+            Assert.Equal(values, read.Memory.ToArray());
+
+            record.SetValue(0, SqlVector<float>.CreateNull(values.Length));
             Assert.True(record.IsDBNull(0));
         }
 

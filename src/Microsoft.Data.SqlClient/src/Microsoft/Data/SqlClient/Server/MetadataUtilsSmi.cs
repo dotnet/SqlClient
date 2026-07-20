@@ -466,6 +466,15 @@ namespace Microsoft.Data.SqlClient.Server
                         }
 
                         break;
+                    case SqlDbTypeExtensions.Vector:
+                        // Vector values are supplied as SqlVector<T> and transferred as their raw
+                        // TDS payload bytes.
+                        if (value is ISqlVector)
+                        {
+                            extendedCode = ExtendedClrTypeCode.ByteArray;
+                        }
+
+                        break;
                     case SqlDbType.Structured:
                         if (isMultiValued)
                         {

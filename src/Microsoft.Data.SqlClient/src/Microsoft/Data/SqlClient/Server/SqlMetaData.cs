@@ -94,6 +94,7 @@ namespace Microsoft.Data.SqlClient.Server
             DbType.DateTime2,       // SqlDbType.DateTime2
             DbType.DateTimeOffset,  // SqlDbType.DateTimeOffset
             DbType.String,          // SqlDbTypeExtensions.Json (value 35)
+            DbType.Binary,          // SqlDbTypeExtensions.Vector (value 36)
         };
 
 
@@ -136,6 +137,7 @@ namespace Microsoft.Data.SqlClient.Server
             new SqlMetaData("datetime2", SqlDbType.DateTime2, 8, 0, 7, 0, SqlCompareOptions.None),
             new SqlMetaData("datetimeoffset", SqlDbType.DateTimeOffset, 10, 0, 7, 0, SqlCompareOptions.None),
             new SqlMetaData("json", SqlDbTypeExtensions.Json, UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("vector", SqlDbTypeExtensions.Vector, TdsEnums.VECTOR_HEADER_SIZE, 0, 0, 0, SqlCompareOptions.None),
         };
 
         private string _name;
@@ -386,6 +388,7 @@ namespace Microsoft.Data.SqlClient.Server
                     break;
                 case SqlDbType.Binary:
                 case SqlDbType.VarBinary:
+                case SqlDbTypeExtensions.Vector:
                     Construct(name, dbType, maxLength, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
                 case SqlDbType.Char:
@@ -654,6 +657,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 // old-style lobs only allowed with Max length
                 if (SqlMetaData.Max != maxLength)
+                {
+                    throw ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidDataLength2, maxLength.ToString(CultureInfo.InvariantCulture)), nameof(maxLength));
+                }
+            }
+            else if (SqlDbTypeExtensions.Vector == dbType)
+            {
+                // Vector max length is the total byte size (8-byte header + element payload).
+                if (maxLength < TdsEnums.VECTOR_HEADER_SIZE)
                 {
                     throw ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidDataLength2, maxLength.ToString(CultureInfo.InvariantCulture)), nameof(maxLength));
                 }
@@ -2040,7 +2051,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private void SetDefaultsForType(SqlDbType dbType)
         {
-            if ((SqlDbType.BigInt <= dbType && SqlDbType.DateTimeOffset >= dbType) || SqlDbTypeExtensions.Json == dbType)
+            if ((SqlDbType.BigInt <= dbType && SqlDbType.DateTimeOffset >= dbType) || SqlDbTypeExtensions.Json == dbType || SqlDbTypeExtensions.Vector == dbType)
             {
                 SqlMetaData smdDflt = s_defaults[(int)dbType];
                 _sqlDbType = dbType;
