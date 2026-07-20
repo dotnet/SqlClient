@@ -58,7 +58,7 @@ steps:
       # Pull the SQL Server image with retries.  The macOS agents intermittently
       # fail to resolve or reach mcr.microsoft.com (DNS lookups or registry i/o
       # time out), which previously failed the whole step on the first attempt.
-      # Retry a handful of times with a back-off before giving up.
+      # Retry a handful of times with a fixed delay before giving up.
       pullAttempts=5
       pullDelay=15
       pulled=0
