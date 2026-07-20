@@ -33,6 +33,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             Run_JsonVsVarcharReadBenchmark();
             Run_BeginTransactionBenchmark();
             Run_ConnectionPoolStressBenchmark();
+            Run_ConnectionPoolContentionBenchmark();
+            Run_ConnectionPoolChurnBenchmark();
 
             // TODOs:
             // Prepared/Regular Parameterized queries
@@ -47,6 +49,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             }
+
+            // If the config file specifies to use the new channel-based connection pool,
+            // enable the UseConnectionPoolV2 AppContext switch. This must be set before any
+            // connection is opened because the switch is read and cached when a pool is first
+            // created; it cannot be changed later in the process lifetime.
+            AppContext.SetSwitch(
+                "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
+                _config.UseConnectionPoolV2);
 
             // If the config file specifies to use optimized async behavior, 
             // enable packet multiplexing feature and other optimizations in SqlClient 
@@ -183,6 +193,22 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             if (_config.Benchmarks.ConnectionPoolStressRunnerConfig?.Enabled == true)
             {
                 BenchmarkRunner.Run<ConnectionPoolStressRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ConnectionPoolStressRunnerConfig));
+            }
+        }
+
+        private void Run_ConnectionPoolContentionBenchmark()
+        {
+            if (_config.Benchmarks.ConnectionPoolContentionRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ConnectionPoolContentionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ConnectionPoolContentionRunnerConfig));
+            }
+        }
+
+        private void Run_ConnectionPoolChurnBenchmark()
+        {
+            if (_config.Benchmarks.ConnectionPoolChurnRunnerConfig?.Enabled == true)
+            {
+                BenchmarkRunner.Run<ConnectionPoolChurnRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.ConnectionPoolChurnRunnerConfig));
             }
         }
 
