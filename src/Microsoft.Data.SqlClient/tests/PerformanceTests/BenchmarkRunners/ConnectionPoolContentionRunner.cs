@@ -107,29 +107,36 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
-                tasks[i] = Task.Run(async () =>
+                if (Async is AsyncBehavior.Async)
                 {
-                    for (int op = 0; op < OpsPerWorker; op++)
+                    tasks[i] = Task.Run(async () =>
                     {
-                        using var conn = new SqlConnection(_connectionString);
-
-                        if (Async is AsyncBehavior.Async)
+                        for (int op = 0; op < OpsPerWorker; op++)
                         {
+                            using var conn = new SqlConnection(_connectionString);
                             await conn.OpenAsync();
                             using var cmd = conn.CreateCommand();
                             cmd.CommandText = "SELECT 1";
                             _ = await cmd.ExecuteScalarAsync();
+                            // Dispose returns the connection to the pool.
                         }
-                        else
+                    });
+                }
+                else
+                {
+                    tasks[i] = Task.Run(() =>
+                    {
+                        for (int op = 0; op < OpsPerWorker; op++)
                         {
+                            using var conn = new SqlConnection(_connectionString);
                             conn.Open();
                             using var cmd = conn.CreateCommand();
                             cmd.CommandText = "SELECT 1";
                             _ = cmd.ExecuteScalar();
+                            // Dispose returns the connection to the pool.
                         }
-                        // Dispose returns the connection to the pool.
-                    }
-                });
+                    });
+                }
             }
 
             await Task.WhenAll(tasks);
@@ -138,15 +145,23 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private void WarmPool(int count)
         {
             var conns = new SqlConnection[count];
-            for (int i = 0; i < count; i++)
+            try
             {
-                conns[i] = new SqlConnection(_connectionString);
-                conns[i].Open();
+                for (int i = 0; i < count; i++)
+                {
+                    conns[i] = new SqlConnection(_connectionString);
+                    conns[i].Open();
+                }
             }
-            // Return them all to the pool so subsequent checkouts are served from idle.
-            for (int i = 0; i < count; i++)
+            finally
             {
-                conns[i].Close();
+                // Close and dispose every connection so they return to the pool and
+                // are not retained until GC (which would add allocation/GC noise).
+                for (int i = 0; i < count; i++)
+                {
+                    conns[i]?.Close();
+                    conns[i]?.Dispose();
+                }
             }
         }
     }
