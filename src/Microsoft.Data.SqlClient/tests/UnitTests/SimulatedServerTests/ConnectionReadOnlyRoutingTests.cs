@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     }).ConnectionString;
                 }
 
-                SqlConnectionStringBuilder builder = new(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
+                SqlConnectionStringBuilder builder = new(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly, Pooling = false };
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
             }
@@ -125,7 +125,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 SqlConnectionStringBuilder builder = new(lastConnectionString) {
                     ApplicationIntent = ApplicationIntent.ReadOnly,
-                    Encrypt = false
+                    Encrypt = false,
+                    Pooling = false
                 };
                 using SqlConnection connection = new(builder.ConnectionString);
                 await connection.OpenAsync();

@@ -24,19 +24,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     public class ConnectionTests
     {
-        [Trait("Category", "flaky")]
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.ConnectionTest [12 ms]
-        // ##[error]EXEC(0,0): Error Message:
-        // EXEC : error Message:  [/mnt/vss/_work/1/s/build.proj]
-        //      System.InvalidOperationException : The SQL Server instance returned an invalid or unsupported protocol version during login negotiation.
-        //     Stack Trace:
-        //        at Microsoft.Data.SqlClient.ConnectionPool.BlockingPeriodErrorState.ThrowIfActive() in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ConnectionPool/BlockingPeriodErrorState.cs:line 108
-        //      at Microsoft.Data.SqlClient.ConnectionPool.WaitHandleDbConnectionPool.TryGetConnection(DbConnection owningObject, UInt32 waitForMultipleObjectsTimeout, Boolean allowCreate, Boolean onlyOneCheckConnection, TimeoutTimer timeout, DbConnectionInternal& connection) in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ConnectionPool/WaitHandleDbConnectionPool.cs:line 1015
-        //      at Microsoft.Data.SqlClient.SqlConnectionFactory.TryGetConnection(DbConnection owningConnection, TaskCompletionSource`1 retry, DbConnectionInternal oldConnection, TimeoutTimer timeout, Boolean forceNewConnection, DbConnectionInternal& connection) in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionFactory.cs:line 431
-        //      at Microsoft.Data.SqlClient.SqlConnection.Open() in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnection.cs:line 1596
-        //      at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.ConnectionTest() in /mnt/vss/_work/1/s/src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/ConnectionTests.cs:line 38
-        // Note: cross-test contamination of the shared connection pool's BlockingPeriodErrorState;
-        // a prior simulated-server test's login error is cached and re-thrown by this test's Open().
         [Fact]
         public void ConnectionTest()
         {
@@ -80,7 +67,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             var connStr = new SqlConnectionStringBuilder()
             {
-                DataSource = $"localhost,{server.EndPoint.Port}"
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             }.ConnectionString;
 
             using SqlConnection connection = new(connStr);
@@ -216,7 +204,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -243,7 +232,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
@@ -599,7 +589,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ConnectTimeout = timeout,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
 
@@ -643,7 +634,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 ConnectTimeout = timeout,
-                Encrypt = SqlConnectionEncryptOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
 
@@ -861,6 +853,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             }.ConnectionString;
             using SqlConnection conn = new(connStr);
 
@@ -939,6 +932,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so an expected failure does not poison a shared pool
             }.ConnectionString;
             using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
