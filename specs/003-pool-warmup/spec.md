@@ -37,14 +37,14 @@ Warmup creates connections through the same rate-limiting mechanism as user-init
 
 ### User Story 3 — Warmup Failure Resilience (P1)
 
-If a connection fails to open during warmup, the failure is silently absorbed. The pool remains fully operational — user requests create connections on demand as needed. Warmup failures never trigger the pool-level error state.
+If a connection fails to open during warmup, the failure is silently absorbed on the warmup loop — it is never propagated to the caller as an unhandled exception. Warmup participates in the pool's blocking-period error state exactly like an on-demand creation (mirroring the legacy WaitHandle pool): a genuine open failure enters the error state, and a successful open clears it. The pool remains operational — once the blocking period expires, user requests create connections on demand as needed.
 
 **Acceptance Scenarios**:
 
-1. **Given** warmup is in progress, **When** a connection fails to open, **Then** the failure is traced/logged but not propagated as an exception.
-2. **Given** warmup fails for all connections, **When** a user subsequently opens a connection, **Then** the user request creates a connection on demand and succeeds normally.
-3. **Given** warmup fails, **When** the pool's error state is checked, **Then** the pool is NOT in error state — warmup failures do not trigger the pool-level blocking-period mechanism.
-4. **Given** the pool is already in the blocking-period error state (driven there by failing user requests), **When** warmup would otherwise replenish, **Then** warmup stands down while the error state is active rather than piling more doomed opens onto a struggling server. Warmup respects the error state but never enters or clears it (mirroring the legacy WaitHandle pool).
+1. **Given** warmup is in progress, **When** a connection fails to open, **Then** the failure is traced/logged and absorbed by the warmup loop rather than surfacing as an unhandled exception.
+2. **Given** warmup fails and has entered the blocking-period error state, **When** a user opens a connection during the blocking window, **Then** the user request fast-fails with the cached exception (matching the WaitHandle pool); once the blocking period expires it creates a connection on demand and succeeds normally.
+3. **Given** warmup's open fails, **When** the pool's error state is checked, **Then** the pool IS in the blocking-period error state — warmup uses the same shared creation path as user requests and enters/clears that state identically.
+4. **Given** the pool is already in the blocking-period error state (driven there by a failing request), **When** warmup would otherwise replenish, **Then** warmup stands down while the error state is active rather than piling more doomed opens onto a struggling server (the loop's `CanWarmup` guard skips replenishment while `ErrorOccurred`, mirroring the WaitHandle pool).
 
 ---
 
@@ -76,9 +76,9 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 - Warmup starts automatically when the pool's `Startup()` is called.
 - Warmup runs on a background task, so it never blocks the caller (`Startup`/connection return) and uses no sync-over-async in the loop. The physical connection open itself is currently synchronous (executed on the background task); the connection factory does not yet expose an async open.
 - Creates connections serially (one at a time) through the shared rate limiter.
-- Warmup failures are traced/logged but do not propagate or trigger error state. Warmup does, however, respect an already-active blocking-period error state and stands down while it is active.
+- Warmup failures are traced/logged and absorbed by the warmup loop (never surfaced as an unhandled exception). Warmup goes through the same shared creation path as user requests, so a genuine open failure enters the blocking-period error state and a successful open clears it (mirroring the WaitHandle pool). While the error state is active, the warmup loop stands down (`CanWarmup`) rather than replenishing.
 - If a `Clear` races with an in-flight warmup creation, the freshly created (now stale-generation) connection is not special-cased by warmup; it is harmlessly discarded by the liveness/generation check on its next retrieval. After a `Clear`, replenishment refills the pool to the minimum with fresh-generation connections.
-- Concurrent warmup/replenishment requests are coalesced — only one warmup loop executes at a time.
+- Concurrent warmup/replenishment requests are coalesced — a single `_warmupLoopRunning` guard ensures only one warmup loop executes at a time, and requests that arrive while it is running are dropped (the running loop re-reads the pool count each iteration and drives to the minimum on its own).
 - Warmup is a no-op when Min Pool Size = 0.
 
 ## Acceptance Criteria
@@ -87,7 +87,7 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 - After warmup completes, the pool contains Min Pool Size idle connections.
 - Warmup runs on a background task without blocking callers and without sync-over-async in the loop (the physical open is currently synchronous, executed on the background task, pending async-open support in the factory).
 - Warmup connections are created serially through the shared rate limiter.
-- Warmup errors are traced/logged and do not crash the application or trigger error state.
+- Warmup errors are traced/logged and never crash the application. Because warmup shares the on-demand creation path, a genuine open failure enters the pool's blocking-period error state (as it would for a user request) and a successful open clears it.
 - If the pool is shut down or cleared during warmup, warmup stops gracefully.
 - After any event that reduces the pool below Min Pool Size, the pool restores to minimum within one warmup pass.
 - Concurrent warmup/replenishment requests are coalesced so only one warmup loop executes at a time.
