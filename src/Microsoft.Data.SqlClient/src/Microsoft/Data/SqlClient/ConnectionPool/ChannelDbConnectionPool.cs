@@ -641,8 +641,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Fast-fail if the pool is in the blocking-period error state. FR-006. Warmup goes
             // through this same path (it has no isWarmup exemption): it mirrors the legacy WaitHandle
             // pool, whose replenishment enters/clears the same error state as user requests. In
-            // practice the warmup loop already stands down before reaching here (CanWarmup checks
-            // ErrorOccurred); this covers the narrow race where the state flips in between.
+            // practice the warmup loop already stands down before reaching here (its loop condition
+            // checks ErrorOccurred); this covers the narrow race where the state flips in between.
             _errorState?.ThrowIfActive();
 
             try
@@ -1060,8 +1060,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         ///
         /// This is the single entry point for every warmup trigger: pool startup and any event that
         /// drops the pool below <see cref="MinPoolSize"/> (connection destruction on return, idle
-        /// timeout eviction, pruning). Concurrent requests are coalesced so that only one warmup
-        /// loop ever runs at a time (implementation note: warmup coalescing).
+        /// timeout eviction, pruning). Concurrent requests are coalesced by the
+        /// <see cref="_warmupLoopRunning"/> guard so that only one warmup loop ever runs at a time: a
+        /// request that arrives while a loop is already running is simply dropped, because that loop
+        /// re-reads <see cref="Count"/> on every iteration and will drive the pool to
+        /// <see cref="MinPoolSize"/> regardless.
         /// </summary>
         private void RequestWarmup()
         {
@@ -1082,32 +1085,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            TryStartWarmupLoop();
-        }
-
-        /// <summary>
-        /// True while warmup/replenishment is permitted to keep creating connections: the pool is
-        /// running, shutdown has not cancelled background work, and the pool is not in the
-        /// blocking-period error state. While user requests are failing and the pool is blocking,
-        /// warmup stands down rather than piling more doomed opens onto a struggling server. This
-        /// mirrors the legacy WaitHandle pool, which skips replenishment while <c>ErrorOccurred</c>
-        /// is set. (Warmup does participate in the error state on its own creations - entering it on
-        /// failure and clearing it on success, via <see cref="OpenNewInternalConnection"/>.)
-        /// </summary>
-        private bool CanWarmup(CancellationToken token)
-            => State == Running && !token.IsCancellationRequested && !ErrorOccurred;
-
-        /// <summary>
-        /// Starts the coalesced warmup loop if one is not already running. The single-loop guard
-        /// (<see cref="_warmupLoopRunning"/>) coalesces concurrent requests: a request that arrives
-        /// while a loop is already running is simply dropped, because that loop re-reads
-        /// <see cref="Count"/> on every iteration and will drive the pool to <see cref="MinPoolSize"/>
-        /// regardless. Runs on the thread pool so warmup never blocks the caller (Startup or a
-        /// returning connection); tests may supply an alternate scheduler so warmup startup is not
-        /// subject to thread-pool scheduling latency.
-        /// </summary>
-        private void TryStartWarmupLoop()
-        {
+            // Coalesce: only start a loop if one is not already running.
             if (Interlocked.CompareExchange(ref _warmupLoopRunning, 1, 0) != 0)
             {
                 return;
@@ -1115,7 +1093,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                // Fire-and-forget: the loop absorbs its own exceptions and always releases the
+                // Fire-and-forget on the thread pool (or an injected test scheduler) so warmup never
+                // blocks the caller. The loop absorbs its own exceptions and always releases the
                 // single-loop guard on exit.
                 _warmupLoopScheduler(RunWarmupLoopAsync);
             }
@@ -1126,7 +1105,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // for the life of the pool; the next below-minimum trigger will try again.
                 Volatile.Write(ref _warmupLoopRunning, 0);
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.TryStartWarmupLoop|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
+                    "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
             }
         }
 
@@ -1158,7 +1137,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Single pass: re-reads Count each iteration, so any below-minimum drop that happens
                 // while the loop is running is picked up here without a separate request flag.
-                while (CanWarmup(token) && Count < MinPoolSize)
+                //
+                // The loop keeps creating while the pool is running, shutdown has not cancelled
+                // background work, and the pool is not in the blocking-period error state. While user
+                // requests are failing and the pool is blocking (ErrorOccurred), warmup stands down
+                // rather than piling more doomed opens onto a struggling server - mirroring the legacy
+                // WaitHandle pool, which skips replenishment while blocking. (Warmup still
+                // participates in the error state on its own creations - entering it on failure and
+                // clearing it on success - via OpenNewInternalConnection.)
+                while (State == Running
+                    && !token.IsCancellationRequested
+                    && !ErrorOccurred
+                    && Count < MinPoolSize)
                 {
                     // Fresh per-attempt timeout budget based on the pool's CreationTimeout, since
                     // warmup has no owning Open() call to inherit a budget from. Matches the

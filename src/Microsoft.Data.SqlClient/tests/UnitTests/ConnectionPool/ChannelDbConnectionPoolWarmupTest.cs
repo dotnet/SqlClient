@@ -368,10 +368,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Warmup respects the pool's blocking-period error state: once user requests have driven the
-        /// pool into the error state, warmup stands down (<c>CanWarmup</c> is false) and creates
-        /// nothing, mirroring the legacy WaitHandle pool, which skips replenishment while the pool is
-        /// blocking. The warmup loop is held at its first instruction until the pool is blocking so
-        /// the stand-down is observed deterministically.
+        /// pool into the error state, warmup stands down (its loop condition sees ErrorOccurred) and
+        /// creates nothing, mirroring the legacy WaitHandle pool, which skips replenishment while the
+        /// pool is blocking. The warmup loop is held at its first instruction until the pool is
+        /// blocking so the stand-down is observed deterministically.
         /// </summary>
         [Fact]
         public void Warmup_RespectsErrorState_StandsDownWhileBlocking()
@@ -414,8 +414,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.ThrowsAny<Exception>(() => CheckOut(pool));
             Assert.True(WaitFor(() => pool.ErrorOccurred), "User failure did not enter the pool error state.");
 
-            // Release the warmup loop. Because the pool is blocking, CanWarmup is false, so the loop
-            // must exit immediately without creating any connections.
+            // Release the warmup loop. Because the pool is blocking, its loop condition sees the
+            // error state, so the loop must exit immediately without creating any connections.
             warmupStartGate.Set();
             Assert.True(
                 warmupLoopFinished.Wait(HandshakeTimeout),
