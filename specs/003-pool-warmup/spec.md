@@ -8,7 +8,7 @@
 
 Implement background pool warmup for `ChannelDbConnectionPool`. When the pool starts, it asynchronously pre-creates connections up to Min Pool Size in the background, serially (one at a time), through the shared rate-limiting mechanism used by user-initiated requests.
 
-Whenever the pool count drops below Min Pool Size for any reason (pruning, connection destruction, idle timeout expiry), the pool automatically triggers replenishment using the same serial, rate-limited creation path.
+Whenever the pool count drops below Min Pool Size for any reason (a connection destroyed on return, idle-timeout eviction, or any other removal that crosses the floor), the pool automatically triggers replenishment using the same serial, rate-limited creation path. Pruning itself respects the Min Pool Size floor and never reduces the pool below the minimum; it is only mentioned here because it shares the same removal choke point that triggers replenishment.
 
 ## User Scenarios & Testing
 
@@ -61,13 +61,13 @@ When a pool is shut down while warmup is still in progress, warmup stops promptl
 
 ### User Story 5 — Replenishment on Any Below-Minimum Event (P2)
 
-Whenever the pool count drops below Min Pool Size for any reason, the pool automatically triggers warmup-style replenishment to restore to the minimum.
+Whenever the pool count drops below Min Pool Size, the pool automatically triggers warmup-style replenishment to restore to the minimum. Every connection removal funnels through a single choke point (`RemoveConnection`), which triggers replenishment when the removal leaves the pool below the minimum.
 
 **Acceptance Scenarios**:
 
-1. **Given** pruning has reduced the pool below the minimum pool size, **When** the pruning cycle completes, **Then** the pool queues a replenishment request.
+1. **Given** a pruning cycle runs, **When** it removes idle connections, **Then** it stops at the Min Pool Size floor and does not reduce the pool below the minimum (pruning shares the removal choke point but does not itself cause a below-minimum replenishment).
 2. **Given** a connection is destroyed on return to the pool (broken, lifetime expired), **When** the pool count drops below the minimum, **Then** the pool queues a replenishment request.
-3. **Given** idle timeout expiry removes a connection, **When** the pool count drops below minimum, **Then** the pool queues a replenishment request.
+3. **Given** idle-timeout eviction removes an expired connection on retrieval, **When** the pool count drops below minimum, **Then** the pool queues a replenishment request.
 4. **Given** replenishment is triggered, **When** connections are created, **Then** they are created serially through the shared rate limiter, identical to initial warmup.
 5. **Given** the pool is at or above the minimum pool size, **When** a connection is destroyed, **Then** no replenishment is triggered.
 
@@ -78,6 +78,7 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 - Creates connections serially (one at a time) through the shared rate limiter. If the limiter is saturated (no permit available), warmup ends the pass rather than bypassing or spinning on the limiter; convergence to the minimum is handled by the concurrent user creations that saturated it and by re-triggering on the next below-minimum event.
 - Warmup failures are traced/logged and absorbed by the warmup loop (never surfaced as an unhandled exception). Warmup goes through the same shared creation path as user requests, so a genuine open failure enters the blocking-period error state and a successful open clears it (mirroring the WaitHandle pool). While the error state is active, the warmup loop stands down rather than replenishing.
 - If a `Clear` races with an in-flight warmup creation, the freshly created (now stale-generation) connection is not special-cased by warmup; it is harmlessly discarded by the liveness/generation check on its next retrieval. After a `Clear`, replenishment refills the pool to the minimum with fresh-generation connections.
+- Idle-timeout eviction is lazy: an idle connection past its timeout is removed when it is next retrieved (via the liveness check), not by a background sweep. Pruning is separate and always respects the Min Pool Size floor.
 - Concurrent warmup/replenishment requests are coalesced — a single `_warmupLoopRunning` guard ensures only one warmup loop executes at a time, and requests that arrive while it is running are dropped (the running loop re-reads the pool count each iteration and drives to the minimum on its own).
 - Warmup is a no-op when Min Pool Size = 0.
 
@@ -89,6 +90,6 @@ Whenever the pool count drops below Min Pool Size for any reason, the pool autom
 - Warmup connections are created serially through the shared rate limiter.
 - Warmup errors are traced/logged and never crash the application. Because warmup shares the on-demand creation path, a genuine open failure enters the pool's blocking-period error state (as it would for a user request) and a successful open clears it.
 - If the pool is shut down or cleared during warmup, warmup stops gracefully.
-- After any event that reduces the pool below Min Pool Size, the pool restores to minimum within one warmup pass.
+- After any event that reduces the pool below Min Pool Size, the pool restores to the minimum through replenishment: a single warmup pass suffices when it is not racing a concurrent drain (e.g. `Clear`) or a saturated rate limiter; otherwise convergence completes across subsequent re-triggered passes.
 - Concurrent warmup/replenishment requests are coalesced so only one warmup loop executes at a time.
 - Unit tests validate warmup behavior for various Min Pool Size values (0, 1, N) and all replenishment triggers.
