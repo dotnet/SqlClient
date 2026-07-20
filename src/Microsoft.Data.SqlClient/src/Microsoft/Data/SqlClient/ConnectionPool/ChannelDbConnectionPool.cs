@@ -379,6 +379,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 _warmupCts.Cancel();
             }
+            catch (ObjectDisposedException)
+            {
+                // Expected no-op: the cancellation source is already disposed, so there is nothing
+                // left to cancel. This is not a failure, so it is not traced.
+            }
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -464,6 +469,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             try
             {
                 _warmupCts.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Expected no-op: the cancellation source is already disposed. Dispose is documented
+                // as safe to call repeatedly, so this is not a failure and is not traced.
             }
             catch (Exception ex)
             {

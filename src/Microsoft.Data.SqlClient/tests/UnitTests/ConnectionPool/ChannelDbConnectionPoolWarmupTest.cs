@@ -207,7 +207,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // proving warmup and user requests share one limiter (warmup did not bypass it).
             long failedBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
             var tcs = new TaskCompletionSource<DbConnectionInternal>();
-            pool.TryGetConnection(new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _);
+            bool completedSynchronously = pool.TryGetConnection(
+                new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? immediateConnection);
+
+            // The async request cannot be satisfied inline: there is no idle connection and the
+            // shared limiter's only permit is held by warmup. TryGetConnection therefore returns
+            // false with no connection, deferring the result to the TaskCompletionSource.
+            Assert.False(completedSynchronously, "Async request unexpectedly completed synchronously.");
+            Assert.Null(immediateConnection);
 
             Assert.True(
                 WaitFor(() => rateLimiter.GetStatistics()!.TotalFailedLeases > failedBefore),
