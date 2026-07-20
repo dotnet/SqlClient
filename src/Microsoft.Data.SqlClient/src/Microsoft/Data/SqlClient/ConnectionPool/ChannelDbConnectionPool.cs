@@ -610,9 +610,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="isWarmup">When true, the call originates from background warmup/replenishment
         /// rather than a user request. Warmup deliberately does not interact with the pool-level
         /// blocking-period error state: it neither fast-fails when the state is active, nor enters
-        /// the state on failure, nor clears it on success. A warmup creation failure is traced and
-        /// absorbed (null is returned) instead of propagating, so warmup can never crash the
-        /// application or poison the pool for user requests (Story 3).</param>
+        /// the state on failure, nor clears it on success. A warmup creation failure still throws
+        /// (without entering the error state) so the caller can distinguish it from a rate-limit
+        /// backoff, which is signalled by a null return; see <see cref="WarmupPassAsync"/> (Story 3).</param>
         /// <returns>The new internal connection, or null if the pool has no available slot or the
         /// rate limiter is currently saturated. In the latter case the caller should fall back to
         /// the idle-channel wait; the rate limiter will write a null to the idle channel when a
@@ -762,14 +762,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
             {
-                // Warmup failures are silently absorbed: trace and return null instead of
-                // propagating, and never enter the blocking-period state (Story 3). The pool
-                // remains fully operational and user requests continue to create on demand.
+                // Warmup deliberately does not enter the blocking-period state on failure (Story 3):
+                // a warmup creation failure must never poison the pool for user requests. We still
+                // rethrow so the warmup caller can distinguish a genuine creation failure from a
+                // rate-limit backoff (which is signalled by a null return, not an exception) and
+                // apply the right policy. WarmupPassAsync traces and absorbs the exception there.
                 if (isWarmup)
                 {
-                    SqlClientEventSource.Log.TryPoolerTraceEvent(
-                        "<prov.DbConnectionPool.OpenNewInternalConnection|RES|CPOOL> {0}, Warmup connection creation failed, absorbing: {1}", Id, ex);
-                    return null;
+                    throw;
                 }
 
                 // Enter the blocking period error state on creation failure if configured.
@@ -1071,6 +1071,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
+            // Fast path: the pool is already at or above the minimum, so there is nothing to warm
+            // up. Return before touching the request flag or scheduling a thread-pool work item.
+            // This keeps hot-path callers (e.g. RemoveConnection on every return) cheap. The check
+            // is best-effort under concurrency; a below-minimum condition missed here is still
+            // observed by WarmupPassAsync's loop guard on the next trigger.
+            if (Count >= MinPoolSize)
+            {
+                return;
+            }
+
             // Record that (more) warmup is needed. A loop that is already running observes this and
             // executes an additional pass; see RunWarmupLoopAsync.
             Volatile.Write(ref _warmupRequested, 1);
@@ -1180,7 +1190,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     // owningConnection is null: warmup connections are created unattached and enter
                     // the pool as idle. isWarmup suppresses all blocking-period error-state
-                    // interaction and converts creation failures into an absorbed null.
+                    // interaction. A null return means the shared rate limiter was saturated; a
+                    // thrown exception means the physical connection open genuinely failed.
                     connection = OpenNewInternalConnection(
                         owningConnection: null,
                         cancellationToken: token,
@@ -1192,13 +1203,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // Shutdown/cancellation unwound the in-flight create. Stop warming up.
                     break;
                 }
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+                {
+                    // A genuine connection-open failure (not rate limiting). Trace and absorb it,
+                    // then stop this pass rather than retrying on a tight cadence: if opens are
+                    // failing, hammering the server every few milliseconds would be wasteful and
+                    // noisy. The pool stays fully operational and user requests continue to create
+                    // on demand; the next below-minimum trigger (or a returning connection) will
+                    // re-request warmup and try again (Story 3).
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "<prov.DbConnectionPool.WarmupPassAsync|RES|CPOOL> {0}, Warmup connection creation failed, stopping pass: {1}", Id, ex);
+                    break;
+                }
 
                 if (connection is null)
                 {
-                    // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize), so a
-                    // null return means the shared rate limiter is currently saturated. Wait our
-                    // turn rather than bypassing it (Story 2), then retry. Capacity frees up as user
-                    // requests release their permits.
+                    // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize), and
+                    // creation failures throw rather than return null, so a null return means the
+                    // shared rate limiter is currently saturated. Wait our turn rather than
+                    // bypassing it (Story 2), then retry. Capacity frees up as user requests release
+                    // their permits.
                     try
                     {
                         await Task.Delay(s_warmupRateLimitRetryDelay, token).ConfigureAwait(false);

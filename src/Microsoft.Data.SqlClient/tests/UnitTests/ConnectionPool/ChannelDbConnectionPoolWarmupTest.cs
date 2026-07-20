@@ -249,6 +249,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 "A warmup connection was pooled despite all creations failing.");
             Assert.Equal(0, pool.IdleCount);
             Assert.False(pool.ErrorOccurred, "Warmup failures must not trigger the pool error state.");
+
+            // A genuine creation failure stops the warmup pass instead of retrying on a tight
+            // cadence, so the failing factory is not hammered. Without a fresh below-minimum trigger
+            // the attempt count stays bounded (a single failed pass), rather than spinning up dozens
+            // of attempts against a server that is failing to accept connections.
+            int attemptsAfterFailure = factory.WarmupAttemptCount;
+            Thread.Sleep(300);
+            Assert.True(
+                factory.WarmupAttemptCount <= attemptsAfterFailure + 1,
+                $"Warmup spun on a persistent failure: {factory.WarmupAttemptCount} attempts observed.");
         }
 
         // After warmup fails, a subsequent user request creates a connection on demand and succeeds.
