@@ -156,7 +156,7 @@ extends:
       #
       apiscan:
         # We want APIScan enabled by default for our jobs.  However, some jobs don't produce any
-        # artifacts, and they will disable APIScan via the OneBranch per-job ob_sdl_apiscan_enable
+        # artifacts, and they will disable APIScan via the OneBranch per-job ob_sdl_apiscan_enabled
         # variable.
         enabled: true
 
