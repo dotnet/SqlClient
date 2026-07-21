@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -513,6 +514,55 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.Count);
         }
 
+        /// <summary>
+        /// An idle connection evicted by the idle-timeout check (IsLiveConnection) drops the pool
+        /// below MinPoolSize and triggers replenishment via RemoveConnection → RequestWarmup,
+        /// restoring the pool to the minimum.
+        /// </summary>
+        [Fact]
+        public async Task Replenish_AfterIdleTimeoutEviction_RefillsToMinimum()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.UseLegacyIdleTimeoutBehavior = false;
+
+            // Pool with a 1-second idle timeout and MinPoolSize=2 so an evicted connection
+            // triggers replenishment.
+            var factory = new DoomableConnectionFactory();
+            using var pool = ConstructPool(factory, minPoolSize: 2, maxPoolSize: 10, idleTimeout: 1);
+
+            pool.Startup();
+            await pool.WarmupLoopTask!;
+            Assert.Equal(2, pool.Count);
+            int createCountAfterWarmup = factory.CreateCount;
+
+            // Check out both warm-up connections.
+            var owner1 = new SqlConnection();
+            var owner2 = new SqlConnection();
+            pool.TryGetConnection(owner1, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
+            pool.TryGetConnection(owner2, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn2);
+            Assert.NotNull(conn1);
+            Assert.NotNull(conn2);
+
+            // Return conn1 first, then backdate its ReturnedTime to simulate idle expiry beyond the 1s timeout.
+            pool.ReturnInternalConnection(conn1!, owner1);
+            conn1!.ReturnedTime = DateTime.UtcNow - TimeSpan.FromSeconds(2);
+
+            // Return conn2 normally — not expired.
+            pool.ReturnInternalConnection(conn2!, owner2);
+
+            // TryGetConnection pops conn1 (head of channel), finds it idle-expired, calls
+            // RemoveConnection (which triggers RequestWarmup), then pops conn2 and returns it.
+            var owner3 = new SqlConnection();
+            pool.TryGetConnection(owner3, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn3);
+            Assert.NotNull(conn3);
+            Assert.Same(conn2, conn3);
+
+            // The eviction triggered replenishment; await the pass and verify the pool refilled to MinPoolSize.
+            await pool.WarmupLoopTask!;
+            Assert.Equal(2, pool.Count);
+            Assert.Equal(createCountAfterWarmup + 1, factory.CreateCount);
+        }
+
         #endregion
 
         #region Test doubles
@@ -554,6 +604,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         private sealed class DoomableConnectionFactory : SqlConnectionFactory
         {
+            private int _createCount;
+
+            internal int CreateCount => Volatile.Read(ref _createCount);
+
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
                 ConnectionPoolKey poolKey,
@@ -561,7 +615,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
                 TimeoutTimer timeout)
-                => new DoomableStubConnection();
+            {
+                Interlocked.Increment(ref _createCount);
+                return new DoomableStubConnection();
+            }
         }
 
         /// <summary>
