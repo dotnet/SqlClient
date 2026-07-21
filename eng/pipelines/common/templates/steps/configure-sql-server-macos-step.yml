@@ -52,8 +52,31 @@ steps:
       # Colima >= 0.8 when using --vm-type vz, which is dramatically faster than
       # --arch x86_64 (full QEMU VM emulation).
       # Requires macOS >= 13 (Ventura).
-      if ! colima start --vm-type vz --cpu 4 --memory 4; then
-        echo "ERROR: colima failed to start."
+      #
+      # The Lima hostagent that backs Colima intermittently fails to become
+      # ready within its short startup window on the macOS CI runners
+      # ("hostagent did not start up in 5s"), which is transient. Retry a few
+      # times, tearing down the half-created instance between attempts and
+      # dumping the hostagent log for diagnostics, before giving up.
+      colimaAttempts=3
+      colimaStarted=0
+      for ((c=1; c<=colimaAttempts; c++))
+      do
+        echo "Starting Colima (attempt #$c of $colimaAttempts)..."
+        if colima start --vm-type vz --cpu 4 --memory 4; then
+          colimaStarted=1
+          break
+        fi
+        echo "colima start failed (attempt #$c of $colimaAttempts)."
+        echo "--- hostagent stderr (last 40 lines) ---"
+        tail -40 "$HOME/.colima/_lima/colima/ha.stderr.log" 2>/dev/null || true
+        echo "--- Tearing down half-created instance before retry ---"
+        colima delete --force || true
+        sleep 5
+      done
+
+      if [ $colimaStarted -ne 1 ]; then
+        echo "ERROR: colima failed to start after $colimaAttempts attempts."
         colima status || true
         exit 1
       fi
