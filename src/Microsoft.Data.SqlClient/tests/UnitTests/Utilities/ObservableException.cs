@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Utilities;
 /// </summary>
 /// <remarks>
 /// Since testing whether an exception is observed requires hooking into the unobserved exception
-/// handler (ie, global state), there is a race condition with any other tests that may cause
+/// handler (i.e., global state), there is a race condition with any other tests that may cause
 /// unobserved exceptions. Thus, the best practice is to have the simulated unobserved exception
 /// be a specific type with a specific identifier.
 ///
@@ -25,7 +25,7 @@ public class ObservableException : Exception
     /// <summary>
     /// Represents a utility exception designed for testing scenarios where exceptions must be observed.
     /// </summary>
-    /// <param name="id">Identifier to uniquely identify the </param>
+    /// <param name="id">Identifier to uniquely identify the exception.</param>
     public ObservableException(Guid id)
     {
         Identifier = id;
