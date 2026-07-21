@@ -235,7 +235,9 @@
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
-                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+    </EmbeddedResource>
 
     <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
@@ -309,6 +311,7 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.Threading.RateLimiting" />
     <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
@@ -321,6 +324,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Threading.RateLimiting" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

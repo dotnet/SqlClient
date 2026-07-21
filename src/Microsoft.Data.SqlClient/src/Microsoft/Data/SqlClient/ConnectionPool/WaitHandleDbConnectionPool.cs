@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     ///   <item><description><b>Transaction-Aware Pooling:</b> Tracks connections enlisted in <see cref="System.Transactions.Transaction"/> using <c>TransactedConnectionPool</c> and <c>TransactedConnectionList</c>, ensuring proper context reuse.</description></item>
     ///   <item><description><b>Concurrency and Synchronization:</b> Uses wait handles and semaphores via <c>PoolWaitHandles</c> to coordinate safe multi-threaded access.</description></item>
     ///   <item><description><b>Connection Lifecycle Management:</b> Manages creation (<c>CreateObject</c>), deactivation (<c>DeactivateObject</c>), destruction (<c>DestroyObject</c>), and reclamation (<c>ReclaimEmancipatedObjects</c>) of internal connections.</description></item>
-    ///   <item><description><b>Error Handling and Resilience:</b> Implements retry and exponential backoff in <c>TryGetConnection</c> and handles transient errors using <c>_errorWait</c>.</description></item>
+    ///   <item><description><b>Error Handling and Resilience:</b> Implements retry and exponential backoff in <c>TryGetConnection</c> and delegates blocking-period bookkeeping (cached exception, exit timer) to <see cref="BlockingPeriodErrorState"/>.</description></item>
     ///   <item><description><b>Minimum Pool Size Enforcement:</b> Maintains the <c>MinPoolSize</c> by spawning background tasks to create new connections when needed.</description></item>
     ///   <item><description><b>Load Balancing Support:</b> Honors <c>LoadBalanceTimeout</c> to clean up idle connections and distribute load evenly.</description></item>
     ///   <item><description><b>Telemetry and Tracing:</b> Uses <c>SqlClientEventSource</c> for extensive diagnostic tracing of connection lifecycle events.</description></item>
@@ -165,8 +165,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private const int WAIT_ABANDONED = 0x80;
 
-        private const int ERROR_WAIT_DEFAULT = 5 * 1000; // 5 seconds
-
         // we do want a testable, repeatable set of generated random numbers
         private static readonly Random s_random = new Random(5101977); // Value obtained from Dave Driver
 
@@ -194,11 +192,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal int _waitCount;
         private readonly PoolWaitHandles _waitHandles;
 
-        private Exception _resError;
-        private volatile bool _errorOccurred;
-
-        private int _errorWait;
-        internal Timer _errorTimer;
+        private readonly TimeProvider _timeProvider;
+        private readonly BlockingPeriodErrorState _errorState;
 
         internal Timer _cleanupTimer;
 
@@ -212,7 +207,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
-            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo,
+            TimeProvider timeProvider = null)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -249,11 +245,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
             _identity = identity;
+            _timeProvider = timeProvider ?? TimeProvider.System;
 
             _waitHandles = new PoolWaitHandles();
 
-            _errorWait = ERROR_WAIT_DEFAULT;
-            _errorTimer = null;  // No error yet.
+            // Hook the wait-handle event so any thread blocked in WaitAny over the pool's
+            // handles wakes up immediately when the blocking period is entered/exited.
+            // _timeProvider is the system clock in production; tests inject a fake clock to
+            // drive the exit timer deterministically.
+            _errorState = new BlockingPeriodErrorState(
+                Id,
+                errorEvent: _waitHandles.ErrorEvent,
+                timeProvider: _timeProvider);
 
             _objectList = new List<DbConnectionInternal>(MaxPoolSize);
 
@@ -283,7 +286,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
-        public bool ErrorOccurred => _errorOccurred;
+        public bool ErrorOccurred => _errorState.HasError;
 
         private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
 
@@ -523,39 +526,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cleanupWait,
                 _cleanupWait);
 
-        private bool IsBlockingPeriodEnabled()
-        {
-            var poolGroupConnectionOptions = _connectionPoolGroup.ConnectionOptions;
-            if (poolGroupConnectionOptions == null)
-            {
-                return true;
-            }
-
-            var policy = poolGroupConnectionOptions.PoolBlockingPeriod;
-
-            switch (policy)
-            {
-                case PoolBlockingPeriod.Auto:
-                    {
-                        return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
-                    }
-                case PoolBlockingPeriod.AlwaysBlock:
-                    {
-                        return true; //Enabled
-                    }
-                case PoolBlockingPeriod.NeverBlock:
-                    {
-                        return false; //Disabled
-                    }
-                default:
-                    {
-                        //we should never get into this path.
-                        Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
-                        return true;
-                    }
-            }
-        }
-
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
@@ -581,14 +551,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", Id, newObj?.ObjectID);
 
-                // Reset the error wait:
-                _errorWait = ERROR_WAIT_DEFAULT;
+                // A successful creation clears any prior error state and resets backoff.
+                _errorState.Clear();
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 ADP.TraceExceptionWithoutRethrow(e);
 
-                if (!IsBlockingPeriodEnabled())
+                if (!_connectionPoolGroup.IsBlockingPeriodEnabled())
                 {
                     throw;
                 }
@@ -601,33 +571,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 newObj = null; // set to null, so we do not return bad new object
 
-                // Failed to create instance
-                _resError = e;
+                // Enter the blocking period: caches the exception, schedules the exit timer,
+                // and signals the wait-handle error event via the onEnter callback.
+                _errorState.Enter(e);
 
-                // Make sure the timer starts even if ThreadAbort occurs after setting the ErrorEvent.
-                Timer t = new Timer(new TimerCallback(this.ErrorCallback), null, Timeout.Infinite, Timeout.Infinite);
-
-                bool timerIsNotDisposed;
-
-                _waitHandles.ErrorEvent.Set();
-                _errorOccurred = true;
-
-                // Enable the timer.
-                // Note that the timer is created to allow periodic invocation. If ThreadAbort occurs in the middle of ErrorCallback,
-                // the timer will restart. Otherwise, the timer callback (ErrorCallback) destroys the timer after resetting the error to avoid second callback.
-                _errorTimer = t;
-                timerIsNotDisposed = t.Change(_errorWait, _errorWait);
-
-                Debug.Assert(timerIsNotDisposed, "ErrorCallback timer has been disposed");
-
-                if (30000 < _errorWait)
-                {
-                    _errorWait = 60000;
-                }
-                else
-                {
-                    _errorWait *= 2;
-                }
                 throw;
             }
             return newObj;
@@ -799,35 +746,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 SqlClientDiagnostics.Metrics.HardDisconnectRequest();
             }
         }
-
-        internal void ErrorCallback(object state)
-        {
-            // Skip work if the pool is not Running. The shutdown path disposes the
-            // timer; this guard handles the in-flight-callback race.
-            if (State is not Running)
-            {
-                return;
-            }
-
-            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ErrorCallback|RES|CPOOL> {0}, Resetting Error handling.", Id);
-            _errorOccurred = false;
-            _waitHandles.ErrorEvent.Reset();
-
-            // the error state is cleaned, destroy the timer to avoid periodic invocation
-            Timer t = _errorTimer;
-            _errorTimer = null;
-            if (t != null)
-            {
-                t.Dispose(); // Cancel timer request.
-            }
-        }
-
-
-        private Exception TryCloneCachedException()
-        // Cached exception can be of any type, so is not always cloneable.
-        // This functions clones SqlException
-        // OleDb and Odbc connections are not passing throw this code
-            => _resError is SqlException sqlEx ? sqlEx.InternalClone() : _resError;
 
         private void WaitForPendingOpen()
         {
@@ -1094,7 +1012,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // Throw the error that PoolCreateRequest stashed.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Errors are set.", Id);
                                 Interlocked.Decrement(ref _waitCount);
-                                throw TryCloneCachedException();
+                                _errorState.ThrowIfActive();
+                                // Narrow race: error state cleared between WaitAny observing
+                                // the signal and this check. Re-balance _waitCount and let the
+                                // outer do/while loop retry.
+                                Interlocked.Increment(ref _waitCount);
+                                break;
 
                             case CREATION_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creating new connection.", Id);
@@ -1655,8 +1578,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // and short-circuit (see CleanupCallback / ErrorCallback).
             Timer cleanup = Interlocked.Exchange(ref _cleanupTimer, null);
             cleanup?.Dispose();
-            Timer error = Interlocked.Exchange(ref _errorTimer, null);
-            error?.Dispose();
+
+            _errorState.Dispose();
 
             // Wake any threads parked in WaitHandle.WaitAny by releasing as many semaphore
             // slots as there are recorded waiters. Using _waitCount (rather than MaxPoolSize)
@@ -1712,25 +1635,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // instead obtained creation mutex
 
             DbConnectionInternal obj = null;
-            if (ErrorOccurred)
-            {
-                throw TryCloneCachedException();
-            }
-            else
-            {
-                if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
-                {
-                    // If we have an odd number of total objects, reclaim any dead objects.
-                    // If we did not find any objects to reclaim, create a new one.
+            _errorState.ThrowIfActive();
 
-                    // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
-                    if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
-                    {
-                        obj = CreateObject(owningObject, oldConnection, timeout);
-                    }
+            if ((oldConnection != null) || (Count < MaxPoolSize) || (0 == MaxPoolSize))
+            {
+                // If we have an odd number of total objects, reclaim any dead objects.
+                // If we did not find any objects to reclaim, create a new one.
+
+                // TODO: Consider implement a control knob here; why do we only check for dead objects ever other time?  why not every 10th time or every time?
+                if ((oldConnection != null) || (Count & 0x1) == 0x1 || !ReclaimEmancipatedObjects())
+                {
+                    obj = CreateObject(owningObject, oldConnection, timeout);
                 }
-                return obj;
             }
+            return obj;
         }
     }
 }
