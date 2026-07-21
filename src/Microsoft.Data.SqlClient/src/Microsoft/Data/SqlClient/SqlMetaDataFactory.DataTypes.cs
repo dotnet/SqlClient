@@ -23,8 +23,7 @@ internal sealed partial class SqlMetaDataFactory
     {
         #pragma warning disable format
 
-        private static readonly TypeMetaData[] s_types = [
-            // Type order follows the order from SqlMetaData.xml               
+        private static readonly TypeMetaData[] s_flat_types = [             
             //                                                                                             IsBestMatch             isFixedPrecisionScale   IsSearchable           MaximumScale             IsLiteralSupported      IsSupported
             //                                                                                                     IsCaseSensitive         IsLong                  IsSearchableWithLike    MinimumScale            LiteralPrefix                                           CreateParameters
             //                              ColumnSize                     (CreateFormat)*         IsAutoIncrementable     IsFixedLength           IsNullable              isUnsigned              IsConcurrencyType       LiteralSuffix              
@@ -62,6 +61,41 @@ internal sealed partial class SqlMetaDataFactory
             new (SqlDbTypeExtensions.Json  ,int.MaxValue                /*,"json"               */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,"'"    ,"'"    ,caps => caps.JsonType                  ,null),
             ];
         // * - CreateFormat value, that supposed to be produced
+
+        // Type order follows the order from SqlMetaData.xml  
+        private static readonly TypeMetaData[] s_types = [
+            TypeMetaData.CreateFixedNumericType(SqlDbType.SmallInt, isBestMatch: true),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.Int, isBestMatch: true),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.Real, isBestMatch: true),
+            TypeMetaData.CreateVariablePrecisionNumericType(SqlDbType.Float, columnSize: 53),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.Money, isBestMatch: false),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.SmallMoney, isBestMatch: false),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.Bit, isBestMatch: false),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.TinyInt, isBestMatch: true),
+            TypeMetaData.CreateFixedNumericType(SqlDbType.BigInt, isBestMatch: true),
+            TypeMetaData.CreateRowVersionType(),
+            TypeMetaData.CreateFixedLengthStringOrBinaryType(SqlDbType.Binary, literalPrefix: "0x"),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.Image, literalPrefix: "0x"),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.Text, literalPrefix: "'", literalSuffix: "'"),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.NText, literalPrefix: "N'", literalSuffix: "'"),
+            TypeMetaData.CreateVariablePrecisionNumericType(SqlDbType.Decimal, columnSize: 38),
+            TypeMetaData.CreateVariablePrecisionNumericType(SqlDbType.Decimal, columnSize: 38, aliasType: "numeric"),
+            TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.DateTime, isBestMatch: true),
+            TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.SmallDateTime, isBestMatch: true),
+            TypeMetaData.CreateSqlVariantType(),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.Xml, isSupported: caps => caps.XmlDataType),
+            TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.VarChar, literalPrefix: "'", literalSuffix: "'"),
+            TypeMetaData.CreateFixedLengthStringOrBinaryType(SqlDbType.Char, literalPrefix: "'", literalSuffix: "'"),
+            TypeMetaData.CreateFixedLengthStringOrBinaryType(SqlDbType.NChar, literalPrefix: "N'", literalSuffix: "'"),
+            TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.NVarChar, literalPrefix: "N'", literalSuffix: "'"),
+            TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.VarBinary, literalPrefix: "0x"),
+            TypeMetaData.CreateUniqueIdentifierType(),
+            TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.Date, isBestMatch: false, isSupported: caps => caps.ExpandedDateTimeDataTypes),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.Time, columnSize: 5, isBestMatch: false, isSupported: caps => caps.ExpandedDateTimeDataTypes),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTime2, columnSize: 8, isSupported: caps => caps.ExpandedDateTimeDataTypes),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTimeOffset, columnSize: 10, isSupported: caps => caps.ExpandedDateTimeDataTypes),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'",isSupported: caps => caps.JsonType),
+        ];
 
         #pragma warning restore format
 
@@ -216,39 +250,41 @@ internal sealed partial class SqlMetaDataFactory
         public string? LiteralPrefix{ get; init; }
         public string? LiteralSuffix{ get; init; }
 
-        public TypeMetaData(string typeName, int providerDbType, int columnSize, string createFormat,
-            string dataType, bool isAutoIncrementable, bool isBestMatch, bool isCaseSensitive, bool isFixedLength,
-            bool isFixedPrecisionScale, bool isLong, bool isNullable, bool isSearchable, bool isSearchableWithLike,
-            bool? isUnsigned, short maximumScale, short minimumScale, bool isConcurrencyType,
-            bool? isLiteralSupported, string? literalPrefix, string? literalSuffix,
-            Predicate<ConnectionCapabilities>? isSupported, string createParameters)
+        /// <summary>
+        /// Fills main values from the <see cref="MetaType"/> specified by <paramref name="dbType"/> and sets reasonable default values for the rest of the properties.
+        /// </summary>
+        /// <param name="dbType"></param>
+        private TypeMetaData(SqlDbType dbType)
         {
-            TypeName = typeName;
-            ProviderDbType = providerDbType;
-            ColumnSize = columnSize;
-            CreateFormat = createFormat;
-            CreateParameters = createParameters;
-            DataType = dataType;
-            IsAutoIncrementable = isAutoIncrementable;
-            IsBestMatch = isBestMatch;
-            IsCaseSensitive = isCaseSensitive;
-            IsFixedLength = isFixedLength;
-            IsFixedPrecisionScale = isFixedPrecisionScale;
-            IsLong = isLong;
-            IsNullable = isNullable;
-            IsSearchable = isSearchable;
-            IsSearchableWithLike = isSearchableWithLike;
-            IsUnsigned = isUnsigned;
-            MaximumScale = maximumScale;
-            MinimumScale = minimumScale;
-            IsConcurrencyType = isConcurrencyType;
-            IsSupported = isSupported;
-            IsLiteralSupported = isLiteralSupported;
-            LiteralPrefix = literalPrefix;
-            LiteralSuffix = literalSuffix;
+            MetaType _metaType = MetaType.GetMetaTypeFromSqlDbType(dbType, isMultiValued: false);
+            TypeName = _metaType.TypeName;
+            ProviderDbType = (int)_metaType.SqlDbType;
+            DataType = _metaType.ClassType.FullName!;
+            ColumnSize = (_metaType.Precision == TdsEnums.UNKNOWN_PRECISION_SCALE
+                                            ? _metaType.FixedLength
+                                            : _metaType.Precision);
+            CreateFormat = _metaType.TypeName;
+            CreateParameters = null;
+
+            IsAutoIncrementable = false;
+            IsBestMatch = true;
+            IsCaseSensitive = false;
+            IsFixedLength = true;
+            IsFixedPrecisionScale = false;
+            IsLong = false;
+            IsNullable = true;
+            IsSearchable = true;
+            IsSearchableWithLike = false;
+            IsUnsigned = null;
+            MaximumScale = -1;
+            MinimumScale = -1;
+            IsConcurrencyType = false;
+            IsLiteralSupported = null;
+            LiteralPrefix = null;
+            LiteralSuffix = null;
         }
 
-        public TypeMetaData(SqlDbType dbType, int? columnSize, 
+        public TypeMetaData(SqlDbType dbType, int? columnSize,
             bool isAutoIncrementable, bool isBestMatch, bool isCaseSensitive, bool isFixedLength,
             bool isFixedPrecisionScale, bool isLong, bool isNullable, bool isSearchable, bool isSearchableWithLike,
             bool? isUnsigned, short maximumScale, short minimumScale, bool isConcurrencyType,
@@ -307,5 +343,165 @@ internal sealed partial class SqlMetaDataFactory
             LiteralPrefix = literalPrefix;
             LiteralSuffix = literalSuffix;
         }
+
+        internal static TypeMetaData CreateFixedNumericType(SqlDbType integerDbType, bool isBestMatch) =>
+            new TypeMetaData(integerDbType)
+            {
+                // Of all fixed-scale integer types, only "tinyint", "smallint", "int" and "bigint" are auto-incrementable.
+                IsAutoIncrementable = integerDbType is SqlDbType.TinyInt or SqlDbType.SmallInt or SqlDbType.Int or SqlDbType.BigInt,
+                IsBestMatch = isBestMatch,
+                // "real" is an ISO synonym of "float(24)". This means that it's a fixed-scale alias of a dynamic-scale type.
+                // "bit" is also not considered fixed precision/scale, since SQL Server packs multiple bit columns into the same byte.
+                IsFixedPrecisionScale = integerDbType is not SqlDbType.Real and not SqlDbType.Bit,
+                // Only "tinyint" is unsigned. "bit" does not have the concept of signed/unsigned.
+                IsUnsigned = integerDbType is SqlDbType.Bit ? null : integerDbType is SqlDbType.TinyInt,
+            };
+
+        internal static TypeMetaData CreateVariablePrecisionNumericType(SqlDbType numericDbType, int columnSize,
+                                                                            string? aliasType = null)
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(numericDbType, isMultiValued: false);
+            bool variableScale = numericDbType is SqlDbType.Decimal;
+            string typeName = aliasType ?? metaType.TypeName;
+
+            return new TypeMetaData(numericDbType)
+            {
+                TypeName = typeName,
+                ColumnSize = columnSize,
+                CreateFormat = variableScale ? $"{typeName}({{0}}, {{1}})" : $"{typeName}({{0}})",
+                CreateParameters = variableScale ? "precision,scale" : "number of bits used to store the mantissa",
+                // Both "float" and "decimal" have variable precision, but "decimal" also has variable scale.
+                MinimumScale = (short)(variableScale ? 0 : -1),
+                // The data type is a fixed number of bytes, which can be distributed between the precision
+                // and the scale. Therefore, the maximum scale is equal to the column size.
+                MaximumScale = (short)(variableScale ? columnSize : -1),
+                IsAutoIncrementable = numericDbType is SqlDbType.Decimal,
+                IsUnsigned = false
+            };
+        }
+
+        internal static TypeMetaData CreateFixedPrecisionDateTimeType(SqlDbType dateTimeDbType, bool isBestMatch,
+            Predicate<ConnectionCapabilities>? isSupported = null) => new TypeMetaData(dateTimeDbType)
+            {
+                IsBestMatch = isBestMatch,
+                IsFixedPrecisionScale = dateTimeDbType is SqlDbType.Date,
+                IsSearchableWithLike = true,
+                LiteralPrefix = @"{ts '",
+                LiteralSuffix = @"'}",
+                IsSupported = isSupported
+            };
+
+        internal static TypeMetaData CreateVariablePrecisionDateTimeType(SqlDbType dateTimeDbType, int columnSize,
+            bool isBestMatch = true,
+            Predicate<ConnectionCapabilities>? isSupported = null)
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(dateTimeDbType, isMultiValued: false);
+            return new TypeMetaData(dateTimeDbType)
+            {
+                ColumnSize = columnSize,
+                CreateFormat = $"{metaType.TypeName}({{0}})",
+                // The documentation describes these data types as having variable precision, but GetSchema reports that they
+                // have variable scale.
+                CreateParameters = "scale",
+                IsBestMatch = isBestMatch,
+                IsFixedLength = false,
+                IsSearchableWithLike = true,
+                MinimumScale = 0,
+                MaximumScale = metaType.Scale,
+                LiteralPrefix = @"{ts '",
+                LiteralSuffix = @"'}",
+                IsSupported = isSupported
+            };
+        }
+
+        internal static TypeMetaData CreateStringOrBinaryType(SqlDbType sqlDbType, int columnSize, bool isLong,
+            bool isFixedLength, bool isSearchable,
+            string? literalPrefix = null, string? literalSuffix = null,
+            Predicate<ConnectionCapabilities>? isSupported = null)
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(sqlDbType, isMultiValued: false);
+            bool hasLengthSpecifier = sqlDbType is SqlDbType.Char or SqlDbType.NChar or SqlDbType.Binary
+                or SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbType.VarBinary;
+            return new TypeMetaData(sqlDbType)
+            {
+                ColumnSize = columnSize,
+                CreateFormat = hasLengthSpecifier ? $"{metaType.TypeName}({{0}})" : metaType.TypeName,
+                // Several string or binary data types do not include the length in their type declaration.
+                // Of the data types which do, fixed-length types use the length parameter to decide the full length,
+                // while the rest use it to decide the maximum length.
+                CreateParameters = hasLengthSpecifier ? (isFixedLength ? "length" : "max length") : null,
+                // The DataType for XML is string, which is not the best match for an XML type.
+                // Similarly, although timestamp/rowversion is represented as a byte array, it's not best
+                // represented as such.
+                IsBestMatch = sqlDbType is not SqlDbType.Xml and not SqlDbType.Timestamp and not SqlDbTypeExtensions.Json,
+                IsConcurrencyType = sqlDbType is SqlDbType.Timestamp,
+                IsFixedLength = isFixedLength,
+                IsLong = isLong,
+                IsNullable = sqlDbType is not SqlDbType.Timestamp,
+                IsSearchable = isSearchable,
+                // String types are searchable with LIKE; binary types are not. SQL Server considers XML and JSON a binary type for this purpose.
+                IsSearchableWithLike = metaType.IsCharType && sqlDbType is not SqlDbType.Xml and not SqlDbTypeExtensions.Json,
+                // If no literal prefix or suffix is specified, then literal support is not available.
+                IsLiteralSupported = literalPrefix is not null || literalSuffix is not null,
+                LiteralPrefix = literalPrefix,
+                LiteralSuffix = literalSuffix,
+                IsSupported = isSupported,
+            };
+        }
+
+        internal static TypeMetaData CreateLongStringOrBinaryType(SqlDbType longDbType,
+            string? literalPrefix = null, string? literalSuffix = null,
+            Predicate<ConnectionCapabilities>? isSupported = null) =>
+            CreateStringOrBinaryType(longDbType,
+                // The column size is measured in elements, not bytes. For ntext, each element is a 2 byte Unicode character.
+                columnSize: longDbType is SqlDbType.NText ? int.MaxValue / ADP.CharSize : int.MaxValue,
+                isLong: true, isFixedLength: false,
+                isSearchable: false,
+                literalPrefix: literalPrefix, literalSuffix: literalSuffix,
+                isSupported: isSupported);
+
+        internal static TypeMetaData CreateFixedLengthStringOrBinaryType(SqlDbType fixedLengthDbType,
+            string? literalPrefix = null, string? literalSuffix = null) =>
+            CreateStringOrBinaryType(fixedLengthDbType,
+                // See the comment on AddLongStringOrBinary regarding column sizes. To add: the "binary" type can be up to 8000 bytes.
+                columnSize: fixedLengthDbType switch
+                {
+                    SqlDbType.Binary => 8000,
+                    SqlDbType.NChar => int.MaxValue / ADP.CharSize,
+                    _ => int.MaxValue
+                },
+                isLong: false, isFixedLength: true,
+                isSearchable: true,
+                literalPrefix: literalPrefix, literalSuffix: literalSuffix);
+
+        internal static TypeMetaData CreateVariableLengthStringOrBinaryType(SqlDbType variableLengthDbType,
+            string? literalPrefix = null, string? literalSuffix = null) =>
+            CreateStringOrBinaryType(variableLengthDbType,
+                // See the comment on AddLongStringOrBinary regarding column sizes. Unlike the "binary" type, varbinary is reported to
+                // have a maximum column size of (2^32-1) / 2 elements, just as nvarchar does.
+                columnSize: variableLengthDbType is SqlDbType.NVarChar or SqlDbType.VarBinary
+                    ? int.MaxValue / ADP.CharSize
+                    : int.MaxValue,
+                isLong: false, isFixedLength: false,
+                isSearchable: true,
+                literalPrefix: literalPrefix, literalSuffix: literalSuffix);
+
+        internal static TypeMetaData CreateRowVersionType() =>
+            CreateStringOrBinaryType(SqlDbType.Timestamp,
+                columnSize: TdsEnums.TEXT_TIME_STAMP_LEN, isLong: false, isFixedLength: true,
+                isSearchable: true,
+                literalPrefix: "0x");
+
+        internal static TypeMetaData CreateSqlVariantType() => new TypeMetaData(SqlDbType.Variant)
+        {
+            IsFixedLength = false,
+            IsLiteralSupported = false
+        };
+
+        internal static TypeMetaData CreateUniqueIdentifierType() => new TypeMetaData(SqlDbType.UniqueIdentifier)
+        {
+            LiteralPrefix = "'",
+            LiteralSuffix = "'",
+        };
     }
 }
