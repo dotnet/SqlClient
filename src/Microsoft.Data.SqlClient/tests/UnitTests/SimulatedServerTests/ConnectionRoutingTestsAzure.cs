@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
             using SqlConnection connection = new(builder.ConnectionString);
             Assert.Throws<SqlException>(() => connection.Open());

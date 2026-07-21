@@ -52,14 +52,90 @@ steps:
       # Colima >= 0.8 when using --vm-type vz, which is dramatically faster than
       # --arch x86_64 (full QEMU VM emulation).
       # Requires macOS >= 13 (Ventura).
-      colima start --vm-type vz --cpu 4 --memory 4
+      #
+      # The Lima hostagent that backs Colima intermittently fails to become
+      # ready within its short startup window on the macOS CI runners
+      # ("hostagent did not start up in 5s"), which is transient. Retry a few
+      # times, tearing down the half-created instance between attempts and
+      # dumping the hostagent log for diagnostics, before giving up.
+      colimaAttempts=3
+      colimaStarted=0
+      for ((c=1; c<=colimaAttempts; c++))
+      do
+        echo "Starting Colima (attempt #$c of $colimaAttempts)..."
+        if colima start --vm-type vz --cpu 4 --memory 4; then
+          colimaStarted=1
+          break
+        fi
+        echo "colima start failed (attempt #$c of $colimaAttempts)."
+        echo "--- hostagent stderr (last 40 lines) ---"
+        tail -40 "$HOME/.colima/_lima/colima/ha.stderr.log" 2>/dev/null || true
+        echo "--- Tearing down half-created instance before retry ---"
+        colima delete --force || true
+        sleep 5
+      done
+
+      if [ $colimaStarted -ne 1 ]; then
+        echo "ERROR: colima failed to start after $colimaAttempts attempts."
+        colima status || true
+        exit 1
+      fi
+
+      # Point the docker CLI at Colima's daemon socket.  Colima normally sets an
+      # active docker context, but the standalone docker CLI (installed above via
+      # 'brew install docker') can default to unix:///var/run/docker.sock, which
+      # does not exist on macOS without Docker Desktop.  This caused every
+      # 'docker pull' to fail instantly with:
+      #   failed to connect to the docker API at unix:///var/run/docker.sock
+      # Export DOCKER_HOST explicitly so all docker commands reach Colima.
+      export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
       docker --version
-      docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2025-latest
+
+      # Verify the docker daemon is actually reachable before attempting to pull.
+      # This fails fast with useful diagnostics instead of looping through the
+      # pull retries when the socket is misconfigured.
+      if ! docker info >/dev/null 2>&1; then
+        echo "ERROR: docker daemon is not reachable at $DOCKER_HOST."
+        echo "--- colima status ---"
+        colima status || true
+        echo "--- docker context ls ---"
+        docker context ls || true
+        exit 1
+      fi
+
+      # Pull the SQL Server image with retries.  The macOS agents intermittently
+      # fail to resolve or reach mcr.microsoft.com (DNS lookups or registry i/o
+      # time out), which previously failed the whole step on the first attempt.
+      # Retry a handful of times with a fixed delay before giving up.
+      pullAttempts=5
+      pullDelay=15
+      pulled=0
+      for ((p=1; p<=pullAttempts; p++))
+      do
+        echo "Pulling SQL Server image (attempt #$p of $pullAttempts)..."
+        if docker pull --platform linux/amd64 mcr.microsoft.com/mssql/server:2025-latest; then
+          pulled=1
+          break
+        fi
+        echo "docker pull failed (attempt #$p of $pullAttempts). Retrying in ${pullDelay}s..."
+        sleep $pullDelay
+      done
+
+      if [ $pulled -ne 1 ]; then
+        echo "ERROR: Unable to pull mcr.microsoft.com/mssql/server:2025-latest after $pullAttempts attempts (registry/DNS unreachable)."
+        exit 1
+      fi
 
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
 
-      docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
+      # Start the container and fail fast (with diagnostics) if it does not launch,
+      # rather than silently falling through to the connection-wait loop.
+      if ! docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest; then
+        echo "ERROR: Failed to start the sql1 container."
+        docker ps -a --filter "name=^/sql1$"
+        exit 1
+      fi
 
       sleep 10
 
