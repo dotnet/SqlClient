@@ -130,6 +130,7 @@ extends:
     buildPlatforms: ${{ parameters.buildPlatforms }}
     referenceType: Project
     debug: ${{ parameters.debug }}
+    skipRedundantTrigger: true
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
