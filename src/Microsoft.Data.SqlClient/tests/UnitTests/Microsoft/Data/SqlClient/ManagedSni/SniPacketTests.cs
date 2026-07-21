@@ -31,21 +31,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         public async Task ReadFromStreamAsync_WhenAsyncIoCallbackThrows_CreatesUnobservedTaskException()
         {
             // Arrange
-            // - Create ID for our special test exception
-            ObservableException testException = new ObservableException(Guid.NewGuid());
-
-            // - Set up unobserved exception handler that only observes our special test exception.
-            TaskCompletionSource<Exception> unobservedExceptionRaised = new(TaskCreationOptions.RunContinuationsAsynchronously);
-            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
-                (_, args) =>
-                {
-                    if (args.Exception.InnerExceptions.Contains(testException))
-                    {
-                        args.SetObserved();
-                        unobservedExceptionRaised.TrySetResult(args.Exception);
-                    }
-                };
-            TaskScheduler.UnobservedTaskException += handleUnobservedException;
+            // - Set up for unobserved exception handling
+            using ObservableExceptionHelper exceptionHelper = new ObservableExceptionHelper();
 
             // - Set up task completion source to signal end of async IO completion callback
             TaskCompletionSource callbackStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -61,7 +48,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 // we know the exception was thrown.
                 try
                 {
-                    throw testException;
+                    throw exceptionHelper.TestException;
                 }
                 finally
                 {
@@ -69,57 +56,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 }
             });
 
-            try
-            {
-                // Act
-                // - Read some bytes from the test asynchronously. This will cause the async IO
-                //   completion callback to fire, which will throw our test exception.
-                using MemoryStream emptyStream = new();
-                testPacket.ReadFromStreamAsync(emptyStream);
+            // Act
+            // - Read some bytes from the test asynchronously. This will cause the async IO
+            //   completion callback to fire, which will throw our test exception.
+            using MemoryStream emptyStream = new();
+            testPacket.ReadFromStreamAsync(emptyStream);
 
-                // - Wait for async IO to complete (should be more or less instantaneous)
-                await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            // - Wait for async IO to complete (should be more or less instantaneous)
+            await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-                // - Force GC and wait for unhandled exception to be raised
-                Exception? unobservedException = await WaitForUnobservedExceptionAsync(
-                    unobservedExceptionRaised.Task,
-                    TimeSpan.FromSeconds(5));
+            // - Force GC and wait for unhandled exception to be raised
+            Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(5));
 
-                // Assert
-                Assert.NotNull(unobservedException);
-            }
-            finally
-            {
-                // Cleanup
-                // - Unregister unobserved exception handler
-                TaskScheduler.UnobservedTaskException -= handleUnobservedException;
-            }
-        }
-
-        private static async Task<Exception?> WaitForUnobservedExceptionAsync(
-            Task<Exception> unobservedExceptionTask,
-            TimeSpan timeout)
-        {
-            DateTime deadline = DateTime.UtcNow + timeout;
-            do
-            {
-                // Force GC collection
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                // Effectively wait up to 50ms before looping and trying to garbage collect again
-                Task delayTask = Task.Delay(TimeSpan.FromMilliseconds(50));
-                Task completedTask = await Task.WhenAny(unobservedExceptionTask, delayTask);
-                if (completedTask == unobservedExceptionTask)
-                {
-                    // Unobserved exception completed before we gave up
-                    return await unobservedExceptionTask;
-                }
-            } while (DateTime.UtcNow < deadline);
-
-            // Unobserved exception did not complete, so we give up and return null
-            return null;
+            // Assert
+            Assert.NotNull(unobservedException);
         }
 
         private sealed class TestSniHandle : SniHandle
