@@ -54,13 +54,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal static DbConnectionPoolIdentity GetCurrent()
         {
-            #if NETFRAMEWORK
-            return GetCurrentNative();
-            #else
             return LocalAppContextSwitches.UseManagedNetworking
                 ? GetCurrentManaged()
                 : GetCurrentNative();
-            #endif
         }
 
         #if NETFRAMEWORK
