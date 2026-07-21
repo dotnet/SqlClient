@@ -256,14 +256,14 @@ internal sealed partial class SqlMetaDataFactory
         /// <param name="dbType"></param>
         private TypeMetaData(SqlDbType dbType)
         {
-            MetaType _metaType = MetaType.GetMetaTypeFromSqlDbType(dbType, isMultiValued: false);
-            TypeName = _metaType.TypeName;
-            ProviderDbType = (int)_metaType.SqlDbType;
-            DataType = _metaType.ClassType.FullName!;
-            ColumnSize = (_metaType.Precision == TdsEnums.UNKNOWN_PRECISION_SCALE
-                                            ? _metaType.FixedLength
-                                            : _metaType.Precision);
-            CreateFormat = _metaType.TypeName;
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(dbType, isMultiValued: false);
+            TypeName = metaType.TypeName;
+            ProviderDbType = (int)metaType.SqlDbType;
+            DataType = metaType.ClassType.FullName!;
+            ColumnSize = (metaType.Precision == TdsEnums.UNKNOWN_PRECISION_SCALE
+                                            ? metaType.FixedLength
+                                            : metaType.Precision);
+            CreateFormat = metaType.TypeName;
             CreateParameters = null;
 
             IsAutoIncrementable = false;
