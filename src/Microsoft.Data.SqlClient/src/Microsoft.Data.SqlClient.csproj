@@ -19,11 +19,6 @@
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
     <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
-
-    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
-    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <!-- Target Frameworks =============================================== -->
@@ -231,11 +226,11 @@
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
     <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
-    <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
+    <!-- the app context switch in their csproj. This file only applies to netcore.               -->
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
-                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'">
+                      Condition="'$(TargetFramework)' != 'net462'">
       <LogicalName>ILLink.Substitutions.xml</LogicalName>
     </EmbeddedResource>
 
