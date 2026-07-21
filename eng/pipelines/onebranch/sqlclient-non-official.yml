@@ -127,14 +127,41 @@ extends:
 
     # See: https://aka.ms/obpipelines/sdl
     globalSdl:
+      # Configure APIScan behaviour:
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
+      #
+      # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/apiscan-build-task#v2
+      #
       apiscan:
-        # APIScan "software name" and version parameters are set on a per-job basis with via
-        # ob_sdl_apiscan_* variables.
+        # We want APIScan enabled by default for our jobs.  However, some jobs don't produce any
+        # artifacts, and they will disable APIScan via the OneBranch per-job ob_sdl_apiscan_enable
+        # variable.
         enabled: true
+
+        # APIScan errors should not break non-official builds.
         break: false
+
+        # Use pre-release mode for non-official pipelines.
+        modeType: prerelease
+
+        # We have a single "name" and version registered with APIScan for all of our packages.
+        #
+        # https://eng.ms/docs/products/apiscan/onboard/requirements/registersoftware
+        #
+        softwareName: Microsoft.Data.SqlClient
+
+        # Similar to the software name, we have a single version registered as well.  This has
+        # nothing to do with the NuGet package version.  It is purely an APIScan registration
+        # value that points to our backend configuration.
+        softwareVersion: '6.10'
+
+        # We want the standard level of logging.
+        verbosityLevel: standard
 
       armory:
         enabled: true
+        break: false
 
       asyncSdl:
         # Disabling this as it complicates the build process with minimal gain
@@ -142,6 +169,7 @@ extends:
 
       binskim:
         enabled: true
+        break: false
 
       codeql:
         enabled: true
@@ -157,11 +185,13 @@ extends:
 
       policheck:
         enabled: true
+        break: false
         exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
 
       roslyn:
         # Note, requires RoslynAnalyzers task to be added as a separate step
         enabled: true
+        break: false
 
       publishLogs:
         enabled: true
@@ -172,11 +202,9 @@ extends:
         packageVersion: '$(Build.BuildNumber)'
 
       tsa:
-        # We disable TSA for non-official pipelines. This inhibits spurious TSA alerts and ADO task
-        # creation, since non-official builds are often done against development branches. This also
-        # forces all SDL tasks into "break" build mode.
+        # Disable TSA for non-official runs.  Developers don't need the TSA integration for
+        # manually-run non-official builds.
         enabled: false
-        configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self

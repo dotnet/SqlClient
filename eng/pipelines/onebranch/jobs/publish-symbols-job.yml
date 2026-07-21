@@ -61,7 +61,6 @@ jobs:
       # Disable SDL scanning — this job only uploads/publishes PDBs and produces no
       # assemblies to scan. APIScan and BinSkim are handled by the build jobs.
       ob_sdl_apiscan_enabled: false
-      ob_sdl_binskim_break: false
       ob_sdl_binskim_enabled: false
 
       # Path where the downloaded artifact will be placed.
