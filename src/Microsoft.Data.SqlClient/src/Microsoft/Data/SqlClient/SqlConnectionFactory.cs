@@ -318,6 +318,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout,
+            bool forceNewConnection,
             out DbConnectionInternal connection)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
@@ -419,7 +420,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (((SqlConnection)owningConnection).ForceNewConnection)
+                    if (forceNewConnection)
                     {
                         Debug.Assert(oldConnection is not DbConnectionClosed, "Force new connection, but there is no old connection");
                         
@@ -752,8 +753,8 @@ namespace Microsoft.Data.SqlClient
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-            
-            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
+
+            return new SqlMetaDataFactory(xmlStream, internalConnection.Capabilities);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
@@ -777,7 +778,6 @@ namespace Microsoft.Data.SqlClient
                         
                         if (oldConnection?.State == ConnectionState.Open)
                         {
-                            oldConnection.PrepareForReplaceConnection();
                             oldConnection.Dispose();
                         }
                         

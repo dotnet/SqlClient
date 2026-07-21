@@ -607,7 +607,7 @@
     <value>Impossible de trouver un fournisseur d'authentification pour « {0} ». Installez le package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) pour utiliser les méthodes d'authentification Active Directory Domain Services (Entra ID).</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 1.1.0 ou ultérieure, qui inclut ce type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas être Null ou vide.</value>
@@ -964,7 +964,7 @@
     <value>Durée minimale de conservation (en secondes) de cette connexion avant sa destruction.</value>
   </data>
   <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
+    <value>Durée maximale (en secondes) pendant laquelle une connexion peut rester inutilisée (inactive) dans le pool avant d’être supprimée lorsque le comportement hérité du délai d’inactivité est désactivé. Une valeur de 0 désactive l’expiration d’inactivité.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Nombre maximal de connexions autorisé dans le pool.</value>

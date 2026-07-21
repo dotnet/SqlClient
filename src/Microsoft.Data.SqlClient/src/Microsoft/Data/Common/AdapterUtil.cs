@@ -65,22 +65,6 @@ namespace Microsoft.Data.Common
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
 
-        /// <summary>
-        /// This member returns true if the current OS platform is Windows.
-        /// </summary>
-        /// <remarks>
-        /// This is a const on .NET Framework, and a property on .NET Core, because of differing API availability and JIT requirements.
-        /// .NET Framework will perform basic dead branch elimination when a const value is encountered, while .NET Core can trim Windows-specific
-        /// code when published to non-Windows platforms.
-        /// .NET Core's trimming is very limited though, so this must be used inline within methods to throw PlatformNotSupportedException,
-        /// rather than in a throw helper.
-        /// </remarks>
-        #if NETFRAMEWORK
-        public const bool IsWindows = true;
-        #else
-        public static bool IsWindows => OperatingSystem.IsWindows();
-        #endif
-
         #region UDT
 
         #if NETFRAMEWORK
@@ -149,9 +133,10 @@ namespace Microsoft.Data.Common
             }
         }
 
+#nullable enable
         internal static Timer UnsafeCreateTimer(
             TimerCallback callback,
-            object state,
+            object? state,
             int dueTimeMilliseconds,
             int periodMilliseconds) =>
             UnsafeCreateTimer(
@@ -160,7 +145,7 @@ namespace Microsoft.Data.Common
                 TimeSpan.FromMilliseconds(dueTimeMilliseconds),
                 TimeSpan.FromMilliseconds(periodMilliseconds));
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto
             // a global timer causing them to live forever
@@ -175,6 +160,41 @@ namespace Microsoft.Data.Common
             }
         }
 
+        /// <summary>
+        /// Creates an <see cref="ITimer"/> using the supplied <see cref="TimeProvider"/> without
+        /// capturing the current <see cref="ExecutionContext"/>. This overload accepts a strongly
+        /// typed <see cref="Action{T}"/> callback that receives the supplied <paramref name="state"/>
+        /// when the timer fires.
+        /// </summary>
+        /// <typeparam name="T">The type of the state passed to the callback.</typeparam>
+        /// <param name="timeProvider">The time provider used to create the timer.</param>
+        /// <param name="callback">The delegate invoked with <paramref name="state"/> when the timer fires.</param>
+        /// <param name="state">The state object passed to <paramref name="callback"/> on each invocation.</param>
+        /// <param name="dueTime">The amount of time to wait before the first invocation, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to create the timer disarmed.</param>
+        /// <param name="period">The interval between invocations, or
+        /// <see cref="Timeout.InfiniteTimeSpan"/> to disable periodic signaling.</param>
+        /// <returns>An <see cref="ITimer"/> created by <paramref name="timeProvider"/>.</returns>
+        internal static ITimer UnsafeCreateTimer<T>(
+            TimeProvider timeProvider,
+            Action<T> callback,
+            T state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            if (ExecutionContext.IsFlowSuppressed())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
+            }
+
+            using (ExecutionContext.SuppressFlow())
+            {
+                return timeProvider.CreateTimer(s => callback((T)s!), state, dueTime, period);
+            }
+        }
+
+
+#nullable restore
 
 #region COM+ exceptions
         internal static ArgumentException Argument(string error)
@@ -441,7 +461,7 @@ namespace Microsoft.Data.Common
         internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
         {
             #if NET
-            if (!IsWindows)
+            if (!OsConstants.IsWindows)
             {
                 // No registry in non-Windows environments
                 return null;
@@ -479,6 +499,17 @@ namespace Microsoft.Data.Common
             if (((int)value < 0) || (0x3F < (int)value))
             {
                 throw InvalidCommandBehavior(value);
+            }
+        }
+
+        internal static void ValidateTdsVersion(uint tdsVersion)
+        {
+            if (tdsVersion is not TdsEnums.SQL2005_VERSION
+                and not TdsEnums.SQL2008_VERSION
+                and not TdsEnums.TDS7X_VERSION
+                and not TdsEnums.TDS80_VERSION)
+            {
+                throw SQL.InvalidTDSVersion();
             }
         }
 

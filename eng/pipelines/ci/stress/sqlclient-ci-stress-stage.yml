@@ -57,10 +57,6 @@ parameters:
     type: object
     default: [net8.0, net9.0, net10.0]
 
-  # The 1ES pool name for Linux and Windows jobs.  macOS always uses 'Azure Pipelines'.
-  - name: poolName
-    type: string
-
 stages:
   - stage: stress_tests_stage
     displayName: Run Stress Tests
@@ -77,7 +73,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on Linux.
 
-    - template: /eng/pipelines/stress/stress-tests-job.yml@self
+    - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
@@ -88,7 +84,6 @@ stages:
         # No .NET Framework runtimes on Linux.
         netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
@@ -99,7 +94,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on Windows
 
-    - template: /eng/pipelines/stress/stress-tests-job.yml@self
+    - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
@@ -110,7 +105,6 @@ stages:
         # Note that we include the .NET Framework runtimes for test runs on Windows.
         netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        poolName: ${{ parameters.poolName }}
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-win-step.yml@self
@@ -123,7 +117,7 @@ stages:
     # ----------------------------------------------------------------------------------------------
     # Build and test on macOS.
 
-    - template: /eng/pipelines/stress/stress-tests-job.yml@self
+    - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         debug: ${{ parameters.debug }}
@@ -134,12 +128,10 @@ stages:
         # No .NET Framework runtimes on macOS.
         netFrameworkTestRuntimes: []
         netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        # We don't have any 1ES Hosted Pool images for macOS, so we use a generic one from Azure
-        # Pipelines.
-        poolName: Azure Pipelines
         saPassword: $(saPassword)
         sqlSetupStep:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
           parameters:
             saPassword: $(saPassword)
+        # A macOS vmImage name routes this job to the Microsoft-hosted 'Azure Pipelines' pool.
         vmImage: macos-latest

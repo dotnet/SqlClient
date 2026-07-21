@@ -7,35 +7,27 @@
 # This pipeline builds all packages using the build.proj Pack target with ReferenceType=Package,
 # then publishes the resulting .nupkg and .snupkg files as a single pipeline artifact.
 #
-# It runs:
-#   - On pushes to GitHub main and ADO internal/main (batched)
-#   - Nightly at 00:00 UTC on both branches
+# It runs nightly at 00:20 UTC on GitHub dotnet/SqlClient main and ADO.Net dotnet-sqlclient
+# internal/main.
 #
 # On internal/main the strong-name signing key is downloaded and used to sign assemblies during the
 # build.
 #
-# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We distinguish the two via
-# branch filters:
+# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO.NET CI.  We distinguish the two
+# via branch filters:
 #
 #   - Only the GitHub repo has a 'main' branch.
 #   - Only the ADO repo has an 'internal/main' branch.
 
 name: $(DayOfYear)$(Rev:rr)
 
-# Do not trigger this pipeline for PRs.
+# Do not trigger this pipeline for PRs or pushes.
 pr: none
+trigger: none
 
-# Trigger on pushes to main and internal/main, batching concurrent commits.
-trigger:
-  batch: true
-  branches:
-    include:
-      - main
-      - internal/main
-
-# Nightly schedule at 00:00 UTC.
+# Nightly schedule at 00:20 UTC.
 schedules:
-  - cron: '0 0 * * *'
+  - cron: '20 0 * * *'
     displayName: Nightly Build
     branches:
       include:
@@ -92,13 +84,13 @@ variables:
   # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
   - name: signingKeyArg
     ${{ if eq(variables.isInternalBuild, true) }}:
-      value: '-p:SigningKeyPath="$(keyFile.secureFilePath)"'
+      value: -p:SigningKeyPath="$(driverKeyFile.secureFilePath)"
     ${{ else }}:
       value: ''
 
 jobs:
-  - job: pack_all_packages
-    displayName: Pack All Packages
+  - job: build_nuget_packages
+    displayName: Build NuGet Packages
 
     pool:
       ${{ if eq(variables.isInternalBuild, true) }}:
@@ -117,36 +109,36 @@ jobs:
           displayName: '[Debug] Print Environment Variables'
 
       # Install the .NET SDK from global.json.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
 
       # Restore dotnet local tools (pwsh, apicompat, etc.).
-      - template: /eng/pipelines/steps/restore-dotnet-tools.yml@self
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-      # Clean any pre-existing .nupkg / .snupkg files from the packages/ directory
-      # to ensure we only publish packages produced by this run.
+      # Clean any pre-existing .nupkg / .snupkg files from the packages/ directory to ensure we only
+      # publish packages produced by this run.
       - pwsh: |
           Write-Host 'Cleaning packages/ directory...'
           Remove-Item -Force "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue
           Remove-Item -Force "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue
           Write-Host 'Done.'
-        displayName: Clean packages/ directory
+        displayName: Clean Packages Directory
 
       # On internal builds, download the strong-name signing key.
       - ${{ if eq(variables.isInternalBuild, true) }}:
         - task: DownloadSecureFile@1
-          displayName: Download Signing Key
+          displayName: Download Driver Signing Key
           inputs:
             secureFile: netfxKeypair.snk
-          name: keyFile
+          name: driverKeyFile
 
       # Run the Pack target via build.proj.
       - task: DotNetCoreCLI@2
-        displayName: build.proj - Pack (ReferenceType=Package)
+        displayName: Build & Pack
         inputs:
           command: build
-          projects: '$(Build.SourcesDirectory)/build.proj'
+          projects: $(Build.SourcesDirectory)/build.proj
           arguments: >-
             -t:Pack
             -p:Configuration=${{ parameters.buildConfiguration }}
@@ -161,12 +153,12 @@ jobs:
           Write-Host 'Packages produced:'
           Get-ChildItem "$(Build.SourcesDirectory)/packages/*.nupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
           Get-ChildItem "$(Build.SourcesDirectory)/packages/*.snupkg" -ErrorAction SilentlyContinue | Format-Table Name, Length -AutoSize -Wrap
-        displayName: List produced packages
+        displayName: List Packages
 
       # Publish all .nupkg and .snupkg files from packages/ as a pipeline artifact.
       - task: PublishPipelineArtifact@1
-        displayName: Publish NuGet Packages
+        displayName: Publish Packages
         inputs:
-          targetPath: '$(Build.SourcesDirectory)/packages'
-          artifactName: Packages
+          targetPath: $(Build.SourcesDirectory)/packages
+          artifactName: SqlClient-Driver-Packages
           publishLocation: pipeline

@@ -181,6 +181,8 @@ namespace Microsoft.Data.ProviderBase
 
         public abstract string ServerVersion { get; }
 
+        public virtual ConnectionCapabilities Capabilities => null;
+
         // this should be abstract but until it is added to all the providers virtual will have to do RickFe
         public virtual string ServerVersionNormalized
         {
@@ -735,11 +737,6 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal virtual void PrepareForReplaceConnection()
-        {
-            // By default, there is no preparation required
-        }
-
         /// <summary>
         /// Stamps <see cref="ReturnedTime"/> with the current UTC time. The pool calls this from its
         /// return-to-pool path only when it intends the idle-timeout machinery to act on the value;
@@ -930,6 +927,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
+            bool forceNewConnection,
             TimeoutTimer timeout)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
@@ -939,7 +937,13 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, retry, this, timeout, out openConnection))
+                    if (!connectionFactory.TryGetConnection(
+                            outerConnection, 
+                            retry, 
+                            this, 
+                            timeout, 
+                            forceNewConnection, 
+                            out openConnection))
                     {
                         return false;
                     }

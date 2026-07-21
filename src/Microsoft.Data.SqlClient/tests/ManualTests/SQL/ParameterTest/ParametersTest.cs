@@ -485,8 +485,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<OverflowException>(() => rdr.GetDecimal(0));
         }
 
-        [Theory]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        public static TheoryData<string, bool> TestScaledDecimalParameter_Data
+        {
+            get
+            {
+                TheoryData<string, bool> result = new();
+                foreach (string connectionString in DataTestUtility.ConnectionStrings)
+                {
+                    result.Add(connectionString, false); // Truncate scaled decimal disabled
+                    result.Add(connectionString, true);  // Truncate scaled decimal enabled
+                }
+
+                return result;
+            }
+        }
+
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
@@ -516,8 +532,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
-        [Theory]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalParameter_BulkCopy(string connectionString, bool truncateScaledDecimal)
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
@@ -548,9 +565,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
+        // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [Trait("Category", "flaky")]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)
         {
             using LocalAppContextSwitchesHelper appContextSwitchesHelper = new();
@@ -627,19 +645,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !exceptionHit;
         }
 
-        public class ConnectionStringsProvider : IEnumerable<object[]>
-        {
-            public IEnumerator<object[]> GetEnumerator()
-            {
-                foreach (var cnnString in DataTestUtility.ConnectionStrings)
-                {
-                    yield return new object[] { cnnString, false };
-                    yield return new object[] { cnnString, true };
-                }
-            }
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
         #endregion
         #endregion
 

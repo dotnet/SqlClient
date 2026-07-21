@@ -607,7 +607,7 @@
     <value>Pro {0} nelze najít zprostředkovatele ověřování. Nainstalujte balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), abyste mohli používat metody ověřování Active Directory (Entra ID).</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
@@ -964,7 +964,7 @@
     <value>Minimální doba (v sekundách), po jakou má být toto připojení uchováváno ve fondu, než bude zrušeno.</value>
   </data>
   <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
+    <value>Maximální doba (v sekundách), po kterou může být připojení ve fondu nevyužité (nečinné), než se zahodí, když je zakázané starší chování při vypršení časového limitu nečinnosti. Hodnota 0 zakáže vypršení platnosti při nečinnosti.</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>Maximální počet připojení povolených ve fondu.</value>

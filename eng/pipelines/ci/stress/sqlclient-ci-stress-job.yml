@@ -3,7 +3,10 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# This job builds and runs stress tests by compiling the SqlClient projects transitively.
+# This job builds and runs stress tests against the SqlClient NuGet packages produced by the
+# sqlclient-ci-package pipeline.  The package artifacts are downloaded into the local NuGet feed
+# (packages/) and the stress test projects are built in "Package" mode (ReferenceType=Package)
+# against the exact package versions produced by that pipeline.
 #
 # The stress tests are located here:
 #
@@ -59,10 +62,6 @@ parameters:
   - name: netTestRuntimes
     type: object
 
-  # The name of the Azure Pipelines pool to use.
-  - name: poolName
-    type: string
-
   # The local SQL Server instance's 'sa' password, for use in the config file.
   - name: saPassword
     type: string
@@ -72,22 +71,25 @@ parameters:
   - name: sqlSetupStep
     type: step
 
-  # The pool VM image to use.
+  # The pool VM image to use.  Both the internal (ADO-1ES-Pool) and public (ADO-CI-1ES-Pool) pools
+  # must provide an image with this name.
+  #
+  # NOTE: This value is evaluated at template-expansion (compile) time to select the pool, so it
+  # must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
+  # $[...] runtime expressions).
   - name: vmImage
     type: string
 
 jobs:
   - job: stress_tests_job_${{ parameters.jobNameSuffix }}
     displayName: '[${{ parameters.displayNamePrefix }}] Run Stress Tests'
-    pool:
-      name: ${{ parameters.poolName }}
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
-      ${{ else }}:
-        demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
+
+      # Whether this is an internal (ADO.Net project) or public (Public project) build.  Evaluated
+      # at compile time so it can drive template expressions below.
+      - name: isInternalBuild
+        value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
       # Import the variable group that provides SQL Server build properties used by the
       # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
@@ -96,6 +98,11 @@ jobs:
 
       # Import the variable group that provides SQL Server test configuration variables.
       - group: ADO Test Configuration Properties
+
+      # The directory where the "- download:" step places the SqlClient-Driver-Packages artifact
+      # published by the triggering sqlclient-ci-package pipeline.
+      - name: packageArtifactDir
+        value: $(Pipeline.Workspace)/sqlclient-ci-package/SqlClient-Driver-Packages
 
       # The top-level project file to build and run.
       - name: project
@@ -128,11 +135,22 @@ jobs:
       # bypassing the "--" separator.  This causes app arguments to contain SDK options and triggers
       # unintended behavior.
 
+      # Reference-mode arguments shared by build and run.  The stress tests are built in "Package"
+      # mode against the SqlClient packages downloaded from the sqlclient-ci-package pipeline.  The
+      # exact versions are resolved at runtime from the downloaded .nupkg filenames (see the
+      # "Stage Packages and Resolve Versions" step).
+      - name: referenceArgs
+        value: >-
+          -p:ReferenceType=Package
+          -p:SqlClientPackageVersion=$(mdsPackageVersion)
+          -p:AzurePackageVersion=$(azurePackageVersion)
+
       # dotnet CLI options for build.
       - name: dotnetBuildOpts
         value: >-
           --verbosity ${{ parameters.dotnetVerbosity }}
           -p:Configuration=${{ parameters.buildConfiguration }}
+          $(referenceArgs)
 
       # dotnet run options shared by all test steps (framework is appended per-step).
       - name: dotnetRunOpts
@@ -140,10 +158,26 @@ jobs:
           --no-build
           --verbosity ${{ parameters.dotnetVerbosity }}
           --configuration ${{ parameters.buildConfiguration }}
+          $(referenceArgs)
 
       # Stress test options passed after the "--" separator.
       - name: stressTestOpts
         value: --assembly SqlClient.Stress.Tests --console
+
+    # Select the pool based on the requested image:
+    #   - macOS images run on the Microsoft-hosted 'Azure Pipelines' pool (no 1ES macOS images).
+    #   - All other images run on the 1ES pool for the current ADO project, matched via imageOverride.
+    pool:
+      ${{ if startsWith(parameters.vmImage, 'macos') }}:
+        name: 'Azure Pipelines'
+        vmImage: ${{ parameters.vmImage }}
+      ${{ else }}:
+        ${{ if eq(variables.isInternalBuild, true) }}:
+          name: ADO-1ES-Pool
+        ${{ else }}:
+          name: ADO-CI-1ES-Pool
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
 
     steps:
 
@@ -170,9 +204,47 @@ jobs:
             # Write the JSON content to the config file.
             $content | Out-File -FilePath "config.jsonc"
 
+      # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
+      # pipeline into the pipeline workspace.
+      - download: sqlclient-ci-package
+        artifact: SqlClient-Driver-Packages
+        displayName: Download SqlClient Driver Packages
+
+      # Copy the downloaded packages into the local NuGet feed (packages/) and resolve the exact
+      # Microsoft.Data.SqlClient and Microsoft.Data.SqlClient.Extensions.Azure versions from the
+      # .nupkg filenames.  These versions are passed to the build via the referenceArgs variable.
+      - task: PowerShell@2
+        displayName: Stage Packages and Resolve Versions
+        inputs:
+          pwsh: true
+          targetType: inline
+          script: |
+            $ErrorActionPreference = 'Stop'
+            $feed = "$(Build.SourcesDirectory)/packages"
+            New-Item -ItemType Directory -Force -Path $feed | Out-Null
+
+            Copy-Item "$(packageArtifactDir)/*.nupkg" $feed -Force
+            Copy-Item "$(packageArtifactDir)/*.snupkg" $feed -Force -ErrorAction SilentlyContinue
+
+            $mdsPattern = '^Microsoft\.Data\.SqlClient\.(\d[^\\/]*)\.nupkg$'
+            $azurePattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Azure\.(\d[^\\/]*)\.nupkg$'
+
+            $mds = Get-ChildItem "$feed/*.nupkg" | Where-Object { $_.Name -match $mdsPattern } | Select-Object -First 1
+            $azure = Get-ChildItem "$feed/*.nupkg" | Where-Object { $_.Name -match $azurePattern } | Select-Object -First 1
+
+            if (-not $mds) { throw "Microsoft.Data.SqlClient package not found in $feed" }
+            if (-not $azure) { throw "Microsoft.Data.SqlClient.Extensions.Azure package not found in $feed" }
+
+            $mdsVersion = [regex]::Match($mds.Name, $mdsPattern).Groups[1].Value
+            $azureVersion = [regex]::Match($azure.Name, $azurePattern).Groups[1].Value
+
+            Write-Host "Resolved Microsoft.Data.SqlClient version: $mdsVersion"
+            Write-Host "Resolved Microsoft.Data.SqlClient.Extensions.Azure version: $azureVersion"
+            Write-Host "##vso[task.setvariable variable=mdsPackageVersion]$mdsVersion"
+            Write-Host "##vso[task.setvariable variable=azurePackageVersion]$azureVersion"
+
       # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
-      # fetched through the ADO Artifacts feed.  This is required on hosted pool agents (macOS)
-      # that do not have pre-configured feed credentials.
+      # fetched through the ADO Artifacts feed.
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 

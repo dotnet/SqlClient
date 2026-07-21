@@ -4,17 +4,15 @@
 ####################################################################################################
 
 # This pipeline runs the stress test suite against the SqlClient projects, building them
-# transitively as necessary, triggered by successful runs of the following pipelines:
+# transitively as necessary, triggered by successful runs of the sqlclient-ci-package pipeline:
 #
 # Public project:
-#   Triggering pipelines: PR-SqlClient-Project, CI-SqlClient (branch main only)
-#   Pipeline name:        sqlclient-stress
-#   Pipeline URL:         https://sqlclientdrivers.visualstudio.com/public/_build?definitionId=2250
+#   Triggering pipeline:  sqlclient-ci-package
+#   Pipeline name:        sqlclient-ci-stress
 #
 # ADO.Net project:
-#   Triggering pipeline:  MDS Main CI (branch internal/main only)
-#   Pipeline name:        sqlclient-stress
-#   Pipeline URL:         https://dev.azure.com/SqlClientDrivers/ADO.Net/_build?definitionId=2284
+#   Triggering pipeline:  sqlclient-ci-package
+#   Pipeline name:        sqlclient-ci-stress
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
 name: $(DayOfYear)$(Rev:rr)
@@ -23,7 +21,7 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of the desired pipelines.
+# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
 #
 # The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
 # the project, folder, and pipeline name, hence the verbose values below.
@@ -31,29 +29,22 @@ trigger: none
 resources:
   pipelines:
 
-    # The PR-SqlClient-Project pipeline in the Public project.
-    - pipeline: Public-ADO-PR-SqlClient-Project
-      project: Public
-      source: /ADO/PR-SqlClient-Project
+    # Trigger this pipeline when the sqlclient-ci-package pipeline completes successfully.
+    #
+    # 'project' is omitted so the resource resolves to the sqlclient-ci-package pipeline in the
+    # *current* ADO project.  This scopes the trigger per project automatically: the Public
+    # registration is triggered only by Public's sqlclient-ci-package, and the ADO.Net registration
+    # only by ADO.Net's.
+    #
+    # IMPORTANT: 'source' is the bare pipeline name with no folder path.  This REQUIRES the
+    # sqlclient-ci-package name to be UNIQUE within BOTH the Public and ADO.Net projects.  Azure
+    # DevOps only allows omitting the folder when the name is unambiguous; if a second pipeline with
+    # this name is ever added to either project, this resource will fail to resolve and the folder
+    # path must be added back (which, because the folders differ per project, would then require a
+    # per-project approach instead of this single shared definition).
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
       trigger: true
-
-    # The CI-SqlClient pipeline in the Public project.
-    - pipeline: Public-ADO-CI-SqlClient
-      project: Public
-      source: /ADO/CI-SqlClient
-      trigger:
-        branches:
-          include:
-            - main
-
-    # The MDS Main CI pipeline in the ADO.Net project.
-    - pipeline: ADO-Net-Internal-CI-MDS-Main-CI
-      project: ADO.Net
-      source: /CI/MDS Main CI
-      trigger:
-        branches:
-          include:
-            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -92,17 +83,6 @@ parameters:
       - detailed
       - diagnostic
 
-# Pipeline-level variables evaluated at compile time.
-variables:
-  # The 1ES pool name, determined automatically by ADO project:
-  #   - ADO.Net  -> ADO-1ES-Pool
-  #   - public   -> ADO-CI-1ES-Pool
-  - name: poolName
-    ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
-      value: ADO-1ES-Pool
-    ${{ else }}:
-      value: ADO-CI-1ES-Pool
-
 # The stages to run.
 stages:
 
@@ -112,10 +92,9 @@ stages:
       debug: ${{ parameters.debug }}
 
   # Run the stress tests.
-  - template: /eng/pipelines/stress/stress-tests-stage.yml@self
+  - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
-      poolName: ${{ variables.poolName }}
       warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
