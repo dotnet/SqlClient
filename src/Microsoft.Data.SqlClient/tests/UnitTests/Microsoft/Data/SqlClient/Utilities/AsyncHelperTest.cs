@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
@@ -1730,58 +1728,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             return Task.FromCanceled(cts.Token);
         }
 
-        private static TaskCompletionSource<object?> GetTaskCompletionSource()
-            => new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private static TaskCompletionSource<object?> GetTaskCompletionSource() =>
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private static async Task VerifyDoesNotCreateUnobservedException(Func<ObservableException, Task> methodUnderTest)
+        private static async Task VerifyDoesNotCreateUnobservedException(Func<Exception, Task> methodUnderTest)
         {
             // Arrange
-            // - Set up an unobserved exception handler that only captures the exception that will
-            //   be thrown by the continuation callback.
-            // NOTE: This only captures the exception thrown by the callback because unit tests run
-            //   in parallel. Thus, other tests may cause unobserved exceptions that would cause
-            //   false failures of this test.
-            Guid exceptionId = Guid.NewGuid();
-            Exception? unhandledException = null;
-            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException =
-                (_, args) =>
-                {
-                    // Filter inner exceptions on type and expected ID
-                    IEnumerable<ObservableException> observableInnerExceptions =
-                        args.Exception.InnerExceptions.OfType<ObservableException>();
-                    if (observableInnerExceptions.Any(oe => oe.Identifier == exceptionId))
-                    {
-                        unhandledException = args.Exception;
-                        args.SetObserved();
-                    }
-                };
+            // - Generate test exception and register unobserved exception handler that observes
+            //   the test exception.
+            using ObservableExceptionHelper exceptionHelper = new ObservableExceptionHelper();
 
-            // - Register the unobserved exception handler
-            // @TODO: Can we do this with a custom scheduler to avoid changing global state?
-            TaskScheduler.UnobservedTaskException += handleUnobservedException;
+            // Act
+            // - Run the test method
+            await methodUnderTest(exceptionHelper.TestException);
 
-            try
-            {
-                // Act
-                // - Run the test method
-                await methodUnderTest(new ObservableException(exceptionId));
+            // - Force GC and wait for unobserved exceptions to be processed.
+            Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(1));
 
-                // - Force GC collection to get any unobserved exception to raise an exception.
-                //   However, if the method under test is behaving correctly, this *should not*
-                //   raise any exception.
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                // Assert
-                // - The unobserved exception handler should not have captured any exception.
-                Assert.Null(unhandledException);
-            }
-            finally
-            {
-                // Cleanup
-                TaskScheduler.UnobservedTaskException -= handleUnobservedException;
-            }
+            // Assert
+            // - The unobserved handler should not have captured our test exception
+            Assert.Null(unobservedException);
         }
 
         private static async Task RunWithTimeout([NotNull] Task? taskToRun, TimeSpan timeout)
