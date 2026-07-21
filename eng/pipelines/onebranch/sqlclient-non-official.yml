@@ -267,6 +267,7 @@ extends:
         #   TSA here does not by itself force breaking -- breakOnSdlError is what controls whether
         #   findings fail the build.
         enabled: false
+        # Keep this in sync with Official even though TSA is disabled here.
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
