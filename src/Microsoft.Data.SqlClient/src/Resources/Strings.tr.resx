@@ -261,9 +261,6 @@
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>'{0}' adında birden çok koleksiyon var.</value>
   </data>
-  <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
-    <value>Meta veri XML’inde '{0}' koleksiyonu eksik.</value>
-  </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>Doldur</value>
   </data>

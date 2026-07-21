@@ -261,9 +261,6 @@
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>Há várias coleções chamadas '{0}'.</value>
   </data>
-  <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
-    <value>Falta a coleção '{0}' no XML de metadados.</value>
-  </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>Preenchimento</value>
   </data>

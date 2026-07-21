@@ -261,9 +261,6 @@
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>'{0}'(이)라는 컬렉션이 여러 개 있습니다.</value>
   </data>
-  <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
-    <value>컬렉션 '{0}'이(가) 메타데이터 XML에 없습니다.</value>
-  </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>채우기</value>
   </data>

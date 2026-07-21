@@ -261,9 +261,6 @@
   <data name="MDF_CollectionNameISNotUnique" xml:space="preserve">
     <value>有多个名为“{0}”的集合。</value>
   </data>
-  <data name="MDF_DataTableDoesNotExist" xml:space="preserve">
-    <value>元数据 XML 中缺少集合“{0}”。</value>
-  </data>
   <data name="DataCategory_Fill" xml:space="preserve">
     <value>填充</value>
   </data>

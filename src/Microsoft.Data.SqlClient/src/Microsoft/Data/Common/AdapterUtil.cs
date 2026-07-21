@@ -1270,10 +1270,6 @@ namespace Microsoft.Data.Common
 #endregion
 
 #region SqlMetaDataFactory
-        // TODO: Rephrase error message
-        internal static Exception DataTableDoesNotExist(string collectionName)
-            => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
-
         // IDbCommand.UpdateRowSource
         internal static ArgumentOutOfRangeException InvalidUpdateRowSource(UpdateRowSource value)
         {
