@@ -67,12 +67,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <see cref="ChannelDbConnectionPool.Clear"/> draining the pool while replenishment refills
         /// it - so this re-requests warmup until the pool is full. Only safe with a factory whose
         /// warmup creations succeed and where the pool is not in the error state, so every pass makes
-        /// forward progress and the loop terminates.
+        /// forward progress and the loop terminates. Bounded by <see cref="HandshakeTimeout"/> so a
+        /// regression that prevents the pool from ever reaching the minimum surfaces as a
+        /// deterministic timeout instead of hanging the whole test run.
         /// </summary>
         private static async Task AwaitWarmupToMinimum(ChannelDbConnectionPool pool, int minPoolSize)
         {
+            DateTime deadline = DateTime.UtcNow + HandshakeTimeout;
             while (pool.Count < minPoolSize)
             {
+                Assert.True(
+                    DateTime.UtcNow < deadline,
+                    $"Pool did not reach MinPoolSize {minPoolSize} within {HandshakeTimeout}; Count={pool.Count}.");
+
                 pool.RequestWarmup();
                 Task? warmup = pool.WarmupLoopTask;
                 if (warmup is not null)
@@ -241,18 +248,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 factory.FirstCreateStarted.Wait(HandshakeTimeout),
                 "Timed out waiting for warmup to begin its first creation.");
 
-            // A concurrent user request competes for the same limiter and is denied a permit,
-            // proving warmup and user requests share one limiter (warmup did not bypass it).
-            long failedBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
+            // A concurrent user request competes for the same limiter. There is no idle connection
+            // and warmup holds the only permit, so the request cannot be satisfied inline: it is
+            // deferred to the TaskCompletionSource, proving warmup did not bypass the limiter.
             var tcs = new TaskCompletionSource<DbConnectionInternal>();
             bool completedSynchronously = pool.TryGetConnection(
                 new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? immediateConnection);
-
-            // The async request cannot be satisfied inline: there is no idle connection and the
-            // shared limiter's only permit is held by warmup. TryGetConnection therefore returns
-            // false with no connection, deferring the result to the TaskCompletionSource.
             Assert.False(completedSynchronously, "Async request unexpectedly completed synchronously.");
             Assert.Null(immediateConnection);
+
+            // Deterministically prove the shared limiter is saturated by warmup: while warmup holds
+            // its only permit (guaranteed by FirstCreateStarted above and the still-closed gate),
+            // attempting to acquire that same limiter from the test thread is denied. This is the
+            // shared-limiter proof without any spin - the denial is observed synchronously here
+            // rather than by polling for the deferred user request's transient failed-lease, which
+            // races the permit being released below. The denied attempt is a no-op lease.
+            long failedBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
+            using (RateLimitLease probe = rateLimiter.AttemptAcquire(1))
+            {
+                Assert.False(
+                    probe.IsAcquired,
+                    "Shared rate limiter was not saturated while warmup held its permit.");
+            }
+            Assert.True(
+                rateLimiter.GetStatistics()!.TotalFailedLeases > failedBefore,
+                "Denied acquire was not recorded by the shared rate limiter.");
 
             // Release warmup. With rate-limit retry removed, warmup's pass may end early if the
             // user request grabs the freed permit first - but the pool must still converge to
@@ -274,13 +294,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // warmup connections one of which the user took).
             await AwaitWarmupToMinimum(pool, 2);
             Assert.Equal(2, pool.Count);
-
-            // The user request was denied a permit by the shared limiter while warmup held it, then
-            // completed once warmup released it. By now that denial has definitely been recorded, so
-            // this is a deterministic post-settle assertion, not a race.
-            Assert.True(
-                rateLimiter.GetStatistics()!.TotalFailedLeases > failedBefore,
-                "User request was not denied by the shared rate limiter while warmup held the permit.");
         }
 
         #endregion

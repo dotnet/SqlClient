@@ -778,7 +778,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // client-side contention rather than a physical connection creation failure and
                 // must not poison the pool into fast-fail/backoff for other callers.
                 // FR-006, FR-007.
-                _errorState?.Enter(ex);
+                //
+                // Only enter the error state while the pool is still Running. A synchronous physical
+                // open cannot be cancelled once it is in progress (see _warmupCts field docs), so a
+                // warmup/user open that began before Shutdown can complete with a failure after
+                // Shutdown has already disposed _errorState. Entering here would re-arm the exit
+                // timer and keep callbacks/logging alive past teardown, so we skip it once shutdown
+                // has begun; the throw below still propagates the failure to the caller/warmup loop.
+                if (State == Running)
+                {
+                    _errorState?.Enter(ex);
+                }
 
                 throw;
             }
