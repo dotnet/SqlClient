@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// unobserved task exception being captured by the event handler for unobserved task
         /// exceptions.
         /// </summary>
-        // @TODO: This test is a repro scenario for GH#3720, it's assertions should be inverted
+        // @TODO: This test is a repro scenario for GH#3720, its assertions should be inverted
         //    when the broken scenario has been fixed.
         [Fact]
         public async Task ReadFromStreamAsync_WhenAsyncIoCallbackThrows_CreatesUnobservedTaskException()
@@ -66,7 +66,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             // - Force GC and wait for unhandled exception to be raised
-            testPacket.Release();
             testHandle.ReturnPacket(testPacket);
             Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(5));
 

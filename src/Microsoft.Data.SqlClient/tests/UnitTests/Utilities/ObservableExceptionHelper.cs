@@ -73,7 +73,7 @@ public class ObservableExceptionHelper : IDisposable
     /// </summary>
     /// <param name="timeout">
     /// Amount of time to wait for our test unobserved exception handler to complete. Use
-    /// <see cref="TimeSpan.Zero"/> to be only perform one loop.
+    /// <see cref="TimeSpan.Zero"/> to only perform one loop.
     /// </param>
     /// <returns>
     /// Exception raised that included the unobserved task, if handler was invoked before the
