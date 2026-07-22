@@ -104,6 +104,14 @@ parameters:
     type: number
     default: 10
 
+  # When true, a candidate-slower-than-baseline regression FAILS the run (wiki 339 §3 gate).
+  # Default false: the run still reports deltas but does not block, until the gate is trusted
+  # (best paired with the best-of-N confirmation described in eng/pipelines/perf/README.md).
+  - name: failOnRegression
+    displayName: Fail run on regression
+    type: boolean
+    default: false
+
   # --- Kusto (perf-results database) ingestion -----------------------------------------------------
   # Ingestion into the InternalDriverTools perf-results Kusto database (wiki spec 270) is OPTIONAL:
   # it only runs when both kustoClusterUri and kustoServiceConnection are supplied.  This lets the
@@ -161,7 +169,7 @@ extends:
 
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
-    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }}'
+    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }}${{ if eq(parameters.failOnRegression, true) }} --fail-on-regression${{ endif }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:

@@ -25,7 +25,10 @@ param(
     [string]$Framework = "net9.0",
     [string]$ResultsSubdir = "perf-results",
     [string]$BaselineVersion = "",
-    [string]$RegressionThreshold = "10"
+    [string]$RegressionThreshold = "10",
+    # When set, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
+    # Off by default so deltas are reported without blocking until the gate is trusted.
+    [switch]$FailOnRegression
 )
 
 $ErrorActionPreference = "Stop"
@@ -138,6 +141,50 @@ if ($sqlcmd) {
 }
 
 ####################################################################################################
+# Noise-reduction controls (InternalDriverTools wiki 339, "Reducing Noise in Performance Tests").
+#
+# The Perf Test Lab already provides the isolated dedicated host, the tuned SQL instance and the
+# disjoint client CPU set (PERF_CLIENT_CPUS, pinned per pass below).  These are the remaining
+# harness-owned controls: per-run diagnostics, a fail-loud preflight and a warm-up, so a run's
+# mean/variance is steadier and a broken run cannot masquerade as a pass.  (The glibc allocator and
+# sysctl tuning from the Linux harness are Linux-only and intentionally omitted here.)
+####################################################################################################
+
+$DiagDir = Join-Path $ResultsDir "diagnostics"
+New-Item -ItemType Directory -Force -Path $DiagDir | Out-Null
+
+# --- §2.11 Capture host CPU topology (static, once per run) ---------------------------------------
+try {
+    Get-CimInstance Win32_Processor |
+        Select-Object Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, CurrentClockSpeed |
+        Format-List | Out-File -FilePath (Join-Path $DiagDir "cpu-info.txt") -Encoding UTF8
+} catch { Write-Warning "Could not capture CPU info: $_" }
+
+# --- §2.11 Capture the SQL instance configuration (confirm the lab tuning actually took effect) ---
+try {
+    & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 -h -1 -W `
+        -Q "SET NOCOUNT ON;
+            SELECT name, value_in_use FROM sys.configurations
+              WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
+                             'max server memory (MB)','min server memory (MB)','affinity mask',
+                             'affinity I/O mask');
+            SELECT 'tempdb_data_files' AS setting, COUNT(*) AS value FROM tempdb.sys.database_files WHERE type = 0;
+            SELECT @@VERSION;" `
+        *> (Join-Path $DiagDir "sql-config.txt")
+    Write-Host "Captured SQL instance config -> $(Join-Path $DiagDir 'sql-config.txt')"
+} catch { Write-Warning "Could not capture SQL instance config: $_" }
+
+# --- §2.10 / §2.5 Fail loud on an unreachable server, and warm the buffer pool / plan cache -------
+# A benchmark suite that "skips" when the server is down produces an empty comparison that reads
+# green; verify connectivity up front and touch the target DB before the first measured benchmark.
+& $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 15 `
+    -Q "SET NOCOUNT ON; USE [$DbName]; SELECT 1;" *> $null
+if ($LASTEXITCODE -ne 0) {
+    throw "SQL Server $SqlServer (db $DbName) is unreachable; refusing to run so an empty perf comparison cannot be reported as a pass."
+}
+Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warmed."
+
+####################################################################################################
 # 3. Inject the VM's SQL Server connection string into the benchmark runner config.
 ####################################################################################################
 
@@ -203,6 +250,39 @@ function Get-AffinityMask([string]$cpuSpec) {
     return $mask
 }
 
+# Save-CpuTelemetry <label> <before|after>
+# §2.11 telemetry snapshot: per-core current clock speed around each measured pass, so a
+# drifting/throttling result can be explained after the fact.  Best-effort; never fails the run.
+function Save-CpuTelemetry([string]$Label, [string]$When) {
+    try {
+        $stamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        $speeds = Get-CimInstance Win32_Processor |
+            Select-Object DeviceID, CurrentClockSpeed, MaxClockSpeed | Format-Table -AutoSize | Out-String
+        "$stamp`n$speeds" | Out-File -FilePath (Join-Path $DiagDir "cpu-$Label-$When.txt") -Encoding UTF8
+    } catch { }
+}
+
+# Get-BenchmarkResultCount <dir>
+# Counts the BenchmarkDotNet results recorded under <dir> (the "Benchmarks" array of every
+# *-report-full.json).  Used to fail loud when a pass produced nothing.
+function Get-BenchmarkResultCount([string]$Root) {
+    $py = @'
+import glob, json, os, sys
+root = sys.argv[1]
+total = 0
+for f in glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True):
+    try:
+        with open(f, encoding="utf-8-sig") as fh:
+            total += len(json.load(fh).get("Benchmarks", []))
+    except Exception:
+        pass
+print(total)
+'@
+    $out = $py | python3 - $Root
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($out)) { return 0 }
+    return [int]($out.Trim())
+}
+
 # Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) and collects its artifacts into
 # results\<label>. $ExtraArgs are appended to both the build and run invocations.
 function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
@@ -243,7 +323,9 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
             Write-Warning "PERF_CLIENT_CPUS unset; running without CPU pinning."
         }
 
+        Save-CpuTelemetry $Label "before"
         $proc.WaitForExit()
+        Save-CpuTelemetry $Label "after"
         if ($proc.ExitCode -ne 0) { throw "Benchmark run '$Label' failed (exit $($proc.ExitCode))." }
     } finally {
         Pop-Location
@@ -261,6 +343,14 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
         }
     } else {
         Write-Warning "No BenchmarkDotNet.Artifacts directory was produced for '$Label' at $artifactsDir."
+    }
+
+    # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
+    # errored, exporter disabled) must not flow through to an empty comparison that reads green.
+    $nresults = Get-BenchmarkResultCount $dest
+    Write-Host "Pass '$Label' produced $nresults benchmark result(s)."
+    if ($nresults -eq 0) {
+        throw "Pass '$Label' produced no benchmark results; failing the run (a broken benchmark pass must not be reported as a pass)."
     }
 }
 
@@ -287,13 +377,20 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     Write-Host "Comparing current branch against baseline $BaselineVersion ..."
     $comparisonDir = Join-Path $ResultsDir "comparison"
     New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
-    python3 (Join-Path $ScriptDir "compare_perf.py") `
-        --baseline-dir (Join-Path $ResultsDir "baseline") `
-        --current-dir (Join-Path $ResultsDir "current") `
-        --baseline-version $BaselineVersion `
-        --threshold $RegressionThreshold `
-        --out-md (Join-Path $comparisonDir "comparison.md") `
-        --out-json (Join-Path $comparisonDir "comparison.json")
+    $compareArgs = @(
+        "--baseline-dir", (Join-Path $ResultsDir "baseline"),
+        "--current-dir", (Join-Path $ResultsDir "current"),
+        "--baseline-version", $BaselineVersion,
+        "--threshold", $RegressionThreshold,
+        "--out-md", (Join-Path $comparisonDir "comparison.md"),
+        "--out-json", (Join-Path $comparisonDir "comparison.json")
+    )
+    # §3 gate: only a candidate-slower regression fails, and only when explicitly enabled.
+    if ($FailOnRegression) {
+        Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
+        $compareArgs += "--fail-on-regression"
+    }
+    python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs
     if ($LASTEXITCODE -ne 0) { throw "Comparison failed (exit $LASTEXITCODE)." }
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
     Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")

@@ -37,10 +37,13 @@ framework="net9.0"
 resultsSubDir="perf-results"
 baselineVersion=""
 regressionThreshold="10"
+# When true, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
+# Default off so the pipeline reports deltas without blocking until the gate is trusted.
+failOnRegression="false"
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
-         "[--baseline-version <ver>] [--regression-threshold <pct>]" >&2
+         "[--baseline-version <ver>] [--regression-threshold <pct>] [--fail-on-regression]" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -50,6 +53,7 @@ while [[ $# -gt 0 ]]; do
         --results-subdir) resultsSubDir="$2"; shift 2 ;;
         --baseline-version) baselineVersion="$2"; shift 2 ;;
         --regression-threshold) regressionThreshold="$2"; shift 2 ;;
+        --fail-on-regression) failOnRegression="true"; shift 1 ;;
         -h|--help)       usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
@@ -193,6 +197,61 @@ else
 fi
 
 ####################################################################################################
+# Noise-reduction controls (InternalDriverTools wiki 339, "Reducing Noise in Performance Tests").
+#
+# The Perf Test Lab already provides the isolated dedicated host, the tuned SQL instance and the
+# disjoint client CPU set (PERF_CLIENT_CPUS, pinned per pass below).  These are the remaining
+# harness-owned controls: allocator/network tuning, per-run diagnostics, a fail-loud preflight and
+# a warm-up, so a run's mean/variance is steadier and a broken run cannot masquerade as a pass.
+####################################################################################################
+
+DIAG_DIR="${RESULTS_DIR}/diagnostics"
+mkdir -p "${DIAG_DIR}"
+
+# --- §2.8 Allocator tuning (exported so the 'dotnet run' children inherit it) ---------------------
+# Large-buffer benches (AsyncLargeDataRead, SqlBulkCopy) re-mmap a big buffer every iteration under
+# glibc malloc; keep those allocations on the heap and stop trimming freed pages so they are reused,
+# which removes a major source of per-iteration variance.
+export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-134217728}"   # 128 MiB
+export MALLOC_TRIM_THRESHOLD_="${MALLOC_TRIM_THRESHOLD_:--1}"          # never trim
+
+# --- §2.9 Network tuning (best-effort; needs privilege, so it must never fail the run) ------------
+# Connection-churn benches (ConnectionPoolStress, ParallelAsyncConnection) exhaust ephemeral ports;
+# widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.
+if command -v sysctl >/dev/null 2>&1; then
+    for kv in "net.ipv4.ip_local_port_range=1024 65535" "net.ipv4.tcp_tw_reuse=1"; do
+        sudo sysctl -w "${kv}" >/dev/null 2>&1 || sysctl -w "${kv}" >/dev/null 2>&1 || true
+    done
+fi
+
+# --- §2.11 Capture host CPU topology (static, once per run) ---------------------------------------
+{ command -v lscpu >/dev/null 2>&1 && lscpu; } > "${DIAG_DIR}/cpu-info.txt" 2>&1 || true
+
+# --- §2.11 Capture the SQL instance configuration (confirm the lab tuning actually took effect) ---
+"${SQLCMD}" -S "${SQL_SERVER}" -U sa -P "${SQL_PASSWORD}" -C -b -l 30 -h -1 -W \
+    -Q "SET NOCOUNT ON;
+        SELECT name, value_in_use FROM sys.configurations
+          WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
+                         'max server memory (MB)','min server memory (MB)','affinity mask',
+                         'affinity I/O mask');
+        SELECT 'tempdb_data_files' AS setting, COUNT(*) AS value FROM tempdb.sys.database_files WHERE type = 0;
+        SELECT @@VERSION;" \
+    > "${DIAG_DIR}/sql-config.txt" 2>&1 \
+    && echo "Captured SQL instance config -> ${DIAG_DIR}/sql-config.txt" \
+    || echo "WARNING: could not capture SQL instance config (continuing)." >&2
+
+# --- §2.10 / §2.5 Fail loud on an unreachable server, and warm the buffer pool / plan cache -------
+# A benchmark suite that "skips" when the server is down produces an empty comparison that reads
+# green; verify connectivity up front and touch the target DB so the first measured benchmark is not
+# paying cold-cache costs.
+if ! "${SQLCMD}" -S "${SQL_SERVER}" -U sa -P "${SQL_PASSWORD}" -C -b -l 15 \
+        -Q "SET NOCOUNT ON; USE [${DB_NAME}]; SELECT 1;" >/dev/null 2>&1; then
+    echo "ERROR: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is unreachable; refusing to run so an empty perf comparison cannot be reported as a pass." >&2
+    exit 1
+fi
+echo "Preflight: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is reachable and warmed."
+
+####################################################################################################
 # 3. Inject the VM's SQL Server connection string into the benchmark runner config.
 #
 # The perf app reads its config from the file named by RUNNER_CONFIG (falling back to
@@ -269,6 +328,38 @@ write_baseline_nuget_config() {
 XML
 }
 
+# capture_cpu_telemetry <label> <before|after>
+# §2.11 telemetry snapshot: per-core frequency and thermal state around each measured pass, so a
+# drifting/throttling result can be explained after the fact.  Best-effort; never fails the run.
+capture_cpu_telemetry() {
+    local label="$1" when="$2"
+    {
+        date -u +"%Y-%m-%dT%H:%M:%SZ"
+        grep -E "^cpu MHz" /proc/cpuinfo 2>/dev/null || true
+        for z in /sys/class/thermal/thermal_zone*/temp; do
+            [[ -r "${z}" ]] && echo "thermal ${z}=$(cat "${z}" 2>/dev/null)"
+        done
+    } > "${DIAG_DIR}/cpu-${label}-${when}.txt" 2>&1 || true
+}
+
+# count_benchmark_results <dir>
+# Counts the BenchmarkDotNet results recorded under <dir> (the "Benchmarks" array of every
+# *-report-full.json).  Used to fail loud when a pass produced nothing.
+count_benchmark_results() {
+    python3 - "$1" <<'PY'
+import glob, json, os, sys
+root = sys.argv[1]
+total = 0
+for f in glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True):
+    try:
+        with open(f, encoding="utf-8-sig") as fh:
+            total += len(json.load(fh).get("Benchmarks", []))
+    except Exception:
+        pass
+print(total)
+PY
+}
+
 # run_pass <label> <extra dotnet build/run args...>
 # Builds and runs one benchmark pass, pinned to PERF_CLIENT_CPUS, collecting artifacts into
 # ${RESULTS_DIR}/<label>.
@@ -300,10 +391,12 @@ run_pass() {
     fi
 
     echo "Running (${label}): ${run_cmd[*]}"
+    capture_cpu_telemetry "${label}" "before"
     (
         cd "${run_dir}"
         "${run_cmd[@]}"
     )
+    capture_cpu_telemetry "${label}" "after"
 
     local artifacts_dir="${run_dir}/BenchmarkDotNet.Artifacts"
     local dest="${RESULTS_DIR}/${label}"
@@ -316,6 +409,16 @@ run_pass() {
         fi
     else
         echo "WARNING: No BenchmarkDotNet.Artifacts directory was produced for '${label}' at ${artifacts_dir}." >&2
+    fi
+
+    # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
+    # errored, exporter disabled) must not flow through to an empty comparison that reads green.
+    local nresults
+    nresults="$(count_benchmark_results "${dest}")"
+    echo "Pass '${label}' produced ${nresults} benchmark result(s)."
+    if [[ "${nresults}" -eq 0 ]]; then
+        echo "ERROR: pass '${label}' produced no benchmark results; failing the run (a broken benchmark pass must not be reported as a pass)." >&2
+        exit 1
     fi
 }
 
@@ -340,13 +443,20 @@ run_pass "current"
 if [[ -n "${baselineVersion}" ]]; then
     echo "Comparing current branch against baseline ${baselineVersion} ..."
     mkdir -p "${RESULTS_DIR}/comparison"
-    python3 "${SCRIPT_DIR}/compare_perf.py" \
-        --baseline-dir "${RESULTS_DIR}/baseline" \
-        --current-dir "${RESULTS_DIR}/current" \
-        --baseline-version "${baselineVersion}" \
-        --threshold "${regressionThreshold}" \
-        --out-md "${RESULTS_DIR}/comparison/comparison.md" \
+    compare_args=(
+        --baseline-dir "${RESULTS_DIR}/baseline"
+        --current-dir "${RESULTS_DIR}/current"
+        --baseline-version "${baselineVersion}"
+        --threshold "${regressionThreshold}"
+        --out-md "${RESULTS_DIR}/comparison/comparison.md"
         --out-json "${RESULTS_DIR}/comparison/comparison.json"
+    )
+    # §3 gate: only a candidate-slower regression fails, and only when explicitly enabled.
+    if [[ "${failOnRegression}" == "true" ]]; then
+        echo "Regression gate ENABLED: a candidate-slower regression (> ${regressionThreshold}%) will fail the run."
+        compare_args+=(--fail-on-regression)
+    fi
+    python3 "${SCRIPT_DIR}/compare_perf.py" "${compare_args[@]}"
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results/*.md).
     cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
 fi

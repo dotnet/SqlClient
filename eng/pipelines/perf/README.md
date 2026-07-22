@@ -63,6 +63,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `sourcesSubDir` | `dotnet-sqlclient` | Folder the repo (`self`) is checked out into under the template's multi-repo checkout. Must match the ADO repo name. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
+| `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). Default off — reports deltas without blocking. |
 | `kustoClusterUri` | `https://sqldrivers.westus2.kusto.windows.net` | Kusto cluster URI. Blank ⇒ ingestion skipped. |
 | `kustoDatabase` | `PerfResultsTestDB` | Target Kusto database. |
 | `kustoServiceConnection` | `PerfLab Infra Deployments` | ADO ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
@@ -96,6 +97,40 @@ baseline/current mean (ms), mean %Δ, allocation %Δ, and a status (`regression`
 - `results/comparison/comparison.md` (also copied to `results/summary.md`, which the template
   attaches as the run summary),
 - `results/comparison/comparison.json` (structured, for tooling).
+
+## Reducing noise (wiki 339)
+
+The harness applies the "[Your harness]"-owned controls from InternalDriverTools wiki 339
+("Reducing Noise in Performance Tests"). The lab already supplies the isolated dedicated host, the
+tuned SQL instance, and the disjoint client CPU set (`PERF_CLIENT_CPUS`); the run scripts add:
+
+| Control | What the harness does |
+| ------- | --------------------- |
+| Client CPU pin (§2.4) | Pins the benchmark process to `PERF_CLIENT_CPUS` (`taskset` on Linux, `ProcessorAffinity` on Windows). |
+| Fail loud (§2.10) | Preflight `SELECT 1` before any pass, **and** a post-pass guard that fails the run if a pass produced **zero** benchmark results — so an empty comparison can never be reported green. |
+| Warm-up (§2.5) | Touches the target DB in the preflight to warm the buffer pool / plan cache before the first measured benchmark. |
+| Allocator tuning (§2.8, Linux) | Exports `MALLOC_MMAP_THRESHOLD_=128MiB` and `MALLOC_TRIM_THRESHOLD_=-1` so large-buffer benches (`AsyncLargeDataRead`, `SqlBulkCopy`) stop re-`mmap`ing per iteration. |
+| Network tuning (§2.9, Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ParallelAsyncConnection`). Never fails the run. |
+| Diagnostics (§2.11) | Writes `results/diagnostics/`: SQL instance config (MAXDOP, memory, affinity, tempdb files, `@@VERSION`), host CPU topology, and per-pass CPU-clock/thermal telemetry (before/after each pass). |
+| Regression gate (§3) | `failOnRegression` threads `--fail-on-regression` to `compare_perf.py`; only a **candidate-slower** delta past the threshold fails. Default off. |
+
+### Proposed follow-ups (not yet implemented — larger redesign)
+
+These are the high-value but structural controls from wiki 339 §2.2/§2.3/§2.6/§2.7. They change the
+run model and total runtime, so they are called out here for a deliberate decision rather than folded
+into a working harness silently:
+
+- **Interleave candidate/baseline per small unit (§2.2)** — the biggest correctness fix. Today the
+  harness runs two *full sequential* passes (baseline entirely, then current entirely), so the same
+  benchmark is measured tens of minutes apart and any host drift skews one side. Interleaving would
+  measure baseline vs candidate for each small unit back-to-back.
+- **Split the monolithic exe into small bench binaries (§2.3)** — prerequisite for clean interleaving
+  and per-unit re-runs.
+- **Best-of-N auto-confirm (§2.6)** — re-run only the flagged benchmarks N times and require a
+  majority to agree before declaring a regression. This should land **before** the gate
+  (`failOnRegression`) is turned on by default, to keep it from flapping on single-sample noise.
+- **Release-grade sampling / relaxed thresholds (§2.7)** — tune BenchmarkDotNet job counts and
+  significance thresholds in `runnerconfig.jsonc` / `BenchmarkConfig.cs` once the above are in place.
 
 ## Kusto schema & ingestion
 
