@@ -111,19 +111,19 @@ parameters:
   - name: kustoClusterUri
     displayName: Kusto Cluster URI (blank = skip ingestion)
     type: string
-    default: ''
+    default: 'https://sqldrivers.westus2.kusto.windows.net'
 
   - name: kustoDatabase
     displayName: Kusto Database
     type: string
-    default: PerfResults
+    default: PerfResultsTestDB
 
   # An Azure DevOps ARM service connection whose service principal has 'Database Ingestor' (and
   # 'Database Viewer') rights on the Kusto database above.
   - name: kustoServiceConnection
     displayName: Kusto Service Connection (blank = skip ingestion)
     type: string
-    default: ''
+    default: 'PerfLab Infra Deployments'
 
   # Logical driver name recorded on every row (schema DriverName / DerivedRunId component).
   - name: driverName

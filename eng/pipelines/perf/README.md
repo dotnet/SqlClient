@@ -63,9 +63,9 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `sourcesSubDir` | `dotnet-sqlclient` | Folder the repo (`self`) is checked out into under the template's multi-repo checkout. Must match the ADO repo name. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
-| `kustoClusterUri` | *(empty)* | Kusto cluster URI. Blank ⇒ ingestion skipped. |
-| `kustoDatabase` | `PerfResults` | Target Kusto database. |
-| `kustoServiceConnection` | *(empty)* | ADO ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
+| `kustoClusterUri` | `https://sqldrivers.westus2.kusto.windows.net` | Kusto cluster URI. Blank ⇒ ingestion skipped. |
+| `kustoDatabase` | `PerfResultsTestDB` | Target Kusto database. |
+| `kustoServiceConnection` | `PerfLab Infra Deployments` | ADO ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
 | `driverName` | `Microsoft.Data.SqlClient` | Recorded on every row (`DriverName` / `DerivedRunId`). |
 
 ### Managing the baseline version
@@ -153,8 +153,9 @@ artifact for manual/backfill ingestion.
 ## Running the pipeline
 
 1. In ADO, open **SqlClient-Performance-Tests** and select **Run pipeline**.
-2. Choose the branch to benchmark; optionally override `baselineVersion` and (once available) the
-   Kusto parameters.
+2. Choose the branch to benchmark. The Kusto parameters are pre-filled (cluster
+   `sqldrivers.westus2`, database `PerfResultsTestDB`, service connection
+   `PerfLab Infra Deployments`); override `baselineVersion` or the Kusto values only if needed.
 3. After the run, review the **run summary** (comparison) and the `perf-results` /
    `perf-kusto-payloads` artifacts.
 
