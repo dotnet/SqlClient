@@ -90,6 +90,47 @@ parameters:
     type: string
     default: dotnet-sqlclient
 
+  # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
+  # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
+  # at queue time.  Set to an empty string to skip the baseline pass and run current-only.
+  - name: baselineVersion
+    displayName: Baseline Version
+    type: string
+    default: 7.0.2
+
+  # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
+  - name: regressionThreshold
+    displayName: Regression Threshold (%)
+    type: number
+    default: 10
+
+  # --- Kusto (perf-results database) ingestion -----------------------------------------------------
+  # Ingestion into the InternalDriverTools perf-results Kusto database (wiki spec 270) is OPTIONAL:
+  # it only runs when both kustoClusterUri and kustoServiceConnection are supplied.  This lets the
+  # pipeline run + compare before the cluster/service connection are provisioned.
+  - name: kustoClusterUri
+    displayName: Kusto Cluster URI (blank = skip ingestion)
+    type: string
+    default: ''
+
+  - name: kustoDatabase
+    displayName: Kusto Database
+    type: string
+    default: PerfResults
+
+  # An Azure DevOps ARM service connection whose service principal has 'Database Ingestor' (and
+  # 'Database Viewer') rights on the Kusto database above.
+  - name: kustoServiceConnection
+    displayName: Kusto Service Connection (blank = skip ingestion)
+    type: string
+    default: ''
+
+  # Logical driver name recorded on every row (schema DriverName / DerivedRunId component).
+  - name: driverName
+    displayName: Driver Name
+    type: string
+    default: Microsoft.Data.SqlClient
+
 # Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
 # have been onboarded with the Agent Pools and Service Connections required to consume it.
 resources:
@@ -120,7 +161,7 @@ extends:
 
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
-    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results'
+    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
@@ -154,3 +195,119 @@ extends:
           done < <(find "$resultsDir" -type f -name '*-report-github.md' | sort)
         displayName: 'Show performance results'
         condition: succeededOrFailed()
+
+      # Translate the BenchmarkDotNet "full" JSON from both passes into the Kusto perf-results
+      # schema (wiki 270): one PerfRun row + N PerfBenchmarkResult rows per pass, as NDJSON.  This
+      # runs on the AGENT (which has native pipeline-context variables and the collected results)
+      # and always executes so the NDJSON is published even when ingestion is skipped.
+      - bash: |
+          set -euo pipefail
+          repoDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}"
+          scriptsDir="$repoDir/eng/pipelines/perf/scripts"
+          resultsDir="$(Build.ArtifactStagingDirectory)/results"
+          kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
+          mkdir -p "$kustoOut"
+
+          if [ ! -d "$resultsDir/current" ]; then
+            echo "##vso[task.logissue type=warning]No 'current' results found; skipping Kusto translation."
+            exit 0
+          fi
+
+          buildUrl="$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)"
+          machineName="$(Agent.MachineName)"
+          # The VM writes its hostname into runinfo.env; prefer it when present.
+          if [ -f "$resultsDir/runinfo.env" ]; then
+            # shellcheck disable=SC1091
+            . "$resultsDir/runinfo.env" 2>/dev/null || true
+            machineName="${MACHINE_NAME:-$machineName}"
+          fi
+
+          commitHash="$(Build.SourceVersion)"
+          commitDate="$(git -C "$repoDir" show -s --format=%cI "$commitHash" 2>/dev/null || true)"
+          shortSha="$(git -C "$repoDir" rev-parse --short "$commitHash" 2>/dev/null || echo "$commitHash")"
+
+          # --- current (branch under test) ---
+          python3 "$scriptsDir/perf_to_kusto.py" \
+            --input-dir "$resultsDir/current" \
+            --out-run "$kustoOut/current.PerfRun.ndjson" \
+            --out-results "$kustoOut/current.PerfBenchmarkResult.ndjson" \
+            --driver-name "${{ parameters.driverName }}" \
+            --machine-name "$machineName" \
+            --agent-name "$(Agent.MachineName)" \
+            --pipeline-run-id "$(Build.BuildId)" \
+            --build-url "$buildUrl" \
+            --branch-name "$(Build.SourceBranch)" \
+            --version-string "$shortSha" \
+            --commit-hash "$commitHash" \
+            --commit-date "$commitDate" \
+            --is-comparable-base false
+
+          # --- baseline (released NuGet package), when a baseline pass ran ---
+          if [ -d "$resultsDir/baseline" ]; then
+            baseVer="${{ parameters.baselineVersion }}"
+            python3 "$scriptsDir/perf_to_kusto.py" \
+              --input-dir "$resultsDir/baseline" \
+              --out-run "$kustoOut/baseline.PerfRun.ndjson" \
+              --out-results "$kustoOut/baseline.PerfBenchmarkResult.ndjson" \
+              --driver-name "${{ parameters.driverName }}" \
+              --machine-name "$machineName" \
+              --agent-name "$(Agent.MachineName)" \
+              --pipeline-run-id "$(Build.BuildId)" \
+              --build-url "$buildUrl" \
+              --branch-name "refs/tags/v$baseVer" \
+              --version-string "$baseVer" \
+              --commit-hash "v$baseVer" \
+              --is-comparable-base true
+          fi
+
+          echo "Translated Kusto payloads:"
+          find "$kustoOut" -type f | sort
+        displayName: 'Translate results to Kusto schema'
+        condition: succeededOrFailed()
+
+      # Publish the translated NDJSON alongside the raw results for traceability / manual ingestion.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Kusto payloads'
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: $(Build.ArtifactStagingDirectory)/kusto
+          artifact: perf-kusto-payloads
+
+      # Ingest both result sets into the Kusto perf-results database using the ARM service
+      # connection's service principal (az CLI auth).  Conditional: only runs when a cluster URI and
+      # a service connection are supplied, so the pipeline still runs+compares before the cluster is
+      # provisioned.
+      - ${{ if and(ne(parameters.kustoClusterUri, ''), ne(parameters.kustoServiceConnection, '')) }}:
+          - task: AzureCLI@2
+            displayName: 'Ingest results into Kusto'
+            condition: succeededOrFailed()
+            inputs:
+              azureSubscription: ${{ parameters.kustoServiceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+                scriptsDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}/eng/pipelines/perf/scripts"
+                kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
+
+                python3 -m pip install --quiet --upgrade azure-kusto-data azure-kusto-ingest
+
+                runFiles=""
+                resFiles=""
+                for f in "$kustoOut/baseline.PerfRun.ndjson" "$kustoOut/current.PerfRun.ndjson"; do
+                  [ -f "$f" ] && runFiles="${runFiles:+$runFiles,}$f"
+                done
+                for f in "$kustoOut/baseline.PerfBenchmarkResult.ndjson" "$kustoOut/current.PerfBenchmarkResult.ndjson"; do
+                  [ -f "$f" ] && resFiles="${resFiles:+$resFiles,}$f"
+                done
+
+                if [ -z "$runFiles" ]; then
+                  echo "##vso[task.logissue type=warning]No Kusto payloads to ingest."
+                  exit 0
+                fi
+
+                python3 "$scriptsDir/ingest_kusto.py" \
+                  --cluster "${{ parameters.kustoClusterUri }}" \
+                  --database "${{ parameters.kustoDatabase }}" \
+                  --run-file "$runFiles" \
+                  --results-file "$resFiles"

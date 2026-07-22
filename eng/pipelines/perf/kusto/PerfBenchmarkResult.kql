@@ -1,0 +1,54 @@
+// PerfBenchmarkResult table + JSON ingestion mapping for the SqlClient
+// performance-results database.  Schema follows InternalDriverTools wiki page
+// 270 ("Performance Results Database Specification") and the SqlClient
+// BenchmarkDotNet conversion subpage.
+//
+// Ingestion (perf_to_kusto.py output) references the mapping named
+// 'PerfBenchmarkResult_json_mapping'.
+
+.create-merge table PerfBenchmarkResult (
+    BenchmarkId: string,
+    DerivedRunId: string,
+    BenchmarkName: string,
+    MethodName: string,
+    ParameterSignature: string,
+    ParameterBag: dynamic,
+    JobName: string,
+    MeanMs: real,
+    P50Ms: real,
+    P95Ms: real,
+    P99Ms: real,
+    ThroughputOpsPerSec: real,
+    ErrorMs: real,
+    StdDevMs: real,
+    MemoryAllocatedBytes: real,
+    Runtime: string,
+    Platform: string,
+    DriverSpecificMetrics: dynamic,
+    IngestedAt: datetime
+)
+
+.create-or-alter table PerfBenchmarkResult ingestion json mapping "PerfBenchmarkResult_json_mapping"
+```
+[
+    { "column": "BenchmarkId",          "path": "$.BenchmarkId" },
+    { "column": "DerivedRunId",         "path": "$.DerivedRunId" },
+    { "column": "BenchmarkName",        "path": "$.BenchmarkName" },
+    { "column": "MethodName",           "path": "$.MethodName" },
+    { "column": "ParameterSignature",   "path": "$.ParameterSignature" },
+    { "column": "ParameterBag",         "path": "$.ParameterBag" },
+    { "column": "JobName",              "path": "$.JobName" },
+    { "column": "MeanMs",               "path": "$.MeanMs" },
+    { "column": "P50Ms",                "path": "$.P50Ms" },
+    { "column": "P95Ms",                "path": "$.P95Ms" },
+    { "column": "P99Ms",                "path": "$.P99Ms" },
+    { "column": "ThroughputOpsPerSec",  "path": "$.ThroughputOpsPerSec" },
+    { "column": "ErrorMs",              "path": "$.ErrorMs" },
+    { "column": "StdDevMs",             "path": "$.StdDevMs" },
+    { "column": "MemoryAllocatedBytes", "path": "$.MemoryAllocatedBytes" },
+    { "column": "Runtime",              "path": "$.Runtime" },
+    { "column": "Platform",             "path": "$.Platform" },
+    { "column": "DriverSpecificMetrics","path": "$.DriverSpecificMetrics" },
+    { "column": "IngestedAt",           "path": "$.IngestedAt" }
+]
+```

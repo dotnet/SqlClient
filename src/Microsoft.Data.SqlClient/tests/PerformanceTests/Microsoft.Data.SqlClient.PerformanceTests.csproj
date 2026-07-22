@@ -30,8 +30,16 @@
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'"  />
+    <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a    -->
+    <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. Under Central       -->
+    <!-- Package Management a plain Version is ignored, so VersionOverride is used; when       -->
+    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are      -->
+    <!-- mutually exclusive on whether MdsPackageVersion was provided.                         -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
+                      VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
 
   <!-- Other references -->

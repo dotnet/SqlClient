@@ -23,7 +23,9 @@
 param(
     [string]$Configuration = "Release",
     [string]$Framework = "net9.0",
-    [string]$ResultsSubdir = "perf-results"
+    [string]$ResultsSubdir = "perf-results",
+    [string]$BaselineVersion = "",
+    [string]$RegressionThreshold = "10"
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,6 +55,7 @@ Write-Host "  Perf project    : $PerfProject"
 Write-Host "  Configuration   : $Configuration"
 Write-Host "  Framework       : $Framework"
 Write-Host "  Results dir     : $ResultsDir"
+Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
 Write-Host "  SQL_SERVER      : $SqlServer"
 Write-Host "  PERF_CLIENT_CPUS: $($env:PERF_CLIENT_CPUS)"
 Write-Host "  PERF_SQL_CPUS   : $($env:PERF_SQL_CPUS)"
@@ -66,6 +69,9 @@ if ([string]::IsNullOrEmpty($SqlPassword)) {
 }
 
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
+
+# Record VM-side run metadata (e.g. the perf VM hostname) for the agent-side Kusto translation.
+"MACHINE_NAME=$env:COMPUTERNAME" | Set-Content -Path (Join-Path $ResultsDir "runinfo.env") -Encoding ASCII
 
 $env:DOTNET_NOLOGO = "1"
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
@@ -150,15 +156,32 @@ Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; In
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
+#
+# Two passes are executed so the pipeline can compare the branch under test against a released
+# baseline:
+#   * baseline  -> Microsoft.Data.SqlClient restored from NuGet.org at $BaselineVersion
+#                  (ReferenceType=Package + CPM VersionOverride).  Skipped when no baseline is given.
+#   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
+#
+# Each pass runs from its own directory; its BenchmarkDotNet artifacts are collected into
+# results\<label>\.
 ####################################################################################################
 
-$RunDir = Join-Path $RepoRoot "perf-run"
-if (Test-Path $RunDir) { Remove-Item -Recurse -Force $RunDir }
-New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
-
-Write-Host "Building performance tests ($Configuration, $Framework) ..."
-dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal
-if ($LASTEXITCODE -ne 0) { throw "Build failed (exit $LASTEXITCODE)." }
+# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
+# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
+# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
+$BaselineNuGetConfig = Join-Path $RepoRoot "perf-baseline-nuget.config"
+function Write-BaselineNuGetConfig {
+    @'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+'@ | Set-Content -Path $BaselineNuGetConfig -Encoding UTF8
+}
 
 # Convert a CPU range like "16-31" (or a comma list "16,17,18") into an affinity bitmask.
 function Get-AffinityMask([string]$cpuSpec) {
@@ -174,53 +197,100 @@ function Get-AffinityMask([string]$cpuSpec) {
     return $mask
 }
 
-Push-Location $RunDir
-try {
-    Write-Host "Starting benchmarks: dotnet run --project $PerfProject -c $Configuration -f $Framework --no-build"
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = "dotnet"
-    $psi.Arguments = "run --project `"$PerfProject`" -c $Configuration -f $Framework --no-build"
-    $psi.UseShellExecute = $false
-    $psi.WorkingDirectory = $RunDir
+# Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) and collects its artifacts into
+# results\<label>. $ExtraArgs are appended to both the build and run invocations.
+function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
+    $runDir = Join-Path $RepoRoot "perf-run-$Label"
+    if (Test-Path $runDir) { Remove-Item -Recurse -Force $runDir }
+    New-Item -ItemType Directory -Force -Path $runDir | Out-Null
 
-    $proc = [System.Diagnostics.Process]::Start($psi)
+    Write-Host "------------------------------------------------------------------"
+    Write-Host " Pass: $Label"
+    Write-Host "   Extra args: $($ExtraArgs -join ' ')"
+    Write-Host "------------------------------------------------------------------"
 
-    $mask = Get-AffinityMask $env:PERF_CLIENT_CPUS
-    if ($null -ne $mask -and $mask -gt 0) {
-        try {
-            $proc.ProcessorAffinity = [System.IntPtr]$mask
-            Write-Host "Pinned benchmark client (PID $($proc.Id)) to CPUs $($env:PERF_CLIENT_CPUS) (mask 0x$($mask.ToString('X')))."
-        } catch {
-            Write-Warning "Failed to set ProcessorAffinity: $_"
+    Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
+    dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs
+    if ($LASTEXITCODE -ne 0) { throw "Build failed for '$Label' (exit $LASTEXITCODE)." }
+
+    Push-Location $runDir
+    try {
+        $runArgs = @("run", "--project", $PerfProject, "-c", $Configuration, "-f", $Framework, "--no-build") + $ExtraArgs
+        Write-Host "Starting benchmarks ($Label): dotnet $($runArgs -join ' ')"
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = "dotnet"
+        foreach ($a in $runArgs) { $psi.ArgumentList.Add($a) }
+        $psi.UseShellExecute = $false
+        $psi.WorkingDirectory = $runDir
+
+        $proc = [System.Diagnostics.Process]::Start($psi)
+
+        $mask = Get-AffinityMask $env:PERF_CLIENT_CPUS
+        if ($null -ne $mask -and $mask -gt 0) {
+            try {
+                $proc.ProcessorAffinity = [System.IntPtr]$mask
+                Write-Host "Pinned benchmark client (PID $($proc.Id)) to CPUs $($env:PERF_CLIENT_CPUS) (mask 0x$($mask.ToString('X')))."
+            } catch {
+                Write-Warning "Failed to set ProcessorAffinity: $_"
+            }
+        } else {
+            Write-Warning "PERF_CLIENT_CPUS unset; running without CPU pinning."
+        }
+
+        $proc.WaitForExit()
+        if ($proc.ExitCode -ne 0) { throw "Benchmark run '$Label' failed (exit $($proc.ExitCode))." }
+    } finally {
+        Pop-Location
+    }
+
+    $artifactsDir = Join-Path $runDir "BenchmarkDotNet.Artifacts"
+    $dest = Join-Path $ResultsDir $Label
+    New-Item -ItemType Directory -Force -Path $dest | Out-Null
+    if (Test-Path $artifactsDir) {
+        Write-Host "Collecting '$Label' BenchmarkDotNet artifacts into $dest ..."
+        Copy-Item -Recurse -Force $artifactsDir (Join-Path $dest "BenchmarkDotNet.Artifacts")
+        $reportsDir = Join-Path $artifactsDir "results"
+        if (Test-Path $reportsDir) {
+            Copy-Item -Recurse -Force (Join-Path $reportsDir "*") $dest
         }
     } else {
-        Write-Warning "PERF_CLIENT_CPUS unset; running without CPU pinning."
+        Write-Warning "No BenchmarkDotNet.Artifacts directory was produced for '$Label' at $artifactsDir."
     }
-
-    $proc.WaitForExit()
-    if ($proc.ExitCode -ne 0) { throw "Benchmark run failed (exit $($proc.ExitCode))." }
-} finally {
-    Pop-Location
 }
 
+# --- Baseline pass (released NuGet package) -------------------------------------------------------
+if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+    Write-BaselineNuGetConfig
+    Invoke-PerfPass "baseline" @(
+        "-p:ReferenceType=Package",
+        "-p:MdsPackageVersion=$BaselineVersion",
+        "-p:RestoreConfigFile=$BaselineNuGetConfig"
+    )
+} else {
+    Write-Host "No -BaselineVersion supplied; skipping the baseline pass."
+}
+
+# --- Current pass (branch under test, built from source) ------------------------------------------
+Invoke-PerfPass "current" @()
+
 ####################################################################################################
-# 6. Collect BenchmarkDotNet artifacts into the results sub-directory.
+# 6. Compare the two passes and surface a delta (only when a baseline pass ran).
 ####################################################################################################
 
-$ArtifactsDir = Join-Path $RunDir "BenchmarkDotNet.Artifacts"
-if (Test-Path $ArtifactsDir) {
-    Write-Host "Collecting BenchmarkDotNet artifacts into $ResultsDir ..."
-    # Keep the full artifact tree (logs + per-run report folder) for detailed inspection.
-    Copy-Item -Recurse -Force $ArtifactsDir (Join-Path $ResultsDir "BenchmarkDotNet.Artifacts")
-    # Also flatten the report files (github markdown, csv, html) to the TOP of the results folder.
-    # The collect-results template auto-attaches top-level results/*.md files as run summaries, so
-    # placing the *-report-github.md reports here makes them show up on the pipeline run.
-    $ReportsDir = Join-Path $ArtifactsDir "results"
-    if (Test-Path $ReportsDir) {
-        Copy-Item -Recurse -Force (Join-Path $ReportsDir "*") $ResultsDir
-    }
-} else {
-    Write-Warning "No BenchmarkDotNet.Artifacts directory was produced at $ArtifactsDir."
+if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+    Write-Host "Comparing current branch against baseline $BaselineVersion ..."
+    $comparisonDir = Join-Path $ResultsDir "comparison"
+    New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
+    python3 (Join-Path $ScriptDir "compare_perf.py") `
+        --baseline-dir (Join-Path $ResultsDir "baseline") `
+        --current-dir (Join-Path $ResultsDir "current") `
+        --baseline-version $BaselineVersion `
+        --threshold $RegressionThreshold `
+        --out-md (Join-Path $comparisonDir "comparison.md") `
+        --out-json (Join-Path $comparisonDir "comparison.json")
+    if ($LASTEXITCODE -ne 0) { throw "Comparison failed (exit $LASTEXITCODE)." }
+    # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
+    Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
 }
 
 Write-Host "Collected results:"

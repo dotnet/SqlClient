@@ -35,9 +35,12 @@ set -euo pipefail
 configuration="Release"
 framework="net9.0"
 resultsSubDir="perf-results"
+baselineVersion=""
+regressionThreshold="10"
 
 usage() {
-    echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" >&2
+    echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
+         "[--baseline-version <ver>] [--regression-threshold <pct>]" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -45,6 +48,8 @@ while [[ $# -gt 0 ]]; do
         --configuration) configuration="$2"; shift 2 ;;
         --framework)     framework="$2";     shift 2 ;;
         --results-subdir) resultsSubDir="$2"; shift 2 ;;
+        --baseline-version) baselineVersion="$2"; shift 2 ;;
+        --regression-threshold) regressionThreshold="$2"; shift 2 ;;
         -h|--help)       usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
@@ -72,6 +77,7 @@ echo "  Perf project   : ${PERF_PROJECT}"
 echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
+echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
 echo "  SQL_SERVER     : ${SQL_SERVER:-<unset, will default to localhost>}"
 echo "  PERF_CLIENT_CPUS: ${PERF_CLIENT_CPUS:-<unset>}"
 echo "  PERF_SQL_CPUS  : ${PERF_SQL_CPUS:-<unset>}"
@@ -89,6 +95,11 @@ if [[ -z "${SQL_PASSWORD:-}" ]]; then
 fi
 
 mkdir -p "${RESULTS_DIR}"
+
+# Record VM-side run metadata (e.g. the perf VM hostname) for the agent-side Kusto translation.
+{
+    echo "MACHINE_NAME=$(hostname)"
+} > "${RESULTS_DIR}/runinfo.env"
 
 export DOTNET_NOLOGO=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -224,51 +235,113 @@ PY
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
+# Two passes are executed so the pipeline can compare the branch under test against a released
+# baseline:
+#   * baseline  -> Microsoft.Data.SqlClient restored from NuGet.org at ${baselineVersion}
+#                  (ReferenceType=Package + CPM VersionOverride).  Skipped when no baseline is given.
+#   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
+#
 # BenchmarkDotNet writes its artifacts to ./BenchmarkDotNet.Artifacts relative to the working
-# directory, so we run from a dedicated run directory and collect from there afterwards.
+# directory, so each pass runs from its own directory and its artifacts are collected into
+# results/<label>/.
 ####################################################################################################
 
-RUN_DIR="${REPO_ROOT}/perf-run"
-rm -rf "${RUN_DIR}"
-mkdir -p "${RUN_DIR}"
+# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
+# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
+# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
+BASELINE_NUGET_CONFIG="${REPO_ROOT}/perf-baseline-nuget.config"
+write_baseline_nuget_config() {
+    cat > "${BASELINE_NUGET_CONFIG}" <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+XML
+}
 
-# Build once up-front so the timed run uses --no-build (no build noise inside the measured process).
-echo "Building performance tests (${configuration}, ${framework}) ..."
-dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal
+# run_pass <label> <extra dotnet build/run args...>
+# Builds and runs one benchmark pass, pinned to PERF_CLIENT_CPUS, collecting artifacts into
+# ${RESULTS_DIR}/<label>.
+run_pass() {
+    local label="$1"; shift
+    local extra_args=("$@")
 
-# Assemble the run command, pinning to PERF_CLIENT_CPUS when available.
-run_cmd=(dotnet run --project "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --no-build)
+    local run_dir="${REPO_ROOT}/perf-run-${label}"
+    rm -rf "${run_dir}"
+    mkdir -p "${run_dir}"
 
-if [[ -n "${PERF_CLIENT_CPUS:-}" ]] && command -v taskset >/dev/null 2>&1; then
-    echo "Pinning benchmark client to CPUs ${PERF_CLIENT_CPUS} via taskset."
-    run_cmd=(taskset -c "${PERF_CLIENT_CPUS}" "${run_cmd[@]}")
+    echo "------------------------------------------------------------------"
+    echo " Pass: ${label}"
+    echo "   Extra args: ${extra_args[*]:-<none>}"
+    echo "------------------------------------------------------------------"
+
+    echo "Building performance tests (${configuration}, ${framework}) for '${label}' ..."
+    dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
+        "${extra_args[@]}"
+
+    local run_cmd=(dotnet run --project "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" \
+        --no-build "${extra_args[@]}")
+
+    if [[ -n "${PERF_CLIENT_CPUS:-}" ]] && command -v taskset >/dev/null 2>&1; then
+        echo "Pinning benchmark client to CPUs ${PERF_CLIENT_CPUS} via taskset."
+        run_cmd=(taskset -c "${PERF_CLIENT_CPUS}" "${run_cmd[@]}")
+    else
+        echo "WARNING: PERF_CLIENT_CPUS unset or taskset unavailable; running without CPU pinning." >&2
+    fi
+
+    echo "Running (${label}): ${run_cmd[*]}"
+    (
+        cd "${run_dir}"
+        "${run_cmd[@]}"
+    )
+
+    local artifacts_dir="${run_dir}/BenchmarkDotNet.Artifacts"
+    local dest="${RESULTS_DIR}/${label}"
+    mkdir -p "${dest}"
+    if [[ -d "${artifacts_dir}" ]]; then
+        echo "Collecting '${label}' BenchmarkDotNet artifacts into ${dest} ..."
+        cp -R "${artifacts_dir}" "${dest}/BenchmarkDotNet.Artifacts"
+        if [[ -d "${artifacts_dir}/results" ]]; then
+            cp -R "${artifacts_dir}/results/." "${dest}/"
+        fi
+    else
+        echo "WARNING: No BenchmarkDotNet.Artifacts directory was produced for '${label}' at ${artifacts_dir}." >&2
+    fi
+}
+
+# --- Baseline pass (released NuGet package) -------------------------------------------------------
+if [[ -n "${baselineVersion}" ]]; then
+    write_baseline_nuget_config
+    run_pass "baseline" \
+        -p:ReferenceType=Package \
+        -p:MdsPackageVersion="${baselineVersion}" \
+        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
 else
-    echo "WARNING: PERF_CLIENT_CPUS unset or taskset unavailable; running without CPU pinning." >&2
+    echo "No --baseline-version supplied; skipping the baseline pass."
 fi
 
-echo "Running: ${run_cmd[*]}"
-(
-    cd "${RUN_DIR}"
-    "${run_cmd[@]}"
-)
+# --- Current pass (branch under test, built from source) ------------------------------------------
+run_pass "current"
 
 ####################################################################################################
-# 6. Collect BenchmarkDotNet artifacts into the results sub-directory.
+# 6. Compare the two passes and surface a delta (only when a baseline pass ran).
 ####################################################################################################
 
-ARTIFACTS_DIR="${RUN_DIR}/BenchmarkDotNet.Artifacts"
-if [[ -d "${ARTIFACTS_DIR}" ]]; then
-    echo "Collecting BenchmarkDotNet artifacts into ${RESULTS_DIR} ..."
-    # Keep the full artifact tree (logs + per-run report folder) for detailed inspection.
-    cp -R "${ARTIFACTS_DIR}" "${RESULTS_DIR}/BenchmarkDotNet.Artifacts"
-    # Also flatten the report files (github markdown, csv, html) to the TOP of the results folder.
-    # The collect-results template auto-attaches top-level results/*.md files as run summaries, so
-    # placing the *-report-github.md reports here makes them show up on the pipeline run.
-    if [[ -d "${ARTIFACTS_DIR}/results" ]]; then
-        cp -R "${ARTIFACTS_DIR}/results/." "${RESULTS_DIR}/"
-    fi
-else
-    echo "WARNING: No BenchmarkDotNet.Artifacts directory was produced at ${ARTIFACTS_DIR}." >&2
+if [[ -n "${baselineVersion}" ]]; then
+    echo "Comparing current branch against baseline ${baselineVersion} ..."
+    mkdir -p "${RESULTS_DIR}/comparison"
+    python3 "${SCRIPT_DIR}/compare_perf.py" \
+        --baseline-dir "${RESULTS_DIR}/baseline" \
+        --current-dir "${RESULTS_DIR}/current" \
+        --baseline-version "${baselineVersion}" \
+        --threshold "${regressionThreshold}" \
+        --out-md "${RESULTS_DIR}/comparison/comparison.md" \
+        --out-json "${RESULTS_DIR}/comparison/comparison.json"
+    # Surface the comparison as the top-level run summary (collect-results.yml attaches results/*.md).
+    cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
 fi
 
 echo "Collected results:"
