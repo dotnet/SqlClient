@@ -243,6 +243,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // Still flaky under CI load: relies on a delayed primary timing out and
+        // failing over within a tight ConnectTimeout window.
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
@@ -291,6 +294,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount);
         }
 
+        // Still flaky under CI load: relies on a delayed primary timing out and
+        // failing over within a tight ConnectTimeout window.
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {

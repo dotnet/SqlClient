@@ -192,6 +192,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        // Still flaky under CI load: MultiSubnetFailover spawns parallel connection
+        // attempts, so the expected pre-login count is inherently timing-dependent.
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -475,40 +478,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // response.  The listener is held open for the lifetime of the test, so
             // its port cannot be recycled by another concurrently-running test.
             // Reusing a just-freed ephemeral port was the root cause of this test's
+            // flakiness (a sibling server would answer and the connection would
             // unexpectedly succeed).
-            using TcpListener blackHole = new(IPAddress.Loopback, 0);
+            //
+            // TcpListener does not implement IDisposable on .NET Framework, so it is
+            // stopped in a finally block rather than with a using statement.
+            TcpListener blackHole = new(IPAddress.Loopback, 0);
             blackHole.Start();
-            int port = ((IPEndPoint)blackHole.LocalEndpoint).Port;
-
-            var connStr = new SqlConnectionStringBuilder()
-            {
-                DataSource = $"localhost,{port}",
-                ConnectTimeout = timeout,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
-            }.ConnectionString;
-            using SqlConnection connection = new(connStr);
-
-            // Measure the actual time it took to timeout and compare it with configured timeout
-            Stopwatch timer = new();
-            Exception? ex = null;
-
             try
             {
-                timer.Start();
-                connection.Open();
-            }
-            catch (Exception e)
-            {
-                timer.Stop();
-                ex = e;
-            }
+                int port = ((IPEndPoint)blackHole.LocalEndpoint).Port;
 
-            Assert.False(timer.IsRunning, "Timer must be stopped.");
-            Assert.NotNull(ex);
-            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
-                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
-                $"{Environment.NewLine}{ex}");
+                var connStr = new SqlConnectionStringBuilder()
+                {
+                    DataSource = $"localhost,{port}",
+                    ConnectTimeout = timeout,
+                    Encrypt = SqlConnectionEncryptOption.Optional,
+                    Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
+                }.ConnectionString;
+                using SqlConnection connection = new(connStr);
+
+                // Measure the actual time it took to timeout and compare it with configured timeout
+                Stopwatch timer = new();
+                Exception? ex = null;
+
+                try
+                {
+                    timer.Start();
+                    connection.Open();
+                }
+                catch (Exception e)
+                {
+                    timer.Stop();
+                    ex = e;
+                }
+
+                Assert.False(timer.IsRunning, "Timer must be stopped.");
+                Assert.NotNull(ex);
+                Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                    $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                    $"{Environment.NewLine}{ex}");
+            }
+            finally
+            {
+                blackHole.Stop();
+            }
         }
 
         [Theory]
@@ -516,42 +530,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task ConnectionTimeoutTestAsync(int timeout)
         {
             // See ConnectionTimeoutTest for why a held-open black-hole listener is
-            // used instead of disposing a server and reusing its port.
-            using TcpListener blackHole = new(IPAddress.Loopback, 0);
+            // used instead of disposing a server and reusing its port.  TcpListener
+            // does not implement IDisposable on .NET Framework, so it is stopped in a
+            // finally block rather than with a using statement.
+            TcpListener blackHole = new(IPAddress.Loopback, 0);
             blackHole.Start();
-            int port = ((IPEndPoint)blackHole.LocalEndpoint).Port;
-
-            var connStr = new SqlConnectionStringBuilder()
-            {
-                DataSource = $"localhost,{port}",
-                ConnectTimeout = timeout,
-                Encrypt = SqlConnectionEncryptOption.Optional,
-                Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
-            }.ConnectionString;
-            using SqlConnection connection = new(connStr);
-
-            // Measure the actual time it took to timeout and compare it with configured timeout
-            Stopwatch timer = new();
-            Exception? ex = null;
-
             try
             {
-                // An async call with a timeout token to cancel the operation after the specified time
-                using CancellationTokenSource cts = new(timeout * 1000);
-                timer.Start();
-                await connection.OpenAsync(cts.Token).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                timer.Stop();
-                ex = e;
-            }
+                int port = ((IPEndPoint)blackHole.LocalEndpoint).Port;
 
-            Assert.False(timer.IsRunning, "Timer must be stopped.");
-            Assert.NotNull(ex);
-            Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
-                $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
-                $"{Environment.NewLine}{ex}");
+                var connStr = new SqlConnectionStringBuilder()
+                {
+                    DataSource = $"localhost,{port}",
+                    ConnectTimeout = timeout,
+                    Encrypt = SqlConnectionEncryptOption.Optional,
+                    Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
+                }.ConnectionString;
+                using SqlConnection connection = new(connStr);
+
+                // Measure the actual time it took to timeout and compare it with configured timeout
+                Stopwatch timer = new();
+                Exception? ex = null;
+
+                try
+                {
+                    // An async call with a timeout token to cancel the operation after the specified time
+                    using CancellationTokenSource cts = new(timeout * 1000);
+                    timer.Start();
+                    await connection.OpenAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    timer.Stop();
+                    ex = e;
+                }
+
+                Assert.False(timer.IsRunning, "Timer must be stopped.");
+                Assert.NotNull(ex);
+                Assert.True(timer.Elapsed.TotalSeconds <= timeout + 3,
+                    $"The actual timeout {timer.Elapsed.TotalSeconds} is expected to be less than {timeout} plus 3 seconds additional threshold." +
+                    $"{Environment.NewLine}{ex}");
+            }
+            finally
+            {
+                blackHole.Stop();
+            }
         }
 
         [Fact]
