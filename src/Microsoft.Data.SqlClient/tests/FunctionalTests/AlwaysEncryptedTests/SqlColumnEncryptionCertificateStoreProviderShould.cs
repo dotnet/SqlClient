@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
 
-        public static TheoryData<string, object, Utility.CColumnEncryptionType> TestAedEncryptionReversal_Data
+        public static TheoryData<string, object, Utility.CColumnEncryptionType> TestAndEncryptionReversal_Data
         {
             get
             {
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [MemberData(nameof(TestAedEncryptionReversal_Data))]
+        [MemberData(nameof(TestAndEncryptionReversal_Data))]
         public void TestAeadEncryptionReversal(string dataType, object data, Utility.CColumnEncryptionType encType)
         {
             // @TODO: Split into int test and string test.
