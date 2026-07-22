@@ -204,6 +204,13 @@ fi
 RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
 
+# The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
+# "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
+# perf-run-<label> dir, so without this the app throws FileNotFoundException for datatypes.json.
+# It needs no per-run modification, so point the env var at the checked-in file directly.
+DATATYPES_CONFIG="${PERF_DIR}/datatypes.json"
+export DATATYPES_CONFIG
+
 python3 - "$PERF_DIR/runnerconfig.jsonc" "$RUNNER_CONFIG" <<'PY'
 import json, os, re, sys
 

@@ -144,6 +144,12 @@ if ($sqlcmd) {
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
 
+# The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
+# "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
+# perf-run-<label> dir, so without this the app throws FileNotFoundException for datatypes.json.
+# It needs no per-run modification, so point the env var at the checked-in file directly.
+$env:DATATYPES_CONFIG = Join-Path $PerfDir "datatypes.json"
+
 $srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 $rawConfig = Get-Content $srcConfig -Raw
 # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
