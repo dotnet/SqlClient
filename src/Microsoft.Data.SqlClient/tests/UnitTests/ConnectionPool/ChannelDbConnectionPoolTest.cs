@@ -1859,15 +1859,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies the FR-004 wake path: a caller blocked purely because the rate limiter denied
-        /// its permit is woken when a different caller releases its lease, and then creates its own
-        /// physical connection (rather than reusing one, since the permit holder never returns its
-        /// connection). Exercises both the sync and async idle-channel wait mechanisms.
+        /// Verifies the FR-004 behavior that releasing a rate-limiter lease lets a caller which
+        /// could not obtain a permit go on to create its own physical connection. Caller A holds the
+        /// single permit while it creates, so caller B cannot create until A releases its lease;
+        /// because A never returns its connection, B cannot reuse one and must open its own. When B
+        /// has already parked on the idle channel this covers the lease-release wake poke, but the
+        /// assertions hold in every interleaving. Runs both the sync and async open paths.
         /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task RateLimiter_LeaseReleaseWakesRateLimitedWaiter_CreatesPhysicalConnection(bool async)
+        public async Task RateLimiter_LeaseReleaseAllowsRateLimitedWaiterToCreatePhysicalConnection(bool async)
         {
             // Arrange
             using var createGate = new ManualResetEventSlim(initialState: false);
@@ -1949,8 +1951,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that when the rate limiter denies a new physical open, the caller falls back
-        /// to waiting for an existing connection to be returned instead of forcing a second create.
+        /// Verifies that when the rate limiter denies a new physical open, the caller reuses a
+        /// connection returned to the pool instead of forcing a second create. The single permit is
+        /// held for the whole test, so the pool can never open a second connection; the waiting
+        /// request can only complete by reusing the returned connection.
         /// </summary>
         [Fact]
         public async Task RateLimiter_PermitDenied_ReusesReturnedConnection()
