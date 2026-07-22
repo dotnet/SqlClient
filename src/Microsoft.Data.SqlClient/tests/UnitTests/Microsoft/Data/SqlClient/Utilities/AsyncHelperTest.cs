@@ -1743,7 +1743,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient.Utilities
             await methodUnderTest(exceptionHelper.TestException);
 
             // - Force GC and wait for unobserved exceptions to be processed.
-            Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(1));
+            Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(0.5));
 
             // Assert
             // - The unobserved handler should not have captured our test exception

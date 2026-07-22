@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 }
                 finally
                 {
-                    callbackStarted.SetResult();
+                    callbackStarted.TrySetResult();
                 }
             });
 
@@ -66,6 +66,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             await callbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
             // - Force GC and wait for unhandled exception to be raised
+            testPacket.Release();
+            testHandle.ReturnPacket(testPacket);
             Exception? unobservedException = await exceptionHelper.Wait(TimeSpan.FromSeconds(5));
 
             // Assert
