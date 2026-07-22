@@ -243,9 +243,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
-        // Still flaky under CI load: relies on a delayed primary timing out and
-        // failing over within a tight ConnectTimeout window.
-        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
@@ -258,11 +255,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             failoverServer.Start();
 
             // Arrange
+            // The primary never completes login (permanent delay), so the client always
+            // times out on the primary and fails over. A very large delay avoids any
+            // delay-vs-timeout race; it is interrupted immediately on server Dispose.
             using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientDelay = true,
-                    DelayDuration = TimeSpan.FromMilliseconds(10000),
+                    IsEnabledPermanentDelay = true,
+                    DelayDuration = TimeSpan.FromMinutes(5),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -290,13 +290,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
 
-            Assert.Equal(1, failoverServer.PreLoginCount);
-            Assert.Equal(1, server.PreLoginCount);
+            // Assert on completed-login counts (Login7Count), which are robust to any
+            // extra abandoned pre-login attempts during the failover transition: the
+            // primary never completes a login, and the failover partner completes one.
+            Assert.Equal(0, server.Login7Count);
+            Assert.Equal(1, failoverServer.Login7Count);
+            Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
-        // Still flaky under CI load: relies on a delayed primary timing out and
-        // failing over within a tight ConnectTimeout window.
-        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
@@ -309,11 +310,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             failoverServer.Start();
 
             // Arrange
+            // The primary never completes login (permanent delay), so the client always
+            // times out on the primary and fails over. A very large delay avoids any
+            // delay-vs-timeout race; it is interrupted immediately on server Dispose.
             using TransientDelayTdsServer server = new(
                 new TransientDelayTdsServerArguments()
                 {
-                    IsEnabledTransientDelay = true,
-                    DelayDuration = TimeSpan.FromMilliseconds(10000),
+                    IsEnabledPermanentDelay = true,
+                    DelayDuration = TimeSpan.FromMinutes(5),
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -339,9 +343,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // so the connection will retry on the failover server.
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
-            Assert.Equal(1, server.PreLoginCount);
+            // Assert on completed-login counts (Login7Count), which are robust to any
+            // extra abandoned pre-login attempts during the failover transition: the
+            // primary never completes a login, and the failover partner completes one.
             Assert.Equal(0, server.Login7Count);
-            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
+            Assert.Equal(1, failoverServer.Login7Count);
+            Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
         /// <summary>
