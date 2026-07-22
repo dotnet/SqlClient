@@ -1,0 +1,156 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# SqlClient Performance Test pipeline.
+#
+# This pipeline runs the Microsoft.Data.SqlClient BenchmarkDotNet performance tests on the internal
+# "Perf Test Lab" (Azure Dedicated Hosts).  It does so by consuming the reusable extends template
+# published by the InternalDriverTools/PerfTest repository:
+#
+#   v1/Perf.Test.Job.yml@PerfTemplates
+#
+# See the design/usage guidance on the wiki:
+#   InternalDriverTools.wiki - "Performance Test Automation" (page 284)
+#
+# The template owns the full run lifecycle (SSH key generation, dedicated-host VM provisioning, test
+# execution over SSH, result collection, and teardown).  All this pipeline supplies is:
+#
+#   * the source directory to copy to the VM (testRootDir),
+#   * the entry-point script to execute on the VM (testScript + testScriptArgs),
+#   * the results subfolder to copy back (testResultsSubDir), and
+#   * optional post-test steps to surface the results.
+#
+# The on-VM script (eng/pipelines/perf/scripts/run-perf-tests.*) installs the .NET SDK, creates the
+# perf database, injects the VM's SQL Server connection string into the benchmark runner config,
+# pins the client to the reserved CPU set, runs the benchmarks, and collects the BenchmarkDotNet
+# artifacts into the results subfolder.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# This pipeline is manual/scheduled only; never trigger on PRs or commits.
+pr: none
+trigger: none
+
+# Uncomment to run nightly.  Times are UTC.
+# schedules:
+#   - cron: "0 6 * * *"
+#     displayName: Nightly performance run
+#     branches:
+#       include:
+#         - main
+#     always: true
+
+parameters:
+
+  # Target OS for the perf VM and the benchmark client.
+  - name: platform
+    displayName: Platform
+    type: string
+    default: linux
+    values:
+      - linux
+      - windows
+
+  # The build configuration used to build and run the benchmarks on the VM.  Performance numbers are
+  # only meaningful in Release, so that is the default (and only) supported value.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Release
+
+  # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
+  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  - name: dotnetFramework
+    displayName: .NET Framework (TFM)
+    type: string
+    default: net9.0
+    values:
+      - net8.0
+      - net9.0
+      - net10.0
+
+  # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
+  - name: testTimeoutMinutes
+    displayName: Test Timeout (minutes)
+    type: number
+    default: 180
+
+  # The folder name this repository ('self') is checked out into.  The Perf.Test.Job template
+  # performs a MULTI-REPO checkout ('checkout: self' + the template repo), so Azure DevOps places
+  # 'self' under $(Build.SourcesDirectory)/<repoName> rather than at $(Build.SourcesDirectory)
+  # directly (mirroring how the template repo lands at $(Build.SourcesDirectory)/PerfTest).  This
+  # must match the ADO repository name for the SqlClient repo hosting this pipeline.
+  - name: sourcesSubDir
+    displayName: Self checkout folder name
+    type: string
+    default: dotnet-sqlclient
+
+# Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
+# have been onboarded with the Agent Pools and Service Connections required to consume it.
+resources:
+  repositories:
+    - repository: PerfTemplates
+      type: git
+      name: InternalDriverTools/PerfTest
+      ref: refs/heads/main
+
+# Consume the Perf Test Lab template.  The template defines the whole job/stage structure; we only
+# pass parameters into it.
+extends:
+  template: v1/Perf.Test.Job.yml@PerfTemplates
+  parameters:
+    platform: ${{ parameters.platform }}
+
+    # The entire driver source tree is copied to the VM so the benchmarks (which reference
+    # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
+    # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
+    testRootDir: $(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}
+
+    # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
+    # uses PowerShell, per the template's .sh/.ps1 convention.
+    ${{ if eq(parameters.platform, 'windows') }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.ps1
+    ${{ else }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.sh
+
+    # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
+    # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
+    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results'
+
+    # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
+    # copies this VM folder back to the agent, but always lands it at a fixed location:
+    # $(Build.ArtifactStagingDirectory)/results (and publishes it as the 'perf-results' artifact).
+    testResultsSubDir: perf-results
+
+    testTimeoutMinutes: ${{ parameters.testTimeoutMinutes }}
+    jobName: SqlClientPerf
+
+    # Post-test steps run on the agent after results have been copied back.  The template already
+    # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
+    # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.
+    steps:
+      - bash: |
+          set -euo pipefail
+          resultsDir="$(Build.ArtifactStagingDirectory)/results"
+          echo "=== Performance results ($resultsDir) ==="
+          if [ ! -d "$resultsDir" ]; then
+            echo "##vso[task.logissue type=warning]No results directory was collected from the VM."
+            exit 0
+          fi
+          find "$resultsDir" -type f | sort
+          echo
+          # Print every BenchmarkDotNet GitHub-markdown report that was produced.
+          while IFS= read -r report; do
+            echo "----------------------------------------------------------------"
+            echo "### $report"
+            echo "----------------------------------------------------------------"
+            cat "$report"
+            echo
+          done < <(find "$resultsDir" -type f -name '*-report-github.md' | sort)
+        displayName: 'Show performance results'
+        condition: succeededOrFailed()
