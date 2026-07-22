@@ -290,7 +290,14 @@ extends:
                 scriptsDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}/eng/pipelines/perf/scripts"
                 kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
 
-                python3 -m pip install --quiet --upgrade azure-kusto-data azure-kusto-ingest
+                # PEP 668: Ubuntu agents ship an "externally managed" Python, so a system-wide
+                # 'pip install' is rejected. Install the Kusto SDKs into an isolated virtualenv
+                # and use its interpreter for the ingest script.
+                venvDir="$(Agent.TempDirectory)/kusto-venv"
+                python3 -m venv "$venvDir"
+                venvPy="$venvDir/bin/python"
+                "$venvPy" -m pip install --quiet --upgrade pip
+                "$venvPy" -m pip install --quiet --upgrade azure-kusto-data azure-kusto-ingest
 
                 runFiles=""
                 resFiles=""
@@ -306,7 +313,7 @@ extends:
                   exit 0
                 fi
 
-                python3 "$scriptsDir/ingest_kusto.py" \
+                "$venvPy" "$scriptsDir/ingest_kusto.py" \
                   --cluster "${{ parameters.kustoClusterUri }}" \
                   --database "${{ parameters.kustoDatabase }}" \
                   --run-file "$runFiles" \
