@@ -552,7 +552,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal((int)errorCode, e.Number);
                 return;
             }
-            // [errorcode: 42109] Assert.Fail() Failure
+
             Assert.Fail();
         }
 

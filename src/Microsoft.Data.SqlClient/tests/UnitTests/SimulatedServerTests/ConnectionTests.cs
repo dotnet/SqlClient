@@ -495,7 +495,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 var connStr = new SqlConnectionStringBuilder()
                 {
-                    DataSource = $"localhost,{port}",
+                    // Target 127.0.0.1 explicitly (not "localhost") so the client always
+                    // connects to the IPv4 black-hole listener above rather than resolving to
+                    // ::1, which would produce connection-refused instead of a pre-login timeout.
+                    DataSource = $"127.0.0.1,{port}",
                     ConnectTimeout = timeout,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
@@ -545,7 +548,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 var connStr = new SqlConnectionStringBuilder()
                 {
-                    DataSource = $"localhost,{port}",
+                    // Target 127.0.0.1 explicitly (not "localhost") so the client always
+                    // connects to the IPv4 black-hole listener above rather than resolving to
+                    // ::1, which would produce connection-refused instead of a pre-login timeout.
+                    DataSource = $"127.0.0.1,{port}",
                     ConnectTimeout = timeout,
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
@@ -558,8 +564,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 try
                 {
-                    // An async call with a timeout token to cancel the operation after the specified time
-                    using CancellationTokenSource cts = new(timeout * 1000);
+                    // The cancellation token is only a safety net: it is set well beyond
+                    // ConnectTimeout so the failure we observe is the driver's own connection
+                    // timeout, not an external cancellation.
+                    using CancellationTokenSource cts = new((timeout + 30) * 1000);
                     timer.Start();
                     await connection.OpenAsync(cts.Token).ConfigureAwait(false);
                 }

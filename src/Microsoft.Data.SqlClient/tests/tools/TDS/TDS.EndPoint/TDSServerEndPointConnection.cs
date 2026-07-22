@@ -168,7 +168,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // A bounded wait guards against an unexpected hang.
             try
             {
-                ProcessorTask?.Wait(TimeSpan.FromSeconds(30));
+                // Surface a hang: if the processor task does not complete within the bound,
+                // log it rather than silently returning while background work may continue.
+                if (ProcessorTask != null && !ProcessorTask.Wait(TimeSpan.FromSeconds(30)))
+                {
+                    Log("Processor task did not complete within 30 seconds during Dispose.");
+                }
             }
             catch (AggregateException)
             {
@@ -183,6 +188,15 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         private void RunConnectionHandler()
         {
             TcpClient connection = Connection;
+
+            // Dispose() may have already closed and nulled the connection before this task
+            // began running. Treat that as a normal (already torn down) shutdown rather than
+            // dereferencing a null Connection and logging a spurious error.
+            if (connection == null)
+            {
+                OnConnectionClosed?.Invoke(this, null);
+                return;
+            }
 
             try
             {
@@ -210,9 +224,13 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             }
             catch (Exception ex)
             {
-                // The socket being closed during Dispose surfaces here; it is an
-                // expected part of teardown.
-                Log(ex.ToString());
+                // A socket close during Dispose is an expected part of teardown, so only log
+                // when a stop was not requested. This keeps real failures visible in CI logs
+                // without the teardown noise.
+                if (!_stopRequested)
+                {
+                    Log(ex.ToString());
+                }
             }
 
             try

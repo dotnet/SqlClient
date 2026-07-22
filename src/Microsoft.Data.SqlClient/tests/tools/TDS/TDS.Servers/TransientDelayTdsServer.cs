@@ -22,6 +22,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         private readonly CancellationTokenSource _disposeCts = new CancellationTokenSource();
 
+        /// <summary>
+        /// Guards against running Dispose logic more than once.
+        /// </summary>
+        private bool _disposed;
+
         public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) 
             : base(arguments)
         {
@@ -35,11 +40,26 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <inheritdoc/>
         public override void Dispose()
         {
-            // Wake any in-progress delay before joining the processor task.
-            _disposeCts.Cancel();
-            base.Dispose();
-            RequestCounter = 0;
-            _disposeCts.Dispose();
+            // Guard against multiple Dispose calls: cancelling/disposing the CTS twice would
+            // throw ObjectDisposedException and break test teardown paths.
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+
+            try
+            {
+                // Wake any in-progress delay before joining the processor task.
+                _disposeCts.Cancel();
+                base.Dispose();
+                RequestCounter = 0;
+            }
+            finally
+            {
+                // Always release the CTS, even if base.Dispose() throws.
+                _disposeCts.Dispose();
+            }
         }
 
         /// <summary>

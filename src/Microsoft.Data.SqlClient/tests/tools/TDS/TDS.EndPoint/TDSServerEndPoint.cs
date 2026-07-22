@@ -215,6 +215,17 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     catch (Exception ex)
                     {
                         Log(ex.ToString());
+
+                        // Setup failed, so this connection was never registered and will not be
+                        // torn down by Stop(); dispose the accepted socket to avoid leaking it.
+                        try
+                        {
+                            newConnection?.Dispose();
+                        }
+                        catch (Exception disposeEx)
+                        {
+                            Log(disposeEx.ToString());
+                        }
                     }
                 }
             }
