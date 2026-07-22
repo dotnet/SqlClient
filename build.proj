@@ -359,6 +359,21 @@
       Examples:       "1", "12", "AE", "12AE"
     -->
     <TestSet Condition="'$(TestSet)' == ''" />
+
+    <!--
+      TestArchitecture
+      Applies to:     Test* targets
+      Description:    Process architecture (e.g. x64 or x86) that the tests are being executed under.
+                      This value is only used to disambiguate the test result (trx) log file prefix so
+                      that results produced by different architectures do not share the same test names
+                      when they are published and merged together (e.g. by PublishTestResults with
+                      mergeTestResults=true). It does NOT influence the architecture the tests actually
+                      run under; that is controlled by the dotnet host selected via DotnetPath.
+      Default value:  [blank]
+      Allowed values: (x64|x86|...)
+      Example:        x86
+    -->
+    <TestArchitecture Condition="'$(TestArchitecture)' == ''" />
   </PropertyGroup>
 
   <!-- ================================================================= -->
@@ -644,6 +659,7 @@
     <!-- @TODO: Prevent from running in non-admin user mode -->
     <PropertyGroup>
       <LogFilePrefix>SqlClientFunctional-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestArchitecture)' != ''">$(LogFilePrefix)-$(TestArchitecture)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
@@ -675,6 +691,7 @@
   <Target Name="TestSqlClientManual">
     <PropertyGroup>
       <LogFilePrefix>SqlClientManual-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestArchitecture)' != ''">$(LogFilePrefix)-$(TestArchitecture)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
@@ -721,6 +738,7 @@
   <Target Name="TestSqlClientUnit">
     <PropertyGroup>
       <LogFilePrefix>SqlClientUnit-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestArchitecture)' != ''">$(LogFilePrefix)-$(TestArchitecture)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
@@ -912,6 +930,7 @@
         package version arguments are specified in this command.
       -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestArchitecture)' != ''">$(LogFilePrefix)-$(TestArchitecture)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
@@ -1013,6 +1032,7 @@
   <Target Name="TestAzure">
     <PropertyGroup>
       <LogFilePrefix>AzureTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestArchitecture)' != ''">$(LogFilePrefix)-$(TestArchitecture)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>

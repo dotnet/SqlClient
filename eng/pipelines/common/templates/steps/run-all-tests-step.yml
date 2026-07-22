@@ -94,6 +94,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
       ${{ else }}: # x86
         arguments: >-
           -t:TestSqlClientUnit
@@ -104,6 +105,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
@@ -121,6 +123,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
         arguments: >-
@@ -133,6 +136,7 @@ steps:
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -153,6 +157,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
       ${{ else }}: # x86
         arguments: >-
           -t:TestSqlClientFunctional
@@ -165,6 +170,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
@@ -184,6 +190,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
         arguments: >-
@@ -198,6 +205,7 @@ steps:
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -219,6 +227,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
       ${{ else }}: # x86
         arguments: >-
           -t:TestSqlClientManual
@@ -232,6 +241,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
   - task: DotNetCoreCLI@2
@@ -253,6 +263,7 @@ steps:
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
         arguments: >-
@@ -268,6 +279,7 @@ steps:
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
+          -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
           -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -286,6 +298,7 @@ steps:
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Flaky Unit Tests'
@@ -302,6 +315,7 @@ steps:
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
         -p:TestCodeCoverage=false
     continueOnError: true
 
@@ -321,6 +335,7 @@ steps:
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Flaky Functional Tests'
@@ -339,6 +354,7 @@ steps:
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
         -p:TestCodeCoverage=false
     continueOnError: true
   - task: DotNetCoreCLI@2
@@ -358,6 +374,7 @@ steps:
         -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
   - task: DotNetCoreCLI@2
@@ -378,5 +395,6 @@ steps:
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
+        -p:TestArchitecture=${{ parameters.msbuildArchitecture }}
         -p:TestCodeCoverage=false
     continueOnError: true
