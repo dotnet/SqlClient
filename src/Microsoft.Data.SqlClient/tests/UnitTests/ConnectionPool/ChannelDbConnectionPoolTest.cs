@@ -1877,8 +1877,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
-                // Room to grow so the release actually pokes a waiter (ReservationCount < MaxPoolSize).
-                maxPoolSize: 2,
+                // Headroom so the lease-release poke fires deterministically. That poke is gated on
+                // ReservationCount < MaxPoolSize, and a denied waiter (B) still holds a transient
+                // slot reservation while it unwinds (ConnectionPoolSlots.Add only releases it when
+                // the createCallback returns null). When A releases, the count can momentarily be
+                // A's own in-flight reservation plus B's (2), so MaxPoolSize must exceed 2 for the
+                // poke to fire regardless of how far B has unwound. The idle channel is unbounded, so
+                // once fired the poke is buffered and never lost even if B parks just after it.
+                maxPoolSize: 3,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
                 hasTransactionAffinity: true,
@@ -1918,20 +1924,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
                 "Timed out waiting for the first open to begin physical creation.");
 
-            // Caller B is denied a permit (A holds it) and must fall back to the idle-channel wait.
-            // A denied AttemptAcquire increments the limiter's TotalFailedLeases, so watching that
-            // counter rise is how we confirm B was refused a permit and is now parked on the idle
-            // channel waiting for a wakeup (rather than still racing to acquire).
-            long failedLeasesBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
+            // Caller B is denied a permit (A holds it) and falls back to the idle-channel wait.
             Task<DbConnectionInternal?> requestB = Open(new SqlConnection());
-            Assert.True(
-                SpinWait.SpinUntil(
-                    () => rateLimiter.GetStatistics()!.TotalFailedLeases > failedLeasesBefore,
-                    TimeSpan.FromSeconds(5)),
-                "Timed out waiting for the second request to be denied by the rate limiter.");
 
-            // Releasing A's create lets it finish and dispose its lease, which pokes the idle
-            // channel to wake B. B then finds the permit available and creates its own connection.
+            // Release A's create. A finishes, disposes its lease (returning the permit) and then
+            // pokes the idle channel. Because the permit is released before the poke and the channel
+            // is unbounded, B is guaranteed to observe the wake - whether it already parked or reads
+            // the buffered poke afterward - and then acquires the now-free permit. B has no idle
+            // connection to reuse (A never returns its connection), so this deterministically forces
+            // B to create its own physical connection with no reliance on spin/sleep timing.
             createGate.Set();
 
             DbConnectionInternal? connectionA = await requestA;
@@ -1961,6 +1962,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
+                // Room to grow: a free slot remains after the first connection is checked out, so
+                // the only thing that can stop the second request from opening a new physical
+                // connection is the rate limiter - not pool exhaustion.
                 maxPoolSize: 2,
                 creationTimeout: 15,
                 loadBalanceTimeout: 0,
@@ -1982,13 +1986,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(firstConnection);
             Assert.Equal(1, factory.CreateCount);
 
-            // Externally hold the only permit so the pool's next AttemptAcquire is denied and the
-            // waiting request must fall back to waiting for a returned connection.
+            // Hold the single permit for the remainder of the test. This is the invariant the
+            // assertions rely on: while the permit is held, every AttemptAcquire the pool makes is
+            // denied, so the second request can never create a physical connection. Its only path
+            // to a connection is to reuse one returned to the pool. That makes the outcome
+            // independent of thread scheduling - no polling for the denial, no spin, no sleep.
             using RateLimitLease heldLease = rateLimiter.AttemptAcquire(1);
             Assert.True(heldLease.IsAcquired);
-            long failedLeasesBefore = rateLimiter.GetStatistics()!.TotalFailedLeases;
 
             // Act
+            // The second request finds no idle connection and is denied a permit, so it parks on
+            // the idle channel waiting for a returned connection. It runs on a background thread
+            // because the sync pool path blocks the caller until a connection becomes available.
             Task<DbConnectionInternal?> waitingRequest = Task.Run(() =>
             {
                 pool.TryGetConnection(
@@ -1999,16 +2008,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return queuedConnection;
             });
 
-            Assert.True(
-                SpinWait.SpinUntil(
-                    () => rateLimiter.GetStatistics()!.TotalFailedLeases > failedLeasesBefore,
-                    TimeSpan.FromSeconds(5)),
-                "Timed out waiting for the second request to be denied by the rate limiter.");
-
+            // Return the first connection. With the permit held, this is the only connection the
+            // waiting request can obtain, so it deterministically completes by reusing it -
+            // whether it grabs it from the idle channel directly or is woken from its parked wait.
             pool.ReturnInternalConnection(firstConnection!, firstOwner);
             DbConnectionInternal? reusedConnection = await waitingRequest;
 
             // Assert
+            // Same instance reused, and the factory was never asked to create a second connection:
+            // proof the held permit blocked a new open despite the free pool slot, forcing reuse.
             Assert.Same(firstConnection, reusedConnection);
             Assert.Equal(1, factory.CreateCount);
         }
@@ -2053,12 +2061,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 });
             }
 
-            // Every failed open must have released its permit; otherwise the pool would starve.
-            Assert.True(
-                SpinWait.SpinUntil(
-                    () => rateLimiter.GetStatistics()!.CurrentAvailablePermits == 4,
-                    TimeSpan.FromSeconds(5)),
-                "Rate limiter did not release all permits after failed opens.");
+            // Every failed open disposes its rate-limiter lease in the createCallback's finally as
+            // the failure unwinds - which happens before that failure propagates to complete the
+            // awaited request. So once all opens above have thrown, all four permits are already
+            // back in the limiter; there is nothing to wait for and no need to poll.
+            Assert.Equal(4, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
         }
 
         /// <summary>
