@@ -107,6 +107,14 @@ parameters:
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
+  # TEMPORARY diagnostics for investigating intermittent post-login connection
+  # timeouts (see LoginTimeoutDiagnostics in the driver). When set, the driver
+  # emits '[MDS-TIMEOUT-DIAG]' lines to stderr correlating the configured
+  # ConnectTimeout with the actual timer budget handed to the SNI read. Remove
+  # this variable once the investigation concludes.
+  - name: MDS_LOGIN_TIMEOUT_DIAG
+    value: 1
+
   - name: abstractionsArtifactsName
     value: Abstractions.Artifacts
 

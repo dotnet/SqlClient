@@ -383,6 +383,35 @@ namespace Microsoft.Data.SqlClient.Connection
                 // connect timeout.
                 _timeout = ResolveLoginTimeout(timeout, connectionOptions.ConnectTimeout);
 
+                if (LoginTimeoutDiagnostics.Enabled)
+                {
+                    _timeoutErrorInternal.SetDiagnosticContext(
+                        connectionOptions.DataSource,
+                        connectionOptions.ConnectTimeout,
+                        _timeout.IsInfinite ? -1 : _timeout.MillisecondsRemaining,
+                        _timeout.IsInfinite,
+                        LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait);
+
+                    LoginTimeoutDiagnostics.Log(string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        "LoginTimerSetup: DataSource='{0}'; ConnectTimeoutConfig={1}s; " +
+                        "ResolvedLoginBudgetMs={2}; LoginTimerInfinite={3}; " +
+                        "CallerTimerInfinite={4}; CallerTimerRemainingMs={5}; " +
+                        "OverallPoolWaitSwitch={6}; UseMinimumLoginTimeout={7}; " +
+                        "Pooling={8}; MultiSubnetFailover={9}; TransientFaultHandling={10}",
+                        connectionOptions.DataSource,
+                        connectionOptions.ConnectTimeout,
+                        _timeout.IsInfinite ? -1 : _timeout.MillisecondsRemaining,
+                        _timeout.IsInfinite,
+                        timeout is null ? (object)"null" : timeout.IsInfinite,
+                        timeout is null ? -1 : (timeout.IsInfinite ? -1 : timeout.MillisecondsRemaining),
+                        LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait,
+                        LocalAppContextSwitches.UseMinimumLoginTimeout,
+                        connectionOptions.Pooling,
+                        connectionOptions.MultiSubnetFailover,
+                        applyTransientFaultHandling));
+                }
+
                 // If transient fault handling is enabled then we can retry the login up to the
                 // ConnectRetryCount.
                 int connectionEstablishCount = applyTransientFaultHandling
@@ -2950,6 +2979,20 @@ namespace Microsoft.Data.SqlClient.Connection
             // @TODO: How about we define all the easy ones in one block, then have the conditional ones below that
             login.authentication = ConnectionOptions.Authentication;
             login.timeout = timeoutInSeconds;
+
+            if (LoginTimeoutDiagnostics.Enabled)
+            {
+                LoginTimeoutDiagnostics.Log(string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "LoginAttemptBudget: server='{0}'; loginTimeoutSecondsToSni={1}; " +
+                    "timerInfinite={2}; timerRemainingMs={3}; overallConnectTimeoutConfig={4}s",
+                    server?.ExtendedServerName,
+                    timeoutInSeconds,
+                    timeout.IsInfinite,
+                    timeout.IsInfinite ? -1 : timeout.MillisecondsRemaining,
+                    ConnectionOptions.ConnectTimeout));
+            }
+
             login.userInstance = ConnectionOptions.UserInstance;
             login.hostName = ConnectionOptions.ObtainWorkstationId();
             login.userName = ConnectionOptions.UserID;

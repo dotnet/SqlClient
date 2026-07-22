@@ -66,7 +66,30 @@ namespace Microsoft.Data.SqlClient
         private SqlConnectionInternalSourceType _currentSourceType;
         private bool _isFailoverScenario;
 
+        // TEMPORARY CI diagnostics context (see LoginTimeoutDiagnostics). Populated when the
+        // owning SqlConnectionInternal sets up the login timer so the timeout message emission
+        // can correlate the configured ConnectTimeout with the actual timer budget.
+        private int _diagConnectTimeoutSeconds = -1;
+        private long _diagLoginBudgetMs = -1;
+        private bool _diagLoginTimerInfinite;
+        private bool _diagOverallPoolWaitSwitch;
+        private string _diagDataSource;
+
         internal SqlConnectionTimeoutErrorPhase CurrentPhase => _currentPhase;
+
+        internal void SetDiagnosticContext(
+            string dataSource,
+            int connectTimeoutSeconds,
+            long loginBudgetMs,
+            bool loginTimerInfinite,
+            bool overallPoolWaitSwitch)
+        {
+            _diagDataSource = dataSource;
+            _diagConnectTimeoutSeconds = connectTimeoutSeconds;
+            _diagLoginBudgetMs = loginBudgetMs;
+            _diagLoginTimerInfinite = loginTimerInfinite;
+            _diagOverallPoolWaitSwitch = overallPoolWaitSwitch;
+        }
 
         public SqlConnectionTimeoutErrorInternal()
         {
@@ -231,6 +254,36 @@ namespace Microsoft.Data.SqlClient
             {
                 errorBuilder.Append("  ");
                 errorBuilder.Append(durationString);
+            }
+
+            if (LoginTimeoutDiagnostics.Enabled)
+            {
+                long postLoginMs = _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PostLogin]?.GetMilliSecondDuration() ?? -1;
+                long preLoginMs = _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin]?.GetMilliSecondDuration() ?? -1;
+                string diag = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "TimeoutMessageBuilt: phase={0}; failover={1}; sourceType={2}; " +
+                    "DataSource='{3}'; ConnectTimeoutConfig={4}s; LoginBudgetMs={5}; " +
+                    "LoginTimerInfinite={6}; OverallPoolWaitSwitch={7}; " +
+                    "PreLoginPhaseMs={8}; PostLoginPhaseMs={9}",
+                    _currentPhase,
+                    _isFailoverScenario,
+                    _currentSourceType,
+                    _diagDataSource,
+                    _diagConnectTimeoutSeconds,
+                    _diagLoginBudgetMs,
+                    _diagLoginTimerInfinite,
+                    _diagOverallPoolWaitSwitch,
+                    preLoginMs,
+                    postLoginMs);
+
+                LoginTimeoutDiagnostics.Log(diag);
+
+                // Also append a compact, greppable suffix directly to the timeout
+                // exception message so it is captured in the test failure output
+                // (xunit surfaces exception messages even when it does not surface
+                // driver stderr). Env-gated, append-only, timeout-path-only.
+                errorBuilder.Append("  [MDS-TIMEOUT-DIAG ").Append(diag).Append("]");
             }
 
             return errorBuilder.ToString();
