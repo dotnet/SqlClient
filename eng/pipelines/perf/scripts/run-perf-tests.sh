@@ -40,10 +40,18 @@ regressionThreshold="10"
 # When true, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
 # Default off so the pipeline reports deltas without blocking until the gate is trusted.
 failOnRegression="false"
+# Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+#   interleaved -> run one unit at a time, baseline and candidate back-to-back, with best-of-N
+#                  confirmation of flagged regressions (the noise-resistant default).
+#   sequential  -> legacy: run the whole baseline suite, then the whole candidate suite, then compare.
+runMode="interleaved"
+# Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
+confirmationRuns="3"
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
-         "[--baseline-version <ver>] [--regression-threshold <pct>] [--fail-on-regression]" >&2
+         "[--baseline-version <ver>] [--regression-threshold <pct>] [--fail-on-regression]" \
+         "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -54,6 +62,8 @@ while [[ $# -gt 0 ]]; do
         --baseline-version) baselineVersion="$2"; shift 2 ;;
         --regression-threshold) regressionThreshold="$2"; shift 2 ;;
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
+        --run-mode) runMode="$2"; shift 2 ;;
+        --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
         -h|--help)       usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
@@ -82,6 +92,7 @@ echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
+echo "  Run mode       : ${runMode} (confirmation runs: ${confirmationRuns})"
 echo "  SQL_SERVER     : ${SQL_SERVER:-<unset, will default to localhost>}"
 echo "  PERF_CLIENT_CPUS: ${PERF_CLIENT_CPUS:-<unset>}"
 echo "  PERF_SQL_CPUS  : ${PERF_SQL_CPUS:-<unset>}"
@@ -422,25 +433,60 @@ run_pass() {
     fi
 }
 
+# build_variant <label> <extra dotnet build args...>
+# Builds the PerformanceTests app once into its own output directory (perf-build-<label>) so the
+# interleaved orchestrator can invoke it repeatedly without rebuilding.  The two variants (baseline
+# package vs candidate source) must go to distinct dirs because they share the project's bin path.
+build_variant() {
+    local label="$1"; shift
+    local out_dir="${REPO_ROOT}/perf-build-${label}"
+    rm -rf "${out_dir}"
+    mkdir -p "${out_dir}"
+    echo "Building '${label}' variant (${configuration}, ${framework}) into ${out_dir} ..."
+    dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
+        -o "${out_dir}" "$@"
+}
+
 # --- Baseline pass (released NuGet package) -------------------------------------------------------
-if [[ -n "${baselineVersion}" ]]; then
+if [[ -n "${baselineVersion}" && "${runMode}" == "interleaved" ]]; then
+    ################################################################################################
+    # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
+    # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
+    # regression across N passes before it counts toward the gate.
+    ################################################################################################
+    write_baseline_nuget_config
+    build_variant "baseline" \
+        -p:ReferenceType=Package \
+        -p:MdsPackageVersion="${baselineVersion}" \
+        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
+    build_variant "current"
+
+    interleave_args=(
+        --baseline-exe-dir "${REPO_ROOT}/perf-build-baseline"
+        --current-exe-dir "${REPO_ROOT}/perf-build-current"
+        --assembly "PerformanceTests.dll"
+        --results-dir "${RESULTS_DIR}"
+        --threshold "${regressionThreshold}"
+        --reps "${confirmationRuns}"
+        --baseline-version "${baselineVersion}"
+        --client-cpus "${PERF_CLIENT_CPUS:-}"
+    )
+    if [[ "${failOnRegression}" == "true" ]]; then
+        echo "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> ${regressionThreshold}%) will fail the run."
+        interleave_args+=(--fail-on-regression)
+    fi
+    echo "Running interleaved benchmarks (best-of-${confirmationRuns}) ..."
+    python3 "${SCRIPT_DIR}/interleave_perf.py" "${interleave_args[@]}"
+
+elif [[ -n "${baselineVersion}" ]]; then
+    # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
     write_baseline_nuget_config
     run_pass "baseline" \
         -p:ReferenceType=Package \
         -p:MdsPackageVersion="${baselineVersion}" \
         -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
-else
-    echo "No --baseline-version supplied; skipping the baseline pass."
-fi
+    run_pass "current"
 
-# --- Current pass (branch under test, built from source) ------------------------------------------
-run_pass "current"
-
-####################################################################################################
-# 6. Compare the two passes and surface a delta (only when a baseline pass ran).
-####################################################################################################
-
-if [[ -n "${baselineVersion}" ]]; then
     echo "Comparing current branch against baseline ${baselineVersion} ..."
     mkdir -p "${RESULTS_DIR}/comparison"
     compare_args=(
@@ -459,6 +505,11 @@ if [[ -n "${baselineVersion}" ]]; then
     python3 "${SCRIPT_DIR}/compare_perf.py" "${compare_args[@]}"
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results/*.md).
     cp "${RESULTS_DIR}/comparison/comparison.md" "${RESULTS_DIR}/summary.md"
+
+else
+    # --- No baseline: current-only run (no comparison) --------------------------------------------
+    echo "No --baseline-version supplied; running current only (no comparison)."
+    run_pass "current"
 fi
 
 echo "Collected results:"

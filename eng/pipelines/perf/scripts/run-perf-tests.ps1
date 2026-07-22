@@ -28,7 +28,15 @@ param(
     [string]$RegressionThreshold = "10",
     # When set, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
     # Off by default so deltas are reported without blocking until the gate is trusted.
-    [switch]$FailOnRegression
+    [switch]$FailOnRegression,
+    # Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+    #   interleaved -> run one unit at a time, baseline and candidate back-to-back, with best-of-N
+    #                  confirmation of flagged regressions (the noise-resistant default).
+    #   sequential  -> legacy: run the whole baseline suite, then the whole candidate suite, compare.
+    [ValidateSet("interleaved", "sequential")]
+    [string]$RunMode = "interleaved",
+    # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
+    [int]$ConfirmationRuns = 3
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,6 +66,7 @@ Write-Host "  Perf project    : $PerfProject"
 Write-Host "  Configuration   : $Configuration"
 Write-Host "  Framework       : $Framework"
 Write-Host "  Results dir     : $ResultsDir"
+Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
 Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
 Write-Host "  SQL_SERVER      : $SqlServer"
 Write-Host "  PERF_CLIENT_CPUS: $($env:PERF_CLIENT_CPUS)"
@@ -354,26 +363,64 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
     }
 }
 
-# --- Baseline pass (released NuGet package) -------------------------------------------------------
-if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+# Build-Variant <label> <extra build args...>
+# Builds the PerformanceTests app once into perf-build-<label> so the interleaved orchestrator can
+# invoke it repeatedly without rebuilding.  Distinct output dirs are mandatory (both variants share
+# the project's default bin path).
+function Build-Variant {
+    param([string]$Label, [string[]]$ExtraArgs = @())
+    $outDir = Join-Path $RepoRoot "perf-build-$Label"
+    if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
+    New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+    Write-Host "Building '$Label' variant ($Configuration, $Framework) into $outDir ..."
+    $buildArgs = @("build", $PerfProject, "-c", $Configuration, "-f", $Framework, "--nologo", "-v", "minimal", "-o", $outDir) + $ExtraArgs
+    dotnet @buildArgs
+    if ($LASTEXITCODE -ne 0) { throw "Build failed for '$Label' variant (exit $LASTEXITCODE)." }
+    return $outDir
+}
+
+if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interleaved")) {
+    ####################################################################################################
+    # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
+    # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
+    # regression across N passes before it counts toward the gate.
+    ####################################################################################################
+    Write-BaselineNuGetConfig
+    $baselineExeDir = Build-Variant "baseline" @(
+        "-p:ReferenceType=Package",
+        "-p:MdsPackageVersion=$BaselineVersion",
+        "-p:RestoreConfigFile=$BaselineNuGetConfig"
+    )
+    $currentExeDir = Build-Variant "current" @()
+
+    $interleaveArgs = @(
+        "--baseline-exe-dir", $baselineExeDir,
+        "--current-exe-dir", $currentExeDir,
+        "--assembly", "PerformanceTests.dll",
+        "--results-dir", $ResultsDir,
+        "--threshold", $RegressionThreshold,
+        "--reps", $ConfirmationRuns,
+        "--baseline-version", $BaselineVersion,
+        "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
+    )
+    if ($FailOnRegression) {
+        Write-Host "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> $RegressionThreshold%) will fail the run."
+        $interleaveArgs += "--fail-on-regression"
+    }
+    Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
+    python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs
+    if ($LASTEXITCODE -ne 0) { throw "Interleaved run failed (exit $LASTEXITCODE)." }
+
+} elseif (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+    # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
     Write-BaselineNuGetConfig
     Invoke-PerfPass "baseline" @(
         "-p:ReferenceType=Package",
         "-p:MdsPackageVersion=$BaselineVersion",
         "-p:RestoreConfigFile=$BaselineNuGetConfig"
     )
-} else {
-    Write-Host "No -BaselineVersion supplied; skipping the baseline pass."
-}
+    Invoke-PerfPass "current" @()
 
-# --- Current pass (branch under test, built from source) ------------------------------------------
-Invoke-PerfPass "current" @()
-
-####################################################################################################
-# 6. Compare the two passes and surface a delta (only when a baseline pass ran).
-####################################################################################################
-
-if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     Write-Host "Comparing current branch against baseline $BaselineVersion ..."
     $comparisonDir = Join-Path $ResultsDir "comparison"
     New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
@@ -394,6 +441,11 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     if ($LASTEXITCODE -ne 0) { throw "Comparison failed (exit $LASTEXITCODE)." }
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
     Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
+
+} else {
+    # --- No baseline: current-only run (no comparison) --------------------------------------------
+    Write-Host "No -BaselineVersion supplied; running current only (no comparison)."
+    Invoke-PerfPass "current" @()
 }
 
 Write-Host "Collected results:"

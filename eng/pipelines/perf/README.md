@@ -14,9 +14,10 @@ NuGet baseline, and ingest the results into the InternalDriverTools **perf-resul
 | Path | Purpose |
 | ---- | ------- |
 | `sqlclient-perf-pipeline.yml` | The pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. |
-| `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, two benchmark passes, compare. |
+| `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
-| `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). |
+| `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes (wiki 339 §2.2/§2.3/§2.6). |
+| `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 | `kusto/PerfRun.kql` | Create-table + JSON ingestion mapping for `PerfRun`. |
@@ -38,8 +39,9 @@ ON THE VM  ── run-perf-tests.{sh,ps1}
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
       5. Current  pass  → MDS built from source (ProjectReference)              → results/current/
-         (both pinned to PERF_CLIENT_CPUS)
-      6. compare_perf.py → results/comparison/ + results/summary.md
+         (both pinned to PERF_CLIENT_CPUS; interleaved per-unit by default, or two full
+          sequential passes when benchmarkRunMode=sequential)
+      6. interleave_perf.py / compare_perf.py → results/comparison/ + results/summary.md
       ▼
 ON THE AGENT  ── pipeline post-test steps
       • Show the BenchmarkDotNet markdown reports in the log.
@@ -63,7 +65,9 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `sourcesSubDir` | `dotnet-sqlclient` | Folder the repo (`self`) is checked out into under the template's multi-repo checkout. Must match the ADO repo name. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
-| `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). Default off — reports deltas without blocking. |
+| `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
+| `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
+| `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
 | `kustoClusterUri` | `https://sqldrivers.westus2.kusto.windows.net` | Kusto cluster URI. Blank ⇒ ingestion skipped. |
 | `kustoDatabase` | `PerfResultsTestDB` | Target Kusto database. |
 | `kustoServiceConnection` | `PerfLab Infra Deployments` | ADO ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
@@ -112,25 +116,39 @@ tuned SQL instance, and the disjoint client CPU set (`PERF_CLIENT_CPUS`); the ru
 | Allocator tuning (§2.8, Linux) | Exports `MALLOC_MMAP_THRESHOLD_=128MiB` and `MALLOC_TRIM_THRESHOLD_=-1` so large-buffer benches (`AsyncLargeDataRead`, `SqlBulkCopy`) stop re-`mmap`ing per iteration. |
 | Network tuning (§2.9, Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ParallelAsyncConnection`). Never fails the run. |
 | Diagnostics (§2.11) | Writes `results/diagnostics/`: SQL instance config (MAXDOP, memory, affinity, tempdb files, `@@VERSION`), host CPU topology, and per-pass CPU-clock/thermal telemetry (before/after each pass). |
-| Regression gate (§3) | `failOnRegression` threads `--fail-on-regression` to `compare_perf.py`; only a **candidate-slower** delta past the threshold fails. Default off. |
+| Regression gate (§3) | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
+| Interleaving (§2.2/§2.3) | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |
+| Best-of-N confirmation (§2.6) | A unit flagged in the first interleaved pass is re-run `confirmationRuns` times; a regression is **confirmed** only on a strict majority. Unconfirmed flags are reported but never fail the gate. |
 
-### Proposed follow-ups (not yet implemented — larger redesign)
+### Interleaving + best-of-N (run model)
 
-These are the high-value but structural controls from wiki 339 §2.2/§2.3/§2.6/§2.7. They change the
-run model and total runtime, so they are called out here for a deliberate decision rather than folded
-into a working harness silently:
+`benchmarkRunMode` selects how the two variants are measured:
 
-- **Interleave candidate/baseline per small unit (§2.2)** — the biggest correctness fix. Today the
-  harness runs two *full sequential* passes (baseline entirely, then current entirely), so the same
-  benchmark is measured tens of minutes apart and any host drift skews one side. Interleaving would
-  measure baseline vs candidate for each small unit back-to-back.
-- **Split the monolithic exe into small bench binaries (§2.3)** — prerequisite for clean interleaving
-  and per-unit re-runs.
-- **Best-of-N auto-confirm (§2.6)** — re-run only the flagged benchmarks N times and require a
-  majority to agree before declaring a regression. This should land **before** the gate
-  (`failOnRegression`) is turned on by default, to keep it from flapping on single-sample noise.
+- **`interleaved`** (default) — `interleave_perf.py` orchestrates the run. Both variants are built
+  **once** into separate output dirs (`perf-build-baseline`, `perf-build-current`), then for each
+  benchmark unit the baseline and candidate builds run **back-to-back** before moving to the next
+  unit. Because the same benchmark is measured on both sides within seconds, slow host drift affects
+  both roughly equally and cancels out of the delta. This relies on the `PerformanceTests` runner
+  supporting `PERF_LIST_BENCHMARKS` (enumerate enabled units) and `PERF_BENCHMARK=<unit>` (run a
+  single unit) — see `Program.cs`.
+
+  After the first interleaved pass, only the units containing a flagged regression are re-run
+  `confirmationRuns` times (best-of-N). A regression is **confirmed** only when a strict majority of
+  the N passes agree `(count * 2 > N)`; otherwise it is reported as `regression (unconfirmed)` and
+  does **not** fail the `failOnRegression` gate. `confirmationRuns = 1` disables confirmation.
+
+- **`sequential`** — legacy model: the whole baseline suite runs, then the whole candidate suite,
+  then `compare_perf.py` diffs them. Kept as a fallback; produces the same `results/baseline`,
+  `results/current`, and `results/comparison/` layout so Kusto ingestion is identical.
+
+Both modes emit `results/comparison/comparison.md` + `comparison.json` and copy the markdown to
+`results/summary.md`; interleaved mode adds a **Confirm** column and a confirmed/unconfirmed summary.
+
+### Further tuning (not yet implemented)
+
 - **Release-grade sampling / relaxed thresholds (§2.7)** — tune BenchmarkDotNet job counts and
-  significance thresholds in `runnerconfig.jsonc` / `BenchmarkConfig.cs` once the above are in place.
+  significance thresholds in `runnerconfig.jsonc` / `BenchmarkConfig.cs` now that interleaving and
+  best-of-N are in place.
 
 ## Kusto schema & ingestion
 

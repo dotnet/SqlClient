@@ -112,6 +112,26 @@ parameters:
     type: boolean
     default: false
 
+  # Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+  #   interleaved -> run one benchmark unit at a time, baseline and candidate back-to-back, and
+  #                  confirm any flagged regression across N passes (best-of-N).  Noise-resistant
+  #                  default; required before trusting the failOnRegression gate.
+  #   sequential  -> legacy: run the whole baseline suite, then the whole candidate suite, compare.
+  - name: benchmarkRunMode
+    displayName: Benchmark run mode
+    type: string
+    default: interleaved
+    values:
+      - interleaved
+      - sequential
+
+  # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed
+  # (1 disables confirmation).  Only used when benchmarkRunMode = interleaved.
+  - name: confirmationRuns
+    displayName: Confirmation runs (best-of-N)
+    type: number
+    default: 3
+
   # --- Kusto (perf-results database) ingestion -----------------------------------------------------
   # Ingestion into the InternalDriverTools perf-results Kusto database (wiki spec 270) is OPTIONAL:
   # it only runs when both kustoClusterUri and kustoServiceConnection are supplied.  This lets the
@@ -169,7 +189,7 @@ extends:
 
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
-    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }}${{ if eq(parameters.failOnRegression, true) }} --fail-on-regression${{ endif }}'
+    testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}${{ if eq(parameters.failOnRegression, true) }} --fail-on-regression${{ endif }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
