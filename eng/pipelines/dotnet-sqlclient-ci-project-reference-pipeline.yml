@@ -16,8 +16,8 @@
 #
 #   - Commits to GitHub main and release/* branches
 #   - Commits to ADO internal/main and internal/release/* branches
-#   - Weekdays at 01:00 UTC on GitHub main
-#   - Thursdays at 05:00 UTC on ADO internal/main
+#   - Daily at 01:00 UTC on GitHub main
+#   - Daily at 05:00 UTC on ADO internal/main
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
 # able to define different triggers and schedules using branch filters:
@@ -66,17 +66,17 @@ trigger:
 # Trigger this pipeline on a schedule.
 schedules:
 
-  # GitHub main on weekdays
-  - cron: '0 1 * * Mon-Fri'
-    displayName: Weekday Run (Release Config)
+  # GitHub main daily.
+  - cron: '0 1 * * *'
+    displayName: Daily Run (Release Config)
     branches:
       include:
       - main
     always: true
 
-  # ADO internal/main on Thursdays.
-  - cron: '0 5 * * Thu'
-    displayName: Thursday Run (Release Config)
+  # ADO internal/main daily.
+  - cron: '0 5 * * *'
+    displayName: Daily Run (Release Config)
     branches:
       include:
       - internal/main
