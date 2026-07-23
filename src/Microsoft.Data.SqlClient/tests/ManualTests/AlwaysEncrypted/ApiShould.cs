@@ -2225,6 +2225,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+#if !DEBUG
+        // The failpoint that makes this test deterministic (the Thread.Sleep in
+        // SqlCommand.Encryption.cs that parks the parameter-encryption flow) is compiled
+        // only under DEBUG. In non-DEBUG (Release) builds the injected pause is gone, so the
+        // fixed CancelAfter window races a real, network-latency-dependent Always Encrypted
+        // query and the exact-message assertion flakes. Quarantine it only for non-DEBUG
+        // builds; under DEBUG the failpoint keeps it deterministic and gating.
+        [Trait("Category", "flaky")]
+#endif
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
         public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)

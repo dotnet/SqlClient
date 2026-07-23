@@ -500,6 +500,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     // ::1, which would produce connection-refused instead of a pre-login timeout.
                     DataSource = $"127.0.0.1,{port}",
                     ConnectTimeout = timeout,
+                    ConnectRetryCount = 0, // Single timeout attempt; no retry that would extend the wall clock
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
                 }.ConnectionString;
@@ -553,6 +554,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     // ::1, which would produce connection-refused instead of a pre-login timeout.
                     DataSource = $"127.0.0.1,{port}",
                     ConnectTimeout = timeout,
+                    ConnectRetryCount = 0, // Single timeout attempt; no retry that would extend the wall clock
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     Pooling = false, // Disable pooling so this expected timeout failure does not poison a shared pool
                 }.ConnectionString;
