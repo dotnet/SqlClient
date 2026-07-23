@@ -220,7 +220,11 @@ $rawConfig = Get-Content $srcConfig -Raw
 $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
 $cfg = ConvertFrom-Json $rawConfig
 
-$cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$SqlPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+# SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
+# quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
+# value instead of corrupting the connection string.
+$escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
+$cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
 $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
 Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
 

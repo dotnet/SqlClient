@@ -69,6 +69,19 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
+# falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
+# or erroring out obscurely much later.
+case "${runMode}" in
+    interleaved|sequential) ;;
+    *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
+       usage; exit 2 ;;
+esac
+if ! [[ "${confirmationRuns}" =~ ^[0-9]+$ ]] || [[ "${confirmationRuns}" -lt 1 ]]; then
+    echo "ERROR: --confirmation-runs must be a positive integer (got '${confirmationRuns}')." >&2
+    usage; exit 2
+fi
+
 ####################################################################################################
 # Resolve paths
 ####################################################################################################
@@ -238,10 +251,12 @@ export MALLOC_TRIM_THRESHOLD_="${MALLOC_TRIM_THRESHOLD_:--1}"          # never t
 
 # --- §2.9 Network tuning (best-effort; needs privilege, so it must never fail the run) ------------
 # Connection-churn benches (ConnectionPoolStress, ParallelAsyncConnection) exhaust ephemeral ports;
-# widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.
+# widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.  'sudo -n' keeps
+# this non-interactive: on a VM without passwordless sudo it fails immediately instead of blocking
+# on a password prompt, then we fall back to a non-sudo sysctl (and finally give up quietly).
 if command -v sysctl >/dev/null 2>&1; then
     for kv in "net.ipv4.ip_local_port_range=1024 65535" "net.ipv4.tcp_tw_reuse=1"; do
-        sudo sysctl -w "${kv}" >/dev/null 2>&1 || sysctl -w "${kv}" >/dev/null 2>&1 || true
+        sudo -n sysctl -w "${kv}" >/dev/null 2>&1 || sysctl -w "${kv}" >/dev/null 2>&1 || true
     done
 fi
 
@@ -308,8 +323,13 @@ server = os.environ["SQL_SERVER"]
 password = os.environ["SQL_PASSWORD"]
 db = os.environ.get("DB_NAME", "sqlclient-perf-db")
 
+# SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
+# quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
+# value instead of corrupting the connection string.
+password_value = '"' + password.replace('"', '""') + '"'
+
 cfg["ConnectionString"] = (
-    f"Server=tcp:{server},1433;User ID=sa;Password={password};"
+    f"Server=tcp:{server},1433;User ID=sa;Password={password_value};"
     f"Initial Catalog={db};TrustServerCertificate=True;Encrypt=False;"
 )
 

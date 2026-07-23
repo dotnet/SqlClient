@@ -44,19 +44,27 @@ import compare_perf  # noqa: E402  (local module, sits next to this script)
 # CPU affinity (client pinning, wiki §2.4) — best effort, cross platform.
 # --------------------------------------------------------------------------------------------------
 def parse_cpus(spec):
-    """Parse a CPU spec like "16-31" or "0,2,4" or "0-3,8" into a sorted int list."""
+    """Parse a CPU spec like "16-31" or "0,2,4" or "0-3,8" into a sorted int list.
+
+    CPU pinning is a best-effort optimisation, never a gate, so a malformed spec must not
+    fail the run: on any unparseable segment this warns and returns [] (i.e. no pinning)."""
     if not spec:
         return []
     cpus = set()
-    for part in spec.split(","):
-        part = part.strip()
-        if not part:
-            continue
-        if "-" in part:
-            lo, hi = part.split("-", 1)
-            cpus.update(range(int(lo), int(hi) + 1))
-        else:
-            cpus.add(int(part))
+    try:
+        for part in spec.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if "-" in part:
+                lo, hi = part.split("-", 1)
+                cpus.update(range(int(lo), int(hi) + 1))
+            else:
+                cpus.add(int(part))
+    except ValueError:
+        print(f"WARNING: could not parse CPU spec {spec!r}; running without CPU pinning.",
+              file=sys.stderr)
+        return []
     return sorted(cpus)
 
 
@@ -203,7 +211,7 @@ def _regression_keys(baseline_dir, current_dir, threshold):
     return entries, {e["key"] for e in entries if e["status"] == "regression"}
 
 
-def orchestrate(runner, units, results_dir, threshold, reps, fail_on_regression):
+def orchestrate(runner, units, results_dir, threshold, reps):
     baseline_agg = os.path.join(results_dir, "baseline")
     current_agg = os.path.join(results_dir, "current")
     comparison_dir = os.path.join(results_dir, "comparison")
@@ -369,7 +377,7 @@ def main(argv=None):
     print(f"Enabled units ({len(units)}): {', '.join(units)}")
 
     entries, confirmed, unconfirmed = orchestrate(
-        runner, units, results_dir, args.threshold, args.reps, args.fail_on_regression)
+        runner, units, results_dir, args.threshold, args.reps)
 
     # Outputs.
     comparison_dir = os.path.join(results_dir, "comparison")

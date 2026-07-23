@@ -326,7 +326,13 @@ extends:
       # explicitly opted out of ingestion.
       - task: AzureCLI@2
         displayName: 'Ingest results into Kusto'
-        condition: and(eq('${{ parameters.enableKustoIngestion }}', 'True'), succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
+        # Gate on the boolean parameter at compile time (a reliable boolean comparison), then only the
+        # runtime variable presence is left to the 'condition'.  Comparing the stringified parameter to
+        # 'True' inside 'condition' is fragile across template expansion, so it is avoided.
+        ${{ if eq(parameters.enableKustoIngestion, true) }}:
+          condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
+        ${{ else }}:
+          condition: false
         inputs:
           azureSubscription: $(KustoServiceConnection)
           scriptType: bash
