@@ -10,6 +10,15 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 pr: none
 trigger: none
 
+# We run this pipeline on a daily schedule.
+schedules:
+  - cron: "30 4 * * *"
+    displayName: Daily 04:30 UTC Build
+    branches:
+      include:
+        - internal/main
+    always: true
+
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
 
