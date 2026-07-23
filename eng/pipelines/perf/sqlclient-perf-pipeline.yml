@@ -208,9 +208,11 @@ extends:
       # Tag the build with the baseline version used for the comparison so runs are
       # identifiable at a glance in the ADO build list.  Runs first so the tag is applied
       # even if a later step fails; omitted entirely when no baseline pass is requested.
+      # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL
+      # path and a colon trips ADO's "potentially dangerous Request.Path" filter.
       - ${{ if ne(parameters.baselineVersion, '') }}:
         - bash: |
-            echo "##vso[build.addbuildtag]Baseline: ${{ parameters.baselineVersion }}"
+            echo "##vso[build.addbuildtag]Baseline ${{ parameters.baselineVersion }}"
           displayName: 'Tag build with baseline version'
           condition: succeededOrFailed()
 
