@@ -205,6 +205,15 @@ extends:
     # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
     # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.
     steps:
+      # Tag the build with the baseline version used for the comparison so runs are
+      # identifiable at a glance in the ADO build list.  Runs first so the tag is applied
+      # even if a later step fails; omitted entirely when no baseline pass is requested.
+      - ${{ if ne(parameters.baselineVersion, '') }}:
+        - bash: |
+            echo "##vso[build.addbuildtag]Baseline: ${{ parameters.baselineVersion }}"
+          displayName: 'Tag build with baseline version'
+          condition: succeededOrFailed()
+
       - bash: |
           set -euo pipefail
           resultsDir="$(Build.ArtifactStagingDirectory)/results"

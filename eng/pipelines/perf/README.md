@@ -222,7 +222,8 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
    `KustoClusterUri` / `KustoDatabase` / `KustoServiceConnection` there to enable it, leave them empty
    to skip ingestion, or untick **Ingest results into Kusto** to skip it for a single run.
 3. After the run, review the **run summary** (comparison) and the `perf-results` /
-   `perf-kusto-payloads` artifacts.
+   `perf-kusto-payloads` artifacts. When a baseline pass ran, the build is tagged
+   **`Baseline: <version>`** so the baseline used is visible at a glance in the ADO build list.
 
 ## Troubleshooting
 
