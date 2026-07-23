@@ -22,9 +22,9 @@ schedules:
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
 
-  # When true, any SDL errors will break the build, and TSA bug filing will be disabled.  When
-  # false, SDL errors will be logged but will not break the build, and TSA bug filing will be
-  # enabled.
+  # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
+  # will not break the build.  TSA bug filing is always enabled in the official pipeline and is
+  # independent of this parameter (see the tsa block in globalSdl).
   - name: breakOnSdlError
     displayName: Break on SDL error
     type: boolean
