@@ -61,6 +61,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
+| `enableKustoIngestion` | `true` | **Ingest results into Kusto** — when `false`, the run still benchmarks + compares but skips ingesting into the perf database. When `true`, ingestion additionally requires the `ADX Cluster Variables` group to be populated. |
 
 The following values are **fixed constants** in the pipeline (not parameters or variables), since they
 are invariant for this pipeline: `buildConfiguration = Release`, `sourcesSubDir = dotnet-sqlclient`
@@ -205,18 +206,20 @@ data-management (`ingest-`) endpoint.
 
 ### Running before the cluster exists
 
-Ingestion is **conditional**: it only runs when `KustoClusterUri`, `KustoDatabase` and
-`KustoServiceConnection` (from the `ADX Cluster Variables` group) are all non-empty. Until a cluster
-and service connection are
+Ingestion is **conditional**: it only runs when the `enableKustoIngestion` parameter is `true` (the
+default) **and** `KustoClusterUri`, `KustoDatabase` and `KustoServiceConnection` (from the `ADX
+Cluster Variables` group) are all non-empty. Set `enableKustoIngestion` to `false` to opt a run out
+of ingestion explicitly. Until a cluster and service connection are
 configured, the pipeline still runs both passes, produces the comparison, and publishes the
 translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill ingestion.
 
 ## Running the pipeline
 
 1. Open the performance test pipeline in Azure DevOps and select **Run pipeline**.
-2. Choose the branch to benchmark; override `baselineVersion` only if needed. Ingestion uses the
-   `ADX Cluster Variables` group — populate `KustoClusterUri` / `KustoServiceConnection` there to
-   enable it, or leave them empty to skip ingestion.
+2. Choose the branch to benchmark; override `baselineVersion` only if needed. Ingestion is on by
+   default (`enableKustoIngestion`) and uses the `ADX Cluster Variables` group — populate
+   `KustoClusterUri` / `KustoDatabase` / `KustoServiceConnection` there to enable it, leave them empty
+   to skip ingestion, or untick **Ingest results into Kusto** to skip it for a single run.
 3. After the run, review the **run summary** (comparison) and the `perf-results` /
    `perf-kusto-payloads` artifacts.
 
@@ -227,7 +230,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion`) or one pass produced no `*-report-full.json`. |
-| Ingestion step skipped | `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
+| Ingestion step skipped | `enableKustoIngestion` is `false`, or `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
 | Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |

@@ -113,6 +113,15 @@ parameters:
     type: number
     default: 3
 
+  # Whether to ingest the run's results into Kusto (Azure Data Explorer).  Enabled by default; set to
+  # false at queue time to run + compare only and skip ingestion (e.g. for a throwaway/experimental
+  # run you do not want recorded in the perf database).  Even when true, ingestion still requires the
+  # 'ADX Cluster Variables' group to be populated (see below); an empty coordinate skips it anyway.
+  - name: enableKustoIngestion
+    displayName: Ingest results into Kusto
+    type: boolean
+    default: true
+
   # NOTE: The Kusto (Azure Data Explorer) ingestion coordinates - cluster URI, database, and the
   # Azure DevOps ARM service connection - are NOT parameters.  They are sourced from the pipeline
   # library variable group 'ADX Cluster Variables' (see the 'variables' section below), so no
@@ -300,12 +309,13 @@ extends:
 
       # Ingest both result sets into the Kusto perf-results database using the ARM service
       # connection's service principal (az CLI auth).  Cluster/database/service-connection come from
-      # the 'ADX Cluster Variables' group.  The task is skipped (runtime condition) when the cluster
-      # URI or service connection is empty, so the pipeline still runs+compares before the cluster is
-      # provisioned.
+      # the 'ADX Cluster Variables' group.  The task is skipped when the 'Ingest results into Kusto'
+      # parameter is disabled, or (runtime) when the cluster URI, database or service connection is
+      # empty - so the pipeline still runs+compares before the cluster is provisioned or when a run is
+      # explicitly opted out of ingestion.
       - task: AzureCLI@2
         displayName: 'Ingest results into Kusto'
-        condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
+        condition: and(eq('${{ parameters.enableKustoIngestion }}', 'True'), succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
         inputs:
           azureSubscription: $(KustoServiceConnection)
           scriptType: bash
