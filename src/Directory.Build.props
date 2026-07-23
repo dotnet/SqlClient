@@ -36,7 +36,7 @@
   <!--
     When EnableAnalyzers is set (by the SDL Roslyn Analyzers pipeline step, forwarded from
     build.proj's EnableAnalyzers property), run as many Roslyn analyzers as possible and emit a
-    per-project SARIF v2 log. The RoslynAnalyzers task then runs in "Copy Logs Only" mode and
+    per-project SARIF v1 log. The RoslynAnalyzers task then runs in "Copy Logs Only" mode and
     collects these logs.
 
     This lives in the leaf projects (here) rather than being injected onto the orchestrating
