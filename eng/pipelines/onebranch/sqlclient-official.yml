@@ -141,8 +141,30 @@ extends:
 
   parameters:
     featureFlags:
+      # WindowsHostVersion selects the Windows *host VM* that our Windows build container runs on.
+      # This is a separate layer from the container image itself (WindowsContainerImage in
+      # onebranch-variables.yml): the host is the outer machine running the Docker engine, and the
+      # container is where our build steps actually execute.
+      #
+      # These two must be kept compatible.  Windows containers can only run on a host whose OS
+      # version is compatible with the container's base image, so when we bumped the container to
+      # Windows Server 2025 (ltsc2025) we must also move the host to 2025.  A mismatch (e.g. a 2025
+      # container on a 2022 host) fails to start the container unless Hyper-V isolation is forced.
+      WindowsHostVersion:
+        Version: 2025
+
+      # We do NOT set a LinuxHostVersion.  Unlike Windows, Linux containers share the host kernel,
+      # so there is no host/container OS-version compatibility requirement to satisfy -- our Linux
+      # build image (LinuxContainerImage in onebranch-variables.yml) runs on the default OneBranch
+      # Linux host regardless of its distribution.
+
+      # CDPx is OneBranch's predecessor build system.  When EnableCDPxPAT is true (the OneBranch
+      # default), the governed templates inject a legacy CDPx Personal Access Token and its
+      # associated NuGet / Azure Artifacts authentication variables (CDP_DEFAULT_CLIENT_PAT,
+      # VSS_NUGET_ACCESSTOKEN, VSS_NUGET_URI_PREFIXES, etc.) into the build and Docker jobs so
+      # package restore against Azure DevOps feeds works without explicit auth.  We don't rely on
+      # that legacy CDPx package-authentication path, so we disable it.
       EnableCDPxPAT: false
-      WindowsHostVersion: 1ESWindows2022
 
     release:
       # This indicates the pipeline category to deploy Box products.  See:

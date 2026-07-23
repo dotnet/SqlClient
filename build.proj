@@ -244,6 +244,122 @@
     <SkipDependencyPack Condition="'$(SkipDependencyPack)' == ''">false</SkipDependencyPack>
 
     <!--
+      IsolatedBuildPath
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When set, redirects each project's binary output (bin) to an isolated
+                      location instead of the repo's artifacts/ folder, and forces a full
+                      (non-incremental) compile. This lets a build run at any time without
+                      clobbering existing real build output - for example, an analysis pass that
+                      only needs to compile the code and must not disturb a real build's output.
+
+                      * bin is redirected under "$(IsolatedBuildPath)/bin/" via ArtifactPath. Each
+                        project's OutputPath already appends a project-specific subfolder, so the
+                        projects do not collide and the real artifacts/ folder is left untouched.
+                      * The intermediate (obj) directory is intentionally left at its default,
+                        per-project location. MSBuild resolves the default relative obj/ against
+                        each project's own directory, which keeps intermediates separate for the
+                        multiple projects that make up a package (for example the ref, src, and
+                        notsupported projects of the driver). Pointing every project at a single
+                        shared obj/ under the isolated path makes those projects overwrite each
+                        other's restore assets and fail. The non-incremental switch guarantees a
+                        full recompile regardless of any pre-existing intermediate output.
+
+                      NOTE: Even though an isolated build shares the default obj/ with a prior real
+                      build, it does not perturb that real build's output. The non-incremental
+                      switch runs MSBuild's Rebuild (Clean then Build), and Clean only deletes files
+                      under the *current* OutDir/IntermediateOutputPath (it uses FindUnderPath).
+                      Because bin is redirected to $(IsolatedBuildPath), the real artifacts/ bin is a
+                      different OutDir and is never in scope, so it is left intact - only the isolated
+                      bin and the shared obj/ intermediates are cleaned and rebuilt. Nothing
+                      downstream consumes obj/, so rebuilding it is harmless.
+      Default value:  [blank] (normal artifacts/ location and incremental build are used)
+      Example:        C:\agent\_temp\isolated-build
+    -->
+    <IsolatedBuildPath Condition="'$(IsolatedBuildPath)' == ''" />
+    <IsolatedBuildArgument Condition="'$(IsolatedBuildPath)' != ''">
+      --no-incremental
+      -p:ArtifactPath="$(IsolatedBuildPath)/bin/"
+    </IsolatedBuildArgument>
+
+    <!--
+      EnableAnalyzers
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When true, turns on the full set of Roslyn analyzers for every project that is
+                      compiled and makes each project emit a per-project SARIF v2 log (see the
+                      EnableAnalyzers block in src/Directory.Build.props). This is consumed by the
+                      SDL Roslyn Analyzers pipeline step, which builds with EnableAnalyzers=true and
+                      then collects the SARIF logs in "Copy Logs Only" mode.
+
+                      The flag is forwarded to each project's own "dotnet build" invocation via
+                      EnableAnalyzersArgument. This forwarding is required because .NET [Roslyn]
+                      analyzers are compiler-integrated: they must run in the leaf compile, and each
+                      leaf compile is a separate "dotnet build" process that build.proj launches with
+                      an <Exec> - it does not inherit properties from this orchestrating build.
+
+                      Independent of IsolatedBuildPath. Analysis is normally run together with
+                      IsolatedBuildPath so the analyzer build does not disturb real build output, but
+                      the two properties can be set independently.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <EnableAnalyzers Condition="'$(EnableAnalyzers)' == ''">false</EnableAnalyzers>
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true'">
+      -p:EnableAnalyzers=true
+    </EnableAnalyzersArgument>
+
+    <!--
+      InternalAnalyzers
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When true (and EnableAnalyzers is also true), additionally runs the internal
+                      Microsoft.Internal.Analyzers ("IA*") Roslyn rules that the SDL Roslyn Analyzers
+                      task would otherwise run (see the InternalAnalyzers block in
+                      src/Directory.Build.props). The Microsoft.Internal.Analyzers package is
+                      Microsoft-internal and confidential, so this flag is set ONLY by the private
+                      ADO.Net project pipelines, which have access to an internal NuGet feed. The
+                      public build and public CI never set it.
+
+                      Like EnableAnalyzers, it is forwarded into each leaf "dotnet build" (it is
+                      appended to EnableAnalyzersArgument) because the analyzers are
+                      compiler-integrated and must run in the leaf compile.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <InternalAnalyzers Condition="'$(InternalAnalyzers)' == ''">false</InternalAnalyzers>
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true'">$(EnableAnalyzersArgument)
+      -p:InternalAnalyzers=true
+    </EnableAnalyzersArgument>
+
+    <!--
+      InternalAnalyzersNugetConfig
+      Applies to:     Build* targets, only when InternalAnalyzers is true
+      Description:    Path to the private NuGet.config (generated at runtime by the private ADO.Net
+                      pipeline) that adds the internal feed hosting Microsoft.Internal.Analyzers. It
+                      is forwarded into each leaf "dotnet build" as -p:RestoreConfigFile, because the
+                      leaf compile runs its own restore in a separate <Exec> process and, like all
+                      global properties, RestoreConfigFile does not cross that <Exec> boundary. The
+                      outer build.proj restore intentionally keeps the default config.
+      Default value:  [blank]
+    -->
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
+      -p:RestoreConfigFile="$(InternalAnalyzersNugetConfig)"
+    </EnableAnalyzersArgument>
+
+    <!--
+      MicrosoftInternalAnalyzersVersion
+      Applies to:     Build* targets, only when InternalAnalyzers is true
+      Description:    Version of the Microsoft.Internal.Analyzers package to restore. It has no
+                      default (see Directory.Packages.props); the private ADO.Net pipeline pins it.
+                      It is forwarded into each leaf "dotnet build" because the package version is
+                      consumed by Directory.Packages.props (central package management) during the
+                      leaf compile, and - like all global properties - it does not cross the <Exec>
+                      boundary from this orchestrating build into the child "dotnet build".
+      Default value:  [blank]
+    -->
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(MicrosoftInternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
+      -p:MicrosoftInternalAnalyzersVersion=$(MicrosoftInternalAnalyzersVersion)
+    </EnableAnalyzersArgument>
+
+    <!--
       SigningKeyPath
       Applies to:     Build*, Pack* (driver targets only)
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
@@ -461,6 +577,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
 
@@ -493,6 +611,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
@@ -524,6 +644,8 @@
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Unix
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
@@ -556,6 +678,8 @@
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
         -p:TargetOs=Windows_NT
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning Arguments -->
@@ -763,6 +887,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!--Versioning arguments -->
@@ -846,6 +972,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
@@ -951,6 +1079,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
@@ -1055,6 +1185,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(LoggingProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
@@ -1119,6 +1251,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!--Versioning arguments -->

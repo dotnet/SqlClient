@@ -88,12 +88,14 @@
 
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
     <!--
       MSBuild will add the target framework to the end of this path by default. Telling it not to
       is possible but also requires specifying the IntermediateOutputPath. So while it would be
       nice to have a flatter directory structure, it's more hassle than its worth.
     -->
-    <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
@@ -105,7 +107,7 @@
   -->
   <PropertyGroup>
     <RefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</RefProjectPath>
-    <RefArtifactPath>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
+    <RefArtifactPath>$(ArtifactPath)Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(RefProjectPath)"
