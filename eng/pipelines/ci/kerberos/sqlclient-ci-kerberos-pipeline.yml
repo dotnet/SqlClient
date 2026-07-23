@@ -182,7 +182,6 @@ stages:
           # --- Build and test ---
           - template: /eng/pipelines/ci/kerberos/build-and-test-steps.yml@self
             parameters:
-              buildTarget: BuildSqlClientWindows
               testFramework: $(testFramework)
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
@@ -271,7 +270,6 @@ stages:
           # --- Build and test ---
           - template: /eng/pipelines/ci/kerberos/build-and-test-steps.yml@self
             parameters:
-              buildTarget: BuildSqlClientUnix
               testFramework: $(testFramework)
               testRunTitle: Linux-$(testFramework)
               artifactName: $(testFramework)-linux-$(System.JobId)
