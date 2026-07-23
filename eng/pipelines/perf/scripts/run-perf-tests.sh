@@ -161,9 +161,17 @@ install_dotnet() {
 }
 
 # Reuse a pre-installed SDK only if it already satisfies global.json; otherwise install locally.
-if command -v dotnet >/dev/null 2>&1 && dotnet --list-sdks 2>/dev/null | grep -q '10\.0\.'; then
-    echo "Using pre-installed dotnet: $(command -v dotnet)"
-    export DOTNET_ROOT="$(dirname -- "$(command -v dotnet)")"
+# 'dotnet --version' evaluated from the repo root honours global.json (including its rollForward
+# policy), so it succeeds only when the pinned SDK is actually available -- a hard-coded '10.0.*'
+# match would accept the wrong SDK band and skip installing the pinned one.
+if command -v dotnet >/dev/null 2>&1 && ( cd "${REPO_ROOT}" && dotnet --version >/dev/null 2>&1 ); then
+    dotnetPath="$(command -v dotnet)"
+    # 'dotnet' on PATH is frequently a symlink (e.g. /usr/bin/dotnet -> /usr/share/dotnet/dotnet);
+    # resolve it so DOTNET_ROOT points at the real install root, not the symlink's directory.
+    resolvedDotnet="$(readlink -f "${dotnetPath}" 2>/dev/null || echo "${dotnetPath}")"
+    export DOTNET_ROOT="$(dirname -- "${resolvedDotnet}")"
+    export PATH="${DOTNET_ROOT}:${DOTNET_ROOT}/tools:${PATH}"
+    echo "Using pre-installed dotnet: ${dotnetPath} (DOTNET_ROOT=${DOTNET_ROOT})"
 else
     install_dotnet
 fi
@@ -177,7 +185,9 @@ dotnet --info
 # but they do NOT create the database itself, so we create it here (idempotently).
 ####################################################################################################
 
-DB_NAME="sqlclient-perf-db"
+# Exported so the inline Python config-rewrite below (which reads os.environ["DB_NAME"]) sees the
+# same database name instead of silently falling back to its own default.
+export DB_NAME="sqlclient-perf-db"
 
 find_sqlcmd() {
     if command -v sqlcmd >/dev/null 2>&1; then

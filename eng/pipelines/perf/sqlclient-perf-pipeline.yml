@@ -133,8 +133,9 @@ parameters:
 #   * KustoDatabase          - target database name
 #   * KustoServiceConnection - Azure DevOps ARM service connection whose service principal has
 #                              'Database Ingestor' (and ideally 'Database Viewer') rights.
-# Ingestion is skipped automatically when KustoClusterUri or KustoServiceConnection is empty, so the
-# pipeline still runs + compares before the cluster/service connection are provisioned.
+# Ingestion is skipped automatically when any of KustoClusterUri, KustoDatabase or
+# KustoServiceConnection is empty, so the pipeline still runs + compares before the cluster/database/
+# service connection are provisioned.
 variables:
   - group: ADX Cluster Variables
 
@@ -168,12 +169,20 @@ extends:
 
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
-    # The regression gate flag is appended via a key-level conditional because inline '${{ if }}'
-    # directives are not allowed inside a quoted string value.
-    ${{ if eq(parameters.failOnRegression, true) }}:
-      testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+    # These are assembled with key-level conditionals because inline '${{ if }}' directives are not
+    # allowed inside a quoted string value.  '--baseline-version' is omitted entirely when no baseline
+    # is requested: emitting an empty value would let the arg parser consume the following
+    # '--regression-threshold' flag as the baseline version and corrupt every subsequent argument.
+    ${{ if ne(parameters.baselineVersion, '') }}:
+      ${{ if eq(parameters.failOnRegression, true) }}:
+        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+      ${{ else }}:
+        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
     ${{ else }}:
-      testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+      ${{ if eq(parameters.failOnRegression, true) }}:
+        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+      ${{ else }}:
+        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
@@ -296,7 +305,7 @@ extends:
       # provisioned.
       - task: AzureCLI@2
         displayName: 'Ingest results into Kusto'
-        condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoServiceConnection'], ''))
+        condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
         inputs:
           azureSubscription: $(KustoServiceConnection)
           scriptType: bash

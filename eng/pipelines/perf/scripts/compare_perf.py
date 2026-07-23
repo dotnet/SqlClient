@@ -62,8 +62,13 @@ def _load_benchmarks(directory):
 
 
 def _pct(baseline, current):
-    if baseline in (None, 0):
+    if baseline is None or current is None:
         return None
+    if baseline == 0:
+        # A percentage change from a zero baseline is undefined (0 -> 0 is no change; 0 -> X is an
+        # infinite increase).  Return 0.0 only for the genuine no-change case; otherwise None, and let
+        # callers surface the raw before/after values so a 0 -> X regression is still visible.
+        return 0.0 if current == 0 else None
     return (current - baseline) / baseline * 100.0
 
 
@@ -90,7 +95,11 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
         if b and c:
             entry["meanDeltaPct"] = _pct(b["meanNs"], c["meanNs"])
             entry["meanRatio"] = (c["meanNs"] / b["meanNs"]) if b["meanNs"] else None
-            if b["allocatedBytes"] and c["allocatedBytes"] is not None:
+            # Compute the allocation delta whenever both sides report a value.  A 0-byte baseline is
+            # valid, so gate on 'is not None' rather than truthiness -- gating on truthiness would drop
+            # a real 0 -> X allocation regression.  The percentage itself is undefined for a 0 baseline
+            # (see _pct); the raw baseline/current byte counts on the entry keep 0 -> X visible.
+            if b["allocatedBytes"] is not None and c["allocatedBytes"] is not None:
                 entry["allocDeltaPct"] = _pct(b["allocatedBytes"], c["allocatedBytes"])
             else:
                 entry["allocDeltaPct"] = None
@@ -139,6 +148,19 @@ def _fmt_bytes(value):
     return f"{int(value)}" if value is not None else "-"
 
 
+def _fmt_alloc(entry):
+    """Alloc column: a percentage when it is defined, otherwise the raw byte transition so a
+    0 -> X regression (undefined as a percentage) is still shown rather than collapsing to '-'."""
+    pct = entry.get("allocDeltaPct")
+    if pct is not None:
+        return f"{pct:+.2f}%"
+    base = entry.get("baselineAllocBytes")
+    cur = entry.get("currentAllocBytes")
+    if base is not None and cur is not None and base != cur:
+        return f"{int(base)} → {int(cur)} B"
+    return "-"
+
+
 def render_markdown(entries, baseline_version, threshold_pct):
     regressions = [e for e in entries if e["status"] == "regression"]
     improvements = [e for e in entries if e["status"] == "improvement"]
@@ -177,7 +199,7 @@ def render_markdown(entries, baseline_version, threshold_pct):
                 base=_fmt_ms(e["baselineMeanMs"]),
                 cur=_fmt_ms(e["currentMeanMs"]),
                 delta=_fmt_pct(e["meanDeltaPct"]),
-                alloc=_fmt_pct(e["allocDeltaPct"]),
+                alloc=_fmt_alloc(e),
             )
         )
     lines.append("")

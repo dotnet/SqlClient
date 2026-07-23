@@ -118,7 +118,16 @@ function Install-DotNet {
 
 $hasNet10Sdk = $false
 if (Get-Command dotnet -ErrorAction SilentlyContinue) {
-    if ((dotnet --list-sdks) -match '^10\.0\.') { $hasNet10Sdk = $true }
+    # 'dotnet --version' evaluated from the repo root honours global.json (including rollForward), so
+    # it succeeds only when the pinned SDK is actually installed.  A bare '10.0.*' match would accept
+    # the wrong SDK band and skip installing the pinned one.
+    Push-Location $RepoRoot
+    try {
+        dotnet --version *> $null
+        if ($LASTEXITCODE -eq 0) { $hasNet10Sdk = $true }
+    } finally {
+        Pop-Location
+    }
 }
 if ($hasNet10Sdk) {
     Write-Host "Using pre-installed dotnet: $((Get-Command dotnet).Source)"
@@ -132,9 +141,8 @@ dotnet --info
 # 2. Create the perf database on the VM's SQL Server.
 #
 # The benchmark runners create their own tables but not the database, so create it here
-# (idempotently) using the Microsoft.Data.SqlClient assembly that ships with the SDK-less runtime,
-# invoked through a tiny inline program.  sqlcmd is used when available; otherwise we fall back to a
-# .NET one-liner via the perf project's own driver reference.
+# (idempotently) using sqlcmd.  sqlcmd is required on the VM; if it is not present the script fails
+# fast (throws below) rather than continuing on to run benchmarks against a missing database.
 ####################################################################################################
 
 Write-Host "Ensuring database [$DbName] exists on $SqlServer ..."
