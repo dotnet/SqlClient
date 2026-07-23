@@ -63,10 +63,22 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
-| `kustoClusterUri` | _(blank)_ | Kusto cluster URI, e.g. `https://<cluster>.<region>.kusto.windows.net`. Blank ⇒ ingestion skipped. |
-| `kustoDatabase` | _(blank)_ | Target Kusto database. Blank ⇒ ingestion skipped. |
-| `kustoServiceConnection` | _(blank)_ | Azure DevOps ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
 | `driverName` | `Microsoft.Data.SqlClient` | Recorded on every row (`DriverName` / `DerivedRunId`). |
+
+### Kusto (Azure Data Explorer) ingestion variables
+
+The ADX ingestion coordinates are **not** pipeline parameters — they come from a pipeline library
+variable group named **`ADX Cluster Variables`** so no infrastructure identifiers are hard-coded in
+the pipeline. The group must define:
+
+| Variable | Description |
+| -------- | ----------- |
+| `KustoClusterUri` | ADX cluster URI, e.g. `https://<cluster>.<region>.kusto.windows.net`. Empty ⇒ ingestion skipped. |
+| `KustoDatabase` | Target Kusto database. |
+| `KustoServiceConnection` | Azure DevOps ARM service connection whose SP has ingest rights. Empty ⇒ ingestion skipped. |
+
+Ingestion is gated at runtime: it only runs when both `KustoClusterUri` and `KustoServiceConnection`
+are non-empty, so the pipeline still runs + compares before the cluster/service connection exist.
 
 ### Managing the baseline version
 
@@ -175,8 +187,8 @@ the schema summarized above.
 ### Authentication
 
 Ingestion runs in an `AzureCLI@2` task using the ADO **ARM service connection**
-(`kustoServiceConnection`). That connection's **service principal** must be granted, on the target
-database:
+(`KustoServiceConnection` from the `ADX Cluster Variables` group). That connection's **service
+principal** must be granted, on the target database:
 
 - **Database Ingestor** (to ingest), and
 - **Database Viewer** (recommended, for verification queries).
@@ -187,17 +199,17 @@ data-management (`ingest-`) endpoint.
 
 ### Running before the cluster exists
 
-Ingestion is **conditional**: it only runs when both `kustoClusterUri` and `kustoServiceConnection`
-are supplied. Until a cluster and service connection are configured, the pipeline still runs both
-passes, produces the comparison, and publishes the translated NDJSON as the `perf-kusto-payloads`
-artifact for manual/backfill ingestion.
+Ingestion is **conditional**: it only runs when both `KustoClusterUri` and `KustoServiceConnection`
+(from the `ADX Cluster Variables` group) are non-empty. Until a cluster and service connection are
+configured, the pipeline still runs both passes, produces the comparison, and publishes the
+translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill ingestion.
 
 ## Running the pipeline
 
 1. Open the performance test pipeline in Azure DevOps and select **Run pipeline**.
-2. Choose the branch to benchmark. Provide the Kusto parameters (cluster URI, database, service
-   connection) to enable ingestion, or leave them blank to skip it; override `baselineVersion` only
-   if needed.
+2. Choose the branch to benchmark; override `baselineVersion` only if needed. Ingestion uses the
+   `ADX Cluster Variables` group — populate `KustoClusterUri` / `KustoServiceConnection` there to
+   enable it, or leave them empty to skip ingestion.
 3. After the run, review the **run summary** (comparison) and the `perf-results` /
    `perf-kusto-payloads` artifacts.
 
@@ -208,6 +220,6 @@ artifact for manual/backfill ingestion.
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion`) or one pass produced no `*-report-full.json`. |
-| Ingestion step skipped | `kustoClusterUri` or `kustoServiceConnection` is blank (expected until the cluster is provisioned). |
+| Ingestion step skipped | `KustoClusterUri` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |

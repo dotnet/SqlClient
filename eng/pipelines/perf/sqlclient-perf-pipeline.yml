@@ -132,32 +132,28 @@ parameters:
     type: number
     default: 3
 
-  # --- Kusto (perf-results database) ingestion -----------------------------------------------------
-  # Ingestion into the InternalDriverTools perf-results Kusto database (wiki spec 270) is OPTIONAL:
-  # it only runs when both kustoClusterUri and kustoServiceConnection are supplied.  This lets the
-  # pipeline run + compare before the cluster/service connection are provisioned.
-  - name: kustoClusterUri
-    displayName: Kusto Cluster URI (blank = skip ingestion)
-    type: string
-    default: 'https://sqldrivers.westus2.kusto.windows.net'
-
-  - name: kustoDatabase
-    displayName: Kusto Database
-    type: string
-    default: PerfResultsTestDB
-
-  # An Azure DevOps ARM service connection whose service principal has 'Database Ingestor' (and
-  # 'Database Viewer') rights on the Kusto database above.
-  - name: kustoServiceConnection
-    displayName: Kusto Service Connection (blank = skip ingestion)
-    type: string
-    default: 'PerfLab Infra Deployments'
+  # NOTE: The Kusto (Azure Data Explorer) ingestion coordinates - cluster URI, database, and the
+  # Azure DevOps ARM service connection - are NOT parameters.  They are sourced from the pipeline
+  # library variable group 'ADX Cluster Variables' (see the 'variables' section below), so no
+  # infrastructure identifiers are hard-coded in this file.
 
   # Logical driver name recorded on every row (schema DriverName / DerivedRunId component).
   - name: driverName
     displayName: Driver Name
     type: string
     default: Microsoft.Data.SqlClient
+
+# Kusto (Azure Data Explorer) ingestion coordinates come from a pipeline library variable group so
+# that no cluster URI, database name, or service-connection name is hard-coded in this pipeline.
+# The 'ADX Cluster Variables' group must define:
+#   * KustoClusterUri        - ADX cluster URI (e.g. https://<cluster>.<region>.kusto.windows.net)
+#   * KustoDatabase          - target database name
+#   * KustoServiceConnection - Azure DevOps ARM service connection whose service principal has
+#                              'Database Ingestor' (and ideally 'Database Viewer') rights.
+# Ingestion is skipped automatically when KustoClusterUri or KustoServiceConnection is empty, so the
+# pipeline still runs + compares before the cluster/service connection are provisioned.
+variables:
+  - group: ADX Cluster Variables
 
 # Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
 # have been onboarded with the Agent Pools and Service Connections required to consume it.
@@ -307,45 +303,45 @@ extends:
           artifact: perf-kusto-payloads
 
       # Ingest both result sets into the Kusto perf-results database using the ARM service
-      # connection's service principal (az CLI auth).  Conditional: only runs when a cluster URI and
-      # a service connection are supplied, so the pipeline still runs+compares before the cluster is
+      # connection's service principal (az CLI auth).  Cluster/database/service-connection come from
+      # the 'ADX Cluster Variables' group.  The task is skipped (runtime condition) when the cluster
+      # URI or service connection is empty, so the pipeline still runs+compares before the cluster is
       # provisioned.
-      - ${{ if and(ne(parameters.kustoClusterUri, ''), ne(parameters.kustoServiceConnection, '')) }}:
-          - task: AzureCLI@2
-            displayName: 'Ingest results into Kusto'
-            condition: succeededOrFailed()
-            inputs:
-              azureSubscription: ${{ parameters.kustoServiceConnection }}
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                set -euo pipefail
-                scriptsDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}/eng/pipelines/perf/scripts"
-                kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
+      - task: AzureCLI@2
+        displayName: 'Ingest results into Kusto'
+        condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoServiceConnection'], ''))
+        inputs:
+          azureSubscription: $(KustoServiceConnection)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+            scriptsDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}/eng/pipelines/perf/scripts"
+            kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
 
-                # PEP 668: Ubuntu agents ship an "externally managed" Python and lack the
-                # python3-venv package (no ensurepip), so both a plain 'pip install' and
-                # 'python3 -m venv' fail. pip itself is available, so install the Kusto SDKs
-                # into the per-user site and bypass the PEP 668 marker.
-                python3 -m pip install --quiet --upgrade --user --break-system-packages \
-                  azure-kusto-data azure-kusto-ingest
+            # PEP 668: Ubuntu agents ship an "externally managed" Python and lack the
+            # python3-venv package (no ensurepip), so both a plain 'pip install' and
+            # 'python3 -m venv' fail. pip itself is available, so install the Kusto SDKs
+            # into the per-user site and bypass the PEP 668 marker.
+            python3 -m pip install --quiet --upgrade --user --break-system-packages \
+              azure-kusto-data azure-kusto-ingest
 
-                runFiles=""
-                resFiles=""
-                for f in "$kustoOut/baseline.PerfRun.ndjson" "$kustoOut/current.PerfRun.ndjson"; do
-                  [ -f "$f" ] && runFiles="${runFiles:+$runFiles,}$f"
-                done
-                for f in "$kustoOut/baseline.PerfBenchmarkResult.ndjson" "$kustoOut/current.PerfBenchmarkResult.ndjson"; do
-                  [ -f "$f" ] && resFiles="${resFiles:+$resFiles,}$f"
-                done
+            runFiles=""
+            resFiles=""
+            for f in "$kustoOut/baseline.PerfRun.ndjson" "$kustoOut/current.PerfRun.ndjson"; do
+              [ -f "$f" ] && runFiles="${runFiles:+$runFiles,}$f"
+            done
+            for f in "$kustoOut/baseline.PerfBenchmarkResult.ndjson" "$kustoOut/current.PerfBenchmarkResult.ndjson"; do
+              [ -f "$f" ] && resFiles="${resFiles:+$resFiles,}$f"
+            done
 
-                if [ -z "$runFiles" ]; then
-                  echo "##vso[task.logissue type=warning]No Kusto payloads to ingest."
-                  exit 0
-                fi
+            if [ -z "$runFiles" ]; then
+              echo "##vso[task.logissue type=warning]No Kusto payloads to ingest."
+              exit 0
+            fi
 
-                python3 "$scriptsDir/ingest_kusto.py" \
-                  --cluster "${{ parameters.kustoClusterUri }}" \
-                  --database "${{ parameters.kustoDatabase }}" \
-                  --run-file "$runFiles" \
-                  --results-file "$resFiles"
+            python3 "$scriptsDir/ingest_kusto.py" \
+              --cluster "$(KustoClusterUri)" \
+              --database "$(KustoDatabase)" \
+              --run-file "$runFiles" \
+              --results-file "$resFiles"
