@@ -265,13 +265,13 @@
                         full recompile regardless of any pre-existing intermediate output.
 
                       NOTE: Even though an isolated build shares the default obj/ with a prior real
-                      build, it does not perturb that real build's output. The non-incremental
-                      switch runs MSBuild's Rebuild (Clean then Build), and Clean only deletes files
-                      under the *current* OutDir/IntermediateOutputPath (it uses FindUnderPath).
-                      Because bin is redirected to $(IsolatedBuildPath), the real artifacts/ bin is a
-                      different OutDir and is never in scope, so it is left intact - only the isolated
-                      bin and the shared obj/ intermediates are cleaned and rebuilt. Nothing
-                      downstream consumes obj/, so rebuilding it is harmless.
+                      build, it does not perturb that real build's output. The non-incremental switch
+                      does not run Clean or delete anything; it disables the incremental/up-to-date
+                      checks and forces a full recompile so the analyzers see every source file. Real
+                      output is safe because bin is redirected to $(IsolatedBuildPath): the isolated
+                      build only ever writes to the isolated bin, never to the real artifacts/ bin.
+                      The recompile just rewrites the shared obj/ intermediates, which is harmless
+                      because nothing downstream consumes obj/.
       Default value:  [blank] (normal artifacts/ location and incremental build are used)
       Example:        C:\agent\_temp\isolated-build
     -->
@@ -285,7 +285,7 @@
       EnableAnalyzers
       Applies to:     Build* targets (driver and extension projects)
       Description:    When true, turns on the full set of Roslyn analyzers for every project that is
-                      compiled and makes each project emit a per-project SARIF v2 log (see the
+                      compiled and makes each project emit a per-project SARIF v1 log (see the
                       EnableAnalyzers block in src/Directory.Build.props). This is consumed by the
                       SDL Roslyn Analyzers pipeline step, which builds with EnableAnalyzers=true and
                       then collects the SARIF logs in "Copy Logs Only" mode.
