@@ -1332,6 +1332,16 @@ Database = AdventureWorks
           <![CDATA[  
 This property corresponds to the "Server Certificate" and "ServerCertificate" keys within the connection string.  
 
+> [!NOTE]
+> `ServerCertificate` is **additive** to normal certificate validation, not a replacement for it. When the driver validates the server certificate, the presented certificate must:
+>
+> 1. Pass chain-and-name validation, **and**
+> 2. Be an exact byte-for-byte match of the certificate loaded from the file at this path.
+>
+> Both checks are enforced independently. If the file cannot be loaded or parsed, the TLS handshake fails; the connection is never silently accepted on the basis of platform trust alone.
+>
+> Certificate validation itself can be disabled by `TrustServerCertificate=true` (except with `Encrypt=strict`, where validation is always performed). When validation is disabled, `ServerCertificate` is not consulted.
+
 ]]>
         </format>
       </remarks>
