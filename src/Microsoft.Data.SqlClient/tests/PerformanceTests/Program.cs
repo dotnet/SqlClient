@@ -57,11 +57,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", false);
             }
 
-            // If the config file specifies to use the NativeMemoryProfiler and ETW profiler,
-            // propagate the setting to BenchmarkConfig so it can attach these Windows-only
-            // diagnosers when building each benchmark's ManualConfig.
-            BenchmarkConfig.UseNativeMemoryAndEtwProfiler = _config.UseNativeMemoryAndETWProfiler;
-
             // If the config file specifies to wait for a profiler, 
             // display the process ID and wait for user input before starting the benchmarks.
             if (_config.WaitForProfiler)
