@@ -1,13 +1,10 @@
 # SqlClient Performance Test Pipeline
 
 This directory contains the Azure DevOps pipeline and supporting scripts that run the
-Microsoft.Data.SqlClient [BenchmarkDotNet](https://benchmarkdotnet.org/) performance tests on the
-internal **Perf Test Lab** (Azure Dedicated Hosts), compare the branch under test against a released
-NuGet baseline, and ingest the results into the InternalDriverTools **perf-results** Kusto database.
-
-> Internal references:
-> - Performance Test Automation — InternalDriverTools wiki page **284**
-> - Performance Results Database Specification — InternalDriverTools wiki page **270**
+Microsoft.Data.SqlClient [BenchmarkDotNet](https://benchmarkdotnet.org/) performance tests on a
+dedicated performance test lab (Azure Dedicated Hosts), compare the branch under test against a
+released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
+database.
 
 ## Contents
 
@@ -16,12 +13,10 @@ NuGet baseline, and ingest the results into the InternalDriverTools **perf-resul
 | `sqlclient-perf-pipeline.yml` | The pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. |
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
-| `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes (wiki 339 §2.2/§2.3/§2.6). |
+| `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
-| `kusto/PerfRun.kql` | Create-table + JSON ingestion mapping for `PerfRun`. |
-| `kusto/PerfBenchmarkResult.kql` | Create-table + JSON ingestion mapping for `PerfBenchmarkResult`. |
 
 ## Architecture
 
@@ -46,7 +41,7 @@ ON THE VM  ── run-perf-tests.{sh,ps1}
 ON THE AGENT  ── pipeline post-test steps
       • Show the BenchmarkDotNet markdown reports in the log.
       • perf_to_kusto.py → NDJSON for both passes (published as 'perf-kusto-payloads').
-      • (optional) AzureCLI@2 + ingest_kusto.py → Kusto perf-results database.
+      • (optional) AzureCLI@2 + ingest_kusto.py → Kusto database.
 ```
 
 The extends template only exposes **post-test** steps to consumers (no pre-build hook), so **both
@@ -68,9 +63,9 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
-| `kustoClusterUri` | `https://sqldrivers.westus2.kusto.windows.net` | Kusto cluster URI. Blank ⇒ ingestion skipped. |
-| `kustoDatabase` | `PerfResultsTestDB` | Target Kusto database. |
-| `kustoServiceConnection` | `PerfLab Infra Deployments` | ADO ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
+| `kustoClusterUri` | _(blank)_ | Kusto cluster URI, e.g. `https://<cluster>.<region>.kusto.windows.net`. Blank ⇒ ingestion skipped. |
+| `kustoDatabase` | _(blank)_ | Target Kusto database. Blank ⇒ ingestion skipped. |
+| `kustoServiceConnection` | _(blank)_ | Azure DevOps ARM service connection whose SP has ingest rights. Blank ⇒ ingestion skipped. |
 | `driverName` | `Microsoft.Data.SqlClient` | Recorded on every row (`DriverName` / `DerivedRunId`). |
 
 ### Managing the baseline version
@@ -102,23 +97,23 @@ baseline/current mean (ms), mean %Δ, allocation %Δ, and a status (`regression`
   attaches as the run summary),
 - `results/comparison/comparison.json` (structured, for tooling).
 
-## Reducing noise (wiki 339)
+## Reducing noise
 
-The harness applies the "[Your harness]"-owned controls from InternalDriverTools wiki 339
-("Reducing Noise in Performance Tests"). The lab already supplies the isolated dedicated host, the
-tuned SQL instance, and the disjoint client CPU set (`PERF_CLIENT_CPUS`); the run scripts add:
+The harness applies a set of harness-owned controls to reduce measurement noise. The lab already
+supplies the isolated dedicated host, the tuned SQL instance, and the disjoint client CPU set
+(`PERF_CLIENT_CPUS`); the run scripts add:
 
 | Control | What the harness does |
 | ------- | --------------------- |
-| Client CPU pin (§2.4) | Pins the benchmark process to `PERF_CLIENT_CPUS` (`taskset` on Linux, `ProcessorAffinity` on Windows). |
-| Fail loud (§2.10) | Preflight `SELECT 1` before any pass, **and** a post-pass guard that fails the run if a pass produced **zero** benchmark results — so an empty comparison can never be reported green. |
-| Warm-up (§2.5) | Touches the target DB in the preflight to warm the buffer pool / plan cache before the first measured benchmark. |
-| Allocator tuning (§2.8, Linux) | Exports `MALLOC_MMAP_THRESHOLD_=128MiB` and `MALLOC_TRIM_THRESHOLD_=-1` so large-buffer benches (`AsyncLargeDataRead`, `SqlBulkCopy`) stop re-`mmap`ing per iteration. |
-| Network tuning (§2.9, Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ParallelAsyncConnection`). Never fails the run. |
-| Diagnostics (§2.11) | Writes `results/diagnostics/`: SQL instance config (MAXDOP, memory, affinity, tempdb files, `@@VERSION`), host CPU topology, and per-pass CPU-clock/thermal telemetry (before/after each pass). |
-| Regression gate (§3) | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
-| Interleaving (§2.2/§2.3) | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |
-| Best-of-N confirmation (§2.6) | A unit flagged in the first interleaved pass is re-run `confirmationRuns` times; a regression is **confirmed** only on a strict majority. Unconfirmed flags are reported but never fail the gate. |
+| Client CPU pin | Pins the benchmark process to `PERF_CLIENT_CPUS` (`taskset` on Linux, `ProcessorAffinity` on Windows). |
+| Fail loud | Preflight `SELECT 1` before any pass, **and** a post-pass guard that fails the run if a pass produced **zero** benchmark results — so an empty comparison can never be reported green. |
+| Warm-up | Touches the target DB in the preflight to warm the buffer pool / plan cache before the first measured benchmark. |
+| Allocator tuning (Linux) | Exports `MALLOC_MMAP_THRESHOLD_=128MiB` and `MALLOC_TRIM_THRESHOLD_=-1` so large-buffer benches (`AsyncLargeDataRead`, `SqlBulkCopy`) stop re-`mmap`ing per iteration. |
+| Network tuning (Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ParallelAsyncConnection`). Never fails the run. |
+| Diagnostics | Writes `results/diagnostics/`: SQL instance config (MAXDOP, memory, affinity, tempdb files, `@@VERSION`), host CPU topology, and per-pass CPU-clock/thermal telemetry (before/after each pass). |
+| Regression gate | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
+| Interleaving | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |
+| Best-of-N confirmation | A unit flagged in the first interleaved pass is re-run `confirmationRuns` times; a regression is **confirmed** only on a strict majority. Unconfirmed flags are reported but never fail the gate. |
 
 ### Interleaving + best-of-N (run model)
 
@@ -146,13 +141,13 @@ Both modes emit `results/comparison/comparison.md` + `comparison.json` and copy 
 
 ### Further tuning (not yet implemented)
 
-- **Release-grade sampling / relaxed thresholds (§2.7)** — tune BenchmarkDotNet job counts and
+- **Release-grade sampling / relaxed thresholds** — tune BenchmarkDotNet job counts and
   significance thresholds in `runnerconfig.jsonc` / `BenchmarkConfig.cs` now that interleaving and
   best-of-N are in place.
 
 ## Kusto schema & ingestion
 
-Schema follows wiki 270. Two tables:
+Two tables:
 
 - **`PerfRun`** — one row per run (baseline OR current): `DerivedRunId` (PK =
   `DriverName|CommitHash|PipelineRunId`), driver/machine/agent, pipeline id + build URL, branch +
@@ -172,16 +167,10 @@ enabled in `Config/BenchmarkConfig.cs` (`JsonExporter.Full`).
 
 ### One-time database setup
 
-Run the KQL scripts once against the target database (Kusto query editor, or
-`.execute database script`):
-
-```
-kusto/PerfRun.kql
-kusto/PerfBenchmarkResult.kql
-```
-
-They create the tables (`.create-merge`, idempotent) and the JSON ingestion mappings
-(`PerfRun_json_mapping`, `PerfBenchmarkResult_json_mapping`) referenced by `ingest_kusto.py`.
+Before ingestion can run, create the two tables (`PerfRun`, `PerfBenchmarkResult`) and their JSON
+ingestion mappings (`PerfRun_json_mapping`, `PerfBenchmarkResult_json_mapping`) in the target
+database. The mapping names are the ones referenced by `ingest_kusto.py`; the table columns match
+the schema summarized above.
 
 ### Authentication
 
@@ -199,16 +188,16 @@ data-management (`ingest-`) endpoint.
 ### Running before the cluster exists
 
 Ingestion is **conditional**: it only runs when both `kustoClusterUri` and `kustoServiceConnection`
-are supplied. Until the cluster and service connection are provisioned, the pipeline still runs both
+are supplied. Until a cluster and service connection are configured, the pipeline still runs both
 passes, produces the comparison, and publishes the translated NDJSON as the `perf-kusto-payloads`
 artifact for manual/backfill ingestion.
 
 ## Running the pipeline
 
-1. In ADO, open **SqlClient-Performance-Tests** and select **Run pipeline**.
-2. Choose the branch to benchmark. The Kusto parameters are pre-filled (cluster
-   `sqldrivers.westus2`, database `PerfResultsTestDB`, service connection
-   `PerfLab Infra Deployments`); override `baselineVersion` or the Kusto values only if needed.
+1. Open the performance test pipeline in Azure DevOps and select **Run pipeline**.
+2. Choose the branch to benchmark. Provide the Kusto parameters (cluster URI, database, service
+   connection) to enable ingestion, or leave them blank to skip it; override `baselineVersion` only
+   if needed.
 3. After the run, review the **run summary** (comparison) and the `perf-results` /
    `perf-kusto-payloads` artifacts.
 
