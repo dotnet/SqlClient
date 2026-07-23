@@ -164,8 +164,9 @@ Both modes emit `results/comparison/comparison.md` + `comparison.json` and copy 
 Two tables:
 
 - **`PerfRun`** — one row per run (baseline OR current): `DerivedRunId` (PK =
-  `DriverName|CommitHash|PipelineRunId`), driver/machine/agent, pipeline id + build URL, branch +
-  `BranchCategory`, `VersionString`, commit hash/date, `IsComparableBase`, `IngestedAt`.
+  `DriverName|CommitHash|PipelineRunId`), driver/machine/agent, `OperatingSystem` (`Windows`/`Linux`),
+  `Architecture` (`x64`/`x86`), `RunType` (`Sequential`/`Interweaved`), pipeline id + build URL,
+  branch + `BranchCategory`, `VersionString`, commit hash/date, `IsComparableBase`, `IngestedAt`.
 - **`PerfBenchmarkResult`** — one row per benchmark: `BenchmarkId` (PK =
   `DerivedRunId|BenchmarkName|MethodName|ParameterSignature`), timings in **milliseconds**
   (BenchmarkDotNet reports nanoseconds; values are divided by 1,000,000), percentiles, throughput,

@@ -30,6 +30,37 @@ def _utcnow_iso():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
+def _normalize_os(value):
+    """Map an OS descriptor to the schema's canonical 'Windows' or 'Linux'."""
+    if not value:
+        return ""
+    v = value.strip().lower()
+    if "win" in v:
+        return "Windows"
+    if any(tok in v for tok in ("linux", "unix", "ubuntu", "debian", "centos", "alpine")):
+        return "Linux"
+    return value
+
+
+def _normalize_arch(value):
+    """Map a process-architecture descriptor to the schema's lowercase form (e.g. X64 -> x64)."""
+    if not value:
+        return ""
+    return value.strip().lower()
+
+
+def _normalize_run_type(value):
+    """Map the harness run mode to the schema's 'Sequential' or 'Interweaved'."""
+    if not value:
+        return ""
+    v = value.strip().lower()
+    if v.startswith("seq"):
+        return "Sequential"
+    if v.startswith("inter"):  # interleaved (harness) -> Interweaved (schema spelling)
+        return "Interweaved"
+    return value
+
+
 def _branch_category(branch_name):
     """Map a git ref to one of the schema's BranchCategory buckets."""
     if not branch_name:
@@ -104,6 +135,9 @@ def translate(input_dir, ctx):
         "DriverName": ctx["driver_name"],
         "MachineName": ctx["machine_name"],
         "AgentName": ctx["agent_name"],
+        "OperatingSystem": _normalize_os(ctx.get("operating_system")),
+        "Architecture": _normalize_arch(ctx.get("architecture")),
+        "RunType": _normalize_run_type(ctx.get("run_type")),
         "PipelineRunId": ctx["pipeline_run_id"],
         "BuildUrl": ctx["build_url"],
         "RunDate": ctx["run_date"] or now,
@@ -119,6 +153,7 @@ def translate(input_dir, ctx):
     result_rows = []
     runtime_seen = None
     platform_seen = None
+    os_seen = None
 
     pattern = os.path.join(input_dir, "**", "*-report-full.json")
     for path in sorted(glob.glob(pattern, recursive=True)):
@@ -134,6 +169,7 @@ def translate(input_dir, ctx):
         architecture = host.get("Architecture")
         runtime_seen = runtime_seen or runtime
         platform_seen = platform_seen or architecture
+        os_seen = os_seen or host.get("OsVersion")
 
         for bench in data.get("Benchmarks", []):
             stats = bench.get("Statistics") or {}
@@ -174,6 +210,13 @@ def translate(input_dir, ctx):
                 "IngestedAt": now,
             })
 
+    # Fill OperatingSystem / Architecture from the benchmark host environment when the pipeline did
+    # not supply explicit overrides, normalizing to the schema's canonical values.
+    if not run_row["OperatingSystem"]:
+        run_row["OperatingSystem"] = _normalize_os(os_seen)
+    if not run_row["Architecture"]:
+        run_row["Architecture"] = _normalize_arch(platform_seen)
+
     return run_row, result_rows
 
 
@@ -194,6 +237,14 @@ def main(argv=None):
     parser.add_argument("--driver-name", default="Microsoft.Data.SqlClient")
     parser.add_argument("--machine-name", default="")
     parser.add_argument("--agent-name", default="")
+    parser.add_argument("--operating-system", default="",
+                        help="OS the run executed on (Windows/Linux). "
+                             "Derived from the benchmark host env when omitted.")
+    parser.add_argument("--architecture", default="",
+                        help="Process architecture the run executed on (x64/x86). "
+                             "Derived from the benchmark host env when omitted.")
+    parser.add_argument("--run-type", default="",
+                        help="Benchmark execution ordering (Sequential/Interweaved).")
     parser.add_argument("--pipeline-run-id", required=True)
     parser.add_argument("--build-url", default="")
     parser.add_argument("--run-date", default="")
@@ -208,6 +259,9 @@ def main(argv=None):
         "driver_name": args.driver_name,
         "machine_name": args.machine_name,
         "agent_name": args.agent_name,
+        "operating_system": args.operating_system,
+        "architecture": args.architecture,
+        "run_type": args.run_type,
         "pipeline_run_id": args.pipeline_run_id,
         "build_url": args.build_url,
         "run_date": args.run_date,

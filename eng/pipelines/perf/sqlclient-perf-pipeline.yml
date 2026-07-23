@@ -246,6 +246,8 @@ extends:
             --driver-name "Microsoft.Data.SqlClient" \
             --machine-name "$machineName" \
             --agent-name "$(Agent.MachineName)" \
+            --operating-system "${{ parameters.platform }}" \
+            --run-type "${{ parameters.benchmarkRunMode }}" \
             --pipeline-run-id "$(Build.BuildId)" \
             --build-url "$buildUrl" \
             --branch-name "$(Build.SourceBranch)" \
@@ -264,6 +266,8 @@ extends:
               --driver-name "Microsoft.Data.SqlClient" \
               --machine-name "$machineName" \
               --agent-name "$(Agent.MachineName)" \
+              --operating-system "${{ parameters.platform }}" \
+              --run-type "${{ parameters.benchmarkRunMode }}" \
               --pipeline-run-id "$(Build.BuildId)" \
               --build-url "$buildUrl" \
               --branch-name "refs/tags/v$baseVer" \
