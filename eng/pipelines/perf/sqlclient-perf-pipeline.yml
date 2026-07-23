@@ -54,15 +54,6 @@ parameters:
       - linux
       - windows
 
-  # The build configuration used to build and run the benchmarks on the VM.  Performance numbers are
-  # only meaningful in Release, so that is the default (and only) supported value.
-  - name: buildConfiguration
-    displayName: Build Configuration
-    type: string
-    default: Release
-    values:
-      - Release
-
   # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
   # the PerformanceTests project (net8.0/net9.0/net10.0).
   - name: dotnetFramework
@@ -79,16 +70,6 @@ parameters:
     displayName: Test Timeout (minutes)
     type: number
     default: 180
-
-  # The folder name this repository ('self') is checked out into.  The Perf.Test.Job template
-  # performs a MULTI-REPO checkout ('checkout: self' + the template repo), so Azure DevOps places
-  # 'self' under $(Build.SourcesDirectory)/<repoName> rather than at $(Build.SourcesDirectory)
-  # directly (mirroring how the template repo lands at $(Build.SourcesDirectory)/PerfTest).  This
-  # must match the ADO repository name for the SqlClient repo hosting this pipeline.
-  - name: sourcesSubDir
-    displayName: Self checkout folder name
-    type: string
-    default: dotnet-sqlclient
 
   # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
   # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
@@ -137,11 +118,13 @@ parameters:
   # library variable group 'ADX Cluster Variables' (see the 'variables' section below), so no
   # infrastructure identifiers are hard-coded in this file.
 
-  # Logical driver name recorded on every row (schema DriverName / DerivedRunId component).
-  - name: driverName
-    displayName: Driver Name
-    type: string
-    default: Microsoft.Data.SqlClient
+# Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
+# library variables: they are invariant for the SqlClient perf pipeline.
+#   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
+#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
+#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
+#                                               must match the ADO repository name.
+#   * driverName          = Microsoft.Data.SqlClient - recorded on every row (DriverName / DerivedRunId).
 
 # Kusto (Azure Data Explorer) ingestion coordinates come from a pipeline library variable group so
 # that no cluster URI, database name, or service-connection name is hard-coded in this pipeline.
@@ -174,7 +157,7 @@ extends:
     # The entire driver source tree is copied to the VM so the benchmarks (which reference
     # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
     # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
-    testRootDir: $(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}
+    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
 
     # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
     # uses PowerShell, per the template's .sh/.ps1 convention.
@@ -188,9 +171,9 @@ extends:
     # The regression gate flag is appended via a key-level conditional because inline '${{ if }}'
     # directives are not allowed inside a quoted string value.
     ${{ if eq(parameters.failOnRegression, true) }}:
-      testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+      testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
     ${{ else }}:
-      testScriptArgs: '--configuration ${{ parameters.buildConfiguration }} --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+      testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
@@ -231,7 +214,7 @@ extends:
       # and always executes so the NDJSON is published even when ingestion is skipped.
       - bash: |
           set -euo pipefail
-          repoDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}"
+          repoDir="$(Build.SourcesDirectory)/dotnet-sqlclient"
           scriptsDir="$repoDir/eng/pipelines/perf/scripts"
           resultsDir="$(Build.ArtifactStagingDirectory)/results"
           kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
@@ -260,7 +243,7 @@ extends:
             --input-dir "$resultsDir/current" \
             --out-run "$kustoOut/current.PerfRun.ndjson" \
             --out-results "$kustoOut/current.PerfBenchmarkResult.ndjson" \
-            --driver-name "${{ parameters.driverName }}" \
+            --driver-name "Microsoft.Data.SqlClient" \
             --machine-name "$machineName" \
             --agent-name "$(Agent.MachineName)" \
             --pipeline-run-id "$(Build.BuildId)" \
@@ -278,7 +261,7 @@ extends:
               --input-dir "$resultsDir/baseline" \
               --out-run "$kustoOut/baseline.PerfRun.ndjson" \
               --out-results "$kustoOut/baseline.PerfBenchmarkResult.ndjson" \
-              --driver-name "${{ parameters.driverName }}" \
+              --driver-name "Microsoft.Data.SqlClient" \
               --machine-name "$machineName" \
               --agent-name "$(Agent.MachineName)" \
               --pipeline-run-id "$(Build.BuildId)" \
@@ -316,7 +299,7 @@ extends:
           scriptLocation: inlineScript
           inlineScript: |
             set -euo pipefail
-            scriptsDir="$(Build.SourcesDirectory)/${{ parameters.sourcesSubDir }}/eng/pipelines/perf/scripts"
+            scriptsDir="$(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts"
             kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
 
             # PEP 668: Ubuntu agents ship an "externally managed" Python and lack the

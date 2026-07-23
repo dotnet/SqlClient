@@ -54,16 +54,18 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
-| `buildConfiguration` | `Release` | Only `Release` produces meaningful numbers. |
 | `dotnetFramework` | `net9.0` | TFM the benchmarks run against (`net8.0`/`net9.0`/`net10.0`). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
-| `sourcesSubDir` | `dotnet-sqlclient` | Folder the repo (`self`) is checked out into under the template's multi-repo checkout. Must match the ADO repo name. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
-| `driverName` | `Microsoft.Data.SqlClient` | Recorded on every row (`DriverName` / `DerivedRunId`). |
+
+The following values are **fixed constants** in the pipeline (not parameters or variables), since they
+are invariant for this pipeline: `buildConfiguration = Release`, `sourcesSubDir = dotnet-sqlclient`
+(the multi-repo checkout folder for `self`, which must match the ADO repository name), and
+`driverName = Microsoft.Data.SqlClient` (recorded on every row as `DriverName` / `DerivedRunId`).
 
 ### Kusto (Azure Data Explorer) ingestion variables
 
