@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
-        public async Task SteadyStateOpenQueryClose()
+        public Task SteadyStateOpenQueryClose()
         {
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
@@ -111,11 +111,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 });
             }
 
-            await Task.WhenAll(tasks);
+            return Task.WhenAll(tasks);
         }
 
         [Benchmark]
-        public async Task SteadyStateOpenQueryCloseAsync()
+        public Task SteadyStateOpenQueryCloseAsync()
         {
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 });
             }
 
-            await Task.WhenAll(tasks);
+            return Task.WhenAll(tasks);
         }
 
         private void WarmPool(int count)
