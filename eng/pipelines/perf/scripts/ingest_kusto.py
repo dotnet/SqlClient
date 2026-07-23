@@ -8,11 +8,15 @@ queued ingestion of the PerfRun and PerfBenchmarkResult NDJSON files produced by
 ``perf_to_kusto.py``.
 
 Queued ingestion is asynchronous: ``ingest_from_file`` only *enqueues* the data
-and returns success even when the data later fails to land (e.g. a missing JSON
-mapping or a schema mismatch).  Those failures surface only in Kusto's ingestion
-failure system, so the pipeline step used to go green while the database stayed
-empty.  To avoid that silent-failure mode this script:
+and returns success even when the data later fails to land (e.g. a schema
+mismatch, or a *missing* server-side ingestion mapping - which the data-management
+service silently retries for ~2 days before recording a failure).  Those failures
+surface only in Kusto's ingestion failure system, so the pipeline step used to go
+green (or hang) while the database stayed empty.  To avoid that this script:
 
+  * sends a **self-contained inline JSON column mapping** (built from the payload's
+    own property names, which match the target table's columns) instead of
+    referencing a named server-side mapping that must be pre-created on the cluster,
   * sets ``flush_immediately`` so the data-management service seals the batch
     right away instead of waiting out the (default 5 minute) batching window, and
   * verifies, after queuing, that the expected rows actually became queryable --
@@ -50,18 +54,62 @@ def _ingest_uri(cluster):
     return cluster
 
 
-def _ingest(cluster, database, table, mapping, data_file):
+def _ndjson_columns(data_file):
+    """Ordered union of the JSON property names across every record in an NDJSON file.
+
+    The translated payload uses property names that are identical to the target table's
+    column names, so this doubles as the set of columns to map."""
+    columns = []
+    seen = set()
+    with open(data_file, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except ValueError:
+                continue
+            for key in obj:
+                if key not in seen:
+                    seen.add(key)
+                    columns.append(key)
+    return columns
+
+
+def _inline_json_mapping(data_file):
+    """Build an inline JSON column mapping (column -> $.column) from the payload's own keys.
+
+    Ingestion deliberately does NOT reference a pre-created server-side named mapping: relying on
+    one silently breaks ingestion whenever the mapping is missing from the cluster (the queued
+    request is retried for ~2 days before a failure is even recorded).  Because the NDJSON property
+    names match the table column names 1:1, a self-contained inline mapping removes that external
+    dependency entirely."""
+    from azure.kusto.ingest import ColumnMapping
+
+    # An empty column_type lets Kusto use each table column's declared type (works for string,
+    # numeric, datetime, bool and dynamic columns alike).
+    return [ColumnMapping(column_name=col, column_type="", path=f"$.{col}")
+            for col in _ndjson_columns(data_file)]
+
+
+def _ingest(cluster, database, table, data_file):
     from azure.kusto.data import KustoConnectionStringBuilder
     from azure.kusto.ingest import (
         QueuedIngestClient,
         IngestionProperties,
         FileDescriptor,
     )
-    from azure.kusto.data.data_format import DataFormat
+    from azure.kusto.data.data_format import DataFormat, IngestionMappingKind
     from azure.kusto.ingest import ReportLevel
 
     if not os.path.exists(data_file) or os.path.getsize(data_file) == 0:
         print(f"Skipping {table}: '{data_file}' is missing or empty.")
+        return 0
+
+    column_mappings = _inline_json_mapping(data_file)
+    if not column_mappings:
+        print(f"Skipping {table}: '{data_file}' has no recognizable JSON records.")
         return 0
 
     kcsb = KustoConnectionStringBuilder.with_az_cli_authentication(_ingest_uri(cluster))
@@ -71,7 +119,8 @@ def _ingest(cluster, database, table, mapping, data_file):
         database=database,
         table=table,
         data_format=DataFormat.MULTIJSON,
-        ingestion_mapping_reference=mapping,
+        column_mappings=column_mappings,
+        ingestion_mapping_kind=IngestionMappingKind.JSON,
         report_level=ReportLevel.FailuresAndSuccesses,
         # Seal the batch immediately: perf payloads are tiny and we want the rows
         # queryable in seconds (and any verification to run promptly), not after
@@ -82,7 +131,7 @@ def _ingest(cluster, database, table, mapping, data_file):
     descriptor = FileDescriptor(data_file, os.path.getsize(data_file))
     client.ingest_from_file(descriptor, ingestion_properties=props)
     print(f"Queued ingestion of '{data_file}' -> {database}.{table} "
-          f"(mapping '{mapping}').")
+          f"(inline JSON mapping, {len(column_mappings)} columns).")
     return 0
 
 
@@ -244,8 +293,6 @@ def main(argv=None):
                         help="PerfBenchmarkResult NDJSON file(s), comma-separated.")
     parser.add_argument("--run-table", default="PerfRun")
     parser.add_argument("--results-table", default="PerfBenchmarkResult")
-    parser.add_argument("--run-mapping", default="PerfRun_json_mapping")
-    parser.add_argument("--results-mapping", default="PerfBenchmarkResult_json_mapping")
     parser.add_argument("--verify-timeout", type=int,
                         default=int(os.environ.get("KUSTO_VERIFY_TIMEOUT", "300")),
                         help="Seconds to wait for ingested rows to become queryable "
@@ -271,11 +318,9 @@ def main(argv=None):
     pipeline_ids = _pipeline_ids(run_files)
 
     for data_file in run_files:
-        _ingest(args.cluster, args.database, args.run_table,
-                args.run_mapping, data_file)
+        _ingest(args.cluster, args.database, args.run_table, data_file)
     for data_file in results_files:
-        _ingest(args.cluster, args.database, args.results_table,
-                args.results_mapping, data_file)
+        _ingest(args.cluster, args.database, args.results_table, data_file)
 
     print("Ingestion requests submitted (queued).")
 

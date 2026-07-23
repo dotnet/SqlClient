@@ -184,10 +184,11 @@ enabled in `Config/BenchmarkConfig.cs` (`JsonExporter.Full`).
 
 ### One-time database setup
 
-Before ingestion can run, create the two tables (`PerfRun`, `PerfBenchmarkResult`) and their JSON
-ingestion mappings (`PerfRun_json_mapping`, `PerfBenchmarkResult_json_mapping`) in the target
-database. The mapping names are the ones referenced by `ingest_kusto.py`; the table columns match
-the schema summarized above.
+Before ingestion can run, create the two tables (`PerfRun`, `PerfBenchmarkResult`) in the target
+database, with columns matching the schema summarized above. No server-side ingestion mappings need
+to be created: `ingest_kusto.py` sends a **self-contained inline JSON column mapping** built from
+each payload's own property names (which are identical to the table's column names), so ingestion
+does not depend on any pre-created named mapping existing on the cluster.
 
 ### Authentication
 
@@ -233,4 +234,5 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | Ingestion step skipped | `enableKustoIngestion` is `false`, or `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
+| `Kusto ingestion did not complete: PerfRun=0/N ... after 300s` while `.show ingestion failures` shows nothing | Data was queued but never landed. Confirm the `PerfRun` / `PerfBenchmarkResult` tables exist with columns matching the schema above. Ingestion uses a self-contained inline JSON mapping, so a missing server-side named mapping is no longer a cause; a schema/column-name mismatch is the remaining one. |
 | Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |
