@@ -34,18 +34,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// </summary>
     public class ConnectionPoolContentionRunner : BaseRunner
     {
-        public enum AsyncBehavior
-        {
-            Sync,
-            Async
-        }
-
-        /// <summary>
-        /// Whether workers check connections out synchronously or asynchronously.
-        /// </summary>
-        [ParamsAllValues]
-        public AsyncBehavior Async { get; set; }
-
         /// <summary>
         /// Number of concurrent workers competing for pooled connections.
         /// </summary>
@@ -107,36 +95,41 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
-                if (Async is AsyncBehavior.Async)
+                tasks[i] = Task.Run(() =>
                 {
-                    tasks[i] = Task.Run(async () =>
+                    for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        for (int op = 0; op < OpsPerWorker; op++)
-                        {
-                            using var conn = new SqlConnection(_connectionString);
-                            await conn.OpenAsync();
-                            using var cmd = conn.CreateCommand();
-                            cmd.CommandText = "SELECT 1";
-                            _ = await cmd.ExecuteScalarAsync();
-                            // Dispose returns the connection to the pool.
-                        }
-                    });
-                }
-                else
+                        using var conn = new SqlConnection(_connectionString);
+                        conn.Open();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT 1";
+                        _ = cmd.ExecuteScalar();
+                        // Dispose returns the connection to the pool.
+                    }
+                });
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+        [Benchmark]
+        public async Task SteadyStateOpenQueryCloseAsync()
+        {
+            var tasks = new Task[Parallelism];
+            for (int i = 0; i < Parallelism; i++)
+            {
+                tasks[i] = Task.Run(async () =>
                 {
-                    tasks[i] = Task.Run(() =>
+                    for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        for (int op = 0; op < OpsPerWorker; op++)
-                        {
-                            using var conn = new SqlConnection(_connectionString);
-                            conn.Open();
-                            using var cmd = conn.CreateCommand();
-                            cmd.CommandText = "SELECT 1";
-                            _ = cmd.ExecuteScalar();
-                            // Dispose returns the connection to the pool.
-                        }
-                    });
-                }
+                        using var conn = new SqlConnection(_connectionString);
+                        await conn.OpenAsync();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT 1";
+                        _ = await cmd.ExecuteScalarAsync();
+                        // Dispose returns the connection to the pool.
+                    }
+                });
             }
 
             await Task.WhenAll(tasks);

@@ -28,18 +28,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// </summary>
     public class ConnectionPoolChurnRunner : BaseRunner
     {
-        public enum AsyncBehavior
-        {
-            Sync,
-            Async
-        }
-
-        /// <summary>
-        /// Whether the connection is opened synchronously or asynchronously.
-        /// </summary>
-        [ParamsAllValues]
-        public AsyncBehavior Async { get; set; }
-
         /// <summary>
         /// Number of sequential open/close operations performed per invocation. Kept high
         /// so each measured invocation captures many pool checkouts, yielding a stable
@@ -83,20 +71,23 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
-        public async Task RapidOpenCloseSingleThread()
+        public void RapidOpenCloseSingleThread()
         {
             for (int i = 0; i < OpsPerInvocation; i++)
             {
                 using var conn = new SqlConnection(_connectionString);
+                conn.Open();
+                // Dispose returns the connection to the pool.
+            }
+        }
 
-                if (Async is AsyncBehavior.Async)
-                {
-                    await conn.OpenAsync();
-                }
-                else
-                {
-                    conn.Open();
-                }
+        [Benchmark]
+        public async Task RapidOpenCloseSingleThreadAsync()
+        {
+            for (int i = 0; i < OpsPerInvocation; i++)
+            {
+                using var conn = new SqlConnection(_connectionString);
+                await conn.OpenAsync();
                 // Dispose returns the connection to the pool.
             }
         }
