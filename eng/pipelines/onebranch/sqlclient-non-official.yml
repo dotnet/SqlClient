@@ -6,12 +6,30 @@
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# No automated triggers; this pipeline must be run manually.
+# No activity-based triggers.
 pr: none
 trigger: none
 
+# We run this pipeline on a daily schedule.
+schedules:
+  - cron: "30 4 * * *"
+    displayName: Daily 04:30 UTC Build
+    branches:
+      include:
+        - internal/main
+    always: true
+
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
+
+  # When true, any SDL errors will break the build, and TSA bug filing will be disabled.  When
+  # false, SDL errors will be logged but will not break the build, and TSA bug filing will be
+  # enabled.
+  - name: breakOnSdlError
+    displayName: Break on SDL error
+    type: boolean
+    default: false
+
   # True to enable debug information and steps.
   - name: debug
     displayName: Enable debug output
@@ -126,7 +144,22 @@ extends:
       category: NonAzure
 
     # See: https://aka.ms/obpipelines/sdl
+    #
+    # The following SDL tasks are auto-injected by the OneBranch / 1ES Pipeline Templates and run
+    # WITHOUT any explicit globalSdl configuration.  They were verified as running in recent
+    # pipeline runs, so we intentionally do not redeclare them here:
+    #
+    #   - Component Governance / Component Detection / Secure Supply Chain
+    #     Analysis (dependency vulnerability scanning)
+    #   - AntiMalware Scanner (Binary + Source)
+    #   - 1ES Secret Scanning (SPMI)
+    #   - Generate SBoM Manifest
+    #   - CodeQL 3000 (only run when it is explicitly opted in via codeql.compiled.enabled, and
+    #     even then only on its ~72h cadence and on supported (non-PR/non-tag)
+    #     branches.)
+    #
     globalSdl:
+
       # Configure APIScan behaviour:
       #
       # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
@@ -139,8 +172,8 @@ extends:
         # variable.
         enabled: true
 
-        # APIScan errors should not break non-official builds.
-        break: false
+        # APIScan errors break the build when breakOnSdlError is set.
+        break: ${{ parameters.breakOnSdlError }}
 
         # Use pre-release mode for non-official pipelines.
         modeType: prerelease
@@ -161,7 +194,7 @@ extends:
 
       armory:
         enabled: true
-        break: false
+        break: ${{ parameters.breakOnSdlError }}
 
       asyncSdl:
         # Disabling this as it complicates the build process with minimal gain
@@ -169,11 +202,14 @@ extends:
 
       binskim:
         enabled: true
-        break: false
+        break: ${{ parameters.breakOnSdlError }}
 
       codeql:
-        enabled: true
+        # CodeQL 3000 is configured under the `compiled` key; `enabled` is a sub-property of
+        # `compiled` (not of `codeql`).  CodeQL runs asynchronously on its own platform and cannot
+        # break the build by design, so it has no `break` value.
         compiled:
+          enabled: true
 
       credscan:
         enabled: true
@@ -182,16 +218,23 @@ extends:
       eslint:
         # Only useful for repos with ECMAscript - which we do not have.
         enabled: false
+        # Break value is wired preemptively so it takes effect if eslint is ever enabled.
+        break: ${{ parameters.breakOnSdlError }}
 
       policheck:
         enabled: true
-        break: false
+        break: ${{ parameters.breakOnSdlError }}
         exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
+
+      psscriptanalyzer:
+        # Static analysis of the repository's PowerShell scripts (e.g. under eng/).
+        enabled: true
+        break: ${{ parameters.breakOnSdlError }}
 
       roslyn:
         # Note, requires RoslynAnalyzers task to be added as a separate step
         enabled: true
-        break: false
+        break: ${{ parameters.breakOnSdlError }}
 
       publishLogs:
         enabled: true
@@ -202,9 +245,15 @@ extends:
         packageVersion: '$(Build.BuildNumber)'
 
       tsa:
-        # Disable TSA for non-official runs.  Developers don't need the TSA integration for
-        # manually-run non-official builds.
-        enabled: false
+        # We deliberately drive every tool's `break` value from breakOnSdlError and set TSA's
+        # `enabled` to its negation, rather than relying on OneBranch's implicit behaviour of
+        # flipping each tool's break default based on whether TSA is enabled.  We have hit bugs in
+        # that implicit break-altering logic in the past, so we set both values explicitly to keep
+        # them deterministic.
+        #
+        # TSA bug filing is enabled when we are not breaking on SDL errors.
+        enabled: ${{ not(parameters.breakOnSdlError) }}
+        configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
