@@ -50,10 +50,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             }
 
-            // If the config file specifies to use the new channel-based connection pool,
-            // enable the UseConnectionPoolV2 AppContext switch. This must be set before any
-            // connection is opened because the switch is read and cached when a pool is first
-            // created; it cannot be changed later in the process lifetime.
+            // Set the UseConnectionPoolV2 AppContext switch from config (true or false).
+            // This must be set before any connection is opened because the switch is read
+            // and cached when a pool is first created; it cannot be changed later in the
+            // process lifetime.
             AppContext.SetSwitch(
                 "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
                 _config.UseConnectionPoolV2);
