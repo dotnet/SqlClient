@@ -661,7 +661,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 Assert.Equal(expectedData, dbData);
                 rowcnt++;
             }
-            Assert.Equal(10, rowcnt);
+            Assert.Equal(sampleDataSet.GetLength(0), rowcnt);
 
             static TElement[] GetMultidimensionalArraySlice(TElement[,] sourceArray, int dimension)
             {
