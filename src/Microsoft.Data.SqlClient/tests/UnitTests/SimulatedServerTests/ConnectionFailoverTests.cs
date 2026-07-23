@@ -18,11 +18,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
+        //
         // Flaky under CI load only (never reproduces locally): the connection intermittently
         // reports the failover partner's port for connection.DataSource (primary port - 1),
         // i.e. the driver occasionally fails over on a login-phase transient error instead of
         // retrying the primary. This is the failover-alternation / parser-state timing behavior
         // these tests guard, not a harness race, so it cannot be made deterministic here.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_NoFailover_DoesNotClearPool(errorCode: 42108) [3 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Strings differ
+        //                            Γåô (pos 14)
+        //   Expected: "localhost,49201"
+        //   Actual:   "localhost,49200"
+        //                            Γåæ (pos 14)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_NoFailover_DoesNotClearPool(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 72
+        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+        //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
         [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
@@ -734,11 +748,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Verifies pooled connections are not cleared and failover is not attempted when a
         /// login-phase transient SQL error occurs with a user-provided failover partner.
         /// </summary>
+        //
         // Flaky under CI load only (never reproduces locally): the connection intermittently
         // reports the failover partner's port for connection.DataSource (primary port - 1),
         // i.e. the driver occasionally fails over on a login-phase transient error instead of
         // retrying the primary. This is the failover-alternation / parser-state timing behavior
         // this test guards, not a harness race, so it cannot be made deterministic here.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(errorCode: 40613) [3 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Strings differ
+        //                            Γåô (pos 14)
+        //   Expected: "localhost,49182"
+        //   Actual:   "localhost,49181"
+        //                            Γåæ (pos 14)
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 777
+        //      at InvokeStub_ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(Object, Span`1)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
         [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]

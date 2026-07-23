@@ -1487,7 +1487,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
 
             // Act
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new ChannelDbConnectionPool(
                     SuccessfulConnectionFactory,
                     dbConnectionPoolGroup,
@@ -1880,7 +1880,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             ThreadPool.GetMinThreads(out int minWorker, out int minIo);
             if (minWorker < 16)
             {
-                ThreadPool.SetMinThreads(16, minIo);
+                Assert.True(ThreadPool.SetMinThreads(16, minIo), "Failed to raise ThreadPool minimum worker threads.");
             }
 
             // Arrange
@@ -2342,4 +2342,3 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
     }
 }
-
