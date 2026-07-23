@@ -13,6 +13,7 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -31,7 +32,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int maxPoolSize = 50,
             int idleTimeout = 0,
             int loadBalanceTimeout = 0,
-            ConcurrencyLimiter? connectionCreationRateLimiter = null)
+            ConcurrencyLimiter? connectionCreationRateLimiter = null,
+            TimeProvider? timeProvider = null)
         {
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -52,7 +54,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 dbConnectionPoolGroup,
                 DbConnectionPoolIdentity.NoIdentity,
                 new DbConnectionPoolProviderInfo(),
-                connectionCreationRateLimiter);
+                connectionCreationRateLimiter,
+                timeProvider);
         }
 
         /// <summary>
@@ -551,7 +554,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <summary>
         /// An idle connection evicted by the idle-timeout check (IsLiveConnection) drops the pool
         /// below MinPoolSize and triggers replenishment via RemoveConnection → RequestWarmup,
-        /// restoring the pool to the minimum.
+        /// restoring the pool to the minimum. A <see cref="FakeTimeProvider"/> drives the idle-timeout
+        /// clock so exactly one connection crosses the timeout, making the create-count assertion
+        /// deterministic regardless of host scheduling or GC pauses.
         /// </summary>
         [Fact]
         public async Task Replenish_AfterIdleTimeoutEviction_RefillsToMinimum()
@@ -560,9 +565,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             switchesHelper.UseLegacyIdleTimeoutBehavior = false;
 
             // Pool with a 1-second idle timeout and MinPoolSize=2 so an evicted connection
-            // triggers replenishment.
+            // triggers replenishment. The fake clock lets the test decide exactly which connection
+            // ages past the idle timeout, rather than racing the wall clock.
+            var fakeTime = new FakeTimeProvider();
             var factory = new DoomableConnectionFactory();
-            using var pool = ConstructPool(factory, minPoolSize: 2, maxPoolSize: 10, idleTimeout: 1);
+            using var pool = ConstructPool(factory, minPoolSize: 2, maxPoolSize: 10, idleTimeout: 1, timeProvider: fakeTime);
 
             pool.Startup();
             await pool.WarmupLoopTask!;
@@ -577,11 +584,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(conn1);
             Assert.NotNull(conn2);
 
-            // Return conn1 first, then backdate its ReturnedTime to simulate idle expiry beyond the 1s timeout.
+            // Return conn1, then advance the fake clock past the 1s idle timeout. conn1's return stamp
+            // is now 2s old while conn2, returned after the advance, is fresh (0s), so only conn1 expires.
             pool.ReturnInternalConnection(conn1!, owner1);
-            conn1!.ReturnedTime = DateTime.UtcNow - TimeSpan.FromSeconds(2);
-
-            // Return conn2 normally — not expired.
+            fakeTime.Advance(TimeSpan.FromSeconds(2));
             pool.ReturnInternalConnection(conn2!, owner2);
 
             // TryGetConnection pops conn1 (head of channel), finds it idle-expired, calls

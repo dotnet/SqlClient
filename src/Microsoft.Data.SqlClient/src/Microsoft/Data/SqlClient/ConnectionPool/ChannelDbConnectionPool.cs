@@ -122,6 +122,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly ConcurrencyLimiter? _connectionCreationRateLimiter;
 
         /// <summary>
+        /// Time source for idle-timeout expiry and the blocking-period exit timer. Defaults to
+        /// <see cref="TimeProvider.System"/> in production; tests inject a fake provider so idle
+        /// expiry and the blocking period can be driven deterministically without real waits.
+        /// </summary>
+        private readonly TimeProvider _timeProvider;
+
+        /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
         /// backoff timer, and synchronization. Created only when blocking period is enabled for
         /// this pool group. See <see cref="BlockingPeriodErrorState"/>.
@@ -166,15 +173,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
+            // timeProvider is injected only by tests so idle-timeout expiry and the blocking-period
+            // exit timer can be driven deterministically; in production it is null and falls back to
+            // TimeProvider.System, whose UTC time equals DateTime.UtcNow.
+            _timeProvider = timeProvider ?? TimeProvider.System;
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
             if (PoolGroup.IsBlockingPeriodEnabled())
             {
-                // timeProvider is injected only by tests so the blocking-period exit timer can be
-                // driven deterministically; in production it is null and the error state falls back
-                // to TimeProvider.System.
-                _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: timeProvider);
+                _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: _timeProvider);
             }
 
             // Pruning is only useful when the pool can grow beyond MinPoolSize.
@@ -323,12 +331,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // measures time-in-pool, not time-since-last-return. Without this, a connection whose
             // checkout exceeded IdleTimeout (e.g. a long-running query) would be wrongly evicted on
             // return even though it was actively in use on the wire. The same gating conditions are
-            // applied here as in IsLiveConnection so we avoid the per-return DateTime.UtcNow when
+            // applied here as in IsLiveConnection so we avoid the per-return timestamp read when
             // idle expiry is disabled or the legacy idle-timeout behavior is in effect.
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
-                connection.SetReturnedTime();
+                connection.SetReturnedTime(_timeProvider.GetUtcNow().UtcDateTime);
             }
 
             if (!IsLiveConnection(connection))
@@ -806,13 +814,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // connection is discarded without an SNI round-trip.
             // ReturnedTime is initialized to CreateTime so a freshly minted connection never trips this
             // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
+            // Uses the pool's TimeProvider (TimeProvider.System in production) so the return stamp and
+            // this expiry check read the same clock, letting tests drive idle expiry deterministically.
             // Use subtraction rather than addition so the comparison cannot throw if ReturnedTime is
             // ever close to DateTime.MaxValue. A clock skew that leaves ReturnedTime in the future
             // produces a negative TimeSpan, which falls through as not-expired (fail safe).
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 idleTimeout != TimeSpan.Zero &&
-                DateTime.UtcNow - connection.ReturnedTime > idleTimeout)
+                _timeProvider.GetUtcNow().UtcDateTime - connection.ReturnedTime > idleTimeout)
             {
                 return false;
             }
