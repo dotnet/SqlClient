@@ -32,6 +32,90 @@
     <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
   </PropertyGroup>
 
+  <!-- SDL Roslyn analysis pass ======================================== -->
+  <!--
+    When EnableAnalyzers is set (by the SDL Roslyn Analyzers pipeline step, forwarded from
+    build.proj's EnableAnalyzers property), run as many Roslyn analyzers as possible and emit a
+    per-project SARIF v1 log. The RoslynAnalyzers task then runs in "Copy Logs Only" mode and
+    collects these logs.
+
+    This lives in the leaf projects (here) rather than being injected onto the orchestrating
+    build.proj command line, because build.proj compiles each project in a separate "dotnet build"
+    process that would not inherit command-line analyzer properties from the outer build.
+  -->
+  <PropertyGroup Condition="'$(EnableAnalyzers)' == 'true'">
+    <RunAnalyzers>true</RunAnalyzers>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!--
+      Turn on every rule the SDK ships, at the latest level, plus the IDE code-style analyzers.
+
+      COVERAGE GAP vs the SDL Roslyn task: latest-all is a superset of the SDL-recommended CA* rules
+      (the CA* analyzers are in the SDK), but it does NOT include the internal IA* rules the SDL task
+      runs. Those come from the Microsoft.Internal.Analyzers package, which is Microsoft-internal-only
+      and confidential (the "IA" prefix means "Internal Analyzers"). It is NOT on our governed feed,
+      and it MUST NOT be added to it: that feed lives under the PUBLIC SqlClientDrivers ADO project,
+      so publishing an internal package there would leak confidential tooling and breach its
+      internal-use license. The IA* rules can only be run from the private ADO.Net pipelines (against
+      the internal dotnet-sqlclient mirror), where an internal feed is available. See the coverage
+      table and the "NOTE ON THE INTERNAL IA* RULES" section in
+      eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml.
+    -->
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <!--
+      IDE code-style (IDExxxx) rules ship in the SDK; their configuration (which rules fire, at what
+      severity, and the style preferences they check) lives in our .editorconfig files.
+    -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!--
+      Emit one uniquely-named SARIF log per project for the RoslynAnalyzers "Copy Logs Only"
+      collector (it globs *.csproj.*.sarif, and $(MSBuildProjectFullPath) ends in .csproj, so
+      "$(MSBuildProjectFullPath).<guid>.sarif" matches; the GUID avoids collisions across the
+      multiple target frameworks a single project builds).
+
+      IMPORTANT: do NOT append ",version=2". The Guardian Roslyn sanitizer deserializes each log as
+      SARIF v1 (Serializer.Read<SarifLogVersionOne> in Microsoft.Guardian.RoslynAnalyzers.dll),
+      so a v2.1.0 log fails to deserialize and throws SanitizeRoslynAnalyzersScanLogFileException,
+      dropping the results. The default ErrorLog format (no version suffix) is SARIF v1, which is
+      what the sanitizer expects and what the SDL "Copy Logs Only" docs use.
+    -->
+    <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString().Substring(0,8)).sarif</ErrorLog>
+    <!--
+      The analysis pass must record every diagnostic instead of stopping at the first one, so it
+      overrides the repo-wide TreatWarningsAsErrors=true set above. Genuine compiler errors still
+      fail the build.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Internal SDL analyzers (IA* rules) - private ADO.Net pipelines only ==== -->
+  <!--
+    When InternalAnalyzers is set (by the private ADO.Net pipeline, forwarded from build.proj's
+    InternalAnalyzers property alongside EnableAnalyzers), additionally reference the
+    Microsoft.Internal.Analyzers package so the internal "IA*" SDL Roslyn rules run inside the
+    analysis pass and contribute to the per-project SARIF log, closing the coverage gap noted above.
+
+    This is deliberately gated on EnableAnalyzers as well as InternalAnalyzers, so it only takes
+    effect as part of the analysis pass above (which is what enables RunAnalyzers, sets ErrorLog, and
+    relaxes TreatWarningsAsErrors to false). Referencing the analyzer package outside that pass would
+    let the IA* rules run under the repo-wide TreatWarningsAsErrors=true and break a normal build,
+    while emitting no SARIF. build.proj applies the same combined gate when forwarding the flag.
+
+    Microsoft.Internal.Analyzers is Microsoft-internal and confidential (see the COVERAGE GAP note
+    above and the "NOTE ON THE INTERNAL IA* RULES" section in
+    eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml). It is restored only from an
+    internal NuGet feed that is reachable solely from the private ADO.Net project. The public build
+    and public CI never set InternalAnalyzers, so they never reference the package and the public
+    governed feed stays clean.
+
+    PrivateAssets="all" keeps it a build-only analyzer that never flows into the shipped NuGet
+    package's dependency graph. Its version is centrally managed in Directory.Packages.props
+    (MicrosoftInternalAnalyzersVersion).
+  -->
+  <ItemGroup Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true'">
+    <PackageReference Include="Microsoft.Internal.Analyzers" PrivateAssets="all" IncludeAssets="analyzers" />
+  </ItemGroup>
+
   <!-- Versioning ====================================================== -->
   <!--
     Versions for packages are assigned in the project's Versions.props file. Below, we provide

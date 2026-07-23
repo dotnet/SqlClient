@@ -32,6 +32,15 @@ variables:
   # SymbolsUploadAccount
   - group: 'symbols-variables-v3'
 
+  # These variables point the SDL Roslyn analysis step at the internal Microsoft.Internal.Analyzers
+  # package (the "IA*" rules). The package is Microsoft-internal and confidential, so the feed URL
+  # and pinned version live in this ADO.Net-project variable group rather than in the repo. Consumed
+  # by eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml.
+  #
+  # MicrosoftInternalAnalyzersFeed
+  # MicrosoftInternalAnalyzersVersion
+  - group: 'internal-analyzers-variables-v1'
+
   # Well-Known Variables ###################################################
 
   # Directory where downloaded pipeline artifacts (NuGet packages from earlier
@@ -55,10 +64,12 @@ variables:
     value: true
 
   # OneBranch supplies a variety of container images we must use for our jobs.
+  #
+  # https://eng.ms/docs/products/onebranch/infrastructureandimages/containerimages/containerimages
 
   # Windows jobs use this image.
   - name: WindowsContainerImage
-    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+    value: onebranch.azurecr.io/windows/ltsc2025/vse2026:latest
 
   # Linux jobs use this image.
   - name: LinuxContainerImage
