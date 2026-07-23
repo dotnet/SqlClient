@@ -116,9 +116,10 @@
 #   (only bin is redirected), which is where the Copy Logs Only step collects them from.
 #
 #   The analysis build shares the default obj/ intermediate directory with a real build, but it
-#   still cannot corrupt real build output. --no-incremental runs MSBuild's Rebuild (Clean + Build),
-#   and Clean only removes files under the *current* OutDir (the redirected isolated bin) and the
-#   obj/ intermediates -- it never touches the real artifacts/ bin. Every downstream step in
+#   still cannot corrupt real build output. --no-incremental does not run Clean or delete anything;
+#   it only disables the incremental/up-to-date checks and forces a full recompile. Real output is
+#   safe because bin is redirected to the isolated path -- the isolated build only writes to the
+#   isolated bin, never the real artifacts/ bin. Every downstream step in
 #   build-buildproj-job.yml operates on $(BUILD_OUTPUT) (= artifacts/): DLL signing, the APIScan
 #   copies, packing, NuGet signing, and the copy to the job output. None of them read obj/, so
 #   rebuilding the shared intermediates has no effect on them.
@@ -154,9 +155,10 @@ steps:
   # to the public repo.
 
   # Step 0a: Generate a private NuGet.config that adds the internal feed hosting
-  # Microsoft.Internal.Analyzers. packageSourceMapping pins Microsoft.Internal.* to the internal feed
-  # and routes every other package to the existing governed/local sources, so no other restore is
-  # redirected. The config is handed to the leaf builds via -p:InternalAnalyzersNugetConfig
+  # Microsoft.Internal.Analyzers. In packageSourceMapping the longest matching package-pattern wins,
+  # so Microsoft.Internal.* resolves ONLY from the internal feed (that pattern is more specific than
+  # the "*" on governed/local), while every other package still resolves from governed/local.
+  # The config is handed to the leaf builds via -p:InternalAnalyzersNugetConfig
   # (build.proj forwards it as -p:RestoreConfigFile), which replaces the whole NuGet config hierarchy
   # for the analysis restore, leaving the committed root NuGet.config (with its <clear/>) untouched.
   - pwsh: |
@@ -191,9 +193,10 @@ steps:
           '</configuration>'
       )
       Set-Content -Path $cfg -Value $lines -Encoding utf8
-      Write-Host "Wrote internal NuGet.config to $cfg :"
-      Get-Content $cfg | ForEach-Object { Write-Host "  $_" }
-      Write-Host "##vso[task.setvariable variable=internalAnalyzersArgs]-p:InternalAnalyzers=true -p:InternalAnalyzersNugetConfig=$cfg -p:MicrosoftInternalAnalyzersVersion=$version"
+      # Do not log the file contents: they include the confidential internal feed URL. Log only the path.
+      Write-Host "Wrote internal NuGet.config to $cfg"
+      # Quote the config path so a temp path containing spaces is not mis-parsed as multiple args.
+      Write-Host "##vso[task.setvariable variable=internalAnalyzersArgs]-p:InternalAnalyzers=true -p:InternalAnalyzersNugetConfig=`"$cfg`" -p:MicrosoftInternalAnalyzersVersion=$version"
     displayName: 'Internal analyzers: generate private NuGet.config'
 
   # Step 0b: Authenticate to the internal Azure Artifacts feed so the leaf restores can pull
@@ -250,8 +253,9 @@ steps:
           'SqlServer'    { 'Microsoft.SqlServer.Server.csproj' }
           default        { Write-Error "Unknown packageShortName '${{ parameters.packageShortName }}'; update the SARIF verification map."; exit 1 }
       }
-      $sarif = Get-ChildItem -Path "$(REPO_ROOT)" -Recurse -File -Filter '*.sarif' |
-          Where-Object { $_.Name -like "$expectedCsproj.*.sarif" }
+      # Match this package's per-project logs directly via -Filter, so we do not enumerate every
+      # *.sarif other SDL tools may have produced under the repo.
+      $sarif = Get-ChildItem -Path "$(REPO_ROOT)" -Recurse -File -Filter "$expectedCsproj.*.sarif"
       Write-Host "Found $($sarif.Count) Roslyn SARIF log(s) matching '$expectedCsproj.*.sarif':"
       $sarif | ForEach-Object { Write-Host "  $($_.FullName)" }
       if ($sarif.Count -eq 0) {
