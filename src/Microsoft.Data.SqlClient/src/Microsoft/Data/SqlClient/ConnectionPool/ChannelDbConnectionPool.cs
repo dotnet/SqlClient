@@ -122,11 +122,35 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly ConcurrencyLimiter? _connectionCreationRateLimiter;
 
         /// <summary>
+        /// Time source for idle-timeout expiry and the blocking-period exit timer. Defaults to
+        /// <see cref="TimeProvider.System"/> in production; tests inject a fake provider so idle
+        /// expiry and the blocking period can be driven deterministically without real waits.
+        /// </summary>
+        private readonly TimeProvider _timeProvider;
+
+        /// <summary>
         /// Encapsulates the blocking-period error state for this pool: cached exception, exponential
         /// backoff timer, and synchronization. Created only when blocking period is enabled for
         /// this pool group. See <see cref="BlockingPeriodErrorState"/>.
         /// </summary>
         private readonly BlockingPeriodErrorState? _errorState;
+
+        /// <summary>
+        /// Cancels in-flight background warmup/replenishment when the pool shuts down so no new
+        /// connections are created after shutdown begins (Story 4). The token is observed at the
+        /// warmup loop's await points and before each creation attempt, so it stops the loop and
+        /// prevents further attempts promptly. It cannot abort an already in-progress physical open:
+        /// that path is synchronous and the connection factory does not yet accept a cancellation
+        /// token (see the TODO in <see cref="OpenNewInternalConnection"/>).
+        /// </summary>
+        private readonly CancellationTokenSource _warmupCts = new();
+
+        /// <summary>
+        /// Coalescing guard ensuring only one warmup loop executes at a time. Transitioned
+        /// 0 -> 1 via <see cref="Interlocked.CompareExchange(ref int, int, int)"/> by the first
+        /// requester to start the loop, and reset to 0 by the loop when it drains.
+        /// </summary>
+        private int _warmupLoopRunning;
         #endregion
 
         /// <summary>
@@ -149,15 +173,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
+            // timeProvider is injected only by tests so idle-timeout expiry and the blocking-period
+            // exit timer can be driven deterministically; in production it is null and falls back to
+            // TimeProvider.System, whose UTC time equals DateTime.UtcNow.
+            _timeProvider = timeProvider ?? TimeProvider.System;
 
             _connectionSlots = new(MaxPoolSize);
             _idleChannel = new();
             if (PoolGroup.IsBlockingPeriodEnabled())
             {
-                // timeProvider is injected only by tests so the blocking-period exit timer can be
-                // driven deterministically; in production it is null and the error state falls back
-                // to TimeProvider.System.
-                _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: timeProvider);
+                _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: _timeProvider);
             }
 
             // Pruning is only useful when the pool can grow beyond MinPoolSize.
@@ -221,6 +246,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private uint MaxPoolSize { get; }
 
         private int MinPoolSize => PoolGroupOptions.MinPoolSize;
+
+        /// <summary>
+        /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
+        /// warmup pass to a deterministic completion instead of polling pool counters. May be null
+        /// (warmup never requested) or reference an already-completed pass (requests are coalesced);
+        /// a caller that only needs "some warmup pass has finished" can await it regardless. Only
+        /// consumed by unit tests, which read it after synchronously triggering warmup on their own
+        /// thread, so a plain auto-property is sufficient.
+        /// </summary>
+        internal Task? WarmupLoopTask { get; private set; }
         #endregion
 
         #region Methods
@@ -296,12 +331,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // measures time-in-pool, not time-since-last-return. Without this, a connection whose
             // checkout exceeded IdleTimeout (e.g. a long-running query) would be wrongly evicted on
             // return even though it was actively in use on the wire. The same gating conditions are
-            // applied here as in IsLiveConnection so we avoid the per-return DateTime.UtcNow when
+            // applied here as in IsLiveConnection so we avoid the per-return timestamp read when
             // idle expiry is disabled or the legacy idle-timeout behavior is in effect.
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
-                connection.SetReturnedTime();
+                connection.SetReturnedTime(_timeProvider.GetUtcNow().UtcDateTime);
             }
 
             if (!IsLiveConnection(connection))
@@ -348,6 +383,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Transition to ShuttingDown. After this point, ReturnInternalConnection
             // routes returning connections to RemoveConnection.
             State = ShuttingDown;
+
+            // Cancel any in-flight background warmup/replenishment so no new connections are
+            // created after shutdown begins (Story 4). The warmup loop also observes the
+            // State transition above; cancelling here stops the loop promptly by tripping its
+            // await points and pre-create checks. It does not abort an already in-progress
+            // synchronous physical open (see _warmupCts field docs). Cancel is idempotent.
+            try
+            {
+                _warmupCts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Expected no-op: the cancellation source is already disposed, so there is nothing
+                // left to cancel. This is not a failure, so it is not traced.
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, _warmupCts.Cancel threw, continuing shutdown: {1}", Id, ex);
+            }
 
             // Each cleanup step is independent and best-effort. A failure in one step must not
             // prevent later steps from running, otherwise the pool can be left half-shut-down
@@ -422,6 +477,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, RemoveConnection threw during drain, continuing: {1}", Id, ex);
                 }
             }
+
+            // Release the warmup cancellation source now that the loop has been signalled to stop
+            // and no further connections will be created. Dispose is best-effort and idempotent.
+            try
+            {
+                _warmupCts.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Expected no-op: the cancellation source is already disposed. Dispose is documented
+                // as safe to call repeatedly, so this is not a failure and is not traced.
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, _warmupCts.Dispose threw, continuing shutdown: {1}", Id, ex);
+            }
         }
 
         /// <summary>
@@ -432,14 +504,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Startup()
         {
-            // Startup is currently a no-op for this pool: State is set to Running in the
-            // constructor, and PoolPruner (when present, i.e. MinPoolSize < MaxPoolSize) is
-            // also constructed eagerly there; its timer arms/disarms via UpdateTimer() calls
-            // from OpenNewInternalConnection and RemoveConnection as the pool grows/shrinks.
-            // This method exists as the symmetrical counterpart of Shutdown and as a hook
-            // for future warmup behavior.
+            // State is set to Running in the constructor, and PoolPruner (when present, i.e.
+            // MinPoolSize < MaxPoolSize) is also constructed eagerly there; its timer arms/disarms
+            // via UpdateTimer() calls from OpenNewInternalConnection and RemoveConnection as the
+            // pool grows/shrinks.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}", Id);
+
+            // Kick off background warmup so the pool pre-creates connections up to MinPoolSize
+            // without blocking the caller (Story 1). No-op when MinPoolSize == 0.
+            RequestWarmup();
         }
 
         /// <inheritdoc />
@@ -571,7 +645,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Fast-fail in the error state. FR-006.
+            // Fast-fail if the pool is in the blocking-period error state. FR-006. Warmup goes
+            // through this same path (it has no isWarmup exemption): it mirrors the legacy WaitHandle
+            // pool, whose replenishment enters/clears the same error state as user requests. In
+            // practice the warmup loop already stands down before reaching here (its loop condition
+            // checks ErrorOccurred); this covers the narrow race where the state flips in between.
             _errorState?.ThrowIfActive();
 
             try
@@ -688,8 +766,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
 
-                    // A successful creation clears error/backoff state
-                    // FR-009.
+                    // A successful creation clears error/backoff state (FR-009). Warmup goes through
+                    // this same path and clears the state on success too, mirroring the legacy
+                    // WaitHandle pool: a connection that opens proves the server is reachable.
                     _errorState?.Clear();
                 }
 
@@ -697,13 +776,27 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
             {
-                // Enter the blocking period error state on creation failure if configured.
+                // Enter the blocking period error state on creation failure if configured. Warmup
+                // goes through this same path (the warmup loop absorbs the rethrow in its own catch),
+                // mirroring the legacy WaitHandle pool, whose replenishment failures also enter the
+                // error state.
+                //
                 // We deliberately exclude OperationCanceledException: that is thrown when the
                 // caller's own timeout/cancellation budget expires while waiting, which is
                 // client-side contention rather than a physical connection creation failure and
                 // must not poison the pool into fast-fail/backoff for other callers.
                 // FR-006, FR-007.
-                _errorState?.Enter(ex);
+                //
+                // Only enter the error state while the pool is still Running. A synchronous physical
+                // open cannot be cancelled once it is in progress (see _warmupCts field docs), so a
+                // warmup/user open that began before Shutdown can complete with a failure after
+                // Shutdown has already disposed _errorState. Entering here would re-arm the exit
+                // timer and keep callbacks/logging alive past teardown, so we skip it once shutdown
+                // has begun; the throw below still propagates the failure to the caller/warmup loop.
+                if (State == Running)
+                {
+                    _errorState?.Enter(ex);
+                }
 
                 throw;
             }
@@ -721,13 +814,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // connection is discarded without an SNI round-trip.
             // ReturnedTime is initialized to CreateTime so a freshly minted connection never trips this
             // check on first retrieval, and is then stamped by ReturnInternalConnection on every return.
+            // Uses the pool's TimeProvider (TimeProvider.System in production) so the return stamp and
+            // this expiry check read the same clock, letting tests drive idle expiry deterministically.
             // Use subtraction rather than addition so the comparison cannot throw if ReturnedTime is
             // ever close to DateTime.MaxValue. A clock skew that leaves ReturnedTime in the future
             // produces a negative TimeSpan, which falls through as not-expired (fail safe).
             TimeSpan idleTimeout = PoolGroupOptions.IdleTimeout;
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 idleTimeout != TimeSpan.Zero &&
-                DateTime.UtcNow - connection.ReturnedTime > idleTimeout)
+                _timeProvider.GetUtcNow().UtcDateTime - connection.ReturnedTime > idleTimeout)
             {
                 return false;
             }
@@ -770,6 +865,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
             Pruner?.UpdateTimer();
+
+            // Any removal that drops the pool below MinPoolSize triggers replenishment through the
+            // shared serial, rate-limited warmup path (Story 5). This is the single choke point for
+            // every below-minimum event: connections destroyed on return (broken/lifetime), idle
+            // timeout eviction, and pruning all funnel through RemoveConnection. RequestWarmup is a
+            // no-op when MinPoolSize == 0, the pool is not Running, or a warmup loop is already
+            // running/queued, so calling it unconditionally here is cheap.
+            RequestWarmup();
         }
 
         /// <summary>
@@ -958,6 +1061,199 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // means, is that we're now responsible for this connection:
                 // it won't get reclaimed if it gets lost.
                 connection.PrePush(owningObject);
+            }
+        }
+        #endregion
+
+        #region Warmup
+        /// <summary>
+        /// Requests background warmup/replenishment: the pool asynchronously pre-creates connections
+        /// up to <see cref="MinPoolSize"/>, serially and through the shared rate limiter. Safe to
+        /// call from any thread and from hot paths; it is cheap and non-blocking.
+        ///
+        /// This is the single entry point for every warmup trigger: pool startup and any event that
+        /// drops the pool below <see cref="MinPoolSize"/> (connection destruction on return, idle
+        /// timeout eviction, pruning). It is also invoked directly by tests to exercise the loop
+        /// deterministically. Concurrent requests are coalesced by the
+        /// <see cref="_warmupLoopRunning"/> guard so that only one warmup loop ever runs at a time: a
+        /// request that arrives while a loop is already running is simply dropped, because that loop
+        /// re-reads <see cref="Count"/> on every iteration and will drive the pool to
+        /// <see cref="MinPoolSize"/> regardless.
+        /// </summary>
+        internal void RequestWarmup()
+        {
+            // No-op when there is nothing to pre-create (MinPoolSize == 0), the pool is not running,
+            // or shutdown has cancelled background activity.
+            if (MinPoolSize == 0 || State != Running || _warmupCts.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // Fast path: the pool is already at or above the minimum, so there is nothing to warm
+            // up. Return before scheduling a thread-pool work item. This keeps hot-path callers
+            // (e.g. RemoveConnection on every return) cheap. The check is best-effort under
+            // concurrency; a below-minimum condition missed here is still observed by the running
+            // loop, which re-reads Count on every iteration.
+            if (Count >= MinPoolSize)
+            {
+                return;
+            }
+
+            // Coalesce: only start a loop if one is not already running.
+            if (Interlocked.CompareExchange(ref _warmupLoopRunning, 1, 0) != 0)
+            {
+                return;
+            }
+
+            try
+            {
+                // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
+                // absorbs its own exceptions and always releases the single-loop guard on exit. The
+                // task is published so tests can await a warmup pass to a deterministic completion.
+                WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
+            }
+            catch (Exception ex)
+            {
+                // Scheduling the loop failed (e.g. the thread pool refused the work item). Release the
+                // guard so warmup isn't permanently pinned off for the life of the pool; the next
+                // below-minimum trigger will try again. Release the guard for every exception, but
+                // only absorb catchable ones - a non-catchable exception (e.g. OutOfMemoryException)
+                // must not be swallowed into a pool that keeps running in a potentially corrupted state.
+                Interlocked.Exchange(ref _warmupLoopRunning, 0);
+                if (!ADP.IsCatchableExceptionType(ex))
+                {
+                    throw;
+                }
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
+            }
+        }
+
+        /// <summary>
+        /// The coalesced warmup loop: creates connections one at a time (serially) up to
+        /// <see cref="MinPoolSize"/>, then releases the single-loop guard. Each creation goes through
+        /// the same slot-reservation and rate-limited path as user requests
+        /// (<see cref="OpenNewInternalConnection"/>), and freshly created connections are published
+        /// to the idle channel for waiting or future user requests. All failures are absorbed so
+        /// warmup can never surface an unhandled exception (Story 3); a genuine open failure still
+        /// enters the pool's blocking-period error state via the shared creation path, mirroring the
+        /// legacy WaitHandle pool.
+        /// </summary>
+        private async Task RunWarmupLoopAsync()
+        {
+            try
+            {
+                CancellationToken token;
+                try
+                {
+                    token = _warmupCts.Token;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The pool shut down and disposed the cancellation source before this loop
+                    // started. There is nothing to warm up; the finally releases the guard.
+                    return;
+                }
+
+                // Single pass: re-reads Count each iteration, so any below-minimum drop that happens
+                // while the loop is running is picked up here without a separate request flag.
+                //
+                // The loop keeps creating while the pool is running, shutdown has not cancelled
+                // background work, and the pool is not in the blocking-period error state. While user
+                // requests are failing and the pool is blocking (ErrorOccurred), warmup stands down
+                // rather than piling more doomed opens onto a struggling server - mirroring the legacy
+                // WaitHandle pool, which skips replenishment while blocking. (Warmup still
+                // participates in the error state on its own creations - entering it on failure and
+                // clearing it on success - via OpenNewInternalConnection.)
+                while (State == Running
+                    && !token.IsCancellationRequested
+                    && !ErrorOccurred
+                    && Count < MinPoolSize)
+                {
+                    // Fresh per-attempt timeout budget based on the pool's CreationTimeout, since
+                    // warmup has no owning Open() call to inherit a budget from. Matches the
+                    // replenishment behavior of the legacy WaitHandle pool.
+                    TimeoutTimer timeout = TimeoutTimer.StartNew(
+                        TimeSpan.FromMilliseconds(PoolGroupOptions.CreationTimeout));
+
+                    DbConnectionInternal? connection;
+                    try
+                    {
+                        // owningConnection is null: warmup connections are created unattached and
+                        // enter the pool as idle. A null return means the shared rate limiter was
+                        // saturated; a thrown exception means the physical open genuinely failed.
+                        connection = OpenNewInternalConnection(
+                            owningConnection: null,
+                            cancellationToken: token,
+                            timeout: timeout);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Shutdown/cancellation unwound the in-flight create. Stop warming up.
+                        break;
+                    }
+                    catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+                    {
+                        // A genuine connection-open failure (not rate limiting). It has already
+                        // entered the pool's blocking-period error state (see OpenNewInternalConnection);
+                        // trace and absorb the rethrow here, then stop this pass rather than retrying
+                        // on a tight cadence. The pool stays operational: user requests fast-fail
+                        // during the blocking window and resume creating on demand once it expires,
+                        // and the next below-minimum trigger re-requests warmup (Story 3).
+                        SqlClientEventSource.Log.TryPoolerTraceEvent(
+                            "<prov.DbConnectionPool.RunWarmupLoopAsync|RES|CPOOL> {0}, Warmup connection creation failed, stopping pass: {1}", Id, ex);
+                        break;
+                    }
+
+                    if (connection is null)
+                    {
+                        // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize),
+                        // and creation failures throw rather than return null, so a null return means
+                        // the shared rate limiter is currently saturated. Rather than bypassing the
+                        // limiter or spinning on it (Story 2), end this warmup pass. Saturation only
+                        // happens while user requests are actively creating connections - those very
+                        // creations fill the pool toward MinPoolSize, and any later drop below the
+                        // minimum re-triggers warmup through RemoveConnection - so warmup does not need
+                        // to compete for a permit here.
+                        break;
+                    }
+
+                    // Publish the freshly created connection as idle. It was PrePush'd at creation
+                    // (CreatePooledConnection) and never activated, so it is in the correct state
+                    // to enter the idle channel directly. If a Clear raced and bumped the
+                    // generation, the stale connection is harmlessly removed by IsLiveConnection
+                    // on its next retrieval, so we don't check the generation here.
+                    if (!_idleChannel.TryWrite(connection))
+                    {
+                        // Channel completed (pool shutting down). Destroy instead of pooling.
+                        RemoveConnection(connection);
+                        break;
+                    }
+
+                    // OpenNewInternalConnection is synchronous and blocks the loop's thread for
+                    // the duration of the physical open. Yield between creations so a multi-
+                    // connection warmup returns its thread-pool worker to the scheduler between
+                    // opens (rather than monopolizing one worker for the whole sequence) and stays
+                    // responsive to cancellation. There is no sync-over-async anywhere in this path.
+                    await Task.Yield();
+                }
+            }
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+            {
+                // Defense in depth: the loop must never throw a catchable exception onto the thread
+                // pool. A non-catchable exception (e.g. OutOfMemoryException) is left to propagate
+                // rather than absorbed into a pool that keeps running in a potentially corrupted
+                // state; the finally below still releases the single-loop guard on that path.
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.RunWarmupLoopAsync|RES|CPOOL> {0}, Warmup loop failed, absorbing: {1}", Id, ex);
+            }
+            finally
+            {
+                // Always release the single-loop guard, whatever exit path we took, so a future
+                // below-minimum trigger can start a new loop. Interlocked.Exchange mirrors the
+                // Interlocked.CompareExchange acquire in RequestWarmup.
+                Interlocked.Exchange(ref _warmupLoopRunning, 0);
             }
         }
         #endregion

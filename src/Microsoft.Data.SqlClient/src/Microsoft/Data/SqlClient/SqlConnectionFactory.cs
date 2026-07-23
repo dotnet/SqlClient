@@ -650,8 +650,14 @@ namespace Microsoft.Data.SqlClient
                         //     used below to connect to the SQL Express User Instance.
                         instanceName = sseConnection.InstanceName;
 
-                        // Set future transient fault handling based on connection options
-                        sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+                        // Set future transient fault handling based on connection options.
+                        // sqlOwningConnection is null for background warmup/replenishment creations,
+                        // which have no owning connection to carry this state forward; only propagate
+                        // it when an owning connection is present (matches the null-safe reads above).
+                        if (sqlOwningConnection != null)
+                        {
+                            sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+                        }
 
                         if (!instanceName.StartsWith(@"\\.\", StringComparison.Ordinal))
                         {
