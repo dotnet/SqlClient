@@ -107,6 +107,24 @@
   </ItemGroup>
 
   <!-- ===================================================================== -->
+  <!-- Internal SDL analyzers (private ADO.Net pipelines only) -->
+  <!--
+    Microsoft.Internal.Analyzers provides the internal "IA*" SDL Roslyn rules. The package is
+    Microsoft-internal and confidential: it is restored ONLY from an internal NuGet feed, ONLY by
+    the private ADO.Net project pipelines, and ONLY when EnableAnalyzers and InternalAnalyzers are
+    both true (see the InternalAnalyzers block in src/Directory.Build.props). Public builds and
+    public CI never set those flags, so the version below is only declared for the private analysis
+    pass and is never seen by a public build.
+
+    The version is supplied by the private pipeline via the MicrosoftInternalAnalyzersVersion
+    property. There is intentionally NO default: the pipeline pins the exact version, and an
+    unset value fails restore rather than silently drifting.
+  -->
+  <ItemGroup Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true'">
+    <PackageVersion Include="Microsoft.Internal.Analyzers" Version="$(MicrosoftInternalAnalyzersVersion)" />
+  </ItemGroup>
+
+  <!-- ===================================================================== -->
   <!-- SqlServer Dependencies -->
 
   <!-- None -->
