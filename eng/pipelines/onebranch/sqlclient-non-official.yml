@@ -6,29 +6,20 @@
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# No activity-based triggers.
+# No activity- or schedule-based triggers.  This pipeline is run manually only.
 pr: none
 trigger: none
-
-# We run this pipeline on a daily schedule.
-schedules:
-  - cron: "30 4 * * *"
-    displayName: Daily 04:30 UTC Build
-    branches:
-      include:
-        - internal/main
-    always: true
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
 
-  # When true, any SDL errors will break the build, and TSA bug filing will be disabled.  When
-  # false, SDL errors will be logged but will not break the build, and TSA bug filing will be
-  # enabled.
+  # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
+  # will not break the build.  TSA bug filing is always disabled in the non-official pipeline
+  # (see the tsa block in globalSdl).
   - name: breakOnSdlError
     displayName: Break on SDL error
     type: boolean
-    default: false
+    default: true
 
   # True to enable debug information and steps.
   - name: debug
@@ -252,14 +243,30 @@ extends:
         packageVersion: '$(Build.BuildNumber)'
 
       tsa:
-        # We deliberately drive every tool's `break` value from breakOnSdlError and set TSA's
-        # `enabled` to its negation, rather than relying on OneBranch's implicit behaviour of
-        # flipping each tool's break default based on whether TSA is enabled.  We have hit bugs in
-        # that implicit break-altering logic in the past, so we set both values explicitly to keep
-        # them deterministic.
+        # TSA (Trust Services Automation) files SDL analysis findings as Azure DevOps bug work
+        # items.  It is hardcoded DISABLED in the non-official pipeline.
         #
-        # TSA bug filing is enabled when we are not breaking on SDL errors.
-        enabled: ${{ not(parameters.breakOnSdlError) }}
+        # Why disabled here:
+        #   The non-official pipeline is a manual-only, developer-helper build used to validate
+        #   SDL scans and iterate on fixes before they land.  We do not want it filing (or
+        #   updating) bug work items -- that would create churn and duplicate the bugs owned by
+        #   the official pipeline, where TSA is hardcoded enabled.  Here, findings surface
+        #   directly in the build instead, gated by breakOnSdlError.
+        #
+        # Interaction with other SDL tool defaults:
+        #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
+        #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
+        #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
+        #   coupling: every tool above sets `break: ${{ parameters.breakOnSdlError }}` explicitly,
+        #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
+        #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
+        #   set explicitly to keep the behaviour deterministic.
+        #
+        # Otherwise independent of breakOnSdlError:
+        #   Aside from that default-flipping, TSA and breakOnSdlError are orthogonal.  Disabling
+        #   TSA here does not by itself force breaking -- breakOnSdlError is what controls whether
+        #   findings fail the build.
+        enabled: false
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:

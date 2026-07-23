@@ -258,14 +258,26 @@ extends:
         packageVersion: '$(Build.BuildNumber)'
 
       tsa:
-        # We deliberately drive every tool's `break` value from breakOnSdlError and set TSA's
-        # `enabled` to its negation, rather than relying on OneBranch's implicit behaviour of
-        # flipping each tool's break default based on whether TSA is enabled.  We have hit bugs in
-        # that implicit break-altering logic in the past, so we set both values explicitly to keep
-        # them deterministic.
+        # TSA (Trust Services Automation) files SDL analysis findings as Azure DevOps bug work
+        # items.  It is hardcoded enabled in the official pipeline so that every SDL finding is
+        # always tracked as a bug, regardless of how any individual run terminates.
         #
-        # TSA bug filing is enabled when we are not breaking on SDL errors.
-        enabled: ${{ not(parameters.breakOnSdlError) }}
+        # Interaction with other SDL tool defaults:
+        #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
+        #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
+        #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
+        #   coupling: every tool above sets `break: ${{ parameters.breakOnSdlError }}` explicitly,
+        #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
+        #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
+        #   set explicitly to keep the behaviour deterministic.
+        #
+        # Otherwise independent of breakOnSdlError:
+        #   Aside from that default-flipping, TSA and breakOnSdlError are orthogonal.  TSA files
+        #   bugs from the complete finding set (the TSAUpload step runs after all analyzers have
+        #   produced results), while breakOnSdlError separately controls whether those same
+        #   findings also fail the build.  Enabling TSA here does not suppress breaking, and
+        #   breaking does not prevent bug filing within a job.
+        enabled: true
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
