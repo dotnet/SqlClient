@@ -76,11 +76,12 @@ the pipeline. The group must define:
 | Variable | Description |
 | -------- | ----------- |
 | `KustoClusterUri` | ADX cluster URI, e.g. `https://<cluster>.<region>.kusto.windows.net`. Empty ⇒ ingestion skipped. |
-| `KustoDatabase` | Target Kusto database. |
+| `KustoDatabase` | Target Kusto database. Empty ⇒ ingestion skipped. |
 | `KustoServiceConnection` | Azure DevOps ARM service connection whose SP has ingest rights. Empty ⇒ ingestion skipped. |
 
-Ingestion is gated at runtime: it only runs when both `KustoClusterUri` and `KustoServiceConnection`
-are non-empty, so the pipeline still runs + compares before the cluster/service connection exist.
+Ingestion is gated at runtime: it only runs when `KustoClusterUri`, `KustoDatabase` and
+`KustoServiceConnection` are all non-empty, so the pipeline still runs + compares before the
+cluster/service connection exist.
 
 ### Managing the baseline version
 
@@ -193,8 +194,10 @@ Ingestion runs in an `AzureCLI@2` task using the ADO **ARM service connection**
 (`KustoServiceConnection` from the `ADX Cluster Variables` group). That connection's **service
 principal** must be granted, on the target database:
 
-- **Database Ingestor** (to ingest), and
-- **Database Viewer** (recommended, for verification queries).
+- **Database Ingestor** — required to queue the ingestion, and
+- **Database Viewer** — required for the post-ingestion verification queries. With Ingestor-only
+  rights the data still lands, but the verify step cannot read it back and logs a warning naming
+  this missing role.
 
 `ingest_kusto.py` authenticates to Kusto with `with_az_cli_authentication` (the service connection
 is already `az login`'d inside the task) and performs a **queued** ingestion against the
@@ -202,8 +205,9 @@ data-management (`ingest-`) endpoint.
 
 ### Running before the cluster exists
 
-Ingestion is **conditional**: it only runs when both `KustoClusterUri` and `KustoServiceConnection`
-(from the `ADX Cluster Variables` group) are non-empty. Until a cluster and service connection are
+Ingestion is **conditional**: it only runs when `KustoClusterUri`, `KustoDatabase` and
+`KustoServiceConnection` (from the `ADX Cluster Variables` group) are all non-empty. Until a cluster
+and service connection are
 configured, the pipeline still runs both passes, produces the comparison, and publishes the
 translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill ingestion.
 
@@ -223,6 +227,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion`) or one pass produced no `*-report-full.json`. |
-| Ingestion step skipped | `KustoClusterUri` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
+| Ingestion step skipped | `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
+| "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
 | Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |

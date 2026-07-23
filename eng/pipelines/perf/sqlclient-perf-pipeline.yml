@@ -336,7 +336,7 @@ extends:
               exit 0
             fi
 
-            python3 "$scriptsDir/ingest_kusto.py" \
+            python3 -u "$scriptsDir/ingest_kusto.py" \
               --cluster "$(KustoClusterUri)" \
               --database "$(KustoDatabase)" \
               --run-file "$runFiles" \

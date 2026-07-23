@@ -119,6 +119,20 @@ def _scalar(client, database, query):
     return int(resp.primary_results[0].rows[0][0])
 
 
+def _is_authorization_error(exc):
+    """True when an exception looks like a Kusto authorization/permission denial
+    (as opposed to a transient network error), so the operator can be told to
+    grant the querying role rather than chase a connectivity problem."""
+    if exc is None:
+        return False
+    text = str(exc).lower()
+    needles = (
+        "forbidden", "unauthorized", "not authorized", "does not have permission",
+        "principal", "403", "e_access", "access denied",
+    )
+    return any(n in text for n in needles)
+
+
 def _dump_failures(client, database):
     cmd = (".show ingestion failures "
            "| where Table in ('PerfRun', 'PerfBenchmarkResult') "
@@ -171,6 +185,7 @@ def _verify(cluster, database, run_table, results_table, pipeline_ids,
 
     deadline = time.time() + timeout_s
     query_ever_ok = False
+    last_exc = None
     run_have = res_have = -1
     while True:
         try:
@@ -178,6 +193,7 @@ def _verify(cluster, database, run_table, results_table, pipeline_ids,
             res_have = _scalar(client, database, res_query)
             query_ever_ok = True
         except Exception as exc:  # noqa: BLE001 - transient/permission, retried
+            last_exc = exc
             print(f"  (verification query failed, will retry: {exc})")
 
         if query_ever_ok:
@@ -192,9 +208,21 @@ def _verify(cluster, database, run_table, results_table, pipeline_ids,
         time.sleep(interval_s)
 
     if not query_ever_ok:
-        print("##vso[task.logissue type=warning]Could not verify Kusto ingestion "
-              "(query endpoint unreachable or insufficient rights). Data was queued; "
-              "check the database manually.", file=sys.stderr)
+        detail = str(last_exc) if last_exc is not None else "no further detail"
+        if _is_authorization_error(last_exc):
+            # Queued ingestion only needs the 'Database Ingestor' role; verification *queries* the
+            # data back and additionally needs 'Database Viewer'.  A principal with Ingestor-only
+            # rights ingests fine but cannot verify, so name the missing role instead of blaming the
+            # network.  The ingestion itself was queued, so this stays a warning (exit 0).
+            print("##vso[task.logissue type=warning]Kusto ingestion was queued, but the ingestion "
+                  "principal is not authorized to query the database, so ingestion could not be "
+                  "verified. Grant the service connection's service principal the 'Database Viewer' "
+                  "role on this database (in addition to 'Database Ingestor'). "
+                  f"Details: {detail}", file=sys.stderr)
+        else:
+            print("##vso[task.logissue type=warning]Could not verify Kusto ingestion "
+                  "(query endpoint unreachable or the verification query failed). Data was queued; "
+                  f"check the database manually. Details: {detail}", file=sys.stderr)
         return 0
 
     print(f"##vso[task.logissue type=error]Kusto ingestion did not complete: "
