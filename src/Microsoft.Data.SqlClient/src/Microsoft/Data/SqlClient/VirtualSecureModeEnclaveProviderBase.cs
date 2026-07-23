@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -100,52 +100,34 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, Array.Empty<byte>(), clientDHKey);
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        protected override SqlEnclaveSession CreateEnclaveSessionCore(
+            byte[] enclaveAttestationInfo,
+            SqlEnclaveAttestationParameters attestationParameters,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength)
         {
-            sqlEnclaveSession = null;
-            counter = 0;
-            try
+            if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
             {
-                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
-                if (sqlEnclaveSession == null)
-                {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
-                    {
-                        // Deserialize the payload
-                        AttestationInfo info = new AttestationInfo(attestationInfo);
+                // Deserialize the payload
+                AttestationInfo info = new AttestationInfo(enclaveAttestationInfo);
 
-                        // Verify enclave policy matches expected policy
-                        VerifyEnclavePolicy(info.EnclaveReportPackage);
+                // Verify enclave policy matches expected policy
+                VerifyEnclavePolicy(info.EnclaveReportPackage);
 
-                        // Perform Attestation per VSM protocol
-                        VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
+                // Perform Attestation per VSM protocol
+                VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
 
-                        // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+                // Set up shared secret and validate signature
+                byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
 
-                        // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
-                    }
-                    else
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
-                }
+                return new SqlEnclaveSession(sharedSecret, info.SessionId);
             }
-            finally
+            else
             {
-                UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
             }
         }
-
-        // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
-        }
-
         #endregion
 
         #region Private helpers
