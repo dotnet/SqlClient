@@ -41,11 +41,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public int Parallelism { get; set; }
 
         /// <summary>
-        /// Maximum pool size. A value greater than or equal to <see cref="Parallelism"/>
-        /// means no contention for physical connections; a smaller value forces workers to
-        /// wait for connections to be returned (pool exhaustion / back-pressure).
+        /// Maximum pool size, exercised across three regimes relative to
+        /// <see cref="Parallelism"/>: larger than the worker count (idle spare
+        /// connections, no contention), equal to it (fully subscribed, no contention), and
+        /// smaller than it (pool exhaustion forces workers to wait for a connection to be
+        /// returned — back-pressure).
         /// </summary>
-        [Params(50, 10)]
+        [Params(100, 50, 10)]
         public int MaxPoolSize { get; set; }
 
         /// <summary>
