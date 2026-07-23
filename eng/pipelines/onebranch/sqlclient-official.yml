@@ -166,6 +166,13 @@ extends:
     #
     globalSdl:
 
+      # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
+      # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
+      # non-official run and kept under .config/ alongside the other SDL tool configs
+      # (CredScan/PoliCheck/TSA).
+      baseline:
+        baselineFile: $(Build.SourcesDirectory)/.config/guardian/.gdnbaselines
+
       # Configure APIScan behaviour:
       #
       # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
