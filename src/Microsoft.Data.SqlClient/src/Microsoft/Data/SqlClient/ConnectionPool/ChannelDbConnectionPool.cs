@@ -1106,8 +1106,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Scheduling the loop failed (e.g. the thread pool refused the work item). Release the
                 // guard so warmup isn't permanently pinned off for the life of the pool; the next
-                // below-minimum trigger will try again.
+                // below-minimum trigger will try again. Release the guard for every exception, but
+                // only absorb catchable ones - a non-catchable exception (e.g. OutOfMemoryException)
+                // must not be swallowed into a pool that keeps running in a potentially corrupted state.
                 Interlocked.Exchange(ref _warmupLoopRunning, 0);
+                if (!ADP.IsCatchableExceptionType(ex))
+                {
+                    throw;
+                }
+
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
             }
@@ -1222,9 +1229,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     await Task.Yield();
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                // Defense in depth: the loop must never throw onto the thread pool.
+                // Defense in depth: the loop must never throw a catchable exception onto the thread
+                // pool. A non-catchable exception (e.g. OutOfMemoryException) is left to propagate
+                // rather than absorbed into a pool that keeps running in a potentially corrupted
+                // state; the finally below still releases the single-loop guard on that path.
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.RunWarmupLoopAsync|RES|CPOOL> {0}, Warmup loop failed, absorbing: {1}", Id, ex);
             }
