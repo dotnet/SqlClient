@@ -2,9 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// @TODO: Merge with SessionHandle.windows (and/or introduce polymorphism to handle this indirection)
-// @TODO: Also, why do we have native handle type defined in Unix which doesn't ever have a native handle type?
-#if NET && _UNIX
+// @TODO: Merge with other implementations (and/or introduce polymorphism to handle this indirection)
+#if NET
 
 namespace Microsoft.Data.SqlClient
 {
@@ -16,27 +15,31 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     /// <remarks>
     /// It is a ref struct so that it can only be used to transport the handles and not store them.
-    /// If you change this type you must also change the version for the other platform.
     /// </remarks>
     internal readonly ref struct SessionHandle
     {
         public const int NativeHandleType = 1;
         public const int ManagedHandleType = 2;
 
-        // @TODO: Auto-properties
+        // @TODO: Make auto-properties
         public readonly ManagedSni.SniHandle ManagedHandle;
+        public readonly SNIHandle NativeHandle;
         public readonly int Type;
 
-        public SessionHandle(ManagedSni.SniHandle managedHandle, int type)
+        public SessionHandle(ManagedSni.SniHandle managedHandle, SNIHandle nativeHandle, int type)
         {
             Type = type;
             ManagedHandle = managedHandle;
+            NativeHandle = nativeHandle;
         }
 
-        public bool IsNull => ManagedHandle is null;
+        public bool IsNull => (Type == NativeHandleType) ? NativeHandle is null : ManagedHandle is null;
 
         public static SessionHandle FromManagedSession(ManagedSni.SniHandle managedSessionHandle) =>
-            new SessionHandle(managedSessionHandle, ManagedHandleType);
+            new SessionHandle(managedSessionHandle, nativeHandle: null, ManagedHandleType);
+
+        public static SessionHandle FromNativeHandle(SNIHandle nativeSessionHandle) =>
+            new SessionHandle(managedHandle: null, nativeSessionHandle, NativeHandleType);
     }
 }
 

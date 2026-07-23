@@ -54,19 +54,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal static DbConnectionPoolIdentity GetCurrent()
         {
-            #if NETFRAMEWORK
-            return GetCurrentNative();
-            #else
-
-            #if _UNIX
-            return GetCurrentManaged();
-            #else
             return LocalAppContextSwitches.UseManagedNetworking
                 ? GetCurrentManaged()
                 : GetCurrentNative();
-            #endif
-
-            #endif
         }
 
         #if NETFRAMEWORK
@@ -94,7 +84,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return current;
         }
 
-        #if _WINDOWS
         private static DbConnectionPoolIdentity GetCurrentNative()
         {
             DbConnectionPoolIdentity current;
@@ -124,7 +113,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             s_lastIdentity = current;
             return current;
         }
-        #endif
     }
 }
 

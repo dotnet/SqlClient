@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if _WINDOWS
-
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -276,7 +274,12 @@ namespace Microsoft.Data.SqlClient.LocalDb
         // localDB can also have a format of np:\\.\pipe\LOCALDB#<some number>\tsql\query
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
         {
-            if (serverName is not null)
+            // LocalDB is only supported on Windows
+            if (!OsConstants.IsWindows)
+            {
+                return null;
+            }
+            else if (serverName is not null)
             {
                 // it can start with spaces if specified in quotes
                 // Memory allocation is reduced by using ReadOnlySpan
@@ -300,6 +303,12 @@ namespace Microsoft.Data.SqlClient.LocalDb
 
         internal static string GetLocalDbMessage(int hrCode)
         {
+            if (!OsConstants.IsWindows)
+            {
+                // LocalDB is not available for Unix and hence it cannot be supported.
+                throw new PlatformNotSupportedException(Strings.LocalDBNotSupported);
+            }
+
             Debug.Assert(hrCode < 0, "HRCode does not indicate error");
             try
             {
@@ -422,5 +431,3 @@ namespace Microsoft.Data.SqlClient.LocalDb
         #endif
     }
 }
-
-#endif
