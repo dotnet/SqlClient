@@ -2,10 +2,9 @@
 namespace SqlMetaDataCS;
 
 using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Data.Sql;
-using System.Data.SqlTypes;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient.Server;
 
 public sealed partial class SqlMetaDataTester
 {
@@ -14,10 +13,12 @@ public sealed partial class SqlMetaDataTester
     }
 
     //<Snippet1>
+    // using System;
+    // using System.Collections.Generic;
+    // using System.Data;
     // using Microsoft.Data.SqlClient.Server;
 
-    [SqlProcedure]
-    public static void CreateNewRecord()
+    public static IEnumerable<SqlDataRecord> ReturnNewRecords()
     {
         // Variables.
         SqlMetaData column1Info;
@@ -35,13 +36,15 @@ public sealed partial class SqlMetaDataTester
                                                   column2Info,
                                                   column3Info });
 
-        // Set the record fields.
+        // Set the fields of the first record and stream it to SQL Server.
         record.SetString(0, "Hello World!");
         record.SetInt32(1, 42);
         record.SetDateTime(2, DateTime.Now);
+        yield return record;
 
-        // Send the record to the calling program.
-        SqlContext.Pipe.Send(record);
+        // Set the fields of the second record and stream it to SQL Server.
+        record.SetInt32(1, 0);
+        yield return record;
     }
     //</Snippet1>
 
