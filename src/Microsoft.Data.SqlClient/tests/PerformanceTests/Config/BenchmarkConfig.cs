@@ -9,7 +9,7 @@ using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
 #if WINDOWS
-using BenchmarkDotNet.Diagnostics.Windows.Configs;
+using BenchmarkDotNet.Diagnostics.Windows;
 #endif
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             if (UseNativeMemoryAndEtwProfiler)
             {
                 config = config
-                    .AddDiagnoser(NativeMemoryProfiler.Default)
+                    .AddDiagnoser(new NativeMemoryProfiler())
                     .AddDiagnoser(new EtwProfiler());
             }
 #endif

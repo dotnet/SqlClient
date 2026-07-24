@@ -454,7 +454,10 @@ function Build-Variant {
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
     Write-Host "Building '$Label' variant ($Configuration, $Framework) into $outDir ..."
     $buildArgs = @("build", $PerfProject, "-c", $Configuration, "-f", $Framework, "--nologo", "-v", "minimal", "-o", $outDir) + $ExtraArgs
-    Invoke-Native { dotnet @buildArgs } "Build failed for '$Label' variant"
+    # Route the build output to the host/transcript (Out-Host) so it is visible AND does not land on
+    # this function's success stream: '$dir = Build-Variant ...' otherwise captures the entire build
+    # log into the return value, hiding build errors and corrupting the returned exe-dir path.
+    Invoke-Native { dotnet @buildArgs } "Build failed for '$Label' variant" | Out-Host
     return $outDir
 }
 
