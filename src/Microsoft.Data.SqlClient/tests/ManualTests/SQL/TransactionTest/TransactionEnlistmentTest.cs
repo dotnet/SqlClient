@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RunTestFormat(Action testCase)
         {
-            TestTableName = DataTestUtility.GenerateObjectName();
+            TestTableName = DataTestUtility.GetShortName("TransactionEnlistmentTest");
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {

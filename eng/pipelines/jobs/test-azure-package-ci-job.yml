@@ -264,8 +264,6 @@ jobs:
           # The config.jsonc file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are
           # necessary here.
-
-          AADServicePrincipalId: $(AADServicePrincipalId)
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
@@ -277,7 +275,7 @@ jobs:
           # prevents external contributors from creating PRs and running
           # pipelines that could expose these secrets.
           ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
             AADServicePrincipalSecret: $(AADServicePrincipalSecret)
 
       # Perform any local SQL Server setup.

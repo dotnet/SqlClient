@@ -232,8 +232,6 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
-        ${{ if parameters.configProperties.AADAuthorityURL }}:
-          AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
           TCPConnectionStringHGSVBS: ${{ parameters.configProperties.TCPConnectionStringHGSVBS }}
         ${{ if parameters.configProperties.TCPConnectionStringNoneVBS }}:
@@ -244,8 +242,6 @@ jobs:
           EnclaveEnabled: ${{ eq(parameters.configProperties.EnclaveEnabled, 'true') }}
         ${{ if parameters.configProperties.TracingEnabled }}:
           TracingEnabled: ${{ eq(parameters.configProperties.TracingEnabled, 'true') }}
-        ${{ if parameters.configProperties.AADPasswordConnectionString }}:
-          AADPasswordConnectionString: ${{ parameters.configProperties.AADPasswordConnectionString }}
         ${{ if parameters.configProperties.AADServicePrincipalId }}:
           AADServicePrincipalId: ${{ parameters.configProperties.AADServicePrincipalId }}
         ${{ if parameters.configProperties.AADServicePrincipalSecret }}:

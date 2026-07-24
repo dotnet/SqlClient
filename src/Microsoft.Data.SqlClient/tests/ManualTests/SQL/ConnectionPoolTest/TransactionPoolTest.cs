@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 
+using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
@@ -13,23 +14,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class TransactionPoolTest
     {
         /// <summary>
+        /// Opens the given connection, setting an access token for Azure SQL targets.
+        /// </summary>
+        private static async Task OpenWithAccessTokenAsync(SqlConnection connection)
+        {
+            if (DataTestUtility.IsAzureConnStringSetup())
+            {
+                connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            }
+            connection.Open();
+        }
+
+        /// <summary>
         /// Tests if connections in a distributed transaction are put into a transaction pool. Also checks that clearallpools
         /// does not clear transaction connections and that the transaction root is put into "stasis" when closed
         /// Synapse: only supports local transaction request.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void BasicTransactionPoolTest(string connectionString)
+        public static async Task BasicTransactionPoolTest(string connectionString)
         {
             SqlConnection.ClearAllPools();
             ConnectionPoolWrapper connectionPool = null;
 
-            using (TransactionScope transScope = new())
+            using (TransactionScope transScope = new(TransactionScopeAsyncFlowOption.Enabled))
             {
                 using SqlConnection connection1 = new(connectionString);
                 using SqlConnection connection2 = new(connectionString);
-                connection1.Open();
-                connection2.Open();
+                await OpenWithAccessTokenAsync(connection1);
+                await OpenWithAccessTokenAsync(connection2);
                 connectionPool = new ConnectionPoolWrapper(connection1);
 
                 InternalConnectionWrapper internalConnection1 = new(connection1);
@@ -43,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Attempt to re-use root connection
                 connection1.Close();
                 using SqlConnection connection3 = new(connectionString);
-                connection3.Open();
+                await OpenWithAccessTokenAsync(connection3);
 
                 Assert.True(connectionPool.ContainsConnection(connection3), "New connection in wrong pool");
                 Assert.True(internalConnection1.IsInternalConnectionOf(connection3), "Root connection was not re-used");
@@ -51,14 +64,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Attempt to re-use non-root connection
                 connection2.Close();
                 using SqlConnection connection4 = new(connectionString);
-                connection4.Open();
+                await OpenWithAccessTokenAsync(connection4);
                 Assert.True(internalConnection2.IsInternalConnectionOf(connection4), "Connection did not re-use expected internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in the wrong pool");
                 connection4.Close();
 
                 // Use a different connection string
                 using SqlConnection connection5 = new(connectionString + ";App=SqlConnectionPoolUnitTest;");
-                connection5.Open();
+                await OpenWithAccessTokenAsync(connection5);
                 Assert.False(internalConnection2.IsInternalConnectionOf(connection5), "Connection with different connection string re-used internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection5), "Connection with different connection string is in same pool");
                 connection5.Close();
@@ -76,17 +89,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="connectionString"></param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void TransactionCleanupTest(string connectionString)
+        public static async Task TransactionCleanupTest(string connectionString)
         {
             SqlConnection.ClearAllPools();
             ConnectionPoolWrapper connectionPool = null;
 
-            using (TransactionScope transScope = new())
+            using (TransactionScope transScope = new(TransactionScopeAsyncFlowOption.Enabled))
             {
                 using SqlConnection connection1 = new(connectionString);
                 using SqlConnection connection2 = new(connectionString);
-                connection1.Open();
-                connection2.Open();
+                await OpenWithAccessTokenAsync(connection1);
+                await OpenWithAccessTokenAsync(connection2);
                 InternalConnectionWrapper internalConnection1 = new(connection1);
                 connectionPool = new ConnectionPoolWrapper(connection1);
 

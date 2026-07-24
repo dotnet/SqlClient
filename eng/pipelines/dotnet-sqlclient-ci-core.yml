@@ -504,14 +504,12 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -534,11 +532,9 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
-            AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -585,11 +581,9 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -640,7 +634,6 @@ stages:
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
-              AADAuthorityURL: $(AADAuthorityURL)
               AADServicePrincipalId: $(AADServicePrincipalId)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)

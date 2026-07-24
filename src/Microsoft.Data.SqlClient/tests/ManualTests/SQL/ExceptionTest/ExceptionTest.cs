@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -212,17 +213,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void VariousExceptionTests()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             // Strip the password in connection string if Authentication=Active Directory Managed Identity as it can not be used with a Password
             if (builder.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
             {
-                string[] removeKeys = { "Password", "PWD" };
-                string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
+                string[] removeKeys = ["Password", "PWD"];
+                string connStr = DataTestUtility.TCPConnectionString.RemoveKeysInConnStr(removeKeys);
                 builder = new SqlConnectionStringBuilder(connStr);
             }
 
             // Test 1 - A
-            SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
+            SqlConnectionStringBuilder badBuilder = new(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
             using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
             {
                 using (SqlCommand command = sqlConnection.CreateCommand())

@@ -41,14 +41,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: AADAuthorityURL
-    type: string
-    default: ''
-
-  - name: AADPasswordConnectionString
-    type: string
-    default: ''
-
   - name: AADServicePrincipalId
     type: string
     default: ''
@@ -151,10 +143,6 @@ steps:
           $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
           $p.NPConnectionString="${{parameters.NPConnectionString }}"
-
-          $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
-
-          $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
 
           $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
 

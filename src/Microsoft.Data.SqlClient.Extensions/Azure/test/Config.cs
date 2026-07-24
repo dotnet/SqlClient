@@ -40,8 +40,7 @@ internal static class Config
     internal static bool DebugEmit { get; } = false;
     internal static bool IntegratedSecuritySupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
-    // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
-    internal static string PasswordConnectionString { get; } = string.Empty;
+    internal static string TCPConnectionString { get; } = string.Empty;
     internal static string ServicePrincipalId { get; } = string.Empty;
     internal static string ServicePrincipalSecret { get; } = string.Empty;
     internal static string SystemAccessToken { get; } = string.Empty;
@@ -56,7 +55,7 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.IsEmpty();
+    internal static bool IsAzureSqlConnectionString() => !TCPConnectionString.IsEmpty() && IsAzureSqlServer();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
     internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();
@@ -65,7 +64,7 @@ internal static class Config
     internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.IsEmpty();
 
     internal static bool IsAzureSqlServer() =>
-        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
+        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
 
     internal static bool OnAdoPool() => AdoPool;
     internal static bool OnLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
@@ -117,12 +116,11 @@ internal static class Config
             //
             IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
             ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");
-            PasswordConnectionString = GetString(root, "AADPasswordConnectionString");
             ServicePrincipalId = GetString(root, "AADServicePrincipalId");
             ServicePrincipalSecret = GetString(root, "AADServicePrincipalSecret");
             SystemAssignedManagedIdentitySupported =
                 GetBool(root, "SupportsSystemAssignedManagedIdentity");
-            TcpConnectionString = GetString(root, "TCPConnectionString");
+            TCPConnectionString = GetString(root, "TCPConnectionString");
             TenantId = GetString(root, "AzureKeyVaultTenantId");
             UseManagedSniOnWindows = GetBool(root, "UseManagedSNIOnWindows");
             UserManagedIdentityClientId = GetString(root, "UserManagedIdentityClientId");
@@ -163,10 +161,6 @@ internal static class Config
                 $"  IntegratedSecuritySupported:            {IntegratedSecuritySupported}");
             Console.WriteLine(
                 $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
-            Console.WriteLine(
-                $"  PasswordConnectionString:               {PasswordConnectionString}");
-            Console.WriteLine(
-                $"                                          {Base64Encode(PasswordConnectionString)}");
             Console.WriteLine(
                 $"  ServicePrincipalId:                     {ServicePrincipalId}");
             Console.WriteLine(
