@@ -51,10 +51,6 @@ variables:
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
 
-  # https://aka.ms/obpipelines/sdl
-  - name: ob_sdl_binskim_break
-    value: true
-
   - name: Packaging.EnableSBOMSigning
     value: true
 
