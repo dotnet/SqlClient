@@ -15,7 +15,7 @@
     Framework Windows containers to bind older in-box System.Data.dll versions.
 
     Run: dotnet test tools/SniCloseLegacyRepro                        (in-process tests only)
-      $env:SNICLOSE_CONNSTR="Server=...;User ID=...;Password=..."  (enables live MARS + stress)
+      $env:SNICLOSE_CONNSTR="Server=<server>;User ID=<user>;Password=<pwd>"  (enables live MARS + stress)
       dotnet test tools/SniCloseLegacyRepro
 
     This project uses Central Package Management via the sibling
