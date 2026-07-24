@@ -179,19 +179,36 @@ extends:
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).
     # These are assembled with key-level conditionals because inline '${{ if }}' directives are not
-    # allowed inside a quoted string value.  '--baseline-version' is omitted entirely when no baseline
-    # is requested: emitting an empty value would let the arg parser consume the following
-    # '--regression-threshold' flag as the baseline version and corrupt every subsequent argument.
-    ${{ if ne(parameters.baselineVersion, '') }}:
-      ${{ if eq(parameters.failOnRegression, true) }}:
-        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+    # allowed inside a quoted string value.  The argument STYLE must match the target script: the
+    # Windows entry point is PowerShell (run-perf-tests.ps1) and binds '-PascalCase' named params,
+    # while the Linux entry point is bash (run-perf-tests.sh) and parses '--kebab-case' flags.
+    # Passing '--kebab-case' to PowerShell mis-binds positionally (e.g. 'perf-results' lands on
+    # -RunMode and trips its ValidateSet), so the two platforms need distinct arg strings.
+    # The baseline-version flag is omitted entirely when no baseline is requested: on bash an empty
+    # value would let getopts consume the following flag as the baseline version and corrupt every
+    # subsequent argument; omitting it on both platforms keeps the two paths symmetric.
+    ${{ if eq(parameters.platform, 'windows') }}:
+      ${{ if ne(parameters.baselineVersion, '') }}:
+        ${{ if eq(parameters.failOnRegression, true) }}:
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression'
+        ${{ else }}:
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }}'
       ${{ else }}:
-        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+        ${{ if eq(parameters.failOnRegression, true) }}:
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression'
+        ${{ else }}:
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }}'
     ${{ else }}:
-      ${{ if eq(parameters.failOnRegression, true) }}:
-        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+      ${{ if ne(parameters.baselineVersion, '') }}:
+        ${{ if eq(parameters.failOnRegression, true) }}:
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+        ${{ else }}:
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
       ${{ else }}:
-        testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+        ${{ if eq(parameters.failOnRegression, true) }}:
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+        ${{ else }}:
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
