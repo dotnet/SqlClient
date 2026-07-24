@@ -7,12 +7,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -264,15 +262,13 @@ namespace Microsoft.Data.SqlClient
             return connectionPoolGroup;
         }
 
-        internal SqlMetaDataFactory GetMetaDataFactory(
-            DbConnectionPoolGroup poolGroup,
-            DbConnectionInternal internalConnection)
+        internal SqlMetaDataFactory GetMetaDataFactory(DbConnectionPoolGroup poolGroup)
         {
             Debug.Assert(poolGroup is not null, "connectionPoolGroup may not be null.");
 
             // Get the metadata factory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory(internalConnection);
+            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory();
         }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
@@ -747,14 +743,9 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        private static SqlMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection)
+        private static SqlMetaDataFactory CreateMetaDataFactory()
         {
-            Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
-
-            Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
-            Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-
-            return new SqlMetaDataFactory(xmlStream, internalConnection.Capabilities);
+            return new SqlMetaDataFactory();
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(

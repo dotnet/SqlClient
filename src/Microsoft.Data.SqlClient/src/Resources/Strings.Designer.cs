@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -1402,6 +1402,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration..
+        /// </summary>
+        internal static string DbConnectionString_IdleTimeout {
+            get {
+                return ResourceManager.GetString("DbConnectionString_IdleTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the initial catalog or database in the data source..
         /// </summary>
         internal static string DbConnectionString_InitialCatalog {
@@ -1425,15 +1434,6 @@ namespace System {
         internal static string DbConnectionString_LoadBalanceTimeout {
             get {
                 return ResourceManager.GetString("DbConnectionString_LoadBalanceTimeout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration..
-        /// </summary>
-        internal static string DbConnectionString_IdleTimeout {
-            get {
-                return ResourceManager.GetString("DbConnectionString_IdleTimeout", resourceCulture);
             }
         }
         
@@ -1915,42 +1915,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The collection &apos;{0}&apos; is missing from the metadata XML..
-        /// </summary>
-        internal static string MDF_DataTableDoesNotExist {
-            get {
-                return ResourceManager.GetString("MDF_DataTableDoesNotExist", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The metadata XML is invalid. The {1} column of the {0} collection must contain a non-empty string..
-        /// </summary>
-        internal static string MDF_InvalidXmlInvalidValue {
-            get {
-                return ResourceManager.GetString("MDF_InvalidXmlInvalidValue", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A restriction exists for which there is no matching row in the restrictions collection..
-        /// </summary>
-        internal static string MDF_MissingRestrictionRow {
-            get {
-                return ResourceManager.GetString("MDF_MissingRestrictionRow", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The schema table contains no columns..
-        /// </summary>
-        internal static string MDF_NoColumns {
-            get {
-                return ResourceManager.GetString("MDF_NoColumns", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Unable to build the &apos;{0}&apos; collection because execution of the SQL query failed. See the inner exception for details..
         /// </summary>
         internal static string MDF_QueryFailed {
@@ -1969,29 +1933,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to build schema collection &apos;{0}&apos;;.
-        /// </summary>
-        internal static string MDF_UnableToBuildCollection {
-            get {
-                return ResourceManager.GetString("MDF_UnableToBuildCollection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The requested collection ({0}) is not defined..
         /// </summary>
         internal static string MDF_UndefinedCollection {
             get {
                 return ResourceManager.GetString("MDF_UndefinedCollection", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The population mechanism &apos;{0}&apos; is not defined..
-        /// </summary>
-        internal static string MDF_UndefinedPopulationMechanism {
-            get {
-                return ResourceManager.GetString("MDF_UndefinedPopulationMechanism", resourceCulture);
             }
         }
         
@@ -3054,15 +3000,6 @@ namespace System {
         internal static string SQL_CannotFindActiveDirectoryAuthProvider {
             get {
                 return ResourceManager.GetString("SQL_CannotFindActiveDirectoryAuthProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Setting &apos;useWamBroker&apos; requires the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to expose &apos;Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions&apos;. Upgrade the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to a version that includes this type..
-        /// </summary>
-        internal static string SQL_UseWamBrokerRequiresAzureExtensionUpgrade {
-            get {
-                return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
             }
         }
         
@@ -4251,6 +4188,15 @@ namespace System {
         internal static string SQL_UserInstanceFailure {
             get {
                 return ResourceManager.GetString("SQL_UserInstanceFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting &apos;useWamBroker&apos; requires the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to expose &apos;Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions&apos;. Upgrade the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to at least v1.1.0 that includes this type..
+        /// </summary>
+        internal static string SQL_UseWamBrokerRequiresAzureExtensionUpgrade {
+            get {
+                return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
             }
         }
         
