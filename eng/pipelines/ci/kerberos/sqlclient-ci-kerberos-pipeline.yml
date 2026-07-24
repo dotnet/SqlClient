@@ -253,7 +253,7 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Build and test ---
-          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+          - template: /eng/pipelines/ci/kerberos/build-and-test-steps.yml@self
             parameters:
               buildTargets:
                 - BuildNetFx
