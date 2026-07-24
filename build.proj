@@ -206,7 +206,7 @@
 
     <!--
       ReferenceType
-      Applies to:     BuildSqlClient, BuildSqlClientImple
+      Applies to:     BuildSqlClient, BuildSqlClientImpl
       Description:    Determines how to build SqlClient. If set to "Project", any cross-project
                       references (eg, Abstractions from SqlClient) will be made as project
                       references. If set to "Package", package references will be made instead. When
@@ -516,7 +516,7 @@
 
   <!-- BuildSqlClientImpl: Builds implementation assemblies of SqlClient -->
   <PropertyGroup>
-    <BuildSqlImplClientDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlImplClientDependsOn>
+    <BuildSqlClientImplDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientImplDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientImpl" DependsOnTargets="$(BuildSqlClientImplDependsOn)">
     <PropertyGroup>
