@@ -38,14 +38,21 @@ recognized as non-secrets by the scanner:
 
 ### Do NOT use these placeholder styles
 
-- **Ellipsis values** — `Password=...` or `User ID=...;Password=...`.
-  The literal `...` after `Password=` is treated as a credential value and
-  **will** trip `SEC101/037 SqlLegacyCredentials`. Use `<pwd>` instead.
-- **Realistic-looking fake secrets** — `Password=P@ssw0rd123`,
-  `Password=abc123def456`. Even fake values that look like real passwords can
-  be flagged and set a bad example.
-- **Bare word secrets** — `Password=secret`, `Password=mypassword` inside a
-  connection-string literal. Prefer `<pwd>`.
+- **Ellipsis values** — a `Password` (or `Pwd`) key whose value is a literal
+  ellipsis, especially when paired with a `User ID` key in the same connection
+  string. The ellipsis is treated as a credential value and **will** trip
+  `SEC101/037 SqlLegacyCredentials`. Use `<pwd>` instead.
+- **Realistic-looking fake secrets** — a `Password` key set to a value that
+  looks like a real password (mixed letters, digits, and symbols). Even fake
+  values that resemble real passwords can be flagged and set a bad example.
+- **Bare word secrets** — a `Password` key set to a plain dictionary word
+  inside a connection-string literal. Prefer `<pwd>`.
+
+> **NOTE**: Ironically, this document cannot show verbatim examples of the
+> disallowed styles above — spelling out a `Password` key followed by an
+> ellipsis or realistic-looking value would itself trip `SEC101/037` and block
+> commits to this very file. That is exactly why the "don't" cases are described
+> in prose rather than shown literally.
 
 ### Full connection-string placeholder examples
 
@@ -81,8 +88,9 @@ one or more secrets` with a `SEC101/...` rule id and `commit`/`paths` details.
    - *Real secret*: rotate/revoke it immediately, then remove it from the file.
      If it is in the tip commit only, amend; if it is deeper in **unshared**
      history, rewrite that history. Never rewrite commits already public.
-   - *False positive* (a placeholder like `Password=...`): reword to an approved
-     placeholder (`Password=<pwd>`) so future commits don't recur.
+   - *False positive* (an ellipsis or other non-credential placeholder value):
+     reword to an approved placeholder (`Password=<pwd>`) so future commits
+     don't recur.
 3. **Already-public / mirrored commits.** If the flagged content lives in a
    commit that is already on public GitHub (e.g. an autosync mirror replaying
    `github/main`), you cannot scrub that specific commit without rewriting
@@ -98,7 +106,7 @@ one or more secrets` with a `SEC101/...` rule id and `commit`/`paths` details.
 
 | Rule | Triggers on |
 |------|-------------|
-| `SEC101/037 SqlLegacyCredentials` | `User ID=...;Password=<value>` connection-string shapes |
+| `SEC101/037 SqlLegacyCredentials` | Connection strings pairing a `User ID` key with a `Password`/`Pwd` value |
 | `SEC101/*` (general) | Cloud keys, SAS tokens, client secrets, PATs, bearer tokens |
 
 If in doubt, use an approved placeholder from the table above.
