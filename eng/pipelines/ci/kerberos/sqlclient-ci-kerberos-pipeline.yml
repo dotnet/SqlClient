@@ -5,7 +5,7 @@
 #################################################################################
 
 # =============================================================================
-# sqlclient-kerberos
+# sqlclient-ci-kerberos-pipeline
 # =============================================================================
 # Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
 # Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
@@ -172,7 +172,7 @@ stages:
             displayName: Enable Network DTC Access
 
           # --- Build and test ---
-          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+          - template: /eng/pipelines/ci/kerberos/build-and-test-steps.yml@self
             parameters:
               buildTargets:
                 - BuildNetCore
@@ -321,7 +321,7 @@ stages:
               KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Kerberos domain join ---
-          - template: /eng/pipelines/kerberos/linux-init-step.yml@self
+          - template: /eng/pipelines/ci/kerberos/linux-init-step.yml@self
             parameters:
               kerberosDomain: $(KerberosDomain)
               kerberosDomainOU: $(KerberosDomainOU)
@@ -338,7 +338,7 @@ stages:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
 
           # --- Build and test ---
-          - template: /eng/pipelines/kerberos/build-and-test-steps.yml@self
+          - template: /eng/pipelines/ci/kerberos/build-and-test-steps.yml@self
             parameters:
               buildTargets:
                 - BuildNetCore
@@ -348,7 +348,7 @@ stages:
               artifactName: $(testFramework)-linux-$(System.JobId)
 
           # --- Kerberos cleanup (always runs) ---
-          - template: /eng/pipelines/kerberos/linux-cleanup-step.yml@self
+          - template: /eng/pipelines/ci/kerberos/linux-cleanup-step.yml@self
             parameters:
               kerberosDomain: $(KerberosDomain)
               kerberosDomainUser: $(KerberosDomainUser)
