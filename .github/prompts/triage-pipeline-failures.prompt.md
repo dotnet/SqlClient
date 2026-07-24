@@ -3,7 +3,7 @@ name: triage-pipeline-failures
 description: Find and classify failing tests in the Microsoft.Data.SqlClient CI/CD pipelines at or after a given commit, then fix or quarantine them.
 argument-hint: <target commit SHA> [optional scope, e.g. specific pipelines/branches]
 agent: agent
-tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'read/readFile', 'codebase/search', 'edit/editFiles']
+tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'read/readFile', 'search/codebase', 'edit/editFiles']
 ---
 
 Triage failing tests in the Microsoft.Data.SqlClient pipelines for commit
