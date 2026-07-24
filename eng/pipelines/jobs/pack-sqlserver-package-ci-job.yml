@@ -103,7 +103,10 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+          # BuildNumber supplies the revision component of FileVersion
+          # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+          # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
+          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};BuildNumber=$(Build.BuildNumber)
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Pipeline Artifact

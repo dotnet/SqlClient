@@ -5,10 +5,9 @@
 #################################################################################
 parameters:
 
-  - name: abstractionsPackageVersion
-    type: string
-
-  - name: loggingPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.
+  - name: packageVersion
     type: string
 
   # True to emit debug information and steps.
@@ -17,9 +16,6 @@ parameters:
     default: false
 
   - name: targetFramework
-    type: string
-
-  - name: mdsPackageVersion
     type: string
 
   - name: sqlServerPackageVersion
@@ -91,7 +87,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
@@ -100,7 +96,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
@@ -117,7 +113,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
@@ -128,7 +124,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
@@ -148,9 +144,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
@@ -159,9 +153,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
@@ -178,9 +170,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
@@ -191,9 +181,7 @@ steps:
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
@@ -214,9 +202,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
@@ -226,9 +212,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
@@ -247,9 +231,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:TestFilters="category=flaky"
           -p:TestResultsFolderPath=TestResults
@@ -261,9 +243,7 @@ steps:
           -p:TestSet=${{ parameters.testSet }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestFilters="category=flaky"
@@ -283,7 +263,7 @@ steps:
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
 
@@ -298,7 +278,7 @@ steps:
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
@@ -316,9 +296,7 @@ steps:
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
 
@@ -333,9 +311,7 @@ steps:
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults
@@ -353,9 +329,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
@@ -372,9 +346,7 @@ steps:
         -p:TestSet=${{ parameters.testSet }}
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestFilters="category=flaky"
         -p:TestResultsFolderPath=TestResults

@@ -96,8 +96,6 @@
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
-    <AbstractionsVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Versions.props</AbstractionsVersionsPropsPath>
-    <LoggingVersionsPropsPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Versions.props</LoggingVersionsPropsPath>
     <SqlServerVersionsPropsPath>$(RepoRoot)/src/Microsoft.SqlServer.Server/Versions.props</SqlServerVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
@@ -141,13 +139,11 @@
   </PropertyGroup>
 
   <!--
-    Conditionally import sibling Versions.props files to obtain their calculated package
-    version values for nuspec dependency token expansion.
+    Conditionally import the Microsoft.SqlServer.Server Versions.props to obtain its calculated
+    package version for nuspec dependency token expansion.  The SqlClient family version (used for
+    the Abstractions and Logging dependencies) is already imported globally by
+    src/Directory.Build.props, so only the separately-versioned SqlServer props is needed here.
   -->
-  <Import Project="$(AbstractionsVersionsPropsPath)"
-    Condition="'$(AbstractionsPackageVersion)' == '' AND Exists('$(AbstractionsVersionsPropsPath)')" />
-  <Import Project="$(LoggingVersionsPropsPath)"
-    Condition="'$(LoggingPackageVersion)' == '' AND Exists('$(LoggingVersionsPropsPath)')" />
   <Import Project="$(SqlServerVersionsPropsPath)"
     Condition="'$(SqlServerPackageVersion)' == '' AND Exists('$(SqlServerVersionsPropsPath)')" />
 
@@ -191,27 +187,25 @@
 
     <!-- Check for empty sibling package versions. -->
     <PropertyGroup>
-      <_AbstractionsPackageVersionTrimmed>$([System.String]::Copy('$(AbstractionsPackageVersion)').Trim())</_AbstractionsPackageVersionTrimmed>
-      <_LoggingPackageVersionTrimmed>$([System.String]::Copy('$(LoggingPackageVersion)').Trim())</_LoggingPackageVersionTrimmed>
+      <_SqlClientPackageVersionTrimmed>$([System.String]::Copy('$(SqlClientPackageVersion)').Trim())</_SqlClientPackageVersionTrimmed>
       <_SqlServerPackageVersionTrimmed>$([System.String]::Copy('$(SqlServerPackageVersion)').Trim())</_SqlServerPackageVersionTrimmed>
     </PropertyGroup>
-    <Error Condition="'$(_AbstractionsPackageVersionTrimmed)' == ''"
-      Text="AbstractionsPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionAbstractions=&lt;version&gt;; when packing the project directly, set -p:AbstractionsPackageVersion=&lt;version&gt;; otherwise ensure the Abstractions Versions.props import can resolve a value." />
-    <Error Condition="'$(_LoggingPackageVersionTrimmed)' == ''"
-      Text="LoggingPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionLogging=&lt;version&gt;; when packing the project directly, set -p:LoggingPackageVersion=&lt;version&gt;; otherwise ensure the Logging Versions.props import can resolve a value." />
+    <Error Condition="'$(_SqlClientPackageVersionTrimmed)' == ''"
+      Text="SqlClientPackageVersion is required for SqlClient packaging.  The Abstractions and Logging dependencies are part of the SqlClient family and share this version.  When packing via build.proj, set -p:PackageVersionSqlClient=&lt;version&gt;; when packing the project directly, set -p:SqlClientPackageVersion=&lt;version&gt;; otherwise ensure the SqlClient Versions.props import can resolve a value." />
     <Error Condition="'$(_SqlServerPackageVersionTrimmed)' == ''"
       Text="SqlServerPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionSqlServer=&lt;version&gt;; when packing the project directly, set -p:SqlServerPackageVersion=&lt;version&gt;; otherwise ensure the SqlServer Versions.props import can resolve a value." />
 
     <!-- Expand the SqlClientPackNuspec template with computed version ranges. -->
     <PropertyGroup>
       <!-- Compute version ranges: [floor, (floor.Major+1).0.0) — ceiling derived from floor.
+           The Abstractions and Logging dependencies belong to the SqlClient family and share the
+           SqlClient version, so they use the single SqlClientVersionRange token in the nuspec.
            Use trimmed values to guard against whitespace passed via -p: arguments. -->
-      <_AbstractionsVersionRange>[$(_AbstractionsPackageVersionTrimmed), $([MSBuild]::Add($(_AbstractionsPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_AbstractionsVersionRange>
-      <_LoggingVersionRange>[$(_LoggingPackageVersionTrimmed), $([MSBuild]::Add($(_LoggingPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_LoggingVersionRange>
+      <_SqlClientVersionRange>[$(_SqlClientPackageVersionTrimmed), $([MSBuild]::Add($(_SqlClientPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_SqlClientVersionRange>
       <_SqlServerVersionRange>[$(_SqlServerPackageVersionTrimmed), $([MSBuild]::Add($(_SqlServerPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_SqlServerVersionRange>
     </PropertyGroup>
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsVersionRange$','$(_AbstractionsVersionRange)').Replace('$LoggingVersionRange$','$(_LoggingVersionRange)').Replace('$SqlServerVersionRange$','$(_SqlServerVersionRange)').Replace('$SniVersionRange$','$(SniVersionRange)'))</_SqlClientPackNuspecExpandedText>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$SqlClientVersionRange$','$(_SqlClientVersionRange)').Replace('$SqlServerVersionRange$','$(_SqlServerVersionRange)').Replace('$SniVersionRange$','$(SniVersionRange)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"

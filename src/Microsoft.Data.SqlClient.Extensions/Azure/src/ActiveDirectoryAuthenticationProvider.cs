@@ -798,7 +798,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             {
                 ClientId = publicClientAppKey.ApplicationClientId,
                 ClientName = typeof(ActiveDirectoryAuthenticationProvider).FullName,
-                ClientVersion = Extensions.Azure.ThisAssembly.InformationalVersion,
+                ClientVersion = Extensions.Azure.ThisAssembly.FileVersion,
                 RedirectUri = publicClientAppKey.RedirectUri,
             })
             // The Authority contains the tenant-specific Entra ID endpoint, e.g.

@@ -46,27 +46,12 @@ parameters:
       - all
       - allNoDocs
 
-  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
-  - name: abstractionsPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging, and the
+  # AKV Provider).  They all share this version.  Used when referenceType is Package; ignored for
+  # Project.
+  - name: packageVersion
     type: string
-    default: $(abstractionsPackageVersion)
-
-  # Necessary to build MDS when referenceType is Package.  Ignored when referenceType is Project.
-  - name: loggingPackageVersion
-    type: string
-    default: $(loggingPackageVersion)
-
-  # Package version to use for MDS package. Because we explicitly provide this version, the
-  # assembly version will be generated based on this package version and the build number.
-  # See MdsVersions.props for details on how this works.
-  - name: mdsPackageVersion
-    type: string
-    default: $(mdsPackageVersion)
-
-  # Necessary to build AKV Provider when referenceType is Package.  Ignored when referenceType is Project.
-  - name: akvPackageVersion
-    type: string
-    default: $(akvPackageVersion)
+    default: $(packageVersion)
 
   # Necessary when referenceType is Package.  Ignored when referenceType is Project.
   - name: sqlServerPackageVersion
@@ -87,9 +72,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
   # Build AKV Provider
@@ -105,8 +88,5 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:ReferenceType=${{ parameters.referenceType }}
           -p:BuildNumber=${{ parameters.buildNumber }}
-          -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
-          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}

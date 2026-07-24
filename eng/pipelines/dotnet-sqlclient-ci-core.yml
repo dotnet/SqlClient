@@ -94,6 +94,11 @@ parameters:
     type: boolean
     default: true
 
+  # Build suffix appended to the prerelease tag. PR pipelines pass 'pr',
+  # CI pipelines pass 'ci'. Official builds leave this empty.
+  - name: buildSuffix
+    type: string
+
   - name: dotnetVerbosity
     type: string
     default: normal
@@ -123,6 +128,13 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
+  # Compute all package versions up-front. Downstream stages consume these via
+  # Each build/test stage computes the versions it needs directly from the
+  # compute_versions_ci stage outputs, so no version parameters are passed here.
+  - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
+    parameters:
+      buildSuffix: ${{ parameters.buildSuffix }}
+
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
@@ -134,7 +146,6 @@ stages:
   - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
     parameters:
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -145,8 +156,6 @@ stages:
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
-      loggingPackageVersion: $(loggingPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -159,13 +168,10 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
@@ -180,16 +186,11 @@ stages:
   - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
-      akvPackageVersion: $(akvPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
       # When building SqlClient via packages, we must depend on the Abstractions, Logging,
@@ -205,10 +206,7 @@ stages:
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       azureArtifactsName: $(azureArtifactsName)
-      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
-      azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       # When building via packages, we must depend on the Abstractions, Logging,
@@ -221,12 +219,9 @@ stages:
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
 
   # Verify that all NuGet packages comply with Microsoft metadata requirements.
   # This runs on a Windows agent after all packages have been built and
@@ -246,13 +241,9 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,

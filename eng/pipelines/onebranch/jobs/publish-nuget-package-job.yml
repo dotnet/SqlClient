@@ -39,17 +39,21 @@ parameters:
   # pipeline artifact with the following structure:
   #
   #   drop_build_independent_build_logging/
-  #   ├── packages/
+  #   ├── Package-Release/
   #   │   ├── Microsoft.Data.SqlClient.5.0.0.nupkg
   #   │   └── Microsoft.Data.SqlClient.5.0.0.snupkg
   #   └── symbols/
   #       └── ...
   #
-  # Then the packagePath should be 'packages/Microsoft.Data.SqlClient.5.0.0.nupkg'.
+  # Then the packagePath should be 'Package-Release/Microsoft.Data.SqlClient.5.0.0.nupkg'.
   #
-  # Defaults to 'packages/${{ parameters.packageName }}.*.nupkg' to match any version of the
-  # package. Only .nupkg files are pushed; .snupkg files are included automatically by NuGet
-  # when they exist alongside the .nupkg in the same directory.
+  # When left empty, it defaults to '*/${{ parameters.packageName }}.*.nupkg' to match any version of
+  # the package (see the packageToPush variable; ADO's coalesce() skips the empty default and falls
+  # back to that glob).  The leading '*/' matches whatever single configuration folder the build
+  # produced: the SqlClient package is packed into 'Package-Release/' (PackSqlClient sets
+  # PackageOutputPath), while the other packages are packed by 'dotnet pack' into a plain 'Release/'
+  # folder.  Only .nupkg files are pushed; .snupkg files are included automatically by NuGet when
+  # they exist alongside the .nupkg in the same directory.
   #
   - name: packagePath
     type: string
@@ -74,7 +78,7 @@ jobs:
         value: $(Pipeline.Workspace)/${{ parameters.artifactName }}
 
       - name: packageToPush
-        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('Package-Release/{0}.*.nupkg', parameters.packageName)) }}
+        value: $(artifactPath)/${{ coalesce(parameters.packagePath, format('*/{0}.*.nupkg', parameters.packageName)) }}
 
     # Template context inputs are used to pass parameters to the deployment job since it doesn't
     # automatically download pipeline artifacts.

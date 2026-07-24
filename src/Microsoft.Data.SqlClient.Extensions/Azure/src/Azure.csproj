@@ -22,14 +22,13 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
-       in Package mode).  The guard property inside Versions.props makes this a no-op on the
-       second import. -->
-  <Import Project="Versions.props" Condition="'$(AzureVersionsImported)' != 'true'" />
+  <!-- This package is part of the SqlClient family and shares the SqlClient version.  The
+       SqlClient* version properties are provided by src/Directory.Build.props, which imports the
+       canonical Microsoft.Data.SqlClient/Versions.props for every project. -->
   <PropertyGroup>
-    <AssemblyVersion>$(AzureAssemblyVersion)</AssemblyVersion>
-    <FileVersion>$(AzureFileVersion)</FileVersion>
-    <Version>$(AzurePackageVersion)</Version>
+    <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(SqlClientFileVersion)</FileVersion>
+    <Version>$(SqlClientPackageVersion)</Version>
   </PropertyGroup>
 
   <!-- Strong name signing ============================================= -->

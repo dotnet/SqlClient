@@ -61,6 +61,20 @@
     <FileVersionBuildNumber>$(BuildNumber.Split('.')[0])</FileVersionBuildNumber>
   </PropertyGroup>
 
+  <!--
+    Import the canonical SqlClient version for every project.  All packages in the SqlClient
+    *family* (Internal.Logging, Extensions.Abstractions, Microsoft.Data.SqlClient,
+    Extensions.Azure, and the AlwaysEncrypted.AzureKeyVaultProvider) share the SqlClient version
+    numbers (package, file, and assembly).  Microsoft.SqlServer.Server is versioned separately and
+    imports its own Versions.props.
+
+    This import runs after BuildNumber/FileVersionBuildNumber are set above, and before
+    Directory.Packages.props (which consumes SqlClientPackageVersion in Package mode).  The
+    import guard inside Versions.props makes any later import a no-op.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)Microsoft.Data.SqlClient/Versions.props"
+          Condition="'$(SqlClientVersionsImported)' != 'true'" />
+
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
     <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />

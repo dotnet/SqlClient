@@ -102,7 +102,8 @@ A selection of parameters for build targets in `build.proj` can be found below:
 | `[optional_parameter]`            | Allowed Values                   | Default   | Description                                                                                                                                   |
 |-----------------------------------|----------------------------------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`               | `Debug`, `Release`               | `Debug`   | Build configuration                                                                                                                           |
-| `-p:PackageVersion<TargetPackage>=` | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the target package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
+| `-p:PackageVersionSqlClient=`     | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to the SqlClient family (`Microsoft.Data.SqlClient`, `Internal.Logging`, `Extensions.Abstractions`, `Extensions.Azure`, and the AKV Provider all share it). Assembly and file versions are derived from this, if it is provided. See Versioning for more details |
+| `-p:PackageVersionSqlServer=`     | `major.minor.patch[-prerelease]` | `[blank]` | Version to assign to `Microsoft.SqlServer.Server`, which is versioned separately from the SqlClient family. |
 
 <!-- markdownlint-enable MD060 -->
 
@@ -134,10 +135,11 @@ Build Microsoft.Data.SqlClient in Release configuration:
 dotnet build -t:BuildSqlClient -p:Configuration=Release
 ```
 
-Build v1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
+Build a specific version of Microsoft.Data.SqlClient.Extensions.Abstractions (Abstractions is part of the
+SqlClient family, so its version is set via the family parameter `PackageVersionSqlClient`):
 
 ```bash
-dotnet build -t:BuildAbstractions -p:PackageVersionAbstractions=1.2.3
+dotnet build -t:BuildAbstractions -p:PackageVersionSqlClient=7.1.0
 ```
 
 ### Testing Projects
@@ -243,16 +245,14 @@ A selection of parameters for pack targets in `build.proj` relevant to common de
 |------------------------------------|---------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`                | `Debug`       | `Debug`, `Release`    | Build configuration. Only applies if project and dependencies are being built.                                                                                 |
 | `-p:PackBuild=`                    | `true`        | `true`, `false`       | Whether or not to build the project before packing. If `false`, project must be built using the same parameters.                                               |
-| `-p:PackageVersion<TargetPackage>=` | `[blank]`     | eg. `1.2.3-dev123`    | Version to assign to the package, where `<TargetPackage>` can be one of: `['Abstractions', 'Azure', 'AkvProvider', 'Logging', 'SqlClient', 'SqlServer']`. If `PackBuild` is `true`, the assembly and file versions will be derived from this version. See Versioning for more details. |
+| `-p:PackageVersionSqlClient=`       | `[blank]`     | eg. `7.1.0-dev123`    | Version to assign to the entire SqlClient family (`Microsoft.Data.SqlClient`, `Internal.Logging`, `Extensions.Abstractions`, `Extensions.Azure`, and the AKV Provider — they all share the SqlClient version). If `PackBuild` is `true`, the assembly and file versions are derived from this version. See Versioning for more details. |
+| `-p:PackageVersionSqlServer=`       | `[blank]`     | eg. `1.1.0-dev123`    | Version to assign to `Microsoft.SqlServer.Server`, which is versioned separately from the SqlClient family. |
 
 <!-- markdownlint-enable MD060 -->
 
-For `PackSqlClient`, these additional parameters are optional overrides for dependency versions injected into the SqlClient nuspec during pack:
+For `PackSqlClient`, the SqlClient nuspec pins its family dependencies (Abstractions and Logging) to the same `SqlClientPackageVersion` value, so a single `-p:PackageVersionSqlClient=<version>` controls both the SqlClient package version and those dependency ranges. `Microsoft.SqlServer.Server` is pinned separately via `-p:PackageVersionSqlServer=<version>`.
 
-- `-p:PackageVersionAbstractions=<version>`
-- `-p:PackageVersionLogging=<version>`
-
-If omitted, `PackSqlClient` computes `AbstractionsPackageVersion` and `LoggingPackageVersion` from sibling projects using the current `BuildNumber` and `BuildSuffix` context.
+If omitted, `PackSqlClient` computes these versions from `Versions.props` using the current `BuildNumber` and `BuildSuffix` context.
 
 #### Examples
 
@@ -268,10 +268,11 @@ Package Microsoft.Data.SqlClient:
 dotnet build -t:PackSqlClient
 ```
 
-Package version 1.2.3 of Microsoft.Data.SqlClient.Extensions.Abstractions:
+Package a specific version of Microsoft.Data.SqlClient.Extensions.Abstractions (set via the family parameter
+`PackageVersionSqlClient`):
 
 ```bash
-dotnet build -t:PackAbstractions -p:PackageVersionAbstractions=1.2.3
+dotnet build -t:PackAbstractions -p:PackageVersionSqlClient=7.1.0
 ```
 
 Package Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand:
@@ -283,17 +284,19 @@ dotnet build -t:PackAzure -p:PackBuild=false
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:
-`PackageVersion<TargetProject>`, `BuildNumber`, and `BuildSuffix`. Using these in different combinations, can generate
-appropriate package, assembly, and file versions for different scenarios. For most developer workflows, it is not
-necessary to specify any of these parameters - appropriate versions based on the latest release will be generated
-automatically. This section primarily exists to document the various parameters, their effects, and the scenarios they
-can be useful for.
+`PackageVersionSqlClient` (or `PackageVersionSqlServer`), `BuildNumber`, and `BuildSuffix`. Using these in different
+combinations can generate appropriate package, assembly, and file versions for different scenarios. For most developer
+workflows, it is not necessary to specify any of these parameters - appropriate versions based on the latest release
+will be generated automatically. This section primarily exists to document the various parameters, their effects, and
+the scenarios they can be useful for.
 
-`PackageVersion<TargetProject>` applies to whatever package is being built. For example, if you are building the
-Microsoft.Data.SqlClient package, the appropriate parameter is `-p:PackageVersionSqlClient`.
+All packages in the **SqlClient family** (`Microsoft.Data.SqlClient`, `Internal.Logging`, `Extensions.Abstractions`,
+`Extensions.Azure`, and the AKV Provider) share a single version, set via `-p:PackageVersionSqlClient`.
+`Microsoft.SqlServer.Server` is versioned separately via `-p:PackageVersionSqlServer`.
 
-Each package has a `Versions.props` file in its root directory that defines a "default" version. This should be defined
-as the latest released version of the package. For the table below, we assume this is "1.2.3".
+The SqlClient family version is defined in `src/Microsoft.Data.SqlClient/Versions.props` (and SqlServer's in its own
+`Versions.props`), which declares a "default" version — the next version to release. For the table below, we assume this
+is "1.2.3".
 
 | `PackageVersion` | `BuildNumber` | `BuildSuffix` | Package Version  | Assembly Version | File Version  | Scenario                                                   |
 |------------------|---------------|---------------|------------------|------------------|---------------|------------------------------------------------------------|
@@ -313,18 +316,15 @@ depend on NuGet packages. This mode is useful for verifying that packages work w
 build scenarios. For completeness, and debugging of automated builds, this section documents behavior of "package mode".
 
 To switch to "package mode", set the `ReferenceType` parameter in `build.proj` to `Package`. And, optionally, include
-one or more of the following parameters:
+one or both of the following parameters:
 
-- `PackageVersionAbstractions`
-- `PackageVersionAkvProvider`
-- `PackageVersionAzure`
-- `PackageVersionLogging`
-- `PackageVersionSqlClient`
-- `PackageVersionSqlServer`
+- `PackageVersionSqlClient` — the version for the entire SqlClient family.
+- `PackageVersionSqlServer` — the version for `Microsoft.SqlServer.Server`.
 
-These parameters pull double duty. In targets where the package is being built, the parameter sets the version of the
-package. In targets where the package is being referenced, the parameter sets the version of the package that is being
-referenced.
+These parameters pull double duty. In targets where a package is being built, the parameter sets the version of the
+package. In targets where a package is being referenced, the parameter sets the version of the referenced package.
+Because the SqlClient family shares one version, `PackageVersionSqlClient` covers every family package, whether it is
+being built or referenced.
 
 If these parameters are not specified, the latest version, as defined in the `Versions.props` file, will be used.
 
@@ -334,23 +334,23 @@ run subsequent `build.proj` targets against them.
 
 ### Examples
 
-Build Microsoft.Data.SqlClient version 7.1.1 that references Microsoft.Data.SqlClient.Extensions.Abstractions v1.0.1
-and Microsoft.Data.SqlClient.Internal.Logging v2.2.2.
+Build Microsoft.Data.SqlClient version 7.1.1 in package mode.  Because all SqlClient family packages share the same
+version, a single `-p:PackageVersionSqlClient=7.1.1` applies to SqlClient and its family dependencies (Abstractions and
+Logging).
 
-Build v2.2.2 of Logging and copy to packages:
+Build v7.1.1 of Logging and copy to packages:
 
 ```bash
-dotnet build -t:PackLogging -p:ReferenceType=Package -p:PackageVersionLogging=2.2.2
+dotnet build -t:PackLogging -p:ReferenceType=Package -p:PackageVersionSqlClient=7.1.1
 cp artifacts/Microsoft.Data.SqlClient.Internal.Logging/Debug/*.*pkg packages/
 ```
 
-Build v1.0.1 of Abstractions that depends on v2.2.2 of Logging:
+Build v7.1.1 of Abstractions (which depends on v7.1.1 of Logging):
 
 ```bash
 dotnet build -t:PackAbstractions \
   -p:ReferenceType=Package \
-  -p:PackageVersionAbstractions=1.0.1 \
-  -p:PackageVersionLogging=2.2.2
+  -p:PackageVersionSqlClient=7.1.1
 cp artifacts/Microsoft.Data.SqlClient.Extensions.Abstractions/Package-Debug/*.*pkg packages/
 ```
 
@@ -359,9 +359,7 @@ Build SqlClient:
 ```bash
 dotnet build -t:PackSqlClient \
   -p:ReferenceType=Package \
-  -p:PackageVersionSqlClient=7.1.1 \
-  -p:PackageVersionAbstractions=1.0.1 \
-  -p:PackageVersionLogging=2.2.2
+  -p:PackageVersionSqlClient=7.1.1
 cp artifacts/Microsoft.Data.SqlClient/Package-Debug/*.*pkg packages/
 ```
 
@@ -370,9 +368,7 @@ Run Microsoft.Data.SqlClient functional tests against the versions built above:
 ```bash
 dotnet build -t:TestSqlClientFunctional \
   -p:ReferenceType=Package \
-  -p:PackageVersionSqlClient=7.1.1 \
-  -p:PackageVersionAbstractions=1.0.1 \
-  -p:PackageVersionLogging=2.2.2
+  -p:PackageVersionSqlClient=7.1.1
 ```
 
 Manual test prerequisites and configuration are covered in [TESTGUIDE.md](TESTGUIDE.md#manual-test-prerequisites).

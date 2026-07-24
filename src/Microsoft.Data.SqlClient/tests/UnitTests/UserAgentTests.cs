@@ -78,7 +78,7 @@ public sealed class UserAgentTests
         Assert.Equal(7, parts.Length);
         Assert.Equal("1", parts[0]);
         Assert.Equal("MS-MDS", parts[1]);
-        Assert.Equal(ThisAssembly.NuGetPackageVersion, parts[2]);
+        Assert.Equal(ThisAssembly.PackageVersion, parts[2]);
 
         // Architecture must be non-empty and 10 characters or less.
         Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);

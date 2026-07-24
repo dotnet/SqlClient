@@ -32,60 +32,28 @@ parameters:
 
   # Build parameters — select which packages to build.
 
-  # Build the Microsoft.SqlServer.Server package.
-  - name: buildSqlServerServer
+  # Build the Microsoft.SqlServer.Server package.  The SqlClient family is always built; SqlServer
+  # is optional.  When built, the SqlClient family depends on the freshly-built SqlServer package;
+  # when not built, the family depends on the most recently published SqlServer package.
+  - name: buildSqlServer
     displayName: Build Microsoft.SqlServer.Server
-    type: boolean
-    default: true
-
-  # Build Microsoft.Data.SqlClient and Extensions packages.
-  - name: buildSqlClient
-    displayName: Build Microsoft.Data.SqlClient and Extensions
-    type: boolean
-    default: true
-
-  # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: buildAkvProvider
-    displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     type: boolean
     default: true
 
   # Release parameters — select which packages to publish to NuGet.
   # All default to false; toggle at queue time for on-demand selective release.
 
-  # Release the Microsoft.SqlServer.Server package.
-  - name: releaseSqlServerServer
+  # Release the Microsoft.SqlServer.Server package (versioned separately).
+  - name: releaseSqlServer
     displayName: Release Microsoft.SqlServer.Server
     type: boolean
     default: false
 
-  # Release the Microsoft.Data.SqlClient.Internal.Logging package.
-  - name: releaseLogging
-    displayName: Release Microsoft.Data.SqlClient.Internal.Logging
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.Extensions.Abstractions package.
-  - name: releaseAbstractions
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Abstractions
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient package.
+  # Release the SqlClient family (Internal.Logging, Extensions.Abstractions,
+  # Microsoft.Data.SqlClient, Extensions.Azure, and the AlwaysEncrypted AzureKeyVaultProvider).
+  # The family is always released together at the shared SqlClient version.
   - name: releaseSqlClient
-    displayName: Release Microsoft.Data.SqlClient
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
-  - name: releaseAzure
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: releaseAkvProvider
-    displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    displayName: Release SqlClient family
     type: boolean
     default: false
 
@@ -179,31 +147,28 @@ extends:
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
+      # Compile-time guard (1ES/OneBranch ': error' idiom): releasing Microsoft.SqlServer.Server
+      # requires building it this run, otherwise there is no package to release.  The invalid item
+      # is only emitted for the bad parameter combination and fails template expansion with the
+      # message below.
+      - ${{ if and(eq(parameters.releaseSqlServer, true), eq(parameters.buildSqlServer, false)) }}:
+        - 'Invalid parameters: releaseSqlServer=true requires buildSqlServer=true. There is no freshly-built Microsoft.SqlServer.Server package to release when buildSqlServer is false.': error
+
+      - template: /eng/pipelines/onebranch/stages/compute-versions-stage.yml@self
+        parameters:
+          buildSqlServer: ${{ parameters.buildSqlServer }}
+
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           isOfficial: false # This is a non-official pipeline.
-          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          buildSqlServer: ${{ parameters.buildSqlServer }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsFileVersion: '${{ variables.abstractionsFileVersion }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderFileVersion: '${{ variables.akvProviderFileVersion }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azureFileVersion: '${{ variables.azureFileVersion }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingFileVersion: '${{ variables.loggingFileVersion }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientFileVersion: '${{ variables.sqlClientFileVersion }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerFileVersion: '${{ variables.sqlServerFileVersion }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
@@ -215,22 +180,14 @@ extends:
       - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
         parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
-          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          buildSqlServer: ${{ parameters.buildSqlServer }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
@@ -251,21 +208,11 @@ extends:
           publishSymbols: ${{ parameters.publishSymbols }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
-          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
-          releaseLogging: ${{ parameters.releaseLogging }}
-          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlServer: ${{ parameters.releaseSqlServer }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}
