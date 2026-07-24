@@ -43,6 +43,44 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 ####################################################################################################
+# Native-command error handling
+#
+# The perf VM runs Windows PowerShell 5.1.  There, with $ErrorActionPreference = 'Stop', ANY write
+# to stderr by a native command (dotnet, python) is promoted to a TERMINATING error - even when the
+# command's exit code is 0.  The .NET CLI and Python routinely emit non-fatal diagnostics (SDK
+# resolution notes, restore/build warnings, progress) to stderr, so an unguarded 'dotnet ...' or
+# 'python3 ...' aborts the whole run and surfaces the tool's stderr text as the failure.
+#
+# PowerShell 7.3+ exposes $PSNativeCommandUseErrorActionPreference to opt out; set it where present.
+# On 5.1 there is no such switch, so native tools are invoked through Invoke-Native, which relaxes
+# the preference for the duration of the call and judges success solely by the process exit code.
+####################################################################################################
+
+if (Test-Path Variable:\PSNativeCommandUseErrorActionPreference) {
+    $PSNativeCommandUseErrorActionPreference = $false
+}
+
+# Run a native command (in a scriptblock) with stderr-as-terminating-error suppressed, then throw
+# $FailureMessage if it exited non-zero.  Use for native calls whose non-zero exit must fail the run.
+function Invoke-Native {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, Position = 0)][scriptblock] $Command,
+        [Parameter(Position = 1)][string] $FailureMessage = "Native command failed"
+    )
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $Command
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($LASTEXITCODE -ne 0) {
+        throw "$FailureMessage (exit $LASTEXITCODE)."
+    }
+}
+
+####################################################################################################
 # Resolve paths
 ####################################################################################################
 
@@ -123,8 +161,16 @@ if (Get-Command dotnet -ErrorAction SilentlyContinue) {
     # the wrong SDK band and skip installing the pinned one.
     Push-Location $RepoRoot
     try {
-        dotnet --version *> $null
-        if ($LASTEXITCODE -eq 0) { $hasNet10Sdk = $true }
+        # Relax Stop here: a missing/mismatched pinned SDK makes 'dotnet --version' write to stderr
+        # and exit non-zero, which under Stop would abort before we can fall through to Install-DotNet.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            dotnet --version *> $null
+            if ($LASTEXITCODE -eq 0) { $hasNet10Sdk = $true }
+        } finally {
+            $ErrorActionPreference = $previousPreference
+        }
     } finally {
         Pop-Location
     }
@@ -135,7 +181,8 @@ if ($hasNet10Sdk) {
     Install-DotNet
 }
 
-dotnet --info
+# Informational only: never let 'dotnet --info' (or its stderr) fail the run.
+try { Invoke-Native { dotnet --info } "dotnet --info failed" } catch { Write-Warning $_.Exception.Message }
 
 ####################################################################################################
 # 2. Create the perf database on the VM's SQL Server.
@@ -149,8 +196,16 @@ Write-Host "Ensuring database [$DbName] exists on $SqlServer ..."
 
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if ($sqlcmd) {
-    & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 `
-        -Q "IF DB_ID('$DbName') IS NULL CREATE DATABASE [$DbName];"
+    # Relax Stop around the native sqlcmd call so a benign stderr write cannot abort the run before
+    # the explicit exit-code check below (Windows PowerShell 5.1 promotes native stderr under Stop).
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 `
+            -Q "IF DB_ID('$DbName') IS NULL CREATE DATABASE [$DbName];"
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
     if ($LASTEXITCODE -ne 0) { throw "sqlcmd failed to create database [$DbName] (exit $LASTEXITCODE)." }
     Write-Host "Database [$DbName] is ready."
 } else {
@@ -194,8 +249,14 @@ try {
 # --- §2.10 / §2.5 Fail loud on an unreachable server, and warm the buffer pool / plan cache -------
 # A benchmark suite that "skips" when the server is down produces an empty comparison that reads
 # green; verify connectivity up front and touch the target DB before the first measured benchmark.
-& $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 15 `
-    -Q "SET NOCOUNT ON; USE [$DbName]; SELECT 1;" *> $null
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 15 `
+        -Q "SET NOCOUNT ON; USE [$DbName]; SELECT 1;" *> $null
+} finally {
+    $ErrorActionPreference = $previousPreference
+}
 if ($LASTEXITCODE -ne 0) {
     throw "SQL Server $SqlServer (db $DbName) is unreachable; refusing to run so an empty perf comparison cannot be reported as a pass."
 }
@@ -299,7 +360,15 @@ for f in glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=Tru
         pass
 print(total)
 '@
-    $out = $py | python3 - $Root
+    # Relax Stop: this native python call tolerates failure (returns 0 below); its stderr must not
+    # promote to a terminating error under Windows PowerShell 5.1.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $out = $py | python3 - $Root
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($out)) { return 0 }
     return [int]($out.Trim())
 }
@@ -317,8 +386,7 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
     Write-Host "------------------------------------------------------------------"
 
     Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
-    dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs
-    if ($LASTEXITCODE -ne 0) { throw "Build failed for '$Label' (exit $LASTEXITCODE)." }
+    Invoke-Native { dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
 
     Push-Location $runDir
     try {
@@ -386,8 +454,7 @@ function Build-Variant {
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
     Write-Host "Building '$Label' variant ($Configuration, $Framework) into $outDir ..."
     $buildArgs = @("build", $PerfProject, "-c", $Configuration, "-f", $Framework, "--nologo", "-v", "minimal", "-o", $outDir) + $ExtraArgs
-    dotnet @buildArgs
-    if ($LASTEXITCODE -ne 0) { throw "Build failed for '$Label' variant (exit $LASTEXITCODE)." }
+    Invoke-Native { dotnet @buildArgs } "Build failed for '$Label' variant"
     return $outDir
 }
 
@@ -420,8 +487,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
         $interleaveArgs += "--fail-on-regression"
     }
     Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
-    python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs
-    if ($LASTEXITCODE -ne 0) { throw "Interleaved run failed (exit $LASTEXITCODE)." }
+    Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
@@ -449,8 +515,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
         Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
         $compareArgs += "--fail-on-regression"
     }
-    python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs
-    if ($LASTEXITCODE -ne 0) { throw "Comparison failed (exit $LASTEXITCODE)." }
+    Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
     Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
 
