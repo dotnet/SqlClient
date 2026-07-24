@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -530,6 +530,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
+        }
+
+        [Fact]
+        public static void TestOutOfRangeDecimalParameter_CommandInsert()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand cmd = new("SELECT @Value", connection);
+            // A System.Decimal value has a maximum precision of 29 digits. We specify a Precision of 38 and a Scale of 2 in order
+            // to prove that the client can change the scale and precision of the decimal value in ways which System.Decimal doesn't
+            // intrinsically support.
+            SqlParameter p = new("@Value", decimal.MaxValue)
+            {
+                Precision = 38,
+                Scale = 2
+            };
+
+            cmd.Parameters.Add(p);
+
+            using SqlDataReader reader = cmd.ExecuteReader();
+
+            reader.Read();
+            // Read the original value back as a SqlDecimal, with matching scale and precision.
+            SqlDecimal roundtrippedDecimal = reader.GetSqlDecimal(0);
+
+            Assert.Equal(38, roundtrippedDecimal.Precision);
+            Assert.Equal(2, roundtrippedDecimal.Scale);
+            Assert.Throws<OverflowException>(() => roundtrippedDecimal.Value);
+            Assert.Equal($"{decimal.MaxValue}.00", roundtrippedDecimal.ToString());
         }
 
         // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
