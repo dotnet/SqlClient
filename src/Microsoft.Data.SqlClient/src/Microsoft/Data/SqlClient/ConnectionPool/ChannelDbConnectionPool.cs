@@ -160,11 +160,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: timeProvider);
             }
 
-            // Pruning is only useful when the pool can grow beyond MinPoolSize.
-            // If min >= max, the pool is fixed-size and pruning would never activate.
-            if (MinPoolSize < MaxPoolSize)
+            // Pruning is only useful when the pool can grow beyond MinPoolSize and idle
+            // connections are subject to reclamation. If min >= max the pool is fixed-size so
+            // pruning would never activate; if Connection Idle Timeout is zero, idle connections
+            // are never reclaimed and there is nothing to prune. The pruning window (and thus how
+            // many samples are collected) is derived from IdleTimeout.
+            if (MinPoolSize < MaxPoolSize && PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
-                Pruner = new PoolPruner(this, PoolGroupOptions.LoadBalanceTimeout);
+                Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
             State = Running;
