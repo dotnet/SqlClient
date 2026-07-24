@@ -1487,7 +1487,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
 
             // Act
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new ChannelDbConnectionPool(
                     SuccessfulConnectionFactory,
                     dbConnectionPoolGroup,
@@ -1869,6 +1869,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true)]
         public async Task RateLimiter_LeaseReleaseWakesRateLimitedWaiter_CreatesPhysicalConnection(bool async)
         {
+            // Both open paths below dispatch physical creation onto the thread pool (via Task.Run),
+            // and caller A blocks a worker thread inside gated creation while holding the only
+            // permit. On a busy or low-core CI agent, thread-pool ramp-up can then delay caller B's
+            // dispatched permit attempt past the 5s wait below (the historical flaky failure:
+            // "Timed out waiting for the second request to be denied by the rate limiter"). Raise
+            // the worker-thread floor so both dispatched bodies are scheduled promptly. Raising the
+            // floor is benign and is intentionally not restored so it cannot be lowered underneath
+            // other tests running in parallel.
+            ThreadPool.GetMinThreads(out int minWorker, out int minIo);
+            if (minWorker < 16)
+            {
+                Assert.True(ThreadPool.SetMinThreads(16, minIo), "Failed to raise ThreadPool minimum worker threads.");
+            }
+
             // Arrange
             using var createGate = new ManualResetEventSlim(initialState: false);
             var factory = new GatedSuccessfulConnectionFactory(createGate);
@@ -2328,4 +2342,3 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
     }
 }
-

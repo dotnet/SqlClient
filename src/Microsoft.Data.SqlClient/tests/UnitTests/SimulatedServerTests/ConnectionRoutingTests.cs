@@ -104,17 +104,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Throws<SqlException>(() => connection.Open());
         }
 
-        [Trait("Category", "flaky")]
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionRoutingTests.NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed(multiSubnetFailoverEnabled: True) [2 s]
-        // ##[error]EXEC(0,0): Error Message:
-        // EXEC : error Message:  [D:\a\_work\1\s\build2.proj]
-        //      Assert.Equal() Failure: Values differ
-        //   Expected: 1
-        //   Actual:   2
-        //     Stack Trace:
-        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionRoutingTests.NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed(Boolean multiSubnetFailoverEnabled) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionRoutingTests.cs:line 147
-        //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
-        //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
@@ -161,7 +150,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, router.PreLoginCount);
             if (multiSubnetFailoverEnabled)
             {
-                Assert.True(server.PreLoginCount > 1);
+                // MultiSubnetFailover fan-out count is DNS/timing-dependent; only assert a
+                // completed pre-login at the routed location.
+                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1);
             }
             else
             {
@@ -170,7 +161,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
