@@ -1,0 +1,115 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Diagnostic xUnit harness that runs SNIClose / MARS close-during-IO deadlock tests against the
+    LEGACY System.Data.SqlClient driver, to observe whether the deadlock (ICM 775308542 / ADO.Net
+    #43847) reproduces there.
+
+      * net462/net47/net472/net481 -> in-box System.Data.SqlClient (System.Data.dll)
+      * net10.0                     -> System.Data.SqlClient NuGet package
+
+    Rather than re-implementing the tests, this project LINKS the real test source files directly
+    (see the <Compile Include Link=...> items below) and supplies a small compatibility shim
+    (Compat.cs + GlobalUsings.cs) so the bare Microsoft.Data.SqlClient type names in those files
+    bind to the legacy driver.  See README.md for full usage, including running inside .NET
+    Framework Windows containers to bind older in-box System.Data.dll versions.
+
+    Run: dotnet test tools/SniCloseLegacyRepro                        (in-process tests only)
+      $env:SNICLOSE_CONNSTR="Server=...;User ID=...;Password=..."  (enables live MARS + stress)
+      dotnet test tools/SniCloseLegacyRepro
+
+    This project uses Central Package Management via the sibling
+    Directory.Packages.props (which imports the shared SqlClient tests versions) and
+    Directory.Build.props. The legacy System.Data.SqlClient package versions are served from the
+    repo's governed feed, so no extra NuGet.config is needed.
+  -->
+
+  <PropertyGroup>
+    <!-- .NET Framework targets exercise the in-box System.Data.dll (the driver
+         the ICM was reported against). NOTE: the in-box System.Data.dll is
+         machine-global for the whole 4.x line - only ONE physical DLL exists per
+         machine (here 4.8.1). Multi-targeting older netfx TFMs changes the
+         compile-time reference set and the runtime framework "quirk" behaviors
+         keyed off the app's TargetFrameworkAttribute, but does NOT swap in an
+         older System.Data.dll. Reproducing the exact reported older DLL bits
+         requires a machine/VM with only that older .NET Framework installed. -->
+    <TargetFrameworks>net462;net47;net472;net481;net10.0</TargetFrameworks>
+    <!-- Legacy System.Data.SqlClient NuGet version used by the .NET (Core)
+         target; override to sweep older builds, e.g.
+           dotnet test -f net10.0 -p:SqlClientLegacyVersion=4.6.1 -->
+    <SqlClientLegacyVersion Condition="'$(SqlClientLegacyVersion)' == ''">4.9.1</SqlClientLegacyVersion>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <!-- This is a diagnostic scratch tool; do not gate it on repo-wide analyzers/warnings. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+    <!-- CS0618: the legacy System.Data.SqlClient package types are [Obsolete] -
+         that deprecated driver is exactly what is under test here. -->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+  <!-- Test SDK + xUnit. Versions come from the sibling Directory.Packages.props
+       (which imports the shared SqlClient tests versions).
+       Microsoft.DotNet.XUnitExtensions provides [ConditionalTheory]. Its beta
+       build is delay-signed, so on .NET Framework it must NOT be shadow-copied
+       (shadow copying re-verifies the strong name, which fails). We ship the
+       same xunit.runner.json the real tests use (shadowCopy: false) to avoid
+       that, exactly like the real UnitTests/ManualTests projects. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <!-- Console runner (xunit.console.exe) so the net47 build can run inside a
+         .NET Framework-only Windows container, which has no dotnet CLI. Only
+         provides tools/, so it has no compile impact. -->
+    <PackageReference Include="xunit.runner.console" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- Link the SAME xunit.runner.json the real test projects ship, rather than
+       maintaining a copy. Its shadowCopy:false setting is what lets the
+       delay-signed XUnitExtensions load on .NET Framework (net481). -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <Link>xunit.runner.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- .NET Framework targets: use the in-box legacy driver (System.Data.dll). -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <Reference Include="System.Data" />
+  </ItemGroup>
+
+  <!-- .NET (Core) target: use the legacy driver from its deprecated NuGet
+       package. The base version is centrally managed; $(SqlClientLegacyVersion)
+       overrides it per-run to sweep older builds. -->
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
+    <PackageReference Include="System.Data.SqlClient" VersionOverride="$(SqlClientLegacyVersion)" />
+  </ItemGroup>
+
+  <!-- Driver-agnostic in-process TDS test server used by the pending-read tests. -->
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+  </ItemGroup>
+
+  <!-- Link the REAL test files verbatim (shared, not copied). -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/SNICloseDeadlockTest.cs"
+             Link="Shared/SNICloseDeadlockTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/SNICloseRaceDeadlockTest.cs"
+             Link="Shared/SNICloseRaceDeadlockTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/UnitTests/SimulatedServerTests/SNICloseHandshakeCancellationTest.cs"
+             Link="Shared/SNICloseHandshakeCancellationTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/AsyncTest/MarsCloseDeadlockTest.cs"
+             Link="Shared/MarsCloseDeadlockTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/AsyncTest/MarsCloseStressTest.cs"
+             Link="Shared/MarsCloseStressTest.cs" />
+  </ItemGroup>
+
+</Project>
