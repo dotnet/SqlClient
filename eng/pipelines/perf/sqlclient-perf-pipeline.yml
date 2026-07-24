@@ -284,6 +284,10 @@ extends:
           commitDate="$(git -C "$repoDir" show -s --format=%cI "$commitHash" 2>/dev/null || true)"
           shortSha="$(git -C "$repoDir" rev-parse --short "$commitHash" 2>/dev/null || echo "$commitHash")"
 
+          # The benchmark runner's config governs which SqlClient behaviours a run exercised; its
+          # top-level boolean flags are recorded in PerfRun.Config for both passes.
+          runnerConfig="$repoDir/src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.jsonc"
+
           # --- current (branch under test) ---
           python3 "$scriptsDir/perf_to_kusto.py" \
             --input-dir "$resultsDir/current" \
@@ -300,6 +304,7 @@ extends:
             --version-string "$shortSha" \
             --commit-hash "$commitHash" \
             --commit-date "$commitDate" \
+            --runner-config "$runnerConfig" \
             --is-comparable-base false
 
           # --- baseline (released NuGet package), when a baseline pass ran ---
@@ -319,6 +324,7 @@ extends:
               --branch-name "refs/tags/v$baseVer" \
               --version-string "$baseVer" \
               --commit-hash "v$baseVer" \
+              --runner-config "$runnerConfig" \
               --is-comparable-base true
           fi
 

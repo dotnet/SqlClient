@@ -20,6 +20,7 @@ import datetime
 import glob
 import json
 import os
+import re
 import sys
 
 
@@ -28,6 +29,48 @@ NS_PER_MS = 1_000_000.0
 
 def _utcnow_iso():
     return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+# Top-level runner-config keys that must never be captured into PerfRun.Config:
+#   * ConnectionString - contains server/credential details (secret; not a comparable knob).
+#   * Benchmarks       - per-runner tuning object, not a boolean feature flag.
+_CONFIG_EXCLUDED_KEYS = frozenset(("ConnectionString", "Benchmarks"))
+
+
+def _load_runner_config(path):
+    """Return the runner's boolean feature flags as a dict for the PerfRun.Config column.
+
+    The benchmark runner is driven by a .jsonc config (see PerformanceTests/runnerconfig.jsonc).
+    Only its top-level *boolean* flags describe the SqlClient behaviour a run exercised
+    (e.g. UseManagedSniOnWindows, UseOptimizedAsyncBehaviour), so those are the values worth
+    recording alongside the results.  ConnectionString and Benchmarks are excluded, and any
+    non-boolean top-level entry is ignored so the shape stays a flat {flag: bool} map.
+
+    Returns an empty dict (and warns) when the file is missing or unparseable, so a config
+    problem degrades to an empty Config rather than failing the whole translation.
+    """
+    if not path:
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            raw = handle.read()
+    except OSError as exc:
+        print(f"WARNING: could not read runner config {path}: {exc}", file=sys.stderr)
+        return {}
+    # Strip //-style line comments so the .jsonc content parses as plain JSON.  The config uses
+    # only whole-line comments, so a leading-whitespace match is sufficient and never touches a
+    # '//' embedded in a string value.
+    no_comments = re.sub(r"(?m)^\s*//.*$", "", raw)
+    try:
+        cfg = json.loads(no_comments)
+    except ValueError as exc:
+        print(f"WARNING: could not parse runner config {path}: {exc}", file=sys.stderr)
+        return {}
+    if not isinstance(cfg, dict):
+        print(f"WARNING: runner config {path} is not a JSON object; ignoring.", file=sys.stderr)
+        return {}
+    return {key: value for key, value in cfg.items()
+            if key not in _CONFIG_EXCLUDED_KEYS and isinstance(value, bool)}
 
 
 def _normalize_os(value):
@@ -147,6 +190,7 @@ def translate(input_dir, ctx):
         "CommitHash": ctx["commit_hash"],
         "CommitDate": ctx["commit_date"] or None,
         "IsComparableBase": bool(ctx["is_comparable_base"]),
+        "Config": ctx.get("config") or {},
         "IngestedAt": now,
     }
 
@@ -253,6 +297,10 @@ def main(argv=None):
     parser.add_argument("--commit-hash", required=True)
     parser.add_argument("--commit-date", default="")
     parser.add_argument("--is-comparable-base", default="false")
+    parser.add_argument("--runner-config", default="",
+                        help="Path to the benchmark runner's .jsonc config. Its top-level boolean "
+                             "flags (excluding ConnectionString and Benchmarks) are recorded in "
+                             "PerfRun.Config.")
     args = parser.parse_args(argv)
 
     ctx = {
@@ -270,6 +318,7 @@ def main(argv=None):
         "commit_hash": args.commit_hash,
         "commit_date": args.commit_date,
         "is_comparable_base": str(args.is_comparable_base).lower() in ("1", "true", "yes"),
+        "config": _load_runner_config(args.runner_config),
     }
 
     run_row, result_rows = translate(args.input_dir, ctx)
