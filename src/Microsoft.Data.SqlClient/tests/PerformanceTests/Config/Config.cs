@@ -12,6 +12,20 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public string ConnectionString;
         public bool UseManagedSniOnWindows;
         public bool UseOptimizedAsyncBehaviour;
+
+        /// <summary>
+        /// When true, selects the new channel-based connection pool
+        /// (<c>ChannelDbConnectionPool</c>) by enabling the
+        /// <c>Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2</c> AppContext switch.
+        /// When false (the default), the legacy <c>WaitHandleDbConnectionPool</c> is used.
+        ///
+        /// This is a process-level setting: the switch is read and cached the first time
+        /// a pool is created, so it cannot be toggled per benchmark iteration. To compare
+        /// the two implementations, run the benchmark once with this flag false and once
+        /// with it true.
+        /// </summary>
+        public bool UseConnectionPoolV2;
+
         public bool WaitForProfiler;
         public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
@@ -54,6 +68,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob JsonVsVarcharReadRunnerConfig;
         public RunnerJob BeginTransactionRunnerConfig;
         public RunnerJob ConnectionPoolStressRunnerConfig;
+        public RunnerJob ConnectionPoolContentionRunnerConfig;
+        public RunnerJob ConnectionPoolChurnRunnerConfig;
     }
 
     public class RunnerJob
