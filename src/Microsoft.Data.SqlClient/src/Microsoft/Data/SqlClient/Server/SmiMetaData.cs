@@ -104,6 +104,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal static readonly SmiMetaData DefaultVarChar_NoCollation = new SmiMetaData(SqlDbType.VarChar, MaxANSICharacters, 0, 0, DefaultStringCompareOptions);// SqlDbType.VarChar
         internal static readonly SmiMetaData DefaultVariant = new SmiMetaData(SqlDbType.Variant, 8016, 0, 0, SqlCompareOptions.None);     // SqlDbType.Variant
         internal static readonly SmiMetaData DefaultXml = new SmiMetaData(SqlDbType.Xml, UnlimitedMaxLengthIndicator, 0, 0, DefaultStringCompareOptions);// SqlDbType.Xml
+        internal static readonly SmiMetaData DefaultJson = new SmiMetaData(SqlDbTypeExtensions.Json, UnlimitedMaxLengthIndicator, 0, 0, DefaultStringCompareOptions);// SqlDbTypeExtensions.Json
+        internal static readonly SmiMetaData DefaultVector = new SmiMetaData(SqlDbTypeExtensions.Vector, TdsEnums.VECTOR_HEADER_SIZE, 0, 0, SqlCompareOptions.None);// SqlDbTypeExtensions.Vector
         internal static readonly SmiMetaData DefaultUdt_NoType = new SmiMetaData(SqlDbType.Udt, 0, 0, 0, SqlCompareOptions.None);     // SqlDbType.Udt
         internal static readonly SmiMetaData DefaultStructured = new SmiMetaData(SqlDbType.Structured, 0, 0, 0, SqlCompareOptions.None);     // SqlDbType.Structured
         internal static readonly SmiMetaData DefaultDate = new SmiMetaData(SqlDbType.Date, 3, 10, 0, SqlCompareOptions.None);     // SqlDbType.Date
@@ -260,7 +262,14 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.UniqueIdentifier:
                 case SqlDbType.Variant:
                 case SqlDbType.Xml:
+                case SqlDbTypeExtensions.Json:
                 case SqlDbType.Date:
+                    break;
+                case SqlDbTypeExtensions.Vector:
+                    // Vector carries a finite byte length (8-byte header + payload) and the element
+                    // type indicator (0 = float32) in scale.
+                    _maxLength = maxLength;
+                    _scale = scale;
                     break;
                 case SqlDbType.Binary:
                 case SqlDbType.VarBinary:
@@ -395,7 +404,9 @@ namespace Microsoft.Data.SqlClient.Server
         {
             // Hole in SqlDbTypes between Xml and Udt for non-WinFS scenarios.
             return (SqlDbType.BigInt <= dbType && SqlDbType.Xml >= dbType) ||
-                    (SqlDbType.Udt <= dbType && SqlDbType.DateTimeOffset >= dbType);
+                    (SqlDbType.Udt <= dbType && SqlDbType.DateTimeOffset >= dbType) ||
+                    SqlDbTypeExtensions.Json == dbType ||
+                    SqlDbTypeExtensions.Vector == dbType;
         }
 
         // Only correct access point for defaults per SqlDbType.
@@ -470,6 +481,8 @@ namespace Microsoft.Data.SqlClient.Server
                 DefaultTime,                   // SqlDbType.Time
                 DefaultDateTime2,              // SqlDbType.DateTime2
                 DefaultDateTimeOffset,         // SqlDbType.DateTimeOffset
+                DefaultJson,                   // SqlDbTypeExtensions.Json (value 35)
+                DefaultVector,                 // SqlDbTypeExtensions.Vector (value 36)
             };
 
         // static array of type names ordered by corresponding SqlDbType.
@@ -512,6 +525,8 @@ namespace Microsoft.Data.SqlClient.Server
                 "time",                 // SqlDbType.Time
                 "datetime2",            // SqlDbType.DateTime2
                 "datetimeoffset",       // SqlDbType.DateTimeOffset
+                "json",                 // SqlDbTypeExtensions.Json (value 35)
+                "vector",               // SqlDbTypeExtensions.Vector (value 36)
             };
 
         // Internal setter to be used by constructors only!  Modifies state!

@@ -11,6 +11,7 @@ using Xunit;
 using Xunit.Abstractions;
 using System.Text.Json;
 using Microsoft.Data.SqlTypes;
+using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -372,6 +373,114 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             spCommand.Parameters.Add(outputParam);
             spCommand.ExecuteNonQuery();
             Assert.Equal(JsonDataString, (string)outputParam.Value);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestJsonTvpRoundTrip()
+        {
+            // Pass a table-valued parameter whose column is a JSON type, sourced from
+            // SqlDataRecord rows, and read the values back through the TVP.
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            string tvpTypeName = DataTestUtility.GetLongName("JsonTvp");
+            using (SqlCommand createType = new($"CREATE TYPE {tvpTypeName} AS TABLE (Id int, Data json)", connection))
+            {
+                createType.ExecuteNonQuery();
+            }
+
+            try
+            {
+                SqlMetaData[] metadata =
+                {
+                    new SqlMetaData("Id", SqlDbType.Int),
+                    new SqlMetaData("Data", SqlDbTypeExtensions.Json),
+                };
+
+                SqlDataRecord row0 = new(metadata);
+                row0.SetInt32(0, 0);
+                row0.SetString(1, JsonDataString);
+
+                SqlDataRecord row1 = new(metadata);
+                row1.SetInt32(0, 1);
+                row1.SetDBNull(1); // NULL json
+
+                using SqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT Id, Data FROM @tvp ORDER BY Id";
+                SqlParameter parameter = command.Parameters.AddWithValue("@tvp", new[] { row0, row1 });
+                parameter.SqlDbType = SqlDbType.Structured;
+                parameter.TypeName = tvpTypeName;
+
+                using SqlDataReader reader = command.ExecuteReader();
+
+                Assert.True(reader.Read());
+                Assert.Equal(0, reader.GetInt32(0));
+                Assert.Equal("json", reader.GetDataTypeName(1));
+                Assert.Equal(JsonDataString, reader.GetString(1));
+
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.True(reader.IsDBNull(1));
+
+                Assert.False(reader.Read());
+            }
+            finally
+            {
+                using SqlCommand dropType = new($"DROP TYPE IF EXISTS {tvpTypeName}", connection);
+                dropType.ExecuteNonQuery();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestJsonTvpInsert()
+        {
+            // Insert rows into a real JSON column via a table-valued parameter, then read
+            // them back as a native JSON column.
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            string tvpTypeName = DataTestUtility.GetLongName("JsonTvpIns");
+            using (SqlCommand createType = new($"CREATE TYPE {tvpTypeName} AS TABLE (Id int, Data json)", connection))
+            {
+                createType.ExecuteNonQuery();
+            }
+
+            try
+            {
+                using Table jsonTable = new(connection, nameof(TestJsonTvpInsert), "(Id int, Data json)");
+
+                SqlMetaData[] metadata =
+                {
+                    new SqlMetaData("Id", SqlDbType.Int),
+                    new SqlMetaData("Data", SqlDbTypeExtensions.Json),
+                };
+                SqlDataRecord row = new(metadata);
+                row.SetInt32(0, 1);
+                row.SetString(1, JsonDataString);
+
+                using (SqlCommand insert = connection.CreateCommand())
+                {
+                    insert.CommandText = $"INSERT INTO {jsonTable.Name} (Id, Data) SELECT Id, Data FROM @tvp";
+                    SqlParameter parameter = insert.Parameters.AddWithValue("@tvp", new[] { row });
+                    parameter.SqlDbType = SqlDbType.Structured;
+                    parameter.TypeName = tvpTypeName;
+                    int rowsAffected = insert.ExecuteNonQuery();
+                    Assert.Equal(1, rowsAffected);
+                }
+
+                using SqlCommand read = new($"SELECT Id, Data FROM {jsonTable.Name}", connection);
+                using SqlDataReader reader = read.ExecuteReader();
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal("json", reader.GetDataTypeName(1));
+                Assert.Equal(JsonDataString, reader.GetString(1));
+                Assert.False(reader.Read());
+            }
+            finally
+            {
+                using SqlCommand dropType = new($"DROP TYPE IF EXISTS {tvpTypeName}", connection);
+                dropType.ExecuteNonQuery();
+            }
         }
     }
 }

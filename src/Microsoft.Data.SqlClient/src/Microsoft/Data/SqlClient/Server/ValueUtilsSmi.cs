@@ -1004,6 +1004,12 @@ namespace Microsoft.Data.SqlClient.Server
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue(getters, ordinal, metaData);
                         break;
+                    case SqlDbTypeExtensions.Json:
+                        result = GetString_Unchecked(getters, ordinal);
+                        break;
+                    case SqlDbTypeExtensions.Vector:
+                        result = new Microsoft.Data.SqlTypes.SqlVector<float>(GetByteArray_Unchecked(getters, ordinal));
+                        break;
                     case SqlDbType.Xml:
                         result = GetSqlXml_Unchecked(getters, ordinal).Value;
                         break;
@@ -1158,6 +1164,12 @@ namespace Microsoft.Data.SqlClient.Server
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue(getters, ordinal, metaData);
                         break;
+                    case SqlDbTypeExtensions.Json:
+                        result = new SqlString(GetString_Unchecked(getters, ordinal));
+                        break;
+                    case SqlDbTypeExtensions.Vector:
+                        result = new Microsoft.Data.SqlTypes.SqlVector<float>(GetByteArray_Unchecked(getters, ordinal));
+                        break;
                     case SqlDbType.Xml:
                         result = GetSqlXml_Unchecked(getters, ordinal);
                         break;
@@ -1207,6 +1219,8 @@ namespace Microsoft.Data.SqlClient.Server
             DBNull.Value,       // SqlDbType.Time
             DBNull.Value,       // SqlDbType.DateTime2
             DBNull.Value,       // SqlDbType.DateTimeOffset
+            SqlString.Null,     // SqlDbTypeExtensions.Json (value 35)
+            SqlBinary.Null,     // SqlDbTypeExtensions.Vector (value 36)
         };
 
         internal static object NullUdtInstance(SmiMetaData metaData)
@@ -1484,6 +1498,17 @@ namespace Microsoft.Data.SqlClient.Server
                 CanAccessSetterDirectly(metaData, typeCode) ||
                 value is DataFeed
             );
+
+            // Vector values are transferred as their raw TDS payload bytes (8-byte header + elements).
+            if (SqlDbTypeExtensions.Vector == metaData.SqlDbType && value is ISqlVector vectorValue)
+            {
+                if (value is INullable nullableVector && nullableVector.IsNull)
+                {
+                    SetDBNull_Unchecked(setters, ordinal);
+                    return;
+                }
+                value = vectorValue.VectorPayload;
+            }
 
             switch (typeCode)
             {
@@ -1823,9 +1848,21 @@ namespace Microsoft.Data.SqlClient.Server
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.ByteArray));
                             SetBytes_FromReader(setters, i, metaData[i], reader, 0);
                             break;
+                        case SqlDbTypeExtensions.Vector:
+                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.ByteArray));
+                            SetBytes_FromReader(setters, i, metaData[i], reader, 0);
+                            break;
                         case SqlDbType.VarChar:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
                             SetCharsOrString_FromReader(setters, i, metaData[i], reader, 0);
+                            break;
+                        case SqlDbTypeExtensions.Json:
+                            {
+                                Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
+                                // JSON travels as a single UTF-8 PLP value (see TdsValueSetter.SetString).
+                                string jsonValue = reader.GetString(i);
+                                SetString_Unchecked(setters, i, jsonValue, 0, jsonValue.Length);
+                            }
                             break;
                         case SqlDbType.Xml:
                             {
@@ -2024,9 +2061,21 @@ namespace Microsoft.Data.SqlClient.Server
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
                             SetBytes_FromRecord(setters, i, metaData[i], record, 0);
                             break;
+                        case SqlDbTypeExtensions.Vector:
+                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.ByteArray));
+                            SetBytes_FromRecord(setters, i, metaData[i], record, 0);
+                            break;
                         case SqlDbType.VarChar:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
                             SetChars_FromRecord(setters, i, metaData[i], record, 0);
+                            break;
+                        case SqlDbTypeExtensions.Json:
+                            {
+                                Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
+                                // JSON travels as a single UTF-8 PLP value (see TdsValueSetter.SetString).
+                                string jsonValue = record.GetString(i);
+                                SetString_Unchecked(setters, i, jsonValue, 0, jsonValue.Length);
+                            }
                             break;
                         case SqlDbType.Xml:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
@@ -2522,9 +2571,20 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(ExtendedClrTypeCode.First == 0 && (int)ExtendedClrTypeCode.Last == s_canAccessGetterDirectly.GetLength(0) - 1, "ExtendedClrTypeCodes does not match with __canAccessGetterDirectly");
             Debug.Assert(SqlDbType.BigInt == 0 && (int)SqlDbType.DateTimeOffset == s_canAccessGetterDirectly.GetLength(1) - 1, "SqlDbType does not match with __canAccessGetterDirectly");
             Debug.Assert(ExtendedClrTypeCode.First <= setterTypeCode && ExtendedClrTypeCode.Last >= setterTypeCode);
-            Debug.Assert(SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType);
+            Debug.Assert((SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType) || SqlDbTypeExtensions.Json == metaData.SqlDbType || SqlDbTypeExtensions.Vector == metaData.SqlDbType);
 
-            bool returnValue = s_canAccessGetterDirectly[(int)setterTypeCode, (int)metaData.SqlDbType];
+            // JSON and Vector are outside the contiguous SqlDbType range covered by the access map;
+            // JSON accepts the same accessors as NVarChar (string) and Vector the same as VarBinary (bytes).
+            SqlDbType effectiveGetterType = metaData.SqlDbType;
+            if (SqlDbTypeExtensions.Json == effectiveGetterType)
+            {
+                effectiveGetterType = SqlDbType.NVarChar;
+            }
+            else if (SqlDbTypeExtensions.Vector == effectiveGetterType)
+            {
+                effectiveGetterType = SqlDbType.VarBinary;
+            }
+            bool returnValue = s_canAccessGetterDirectly[(int)setterTypeCode, (int)effectiveGetterType];
 
             // Additional restrictions to distinguish TVPs and Structured UDTs
             if (
@@ -2548,9 +2608,20 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(ExtendedClrTypeCode.First == 0 && (int)ExtendedClrTypeCode.Last == s_canAccessSetterDirectly.GetLength(0) - 1, "ExtendedClrTypeCodes does not match with __canAccessSetterDirectly");
             Debug.Assert(SqlDbType.BigInt == 0 && (int)SqlDbType.DateTimeOffset == s_canAccessSetterDirectly.GetLength(1) - 1, "SqlDbType does not match with __canAccessSetterDirectly");
             Debug.Assert(ExtendedClrTypeCode.First <= setterTypeCode && ExtendedClrTypeCode.Last >= setterTypeCode);
-            Debug.Assert(SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType);
+            Debug.Assert((SqlDbType.BigInt <= metaData.SqlDbType && SqlDbType.DateTimeOffset >= metaData.SqlDbType) || SqlDbTypeExtensions.Json == metaData.SqlDbType || SqlDbTypeExtensions.Vector == metaData.SqlDbType);
 
-            bool returnValue = s_canAccessSetterDirectly[(int)setterTypeCode, (int)metaData.SqlDbType];
+            // JSON and Vector are outside the contiguous SqlDbType range covered by the access map;
+            // JSON accepts the same accessors as NVarChar (string) and Vector the same as VarBinary (bytes).
+            SqlDbType effectiveSetterType = metaData.SqlDbType;
+            if (SqlDbTypeExtensions.Json == effectiveSetterType)
+            {
+                effectiveSetterType = SqlDbType.NVarChar;
+            }
+            else if (SqlDbTypeExtensions.Vector == effectiveSetterType)
+            {
+                effectiveSetterType = SqlDbType.VarBinary;
+            }
+            bool returnValue = s_canAccessSetterDirectly[(int)setterTypeCode, (int)effectiveSetterType];
 
             // Additional restrictions to distinguish TVPs and Structured UDTs
             if (

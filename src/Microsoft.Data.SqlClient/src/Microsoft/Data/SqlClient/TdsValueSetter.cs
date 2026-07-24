@@ -92,6 +92,7 @@ namespace Microsoft.Data.SqlClient
                     case SqlDbType.Timestamp:
                     case SqlDbType.VarBinary:
                     case SqlDbType.VarChar:
+                    case SqlDbTypeExtensions.Vector:
                         _stateObj.Parser.WriteShort(TdsEnums.VARNULL, _stateObj);
                         break;
                     case SqlDbType.Udt:
