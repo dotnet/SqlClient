@@ -34,7 +34,7 @@ internal static class SsrpPacketTestData
     /// <summary>
     /// One empty packet buffer, which should be successfully processed and contain zero responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Process_EmptyBuffer_ReturnsFalse"/>
+    /// <see cref="DacResponseProcessorTest.Read_EmptyBuffer_ReturnsFalse"/>
     /// <see cref="SqlDataSourceResponseProcessorTest.Process_EmptyBuffer_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> EmptyPacketBuffer =>
         new(GeneratePacketBuffers([]));
@@ -242,7 +242,7 @@ internal static class SsrpPacketTestData
     /// <summary>
     /// Packet buffers containing nothing but invalid SVR_RESP (DAC) responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Process_InvalidDacResponse_ReturnsFalse"/>
+    /// <see cref="DacResponseProcessorTest.Read_InvalidDacResponse_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespDacPackets =>
         [
             // Invalid header byte
