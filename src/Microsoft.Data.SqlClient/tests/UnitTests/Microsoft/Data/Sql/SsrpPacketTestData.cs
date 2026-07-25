@@ -162,11 +162,13 @@ internal static class SsrpPacketTestData
                     ValidTcpPort2
                 },
                 {
-                    // One response, split into three buffers.
+                    // One response, split into four buffers.
                     // Buffer 1: the header and first byte of RESP_SIZE.
-                    // Buffer 2: the second byte of RESP_SIZE and the first byte of RESP_DATA (protocol version).
-                    // Buffer 3: remainder.
+                    // Buffer 2: empty
+                    // Buffer 3: the second byte of RESP_SIZE and the first byte of RESP_DATA (protocol version).
+                    // Buffer 4: remainder.
                     GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
+                        [],
                         validPacket1.AsSpan(2, 2).ToArray(),
                         validPacket1.AsSpan(4).ToArray()),
                     ValidTcpPort2
@@ -213,7 +215,26 @@ internal static class SsrpPacketTestData
                         [0x05, ..validPacket4],
                         validPacket1),
                     ValidTcpPort5
-                }
+                },
+                {
+                    // Two responses, with three garbage bytes before the first
+                    GeneratePacketBuffers([0x01, 0x01],
+                        [0x01, ..validPacket4],
+                        validPacket1),
+                    ValidTcpPort5
+                },
+                {
+                    // One response, followed by three garbage bytes
+                    GeneratePacketBuffers(validPacket4,
+                        [0x01, 0x01, 0x05]),
+                    ValidTcpPort5
+                },
+                {
+                    // One empty buffer, followed by one buffer containing one response
+                    GeneratePacketBuffers([],
+                        validPacket1),
+                    ValidTcpPort2
+                },
             };
         }
     }
@@ -242,7 +263,13 @@ internal static class SsrpPacketTestData
             // Invalid port
             GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRespData(ValidRespDataDacProtocolVersion, 0)))
+                CreateRespData(ValidRespDataDacProtocolVersion, 0))),
+
+            // Invalid port, followed by trailing data
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRespData(ValidRespDataDacProtocolVersion, 0)),
+                [0x00, 0x00, 0x00, 0x00]),
         ];
 
     /// <summary>
