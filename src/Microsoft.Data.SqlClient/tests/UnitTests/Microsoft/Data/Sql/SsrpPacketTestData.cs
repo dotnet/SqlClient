@@ -179,7 +179,7 @@ internal static class SsrpPacketTestData
                         validPacket2.AsSpan(0, 2).ToArray(),
                         validPacket2.AsSpan(2).ToArray(),
                         [0x05]),
-                    ValidTcpPort3
+                    ValidTcpPort2
                 },
                 {
                     // Four responses, each with different DAC ports
@@ -187,15 +187,15 @@ internal static class SsrpPacketTestData
                         validPacket2,
                         validPacket3,
                         validPacket4),
-                    ValidTcpPort5
+                    ValidTcpPort2
                 },
                 {
                     // Five responses, with response three invalid
-                    GeneratePacketBuffers(validPacket1,
+                    GeneratePacketBuffers(validPacket4,
                         validPacket2,
                         invalidPacket1,
                         validPacket3,
-                        validPacket4),
+                        validPacket1),
                     ValidTcpPort5
                 },
                 {
@@ -205,6 +205,13 @@ internal static class SsrpPacketTestData
                         [0x05],
                         [0x05, ..validPacket3],
                         validPacket4),
+                    ValidTcpPort2
+                },
+                {
+                    // Two responses, with three extraneous 0x05 bytes before the first
+                    GeneratePacketBuffers([0x05, 0x05],
+                        [0x05, ..validPacket4],
+                        validPacket1),
                     ValidTcpPort5
                 }
             };
