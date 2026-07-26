@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Buffers;
+using System.Diagnostics;
 
 #nullable enable
 
@@ -33,6 +34,11 @@ internal static class DacResponseReader
                 return true;
             }
 
+            // If the current request cannot be parsed, advance by bytesRead.
+            // bytesRead will always be greater than zero - it'll be the next possibly-viable
+            // position of a DAC response, or the end of the sequence if no viable DAC responses
+            // can be found.
+            Debug.Assert(bytesRead > 0 && bytesRead <= remainingSequence.Length);
             remainingSequence = remainingSequence.Slice(bytesRead);
         }
 

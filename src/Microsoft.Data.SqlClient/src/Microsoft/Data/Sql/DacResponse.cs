@@ -46,11 +46,19 @@ internal readonly ref struct DacResponse
 
     /// <summary>
     /// Attempts to parse a single SSRP response from the start of the provided source sequence.
+    /// If an SSRP response cannot be found, supplies the maximum number of bytes to advance the
+    /// sequence by before attempting to parse another response.
     /// </summary>
     /// <param name="sourceSequence">The source buffer to read from.</param>
     /// <param name="response">The populated SSRP response (or default, if one cannot be found.)</param>
     /// <param name="bytesRead">The number of bytes to advance <paramref name="sourceSequence"/> by.</param>
     /// <returns><c>true</c> if the response was processed, <c>false</c> if not.</returns>
+    /// <remarks>
+    /// If the sequence does not start with an SSRP response, <paramref name="bytesRead"/> will
+    /// contain the position of the next possible <c>SVR_RESP</c> header byte (<c>0x05</c>), or
+    /// the length of <paramref name="sourceSequence"/> if this header byte is not present in the
+    /// sequence.
+    /// </remarks>
     public static bool TryParse(ReadOnlySequence<byte> sourceSequence, out DacResponse response, out long bytesRead)
     {
         // Make sure we have enough data to read the header.
