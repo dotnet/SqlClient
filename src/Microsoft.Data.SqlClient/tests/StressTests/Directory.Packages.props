@@ -7,10 +7,22 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- We enable transitive pinning here because we are an application project. -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+
+    <!-- Default to referencing the SqlClient projects directly (e.g. for IDE/local development). -->
+    <!-- CI builds pass ReferenceType=Package to build against the produced NuGet packages instead. -->
+    <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="System.CommandLine" Version="2.0.8" />
+  </ItemGroup>
+
+  <!-- In Package mode the driver references resolve to NuGet packages restored from the local feed  -->
+  <!-- (packages/). The exact versions are supplied by the pipeline via the SqlClientPackageVersion   -->
+  <!-- and AzurePackageVersion build parameters, derived from the downloaded package artifacts.       -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(SqlClientPackageVersion)" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="$(AzurePackageVersion)" />
   </ItemGroup>
 
 </Project>

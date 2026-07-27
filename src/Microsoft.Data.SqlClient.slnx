@@ -214,6 +214,10 @@
     <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/TestUdts/Utf8String/Utf8String.csproj" />
   </Folder>
-  <Project Path="../tools/PackageCompatibility/src/PackageCompatibility.csproj" />
-  <Project Path="../tools/PackageCompatibility/test/PackageCompatibility.Test.csproj" />
+  <Folder Name="/tools/">
+    <Project Path="../tools/PackageCompatibility/src/PackageCompatibility.csproj" />
+    <Project Path="../tools/PackageCompatibility/test/PackageCompatibility.Test.csproj" />
+    <Project Path="../tools/PackageValidator/src/PackageValidator.csproj" />
+    <Project Path="../tools/PackageValidator/test/PackageValidator.Test.csproj" />
+  </Folder>
 </Solution>

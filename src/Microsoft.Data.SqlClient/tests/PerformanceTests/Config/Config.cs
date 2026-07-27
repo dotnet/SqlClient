@@ -11,6 +11,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     {
         public string ConnectionString;
         public bool UseManagedSniOnWindows;
+        public bool UseOptimizedAsyncBehaviour;
+        public bool WaitForProfiler;
+        public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
 
         /// <summary>
@@ -18,7 +21,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         /// If the environment variable "RUNNER_CONFIG" is set, it will be used
         /// as the path to the config file.  Otherwise, the file
-        /// "runnerconfig.json" in the current working directory will be used.
+        /// "runnerconfig.jsonc" in the current working directory will be used.
         /// </summary>
         ///
         /// <returns>
@@ -32,7 +35,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public static Config Load()
         {
             return Loader.FromJsonFile<Config>(
-                "runnerconfig.json", "RUNNER_CONFIG");
+                "runnerconfig.jsonc", "RUNNER_CONFIG");
         }
     }
 
@@ -43,6 +46,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob SqlBulkCopyRunnerConfig;
         public RunnerJob DataTypeReaderRunnerConfig;
         public RunnerJob DataTypeReaderAsyncRunnerConfig;
+        public RunnerJob AsyncLargeDataReadRunnerConfig;
+        public RunnerJob MarsOverheadRunnerConfig;
+        public RunnerJob ParallelAsyncConnectionRunnerConfig;
+        public RunnerJob CancellationTokenReadAsyncRunnerConfig;
+        public RunnerJob SequentialXmlReadRunnerConfig;
+        public RunnerJob JsonVsVarcharReadRunnerConfig;
+        public RunnerJob BeginTransactionRunnerConfig;
+        public RunnerJob ConnectionPoolStressRunnerConfig;
     }
 
     public class RunnerJob

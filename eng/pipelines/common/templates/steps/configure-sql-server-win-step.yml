@@ -147,7 +147,7 @@ steps:
       while ($true) {
           $tries++
           try {
-              Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
+              Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 -ErrorAction Stop @"
                   CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
                   DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
                   CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
@@ -293,7 +293,7 @@ steps:
       while ($true) {
           $tries++
           try {
-              Invoke-Sqlcmd -ServerInstance "$machineName" -Query "SELECT @@VERSION" -ConnectionTimeout 5
+              Invoke-Sqlcmd -ServerInstance "$machineName" -Query "SELECT @@VERSION" -ConnectionTimeout 5 -ErrorAction Stop
               Write-Host "SQL Server is ready after restart (attempt $tries)."
               break
           } catch {
@@ -320,11 +320,26 @@ steps:
         Set-ExecutionPolicy Unrestricted
         Import-Module "sqlps"
 
-        Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 @"
-            EXEC sp_configure filestream_access_level, 2;
-            RECONFIGURE;
-        "@
-        Write-Host "FileStream access level configured successfully."
+        # Immediately after the restart SQL Server can still be stabilizing, which
+        # can surface transient errors such as "the session is in the kill state"
+        # or other severe command errors.  Retry a few times before failing so a
+        # momentary hiccup does not fail the whole step.
+        $tries = 0
+        while ($true) {
+            $tries++
+            try {
+                Invoke-Sqlcmd -ServerInstance "$machineName" -ConnectionTimeout 5 -Query "EXEC sp_configure filestream_access_level, 2; RECONFIGURE;" -ErrorAction Stop
+                Write-Host "FileStream access level configured successfully (attempt $tries)."
+                break
+            } catch {
+                if ($tries -ge 10) {
+                    Write-Host "##[error]Failed to configure FileStream access level after $tries attempts."
+                    throw
+                }
+                Write-Host "FileStream configuration failed (attempt $tries/10): $($_.Exception.Message). Retrying..."
+                Start-Sleep -Seconds 5
+            }
+        }
       displayName: 'Configure FileStream Access Level [Win]'
 
   # Step 9: Start the SQL Server Browser service so that named instances can be

@@ -10,8 +10,17 @@
 
 parameters:
 
+  - name: enableLocalDB
+    type: boolean
+
   # Path to use for file stream tests.
   - name: fileStreamDirectory
+    type: string
+
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
     type: string
 
   # Password to use for the SA account. This should be generated from the generate-secrets-stage.
@@ -113,3 +122,15 @@ steps:
       Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -InputFile $scriptPath
     displayName: 'Create Northwind Database [Win]'
     retryCountOnTaskFailure: 1
+
+  # Start and share the LocalDB instance.
+  - ${{ if eq(parameters.enableLocalDB, true) }}:
+    - powershell: |
+        SqlLocalDB info
+        SqlLocalDB info ${{ parameters.localDbAppName }}
+        SqlLocalDB share ${{ parameters.localDbAppName }} ${{ parameters.localDbSharedInstanceName }}
+        SqlLocalDB start ${{ parameters.localDbAppName }}
+        SqlLocalDB info ${{ parameters.localDbAppName }}
+
+        sqlcmd -S "(localdb)\.\${{ parameters.localDbSharedInstanceName }}" -q "SELECT @@VERSION"
+      displayName: 'Enable LocalDB [Win]'

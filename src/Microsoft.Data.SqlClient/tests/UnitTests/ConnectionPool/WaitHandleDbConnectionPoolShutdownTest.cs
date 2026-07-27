@@ -161,6 +161,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
+        [Trait("Category", "flaky")]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolShutdownTest.Shutdown_UnblocksSyncWaiter [5 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
+        //      Waiter did not park within 5s.
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolShutdownTest.Shutdown_UnblocksSyncWaiter() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\ConnectionPool\WaitHandleDbConnectionPoolShutdownTest.cs:line 207
         [Fact]
         public void Shutdown_UnblocksSyncWaiter()
         {
