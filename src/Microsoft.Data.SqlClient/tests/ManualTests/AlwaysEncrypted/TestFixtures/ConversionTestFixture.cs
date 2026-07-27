@@ -61,20 +61,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected override void Dispose(bool disposing)
         {
-            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
+            try
             {
-                SqlConnectionStringBuilder connectionString = new SqlConnectionStringBuilder(connectionStr);
-                // Match the constructor's minimum timeout; AE teardown is prone to connect timeouts,
-                // and skipping cleanup would leave the shared CMK/CEK behind.
-                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30);
+                foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
+                {
+                    SqlConnectionStringBuilder connectionString = new SqlConnectionStringBuilder(connectionStr);
+                    // Match the constructor's minimum timeout; AE teardown is prone to connect timeouts,
+                    // and skipping cleanup would leave the shared CMK/CEK behind.
+                    connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30);
 
-                using SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString);
-                sqlConnection.Open();
-                ColumnEncryptionKey.Drop(sqlConnection);
-                _columnMasterKey.Drop(sqlConnection);
+                    // Key drops are best-effort: a failure here must not prevent the base fixture
+                    // from removing the test certificate from the certificate store (see finally).
+                    try
+                    {
+                        using SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString);
+                        sqlConnection.Open();
+                        ColumnEncryptionKey.Drop(sqlConnection);
+                        _columnMasterKey.Drop(sqlConnection);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(
+                            $"ConversionTestFixture: failed to drop keys on '{connectionString.DataSource}': {ex.Message}");
+                    }
+                }
             }
-
-            base.Dispose(disposing);
+            finally
+            {
+                base.Dispose(disposing);
+            }
         }
     }
 }
