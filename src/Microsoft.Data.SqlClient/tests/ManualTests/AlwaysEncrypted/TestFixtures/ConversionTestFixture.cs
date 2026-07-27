@@ -63,7 +63,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using SqlConnection sqlConnection = new SqlConnection(connectionStr);
+                SqlConnectionStringBuilder connectionString = new SqlConnectionStringBuilder(connectionStr);
+                // Match the constructor's minimum timeout; AE teardown is prone to connect timeouts,
+                // and skipping cleanup would leave the shared CMK/CEK behind.
+                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30);
+
+                using SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString);
                 sqlConnection.Open();
                 ColumnEncryptionKey.Drop(sqlConnection);
                 _columnMasterKey.Drop(sqlConnection);
