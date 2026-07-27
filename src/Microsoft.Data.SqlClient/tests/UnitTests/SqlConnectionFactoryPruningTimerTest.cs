@@ -1,0 +1,186 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
+using Xunit;
+
+namespace Microsoft.Data.SqlClient.UnitTests
+{
+    /// <summary>
+    /// Unit tests for the demand-driven pruning timer in <see cref="SqlConnectionFactory"/>.
+    ///
+    /// The factory is a process-wide singleton, so before
+    /// https://github.com/dotnet/SqlClient/issues/1881 its pruning timer was armed in the
+    /// constructor and never stopped, waking the process every 30 seconds for the lifetime of the
+    /// process even when there was nothing left to prune. These tests pin the arm/disarm state
+    /// machine that replaced it.
+    /// </summary>
+    public class SqlConnectionFactoryPruningTimerTest
+    {
+        /// <summary>
+        /// Upper bound on the number of pruning passes a single pool group needs to drain
+        /// (Active -> Idle -> Disabled/queued -> released). Generous so the tests fail with a
+        /// useful assertion rather than hanging.
+        /// </summary>
+        private const int MaxPruningPasses = 10;
+
+        #region Helpers
+
+        /// <summary>
+        /// A factory whose timer never actually fires on its own, so tests drive pruning
+        /// deterministically through <see cref="SqlConnectionFactory.RunPruningPass"/> instead of
+        /// racing a background thread.
+        /// </summary>
+        private sealed class TestSqlConnectionFactory : SqlConnectionFactory
+        {
+            internal TestSqlConnectionFactory()
+                : base(TimeSpan.FromDays(1), TimeSpan.FromDays(1))
+            {
+            }
+
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+                => throw new NotSupportedException("These tests never open a connection.");
+        }
+
+        private static DbConnectionPoolGroup AddPoolGroup(
+            SqlConnectionFactory factory,
+            string connectionString)
+        {
+            SqlConnectionOptions userOptions = null!;
+            var key = new ConnectionPoolKey(
+                connectionString,
+                credential: null,
+                accessToken: null,
+                accessTokenCallback: null,
+                sspiContextProvider: null);
+
+            return factory.GetConnectionPoolGroup(key, poolOptions: null, ref userOptions);
+        }
+
+        /// <summary>
+        /// Runs pruning passes until the timer disarms itself, or until
+        /// <see cref="MaxPruningPasses"/> is exhausted.
+        /// </summary>
+        /// <returns>The number of passes executed.</returns>
+        private static int DrainPruningWork(SqlConnectionFactory factory)
+        {
+            int passes = 0;
+            while (factory.IsPruningTimerActive && passes < MaxPruningPasses)
+            {
+                factory.RunPruningPass();
+                passes++;
+            }
+
+            return passes;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// The timer must start disarmed. A process that creates the factory but never opens a
+        /// connection should not be woken at all.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_IsDisarmed_WhenFactoryIsConstructed()
+        {
+            var factory = new TestSqlConnectionFactory();
+
+            Assert.False(factory.IsPruningTimerActive);
+        }
+
+        /// <summary>
+        /// Registering a pool group creates work for the pruner, so the timer must arm.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_IsArmed_WhenPoolGroupIsRegistered()
+        {
+            var factory = new TestSqlConnectionFactory();
+
+            Assert.NotNull(AddPoolGroup(factory, "Data Source=localhost;"));
+
+            Assert.True(factory.IsPruningTimerActive);
+        }
+
+        /// <summary>
+        /// A pool group takes several passes to walk Active -> Idle -> Disabled -> released. The
+        /// timer must stay armed for all of them.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_StaysArmed_WhilePoolGroupIsStillDraining()
+        {
+            var factory = new TestSqlConnectionFactory();
+            AddPoolGroup(factory, "Data Source=localhost;");
+
+            // First pass only moves the group from Active to Idle; it is still tracked.
+            factory.RunPruningPass();
+
+            Assert.True(factory.IsPruningTimerActive);
+        }
+
+        /// <summary>
+        /// The regression test for #1881: once everything has drained, the timer must disarm
+        /// instead of firing forever with nothing to do.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_IsDisarmed_AfterAllWorkDrains()
+        {
+            var factory = new TestSqlConnectionFactory();
+            AddPoolGroup(factory, "Data Source=localhost;");
+            Assert.True(factory.IsPruningTimerActive);
+
+            int passes = DrainPruningWork(factory);
+
+            Assert.False(factory.IsPruningTimerActive);
+            Assert.InRange(passes, 1, MaxPruningPasses);
+        }
+
+        /// <summary>
+        /// Disarming must not be a one-way door: new connection activity has to bring pruning
+        /// back, otherwise the fix would simply have disabled pruning.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_IsRearmed_WhenNewPoolGroupIsRegisteredAfterDraining()
+        {
+            var factory = new TestSqlConnectionFactory();
+            AddPoolGroup(factory, "Data Source=localhost;");
+            DrainPruningWork(factory);
+            Assert.False(factory.IsPruningTimerActive);
+
+            AddPoolGroup(factory, "Data Source=otherhost;");
+
+            Assert.True(factory.IsPruningTimerActive);
+        }
+
+        /// <summary>
+        /// Pool groups queued for release are drained by the same timer, so queueing one must arm
+        /// it. This is the path <see cref="SqlConnection.ClearAllPools"/> ultimately drives.
+        /// </summary>
+        [Fact]
+        public void PruningTimer_IsArmed_WhenPoolGroupIsQueuedForRelease()
+        {
+            var factory = new TestSqlConnectionFactory();
+            DbConnectionPoolGroup poolGroup = AddPoolGroup(factory, "Data Source=localhost;");
+            DrainPruningWork(factory);
+            Assert.False(factory.IsPruningTimerActive);
+
+            factory.QueuePoolGroupForRelease(poolGroup);
+
+            Assert.True(factory.IsPruningTimerActive);
+
+            // ...and it must be able to quiesce again once that queue drains.
+            DrainPruningWork(factory);
+            Assert.False(factory.IsPruningTimerActive);
+        }
+    }
+}

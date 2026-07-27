@@ -45,6 +45,20 @@ namespace Microsoft.Data.SqlClient
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
         private readonly List<IDbConnectionPool> _poolsToRelease;
         private readonly Timer _pruningTimer;
+        private readonly TimeSpan _pruningDueTime;
+        private readonly TimeSpan _pruningPeriod;
+
+        // Guards every state transition of _pruningTimer.
+        //
+        // Lock ordering: this lock may be taken while holding "this", a pool group lock, or
+        // either release-list lock, but the reverse is never true. StopPruningTimerIfIdle takes
+        // _pruningTimerLock first and only then peeks at the release lists, and it deliberately
+        // reads _connectionPoolGroups without taking "this" (the dictionary is swapped wholesale,
+        // so reading the reference is safe). That keeps the lock graph acyclic.
+        private readonly object _pruningTimerLock = new object();
+        private bool _pruningTimerEnabled;
+        private bool _pruningTimerDisposed;
+
         private Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
 
         #endregion
@@ -52,18 +66,36 @@ namespace Microsoft.Data.SqlClient
         #region Constructors
         
         protected SqlConnectionFactory()
+            : this(PruningDueTime, PruningPeriod)
         {
+        }
+
+        /// <summary>
+        /// Constructs a factory with a custom pruning cadence. Intended for tests, which would
+        /// otherwise have to wait minutes for the default schedule to produce an observable
+        /// result.
+        /// </summary>
+        protected SqlConnectionFactory(TimeSpan pruningDueTime, TimeSpan pruningPeriod)
+        {
+            _pruningDueTime = pruningDueTime;
+            _pruningPeriod = pruningPeriod;
             _connectionPoolGroups = new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
+
+            // The timer is created disarmed. It is armed on demand whenever there is something to
+            // prune and disarmed again by the callback once everything has drained, so that an
+            // idle process is not woken every pruning period for the life of the process.
             _pruningTimer = ADP.UnsafeCreateTimer(
                 PruneConnectionPoolGroups,
                 state: null,
-                PruningDueTime,
-                PruningPeriod);
+                Timeout.InfiniteTimeSpan,
+                Timeout.InfiniteTimeSpan);
             
             #if NET
             SubscribeToAssemblyLoadContextUnload();
+            #else
+            SubscribeToAppDomainUnload();
             #endif
         }
         
@@ -74,6 +106,20 @@ namespace Microsoft.Data.SqlClient
         internal static SqlConnectionFactory Instance { get; } = new SqlConnectionFactory(); 
         
         internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
+
+        /// <summary>
+        /// Whether the pruning timer is currently armed. Test hook.
+        /// </summary>
+        internal bool IsPruningTimerActive
+        {
+            get
+            {
+                lock (_pruningTimerLock)
+                {
+                    return _pruningTimerEnabled;
+                }
+            }
+        }
         
         #endregion
 
@@ -255,6 +301,10 @@ namespace Microsoft.Data.SqlClient
                 
                 Debug.Assert(connectionPoolGroup != null, "how did we not create a pool entry?");
                 Debug.Assert(userConnectionOptions != null, "how did we not have user connection options?");
+
+                // A pool group is now registered, so there is something for the pruner to walk.
+                // Arm outside lock(this) to preserve the "this -> _pruningTimerLock" ordering.
+                EnsurePruningTimerRunning();
             }
             else if (userConnectionOptions is null)
             {
@@ -294,6 +344,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 _poolsToRelease.Add(pool);
             }
+
+            // The work is published above, before the timer lock is taken, so a concurrent
+            // disarm attempt is guaranteed to observe it.
+            EnsurePruningTimerRunning();
             
             SqlClientDiagnostics.Metrics.EnterInactiveConnectionPool();
             SqlClientDiagnostics.Metrics.ExitActiveConnectionPool();
@@ -308,6 +362,10 @@ namespace Microsoft.Data.SqlClient
             {
                 _poolGroupsToRelease.Add(poolGroup);
             }
+
+            // The work is published above, before the timer lock is taken, so a concurrent
+            // disarm attempt is guaranteed to observe it.
+            EnsurePruningTimerRunning();
 
             SqlClientDiagnostics.Metrics.EnterInactiveConnectionPoolGroup();
             SqlClientDiagnostics.Metrics.ExitActiveConnectionPoolGroup();
@@ -922,7 +980,92 @@ namespace Microsoft.Data.SqlClient
                 }
                 _connectionPoolGroups = newConnectionPoolGroups;
             }
+
+            // Everything above may have drained the last of the pending work. If so, park the
+            // timer rather than waking the process every pruning period forever.
+            StopPruningTimerIfIdle();
         }
+
+        /// <summary>
+        /// Arms the pruning timer if it is not already running.
+        /// </summary>
+        /// <remarks>
+        /// Callers must publish their work (add to <see cref="_connectionPoolGroups"/>,
+        /// <see cref="_poolsToRelease"/> or <see cref="_poolGroupsToRelease"/>) *before* calling
+        /// this method, and must not hold that collection's lock while calling it. That ordering
+        /// is what makes the arm/disarm handshake safe: <see cref="StopPruningTimerIfIdle"/>
+        /// re-reads all three collections while holding <see cref="_pruningTimerLock"/>, so it can
+        /// never disarm on behalf of work that a producer has already published. If it does win
+        /// the race and disarm first, the producer then observes
+        /// <see cref="_pruningTimerEnabled"/> as false and re-arms.
+        /// </remarks>
+        private void EnsurePruningTimerRunning()
+        {
+            lock (_pruningTimerLock)
+            {
+                if (_pruningTimerEnabled || _pruningTimerDisposed)
+                {
+                    return;
+                }
+
+                _pruningTimerEnabled = true;
+                _pruningTimer.Change(_pruningDueTime, _pruningPeriod);
+
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.EnsurePruningTimerRunning|RES|INFO|CPOOL> {0}, pruning timer started", ObjectId);
+            }
+        }
+
+        /// <summary>
+        /// Disarms the pruning timer if there is nothing left to prune. Called at the tail of
+        /// <see cref="PruneConnectionPoolGroups"/>.
+        /// </summary>
+        private void StopPruningTimerIfIdle()
+        {
+            lock (_pruningTimerLock)
+            {
+                if (!_pruningTimerEnabled || _pruningTimerDisposed || HasPruningWork())
+                {
+                    return;
+                }
+
+                _pruningTimerEnabled = false;
+                _pruningTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.StopPruningTimerIfIdle|RES|INFO|CPOOL> {0}, pruning timer stopped, nothing left to prune", ObjectId);
+            }
+        }
+
+        /// <summary>
+        /// Whether any of the three collections walked by <see cref="PruneConnectionPoolGroups"/>
+        /// still hold work. Must be called while holding <see cref="_pruningTimerLock"/>.
+        /// </summary>
+        private bool HasPruningWork()
+        {
+            // _connectionPoolGroups is replaced wholesale rather than mutated in place, so reading
+            // the reference without lock(this) is safe and avoids a lock-ordering inversion.
+            if (_connectionPoolGroups.Count != 0)
+            {
+                return true;
+            }
+
+            lock (_poolsToRelease)
+            {
+                if (_poolsToRelease.Count != 0)
+                {
+                    return true;
+                }
+            }
+
+            lock (_poolGroupsToRelease)
+            {
+                return _poolGroupsToRelease.Count != 0;
+            }
+        }
+
+        /// <summary>
+        /// Runs a single pruning pass synchronously on the calling thread. Test hook.
+        /// </summary>
+        internal void RunPruningPass() => PruneConnectionPoolGroups(state: null);
         
         private void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
         {
@@ -957,12 +1100,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-        #if NET
+        /// <summary>
+        /// Disposes the pruning timer and drains the pools when the hosting assembly load context
+        /// (.NET) or app domain (.NET Framework) is going away.
+        /// </summary>
         private void Unload(object sender, EventArgs e)
         {
             try
             {
-                _pruningTimer.Dispose();
+                lock (_pruningTimerLock)
+                {
+                    _pruningTimerDisposed = true;
+                    _pruningTimerEnabled = false;
+                    _pruningTimer.Dispose();
+                }
             }
             finally
             {
@@ -970,6 +1121,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        #if NET
         private void SqlConnectionFactoryAssemblyLoadContext_Unloading(AssemblyLoadContext obj)
         {
             Unload(obj, EventArgs.Empty);
@@ -979,6 +1131,12 @@ namespace Microsoft.Data.SqlClient
         {
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
+        }
+        #else
+        private void SubscribeToAppDomainUnload()
+        {
+            AppDomain.CurrentDomain.DomainUnload += Unload;
+            AppDomain.CurrentDomain.ProcessExit += Unload;
         }
         #endif
         
