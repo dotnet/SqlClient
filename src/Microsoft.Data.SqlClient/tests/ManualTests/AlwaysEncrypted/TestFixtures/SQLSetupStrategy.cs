@@ -73,6 +73,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             try
             {
+                // Reclaim identifiers leaked by earlier runs before creating
+                // this run's keys. Runs at most once per test process.
+                AlwaysEncryptedCleanup.SweepOrphansOnce(DataTestUtility.AEConnStringsSetup);
+
                 foreach (string value in DataTestUtility.AEConnStringsSetup)
                 {
                     using (SqlConnection sqlConnection = new SqlConnection(value))

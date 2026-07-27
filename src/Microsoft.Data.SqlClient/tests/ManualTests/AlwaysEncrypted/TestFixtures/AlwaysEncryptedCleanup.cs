@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -22,6 +23,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// </summary>
     internal static class AlwaysEncryptedCleanup
     {
+        // Ensures the orphan sweep runs at most once per test process.
+        private static int s_orphanSweepStarted;
+
         /// <summary>
         /// Drops every supplied object, continuing past any individual failure.
         /// Intended for teardown and for rolling back a partially-completed
@@ -41,6 +45,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     // Best-effort: log and keep going so the remaining objects
                     // (especially the CMK/CEK) still get dropped.
                     Console.WriteLine($"AlwaysEncryptedCleanup: failed to drop '{databaseObject.Name}': {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Runs the orphan sweep once per test process, before the AE fixtures
+        /// create any keys. Recovers identifiers leaked by earlier runs that
+        /// were cancelled or hard-killed before their teardown could run. The
+        /// ManualTests assembly runs serially (see XUnitAssemblyAttributes), so
+        /// this cannot race with keys created by the current run.
+        /// </summary>
+        internal static void SweepOrphansOnce(IEnumerable<string> setupConnectionStrings)
+        {
+            if (Interlocked.Exchange(ref s_orphanSweepStarted, 1) != 0)
+            {
+                return;
+            }
+
+            foreach (string connectionString in setupConnectionStrings)
+            {
+                try
+                {
+                    using SqlConnection sqlConnection = new SqlConnection(connectionString);
+                    sqlConnection.Open();
+                    DropOrphanedAeArtifacts(sqlConnection);
+                }
+                catch (Exception ex)
+                {
+                    // Best-effort recovery; never fail a test run because the
+                    // sweep could not complete.
+                    Console.WriteLine($"AlwaysEncryptedCleanup: orphan sweep failed: {ex.Message}");
                 }
             }
         }
