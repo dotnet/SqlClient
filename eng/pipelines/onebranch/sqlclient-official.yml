@@ -6,15 +6,9 @@
 
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# No PR-based triggers.
+# No activity-based triggers.
 pr: none
-
-# We trigger runs on activity on the internal/main branch, but not on any other branches.  This
-# pipeline is intended to only run against the ADO.Net dotnet-sqlclient repo.
-trigger:
-  branches:
-    include:
-      - internal/main
+trigger: none
 
 # We run this pipeline on a daily schedule.
 schedules:
@@ -27,16 +21,18 @@ schedules:
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
+
+  # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
+  # will not break the build.  TSA bug filing is always enabled in the official pipeline and is
+  # independent of this parameter (see the tsa block in globalSdl).
+  - name: breakOnSdlError
+    displayName: Break on SDL error
+    type: boolean
+    default: true
+
   # True to enable debug information and steps.
   - name: debug
     displayName: Enable debug output
-    type: boolean
-    default: false
-
-  # When true, publish symbols and push NuGet packages to Production environments.  When false,
-  # symbols use PPE and NuGet packages use QA/Test.
-  - name: releaseToProduction
-    displayName: Publish Symbols and NuGet Packages to Production
     type: boolean
     default: false
 
@@ -49,6 +45,13 @@ parameters:
   # True to publish symbols to private and public servers.
   - name: publishSymbols
     displayName: Publish symbols
+    type: boolean
+    default: false
+
+  # When true, publish symbols and push NuGet packages to Production environments.  When false,
+  # symbols use PPE and NuGet packages use QA/Test.
+  - name: releaseToProduction
+    displayName: Publish Symbols and NuGet Packages to Production
     type: boolean
     default: false
 
@@ -147,20 +150,64 @@ extends:
       category: NonAzure
 
     # See: https://aka.ms/obpipelines/sdl
+    #
+    # The following SDL tasks are auto-injected by the OneBranch / 1ES Pipeline Templates and run
+    # WITHOUT any explicit globalSdl configuration.  They were verified as running in recent
+    # pipeline runs, so we intentionally do not redeclare them here:
+    #
+    #   - Component Governance / Component Detection / Secure Supply Chain
+    #     Analysis (dependency vulnerability scanning)
+    #   - AntiMalware Scanner (Binary + Source)
+    #   - 1ES Secret Scanning (SPMI)
+    #   - Generate SBoM Manifest
+    #   - CodeSign Validation (runs on the signing path; nothing is signed in non-official runs)
+    #   - CodeQL 3000 (ALWAYS enabled via the 1ESPT (Official.CrossPlat) entry point, regardless of
+    #     the codeql config below.)
+    #
     globalSdl:
+
+      # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
+      # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
+      # non-official run and kept under .config/ alongside the other SDL tool configs
+      # (CredScan/PoliCheck/TSA).
+      baseline:
+        baselineFile: $(Build.SourcesDirectory)/.config/guardian/.gdnbaselines
+
+      # Configure APIScan behaviour:
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
+      #
+      # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/apiscan-build-task#v2
+      #
       apiscan:
-        # APIScan "software name" and version parameters are set on a per-job basis with via
-        # ob_sdl_apiscan_* variables.
+        # We want APIScan enabled by default for our jobs.  However, some jobs don't produce any
+        # artifacts, and they will disable APIScan via the OneBranch per-job ob_sdl_apiscan_enabled
+        # variable.
         enabled: true
-        # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42858):
-        # We have temporarily disabled breaking the build on ApiScan results until we can:
-        #   - Register our new packages with API Scan, and/or
-        #   - Publish MSDN/Learn/etc documentation for the new packages.
-        break: false
+
+        # APIScan errors break the build when breakOnSdlError is set.
+        break: ${{ parameters.breakOnSdlError }}
+
+        # Use release mode for official pipelines.
+        modeType: release
+
+        # We have a single "name" registered with APIScan for all of our packages.
+        #
+        # https://eng.ms/docs/products/apiscan/onboard/requirements/registersoftware
+        #
+        softwareName: Microsoft.Data.SqlClient
+
+        # Similar to the software name, we have a single version registered as well.  This has
+        # nothing to do with the NuGet package version.  It is purely an APIScan registration
+        # value that points to our backend configuration.
+        softwareVersion: '6.10'
+
+        # We want the standard level of logging.
+        verbosityLevel: standard
 
       armory:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
 
       asyncSdl:
         # Disabling this as it complicates the build process with minimal gain
@@ -168,11 +215,14 @@ extends:
 
       binskim:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
 
       codeql:
-        enabled: true
+        # CodeQL 3000 is configured under the `compiled` key; `enabled` is a sub-property of
+        # `compiled` (not of `codeql`).  CodeQL runs asynchronously on its own platform and cannot
+        # break the build by design, so it has no `break` value.
         compiled:
+          enabled: true
 
       credscan:
         enabled: true
@@ -181,16 +231,23 @@ extends:
       eslint:
         # Only useful for repos with ECMAscript - which we do not have.
         enabled: false
+        # Break value is wired preemptively so it takes effect if eslint is ever enabled.
+        break: ${{ parameters.breakOnSdlError }}
 
       policheck:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
         exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
+
+      psscriptanalyzer:
+        # Static analysis of the repository's PowerShell scripts (e.g. under eng/).
+        enabled: true
+        break: ${{ parameters.breakOnSdlError }}
 
       roslyn:
         # Note, requires RoslynAnalyzers task to be added as a separate step
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
 
       publishLogs:
         enabled: true
@@ -201,8 +258,25 @@ extends:
         packageVersion: '$(Build.BuildNumber)'
 
       tsa:
-        # OneBranch publishes all sdl results to TSA. If TSA is disabled, all SDL tools will be
-        # forced into 'break' build mode.
+        # TSA (Trust Services Automation) files SDL analysis findings as Azure DevOps bug work
+        # items.  It is hardcoded enabled in the official pipeline so that every SDL finding is
+        # always tracked as a bug, regardless of how any individual run terminates.
+        #
+        # Interaction with other SDL tool defaults:
+        #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
+        #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
+        #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
+        #   coupling: every tool above sets `break: ${{ parameters.breakOnSdlError }}` explicitly,
+        #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
+        #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
+        #   set explicitly to keep the behaviour deterministic.
+        #
+        # Otherwise independent of breakOnSdlError:
+        #   Aside from that default-flipping, TSA and breakOnSdlError are orthogonal.  TSA files
+        #   bugs from the complete finding set (the TSAUpload step runs after all analyzers have
+        #   produced results), while breakOnSdlError separately controls whether those same
+        #   findings also fail the build.  Enabling TSA here does not suppress breaking, and
+        #   breaking does not prevent bug filing within a job.
         enabled: true
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 

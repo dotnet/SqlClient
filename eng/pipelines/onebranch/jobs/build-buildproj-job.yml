@@ -102,12 +102,9 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
-      # APIScan configuration for the package being built by this job.
-      ob_sdl_apiscan_enabled: true
+      # APIScan per-job configuration for the DLL and PDB folders.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
-      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
-      ob_sdl_apiscan_versionNumber: ${{ parameters.fileVersion }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
