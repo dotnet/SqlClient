@@ -69,16 +69,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 certStoreProvider);
             _databaseObjects.Add(columnEncryptionKey);
 
-            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
+            try
             {
-                var connectionString = new SqlConnectionStringBuilder(connectionStr);
-                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
-
-                using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
+                foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
                 {
-                    sqlConnection.Open();
-                    _databaseObjects.ForEach(o => o.Create(sqlConnection));
+                    var connectionString = new SqlConnectionStringBuilder(connectionStr);
+                    connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
+
+                    using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
+                    {
+                        sqlConnection.Open();
+                        _databaseObjects.ForEach(o => o.Create(sqlConnection));
+                    }
                 }
+            }
+            catch
+            {
+                // The constructor threw part way through creating the CMK/CEK.
+                // xUnit will not call Dispose for an object whose constructor
+                // failed, so roll back here to avoid leaking keys and exhausting
+                // the server's identifier range, then rethrow.
+                DropDatabaseObjects();
+                throw;
             }
         }
 
@@ -1355,17 +1367,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            _databaseObjects.Reverse();
+            DropDatabaseObjects();
+        }
+
+        /// <summary>
+        /// Drops the per-test tables and the CMK/CEK created by this class,
+        /// best-effort. Every object is attempted even if an individual drop
+        /// fails, and each connection is isolated, so cleanup never leaks keys
+        /// regardless of test outcome.
+        /// </summary>
+        private void DropDatabaseObjects()
+        {
+            List<DbObject> reversed = new List<DbObject>(_databaseObjects);
+            reversed.Reverse();
+
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                try
                 {
+                    using SqlConnection sqlConnection = new SqlConnection(connectionStr);
                     sqlConnection.Open();
+
                     foreach (string table in _tables)
                     {
-                        DropTableIfExists(sqlConnection, table);
+                        try
+                        {
+                            DropTableIfExists(sqlConnection, table);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"ConversionTests: failed to drop table '{table}': {ex.Message}");
+                        }
                     }
-                    _databaseObjects.ForEach(o => o.Drop(sqlConnection));
+
+                    AlwaysEncryptedCleanup.DropSafely(sqlConnection, reversed);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ConversionTests: failed to drop database objects: {ex.Message}");
                 }
             }
         }

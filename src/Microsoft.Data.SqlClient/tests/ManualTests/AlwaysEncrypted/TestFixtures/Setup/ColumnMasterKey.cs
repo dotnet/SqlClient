@@ -50,7 +50,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Drop(SqlConnection sqlConnection)
         {
-            string sql = $"DROP COLUMN MASTER KEY [{Name}];";
+            // Idempotent drop: only drop if the key still exists, so a missing
+            // or already-dropped key never throws (which would abort teardown
+            // and leak the remaining keys/identifiers).
+            string sql =
+                $@"IF EXISTS (SELECT 1 FROM sys.column_master_keys WHERE name = '{Name}')
+                    DROP COLUMN MASTER KEY [{Name}];";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
             {

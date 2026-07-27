@@ -71,26 +71,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal virtual void SetupDatabase()
         {
-            foreach (string value in DataTestUtility.AEConnStringsSetup)
+            try
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                foreach (string value in DataTestUtility.AEConnStringsSetup)
                 {
-                    sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Create(sqlConnection));
-
-                    // Enable rich computation when Enclave is enabled
-                    if (DataTestUtility.EnclaveEnabled)
+                    using (SqlConnection sqlConnection = new SqlConnection(value))
                     {
-                        using (SqlCommand command = new SqlCommand(@"DBCC traceon(127,-1);", sqlConnection))
+                        sqlConnection.Open();
+                        databaseObjects.ForEach(o => o.Create(sqlConnection));
+
+                        // Enable rich computation when Enclave is enabled
+                        if (DataTestUtility.EnclaveEnabled)
                         {
-                            command.ExecuteNonQuery();
+                            using (SqlCommand command = new SqlCommand(@"DBCC traceon(127,-1);", sqlConnection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
                         }
                     }
-                }
 
+                }
+                // Insert data for TrustedMasterKeyPaths tests.
+                InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
             }
-            // Insert data for TrustedMasterKeyPaths tests.
-            InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
+            catch
+            {
+                // If setup fails part way (e.g. a CREATE COLUMN ENCRYPTION KEY
+                // fails), roll back whatever was already created so we do not
+                // leak keys and exhaust the server's identifier range, then
+                // rethrow so the failure is still surfaced.
+                DropDatabaseObjects();
+                throw;
+            }
         }
 
         protected void InsertSampleData(string tableName)
@@ -274,16 +286,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected override void Dispose(bool disposing)
         {
-            databaseObjects.Reverse();
+            DropDatabaseObjects();
+            base.Dispose(disposing);
+        }
+
+        /// <summary>
+        /// Drops all created database objects, best-effort. Every object is
+        /// attempted even if an individual drop fails, and each connection is
+        /// isolated so one bad connection string cannot prevent the rest of the
+        /// cleanup (or the base fixture's certificate cleanup) from running.
+        /// </summary>
+        private void DropDatabaseObjects()
+        {
+            // Drop in reverse creation order (dependents before the keys they
+            // reference). Use a copy so we don't mutate databaseObjects.
+            List<DbObject> reversed = new List<DbObject>(databaseObjects);
+            reversed.Reverse();
+
             foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                try
                 {
+                    using SqlConnection sqlConnection = new SqlConnection(value);
                     sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                    AlwaysEncryptedCleanup.DropSafely(sqlConnection, reversed);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"SQLSetupStrategy: failed to drop database objects: {ex.Message}");
                 }
             }
-            base.Dispose(disposing);
         }
     }
 }

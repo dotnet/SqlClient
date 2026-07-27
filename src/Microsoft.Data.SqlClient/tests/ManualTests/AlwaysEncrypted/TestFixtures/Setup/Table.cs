@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Drop(SqlConnection sqlConnection)
         {
-            string sql = $"DROP TABLE [{Name}];";
+            // Idempotent drop so a missing table never throws during teardown.
+            string sql = $"IF OBJECT_ID('[{Name}]', 'U') IS NOT NULL DROP TABLE [{Name}];";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
