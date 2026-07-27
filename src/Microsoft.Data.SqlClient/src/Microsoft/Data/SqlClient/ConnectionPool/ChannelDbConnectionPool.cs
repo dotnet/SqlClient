@@ -379,8 +379,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     {
                         // Should never happen (oldConnection is checked out, so its slot is stable),
                         // but guard against vending a connection the pool isn't tracking.
-                        // TODO: error types and localization
-                        throw new InvalidOperationException("Connection is no longer in the pool and cannot be replaced.");
+                        throw ADP.InternalError(ADP.InternalErrorCode.ConnectionSlotReplacementFailed);
                     }
                 }
                 catch

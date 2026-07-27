@@ -1096,6 +1096,7 @@ namespace Microsoft.Data.Common
             UnexpectedWaitAnyResult = 16,
             SynchronousConnectReturnedPending = 17,
             CompletedConnectReturnedPending = 18,
+            ConnectionSlotReplacementFailed = 19,
 
             NameValuePairNext = 20,
             InvalidParserState1 = 21,

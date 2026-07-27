@@ -5,8 +5,6 @@
 using System;
 using System.Data.Common;
 using System.Transactions;
-using Microsoft.Data.Common;
-using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
@@ -320,10 +318,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Verifies that when activating the replacement connection fails, the newly created
-        /// connection is returned to the pool rather than leaked, keeping the pool count stable.
+        /// connection is disposed (never taking a pool slot) and the old connection is left intact,
+        /// so the pool's physical connection count is unchanged and nothing is leaked.
         /// </summary>
         [Fact]
-        public void ReplaceConnection_ActivationFails_NewConnectionReturnedToPool()
+        public void ReplaceConnection_ActivationFails_NewConnectionDisposed_PoolCountStable()
         {
             // Arrange
             var factory = new ActivationFailSqlConnectionFactory();
@@ -350,9 +349,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     oldConnection,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
 
-            // Assert — the new connection was returned to pool (not leaked).
-            // Pool count stays same because the new connection replaced the old one's slot
-            // and was then returned to idle.
+            // Assert — the new connection never took a slot and is disposed on the failure path,
+            // while the old connection is left in place for the caller's reconnect retry loop, so
+            // the pool's physical connection count is unchanged (nothing leaked).
             Assert.Equal(countBefore, pool.Count);
         }
 
