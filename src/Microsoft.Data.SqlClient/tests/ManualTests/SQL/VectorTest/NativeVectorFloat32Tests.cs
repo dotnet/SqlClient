@@ -8,6 +8,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 using Xunit;
 using Xunit.Abstractions;
@@ -622,6 +623,121 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 rowcnt++;
             }
             Assert.Equal(10, rowcnt);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        public void TestVectorFloat32TvpRoundTrip()
+        {
+            // Pass VECTOR(float32) values (and a NULL vector) through a table-valued parameter
+            // sourced from SqlDataRecord rows, then read the values back through the TVP.
+            using SqlConnection conn = new SqlConnection(s_connectionString);
+            conn.Open();
+
+            string tvpTypeName = DataTestUtility.GetShortName("VecTvp");
+            using (SqlCommand createType = new SqlCommand(
+                $"CREATE TYPE {tvpTypeName} AS TABLE (Id int, VectorData vector({s_vectorDimensions}))", conn))
+            {
+                createType.ExecuteNonQuery();
+            }
+
+            try
+            {
+                // Vector column max length = 8-byte header + 4 bytes per float32 dimension.
+                int vectorByteLength = VectorFloat32TestData.VectorHeaderSize + sizeof(float) * s_vectorDimensions;
+                float[] values = VectorFloat32TestData.testData;
+
+                SqlMetaData[] metadata =
+                {
+                    new SqlMetaData("Id", SqlDbType.Int),
+                    new SqlMetaData("VectorData", SqlDbTypeExtensions.Vector, vectorByteLength),
+                };
+
+                SqlDataRecord row0 = new SqlDataRecord(metadata);
+                row0.SetInt32(0, 0);
+                row0.SetValue(1, new SqlVector<float>(values));
+
+                SqlDataRecord row1 = new SqlDataRecord(metadata);
+                row1.SetInt32(0, 1);
+                row1.SetValue(1, SqlVector<float>.CreateNull(s_vectorDimensions)); // NULL vector
+
+                using SqlCommand command = conn.CreateCommand();
+                command.CommandText = "SELECT Id, VectorData FROM @tvp ORDER BY Id";
+                SqlParameter p = command.Parameters.AddWithValue("@tvp", new[] { row0, row1 });
+                p.SqlDbType = SqlDbType.Structured;
+                p.TypeName = tvpTypeName;
+
+                using SqlDataReader reader = command.ExecuteReader();
+
+                Assert.True(reader.Read());
+                Assert.Equal(0, reader.GetInt32(0));
+                Assert.Equal(values, reader.GetSqlVector<float>(1).Memory.ToArray());
+
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.True(reader.IsDBNull(1));
+
+                Assert.False(reader.Read());
+            }
+            finally
+            {
+                using SqlCommand dropType = new SqlCommand($"DROP TYPE IF EXISTS {tvpTypeName}", conn);
+                dropType.ExecuteNonQuery();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSqlVectorSupported))]
+        public void TestVectorFloat32TvpInsert()
+        {
+            // Insert VECTOR(float32) rows into a real table via a table-valued parameter, then read
+            // them back as native vectors.
+            using SqlConnection conn = new SqlConnection(s_connectionString);
+            conn.Open();
+
+            string tvpTypeName = DataTestUtility.GetShortName("VecTvpIns");
+            string destTableName = DataTestUtility.GetShortName("VecTvpDest");
+            using (SqlCommand setup = new SqlCommand(
+                $"CREATE TYPE {tvpTypeName} AS TABLE (Id int, VectorData vector({s_vectorDimensions}));" +
+                $"CREATE TABLE {destTableName} (Id int, VectorData vector({s_vectorDimensions}) NULL);", conn))
+            {
+                setup.ExecuteNonQuery();
+            }
+
+            try
+            {
+                int vectorByteLength = VectorFloat32TestData.VectorHeaderSize + sizeof(float) * s_vectorDimensions;
+                float[] values = VectorFloat32TestData.testData;
+
+                SqlMetaData[] metadata =
+                {
+                    new SqlMetaData("Id", SqlDbType.Int),
+                    new SqlMetaData("VectorData", SqlDbTypeExtensions.Vector, vectorByteLength),
+                };
+                SqlDataRecord row = new SqlDataRecord(metadata);
+                row.SetInt32(0, 1);
+                row.SetValue(1, new SqlVector<float>(values));
+
+                using (SqlCommand insert = conn.CreateCommand())
+                {
+                    insert.CommandText = $"INSERT INTO {destTableName} (Id, VectorData) SELECT Id, VectorData FROM @tvp";
+                    SqlParameter p = insert.Parameters.AddWithValue("@tvp", new[] { row });
+                    p.SqlDbType = SqlDbType.Structured;
+                    p.TypeName = tvpTypeName;
+                    Assert.Equal(1, insert.ExecuteNonQuery());
+                }
+
+                using SqlCommand read = new SqlCommand($"SELECT Id, VectorData FROM {destTableName}", conn);
+                using SqlDataReader reader = read.ExecuteReader();
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.Equal(values, reader.GetSqlVector<float>(1).Memory.ToArray());
+                Assert.False(reader.Read());
+            }
+            finally
+            {
+                using SqlCommand cleanup = new SqlCommand(
+                    $"DROP TABLE IF EXISTS {destTableName}; DROP TYPE IF EXISTS {tvpTypeName};", conn);
+                cleanup.ExecuteNonQuery();
+            }
         }
     }
 }

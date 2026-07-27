@@ -253,6 +253,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.NVarChar:
                     case SqlDbType.Text:
                     case SqlDbType.VarChar:
+                    case SqlDbTypeExtensions.Json:
                         if (value.GetType() == typeof(string))
                         {
                             extendedCode = ExtendedClrTypeCode.String;
@@ -462,6 +463,15 @@ namespace Microsoft.Data.SqlClient.Server
                         else if (value.GetType() == typeof(string))
                         {
                             extendedCode = ExtendedClrTypeCode.String;
+                        }
+
+                        break;
+                    case SqlDbTypeExtensions.Vector:
+                        // Vector values are supplied as SqlVector<T> and transferred as their raw
+                        // TDS payload bytes.
+                        if (value is ISqlVector)
+                        {
+                            extendedCode = ExtendedClrTypeCode.ByteArray;
                         }
 
                         break;
@@ -877,6 +887,7 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.TinyInt:
                 case SqlDbType.Variant:
                 case SqlDbType.Xml:
+                case SqlDbTypeExtensions.Json:
                 case SqlDbType.Date:
                     // These types require no  metadata modifies
                     break;

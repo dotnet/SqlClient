@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Data;
 using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -109,7 +110,18 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType &&
                     SmiXetterTypeCode.GetVariantMetaData != xetterType);
 
-            return s_isSetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
+            // JSON and Vector are outside the contiguous SqlDbType range covered by this map;
+            // JSON accepts the same setters as NVarChar (string) and Vector the same as VarBinary (bytes).
+            SqlDbType effectiveType = metaData.SqlDbType;
+            if (SqlDbTypeExtensions.Json == effectiveType)
+            {
+                effectiveType = SqlDbType.NVarChar;
+            }
+            else if (SqlDbTypeExtensions.Vector == effectiveType)
+            {
+                effectiveType = SqlDbType.VarBinary;
+            }
+            return s_isSetterAccessValid[(int)effectiveType, (int)xetterType];
         }
     }
 }
