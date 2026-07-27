@@ -19,7 +19,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [Trait("Set", "AE")]
-    public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
+    public sealed class ConversionTests : IDisposable, IClassFixture<ConversionTestFixture>
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -30,9 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private ColumnEncryptionKey columnEncryptionKey;
-        private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-        private List<DbObject> _databaseObjects = new List<DbObject>();
+        private readonly ColumnEncryptionKey columnEncryptionKey;
         private List<string> _tables = new();
 
         private class ColumnMetaData
@@ -53,49 +51,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             public bool UseMax { get; set; }
         }
 
-        public ConversionTests(ColumnMasterKeyCertificateFixture fixture)
+        public ConversionTests(ConversionTestFixture fixture)
         {
-            X509Certificate2 certificate = fixture.ColumnMasterKeyCertificate;
-            ColumnMasterKey columnMasterKey1 = new CspColumnMasterKey(
-                DatabaseHelper.GenerateUniqueName("CMK"),
-                certificate.Thumbprint,
-                certStoreProvider,
-                DataTestUtility.EnclaveEnabled);
-            _databaseObjects.Add(columnMasterKey1);
-
-            columnEncryptionKey = new ColumnEncryptionKey(
-                DatabaseHelper.GenerateUniqueName("CEK"),
-                columnMasterKey1,
-                certStoreProvider);
-            _databaseObjects.Add(columnEncryptionKey);
-
-            try
-            {
-                // Reclaim identifiers leaked by earlier runs before creating
-                // this run's keys. Runs at most once per test process.
-                AlwaysEncryptedCleanup.SweepOrphansOnce(DataTestUtility.AEConnStringsSetup);
-
-                foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
-                {
-                    var connectionString = new SqlConnectionStringBuilder(connectionStr);
-                    connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
-
-                    using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
-                    {
-                        sqlConnection.Open();
-                        _databaseObjects.ForEach(o => o.Create(sqlConnection));
-                    }
-                }
-            }
-            catch
-            {
-                // The constructor threw part way through creating the CMK/CEK.
-                // xUnit will not call Dispose for an object whose constructor
-                // failed, so roll back here to avoid leaking keys and exhausting
-                // the server's identifier range, then rethrow.
-                DropDatabaseObjects();
-                throw;
-            }
+            // The Column Master Key and Column Encryption Key are created once per test class by
+            // the fixture, rather than once per test case, to avoid rapidly exhausting SQL Server's
+            // per-database identifier allocator (error 3807) on long-lived shared databases.
+            columnEncryptionKey = fixture.ColumnEncryptionKey;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -1371,44 +1332,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            DropDatabaseObjects();
-        }
-
-        /// <summary>
-        /// Drops the per-test tables and the CMK/CEK created by this class,
-        /// best-effort. Every object is attempted even if an individual drop
-        /// fails, and each connection is isolated, so cleanup never leaks keys
-        /// regardless of test outcome.
-        /// </summary>
-        private void DropDatabaseObjects()
-        {
-            List<DbObject> reversed = new List<DbObject>(_databaseObjects);
-            reversed.Reverse();
-
+            // Only the per-test tables are dropped here; the CMK/CEK are owned by the class fixture.
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                try
+                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
-                    using SqlConnection sqlConnection = new SqlConnection(connectionStr);
                     sqlConnection.Open();
-
                     foreach (string table in _tables)
                     {
-                        try
-                        {
-                            DropTableIfExists(sqlConnection, table);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"ConversionTests: failed to drop table '{table}': {ex.Message}");
-                        }
+                        DropTableIfExists(sqlConnection, table);
                     }
-
-                    AlwaysEncryptedCleanup.DropSafely(sqlConnection, reversed);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"ConversionTests: failed to drop database objects: {ex.Message}");
                 }
             }
         }
