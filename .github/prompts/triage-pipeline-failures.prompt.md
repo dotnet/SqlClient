@@ -1,6 +1,6 @@
 ---
 name: triage-pipeline-failures
-description: Find and classify failing tests in the Microsoft.Data.SqlClient CI/CD pipelines at or after a given commit, then fix or quarantine them.
+description: Find and classify failing tests in the CI/CD pipelines at or after a given commit, then fix or quarantine them.
 argument-hint: <target commit SHA> [optional scope, e.g. specific pipelines/branches]
 agent: agent
 # No `tools:` scoping on purpose: this prompt is access-agnostic and must be able
@@ -9,7 +9,7 @@ agent: agent
 # would strip out MCP/extension tools and break the preferred ADO MCP access path.
 ---
 
-Triage failing tests in the Microsoft.Data.SqlClient pipelines for commit
+Triage failing tests in the CI/CD pipelines for commit
 `${input:commit}` and later. Treat only the **first whitespace-delimited token** of
 `${input:commit}` as the target commit SHA — that token is what every git ancestry
 check (`git merge-base --is-ancestor <target> ...`) uses. Any remaining text is
@@ -23,7 +23,7 @@ Perform each operation with whatever Azure DevOps access is available, in this o
 of preference:
 
 1. An **Azure DevOps MCP server**, if one is connected (preferred — no shell needed).
-2. The **`az` CLI** (`az rest --resource 499b84ac-1321-427f-aa17-267ca6975798 ...`,
+2. The **`az` CLI** (`az rest --resource <ADO resource ID> ...`,
    `az pipelines ...`, `az boards ...`).
 3. **Direct ADO REST** calls over HTTPS with a bearer token.
 
@@ -33,12 +33,11 @@ files (quarantine/fix) modify state, and those happen in the repo, not in ADO.
 
 ## Environment
 
-- **ADO organization**: `SqlClientDrivers`.
+- **ADO organization**: `<ADO org>`.
 - **Projects**:
-  - `public` — pipelines under `\ADO\CI` and `\ADO\PR` target the GitHub
-    `dotnet/SqlClient` repo.
-  - `ADO.Net` — CI/OneBranch pipelines target the ADO mirror `dotnet-sqlclient`.
-- The `dotnet-sqlclient` mirror preserves the **same commit SHAs** as GitHub, so git
+  - `<CI project>` — CI/PR pipelines target the upstream GitHub repo.
+  - `<mirror project>` — CI/OneBranch pipelines target the ADO mirror repo.
+- The ADO mirror repo preserves the **same commit SHAs** as GitHub, so git
   ancestry against a GitHub SHA works. It **lags** GitHub because synchronization is
   gated by PRs: a commit only appears in the mirror once its sync PR completes, so a
   target commit may not be present in the mirror yet even though it is on GitHub.
@@ -50,18 +49,15 @@ definition's folder path, `queueStatus`, and `repository.type` / `repository.nam
 
 Ignore any definition that is **not currently enabled** (`queueStatus != enabled`,
 i.e. disabled or paused) — also skip names flagged `[Disabled]`, `[Retired]`, or under
-`\Retired\` folders. Then keep only definitions whose repo is `dotnet/SqlClient`
-(GitHub) or `dotnet-sqlclient` (TfsGit). Exclude the legacy `Microsoft.Data.SqlClient`
-and `*.sni` repos unless the user asks for SNI.
+`\Retired\` folders. Then keep only definitions whose repo is the upstream GitHub repo
+or the ADO mirror repo. Exclude legacy driver repos and native SNI repos unless the
+user asks for SNI.
 
 Because this triage targets **non-PR commit runs** (see Step 2), prefer CI/branch
-definitions over PR-validation ones. Typical in-scope pipelines: CI-SqlClient,
-CI-SqlClient-Package, sqlclient-ci-stress, sqlclient-ci-package (public); MDS Main CI,
-MDS Main CI-Package, sqlclient-kerberos, Test-SqlClient-Managed-Instance, OneBranch
-official/non-official (ADO.Net). PR-triggered definitions (PR-SqlClient-Project,
-PR-SqlClient-Package, sqlclient-pr) are in scope only for the CI/branch runs they may
-also host — their PR-ref runs are excluded in Step 2 unless the user asks to include
-PR runs.
+definitions over PR-validation ones. Prefer CI, package, stress, Kerberos,
+Managed-Instance, and OneBranch official/non-official definitions across both projects.
+PR-triggered definitions are in scope only for the CI/branch runs they may also host —
+their PR-ref runs are excluded in Step 2 unless the user asks to include PR runs.
 
 ## Step 2 — Find runs at/after the target commit
 
@@ -77,8 +73,7 @@ hold:
 - Its `sourceBranch` is an ephemeral merge ref such as `refs/pull/N/merge` or
   `refs/pull/N/head`.
 - Its build `reason` is `pullRequest`.
-- It is a PR-triggered definition (e.g. `PR-SqlClient-Project`, `PR-SqlClient-Package`,
-  `sqlclient-pr`) running against a PR ref.
+- It is a PR-triggered definition running against a PR ref.
 
 Keep only runs whose `sourceVersion` is a committed SHA on a tracked branch. If the
 user explicitly asks to include PR runs, honor that override.
@@ -91,7 +86,7 @@ Resolve **"at or after `${input:commit}`" by commit graph, not timestamp**:
 - Divergent `release/*` or `dev/*` commits do **not** descend from a `main` target —
   exclude them.
 
-Mirror (`dotnet-sqlclient`) runs use the **same SHAs** as GitHub, so apply the same
+Mirror runs use the **same SHAs** as GitHub, so apply the same
 ancestry checks. Because mirror sync is PR-gated, the target commit may not have
 reached the mirror yet — in that window there simply are no in-scope mirror runs, so
 do not infer a run is out of scope from a SHA mismatch (there is none); it is only a
@@ -182,7 +177,7 @@ For each item the user approves:
 1. Prefer a **deterministic fix** that removes the race/isolation/timing dependency.
 2. Otherwise **quarantine**: add `[Trait("Category", "flaky")]` plus a comment holding
    the observed failure signature (test name, assertion, key stack frames) and the
-   root-cause reasoning. Mirror existing quarantine comments in `ConnectionFailoverTests.cs`.
+   root-cause reasoning. Mirror the style of existing quarantine comments in the test suite.
 3. Cover both sync and async variants when the API has both.
 4. Un-quarantine once fixed and consistently green.
 
