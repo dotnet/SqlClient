@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
@@ -20,9 +21,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
 
+        /// <summary>
+        /// Builds a <see cref="ChannelDbConnectionPool"/> for the replacement tests. A frozen
+        /// <see cref="FakeTimeProvider"/> is injected by default so time-driven background
+        /// maintenance (idle-timeout pruning, warmup/replenishment, blocking-period expiry)
+        /// cannot advance and race the assertions. Pass an explicit <paramref name="timeProvider"/>
+        /// only when a test needs to drive time forward deterministically.
+        /// </summary>
         private ChannelDbConnectionPool ConstructPool(
             SqlConnectionFactory connectionFactory,
-            DbConnectionPoolGroupOptions? poolGroupOptions = null)
+            DbConnectionPoolGroupOptions? poolGroupOptions = null,
+            TimeProvider? timeProvider = null)
         {
             poolGroupOptions ??= new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -42,7 +51,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 connectionFactory,
                 dbConnectionPoolGroup,
                 DbConnectionPoolIdentity.NoIdentity,
-                new DbConnectionPoolProviderInfo()
+                new DbConnectionPoolProviderInfo(),
+                timeProvider: timeProvider ?? new FakeTimeProvider()
             );
         }
 

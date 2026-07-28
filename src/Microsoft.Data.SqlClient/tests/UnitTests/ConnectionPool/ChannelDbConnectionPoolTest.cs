@@ -868,7 +868,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void TestReplaceConnection()
         {
             // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(SuccessfulConnectionFactory, timeProvider: fakeTime);
             SqlConnection owner = new();
 
             pool.TryGetConnection(
