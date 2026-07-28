@@ -3,12 +3,18 @@ name: triage-pipeline-failures
 description: Find and classify failing tests in the Microsoft.Data.SqlClient CI/CD pipelines at or after a given commit, then fix or quarantine them.
 argument-hint: <target commit SHA> [optional scope, e.g. specific pipelines/branches]
 agent: agent
-tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'read/readFile', 'search/codebase', 'edit/editFiles']
+# No `tools:` scoping on purpose: this prompt is access-agnostic and must be able
+# to call whatever Azure DevOps MCP server is connected (e.g. `ado/*`) in addition
+# to the built-in terminal/read/search/edit tools. Declaring a scoped `tools:` list
+# would strip out MCP/extension tools and break the preferred ADO MCP access path.
 ---
 
 Triage failing tests in the Microsoft.Data.SqlClient pipelines for commit
-`${input:commit}` and later. If the user supplied extra scope in `${input:commit}`
-(e.g. a pipeline name or branch), honor it; otherwise use the defaults below.
+`${input:commit}` and later. Treat only the **first whitespace-delimited token** of
+`${input:commit}` as the target commit SHA — that token is what every git ancestry
+check (`git merge-base --is-ancestor <target> ...`) uses. Any remaining text is
+**optional scope** (e.g. a pipeline name or branch): honor it when present, otherwise
+use the defaults below.
 
 ## Azure DevOps access is agnostic
 
