@@ -5,14 +5,11 @@
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
 using System.Text;
 using Xunit;
-using Xunit.Sdk;
 using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.TestFixtures;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
@@ -105,9 +102,68 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
+        public static TheoryData<string, Type, string, string, byte[]> InvalidDecryption_Data
+        {
+            get
+            {
+                const string TCE_NullCertificatePath_Windows = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_NullCertificatePath_Unix = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Windows = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Unix = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_NullEncryptedColumnEncryptionKey = @"Internal error. Encrypted column encryption key cannot be null.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+                const string TCE_EmptyEncryptedColumnEncryptionKey = @"Internal error. Empty encrypted column encryption key specified.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+                const string TCE_NullKeyEncryptionAlgorithm = @"Internal error. Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+                const string TCE_InvalidKeyEncryptionAlgorithm = @"Internal error. Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+                const string TCE_LargeCertificatePathLength = @"Internal error. Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificatePath_Windows = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificatePath_Unix = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateLocation_Windows = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateLocation_Unix = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateStore = @"Internal error. Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateSignature = @"Internal error. Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+                const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+                const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+                const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+
+                string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+                string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
+                string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
+                string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
+
+                TheoryData<string, Type, string, string, byte[]> result = new();
+                result.Add(TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null);
+                result.Add(TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, []);
+                result.Add(TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidAlgorithmVersion, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256));
+                result.Add(TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256));
+                result.Add(TCE_InvalidSignatureInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 128));
+                result.Add(TCE_InvalidSignature, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+
+                return result;
+            }
+        }
+
         [Theory]
-        [InvalidDecryptionParameters]
-        public void ThrowExceptionWithInvalidParameterWhileDecryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
+        [MemberData(nameof(InvalidDecryption_Data))]
+        public void ThrowExceptionWithInvalidParameterWhileDecryptingColumnEncryptionKey(
+            string errorMsg,
+            Type exceptionType,
+            string masterKeyPath,
+            string encryptionAlgorithm,
+            byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
             Exception ex = Assert.Throws(exceptionType,
@@ -115,8 +171,54 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Matches(ReplaceKeyTokens(errorMsg), ex.Message);
         }
 
+        public static TheoryData<string, Type, string, string, byte[]> InvalidEncryption_Data
+        {
+            get
+            {
+                const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_NullEncryptedColumnEncryptionKey = @"Column encryption key cannot be null.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
+                const string TCE_EmptyEncryptedColumnEncryptionKey = @"Empty column encryption key specified.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
+                const string TCE_NullKeyEncryptionAlgorithm = @"Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+                const string TCE_InvalidKeyEncryptionAlgorithm = @"Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
+                const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificatePath_Windows = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificatePath_Unix = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateLocation_Windows = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateLocation_Unix = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateStore = @"Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_InvalidCertificateSignature = @"Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+
+                string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+                string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
+                string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
+                string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
+
+                TheoryData<string, Type, string, string, byte[]> result = new();
+                result.Add(TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null);
+                result.Add(TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, []);
+                result.Add(TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(short.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+                result.Add(TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256));
+
+                return result;
+            }
+        }
+
         [Theory]
-        [InvalidEncryptionParameters]
+        [MemberData(nameof(InvalidEncryption_Data))]
         public void ThrowExceptionWithInvalidParameterWhileEncryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -124,8 +226,30 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Matches(ReplaceKeyTokens(errorMsg), ex.Message);
         }
 
+        public static TheoryData<string, Type, string> InvalidSigning_Data
+        {
+            get
+            {
+                const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+                const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+
+                string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
+                string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
+
+                TheoryData<string, Type, string> result = new();
+                result.Add(TCE_NullCertificatePath, typeof(ArgumentNullException), null);
+                result.Add(TCE_EmptyCertificatePath, typeof(ArgumentException), "");
+                result.Add(TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1));
+
+                return result;
+            }
+        }
+
         [Theory]
-        [InvalidSigningParameters]
+        [MemberData(nameof(InvalidSigning_Data))]
         public void ThrowExceptionWithInvalidParameterWhileSigningColumnMasterKeyMetadata(string errorMsg, Type exceptionType, string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -292,10 +416,36 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(decryptedCellData.SequenceEqual(plainTextInBytes), "Reversal was not successful.");
         }
 
+
+        public static TheoryData<string, object, Utility.CColumnEncryptionType> TestAndEncryptionReversal_Data
+        {
+            get
+            {
+                TheoryData<string, object, Utility.CColumnEncryptionType> result = new();
+                result.Add(StringStr, @"", Utility.CColumnEncryptionType.Deterministic);
+                result.Add(StringStr, @"Transparent Column Encryption", Utility.CColumnEncryptionType.Deterministic);
+                result.Add(StringStr, @"ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1\""\", Utility.CColumnEncryptionType.Deterministic);
+                result.Add(IntStr, 0, Utility.CColumnEncryptionType.Deterministic);
+                result.Add(IntStr, 1234, Utility.CColumnEncryptionType.Deterministic);
+                result.Add(IntStr, int.MaxValue, Utility.CColumnEncryptionType.Deterministic);
+                result.Add(IntStr, int.MinValue, Utility.CColumnEncryptionType.Deterministic);
+                result.Add(StringStr, @"", Utility.CColumnEncryptionType.Randomized);
+                result.Add(StringStr, @"Transparent Column Encryption", Utility.CColumnEncryptionType.Randomized);
+                result.Add(StringStr, @"ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1\""\", Utility.CColumnEncryptionType.Randomized);
+                result.Add(IntStr, 0, Utility.CColumnEncryptionType.Randomized);
+                result.Add(IntStr, 1234, Utility.CColumnEncryptionType.Randomized);
+                result.Add(IntStr, int.MaxValue, Utility.CColumnEncryptionType.Randomized);
+                result.Add(IntStr, int.MinValue, Utility.CColumnEncryptionType.Randomized);
+
+                return result;
+            }
+        }
+
         [Theory]
-        [AeadEncryptionParameters]
+        [MemberData(nameof(TestAndEncryptionReversal_Data))]
         public void TestAeadEncryptionReversal(string dataType, object data, Utility.CColumnEncryptionType encType)
         {
+            // @TODO: Split into int test and string test.
             Assert.True(!string.IsNullOrWhiteSpace(dataType));
 
             byte[] plainText = null;
@@ -475,37 +625,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 ?.Replace("{npk_thumbprint}", _certFixture.CertificateWithoutPrivateKey.Thumbprint);
         }
 
-        public class AeadEncryptionParameters : DataAttribute
-        {
-            /// <summary>
-            /// Const to refer to a string.
-            /// </summary>
-            private const string StringStr = "string";
-
-            /// <summary>
-            /// Const to refer to an int.
-            /// </summary>
-            private const string IntStr = "int";
-
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
-            {
-                yield return new object[3] { StringStr, @"", Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { StringStr, @"Transparent Column Encryption", Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { StringStr, @"ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1\""\", Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { IntStr, 0, Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { IntStr, 1234, Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { IntStr, int.MaxValue, Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { IntStr, int.MinValue, Utility.CColumnEncryptionType.Deterministic };
-                yield return new object[3] { StringStr, @"", Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { StringStr, @"Transparent Column Encryption", Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { StringStr, @"ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1ABafd908`12`l2-0lkd as-3912-312-0 skfsla; i-09=-0 41]321`aksdlkf0ws--02iasfidl;sakfd 90-920-391`-0391- AW_!@*)_A:SKD:""sdfasdf90`-11`-=19=`1\""\", Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { IntStr, 0, Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { IntStr, 1234, Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { IntStr, int.MaxValue, Utility.CColumnEncryptionType.Randomized };
-                yield return new object[3] { IntStr, int.MinValue, Utility.CColumnEncryptionType.Randomized };
-            }
-        }
-
         public static IEnumerable<object[]> CEKEncryptionReversalData()
         {
             yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
@@ -533,120 +652,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
-        public class InvalidDecryptionParameters : DataAttribute
-        {
-            private const string TCE_NullCertificatePath_Windows = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_NullCertificatePath_Unix = @"Internal error. Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Windows = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Unix = @"Internal error. Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_NullEncryptedColumnEncryptionKey = @"Internal error. Encrypted column encryption key cannot be null.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Internal error. Empty encrypted column encryption key specified.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_NullKeyEncryptionAlgorithm = @"Internal error. Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
-            private const string TCE_InvalidKeyEncryptionAlgorithm = @"Internal error. Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
-            private const string TCE_LargeCertificatePathLength = @"Internal error. Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath_Windows = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath_Unix = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation_Windows = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation_Unix = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateStore = @"Internal error. Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateSignature = @"Internal error. Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-
-            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
-            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
-            private static readonly string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
-            private static readonly string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
-
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
-            {
-                yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null };
-                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
-                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidAlgorithmVersion, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256) };
-                yield return new Object[] { TCE_InvalidSignatureInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 128) };
-                yield return new Object[] { TCE_InvalidSignature, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-            }
-        }
-
-        public class InvalidEncryptionParameters : DataAttribute
-        {
-            private const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_NullEncryptedColumnEncryptionKey = @"Column encryption key cannot be null.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
-            private const string TCE_EmptyEncryptedColumnEncryptionKey = @"Empty column encryption key specified.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?";
-            private const string TCE_NullKeyEncryptionAlgorithm = @"Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
-            private const string TCE_InvalidKeyEncryptionAlgorithm = @"Invalid key encryption algorithm specified: ''. Expected value: 'RSA_OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?";
-            private const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath_Windows = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificatePath_Unix = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation_Windows = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateLocation_Unix = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateStore = @"Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_InvalidCertificateSignature = @"Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-
-            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
-            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
-            private static readonly string TCE_InvalidCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificatePath_Windows : TCE_InvalidCertificatePath_Unix;
-            private static readonly string TCE_InvalidCertificateLocation = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_InvalidCertificateLocation_Windows : TCE_InvalidCertificateLocation_Unix;
-
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
-            {
-                yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null };
-                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
-                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-            }
-        }
-
-        public class InvalidSigningParameters : DataAttribute
-        {
-            private const string TCE_NullCertificatePath_Windows = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_NullCertificatePath_Unix = @"Certificate path cannot be null. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Windows = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_EmptyCertificatePath_Unix = @"Invalid certificate path: ''. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-            private const string TCE_LargeCertificatePathLength = @"Specified certificate path has 32768 bytes, which exceeds maximum length of 32767 bytes.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
-
-            private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
-            private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
-
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
-            {
-                yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null };
-                yield return new Object[] { TCE_EmptyCertificatePath, typeof(ArgumentException), "" };
-                yield return new Object[] { TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1) };
-            }
-        }
-
-        public static string GenerateString(int length)
+        private static string GenerateString(int length)
         {
             StringBuilder s = new StringBuilder();
             Random random = new Random();

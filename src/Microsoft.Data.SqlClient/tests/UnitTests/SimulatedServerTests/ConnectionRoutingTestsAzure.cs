@@ -161,7 +161,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange

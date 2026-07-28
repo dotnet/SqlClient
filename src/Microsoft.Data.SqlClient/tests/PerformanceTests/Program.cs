@@ -52,6 +52,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("JsonVsVarcharRead", b => b.JsonVsVarcharReadRunnerConfig, typeof(JsonVsVarcharReadRunner)),
             new BenchmarkUnit("BeginTransaction", b => b.BeginTransactionRunnerConfig, typeof(BeginTransactionRunner)),
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
+            new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
+            new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
         };
 
         /// <summary>
@@ -125,6 +127,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             }
+
+            // Set the UseConnectionPoolV2 AppContext switch from config (true or false).
+            // This must be set before any connection is opened because the switch is read
+            // and cached when a pool is first created; it cannot be changed later in the
+            // process lifetime.
+            AppContext.SetSwitch(
+                "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
+                _config.UseConnectionPoolV2);
 
             // If the config file specifies to use optimized async behavior, 
             // enable packet multiplexing feature and other optimizations in SqlClient 
