@@ -23,9 +23,19 @@ namespace Microsoft.Data.SqlClient.UnitTests
     public class SqlConnectionFactoryPruningTimerTest
     {
         /// <summary>
-        /// Upper bound on the number of pruning passes a single pool group needs to drain
-        /// (Active -> Idle -> Disabled/queued -> released). Generous so the tests fail with a
-        /// useful assertion rather than hanging.
+        /// Passes needed to drain a pool group that never had a pool created in it (no test here
+        /// opens a connection): 1) Active -> Idle, 2) Idle -> Disabled, which returns true in the
+        /// same pass and queues the group for release, 3) released from _poolGroupsToRelease.
+        ///
+        /// Three rather than four because Disabled and queued happen together, and the release
+        /// loop runs before the pool-group loop within a pass. Deterministic: tests drive
+        /// <see cref="SqlConnectionFactory.RunPruningPass"/> synchronously.
+        /// </summary>
+        private const int ExpectedDrainPasses = 3;
+
+        /// <summary>
+        /// Hang guard, not an expectation: a regression that leaves the timer armed should fail an
+        /// assertion rather than loop forever.
         /// </summary>
         private const int MaxPruningPasses = 10;
 
@@ -113,8 +123,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// A pool group takes several passes to walk Active -> Idle -> Disabled -> released. The
-        /// timer must stay armed for all of them.
+        /// The timer must stay armed for every pass of the drain, so pruning cannot stall
+        /// half-drained.
         /// </summary>
         [Fact]
         public void PruningTimer_StaysArmed_WhilePoolGroupIsStillDraining()
@@ -122,10 +132,18 @@ namespace Microsoft.Data.SqlClient.UnitTests
             var factory = new TestSqlConnectionFactory();
             AddPoolGroup(factory, "Data Source=localhost;");
 
-            // First pass only moves the group from Active to Idle; it is still tracked.
+            for (int pass = 1; pass < ExpectedDrainPasses; pass++)
+            {
+                factory.RunPruningPass();
+
+                Assert.True(
+                    factory.IsPruningTimerActive,
+                    $"Timer disarmed after pass {pass}, but the pool group had not drained yet.");
+            }
+
             factory.RunPruningPass();
 
-            Assert.True(factory.IsPruningTimerActive);
+            Assert.False(factory.IsPruningTimerActive);
         }
 
         /// <summary>
@@ -142,7 +160,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int passes = DrainPruningWork(factory);
 
             Assert.False(factory.IsPruningTimerActive);
-            Assert.InRange(passes, 1, MaxPruningPasses);
+            Assert.Equal(ExpectedDrainPasses, passes);
         }
 
         /// <summary>
