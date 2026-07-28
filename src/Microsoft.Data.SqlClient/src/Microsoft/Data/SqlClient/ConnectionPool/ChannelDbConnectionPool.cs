@@ -325,27 +325,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
 
-            // Two invariants drive the design and keep the two branches from
-            // collapsing into a single shared path:
-            //
-            // 1. Progress under saturation. Releasing old's slot and re-reserving could let another thread
-            //    steal the freed slot and stall the reconnect until timeout.
-            //
-            // 2. the outer reconnect loop retries assuming oldConnection is not disposed; it may be retired only
-            //    after the replacement is fully activated and we know we won't fail.
-            //
-            // Reuse branch: the idle connection already owns a slot, so it goes
-            // through PrepareConnection like a normal checkout -- if activation throws,
-            // PrepareConnection safely returns it to the pool. We then free old's slot, so the
-            // net slot count drops.
-            //
-            // Create branch: we open a new connection directly, bypassing
-            // the reserve-a-slot path, and leave it UNSLOTTED until TryReplace swaps it into old's
-            // slot *after* activation succeeds. PrepareConnection returns a failed connection to the idle channel,
-            // but one that never took a slot would be published untracked -- letting another caller
-            // vend a connection the pool isn't counting (over max / accounting skew). Staying
-            // unslotted keeps failure trivial: dispose only the new connection and leave old intact.
-
+            // First, prefer to get an idle connection from the pool. 
+            // If one is available, we can avoid the cost of creating a new connection.
             DbConnectionInternal? newConnection = GetIdleConnection();
 
             if (newConnection is not null)
@@ -357,19 +338,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                // Honor the blocking period before opening a new connection, mirroring
-                // OpenNewInternalConnection. Idle reuse above is intentionally exempt.
                 _errorState?.ThrowIfActive();
 
                 // Unlike OpenNewInternalConnection, this direct create intentionally bypasses
-                // _connectionCreationRateLimiter. That limiter paces bursts of pool-growth opens,
-                // relying on a fast-fail-then-wait-for-idle fallback when a permit isn't available.
-                // A replacement fits neither assumption: it is a 1-for-1 swap (oldConnection is
-                // disposed once the new one activates below) so it does not grow the pool, and it
-                // must produce a fresh connection so an already checked-out caller's reconnect can
-                // make forward progress -- the reuse branch above already found no idle connection
-                // to satisfy it.
-                newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+                // _connectionCreationRateLimiter. This mirrors the behavior in WaitHandleDbConnectionPool.ReplaceConnection.
+                try
+                {
+                    newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+                }
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
+                {
+                    // A failed physical open means the server is unreachable, so enter the blocking
+                    // period exactly as OpenNewInternalConnection and WaitHandleDbConnectionPool.CreateObject
+                    // do: subsequent opens fast-fail until the period expires. Activation failures in the
+                    // try below are intentionally excluded -- the server proved reachable -- matching the
+                    // WaitHandle pool, where PrepareConnection runs outside CreateObject's error-state catch.
+                    // We exclude OperationCanceledException (caller-side timeout/cancellation, not a physical
+                    // failure) and only enter while Running, mirroring OpenNewInternalConnection.
+                    if (State == Running)
+                    {
+                        _errorState?.Enter(ex);
+                    }
+
+                    throw;
+                }
 
                 try
                 {
@@ -384,6 +376,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // TODO: Full transaction enlistment support (Story 2).
                     newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
 
+                    // Place new into old's slot
                     bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
 
                     if (!replaced)
@@ -403,6 +396,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // A successful open clears the blocking period, mirroring OpenNewInternalConnection.
                 _errorState?.Clear();
 
+                // Only retire the old connection after the replacement is fully activated and we know we won't fail.
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
             }

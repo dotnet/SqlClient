@@ -230,7 +230,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <summary>
         /// Verifies that when creating the replacement connection fails, the old connection is left fully
         /// intact - it keeps its pool slot and stays poolable - so the caller's reconnect retry loop can reuse
-        /// it on a subsequent attempt. The pool count is unchanged and the pool is not left in an error state.
+        /// it on a subsequent attempt. The pool count is unchanged. The failed physical open enters the
+        /// blocking-period error state (mirroring the normal acquire path and the WaitHandle pool), so the
+        /// caller's retry succeeds only once that period expires.
         /// </summary>
         [Fact]
         public void ReplaceConnection_CreationFails_OldConnectionRetainedForRetry()
@@ -246,7 +248,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 idleTimeout: 0
             );
             var switchableFactory = new SwitchableSqlConnectionFactory();
-            var pool = ConstructPool(switchableFactory, poolGroupOptions);
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(switchableFactory, poolGroupOptions, timeProvider: fakeTime);
 
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
@@ -275,12 +278,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Same(owner1, oldConnection!.Owner);
             // ... it keeps its reference to the pool, which is what enables the caller's retry ...
             Assert.Same(pool, oldConnection!.Pool);
-            // ... and the pool is not left in an error state.
-            Assert.False(pool.ErrorOccurred);
+            // ... and the failed physical open entered the blocking period, mirroring the normal
+            // acquire path and the WaitHandle pool, so subsequent opens fast-fail until it expires.
+            Assert.True(pool.ErrorOccurred);
 
-            // The reconnect retry loop reuses the SAME old connection: a subsequent successful replacement
-            // succeeds, reusing the retained slot and keeping the pool count unchanged.
+            // The reconnect retry loop reuses the SAME old connection. Advancing past the blocking
+            // period fires the exit timer (FakeTimeProvider invokes it synchronously), after which a
+            // subsequent successful replacement reuses the retained slot and keeps the count unchanged.
             switchableFactory.ShouldFail = false;
+            fakeTime.Advance(TimeSpan.FromSeconds(5));
+            Assert.False(pool.ErrorOccurred);
             var newConnection = pool.ReplaceConnection(
                 owner1,
                 oldConnection!,
@@ -564,6 +571,70 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(pool.ErrorOccurred);
             Assert.False(oldConnection!.IsConnectionDoomed);
             Assert.Same(pool, oldConnection!.Pool);
+        }
+
+        /// <summary>
+        /// Verifies that when the new-physical-connection branch of
+        /// <see cref="ChannelDbConnectionPool.ReplaceConnection"/> fails to open (server unreachable),
+        /// the pool enters the blocking-period error state, mirroring the normal acquire path
+        /// (OpenNewInternalConnection) and the legacy WaitHandle pool's CreateObject. This lets
+        /// subsequent opens fast-fail instead of hammering the unhealthy server, while the old
+        /// connection is left intact for the caller's reconnect retry loop.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_NewPhysicalConnectionFails_EntersBlockingPeriod()
+        {
+            // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
+            var factory = new SwitchableSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            SqlConnection owner = new();
+
+            // Check out a connection to later replace (creation succeeds), leaving no idle connection
+            // so the replacement is forced down the new-physical-connection branch.
+            factory.ShouldFail = false;
+            pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection);
+            Assert.NotNull(oldConnection);
+            Assert.False(pool.ErrorOccurred);
+
+            // Act — the replacement's physical open fails.
+            factory.ShouldFail = true;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+
+            // Assert — the failed open poisoned the pool into the blocking period, and the old
+            // connection is left intact so the caller can retry with it.
+            Assert.True(pool.ErrorOccurred);
+            Assert.False(oldConnection!.IsConnectionDoomed);
+            Assert.Same(pool, oldConnection!.Pool);
+        }
+
+        /// <summary>
+        /// Verifies that when a replacement's physical open succeeds but activation fails, the pool
+        /// does NOT enter the blocking-period error state. A reachable server that fails activation
+        /// is not a connectivity failure, so poisoning the pool would be wrong. This mirrors the
+        /// legacy WaitHandle pool, where PrepareConnection (activation) runs outside CreateObject's
+        /// error-state catch.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_ActivationFails_DoesNotEnterBlockingPeriod()
+        {
+            // Arrange
+            var factory = new ActivationFailSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            SqlConnection owner = new();
+
+            factory.FailOnActivate = false;
+            pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection);
+            Assert.NotNull(oldConnection);
+            Assert.False(pool.ErrorOccurred);
+
+            // Act — the replacement opens successfully but fails during activation.
+            factory.FailOnActivate = true;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+
+            // Assert — activation failure does not poison the pool: the server proved reachable.
+            Assert.False(pool.ErrorOccurred);
         }
 
         #endregion
