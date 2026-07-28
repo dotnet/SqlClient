@@ -72,6 +72,7 @@ parameters:
   # True to use managed SNI on Windows.  Ignored on non-Windows, where managed SNI is always used.
   - name: useManagedSNI
     type: boolean
+    default: false
 
   # The pool VM image to use.  The Managed-Instance-pool must provide an image with this name.
   #
