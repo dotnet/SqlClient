@@ -51,7 +51,7 @@ internal readonly ref struct SqlDataSourceResponse
     /// <para>
     /// <see cref="Valid"/> relates strictly to <em>structural</em> validity. It indicates solely
     /// that this component is the correctly-parsed product of a RESP_DATA string. It does not
-    /// indicate that the value is valid for the key (or safe for user consumption.)Please
+    /// indicate that the value is valid for the key (or safe for user consumption.)
     /// </para>
     /// </remarks>
     private readonly ref struct RespDataComponent
@@ -165,7 +165,7 @@ internal readonly ref struct SqlDataSourceResponse
             // bytes in the string, and compare.
             if (maxValueLength != -1)
             {
-                int valueByteCount = Encoding.UTF8.GetByteCount(valueCandidate);
+                int valueByteCount = s_mbcsEncoding.GetByteCount(valueCandidate);
 
                 if (valueByteCount > maxValueLength)
                 {
@@ -203,22 +203,22 @@ internal readonly ref struct SqlDataSourceResponse
         public bool TryGetVersion([NotNullWhen(true)] out Version? value)
         {
             value = null;
-#if NET
+            #if NET
             return Valid && Version.TryParse(Value, out value);
-#else
+            #else
             return Valid && Version.TryParse(Value.ToString(), out value);
-#endif
+            #endif
         }
 
         public bool TryGetUInt16(out ushort value)
         {
             value = 0;
 
-#if NET
+            #if NET
             return Valid && ushort.TryParse(Value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out value);
-#else
+            #else
             return Valid && ushort.TryParse(Value.ToString(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out value);
-#endif
+            #endif
         }
 
         public bool TryGetServerName(out ReadOnlySpan<char> value)
@@ -231,6 +231,7 @@ internal readonly ref struct SqlDataSourceResponse
                 {
                     if (ch != '.'
                         && ch != '-'
+                        && ch != '_'
                         && (!(ch >= '0' && ch <= '9'))
                         && (!(ch >= 'A' && ch <= 'Z'))
                         && (!(ch >= 'a' && ch <= 'z')))
@@ -424,11 +425,11 @@ internal readonly ref struct SqlDataSourceResponse
 
         try
         {
-#if NET
+            #if NET
             decodedRespData = s_mbcsEncoding.GetString(sequence.Slice(0, responseSize));
-#else
+            #else
             decodedRespData = s_mbcsEncoding.GetString(sequence.Slice(0, responseSize).ToArray());
-#endif
+            #endif
         }
         catch (DecoderFallbackException)
         {
@@ -442,7 +443,7 @@ internal readonly ref struct SqlDataSourceResponse
             || !serverNameToken.Key.Equals(ServerNameKey.AsSpan(), StringComparison.Ordinal)
             // The ServerName token must be a valid FQDN.
             // Note: This validation is stricter than called for in MC-SQLR. It is designed to
-            // ensure that server names only contain valid characters (".", "-", a-z, A-Z, 0-9).
+            // ensure that server names only contain valid characters (".", "-", "_", a-z, A-Z, 0-9).
             || !serverNameToken.TryGetServerName(out ReadOnlySpan<char> serverName)
             || !RespDataComponent.TryParse(decodedRespData, ref currRespDataOffset, RespDataComponent.MaxInstanceNameLength, out RespDataComponent instanceNameToken)
             // The second token must be InstanceName.

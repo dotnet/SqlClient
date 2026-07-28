@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.Sql.UnitTests;
 
-public class DacResponseProcessorTest
+public class DacResponseReaderTest
 {
     [Theory]
     [MemberData(nameof(SsrpPacketTestData.EmptyPacketBuffer), MemberType = typeof(SsrpPacketTestData), DisableDiscoveryEnumeration = true)]

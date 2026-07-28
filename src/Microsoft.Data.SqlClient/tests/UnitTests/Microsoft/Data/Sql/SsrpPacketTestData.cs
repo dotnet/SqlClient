@@ -32,18 +32,18 @@ internal static class SsrpPacketTestData
     private const int ValidTcpPort5 = 1437;
 
     /// <summary>
-    /// One empty packet buffer, which should be successfully processed and contain zero responses.
+    /// One empty packet buffer, which should be successfully read and contain zero responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Read_EmptyBuffer_ReturnsFalse"/>
+    /// <see cref="DacResponseReaderTest.Read_EmptyBuffer_ReturnsFalse"/>
     /// <see cref="SqlDataSourceResponseReaderTest.Read_EmptyBuffer_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> EmptyPacketBuffer =>
         new(GeneratePacketBuffers([]));
 
     /// <summary>
     /// Various combinations of packet buffers containing normal SVR_RESP responses, all of which
-    /// should be successfully processed.
+    /// should be successfully read.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseReaderTest.Process_ValidBroadcastSqlDataSourceResponse_ReturnsData"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_ValidSqlDataSourceResponse_ReturnsData"/>
     public static TheoryData<ReadOnlySequence<byte>, string, int, string?, string, int, string?> ValidSvrRespPacketBuffer
     {
         get
@@ -147,9 +147,9 @@ internal static class SsrpPacketTestData
 
     /// <summary>
     /// Various combinations of packet buffers containing SVR_RESP (DAC) responses, all of which
-    /// should be successfully processed.
+    /// should be successfully read.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseReaderTest.Process_ValidDacResponse_ReturnsData"/>
+    /// <see cref="DacResponseReaderTest.Read_ValidDacResponse_ReturnsData"/>
     public static TheoryData<ReadOnlySequence<byte>, int> ValidSvrRespDacPacketBuffer
     {
         get
@@ -268,7 +268,7 @@ internal static class SsrpPacketTestData
     /// <summary>
     /// Packet buffers containing nothing but invalid SVR_RESP (DAC) responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Read_InvalidDacResponse_ReturnsFalse"/>
+    /// <see cref="DacResponseReaderTest.Read_InvalidDacResponse_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespDacPackets =>
         [
             // Invalid header byte
