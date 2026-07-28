@@ -358,6 +358,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // OpenNewInternalConnection. Idle reuse above is intentionally exempt.
                 _errorState?.ThrowIfActive();
 
+                // Unlike OpenNewInternalConnection, this direct create intentionally bypasses
+                // _connectionCreationRateLimiter. That limiter paces bursts of pool-growth opens,
+                // relying on a fast-fail-then-wait-for-idle fallback when a permit isn't available.
+                // A replacement fits neither assumption: it is a 1-for-1 swap (oldConnection is
+                // disposed once the new one activates below) so it does not grow the pool, and it
+                // must produce a fresh connection so an already checked-out caller's reconnect can
+                // make forward progress -- the reuse branch above already found no idle connection
+                // to satisfy it.
                 newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
 
                 try
