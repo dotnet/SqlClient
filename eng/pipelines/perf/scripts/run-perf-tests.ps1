@@ -440,7 +440,9 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
         $proc = [System.Diagnostics.Process]::Start($psi)
 
         $mask = Get-AffinityMask $env:PERF_CLIENT_CPUS
-        if ($null -ne $mask -and $mask -gt 0) {
+        # Use a non-zero check, not '-gt 0': a mask that pins CPU 63 sets the [long] sign bit and
+        # is therefore negative, yet is still a valid ProcessorAffinity value.
+        if ($null -ne $mask -and $mask -ne 0) {
             try {
                 $proc.ProcessorAffinity = [System.IntPtr]$mask
                 Write-Host "Pinned benchmark client (PID $($proc.Id)) to CPUs $($env:PERF_CLIENT_CPUS) (mask 0x$($mask.ToString('X')))."
