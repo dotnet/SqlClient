@@ -1,0 +1,85 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This pipeline runs the SqlClient Unit, Functional, and Manual test suites against an Azure SQL
+# Managed Instance, building the test projects in "Package" mode against the NuGet packages produced
+# by the sqlclient-ci-package pipeline.  It is triggered by successful runs of that pipeline:
+#
+# ADO.Net project:
+#   Triggering pipeline:  sqlclient-ci-package
+#   Pipeline name:        sqlclient-ci-managed-instance
+#
+# This pipeline is registered in the ADO.Net (internal) project ONLY, because it depends on the
+# Managed Instance connection strings provided by the "ADO Test Configuration Properties" variable
+# group and on the Managed-Instance-pool agents, neither of which exist in the Public project.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs, commits, or schedules.
+pr: none
+trigger: none
+
+# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
+resources:
+  pipelines:
+
+    # Trigger this pipeline when the sqlclient-ci-package pipeline completes successfully.
+    #
+    # 'project' is omitted so the resource resolves to the sqlclient-ci-package pipeline in the
+    # *current* ADO project (ADO.Net), where this pipeline is registered.
+    #
+    # IMPORTANT: 'source' is the bare pipeline name with no folder path.  This REQUIRES the
+    # sqlclient-ci-package name to be UNIQUE within the ADO.Net project.  Azure DevOps only allows
+    # omitting the folder when the name is unambiguous; if a second pipeline with this name is ever
+    # added to the project, this resource will fail to resolve and the folder path must be added.
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
+      trigger: true
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+
+  # The build configuration to use when building the; defaults to Release.
+  #
+  # This should match the mode the driver packages we consume were built in - typically Release -
+  # but may vary if we are triggered due to a manual build of sqlclient-ci-package.
+  #
+  - name: buildConfiguration
+    displayName: Test Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to emit debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+# The stages to run.
+stages:
+
+  # Run the Managed Instance tests.  The target frameworks, .NET Framework runtimes, and SNI
+  # variants are defaulted by the stage template (all TFMs per OS, both SNI variants on Windows).
+  - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

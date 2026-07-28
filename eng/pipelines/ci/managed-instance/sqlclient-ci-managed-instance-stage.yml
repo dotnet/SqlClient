@@ -1,0 +1,97 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This stage builds and runs the SqlClient Unit, Functional, and Manual test suites against an Azure
+# SQL Managed Instance, building the test projects in "Package" mode against the NuGet packages
+# produced by the sqlclient-ci-package pipeline.
+#
+# It fans out to one job per OS:
+#
+#   - Windows: one job per SNI variant requested in useManagedSNI (native and/or managed SNI).
+#   - Linux:   a single job (managed SNI is always used on non-Windows).
+#
+# This template defines a stage named 'managed_instance_tests_stage'.
+
+parameters:
+
+  # The type of build to produce (Debug or Release).
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debugging steps.
+  - name: debug
+    type: boolean
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+  # The list of .NET (core) runtimes to test against.  The same set is used on every OS.
+  - name: netTestRuntimes
+    type: object
+    default: [net8.0, net9.0, net10.0]
+
+  # The list of .NET Framework runtimes to test against on Windows.
+  - name: netFrameworkTestRuntimes
+    type: object
+    default: [net462]
+
+  # The SNI variants to test on Windows.  Values [false, true], [false], or [true] are allowed.
+  # 'false' selects native SNI; 'true' selects managed SNI.  Defaults to both.
+  - name: useManagedSNI
+    type: object
+    default: [false, true]
+
+stages:
+  - stage: managed_instance_tests_stage
+    displayName: Run Managed Instance Tests
+
+    jobs:
+
+    # ----------------------------------------------------------------------------------------------
+    # Build and test on Windows, once per requested SNI variant.
+
+    - ${{ each useManagedSNI in parameters.useManagedSNI }}:
+      - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
+        parameters:
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          debug: ${{ parameters.debug }}
+          ${{ if eq(useManagedSNI, true) }}:
+            displayNamePrefix: 'Win : Managed SNI'
+            jobNameSuffix: windows_managed_sni
+          ${{ else }}:
+            displayNamePrefix: 'Win : Native SNI'
+            jobNameSuffix: windows_native_sni
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          operatingSystem: Windows
+          netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
+          netTestRuntimes: ${{ parameters.netTestRuntimes }}
+          useManagedSNI: ${{ useManagedSNI }}
+          vmImage: ADO-MMS22-SQL22
+
+    # ----------------------------------------------------------------------------------------------
+    # Build and test on Linux (managed SNI is always used on non-Windows).
+
+    - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
+      parameters:
+        buildConfiguration: ${{ parameters.buildConfiguration }}
+        debug: ${{ parameters.debug }}
+        displayNamePrefix: Linux
+        jobNameSuffix: linux
+        dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+        operatingSystem: Linux
+        # No .NET Framework runtimes on Linux.
+        netFrameworkTestRuntimes: []
+        netTestRuntimes: ${{ parameters.netTestRuntimes }}
+        vmImage: ADO-UB22-SQL22

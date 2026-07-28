@@ -1,0 +1,110 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This template downloads the SqlClient driver packages published by the sqlclient-ci-package
+# pipeline, copies them into the local NuGet feed (packages/), and resolves the exact package
+# versions from the .nupkg filenames.  The resolved versions are exposed as job-scoped pipeline
+# variables for use by downstream build/test steps:
+#
+#   sqlClientPackageVersion     Microsoft.Data.SqlClient
+#   sqlServerPackageVersion     Microsoft.SqlServer.Server
+#   abstractionsPackageVersion  Microsoft.Data.SqlClient.Extensions.Abstractions
+#   loggingPackageVersion       Microsoft.Data.SqlClient.Internal.Logging
+#   azurePackageVersion         Microsoft.Data.SqlClient.Extensions.Azure
+#
+# The consuming pipeline MUST declare the triggering pipeline as a resource whose alias matches the
+# pipelineResource parameter, e.g.:
+#
+#   resources:
+#     pipelines:
+#       - pipeline: sqlclient-ci-package
+#         source: sqlclient-ci-package
+#         trigger: true
+
+parameters:
+
+  # The pipeline resource alias to download the packages from.  This must match a resource declared
+  # under resources.pipelines in the consuming pipeline.
+  - name: pipelineResource
+    type: string
+    default: sqlclient-ci-package
+
+  # The name of the artifact published by the triggering pipeline that contains the .nupkg/.snupkg
+  # files.
+  - name: artifactName
+    type: string
+    default: SqlClient-Driver-Packages
+
+  # The local NuGet feed directory to copy the downloaded packages into.
+  - name: feedPath
+    type: string
+    default: $(Build.SourcesDirectory)/packages
+
+steps:
+
+  # Download the SqlClient driver packages published by the triggering pipeline into the pipeline
+  # workspace.
+  - download: ${{ parameters.pipelineResource }}
+    artifact: ${{ parameters.artifactName }}
+    displayName: Download SqlClient Driver Packages
+
+  # Copy the downloaded packages into the local NuGet feed and resolve the exact package versions
+  # from the .nupkg filenames, exposing each as a pipeline variable.
+  - task: PowerShell@2
+    displayName: Stage Packages and Resolve Versions
+    inputs:
+      pwsh: true
+      targetType: inline
+      script: |
+        $ErrorActionPreference = 'Stop'
+        $feed = "${{ parameters.feedPath }}"
+        $artifactDir = "$(Pipeline.Workspace)/${{ parameters.pipelineResource }}/${{ parameters.artifactName }}"
+        New-Item -ItemType Directory -Force -Path $feed | Out-Null
+
+        Copy-Item "$artifactDir/*.nupkg" $feed -Force
+        Copy-Item "$artifactDir/*.snupkg" $feed -Force -ErrorAction SilentlyContinue
+
+        # Resolve the version of a single package from its .nupkg filename in the feed.
+        function Resolve-PackageVersion($feed, $pattern, $name) {
+            $pkg = Get-ChildItem "$feed/*.nupkg" | Where-Object { $_.Name -match $pattern } | Select-Object -First 1
+            if (-not $pkg) { throw "$name package not found in $feed" }
+            return [regex]::Match($pkg.Name, $pattern).Groups[1].Value
+        }
+
+        # Each package's .nupkg filename pattern is anchored so, e.g., the Microsoft.Data.SqlClient
+        # pattern does not also match Microsoft.Data.SqlClient.Extensions.Azure.
+        $packages = @(
+            @{
+                Variable = 'sqlClientPackageVersion';
+                Name = 'Microsoft.Data.SqlClient';
+                Pattern = '^Microsoft\.Data\.SqlClient\.(\d[^\\/]*)\.nupkg$'
+            },
+            @{
+                Variable = 'sqlServerPackageVersion';
+                Name = 'Microsoft.SqlServer.Server';
+                Pattern = '^Microsoft\.SqlServer\.Server\.(\d[^\\/]*)\.nupkg$'
+            },
+            @{
+                Variable = 'abstractionsPackageVersion';
+                Name = 'Microsoft.Data.SqlClient.Extensions.Abstractions';
+                Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Abstractions\.(\d[^\\/]*)\.nupkg$'
+            },
+            @{
+                Variable = 'loggingPackageVersion';
+                Name = 'Microsoft.Data.SqlClient.Internal.Logging';
+                Pattern = '^Microsoft\.Data\.SqlClient\.Internal\.Logging\.(\d[^\\/]*)\.nupkg$'
+            },
+            @{
+                Variable = 'azurePackageVersion';
+                Name = 'Microsoft.Data.SqlClient.Extensions.Azure';
+                Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Azure\.(\d[^\\/]*)\.nupkg$'
+            }
+        )
+
+        foreach ($p in $packages) {
+            $version = Resolve-PackageVersion $feed $p.Pattern $p.Name
+            Write-Host "Resolved $($p.Name) version: $version"
+            Write-Host "##vso[task.setvariable variable=$($p.Variable)]$version"
+        }
