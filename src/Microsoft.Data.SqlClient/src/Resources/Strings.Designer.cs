@@ -5083,6 +5083,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The assembly &apos;{0}&apos;, named by a user-defined type returned by the server, was not loaded because it is not permitted by the user-defined type assembly load policy. To permit it, add the assembly name to the &apos;Microsoft.Data.SqlClient.UdtAssemblyAllowList&apos; AppContext data element..
+        /// </summary>
+        internal static string SQLUDT_AssemblyNotAllowed {
+            get {
+                return ResourceManager.GetString("SQLUDT_AssemblyNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type &apos;{0}&apos;, named by a user-defined type returned by the server, is not a user-defined type because it is not annotated with SqlUserDefinedTypeAttribute..
+        /// </summary>
+        internal static string SQLUDT_TypeNotUserDefined {
+            get {
+                return ResourceManager.GetString("SQLUDT_TypeNotUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to UdtTypeName property must be set only for UDT parameters..
         /// </summary>
         internal static string SQLUDT_UnexpectedUdtTypeName {

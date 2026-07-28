@@ -257,6 +257,37 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+| `Switch.Microsoft.Data.SqlClient.UseLegacyUdtAssemblyLoad` | `false` | Restores the pre-policy behavior of loading any assembly named by a server-supplied UDT assembly-qualified name, and of skipping the `[SqlUserDefinedType]` check |
+| `Switch.Microsoft.Data.SqlClient.UseStrictUdtAssemblyLoad` | `false` | Restricts UDT assembly loads to `Microsoft.SqlServer.Types` and the allow list only, excluding assemblies that merely happen to be present in the process |
+
+### UDT Assembly Load Policy
+
+A server-supplied UDT assembly-qualified name reaches `Assembly.Load`, so the
+driver applies a deny-by-default policy before handing the name to the loader.
+
+| Mode | Selected by | Permits |
+|------|-------------|---------|
+| `Restricted` (default) | neither switch | `Microsoft.SqlServer.Types` (identity pinned), the allow list, assemblies already loaded into the process, and assemblies statically referenced by them |
+| `Strict` | `UseStrictUdtAssemblyLoad` | `Microsoft.SqlServer.Types` (identity pinned) and the allow list only |
+| `Legacy` | `UseLegacyUdtAssemblyLoad` (wins over `Strict`) | everything, i.e. the pre-policy behavior |
+
+Applications that use custom UDTs whose assemblies are loaded on demand can name
+them explicitly through the `Microsoft.Data.SqlClient.UdtAssemblyAllowList`
+AppContext data element, a semicolon-separated list of assembly names:
+
+```csharp
+AppDomain.CurrentDomain.SetData(
+    "Microsoft.Data.SqlClient.UdtAssemblyAllowList",
+    "Contoso.Udts;Fabrikam.Udts, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+```
+
+Each entry is matched only on the components it specifies, so a simple name
+permits any version, culture, and public key token, while a fully-qualified name
+must match exactly.
+
+Independently of the mode, a resolved type that is not annotated with
+`SqlUserDefinedTypeAttribute` is rejected before any of its code runs (except in
+`Legacy` mode).
 
 ### Usage Example
 ```csharp

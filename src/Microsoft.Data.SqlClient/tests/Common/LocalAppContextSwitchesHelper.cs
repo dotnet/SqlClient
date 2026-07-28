@@ -59,6 +59,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useConnectionPoolV2Original;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
+    private readonly bool? _useLegacyUdtAssemblyLoadOriginal;
+    private readonly bool? _useStrictUdtAssemblyLoadOriginal;
     #if NET
     // The s_useManagedNetworking field only exists in the SqlClient assembly
     // when it is built for .NET on Windows, so it is captured/restored at
@@ -127,6 +129,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
+            _useLegacyUdtAssemblyLoadOriginal =
+                GetSwitchValue("s_useLegacyUdtAssemblyLoad");
+            _useStrictUdtAssemblyLoadOriginal =
+                GetSwitchValue("s_useStrictUdtAssemblyLoad");
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -203,6 +209,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
+            SetSwitchValue(
+                "s_useLegacyUdtAssemblyLoad",
+                _useLegacyUdtAssemblyLoadOriginal);
+            SetSwitchValue(
+                "s_useStrictUdtAssemblyLoad",
+                _useStrictUdtAssemblyLoadOriginal);
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -368,6 +380,24 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchPropertyValue(nameof(UseOverallConnectTimeoutForPoolWait));
         set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyUdtAssemblyLoad switch value.
+    /// </summary>
+    public bool? UseLegacyUdtAssemblyLoad
+    {
+        get => GetSwitchPropertyValue(nameof(UseLegacyUdtAssemblyLoad));
+        set => SetSwitchValue("s_useLegacyUdtAssemblyLoad", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseStrictUdtAssemblyLoad switch value.
+    /// </summary>
+    public bool? UseStrictUdtAssemblyLoad
+    {
+        get => GetSwitchPropertyValue(nameof(UseStrictUdtAssemblyLoad));
+        set => SetSwitchValue("s_useStrictUdtAssemblyLoad", value);
     }
 
     #if NET
