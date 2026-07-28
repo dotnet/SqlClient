@@ -43,8 +43,8 @@ internal static class SsrpPacketTestData
     /// Various combinations of packet buffers containing normal SVR_RESP responses, all of which
     /// should be successfully processed.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidSqlDataSourceResponse_ReturnsData"/>
-    public static TheoryData<ReadOnlySequence<byte>, string, int, string?> ValidSvrRespPacketBuffer
+    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidBroadcastSqlDataSourceResponse_ReturnsData"/>
+    public static TheoryData<ReadOnlySequence<byte>, string, int, string?, string, int, string?> ValidSvrRespPacketBuffer
     {
         get
         {
@@ -57,6 +57,8 @@ internal static class SsrpPacketTestData
                 spxInfo: $"spx;{ValidInstanceName}",
                 adspInfo: "adsp;SQL2000",
                 bvInfo: "bv;item;group;item;group;org");
+            string smuggledProtocolParameters = CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}",
+                bvInfo: $"bv;item;tcp;item;tcp;{ValidTcpPort2}");
 
             byte[] complexValidPacket = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, complexProtocolParameters));
@@ -68,6 +70,8 @@ internal static class SsrpPacketTestData
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
             byte[] validPacket4 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+            byte[] validPacket5 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, smuggledProtocolParameters));
             byte[] invalidPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, "v14", CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
 
@@ -76,6 +80,9 @@ internal static class SsrpPacketTestData
                 {
                     // One buffer, one response
                     GeneratePacketBuffers(complexValidPacket),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName,
                     ValidServerVersion,
                     ValidTcpPort1,
                     PipeName
@@ -90,6 +97,9 @@ internal static class SsrpPacketTestData
                         complexValidPacket.AsSpan(107).ToArray()),
                     ValidServerVersion,
                     ValidTcpPort1,
+                    PipeName,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     PipeName
                 },
                 {
@@ -101,6 +111,9 @@ internal static class SsrpPacketTestData
                         validPacket4),
                     ValidServerVersion,
                     ValidTcpPort4,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     null
                 },
                 {
@@ -113,6 +126,19 @@ internal static class SsrpPacketTestData
                         validPacket4),
                     ValidServerVersion,
                     ValidTcpPort4,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName
+                },
+                {
+                    // One buffer, one response (but with a separate TCP_INFO smuggled inside BV_INFO.)
+                    GeneratePacketBuffers(validPacket5),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     null
                 }
             };
