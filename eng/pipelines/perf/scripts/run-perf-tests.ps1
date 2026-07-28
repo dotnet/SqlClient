@@ -36,7 +36,16 @@ param(
     [ValidateSet("interleaved", "sequential")]
     [string]$RunMode = "interleaved",
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
-    [int]$ConfirmationRuns = 3
+    [int]$ConfirmationRuns = 3,
+    # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
+    # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
+    # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
+    [ValidateSet("", "true", "false")]
+    [string]$UseManagedSniOnWindows = "",
+    [ValidateSet("", "true", "false")]
+    [string]$UseOptimizedAsyncBehaviour = "",
+    [ValidateSet("", "true", "false")]
+    [string]$UseConnectionPoolV2 = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -286,6 +295,20 @@ $cfg = ConvertFrom-Json $rawConfig
 # value instead of corrupting the connection string.
 $escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
 $cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+# Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
+# the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
+# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
+function Set-CfgBool {
+    param($Config, [string]$Name, [string]$Value)
+    if (-not [string]::IsNullOrEmpty($Value)) {
+        $b = [System.Boolean]::Parse($Value)
+        if ($Config.PSObject.Properties.Name -contains $Name) { $Config.$Name = $b }
+        else { $Config | Add-Member -NotePropertyName $Name -NotePropertyValue $b }
+    }
+}
+Set-CfgBool $cfg "UseManagedSniOnWindows" $UseManagedSniOnWindows
+Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $UseOptimizedAsyncBehaviour
+Set-CfgBool $cfg "UseConnectionPoolV2" $UseConnectionPoolV2
 $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
 Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
 

@@ -73,6 +73,35 @@ def _load_runner_config(path):
             if key not in _CONFIG_EXCLUDED_KEYS and isinstance(value, bool)}
 
 
+def _parse_config_overrides(pairs):
+    """Parse repeated ``--config-override NAME=VALUE`` items into a ``{flag: bool}`` dict.
+
+    The perf pipeline can set a handful of SqlClient behaviour flags (e.g. UseConnectionPoolV2)
+    at queue time. Those values are applied to the runner config the benchmarks actually run
+    against, but the checked-in ``runnerconfig.jsonc`` this script reads still holds the defaults,
+    so the queue-time values are threaded in here to keep ``PerfRun.Config`` faithful to the run.
+
+    Only boolean values are accepted (Config is a flat ``{flag: bool}`` map); a non-boolean value
+    is warned about and skipped so a typo never injects a non-bool. Later duplicates win."""
+    overrides = {}
+    for item in pairs or []:
+        name, sep, value = item.partition("=")
+        name = name.strip()
+        token = value.strip().lower()
+        if not sep or not name:
+            print(f"WARNING: ignoring --config-override '{item}' (expected NAME=VALUE).",
+                  file=sys.stderr)
+            continue
+        if token in ("true", "1", "yes"):
+            overrides[name] = True
+        elif token in ("false", "0", "no"):
+            overrides[name] = False
+        else:
+            print(f"WARNING: ignoring --config-override '{item}' "
+                  f"(value '{value}' is not a boolean).", file=sys.stderr)
+    return overrides
+
+
 def _normalize_os(value):
     """Map an OS descriptor to the schema's canonical 'Windows' or 'Linux'."""
     if not value:
@@ -301,7 +330,16 @@ def main(argv=None):
                         help="Path to the benchmark runner's .jsonc config. Its top-level boolean "
                              "flags (excluding ConnectionString and Benchmarks) are recorded in "
                              "PerfRun.Config.")
+    parser.add_argument("--config-override", action="append", default=[],
+                        metavar="NAME=BOOL",
+                        help="Override or add a PerfRun.Config boolean flag (repeatable). Values "
+                             "supplied here win over those read from --runner-config, so the pipeline "
+                             "records the flags it actually set (e.g. UseConnectionPoolV2=true) "
+                             "regardless of the checked-in runnerconfig.jsonc defaults.")
     args = parser.parse_args(argv)
+
+    config = _load_runner_config(args.runner_config)
+    config.update(_parse_config_overrides(args.config_override))
 
     ctx = {
         "driver_name": args.driver_name,
@@ -318,7 +356,7 @@ def main(argv=None):
         "commit_hash": args.commit_hash,
         "commit_date": args.commit_date,
         "is_comparable_base": str(args.is_comparable_base).lower() in ("1", "true", "yes"),
-        "config": _load_runner_config(args.runner_config),
+        "config": config,
     }
 
     run_row, result_rows = translate(args.input_dir, ctx)

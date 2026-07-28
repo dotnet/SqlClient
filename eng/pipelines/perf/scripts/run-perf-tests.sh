@@ -47,11 +47,20 @@ failOnRegression="false"
 runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
+# Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
+# default untouched".  These are written into the runner config the benchmarks run against AND, via
+# the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
+# settings are queryable/filterable in the dashboard.
+useManagedSniOnWindows=""
+useOptimizedAsyncBehaviour=""
+useConnectionPoolV2=""
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
          "[--baseline-version <ver>] [--regression-threshold <pct>] [--fail-on-regression]" \
-         "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" >&2
+         "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
+         "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
+         "[--use-connection-pool-v2 true|false]" >&2
 }
 
 while [[ $# -gt 0 ]]; do
@@ -64,6 +73,9 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
+        --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
+        --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
+        --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
         -h|--help)       usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
@@ -81,6 +93,16 @@ if ! [[ "${confirmationRuns}" =~ ^[0-9]+$ ]] || [[ "${confirmationRuns}" -lt 1 ]
     echo "ERROR: --confirmation-runs must be a positive integer (got '${confirmationRuns}')." >&2
     usage; exit 2
 fi
+# Each behaviour flag must be empty (leave as-is) or a lowercase boolean.
+validate_bool() {  # $1 = flag name (for the message), $2 = value
+    case "$2" in
+        ""|true|false) ;;
+        *) echo "ERROR: --$1 must be 'true' or 'false' (got '$2')." >&2; usage; exit 2 ;;
+    esac
+}
+validate_bool use-managed-sni-on-windows "${useManagedSniOnWindows}"
+validate_bool use-optimized-async-behaviour "${useOptimizedAsyncBehaviour}"
+validate_bool use-connection-pool-v2 "${useConnectionPoolV2}"
 
 ####################################################################################################
 # Resolve paths
@@ -306,6 +328,13 @@ export RUNNER_CONFIG
 DATATYPES_CONFIG="${PERF_DIR}/datatypes.json"
 export DATATYPES_CONFIG
 
+# Optional SqlClient behaviour flag overrides applied to the runner config (empty = leave as-is).
+# Exported so the JSON-patching python below can read them (its heredoc is single-quoted, so it does
+# not expand shell variables directly).
+export PERF_CFG_USE_MANAGED_SNI="${useManagedSniOnWindows}"
+export PERF_CFG_USE_OPTIMIZED_ASYNC="${useOptimizedAsyncBehaviour}"
+export PERF_CFG_USE_CONNECTION_POOL_V2="${useConnectionPoolV2}"
+
 python3 - "$PERF_DIR/runnerconfig.jsonc" "$RUNNER_CONFIG" <<'PY'
 import json, os, re, sys
 
@@ -332,6 +361,18 @@ cfg["ConnectionString"] = (
     f"Server=tcp:{server},1433;User ID=sa;Password={password_value};"
     f"Initial Catalog={db};TrustServerCertificate=True;Encrypt=False;"
 )
+
+# Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
+# the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
+# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
+for env_name, cfg_key in (
+    ("PERF_CFG_USE_MANAGED_SNI", "UseManagedSniOnWindows"),
+    ("PERF_CFG_USE_OPTIMIZED_ASYNC", "UseOptimizedAsyncBehaviour"),
+    ("PERF_CFG_USE_CONNECTION_POOL_V2", "UseConnectionPoolV2"),
+):
+    val = os.environ.get(env_name, "")
+    if val != "":
+        cfg[cfg_key] = (val.lower() == "true")
 
 with open(dst, "w", encoding="utf-8") as fh:
     json.dump(cfg, fh, indent=2)

@@ -113,6 +113,25 @@ parameters:
     type: number
     default: 3
 
+  # Optional SqlClient behaviour flags. These are applied to the benchmark runner config used by
+  # BOTH the baseline and candidate passes on the VM, and are also recorded in PerfRun.Config so a
+  # run's settings are queryable/filterable on the dashboard. Defaults match the checked-in
+  # runnerconfig.jsonc, so leaving them untouched preserves today's behaviour.
+  - name: useManagedSniOnWindows
+    displayName: UseManagedSniOnWindows
+    type: boolean
+    default: false
+
+  - name: useOptimizedAsyncBehaviour
+    displayName: UseOptimizedAsyncBehaviour
+    type: boolean
+    default: true
+
+  - name: useConnectionPoolV2
+    displayName: UseConnectionPoolV2
+    type: boolean
+    default: false
+
   # Whether to ingest the run's results into Kusto (Azure Data Explorer).  Enabled by default; set to
   # false at queue time to run + compare only and skip ingestion (e.g. for a throwaway/experimental
   # run you do not want recorded in the perf database).  Even when true, ingestion still requires the
@@ -190,25 +209,25 @@ extends:
     ${{ if eq(parameters.platform, 'windows') }}:
       ${{ if ne(parameters.baselineVersion, '') }}:
         ${{ if eq(parameters.failOnRegression, true) }}:
-          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression'
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
         ${{ else }}:
-          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }}'
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -BaselineVersion ${{ parameters.baselineVersion }} -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
       ${{ else }}:
         ${{ if eq(parameters.failOnRegression, true) }}:
-          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression'
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -FailOnRegression -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
         ${{ else }}:
-          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }}'
+          testScriptArgs: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
     ${{ else }}:
       ${{ if ne(parameters.baselineVersion, '') }}:
         ${{ if eq(parameters.failOnRegression, true) }}:
-          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
         ${{ else }}:
-          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --baseline-version ${{ parameters.baselineVersion }} --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
       ${{ else }}:
         ${{ if eq(parameters.failOnRegression, true) }}:
-          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression'
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --fail-on-regression --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
         ${{ else }}:
-          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }}'
+          testScriptArgs: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:
@@ -305,6 +324,9 @@ extends:
             --commit-hash "$commitHash" \
             --commit-date "$commitDate" \
             --runner-config "$runnerConfig" \
+            --config-override "UseManagedSniOnWindows=${{ lower(parameters.useManagedSniOnWindows) }}" \
+            --config-override "UseOptimizedAsyncBehaviour=${{ lower(parameters.useOptimizedAsyncBehaviour) }}" \
+            --config-override "UseConnectionPoolV2=${{ lower(parameters.useConnectionPoolV2) }}" \
             --is-comparable-base false
 
           # --- baseline (released NuGet package), when a baseline pass ran ---
@@ -325,6 +347,9 @@ extends:
               --version-string "$baseVer" \
               --commit-hash "v$baseVer" \
               --runner-config "$runnerConfig" \
+              --config-override "UseManagedSniOnWindows=${{ lower(parameters.useManagedSniOnWindows) }}" \
+              --config-override "UseOptimizedAsyncBehaviour=${{ lower(parameters.useOptimizedAsyncBehaviour) }}" \
+              --config-override "UseConnectionPoolV2=${{ lower(parameters.useConnectionPoolV2) }}" \
               --is-comparable-base true
           fi
 
