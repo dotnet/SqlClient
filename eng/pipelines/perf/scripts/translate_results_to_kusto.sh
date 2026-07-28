@@ -41,14 +41,15 @@ fi
 buildUrl="${COLLECTION_URI}${TEAM_PROJECT}/_build/results?buildId=${BUILD_ID}"
 
 machineName="${AGENT_MACHINE_NAME}"
-# The VM writes its hostname into runinfo.env; prefer it when present.
+# The VM writes its hostname into runinfo.env; prefer it when present.  Extract the value as data
+# (grep/cut) instead of sourcing the file, so unexpected/corrupted file content can never execute
+# as shell code.
 if [ -f "$resultsDir/runinfo.env" ]; then
-    # shellcheck disable=SC1091
-    . "$resultsDir/runinfo.env" 2>/dev/null || true
-    machineName="${MACHINE_NAME:-$machineName}"
+    envMachineName="$(grep -m1 '^MACHINE_NAME=' "$resultsDir/runinfo.env" 2>/dev/null | cut -d= -f2- || true)"
     # A Windows VM writes runinfo.env with CRLF endings; strip any trailing CR so the hostname
     # doesn't leak a '\r' into PerfRun.MachineName.
-    machineName="${machineName%$'\r'}"
+    envMachineName="${envMachineName%$'\r'}"
+    machineName="${envMachineName:-$machineName}"
 fi
 
 commitHash="${SOURCE_VERSION}"
