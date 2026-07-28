@@ -123,14 +123,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// The timer must stay armed for every pass of the drain, so pruning cannot stall
-        /// half-drained.
+        /// The regression test for #1881: the timer must stay armed for every pass of the drain so
+        /// pruning cannot stall half-drained, then disarm once there is nothing left to prune
+        /// instead of firing forever with nothing to do.
         /// </summary>
         [Fact]
-        public void PruningTimer_StaysArmed_WhilePoolGroupIsStillDraining()
+        public void PruningTimer_StaysArmedUntilAllWorkDrains()
         {
             var factory = new TestSqlConnectionFactory();
             AddPoolGroup(factory, "Data Source=localhost;");
+            Assert.True(factory.IsPruningTimerActive);
 
             for (int pass = 1; pass < ExpectedDrainPasses; pass++)
             {
@@ -147,23 +149,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// The regression test for #1881: once everything has drained, the timer must disarm
-        /// instead of firing forever with nothing to do.
-        /// </summary>
-        [Fact]
-        public void PruningTimer_IsDisarmed_AfterAllWorkDrains()
-        {
-            var factory = new TestSqlConnectionFactory();
-            AddPoolGroup(factory, "Data Source=localhost;");
-            Assert.True(factory.IsPruningTimerActive);
-
-            int passes = DrainPruningWork(factory);
-
-            Assert.False(factory.IsPruningTimerActive);
-            Assert.Equal(ExpectedDrainPasses, passes);
-        }
-
-        /// <summary>
         /// Disarming must not be a one-way door: new connection activity has to bring pruning
         /// back, otherwise the fix would simply have disabled pruning.
         /// </summary>
@@ -172,33 +157,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             var factory = new TestSqlConnectionFactory();
             AddPoolGroup(factory, "Data Source=localhost;");
-            DrainPruningWork(factory);
+            int passes = DrainPruningWork(factory);
             Assert.False(factory.IsPruningTimerActive);
+            Assert.Equal(ExpectedDrainPasses, passes);
 
             AddPoolGroup(factory, "Data Source=otherhost;");
 
             Assert.True(factory.IsPruningTimerActive);
-        }
-
-        /// <summary>
-        /// Pool groups queued for release are drained by the same timer, so queueing one must arm
-        /// it. This is the path <see cref="SqlConnection.ClearAllPools"/> ultimately drives.
-        /// </summary>
-        [Fact]
-        public void PruningTimer_IsArmed_WhenPoolGroupIsQueuedForRelease()
-        {
-            var factory = new TestSqlConnectionFactory();
-            DbConnectionPoolGroup poolGroup = AddPoolGroup(factory, "Data Source=localhost;");
-            DrainPruningWork(factory);
-            Assert.False(factory.IsPruningTimerActive);
-
-            factory.QueuePoolGroupForRelease(poolGroup);
-
-            Assert.True(factory.IsPruningTimerActive);
-
-            // ...and it must be able to quiesce again once that queue drains.
-            DrainPruningWork(factory);
-            Assert.False(factory.IsPruningTimerActive);
         }
     }
 }

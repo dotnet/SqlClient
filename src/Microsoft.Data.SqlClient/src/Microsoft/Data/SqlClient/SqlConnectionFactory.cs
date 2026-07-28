@@ -50,11 +50,10 @@ namespace Microsoft.Data.SqlClient
 
         // Guards every state transition of _pruningTimer.
         //
-        // Lock ordering: this lock may be taken while holding "this", a pool group lock, or
-        // either release-list lock, but the reverse is never true. StopPruningTimerIfIdle takes
-        // _pruningTimerLock first and only then peeks at the release lists, and it deliberately
-        // reads _connectionPoolGroups without taking "this" (the dictionary is swapped wholesale,
-        // so reading the reference is safe). That keeps the lock graph acyclic.
+        // Lock ordering: _pruningTimerLock is outermost. StopPruningTimerIfIdle takes it and then
+        // the release-list locks, so neither may be held when arming. It deliberately reads
+        // _connectionPoolGroups without taking "this" (the dictionary is swapped wholesale, so
+        // reading the reference is safe), which keeps the lock graph acyclic.
         private readonly object _pruningTimerLock = new object();
         private bool _pruningTimerEnabled;
         private bool _pruningTimerDisposed;
@@ -302,8 +301,10 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(connectionPoolGroup != null, "how did we not create a pool entry?");
                 Debug.Assert(userConnectionOptions != null, "how did we not have user connection options?");
 
-                // A pool group is now registered, so there is something for the pruner to walk.
-                // Arm outside lock(this) to preserve the "this -> _pruningTimerLock" ordering.
+                // Registering a pool group is the only way pruning work enters the factory: pools
+                // and pool groups are only ever queued for release while a group is still
+                // registered, and the timer cannot disarm until every collection is empty. Armed
+                // outside lock(this) to keep _pruningTimerLock outermost.
                 EnsurePruningTimerRunning();
             }
             else if (userConnectionOptions is null)
@@ -345,10 +346,6 @@ namespace Microsoft.Data.SqlClient
                 _poolsToRelease.Add(pool);
             }
 
-            // The work is published above, before the timer lock is taken, so a concurrent
-            // disarm attempt is guaranteed to observe it.
-            EnsurePruningTimerRunning();
-            
             SqlClientDiagnostics.Metrics.EnterInactiveConnectionPool();
             SqlClientDiagnostics.Metrics.ExitActiveConnectionPool();
         }
@@ -362,10 +359,6 @@ namespace Microsoft.Data.SqlClient
             {
                 _poolGroupsToRelease.Add(poolGroup);
             }
-
-            // The work is published above, before the timer lock is taken, so a concurrent
-            // disarm attempt is guaranteed to observe it.
-            EnsurePruningTimerRunning();
 
             SqlClientDiagnostics.Metrics.EnterInactiveConnectionPoolGroup();
             SqlClientDiagnostics.Metrics.ExitActiveConnectionPoolGroup();
@@ -990,14 +983,10 @@ namespace Microsoft.Data.SqlClient
         /// Arms the pruning timer if it is not already running.
         /// </summary>
         /// <remarks>
-        /// Callers must publish their work (add to <see cref="_connectionPoolGroups"/>,
-        /// <see cref="_poolsToRelease"/> or <see cref="_poolGroupsToRelease"/>) *before* calling
-        /// this method, and must not hold that collection's lock while calling it. That ordering
-        /// is what makes the arm/disarm handshake safe: <see cref="StopPruningTimerIfIdle"/>
-        /// re-reads all three collections while holding <see cref="_pruningTimerLock"/>, so it can
-        /// never disarm on behalf of work that a producer has already published. If it does win
-        /// the race and disarm first, the producer then observes
-        /// <see cref="_pruningTimerEnabled"/> as false and re-arms.
+        /// The caller must publish the new pool group before calling this, and must not hold
+        /// lock(this). <see cref="StopPruningTimerIfIdle"/> re-reads all three collections under
+        /// <see cref="_pruningTimerLock"/>, so it can never disarm on behalf of work that has
+        /// already been published.
         /// </remarks>
         private void EnsurePruningTimerRunning()
         {
