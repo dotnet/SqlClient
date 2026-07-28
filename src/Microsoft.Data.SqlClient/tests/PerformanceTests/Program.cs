@@ -119,6 +119,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             return job != null && job.Enabled;
         }
 
+        /// <summary>
+        /// Returns true when the harness is driving execution via the perf pipeline's env vars
+        /// (<c>PERF_LIST_BENCHMARKS</c> to enumerate units, or <c>PERF_BENCHMARK</c> to run one).
+        /// These modes run unattended, so interactive prompts (e.g. WaitForProfiler) must be skipped.
+        /// </summary>
+        private static bool IsHarnessControlled() =>
+            Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null ||
+            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PERF_BENCHMARK"));
+
         private void SetupConfigurations()
         {
             // If the config file specifies to use managed SNI on Windows, 
@@ -152,7 +161,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             // If the config file specifies to wait for a profiler, 
             // display the process ID and wait for user input before starting the benchmarks.
-            if (_config.WaitForProfiler)
+            // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
+            // those modes run unattended, so blocking on Console.ReadKey() would hang automation.
+            if (_config.WaitForProfiler && !IsHarnessControlled())
             {
                 int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
                 Console.WriteLine();

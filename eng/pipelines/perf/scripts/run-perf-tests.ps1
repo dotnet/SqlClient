@@ -36,6 +36,7 @@ param(
     [ValidateSet("interleaved", "sequential")]
     [string]$RunMode = "interleaved",
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
+    [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
@@ -344,14 +345,25 @@ function Write-BaselineNuGetConfig {
 # Convert a CPU range like "16-31" (or a comma list "16,17,18") into an affinity bitmask.
 function Get-AffinityMask([string]$cpuSpec) {
     if ([string]::IsNullOrEmpty($cpuSpec)) { return $null }
-    [long]$mask = 0
+    # Expand the spec ("16-31", "0,2,4", "0-3,8", ...) into individual CPU indices.
+    $cpus = New-Object System.Collections.Generic.List[int]
     foreach ($part in $cpuSpec.Split(",")) {
         if ($part -match '^\s*(\d+)\s*-\s*(\d+)\s*$') {
-            for ($c = [int]$Matches[1]; $c -le [int]$Matches[2]; $c++) { $mask = $mask -bor ([long]1 -shl $c) }
+            for ($c = [int]$Matches[1]; $c -le [int]$Matches[2]; $c++) { $cpus.Add($c) }
         } elseif ($part -match '^\s*(\d+)\s*$') {
-            $mask = $mask -bor ([long]1 -shl [int]$Matches[1])
+            $cpus.Add([int]$Matches[1])
         }
     }
+    if ($cpus.Count -eq 0) { return $null }
+    # A single-word ProcessorAffinity mask only addresses CPUs 0-63; higher indices require
+    # processor-group APIs, so skip pinning rather than build a mask that silently targets the
+    # wrong CPUs.
+    if (($cpus | Where-Object { $_ -ge 64 }).Count -gt 0) {
+        Write-Warning "PERF_CLIENT_CPUS contains a CPU index >= 64; ProcessorAffinity cannot address processor groups, so running without CPU pinning."
+        return $null
+    }
+    [long]$mask = 0
+    foreach ($c in $cpus) { $mask = $mask -bor ([long]1 -shl $c) }
     return $mask
 }
 
@@ -417,7 +429,11 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
         Write-Host "Starting benchmarks ($Label): dotnet $($runArgs -join ' ')"
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "dotnet"
-        foreach ($a in $runArgs) { $psi.ArgumentList.Add($a) }
+        # Windows PowerShell 5.1 / .NET Framework has no ProcessStartInfo.ArgumentList, so build a
+        # quoted argument string for .Arguments (quoting any arg that contains whitespace).
+        $psi.Arguments = ($runArgs | ForEach-Object {
+            if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
+        }) -join ' '
         $psi.UseShellExecute = $false
         $psi.WorkingDirectory = $runDir
 

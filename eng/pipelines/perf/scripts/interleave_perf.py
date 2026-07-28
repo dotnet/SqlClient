@@ -79,6 +79,14 @@ def apply_affinity(proc, cpus):
         if os.name == "nt":  # Windows
             import ctypes
 
+            # SetProcessAffinityMask takes a single-word mask that only addresses CPUs 0-63;
+            # higher indices require processor-group APIs.  Rather than set a mask that would
+            # silently pin to the wrong CPUs, skip pinning with a warning.
+            if any(c >= 64 for c in cpus):
+                print(f"WARNING: CPU index >= 64 in {cpus}; SetProcessAffinityMask cannot address "
+                      f"processor groups, so pid {proc.pid} runs without CPU pinning.",
+                      file=sys.stderr)
+                return
             mask = 0
             for c in cpus:
                 mask |= (1 << c)

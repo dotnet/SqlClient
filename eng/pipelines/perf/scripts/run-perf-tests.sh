@@ -138,7 +138,9 @@ if [[ ! -f "${PERF_PROJECT}" ]]; then
     exit 1
 fi
 
-: "${SQL_SERVER:=localhost}"
+# Export the (possibly defaulted) server so the inline Python config-rewrite below, which reads
+# os.environ["SQL_SERVER"], sees it even when the template didn't inject SQL_SERVER.
+export SQL_SERVER="${SQL_SERVER:-localhost}"
 if [[ -z "${SQL_PASSWORD:-}" ]]; then
     echo "ERROR: SQL_PASSWORD environment variable is not set (expected from the perf template)." >&2
     exit 1
