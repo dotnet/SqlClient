@@ -46,16 +46,36 @@ Ignore any definition that is **not currently enabled** (`queueStatus != enabled
 i.e. disabled or paused) — also skip names flagged `[Disabled]`, `[Retired]`, or under
 `\Retired\` folders. Then keep only definitions whose repo is `dotnet/SqlClient`
 (GitHub) or `dotnet-sqlclient` (TfsGit). Exclude the legacy `Microsoft.Data.SqlClient`
-and `*.sni` repos unless the user asks for SNI. Typical in-scope pipelines: CI-SqlClient, CI-SqlClient-Package,
-PR-SqlClient-Project, PR-SqlClient-Package, sqlclient-pr, sqlclient-ci-stress,
-sqlclient-ci-package (public); MDS Main CI, MDS Main CI-Package, sqlclient-kerberos,
-Test-SqlClient-Managed-Instance, OneBranch official/non-official (ADO.Net).
+and `*.sni` repos unless the user asks for SNI.
+
+Because this triage targets **non-PR commit runs** (see Step 2), prefer CI/branch
+definitions over PR-validation ones. Typical in-scope pipelines: CI-SqlClient,
+CI-SqlClient-Package, sqlclient-ci-stress, sqlclient-ci-package (public); MDS Main CI,
+MDS Main CI-Package, sqlclient-kerberos, Test-SqlClient-Managed-Instance, OneBranch
+official/non-official (ADO.Net). PR-triggered definitions (PR-SqlClient-Project,
+PR-SqlClient-Package, sqlclient-pr) are in scope only for the CI/branch runs they may
+also host — their PR-ref runs are excluded in Step 2 unless the user asks to include
+PR runs.
 
 ## Step 2 — Find runs at/after the target commit
 
 **Operation:** for each in-scope definition, list recent runs (filter to
 `failed`, `partiallySucceeded`, `canceled`) with their `sourceBranch`,
 `sourceVersion`, `result`, and `finishTime`.
+
+**Limit to non-PR commit runs.** Only consider runs triggered by real commits on
+tracked branches (e.g. `refs/heads/main`, `refs/heads/release/*`); **exclude PR
+validation runs**. A run is a PR run — and therefore out of scope — when any of these
+hold:
+
+- Its `sourceBranch` is an ephemeral merge ref such as `refs/pull/N/merge` or
+  `refs/pull/N/head`.
+- Its build `reason` is `pullRequest`.
+- It is a PR-triggered definition (e.g. `PR-SqlClient-Project`, `PR-SqlClient-Package`,
+  `sqlclient-pr`) running against a PR ref.
+
+Keep only runs whose `sourceVersion` is a committed SHA on a tracked branch. If the
+user explicitly asks to include PR runs, honor that override.
 
 Resolve **"at or after `${input:commit}`" by commit graph, not timestamp**:
 
@@ -64,9 +84,6 @@ Resolve **"at or after `${input:commit}`" by commit graph, not timestamp**:
 - `sourceVersion == <target>` → the target itself (in scope).
 - Divergent `release/*` or `dev/*` commits do **not** descend from a `main` target —
   exclude them.
-- PR runs use ephemeral `refs/pull/N/merge` commits: fetch `pull/N/merge` first, then
-  test whether the target is an ancestor of that merge commit (i.e. the PR base
-  already includes the target).
 
 Mirror (`dotnet-sqlclient`) runs use the **same SHAs** as GitHub, so apply the same
 ancestry checks. Because mirror sync is PR-gated, the target commit may not have
