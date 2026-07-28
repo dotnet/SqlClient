@@ -559,7 +559,7 @@ internal readonly ref struct SqlDataSourceResponse
 
                 if (!RespDataComponent.TryParse(respData, ref tempCurrPos, maxValueLength: -1, expectedTokensInValue: 5, out currentToken))
                 {
-                    break;
+                    return false;
                 }
             }
 

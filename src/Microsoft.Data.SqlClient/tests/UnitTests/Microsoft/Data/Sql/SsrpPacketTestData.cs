@@ -69,7 +69,7 @@ internal static class SsrpPacketTestData
             byte[] validPacket3 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
             byte[] validPacket4 = FormatSvrRespMessage(ValidSvrRespHeader,
-                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: false, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
             byte[] validPacket5 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, smuggledProtocolParameters));
             byte[] invalidPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
@@ -377,9 +377,15 @@ internal static class SsrpPacketTestData
         get
         {
             const string InvalidServerName = "sr\u0008v\u00001";
+            const string InvalidInstanceName = "MSSQL\u0000SQSERVER";
             string validTcpInfo = CreateProtocolParameters($"tcp;{ValidTcpPort1}");
 
             return [
+                // String does not decode into UTF8.
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    // 0xC3, 0xA9 is é. Supply 45 bytes
+                    [.. "éééééééééééééééééééééé"u8, 0xC3])),
+
                 // All keys lowercase
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
@@ -462,6 +468,14 @@ internal static class SsrpPacketTestData
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
                         instanceName: new string('a', 256),
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo))),
+
+                // Instance name contains invalid characters
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        instanceName: InvalidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
                         validTcpInfo))),
@@ -557,10 +571,30 @@ internal static class SsrpPacketTestData
                         ValidServerVersion,
                         CreateProtocolParameters(otherParameters: ";value")))),
 
+                // Valid protocol components appear with short values
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", bvInfo: "bv;first;second;third")))),
+
                 // Invalid PROTOCOLVERSION field value
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     ValidRespDataDacResponseSize,
-                    CreateRespData(protocolVersion: 0x02, ValidTcpPort2)))
+                    CreateRespData(protocolVersion: 0x02, ValidTcpPort2))),
+
+                // RESP_SIZE is correct, but too small for RESP_DATA to be valid (normal response)
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: new string('a', 5),
+                        omitServerName: true,
+                        omitInstanceName: true,
+                        omitIsClustered: true,
+                        omitVersion: true)))
             ];
         }
     }
