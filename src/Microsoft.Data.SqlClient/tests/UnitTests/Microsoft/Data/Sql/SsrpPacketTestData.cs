@@ -35,7 +35,7 @@ internal static class SsrpPacketTestData
     /// One empty packet buffer, which should be successfully processed and contain zero responses.
     /// </summary>
     /// <see cref="DacResponseProcessorTest.Read_EmptyBuffer_ReturnsFalse"/>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_EmptyBuffer_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_EmptyBuffer_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> EmptyPacketBuffer =>
         new(GeneratePacketBuffers([]));
 
@@ -43,7 +43,7 @@ internal static class SsrpPacketTestData
     /// Various combinations of packet buffers containing normal SVR_RESP responses, all of which
     /// should be successfully processed.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidBroadcastSqlDataSourceResponse_ReturnsData"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Process_ValidBroadcastSqlDataSourceResponse_ReturnsData"/>
     public static TheoryData<ReadOnlySequence<byte>, string, int, string?, string, int, string?> ValidSvrRespPacketBuffer
     {
         get
@@ -149,7 +149,7 @@ internal static class SsrpPacketTestData
     /// Various combinations of packet buffers containing SVR_RESP (DAC) responses, all of which
     /// should be successfully processed.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidDacResponse_ReturnsData"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Process_ValidDacResponse_ReturnsData"/>
     public static TheoryData<ReadOnlySequence<byte>, int> ValidSvrRespDacPacketBuffer
     {
         get
@@ -302,7 +302,7 @@ internal static class SsrpPacketTestData
     /// Packets containing an SVR_RESP response which is a valid response to a CLNT_[B|U]CAST_EX message
     /// but not to a CLNT_UCAST_INST message.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidClntUcastInstSvrRespPackets
     {
         get
@@ -323,7 +323,7 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message which is failing due to invalid data
     /// in the top-level SVR_RESP message fields.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespPackets =>
         [
             // Invalid SVR_RESP header field value
@@ -371,7 +371,7 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields but invalid components of the child RESP_DATA structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_RespData_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_RespData_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidRespDataPackets
     {
         get
@@ -569,7 +569,7 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields, a valid RESP_DATA child structure but an invalid TCP_INFO structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidTcpInfoPackets
     {
         get
