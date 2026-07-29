@@ -93,6 +93,14 @@ jobs:
       # (SQL_MI_TCP_CONN_STRING and SQL_MI_NP_CONN_STRING) and other test configuration.
       - group: ADO Test Configuration Properties
 
+      # Path to the strong-name key used to sign the test assemblies.  The sqlclient-ci-package
+      # driver assemblies are signed and grant InternalsVisibleTo to the test assemblies signed with
+      # the dedicated test key's public key, so the tests must be signed with that key.  build.proj
+      # reads this from the environment and forwards it to the unit-test build (TestSigningKeyPath);
+      # the value is populated by the 'Download Test Signing Key' step below.
+      - name: TestSigningKeyPath
+        value: $(testSigningKey.secureFilePath)
+
     # The Managed-Instance-pool agents have network line-of-sight to the Managed Instance.
     pool:
       name: Managed-Instance-pool
@@ -119,6 +127,16 @@ jobs:
       # fetched through the ADO Artifacts feed.
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
+
+      # Download the dedicated test strong-name key so the test assemblies can be signed with the
+      # key whose public key the signed sqlclient-ci-package driver assemblies grant
+      # InternalsVisibleTo to.  The downloaded path is surfaced via the TestSigningKeyPath variable
+      # above.
+      - task: DownloadSecureFile@1
+        displayName: Download Test Signing Key
+        name: testSigningKey
+        inputs:
+          secureFile: sqlclient-test-key.snk
 
       # Write the config.jsonc file pointing the tests at the Managed Instance.  Integrated security
       # and managed identity are not supported against the Managed Instance, and IsManagedInstance
