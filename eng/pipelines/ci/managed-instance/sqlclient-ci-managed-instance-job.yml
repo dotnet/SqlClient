@@ -109,6 +109,26 @@ jobs:
 
     steps:
 
+      # Check out the repo with full history so the working tree can be aligned to the exact commit
+      # that produced the consumed sqlclient-ci-package artifact (see the next step).
+      - checkout: self
+        fetchDepth: 0
+
+      # Align the working-tree source with the commit that built the downloaded package, so the test
+      # projects compile against the matching (internal) API surface.  This only repoints the
+      # built/tested source; the running pipeline definition and its @self templates were compiled
+      # from the triggered branch tip at queue time and are unaffected.  When the resource commit is
+      # unavailable (e.g. some manual runs), the checked-out source is used as-is.
+      - pwsh: |
+          $sha = "$(resources.pipeline.sqlclient-ci-package.sourceCommit)"
+          if ([string]::IsNullOrWhiteSpace($sha)) {
+              Write-Host "No sqlclient-ci-package sourceCommit available; using checked-out source as-is."
+          } else {
+              Write-Host "Aligning source to sqlclient-ci-package commit $sha"
+              git checkout --force $sha
+          }
+        displayName: Align Source With Package Commit
+
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
       # pipeline, stage them into the local NuGet feed, and resolve their exact versions into the
       # sqlClient/sqlServer/abstractions/logging/azure PackageVersion variables.
