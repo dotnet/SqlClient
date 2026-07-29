@@ -68,6 +68,12 @@ parameters:
     type: number
     default: 2
 
+  # True to run the quarantined flaky tests (in separate, non-blocking steps).  Set to false to skip
+  # them entirely.
+  - name: runFlakyTests
+    type: boolean
+    default: true
+
 steps:
 - ${{ if parameters.debug }}:
   - powershell: 'dotnet sdk check'
@@ -101,36 +107,37 @@ steps:
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        arguments: >-
-          -t:TestSqlClientUnit
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-      ${{ else }}: # x86
-        arguments: >-
-          -t:TestSqlClientUnit
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Unit Tests ${{parameters.msbuildArchitecture }}'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+          arguments: >-
+            -t:TestSqlClientUnit
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+        ${{ else }}: # x86
+          arguments: >-
+            -t:TestSqlClientUnit
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+      continueOnError: true
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
@@ -158,36 +165,41 @@ steps:
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
           -p:TestResultsFolderPath=TestResults
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        arguments: >-
-          -t:TestSqlClientFunctional
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-      ${{ else }}: # x86
-        arguments: >-
-          -t:TestSqlClientFunctional
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Functional Tests ${{parameters.msbuildArchitecture }}'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+          arguments: >-
+            -t:TestSqlClientFunctional
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+        ${{ else }}: # x86
+          arguments: >-
+            -t:TestSqlClientFunctional
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+      continueOnError: true
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
@@ -218,38 +230,43 @@ steps:
           -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
-        arguments: >-
-          -t:TestSqlClientManual
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-      ${{ else }}: # x86
-        arguments: >-
-          -t:TestSqlClientManual
-          -p:TestFramework=${{ parameters.targetFramework }}
-          -p:TestSet=${{ parameters.testSet }}
-          -p:ReferenceType=${{ parameters.referenceType }}
-          -p:Configuration=${{ parameters.buildConfiguration }}
-          -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
-          -p:TestResultsFolderPath=TestResults
-          -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Manual Tests ${{parameters.msbuildArchitecture }}'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+          arguments: >-
+            -t:TestSqlClientManual
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:TestSet=${{ parameters.testSet }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+        ${{ else }}: # x86
+          arguments: >-
+            -t:TestSqlClientManual
+            -p:TestFramework=${{ parameters.targetFramework }}
+            -p:TestSet=${{ parameters.testSet }}
+            -p:ReferenceType=${{ parameters.referenceType }}
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+            -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+            -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+            -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+            -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+            -p:TestFilters="category=flaky"
+            -p:TestResultsFolderPath=TestResults
+            -p:TestCodeCoverage=false
+      continueOnError: true
 
 - ${{ else }}: # Linux or macOS
   - task: DotNetCoreCLI@2
@@ -267,23 +284,24 @@ steps:
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Unit Tests'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientUnit
-        -p:TestFramework=${{ parameters.targetFramework }}
-        -p:ReferenceType=${{ parameters.referenceType }}
-        -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
-        -p:TestResultsFolderPath=TestResults
-        -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Unit Tests'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        arguments: >-
+          -t:TestSqlClientUnit
+          -p:TestFramework=${{ parameters.targetFramework }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
+          -p:TestCodeCoverage=false
+      continueOnError: true
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
@@ -300,23 +318,26 @@ steps:
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
         -p:TestResultsFolderPath=TestResults
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Functional Tests'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientFunctional
-        -p:TestFramework=${{ parameters.targetFramework }}
-        -p:ReferenceType=${{ parameters.referenceType }}
-        -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
-        -p:TestResultsFolderPath=TestResults
-        -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Functional Tests'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        arguments: >-
+          -t:TestSqlClientFunctional
+          -p:TestFramework=${{ parameters.targetFramework }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
+          -p:TestCodeCoverage=false
+      continueOnError: true
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests'
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
@@ -334,21 +355,24 @@ steps:
         -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Flaky Manual Tests'
-    condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
-    inputs:
-      command: build
-      projects: build.proj
-      arguments: >-
-        -t:TestSqlClientManual
-        -p:TestFramework=${{ parameters.targetFramework }}
-        -p:TestSet=${{ parameters.testSet }}
-        -p:ReferenceType=${{ parameters.referenceType }}
-        -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
-        -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
-        -p:TestResultsFolderPath=TestResults
-        -p:TestCodeCoverage=false
-    continueOnError: true
+  - ${{ if parameters.runFlakyTests }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Flaky Manual Tests'
+      condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+      inputs:
+        command: build
+        projects: build.proj
+        arguments: >-
+          -t:TestSqlClientManual
+          -p:TestFramework=${{ parameters.targetFramework }}
+          -p:TestSet=${{ parameters.testSet }}
+          -p:ReferenceType=${{ parameters.referenceType }}
+          -p:Configuration=${{ parameters.buildConfiguration }}
+          -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
+          -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+          -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+          -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:TestFilters="category=flaky"
+          -p:TestResultsFolderPath=TestResults
+          -p:TestCodeCoverage=false
+      continueOnError: true
