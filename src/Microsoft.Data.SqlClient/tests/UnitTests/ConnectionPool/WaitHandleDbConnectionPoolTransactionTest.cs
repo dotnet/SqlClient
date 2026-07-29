@@ -896,6 +896,56 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
     #endregion
 
+    #region Pruning Tests
+
+    [Fact]
+    public void Pruning_IgnoresTransactedConnections()
+    {
+        // Arrange - place a connection into the transacted pool by returning it
+        // while a transaction is active. The connection lives in
+        // TransactedConnectionPool, not in the general pool's _stackOld/_stackNew.
+        using var scope = new TransactionScope();
+        var transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        var owner = new SqlConnection();
+        var conn = GetConnection(owner);
+        Assert.NotNull(conn);
+        ReturnConnection(conn, owner);
+
+        // Sanity: connection sits in the transacted pool, not the general pool.
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        Assert.Equal(0, _pool.IdleCount);
+        int poolCountBefore = _pool.Count;
+
+        // Act - invoke pruning twice. The cleanup pass moves connections from
+        // _stackNew to _stackOld on one tick and destroys aged entries on the
+        // next, so running it twice mirrors a full prune cycle.
+        var waitHandlePool = (WaitHandleDbConnectionPool)_pool;
+        waitHandlePool.CleanupCallback(null!);
+        waitHandlePool.CleanupCallback(null!);
+
+        // Assert - the transacted connection must still be tracked in the
+        // transacted pool and must not have been destroyed.
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        Assert.Equal(poolCountBefore, _pool.Count);
+        Assert.False(conn.IsConnectionDoomed,
+            "Transacted connection should not be doomed by the pruning process.");
+
+        // The transacted connection must still be reusable for the same transaction.
+        var owner2 = new SqlConnection();
+        var conn2 = GetConnection(owner2);
+        Assert.Same(conn, conn2);
+        ReturnConnection(conn2, owner2);
+
+        scope.Complete();
+    }
+
+    #endregion
+
     #region Mock Classes
 
     internal class MockSqlConnectionFactory : SqlConnectionFactory
