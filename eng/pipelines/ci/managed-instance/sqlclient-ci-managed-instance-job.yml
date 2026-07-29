@@ -198,6 +198,8 @@ jobs:
           loggingPackageVersion: $(loggingPackageVersion)
           mdsPackageVersion: $(sqlClientPackageVersion)
           sqlServerPackageVersion: $(sqlServerPackageVersion)
+          # The Managed Instance pipeline does not run the quarantined flaky tests.
+          runFlakyTests: false
 
       - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
         parameters:
