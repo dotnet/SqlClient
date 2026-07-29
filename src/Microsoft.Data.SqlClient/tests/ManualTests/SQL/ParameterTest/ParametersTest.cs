@@ -532,8 +532,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
-        [Fact]
-        public static void TestOutOfRangeDecimalParameter_CommandInsert()
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void TestOutOfRangeDecimalParameter_CommandSelect()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
