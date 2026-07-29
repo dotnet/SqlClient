@@ -495,12 +495,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolSlots = new ConnectionPoolSlots(5);
             var oldConnection = poolSlots.Add(
                 createCallback: () => new MockDbConnectionInternal(),
-                cleanupCallback: (conn) => { });
+                cleanupCallback: (conn) => { })!;
             var newConnection = new MockDbConnectionInternal();
             var reservationCountBeforeReplace = poolSlots.ReservationCount;
 
             // Act
-            var replaced = poolSlots.TryReplace(oldConnection!, newConnection);
+            var replaced = poolSlots.TryReplace(oldConnection, newConnection);
 
             // Assert - the slot is reused, so the reservation count is unchanged
             Assert.True(replaced);
@@ -519,15 +519,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolSlots = new ConnectionPoolSlots(5);
             var oldConnection = poolSlots.Add(
                 createCallback: () => new MockDbConnectionInternal(),
-                cleanupCallback: (conn) => { });
+                cleanupCallback: (conn) => { })!;
             var newConnection = new MockDbConnectionInternal();
 
             // Act
-            poolSlots.TryReplace(oldConnection!, newConnection);
+            poolSlots.TryReplace(oldConnection, newConnection);
 
             // Assert - the new connection now occupies the slot and can be removed,
             // while the old connection is no longer present.
-            Assert.False(poolSlots.TryRemove(oldConnection!));
+            Assert.False(poolSlots.TryRemove(oldConnection));
             Assert.True(poolSlots.TryRemove(newConnection));
             Assert.Equal(0, poolSlots.ReservationCount);
         }
@@ -544,7 +544,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var poolSlots = new ConnectionPoolSlots(5);
             var existingConnection = poolSlots.Add(
                 createCallback: () => new MockDbConnectionInternal(),
-                cleanupCallback: (conn) => { });
+                cleanupCallback: (conn) => { })!;
             var missingConnection = new MockDbConnectionInternal();
             var newConnection = new MockDbConnectionInternal();
             var reservationCountBeforeReplace = poolSlots.ReservationCount;
@@ -557,6 +557,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(1, reservationCountBeforeReplace);
             Assert.Equal(1, poolSlots.ReservationCount);
             Assert.False(poolSlots.TryRemove(newConnection));
+            // The occupant of the slot was left untouched, so it is still removable.
+            Assert.True(poolSlots.TryRemove(existingConnection));
+        }
+
+        /// <summary>
+        /// Verifies that replacing a connection with itself is a benign no-op: it reports success,
+        /// leaves the connection in its slot, and does not change the reservation count.
+        /// </summary>
+        [Fact]
+        public void TryReplace_SameConnection_ReturnsTrueAndLeavesConnectionInSlot()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(5);
+            var connection = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { })!;
+
+            // Act - replace the connection with itself
+            var replaced = poolSlots.TryReplace(connection, connection);
+
+            // Assert - the slot still holds the same connection and the count is unchanged
+            Assert.True(replaced);
+            Assert.Equal(1, poolSlots.ReservationCount);
+            Assert.True(poolSlots.TryRemove(connection));
+            Assert.Equal(0, poolSlots.ReservationCount);
         }
 
         /// <summary>

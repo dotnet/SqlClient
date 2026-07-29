@@ -1616,7 +1616,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, forceNewConnection: false, overrides) : TryOpen(null, forceNewConnection: false, overrides)))
+                    if (!(IsProviderRetriable ?
+                            TryOpenWithRetry(retry: null, forceNewConnection: false, overrides: overrides) :
+                            TryOpen(retry: null, forceNewConnection: false, overrides: overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1922,7 +1924,6 @@ namespace Microsoft.Data.SqlClient
 
         private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
             => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, forceNewConnection, cancellationToken), cancellationToken);
-
 
         private Task InternalOpenAsync(SqlConnectionOverrides overrides, bool forceNewConnection, CancellationToken cancellationToken)
         {

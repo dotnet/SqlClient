@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class ChannelDbConnectionPoolReplaceConnectionTest
     {
-        private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
 
         /// <summary>
         /// Builds a <see cref="ChannelDbConnectionPool"/> for the replacement tests. A frozen
@@ -66,7 +65,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_ReturnsNewConnection()
         {
             // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var pool = ConstructPool(new TunableSqlConnectionFactory());
             SqlConnection owner = new();
 
             pool.TryGetConnection(
@@ -96,7 +95,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_OldConnectionIsDisposed()
         {
             // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var pool = ConstructPool(new TunableSqlConnectionFactory());
             SqlConnection owner = new();
 
             pool.TryGetConnection(
@@ -129,7 +128,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_NewPhysicalConnection_PoolCountUnchanged()
         {
             // Arrange — single connection, no idle connections available
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var pool = ConstructPool(new TunableSqlConnectionFactory());
             SqlConnection owner = new();
 
             pool.TryGetConnection(
@@ -169,7 +168,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true,
                 idleTimeout: 0
             );
-            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions);
+            var pool = ConstructPool(new TunableSqlConnectionFactory(), poolGroupOptions);
 
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
@@ -189,6 +188,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert — pool count must not exceed max
             Assert.NotNull(newConnection);
+            Assert.NotSame(conn1, newConnection);
             Assert.Equal(3, pool.Count);
         }
 
@@ -204,8 +204,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_CreationFails_ExceptionPropagated()
         {
             // Arrange — use a factory that succeeds initially then fails
-            var switchableFactory = new SwitchableSqlConnectionFactory();
-            var pool = ConstructPool(switchableFactory);
+            var factory = new TunableSqlConnectionFactory();
+            var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
             pool.TryGetConnection(
@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(oldConnection);
 
             // Switch to failing mode
-            switchableFactory.ShouldFail = true;
+            factory.FailOnCreate = true;
 
             // Act & Assert — exception from factory is propagated
             Assert.Throws<InvalidOperationException>(() =>
@@ -247,9 +247,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true,
                 idleTimeout: 0
             );
-            var switchableFactory = new SwitchableSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var fakeTime = new FakeTimeProvider();
-            var pool = ConstructPool(switchableFactory, poolGroupOptions, timeProvider: fakeTime);
+            var pool = ConstructPool(factory, poolGroupOptions, timeProvider: fakeTime);
 
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.Count);
 
             // Switch to failing mode so the replacement creation throws.
-            switchableFactory.ShouldFail = true;
+            factory.FailOnCreate = true;
 
             // Act — replacement fails
             Assert.Throws<InvalidOperationException>(() =>
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // The reconnect retry loop reuses the SAME old connection. Advancing past the blocking
             // period fires the exit timer (FakeTimeProvider invokes it synchronously), after which a
             // subsequent successful replacement reuses the retained slot and keeps the count unchanged.
-            switchableFactory.ShouldFail = false;
+            factory.FailOnCreate = false;
             fakeTime.Advance(TimeSpan.FromSeconds(5));
             Assert.False(pool.ErrorOccurred);
             var newConnection = pool.ReplaceConnection(
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_ActivationFails_ExceptionPropagated()
         {
             // Arrange
-            var factory = new ActivationFailSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
@@ -342,7 +342,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_ActivationFails_NewConnectionDisposed_PoolCountStable()
         {
             // Arrange
-            var factory = new ActivationFailSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_PrefersIdleOverNewConnection()
         {
             // Arrange — open two connections, then return one so it becomes an idle connection.
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var pool = ConstructPool(new TunableSqlConnectionFactory());
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
 
@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true,
                 idleTimeout: 0
             );
-            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions);
+            var pool = ConstructPool(new TunableSqlConnectionFactory(), poolGroupOptions);
 
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_IdleReuse_ActivationFails_ReturnedToPool()
         {
             // Arrange — open two connections, then return one so it becomes an idle connection.
-            var factory = new ActivationFailSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner1 = new();
             SqlConnection owner2 = new();
@@ -513,7 +513,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_NoIdleConnection_CreatesNew()
         {
             // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var pool = ConstructPool(new TunableSqlConnectionFactory());
             SqlConnection owner = new();
 
             pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? conn1);
@@ -547,25 +547,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_NewPhysicalConnection_RespectsBlockingPeriod()
         {
             // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
-            var factory = new SwitchableSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
             // Check out a connection to later replace (creation succeeds).
-            factory.ShouldFail = false;
+            factory.FailOnCreate = false;
             pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection);
             Assert.NotNull(oldConnection);
 
             // Drive the pool into the blocking-period error state with a failed physical create.
-            factory.ShouldFail = true;
-            Assert.Throws<InvalidOperationException>(() =>
+            factory.FailOnCreate = true;
+            var originalException = Assert.Throws<InvalidOperationException>(() =>
                 pool.TryGetConnection(new SqlConnection(), null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
             Assert.True(pool.ErrorOccurred);
 
             // Act & Assert — a replacement that must open a new physical connection (no idle available)
             // fast-fails during the blocking period rather than hammering the unhealthy server.
-            Assert.Throws<InvalidOperationException>(() =>
+            // Flipping the factory back to succeeding proves the create path was never reached: the
+            // throw can only be the cached exception, which ThrowIfActive rethrows as-is for
+            // non-SqlException types, so it is the very same instance captured above.
+            factory.FailOnCreate = false;
+            var replaceException = Assert.Throws<InvalidOperationException>(() =>
                 pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+            Assert.Same(originalException, replaceException);
 
             // The pool is still blocking and the old connection is untouched, so the caller can retry with it.
             Assert.True(pool.ErrorOccurred);
@@ -585,19 +590,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_NewPhysicalConnectionFails_EntersBlockingPeriod()
         {
             // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
-            var factory = new SwitchableSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
             // Check out a connection to later replace (creation succeeds), leaving no idle connection
             // so the replacement is forced down the new-physical-connection branch.
-            factory.ShouldFail = false;
+            factory.FailOnCreate = false;
             pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection);
             Assert.NotNull(oldConnection);
             Assert.False(pool.ErrorOccurred);
 
             // Act — the replacement's physical open fails.
-            factory.ShouldFail = true;
+            factory.FailOnCreate = true;
             Assert.Throws<InvalidOperationException>(() =>
                 pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
 
@@ -619,7 +624,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_ActivationFails_DoesNotEnterBlockingPeriod()
         {
             // Arrange
-            var factory = new ActivationFailSqlConnectionFactory();
+            var factory = new TunableSqlConnectionFactory();
             var pool = ConstructPool(factory);
             SqlConnection owner = new();
 
@@ -641,42 +646,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #region Test Helper Classes
 
-        internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
+        /// <summary>
+        /// A single tunable connection factory used by all tests in this class. Set
+        /// <see cref="FailOnCreate"/> to simulate a failed physical open, and
+        /// <see cref="FailOnActivate"/> to simulate a connection that opens but fails activation.
+        /// Connections read <see cref="FailOnActivate"/> live at activation time, so it can be
+        /// toggled after a connection has been created (as idle-reuse tests require).
+        /// </summary>
+        internal class TunableSqlConnectionFactory : SqlConnectionFactory
         {
-            protected override DbConnectionInternal CreateConnection(
-                SqlConnectionOptions options,
-                ConnectionPoolKey poolKey,
-                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-                IDbConnectionPool pool,
-                DbConnection owningConnection,
-                TimeoutTimer timeout)
-            {
-                return new StubDbConnectionInternal();
-            }
-        }
+            /// <summary>When true, <see cref="CreateConnection"/> throws instead of returning a connection.</summary>
+            internal bool FailOnCreate { get; set; }
 
-        internal class SwitchableSqlConnectionFactory : SqlConnectionFactory
-        {
-            internal bool ShouldFail { get; set; }
-
-            protected override DbConnectionInternal CreateConnection(
-                SqlConnectionOptions options,
-                ConnectionPoolKey poolKey,
-                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-                IDbConnectionPool pool,
-                DbConnection owningConnection,
-                TimeoutTimer timeout)
-            {
-                if (ShouldFail)
-                {
-                    throw new InvalidOperationException("Simulated connection failure");
-                }
-                return new StubDbConnectionInternal();
-            }
-        }
-
-        internal class ActivationFailSqlConnectionFactory : SqlConnectionFactory
-        {
+            /// <summary>When true, activating any connection from this factory throws.</summary>
             internal bool FailOnActivate { get; set; }
 
             protected override DbConnectionInternal CreateConnection(
@@ -687,45 +669,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnection owningConnection,
                 TimeoutTimer timeout)
             {
-                return new ActivationFailDbConnectionInternal(this);
+                if (FailOnCreate)
+                {
+                    throw new InvalidOperationException("Simulated connection failure");
+                }
+
+                return new StubDbConnectionInternal(this);
             }
         }
 
+        /// <summary>
+        /// A minimal <see cref="DbConnectionInternal"/> stub whose activation behaviour is driven by
+        /// the <see cref="TunableSqlConnectionFactory"/> that created it. The flag is read live so a
+        /// test can make activation fail on a connection that was created earlier.
+        /// </summary>
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
-            public override string ServerVersion => throw new NotImplementedException();
+            private readonly TunableSqlConnectionFactory? _factory;
 
-            public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
-            {
-                throw new NotImplementedException();
-            }
-
-            public override void EnlistTransaction(Transaction transaction)
-            {
-                return;
-            }
-
-            protected override void Activate(Transaction transaction)
-            {
-                return;
-            }
-
-            protected override void Deactivate()
-            {
-                return;
-            }
-
-            internal override void ResetConnection()
-            {
-                return;
-            }
-        }
-
-        internal class ActivationFailDbConnectionInternal : DbConnectionInternal
-        {
-            private readonly ActivationFailSqlConnectionFactory _factory;
-
-            internal ActivationFailDbConnectionInternal(ActivationFailSqlConnectionFactory factory)
+            internal StubDbConnectionInternal(TunableSqlConnectionFactory? factory = null)
             {
                 _factory = factory;
             }
@@ -744,7 +706,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             protected override void Activate(Transaction transaction)
             {
-                if (_factory.FailOnActivate)
+                if (_factory?.FailOnActivate == true)
                 {
                     throw new InvalidOperationException("Simulated activation failure");
                 }
