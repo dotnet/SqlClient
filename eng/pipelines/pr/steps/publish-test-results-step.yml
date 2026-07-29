@@ -45,10 +45,9 @@ steps:
     displayName: 'Publish Test Results'
     inputs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
+      failTaskOnMissingResultsFile: true
       mergeTestResults: true
-      testResultsFiles: |
-        ${{ parameters.testResultsPath }}/*.trx
-        ${{ parameters.testResultsPath }}/**/*.coverage
+      testResultsFiles: ${{ parameters.testResultsPath }}/*.trx
       testResultsFormat: VSTest
       testRunTitle: "${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
     condition: succeededOrFailed()

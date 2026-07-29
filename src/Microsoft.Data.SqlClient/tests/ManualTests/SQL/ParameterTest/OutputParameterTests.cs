@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="collation">Name of a SQL Server collation which encodes text in the given code page.</param>
         /// <param name="codePage">ID of the codepage which should be used by SQL Server and the driver to encode and decode text.</param>
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(OutputParameterCodePages))]
         public void CollatedStringInOutputParameter_DecodesSuccessfully(string collation, int codePage)
         {

@@ -633,6 +633,25 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
     #region Controlled Concurrency Tests
 
+    // Flaky under CI load only (never reproduces locally): the two worker tasks are
+    // scheduled via Task.Run on the thread pool. On a loaded x86 agent the pool can be
+    // slow to spin up a worker, so task1 starts late and fails to signal task1Returned
+    // within task2's 10s wait, producing a WaitAll timeout. task1 itself throws no
+    // assertion (none appears in the AggregateException) — this is thread-pool
+    // starvation, not a pool/transaction defect.
+    //
+    //     [xUnit.net 00:00:14.24]     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry [FAIL]
+    //     Failed Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry [10 s]
+    //     System.AggregateException : One or more errors occurred. (Timed out waiting for task1 to return its connection.)
+    //       ---- Timed out waiting for task1 to return its connection.
+    //     Stack Trace:
+    //          at System.Threading.Tasks.Task.WaitAllCore(Task[] tasks, Int32 millisecondsTimeout, CancellationToken cancellationToken)
+    //        at System.Threading.Tasks.Task.WaitAll(Task[] tasks)
+    //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry() in WaitHandleDbConnectionPoolTransactionTest.cs:line 681
+    //       ----- Inner Stack Trace -----
+    //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.<>c__DisplayClass29_0.<TwoThreads_SharedTransaction_AccessSameTransactedEntry>b__1() in WaitHandleDbConnectionPoolTransactionTest.cs:line 670
+    //        at System.Threading.Tasks.Task.InnerInvoke()
+    [Trait("Category", "flaky")]
     [Fact]
     public void TwoThreads_SharedTransaction_AccessSameTransactedEntry()
     {
@@ -918,6 +937,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         public int MockId { get; } = Interlocked.Increment(ref s_nextId);
 
         public override string ServerVersion => "Mock";
+
+        public override ConnectionCapabilities Capabilities => new();
 
         public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {

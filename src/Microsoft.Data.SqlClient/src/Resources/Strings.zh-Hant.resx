@@ -607,7 +607,7 @@
     <value>找不到 '{0}' 的驗證提供者。請安裝 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 套件 (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)，以使用 Active Directory (Entra ID) 認證方法。</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。請將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v1.1.0，其中包含此類型。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>
@@ -964,7 +964,7 @@
     <value>集區中的連接在被終結前的存在時間下限 (單位為秒)。</value>
   </data>
   <data name="DbConnectionString_IdleTimeout" xml:space="preserve">
-    <value>The maximum amount of time (in seconds) a connection can sit unused (idle) in the pool before it is discarded when legacy idle-timeout behavior is disabled. A value of 0 disables idle expiration.</value>
+    <value>停用舊版閒置逾時行為時，連線在集區中可處於未使用 (閒置) 狀態的最長時間 (以秒為單位)，超過後就會遭到捨棄。值為 0 時會停用閒置到期。</value>
   </data>
   <data name="DbConnectionString_MaxPoolSize" xml:space="preserve">
     <value>集區中允許的連接上限。</value>

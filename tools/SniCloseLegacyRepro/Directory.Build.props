@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+  <!--
+    Standalone diagnostic tool. Like the sibling apps, it purposely does NOT
+    import any parent Directory.Build.props, insulating it from the repo's
+    src/test build conventions. Package versions are centrally managed via the
+    sibling Directory.Packages.props.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>

@@ -1356,16 +1356,9 @@ DROP TABLE #Column_Aliases
                 {
                     _hasMoreRowToCopy = ReadFromRowSource(); // Synchronous calls for DataRows and DataTable won't block. For IDataReader, it may block.
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (_isAsyncBulkCopy && ADP.IsCatchableExceptionType(ex))
                 {
-                    if (_isAsyncBulkCopy)
-                    {
-                        return Task.FromException<bool>(ex);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return Task.FromException<bool>(ex);
                 }
                 finally
                 {
@@ -2530,7 +2523,7 @@ DROP TABLE #Column_Aliases
                     source.SetResult(null);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2739,7 +2732,7 @@ DROP TABLE #Column_Aliases
                     source.TrySetResult(null); // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2816,7 +2809,7 @@ DROP TABLE #Column_Aliases
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2888,7 +2881,7 @@ DROP TABLE #Column_Aliases
                     return CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2950,7 +2943,7 @@ DROP TABLE #Column_Aliases
                     return source.Task;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -3122,7 +3115,7 @@ DROP TABLE #Column_Aliases
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 _localColumnMappings = null;
 
@@ -3299,7 +3292,7 @@ DROP TABLE #Column_Aliases
                     WriteToServerInternalRestContinuedAsync(internalResults, cts, source); // internalResults is valid here.
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -3376,7 +3369,7 @@ DROP TABLE #Column_Aliases
                     return resultTask;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {

@@ -9,7 +9,7 @@ Rules and conventions for editing the OneBranch Azure DevOps YAML pipelines that
 
 ## Pipeline Variants
 
-- `sqlclient-official.yml` — Official pipeline; uses `OneBranch.Official.CrossPlat.yml`; CI trigger on `internal/main` + daily schedule at 04:30 UTC
+- `sqlclient-official.yml` — Official pipeline; uses `OneBranch.Official.CrossPlat.yml`; runs on a daily schedule at 04:30 UTC on `internal/main`, with no activity-based trigger (`pr: none`, `trigger: none`)
 - `sqlclient-non-official.yml` — Non-Official pipeline; uses `OneBranch.NonOfficial.CrossPlat.yml`; manual only (`pr: none`, `trigger: none`)
 - Both live under `eng/pipelines/onebranch/` and extend OneBranch governed templates
 - Never parameterize the OneBranch template name — hardcode it per pipeline for PRC compliance

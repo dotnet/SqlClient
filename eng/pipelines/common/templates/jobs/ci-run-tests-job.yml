@@ -146,11 +146,6 @@ parameters:
   - name: timeout
     type: number
 
-  # True if this is an ARM64 job.
-  - name: isArm64
-    type: boolean
-    default: false
-
   # True to use managed SNI, where applicable.
   - name: usemanagedSNI
     type: boolean
@@ -212,13 +207,7 @@ jobs:
   - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
       debug: ${{ parameters.debug }}
-      ${{ if parameters.isArm64 }}:
-        architecture: arm64
-        # ARM64 needs to specify slightly different runtime version formats.
-        # See the install-dotnet template docs for more info.
-        runtimes: ['8.0', '9.0']
-      ${{ else }}:
-        runtimes: [8.x, 9.x]
+      runtimes: [8.x, 9.x]
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
@@ -348,7 +337,7 @@ jobs:
       # Install the .NET SDK and Runtimes for x86.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
-          architecture: x86
+          forceX86: true
           debug: ${{ parameters.debug }}
           installDir: $(dotnetx86RootPath)
           runtimes: [8.x, 9.x]

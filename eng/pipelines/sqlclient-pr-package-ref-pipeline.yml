@@ -52,9 +52,7 @@ pr:
       - NuGet.config
     exclude:
       - eng/pipelines/ci/*
-      - eng/pipelines/kerberos/*
       - eng/pipelines/onebranch/*
-      - eng/pipelines/stress/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none

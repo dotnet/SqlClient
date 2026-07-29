@@ -191,12 +191,49 @@ stages:
               configDisplayName: "localhost"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              enableLocalDB: false
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
               isLocalServer: true
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              supportsIntegratedSecurity: false
               testSet: "123"
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - LocalDB
+          # Note: connection strings are explicitly set to empty to only allow the localDB tests to
+          # run. LocalDB tests require the localdb app name to be provided and supportsIntegratedSecurity
+          # to be true. If the connection strings (from the library, which as of 7/26 does not use
+          # integrated auth) are provided with supportsIntegratedSecurity set to true, other tests
+          # will fail.
+          - ${{ if eq(platform.operatingSystem, 'Windows') }}:
+            - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+              parameters:
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                buildSuffix: ${{ parameters.buildSuffix }}
+                dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+                stageNameSecrets: ${{ parameters.stageNameSecrets }}
+                testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+                platformDisplayName: ${{ platform.displayName }}
+                platformDotnet: ${{ platform.dotnet }}
+                platformImage: ${{ platform.image }}
+                platformOperatingSystem: ${{ platform.operatingSystem }}
+                poolName: ${{ parameters.poolName }}
+
+                azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+                azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+                configDisplayName: "localdb"
+                connectionStringNp: ""
+                connectionStringTcp: ""
+                enableLocalDB: true
+                fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+                isLocalServer: true
+                localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+                localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+                supportsIntegratedSecurity: true
+                testSet: "123"
+                userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - Azure
           - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
@@ -218,10 +255,12 @@ stages:
               configDisplayName: "azure"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpAzure }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpAzure }}
+              enableLocalDB: false
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
               isLocalServer: false
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              supportsIntegratedSecurity: false
               testSet: "123"
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
@@ -245,10 +284,12 @@ stages:
               configDisplayName: "localhost_ae"
               connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
               connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+              enableLocalDB: false
               fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
               isLocalServer: true
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+              supportsIntegratedSecurity: false
               testSet: "AE"
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
