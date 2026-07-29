@@ -8,9 +8,10 @@
 # sqlclient-ci-package).  This keeps the source that gets built and tested in lockstep with the
 # upstream artifacts' API surface.
 #
-# IMPORTANT: This only repoints the working-tree files that later steps read (build.proj, test
-# projects, global.json, etc.).  The pipeline definition and all @self templates are compiled from
-# the triggered branch tip at queue time and are NOT affected by the runtime checkout.
+# IMPORTANT: Pipeline definitions and @self templates are compiled from the triggered branch tip at
+# queue time, but file-based tasks still read scripts from the runtime working tree.  After aligning
+# the source, this template restores eng/pipelines from the queued commit so compiled pipeline steps
+# and their scripts remain in lockstep.
 #
 # The consuming pipeline MUST declare the upstream pipeline as a resource whose alias matches the
 # upstreamPipeline parameter, e.g.:
@@ -40,7 +41,10 @@ steps:
   # (e.g. some manual runs), skip this step and use the checked-out source as-is.
   - pwsh: |
       $sha = "$(resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit)"
+      $pipelineSourceSha = git rev-parse HEAD
       Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
       git checkout --force $sha
+      Write-Host "Restoring eng/pipelines from queued pipeline commit $pipelineSourceSha"
+      git checkout --force $pipelineSourceSha -- eng/pipelines
     displayName: Align Source With Upstream Commit
     condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')
