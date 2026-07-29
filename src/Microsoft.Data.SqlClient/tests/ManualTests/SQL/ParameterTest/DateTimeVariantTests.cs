@@ -52,7 +52,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for DateTime variant parameters with different date/time types.
     /// </summary>
     [Trait("Set", "3")]
-    [Trait("Category", "flaky")]
     public class DateTimeVariantTests
     {
         private static void RunTest(
@@ -329,6 +328,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Variant(
