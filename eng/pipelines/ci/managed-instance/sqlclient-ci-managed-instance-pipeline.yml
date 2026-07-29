@@ -42,7 +42,7 @@ resources:
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
 
-  # The build configuration to use when building the; defaults to Release.
+  # The build configuration to use when building the test projects; defaults to Release.
   #
   # This should match the mode the driver packages we consume were built in - typically Release -
   # but may vary if we are triggered due to a manual build of sqlclient-ci-package.
