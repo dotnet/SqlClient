@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Diagnostics;
@@ -209,7 +210,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
-        public int Count => _connectionSlots.ReservationCount;
+        public int Count => _connectionSlots.ConnectionCount;
 
         /// <inheritdoc />
         public int IdleCount => _idleChannel.Count;
@@ -447,8 +448,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
+            SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
+            DeactivateAndRouteConnection(connection);
+        }
+
+        /// <summary>
+        /// Deactivates a connection that is already marked as owned by the pool (via
+        /// <see cref="DbConnectionInternal.PrePush"/>) and routes it to the idle channel, the
+        /// transacted pool, stasis, or destruction as appropriate. Shared by the normal return path
+        /// and by emancipated connection reclamation, which has already performed the
+        /// <c>PrePush</c> itself and must not re-validate ownership.
+        /// </summary>
+        /// <param name="connection">The connection to deactivate and route.</param>
+        private void DeactivateAndRouteConnection(DbConnectionInternal connection)
+        {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.",
                 Id,
@@ -826,6 +842,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // processes pending opens on a dedicated non-thread-pool thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
+            // Try to satisfy the request synchronously from the idle channel before paying for a
+            // thread pool hop. WaitHandleDbConnectionPool makes the same non-blocking, non-creating
+            // attempt before enqueuing a pending open, so without this an async open against a warm
+            // pool would always complete asynchronously under this pool but synchronously under the
+            // other -- a behavioural difference callers can observe. We deliberately do not try to
+            // *create* a connection here; that can block on the wire and must stay off the caller's
+            // thread.
+            //
+            // Transactional requests are excluded: they must first consult the transacted store for
+            // a connection already enlisted in the same transaction, which only GetInternalConnection
+            // does. Taking a plain idle connection here would both miss that affinity and skip
+            // enlistment.
+            if (!(HasTransactionAffinity && ambientTransaction is not null))
+            {
+                DbConnectionInternal? idleConnection = GetIdleConnection();
+                if (idleConnection is not null)
+                {
+                    PrepareConnection(owningObject, idleConnection);
+                    SqlClientDiagnostics.Metrics.SoftConnectRequest();
+                    connection = idleConnection;
+                    return true;
+                }
+            }
+
             Task.Run(async () =>
             {
                 if (taskCompletionSource.Task.IsCompleted)
@@ -1008,6 +1048,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 if (connection is not null)
                 {
+                    SqlClientDiagnostics.Metrics.EnterPooledConnection();
+
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
@@ -1113,7 +1155,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            _connectionSlots.TryRemove(connection);
+            if (_connectionSlots.TryRemove(connection))
+            {
+                SqlClientDiagnostics.Metrics.ExitPooledConnection();
+            }
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
@@ -1121,6 +1166,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
+            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
             Pruner?.UpdateTimer();
@@ -1225,6 +1271,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         cancellationToken,
                         timeout);
 
+                    // Before parking on the idle channel (potentially for the full timeout), sweep
+                    // for connections whose owning SqlConnection was garbage collected without ever
+                    // being closed or disposed. Those "emancipated" connections still occupy pool
+                    // slots, so at MaxPoolSize every subsequent request would otherwise time out
+                    // forever. WaitHandleDbConnectionPool performs the same sweep before waiting.
+                    // This is deliberately confined to the slow path: it is O(MaxPoolSize) and
+                    // allocates a snapshot, so it must not run on the hot acquire path.
+                    if (connection is null && ReclaimEmancipatedConnections())
+                    {
+                        connection = GetIdleConnection();
+                    }
+
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
@@ -1255,7 +1313,71 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             PrepareConnection(owningConnection, connection, transaction);
+            SqlClientDiagnostics.Metrics.SoftConnectRequest();
             return connection;
+        }
+
+        /// <summary>
+        /// Reclaims connections whose owning <see cref="DbConnection"/> has been garbage collected
+        /// without being closed or disposed. Such connections are still tracked by the pool but can
+        /// never be returned by their owner, so without this sweep they would leak pool slots.
+        /// </summary>
+        /// <returns>True if at least one connection was reclaimed; otherwise, false.</returns>
+        private bool ReclaimEmancipatedConnections()
+        {
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}", Id);
+
+            List<DbConnectionInternal>? reclaimed = null;
+
+            foreach (DbConnectionInternal connection in _connectionSlots.Snapshot())
+            {
+                // TryEnter rather than Enter: IsEmancipated must be read under the connection lock to
+                // avoid racing PrePush/PostPop, but a connection that is currently locked is being
+                // actively handed out or returned and therefore is not emancipated anyway. Skipping
+                // it keeps this sweep from blocking the caller.
+                bool locked = false;
+                try
+                {
+                    Monitor.TryEnter(connection, ref locked);
+
+                    if (locked && connection.IsEmancipated)
+                    {
+                        // Do as little as possible under the lock: just claim the connection for the
+                        // pool and defer deactivation (which can make server round trips) until the
+                        // lock is released.
+                        connection.PrePush(null);
+                        (reclaimed ??= new List<DbConnectionInternal>()).Add(connection);
+                    }
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        Monitor.Exit(connection);
+                    }
+                }
+            }
+
+            if (reclaimed is null)
+            {
+                return false;
+            }
+
+            foreach (DbConnectionInternal connection in reclaimed)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.",
+                    Id,
+                    connection.ObjectID);
+
+                SqlClientDiagnostics.Metrics.ReclaimedConnectionRequest();
+
+                connection.DetachCurrentTransactionIfEnded();
+                DeactivateAndRouteConnection(connection);
+            }
+
+            return true;
         }
 
         /// <summary>

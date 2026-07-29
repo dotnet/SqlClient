@@ -66,8 +66,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             stopwatch.Start();
 
             Task actionTask = Task.Factory.StartNew(
-                async () => await RunPacketNumberWraparound(enumerator, cancellationTokenSource.Token),
-                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning);
+                () => RunPacketNumberWraparound(enumerator, cancellationTokenSource.Token),
+                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning)
+                .Unwrap();
             Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(60), cancellationTokenSource.Token);
             await Task.WhenAny(actionTask, timeoutTask);
 
