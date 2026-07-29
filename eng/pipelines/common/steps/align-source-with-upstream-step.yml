@@ -37,13 +37,10 @@ steps:
 
   # Align the working-tree source with the commit that built the upstream artifacts, so the projects
   # compile against the matching (internal) API surface.  When the upstream commit is unavailable
-  # (e.g. some manual runs), the checked-out source is used as-is.
+  # (e.g. some manual runs), skip this step and use the checked-out source as-is.
   - pwsh: |
       $sha = "$(resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit)"
-      if ([string]::IsNullOrWhiteSpace($sha)) {
-          Write-Host "No ${{ parameters.upstreamPipeline }} sourceCommit available; using checked-out source as-is."
-      } else {
-          Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
-          git checkout --force $sha
-      }
+      Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
+      git checkout --force $sha
     displayName: Align Source With Upstream Commit
+    condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')

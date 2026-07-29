@@ -66,60 +66,9 @@ steps:
     displayName: Stage Packages and Resolve Versions
     inputs:
       pwsh: true
-      targetType: inline
-      script: |
-        $ErrorActionPreference = 'Stop'
-        $feed = "${{ parameters.feedPath }}"
-        $artifactDir = "$(Pipeline.Workspace)/${{ parameters.pipelineResource }}/${{ parameters.artifactName }}"
-        New-Item -ItemType Directory -Force -Path $feed | Out-Null
-
-        Copy-Item "$artifactDir/*.nupkg" $feed -Force
-        Copy-Item "$artifactDir/*.snupkg" $feed -Force -ErrorAction SilentlyContinue
-
-        # Resolve the version of a single package from its .nupkg filename in the feed.
-        function Resolve-PackageVersion($feed, $pattern, $name) {
-            $pkg = Get-ChildItem "$feed/*.nupkg" | Where-Object { $_.Name -match $pattern } | Select-Object -First 1
-            if (-not $pkg) { throw "$name package not found in $feed" }
-            return [regex]::Match($pkg.Name, $pattern).Groups[1].Value
-        }
-
-        # Each package's .nupkg filename pattern is anchored so, e.g., the Microsoft.Data.SqlClient
-        # pattern does not also match Microsoft.Data.SqlClient.Extensions.Azure.
-        $packages = @(
-            @{
-                Variable = 'sqlClientPackageVersion';
-                Name = 'Microsoft.Data.SqlClient';
-                Pattern = '^Microsoft\.Data\.SqlClient\.(\d[^\\/]*)\.nupkg$'
-            },
-            @{
-                Variable = 'sqlServerPackageVersion';
-                Name = 'Microsoft.SqlServer.Server';
-                Pattern = '^Microsoft\.SqlServer\.Server\.(\d[^\\/]*)\.nupkg$'
-            },
-            @{
-                Variable = 'abstractionsPackageVersion';
-                Name = 'Microsoft.Data.SqlClient.Extensions.Abstractions';
-                Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Abstractions\.(\d[^\\/]*)\.nupkg$'
-            },
-            @{
-                Variable = 'loggingPackageVersion';
-                Name = 'Microsoft.Data.SqlClient.Internal.Logging';
-                Pattern = '^Microsoft\.Data\.SqlClient\.Internal\.Logging\.(\d[^\\/]*)\.nupkg$'
-            },
-            @{
-                Variable = 'azurePackageVersion';
-                Name = 'Microsoft.Data.SqlClient.Extensions.Azure';
-                Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Azure\.(\d[^\\/]*)\.nupkg$'
-            }
-        )
-
-        foreach ($p in $packages) {
-            if ($p.Variable -eq 'sqlServerPackageVersion' -and -not [string]::IsNullOrWhiteSpace('${{ parameters.sqlServerVersionOverride }}')) {
-                $version = '${{ parameters.sqlServerVersionOverride }}'
-                Write-Host "Overriding $($p.Name) version: $version"
-            } else {
-                $version = Resolve-PackageVersion $feed $p.Pattern $p.Name
-                Write-Host "Resolved $($p.Name) version: $version"
-            }
-            Write-Host "##vso[task.setvariable variable=$($p.Variable)]$version"
-        }
+      targetType: filePath
+      filePath: $(Build.SourcesDirectory)/eng/pipelines/common/steps/download-driver-packages.ps1
+      arguments: >-
+        -FeedPath "${{ parameters.feedPath }}"
+        -ArtifactDirectory "$(Pipeline.Workspace)/${{ parameters.pipelineResource }}/${{ parameters.artifactName }}"
+        -SqlServerVersionOverride "${{ parameters.sqlServerVersionOverride }}"
