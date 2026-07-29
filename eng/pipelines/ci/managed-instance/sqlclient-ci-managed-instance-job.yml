@@ -56,13 +56,9 @@ parameters:
       - Linux
       - Windows
 
-  # The list of .NET Framework runtimes to test against.
-  - name: netFrameworkTestRuntimes
-    type: object
-
-  # The list of .NET runtimes to test against.
-  - name: netTestRuntimes
-    type: object
+  # The .NET runtime (TFM) to build and run the tests for.
+  - name: targetFramework
+    type: string
 
   # The timeout, in minutes, for this job.
   - name: timeout
@@ -116,7 +112,12 @@ jobs:
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
       # pipeline, stage them into the local NuGet feed, and resolve their exact versions into the
       # sqlClient/sqlServer/abstractions/logging/azure PackageVersion variables.
+      #
+      # sqlServerVersionOverride pins Microsoft.SqlServer.Server to the released stable 1.0.0 to
+      # avoid an NU1605 downgrade against the >= 1.0.0 dependency from Microsoft.SqlServer.Types.
       - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
+        parameters:
+          sqlServerVersionOverride: 1.0.0
 
       # Install the .NET SDK and the runtimes needed to execute the test frameworks.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
@@ -182,48 +183,25 @@ jobs:
       - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
         displayName: 'Gate: Mark Setup Succeeded'
 
-      # Build and run the Unit, Functional, and Manual test suites for each .NET runtime.  A blank
-      # testSet lets build.proj run all manual tests (its default), matching the Classic pipeline.
-      - ${{ each runtime in parameters.netTestRuntimes }}:
-        - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            targetFramework: ${{ runtime }}
-            buildConfiguration: ${{ parameters.buildConfiguration }}
-            referenceType: Package
-            testSet: ''
-            operatingSystem: ${{ parameters.operatingSystem }}
-            abstractionsPackageVersion: $(abstractionsPackageVersion)
-            loggingPackageVersion: $(loggingPackageVersion)
-            mdsPackageVersion: $(sqlClientPackageVersion)
-            sqlServerPackageVersion: $(sqlServerPackageVersion)
+      # Build and run the Unit, Functional, and Manual test suites for this job's .NET runtime.  A
+      # blank testSet lets build.proj run all manual tests (its default), matching the Classic
+      # pipeline.
+      - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          targetFramework: ${{ parameters.targetFramework }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+          referenceType: Package
+          testSet: ''
+          operatingSystem: ${{ parameters.operatingSystem }}
+          abstractionsPackageVersion: $(abstractionsPackageVersion)
+          loggingPackageVersion: $(loggingPackageVersion)
+          mdsPackageVersion: $(sqlClientPackageVersion)
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
 
-        - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            targetFramework: ${{ runtime }}
-            operatingSystem: ${{ parameters.operatingSystem }}
-            buildConfiguration: ${{ parameters.buildConfiguration }}
-
-      # Build and run the test suites for each .NET Framework runtime (Windows only).  A blank
-      # testSet lets build.proj run all manual tests (its default), matching the Classic pipeline.
-      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
-        - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            targetFramework: ${{ runtime }}
-            buildConfiguration: ${{ parameters.buildConfiguration }}
-            referenceType: Package
-            testSet: ''
-            operatingSystem: ${{ parameters.operatingSystem }}
-            abstractionsPackageVersion: $(abstractionsPackageVersion)
-            loggingPackageVersion: $(loggingPackageVersion)
-            mdsPackageVersion: $(sqlClientPackageVersion)
-            sqlServerPackageVersion: $(sqlServerPackageVersion)
-
-        - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
-          parameters:
-            debug: ${{ parameters.debug }}
-            targetFramework: ${{ runtime }}
-            operatingSystem: ${{ parameters.operatingSystem }}
-            buildConfiguration: ${{ parameters.buildConfiguration }}
+      - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          targetFramework: ${{ parameters.targetFramework }}
+          operatingSystem: ${{ parameters.operatingSystem }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}

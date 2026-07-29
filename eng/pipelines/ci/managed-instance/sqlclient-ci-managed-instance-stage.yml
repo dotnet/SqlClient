@@ -60,38 +60,54 @@ stages:
     jobs:
 
     # ----------------------------------------------------------------------------------------------
-    # Build and test on Windows, once per requested SNI variant.
+    # Windows: one job per SNI variant and per runtime (both .NET Framework and .NET runtimes).
 
     - ${{ each useManagedSNI in parameters.useManagedSNI }}:
+      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+        - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            operatingSystem: Windows
+            targetFramework: ${{ runtime }}
+            useManagedSNI: ${{ useManagedSNI }}
+            vmImage: ADO-MMS22-SQL22
+            ${{ if eq(useManagedSNI, true) }}:
+              displayNamePrefix: 'Win : Managed SNI : ${{ runtime }}'
+              jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
+            ${{ else }}:
+              displayNamePrefix: 'Win : Native SNI : ${{ runtime }}'
+              jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
+
+      - ${{ each runtime in parameters.netTestRuntimes }}:
+        - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            operatingSystem: Windows
+            targetFramework: ${{ runtime }}
+            useManagedSNI: ${{ useManagedSNI }}
+            vmImage: ADO-MMS22-SQL22
+            ${{ if eq(useManagedSNI, true) }}:
+              displayNamePrefix: 'Win : Managed SNI : ${{ runtime }}'
+              jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
+            ${{ else }}:
+              displayNamePrefix: 'Win : Native SNI : ${{ runtime }}'
+              jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
+
+    # ----------------------------------------------------------------------------------------------
+    # Linux: one job per .NET runtime (managed SNI is always used on non-Windows).
+
+    - ${{ each runtime in parameters.netTestRuntimes }}:
       - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          ${{ if eq(useManagedSNI, true) }}:
-            displayNamePrefix: 'Win : Managed SNI'
-            jobNameSuffix: windows_managed_sni
-          ${{ else }}:
-            displayNamePrefix: 'Win : Native SNI'
-            jobNameSuffix: windows_native_sni
+          displayNamePrefix: 'Linux : ${{ runtime }}'
+          jobNameSuffix: linux_${{ replace(runtime, '.', '_') }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          operatingSystem: Windows
-          netFrameworkTestRuntimes: ${{ parameters.netFrameworkTestRuntimes }}
-          netTestRuntimes: ${{ parameters.netTestRuntimes }}
-          useManagedSNI: ${{ useManagedSNI }}
-          vmImage: ADO-MMS22-SQL22
-
-    # ----------------------------------------------------------------------------------------------
-    # Build and test on Linux (managed SNI is always used on non-Windows).
-
-    - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
-      parameters:
-        buildConfiguration: ${{ parameters.buildConfiguration }}
-        debug: ${{ parameters.debug }}
-        displayNamePrefix: Linux
-        jobNameSuffix: linux
-        dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-        operatingSystem: Linux
-        # No .NET Framework runtimes on Linux.
-        netFrameworkTestRuntimes: []
-        netTestRuntimes: ${{ parameters.netTestRuntimes }}
-        vmImage: ADO-UB22-SQL22
+          operatingSystem: Linux
+          targetFramework: ${{ runtime }}
+          vmImage: ADO-UB22-SQL22
