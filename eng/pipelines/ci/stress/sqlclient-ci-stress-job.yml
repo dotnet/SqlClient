@@ -176,6 +176,11 @@ jobs:
 
     steps:
 
+      # Check out the repo and align the working-tree source with the commit that built the upstream
+      # sqlclient-ci-package artifacts, so the stress projects compile against the matching API
+      # surface.
+      - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
+
       # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
