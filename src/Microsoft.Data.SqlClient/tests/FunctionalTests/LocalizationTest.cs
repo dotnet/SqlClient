@@ -40,7 +40,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("ru-RU")]
         [InlineData("zh-Hans")]
         [InlineData("zh-Hant")]
-        [Trait("Category", "flaky")]
         public void Localization_Tests(string culture)
         {
             string localized = GetLocalizedErrorMessage(culture);
