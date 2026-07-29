@@ -784,10 +784,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
             {
+                // We're on the caller's thread, so the ambient transaction is directly observable.
                 var task = GetInternalConnection(
                         owningObject,
                         async: false,
-                        timeout);
+                        timeout,
+                        ADP.GetCurrentTransaction());
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -816,17 +818,28 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
             // is cancelled. We can only cancel based on our own timeout, which is set to the owningObject's
             // ConnectionTimeout.
+            // The ambient transaction is captured here, on the caller's thread, because
+            // Transaction.Current does not flow into the Task.Run below: a TransactionScope keeps
+            // the ambient transaction in thread-static storage unless it was created with
+            // TransactionScopeAsyncFlowOption.Enabled. We rely on the caller to capture the ambient
+            // transaction in the TaskCompletionSource's AsyncState, and then hand it to
+            // GetInternalConnection explicitly.
+            //
+            // Note that we deliberately do not assign Transaction.Current on the thread pool
+            // thread. That assignment writes to thread-static storage which is *not* unwound when
+            // the ExecutionContext is restored, so it would outlive this open and be observed by
+            // unrelated work later scheduled onto the same thread pool thread -- including the
+            // login-time auto-enlistment that non-pooled connections perform against
+            // Transaction.Current. The WaitHandle pool can get away with assigning it because it
+            // processes pending opens on a dedicated non-thread-pool thread.
+            Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+
             Task.Run(async () =>
             {
                 if (taskCompletionSource.Task.IsCompleted)
                 {
                     return;
                 }
-
-                // We're potentially on a new thread, so we need to properly set the ambient transaction.
-                // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
-                // so that we can access it here. Read: area for improvement.
-                ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
 
                 DbConnectionInternal? connection = null;
 
@@ -835,7 +848,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection = await GetInternalConnection(
                         owningObject,
                         async: true,
-                        timeout
+                        timeout,
+                        ambientTransaction
                     ).ConfigureAwait(false);
 
                     if (!taskCompletionSource.TrySetResult(connection))
@@ -1161,6 +1175,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
         /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting
         /// in the pool is deducted from the budget available for physical connection creation.</param>
+        /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread, or
+        /// null when the caller is not inside a transaction. It is passed explicitly rather than read
+        /// from <see cref="Transaction.Current"/> because this method may run on a thread pool thread
+        /// that the ambient transaction does not flow to.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when an OperationCanceledException is caught, indicating that the timeout period
@@ -1173,17 +1191,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection,
             bool async,
-            TimeoutTimer timeout)
+            TimeoutTimer timeout,
+            Transaction? ambientTransaction)
         {
             DbConnectionInternal? connection = null;
-            Transaction? transaction = null;
 
-            // If automatic transaction enlistment is enabled, we first try to get a connection that
-            // is already enlisted in the ambient transaction. If enlistment is not enabled we cannot
-            // vend connections from the transacted pool.
-            if (HasTransactionAffinity)
+            // When automatic enlistment is disabled, the connection must never be bound to the
+            // ambient transaction, so we neither consult the transacted store nor hand the
+            // transaction to activation. HasTransactionAffinity is derived from the connection
+            // string's Enlist keyword.
+            Transaction? transaction = HasTransactionAffinity ? ambientTransaction : null;
+
+            if (transaction is not null)
             {
-                connection = GetFromTransactedPool(out transaction);
+                connection = GetFromTransactedPool(transaction);
             }
 
             // Derive a CancellationTokenSource from the TimeoutTimer so pool-internal wait operations
@@ -1311,20 +1332,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Attempts to retrieve a connection that is already enlisted in the ambient transaction.
+        /// Attempts to retrieve a connection that is already enlisted in the given transaction.
         /// </summary>
-        /// <param name="transaction">Receives the ambient transaction, or null when there is none.
-        /// The caller must enlist whatever connection it ends up using in this transaction, even
-        /// when no transacted connection was available.</param>
-        /// <returns>A live connection already enlisted in the ambient transaction, or null.</returns>
-        private DbConnectionInternal? GetFromTransactedPool(out Transaction? transaction)
+        /// <param name="transaction">The transaction the connection must already be enlisted in.</param>
+        /// <returns>A live connection already enlisted in the transaction, or null.</returns>
+        private DbConnectionInternal? GetFromTransactedPool(Transaction transaction)
         {
-            transaction = ADP.GetCurrentTransaction();
-            if (transaction is null)
-            {
-                return null;
-            }
-
             DbConnectionInternal? connection = TransactedConnectionPool.GetTransactedObject(transaction);
             if (connection is null)
             {

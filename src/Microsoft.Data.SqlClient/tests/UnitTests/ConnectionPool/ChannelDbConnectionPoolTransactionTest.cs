@@ -1021,6 +1021,96 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
     #endregion
 
+    #region Async Ambient Transaction Flow Tests
+
+    /// <summary>
+    /// A <see cref="TransactionScope"/> created without <see cref="TransactionScopeAsyncFlowOption.Enabled"/>
+    /// keeps the ambient transaction in thread-static storage, so it is not observable from the thread
+    /// pool thread the pool opens on. The pool must therefore take the transaction from the
+    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState, which is where SqlConnection.OpenAsync
+    /// captures it.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_AmbientTransactionNotFlowed_StillEnlistsFromAsyncState()
+    {
+        // Arrange - a transaction that is never ambient on any thread, so AsyncState is the only
+        // way the pool can learn about it.
+        using var transaction = new CommittableTransaction();
+        Assert.Null(Transaction.Current);
+        Assert.Null(await Task.Run(() => Transaction.Current));
+
+        // Act
+        var owner = new SqlConnection();
+        var connection = await GetConnectionAsync(owner, transaction);
+
+        // Assert
+        Assert.NotNull(connection);
+        Assert.Equal(transaction, connection.EnlistedTransaction);
+
+        ReturnConnection(connection, owner);
+
+        // Being enlisted, the connection parks in the transacted pool rather than the idle channel.
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        Assert.Equal(0, _pool.IdleCount);
+
+        transaction.Rollback();
+    }
+
+    /// <summary>
+    /// Assigning <see cref="Transaction.Current"/> writes to thread-static storage that the
+    /// ExecutionContext does not unwind, so doing it on a thread pool thread would leave a stale
+    /// transaction behind for unrelated work later scheduled onto that same thread -- including the
+    /// login-time auto-enlistment that non-pooled connections perform against the ambient
+    /// transaction. The pool must pass the transaction explicitly instead of assigning it.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_DoesNotLeakAmbientTransactionOntoThreadPool()
+    {
+        // Arrange & Act - several async opens under a transaction, each on a thread pool thread.
+        for (int i = 0; i < 8; i++)
+        {
+            using var transaction = new CommittableTransaction();
+            var owner = new SqlConnection();
+            var connection = await GetConnectionAsync(owner, transaction);
+            ReturnConnection(connection, owner);
+            transaction.Rollback();
+        }
+
+        // Assert - no thread pool thread was left with an ambient transaction.
+        for (int i = 0; i < 16; i++)
+        {
+            Assert.Null(await Task.Run(() => Transaction.Current));
+        }
+    }
+
+    /// <summary>
+    /// The synchronous path runs on the caller's thread, where the ambient transaction set by a
+    /// TransactionScope is directly observable and must still be honored.
+    /// </summary>
+    [Fact]
+    public void GetConnection_Sync_UsesAmbientTransactionFromCallersThread()
+    {
+        // Arrange
+        using var scope = new TransactionScope();
+        var transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        // Act - no transaction is handed to the pool explicitly; it must read Transaction.Current.
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+
+        // Assert
+        Assert.NotNull(connection);
+        Assert.Equal(transaction, connection.EnlistedTransaction);
+
+        ReturnConnection(connection, owner);
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction!]);
+
+        scope.Complete();
+    }
+
+    #endregion
+
     #region Mock Classes
 
     internal class MockSqlConnectionFactory : SqlConnectionFactory
