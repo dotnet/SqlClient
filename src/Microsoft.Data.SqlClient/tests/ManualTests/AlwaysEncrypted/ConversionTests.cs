@@ -11,14 +11,12 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
-using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
+    public sealed class ConversionTests : IDisposable, IClassFixture<ConversionTestFixture>
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -29,9 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private ColumnEncryptionKey columnEncryptionKey;
-        private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-        private List<DbObject> _databaseObjects = new List<DbObject>();
+        private readonly ColumnEncryptionKey columnEncryptionKey;
         private List<string> _tables = new();
 
         private class ColumnMetaData
@@ -52,33 +48,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             public bool UseMax { get; set; }
         }
 
-        public ConversionTests(ColumnMasterKeyCertificateFixture fixture)
+        public ConversionTests(ConversionTestFixture fixture)
         {
-            X509Certificate2 certificate = fixture.ColumnMasterKeyCertificate;
-            ColumnMasterKey columnMasterKey1 = new CspColumnMasterKey(
-                DatabaseHelper.GenerateUniqueName("CMK"),
-                certificate.Thumbprint,
-                certStoreProvider,
-                DataTestUtility.EnclaveEnabled);
-            _databaseObjects.Add(columnMasterKey1);
-
-            columnEncryptionKey = new ColumnEncryptionKey(
-                DatabaseHelper.GenerateUniqueName("CEK"),
-                columnMasterKey1,
-                certStoreProvider);
-            _databaseObjects.Add(columnEncryptionKey);
-
-            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
-            {
-                var connectionString = new SqlConnectionStringBuilder(connectionStr);
-                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
-
-                using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
-                {
-                    sqlConnection.Open();
-                    _databaseObjects.ForEach(o => o.Create(sqlConnection));
-                }
-            }
+            // The Column Master Key and Column Encryption Key are created once per test class by
+            // the fixture, rather than once per test case, to avoid rapidly exhausting SQL Server's
+            // per-database identifier allocator (error 3807) on long-lived shared databases.
+            columnEncryptionKey = fixture.ColumnEncryptionKey;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -621,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             if (TypeHasSize(largeColumnMeta.ColumnType))
             {
-                // 20% of the time use (max) as the length.                
+                // 20% of the time use (max) as the length.
                 largeColumnMeta.UseMax = (largeColumnMeta.ColumnType is SqlDbType.VarChar ||
                     largeColumnMeta.ColumnType is SqlDbType.NVarChar ||
                     largeColumnMeta.ColumnType is SqlDbType.VarBinary) &&
@@ -683,7 +658,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     smallColumnMeta.Precision = 0;
 
-                    // For Time / DateTime2 / DateTimeOffset types, actual scale is set to 7 when parameter.scale is zero. 
+                    // For Time / DateTime2 / DateTimeOffset types, actual scale is set to 7 when parameter.scale is zero.
                     // Active Issue in SQLParameter.cs when user wants to specify zero as the actual scale.
                     smallColumnMeta.Scale = random.Next(minScale, largeColumnMeta.Scale);
                 }
@@ -1354,7 +1329,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            _databaseObjects.Reverse();
+            // Only the per-test tables are dropped here; the CMK/CEK are owned by the class fixture.
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
@@ -1364,7 +1339,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     {
                         DropTableIfExists(sqlConnection, table);
                     }
-                    _databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
         }
