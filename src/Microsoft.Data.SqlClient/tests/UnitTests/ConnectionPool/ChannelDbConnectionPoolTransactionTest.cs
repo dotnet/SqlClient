@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,14 +10,16 @@ using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
 
 /// <summary>
-/// Deterministic tests for ChannelDbConnectionPool transaction functionality.
-/// These tests exercise transacted connection pathways with controlled synchronization
-/// to verify correct behavior without relying on probabilistic concurrency.
+/// Tests for <see cref="ChannelDbConnectionPool"/> transaction affinity: routing a returning
+/// connection to the transacted store instead of the idle channel, vending an already-enlisted
+/// connection back to the same transaction, releasing the connection when the transaction ends,
+/// and flowing the ambient transaction on the asynchronous open path.
 /// </summary>
 public class ChannelDbConnectionPoolTransactionTest : IDisposable
 {
@@ -26,7 +27,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     private const int DefaultMinPoolSize = 0;
     private const int DefaultCreationTimeoutInMilliseconds = 15000;
 
-    private IDbConnectionPool _pool = null!;
+    private IDbConnectionPool _pool;
 
     public ChannelDbConnectionPoolTransactionTest()
     {
@@ -35,15 +36,21 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
     public void Dispose()
     {
-        // Verify no leaked transactions before cleanup
+        // A transaction entry that outlives its transaction is a leak: the connections it holds
+        // are never returned to general circulation.
         Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
 
-        _pool?.Shutdown();
-        _pool?.Clear();
+        _pool.Shutdown();
+        _pool.Clear();
     }
 
     #region Helper Methods
 
+    /// <summary>
+    /// Builds a pool for these tests. A frozen <see cref="FakeTimeProvider"/> is injected so that
+    /// time-driven background maintenance (idle-timeout pruning, warmup and replenishment,
+    /// blocking-period expiry) cannot advance and race the assertions about pool contents.
+    /// </summary>
     private ChannelDbConnectionPool CreatePool(
         int maxPoolSize = DefaultMaxPoolSize,
         int minPoolSize = DefaultMinPoolSize,
@@ -65,19 +72,33 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             poolGroupOptions
         );
 
-        var connectionFactory = new MockSqlConnectionFactory();
-
         var pool = new ChannelDbConnectionPool(
-            connectionFactory,
+            new MockSqlConnectionFactory(),
             dbConnectionPoolGroup,
             DbConnectionPoolIdentity.NoIdentity,
-            new DbConnectionPoolProviderInfo()
+            new DbConnectionPoolProviderInfo(),
+            timeProvider: new FakeTimeProvider()
         );
 
         pool.Startup();
         return pool;
     }
 
+    /// <summary>
+    /// Tears down the pool built by the constructor and replaces it with one configured
+    /// differently, for the few tests that need non-default pool options.
+    /// </summary>
+    private void ReplaceFixturePool(bool hasTransactionAffinity)
+    {
+        _pool.Shutdown();
+        _pool.Clear();
+        _pool = CreatePool(hasTransactionAffinity: hasTransactionAffinity);
+    }
+
+    /// <summary>
+    /// Opens a connection synchronously. The pool reads the ambient transaction off the calling
+    /// thread on this path.
+    /// </summary>
     private DbConnectionInternal GetConnection(SqlConnection owner)
     {
         _pool.TryGetConnection(
@@ -88,6 +109,12 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         return connection!;
     }
 
+    /// <summary>
+    /// Opens a connection asynchronously, carrying <paramref name="transaction"/> in the
+    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState exactly as
+    /// SqlConnection.InternalOpenAsync does. The pool must take the transaction from there,
+    /// because the open runs on a thread pool thread the ambient transaction may not flow to.
+    /// </summary>
     private async Task<DbConnectionInternal> GetConnectionAsync(
         SqlConnection owner,
         Transaction? transaction = null)
@@ -101,903 +128,417 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         return connection ?? await tcs.Task;
     }
 
-    private void ReturnConnection(DbConnectionInternal connection, SqlConnection owner)
-    {
+    private void ReturnConnection(DbConnectionInternal connection, SqlConnection owner) =>
         _pool.ReturnInternalConnection(connection, owner);
+
+    /// <summary>
+    /// Asserts the pool's accounting after a step.
+    /// </summary>
+    /// <param name="count">Total connections owned by the pool, checked out or not. A connection
+    /// parked in the transacted store still holds its pool slot and so is counted here.</param>
+    /// <param name="idleCount">Connections sitting in the idle channel, available to any caller.</param>
+    /// <param name="transactedCount">Connections parked in the transacted store across all
+    /// transactions. These hold a pool slot but are not available to other callers.</param>
+    private void AssertPoolState(int count, int idleCount, int transactedCount)
+    {
+        Assert.Equal(count, _pool.Count);
+        Assert.Equal(idleCount, _pool.IdleCount);
+        Assert.Equal(transactedCount, TotalTransactedConnections());
     }
 
-    private void AssertPoolMetrics()
+    private int TotalTransactedConnections()
     {
-        Assert.True(_pool.Count <= _pool.PoolGroupOptions.MaxPoolSize,
-            $"Pool count ({_pool.Count}) exceeded max pool size ({_pool.PoolGroupOptions.MaxPoolSize})");
-        Assert.True(_pool.Count >= 0,
-            $"Pool count ({_pool.Count}) is negative");
-        Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
+        int total = 0;
+        foreach (var entry in _pool.TransactedConnectionPool.TransactedConnections)
+        {
+            total += entry.Value.Count;
+        }
+        return total;
     }
+
+    private int TransactedConnectionsFor(Transaction transaction) =>
+        _pool.TransactedConnectionPool.TransactedConnections.TryGetValue(transaction, out var connections)
+            ? connections.Count
+            : 0;
 
     #endregion
 
-    #region Transaction Routing Tests
+    #region Connection Return Routing
 
+    /// <summary>
+    /// A connection returned while still enlisted must be parked in the transacted store rather
+    /// than the idle channel, so it cannot be vended to a caller in a different transaction. It
+    /// keeps its pool slot while parked.
+    /// </summary>
     [Fact]
-    public void GetConnection_UnderTransaction_RoutesToTransactedPool()
+    public void ReturnConnection_WhileEnlisted_ParksInTransactedStoreNotIdleChannel()
     {
-        // Arrange & Act
+        // Arrange
         using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
+        Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
         var owner = new SqlConnection();
-        var conn = GetConnection(owner);
-        Assert.NotNull(conn);
-
-        ReturnConnection(conn, owner);
-
-        // Assert - connection should be in the transacted pool
-        Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
-
-        scope.Complete();
-    }
-
-    [Fact]
-    public void GetConnection_WithoutTransaction_RoutesToGeneralPool()
-    {
-        // Arrange & Act (no TransactionScope)
-        var owner = new SqlConnection();
-        var conn = GetConnection(owner);
-        Assert.NotNull(conn);
-
-        ReturnConnection(conn, owner);
-
-        // Assert - transacted pool should be empty
-        Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
-    }
-
-    [Fact]
-    public void GetConnection_UnderTransaction_ReturnsSameConnectionFromTransactedPool()
-    {
-        // Arrange
-        using var scope = new TransactionScope();
-
-        // Act - first call creates a new connection
-        var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        Assert.NotNull(conn1);
-        ReturnConnection(conn1, owner1);
-
-        // Second call should retrieve the SAME connection from the transacted pool (LIFO)
-        var owner2 = new SqlConnection();
-        var conn2 = GetConnection(owner2);
-        Assert.NotNull(conn2);
-        Assert.Same(conn1, conn2);
-
-        ReturnConnection(conn2, owner2);
-        scope.Complete();
-    }
-
-    [Fact]
-    public async Task GetConnectionAsync_UnderTransaction_ReturnsSameConnectionFromTransactedPool()
-    {
-        // Arrange
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var transaction = Transaction.Current;
-
-        // Act - first call creates a new connection
-        var owner1 = new SqlConnection();
-        var conn1 = await GetConnectionAsync(owner1, transaction: transaction);
-        Assert.NotNull(conn1);
-        ReturnConnection(conn1, owner1);
-
-        // Second call should retrieve the SAME connection from the transacted pool
-        var owner2 = new SqlConnection();
-        var conn2 = await GetConnectionAsync(owner2, transaction: transaction);
-        Assert.NotNull(conn2);
-        Assert.Same(conn1, conn2);
-
-        ReturnConnection(conn2, owner2);
-        scope.Complete();
-    }
-
-    [Fact]
-    public void GetConnection_WithTransactionAffinityDisabled_SkipsTransactedPool()
-    {
-        // Arrange
-        _pool.Shutdown();
-        _pool.Clear();
-        _pool = CreatePool(hasTransactionAffinity: false);
-
-        using var scope = new TransactionScope();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         // Act
-        var owner = new SqlConnection();
-        var conn = GetConnection(owner);
-        Assert.NotNull(conn);
-        ReturnConnection(conn, owner);
+        ReturnConnection(connection, owner);
 
-        // Assert - even though a transaction is active, transacted pool is not used
-        Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
+        // Assert
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction!));
 
         scope.Complete();
     }
 
-    #endregion
-
-    #region Transaction Lifecycle Tests
-
+    /// <summary>
+    /// Without an ambient transaction there is nothing to enlist in, so a returning connection
+    /// goes straight back into the idle channel.
+    /// </summary>
     [Fact]
-    public void TransactionCommit_ClearsTransactedPool()
+    public void ReturnConnection_WithoutTransaction_ReturnsToIdleChannel()
     {
-        // Arrange & Act
+        // Arrange
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        // Act
+        ReturnConnection(connection, owner);
+
+        // Assert
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// The pool deactivates a returning connection before reading its enlistment, and deactivation
+    /// is what detaches a completed transaction. A connection returned after its transaction has
+    /// already ended must therefore land in the idle channel, not be parked under a dead
+    /// transaction where nothing would ever release it.
+    /// </summary>
+    [Fact]
+    public void ReturnConnection_AfterTransactionCompleted_ReturnsToIdleChannel()
+    {
+        // Arrange
+        var owner = new SqlConnection();
+        DbConnectionInternal connection;
         using (var scope = new TransactionScope())
         {
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            // While transaction is active, connection should be in transacted pool
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-
+            connection = GetConnection(owner);
+            Assert.NotNull(connection);
             scope.Complete();
         }
 
-        // Assert - after transaction completes, transacted pool should be empty
-        AssertPoolMetrics();
+        // Act - the transaction is fully disposed by this point.
+        ReturnConnection(connection, owner);
+
+        // Assert
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
     }
 
+    /// <summary>
+    /// A pool with automatic enlistment disabled must never bind a connection to the ambient
+    /// transaction, so the transacted store stays out of the picture entirely.
+    /// </summary>
     [Fact]
-    public void TransactionRollback_ClearsTransactedPool()
+    public void ReturnConnection_WithTransactionAffinityDisabled_ReturnsToIdleChannel()
     {
-        // Arrange & Act
-        using (var scope = new TransactionScope())
-        {
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
+        // Arrange
+        ReplaceFixturePool(hasTransactionAffinity: false);
 
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        using var scope = new TransactionScope();
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
 
-            // Don't call scope.Complete() — triggers rollback
-        }
+        // Act
+        ReturnConnection(connection, owner);
 
-        // Assert - transacted pool should be empty after rollback too
-        AssertPoolMetrics();
+        // Assert
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+
+        scope.Complete();
     }
 
+    /// <summary>
+    /// Returning to a pool that has already shut down destroys the connection instead of pooling
+    /// it, and must not throw.
+    /// </summary>
     [Fact]
-    public void MultipleGetReturn_SameTransaction_ReusesConnection()
+    public void ReturnConnection_ToShutDownPool_DestroysConnection()
     {
         // Arrange
         using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
 
-        // Act - get and return multiple times within same transaction
-        for (int i = 0; i < 10; i++)
-        {
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-        }
+        _pool.Shutdown();
 
-        // Assert - only one connection should be in the transacted pool
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        // Act
+        ReturnConnection(connection, owner);
 
-        scope.Complete();
-    }
-
-    [Fact]
-    public async Task MultipleGetReturn_SameTransaction_Async_ReusesConnection()
-    {
-        // Arrange
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
-
-        // Act - get and return multiple times within same transaction
-        for (int i = 0; i < 10; i++)
-        {
-            var owner = new SqlConnection();
-            var conn = await GetConnectionAsync(owner, transaction: transaction);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-        }
-
-        // Assert - only one connection should be in the transacted pool
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
-
-        scope.Complete();
-    }
-
-    [Fact]
-    public void AlternatingCommitAndRollback_MaintainsConsistentState()
-    {
-        // Act - alternate between commit and rollback
-        for (int i = 0; i < 20; i++)
-        {
-            using var scope = new TransactionScope();
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            if (i % 2 == 0)
-            {
-                scope.Complete();
-            }
-            // else: rollback (no Complete)
-        }
-
-        // Assert
-        AssertPoolMetrics();
+        // Assert - Dispose() dooms the connection and clears its pool back-reference.
+        Assert.True(connection.IsConnectionDoomed,
+            "A connection returned to a shut-down pool should be destroyed, not pooled.");
+        Assert.Null(connection.Pool);
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
     }
 
     #endregion
 
-    #region Nested Transaction Tests
+    #region Vending From The Transacted Store
 
+    /// <summary>
+    /// Round trip: a second request inside the same transaction must be served the connection that
+    /// is already enlisted in it, rather than a fresh connection. Reusing it is what keeps the
+    /// transaction from being promoted to a distributed one.
+    /// </summary>
     [Fact]
-    public void NestedTransaction_Required_SharesSameTransactedEntry()
+    public void GetConnection_UnderSameTransaction_VendsTheAlreadyEnlistedConnection()
     {
         // Arrange
-        using var outerScope = new TransactionScope();
-        var outerTxn = Transaction.Current;
-        Assert.NotNull(outerTxn);
+        using var scope = new TransactionScope();
+        Transaction? transaction = Transaction.Current;
+        Assert.NotNull(transaction);
 
         var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        Assert.NotNull(conn1);
-        ReturnConnection(conn1, owner1);
+        var connection1 = GetConnection(owner1);
+        Assert.NotNull(connection1);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
-        // Act - nested scope with Required shares the same transaction
-        using (var innerScope = new TransactionScope(TransactionScopeOption.Required))
-        {
-            Assert.Same(outerTxn, Transaction.Current);
+        ReturnConnection(connection1, owner1);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
-            var owner2 = new SqlConnection();
-            var conn2 = GetConnection(owner2);
-            Assert.NotNull(conn2);
-            Assert.Same(conn1, conn2); // Same transaction -> same connection from transacted pool
-            ReturnConnection(conn2, owner2);
+        // Act
+        var owner2 = new SqlConnection();
+        var connection2 = GetConnection(owner2);
 
-            // Only one transaction tracked
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        // Assert
+        Assert.Same(connection1, connection2);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
-            innerScope.Complete();
-        }
+        ReturnConnection(connection2, owner2);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction!));
 
-        outerScope.Complete();
+        scope.Complete();
     }
 
+    /// <summary>
+    /// The asynchronous path must reuse the enlisted connection exactly as the synchronous path
+    /// does, even though it runs the open on a thread pool thread.
+    /// </summary>
     [Fact]
-    public void NestedTransaction_RequiresNew_CreatesSeparateTransactedEntry()
+    public async Task GetConnectionAsync_UnderSameTransaction_VendsTheAlreadyEnlistedConnection()
+    {
+        // Arrange
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        Transaction? transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        var owner1 = new SqlConnection();
+        var connection1 = await GetConnectionAsync(owner1, transaction);
+        Assert.NotNull(connection1);
+        ReturnConnection(connection1, owner1);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+        // Act
+        var owner2 = new SqlConnection();
+        var connection2 = await GetConnectionAsync(owner2, transaction);
+
+        // Assert
+        Assert.Same(connection1, connection2);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        ReturnConnection(connection2, owner2);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+        scope.Complete();
+    }
+
+    /// <summary>
+    /// A connection enlisted in one transaction must never be handed to a caller in a different
+    /// transaction; each transaction gets its own entry in the transacted store.
+    /// </summary>
+    [Fact]
+    public void GetConnection_UnderDifferentTransaction_DoesNotVendTheEnlistedConnection()
     {
         // Arrange
         using var outerScope = new TransactionScope();
-        var outerTxn = Transaction.Current;
-        Assert.NotNull(outerTxn);
+        Transaction? outerTransaction = Transaction.Current;
+        Assert.NotNull(outerTransaction);
 
         var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        Assert.NotNull(conn1);
-        ReturnConnection(conn1, owner1);
+        var connection1 = GetConnection(owner1);
+        ReturnConnection(connection1, owner1);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
-        // Act - nested scope with RequiresNew creates a new transaction
+        // Act - RequiresNew starts an unrelated transaction.
         using (var innerScope = new TransactionScope(TransactionScopeOption.RequiresNew))
         {
-            var innerTxn = Transaction.Current;
-            Assert.NotNull(innerTxn);
-            Assert.NotEqual(outerTxn, innerTxn);
+            Transaction? innerTransaction = Transaction.Current;
+            Assert.NotEqual(outerTransaction, innerTransaction);
 
             var owner2 = new SqlConnection();
-            var conn2 = GetConnection(owner2);
-            Assert.NotNull(conn2);
-            Assert.NotSame(conn1, conn2); // Different transaction -> different connection
-            ReturnConnection(conn2, owner2);
+            var connection2 = GetConnection(owner2);
 
-            // Two separate transactions tracked
-            Assert.Equal(2, _pool.TransactedConnectionPool.TransactedConnections.Count);
+            // Assert - a fresh connection, because connection1 belongs to the outer transaction.
+            Assert.NotSame(connection1, connection2);
+            AssertPoolState(count: 2, idleCount: 0, transactedCount: 1);
+
+            ReturnConnection(connection2, owner2);
+            AssertPoolState(count: 2, idleCount: 0, transactedCount: 2);
+            Assert.Equal(1, TransactedConnectionsFor(outerTransaction!));
+            Assert.Equal(1, TransactedConnectionsFor(innerTransaction!));
 
             innerScope.Complete();
         }
+
+        // Completing the inner transaction releases only its connection; the outer transaction's
+        // connection stays parked.
+        AssertPoolState(count: 2, idleCount: 1, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(outerTransaction!));
 
         outerScope.Complete();
     }
 
-    [Fact]
-    public void NestedTransaction_RequiresNew_CompletesIndependently()
-    {
-        // Arrange & Act
-        using (var outerScope = new TransactionScope())
-        {
-            var owner1 = new SqlConnection();
-            var conn1 = GetConnection(owner1);
-            Assert.NotNull(conn1);
-            ReturnConnection(conn1, owner1);
-
-            using (var innerScope = new TransactionScope(TransactionScopeOption.RequiresNew))
-            {
-                var owner2 = new SqlConnection();
-                var conn2 = GetConnection(owner2);
-                Assert.NotNull(conn2);
-                ReturnConnection(conn2, owner2);
-                innerScope.Complete();
-            }
-
-            // Inner transaction completed - its entry should be cleared
-            // Outer transaction entry should still exist
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-
-            outerScope.Complete();
-        }
-
-        // Both completed
-        AssertPoolMetrics();
-    }
-
-    [Fact]
-    public void DeeplyNestedTransactions_RequiresNew_AllTrackedSeparately()
-    {
-        // Arrange & Act
-        using var scope1 = new TransactionScope();
-        var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        ReturnConnection(conn1, owner1);
-
-        using var scope2 = new TransactionScope(TransactionScopeOption.RequiresNew);
-        var owner2 = new SqlConnection();
-        var conn2 = GetConnection(owner2);
-        ReturnConnection(conn2, owner2);
-
-        using var scope3 = new TransactionScope(TransactionScopeOption.RequiresNew);
-        var owner3 = new SqlConnection();
-        var conn3 = GetConnection(owner3);
-        ReturnConnection(conn3, owner3);
-
-        // Assert - three separate transactions tracked
-        Assert.Equal(3, _pool.TransactedConnectionPool.TransactedConnections.Count);
-
-        scope3.Complete();
-        scope2.Complete();
-        scope1.Complete();
-    }
-
-    [Fact]
-    public void DeeplyNestedTransactions_Required_AllShareOneEntry()
-    {
-        // Arrange & Act
-        using var scope1 = new TransactionScope();
-        var txn = Transaction.Current;
-        var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        ReturnConnection(conn1, owner1);
-
-        using var scope2 = new TransactionScope(TransactionScopeOption.Required);
-        Assert.Same(txn, Transaction.Current);
-        var owner2 = new SqlConnection();
-        var conn2 = GetConnection(owner2);
-        Assert.Same(conn1, conn2);
-        ReturnConnection(conn2, owner2);
-
-        using var scope3 = new TransactionScope(TransactionScopeOption.Required);
-        Assert.Same(txn, Transaction.Current);
-        var owner3 = new SqlConnection();
-        var conn3 = GetConnection(owner3);
-        Assert.Same(conn1, conn3);
-        ReturnConnection(conn3, owner3);
-
-        // Assert - single transaction entry
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-
-        scope3.Complete();
-        scope2.Complete();
-        scope1.Complete();
-    }
-
     #endregion
 
-    #region Mixed Transacted and Non-Transacted Tests
+    #region Transaction Completion
 
+    /// <summary>
+    /// Committing releases the parked connection back into the idle channel, where it becomes
+    /// available to any caller.
+    /// </summary>
     [Fact]
-    public void MixedWorkload_AlternatingTransactedAndNonTransacted()
-    {
-        // Act - alternate between transacted and non-transacted
-        for (int i = 0; i < 10; i++)
-        {
-            if (i % 2 == 0)
-            {
-                using var scope = new TransactionScope();
-                var owner = new SqlConnection();
-                var conn = GetConnection(owner);
-                Assert.NotNull(conn);
-                ReturnConnection(conn, owner);
-                scope.Complete();
-            }
-            else
-            {
-                var owner = new SqlConnection();
-                var conn = GetConnection(owner);
-                Assert.NotNull(conn);
-                ReturnConnection(conn, owner);
-            }
-        }
-
-        // Assert
-        AssertPoolMetrics();
-    }
-
-    #endregion
-
-    #region Shared Transaction Tests
-
-    [Fact]
-    public void SharedTransaction_DependentScopes_UseTransactedPool()
+    public void TransactionCommit_ReturnsParkedConnectionToIdleChannel()
     {
         // Arrange
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
-
-        // Act - first connection
-        var owner1 = new SqlConnection();
-        var conn1 = GetConnection(owner1);
-        Assert.NotNull(conn1);
-        ReturnConnection(conn1, owner1);
-
-        // Use dependent scope on same transaction
-        using (var innerScope = new TransactionScope(transaction))
-        {
-            Assert.Same(transaction, Transaction.Current);
-            var owner2 = new SqlConnection();
-            var conn2 = GetConnection(owner2);
-            Assert.NotNull(conn2);
-            Assert.Same(conn1, conn2); // Same transaction -> same connection
-            ReturnConnection(conn2, owner2);
-            innerScope.Complete();
-        }
-
-        // Assert - still one transaction entry
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
-
-        scope.Complete();
-    }
-
-    #endregion
-
-    #region Pool Saturation with Transactions Tests
-
-    [Fact]
-    public void PoolSaturation_BlocksUntilConnectionAvailable()
-    {
-        // Arrange - small pool
-        _pool.Shutdown();
-        _pool.Clear();
-        _pool = CreatePool(maxPoolSize: 1);
-
-        using var allAcquired = new ManualResetEventSlim(false);
-        using var releaseFirst = new ManualResetEventSlim(false);
-
-        var saturatingTask = Task.Run(() =>
-            {
-                using var scope = new TransactionScope();
-                var owner = new SqlConnection();
-                var conn = GetConnection(owner);
-                Assert.NotNull(conn);
-
-                allAcquired.Set(); // Signal that this connection is held
-
-                Assert.True(releaseFirst.Wait(TimeSpan.FromSeconds(15)),
-                    "Timed out waiting for releaseFirst signal.");
-
-                ReturnConnection(conn, owner);
-                scope.Complete();
-            });
-
-        Assert.True(allAcquired.Wait(TimeSpan.FromSeconds(10)),
-            "Timed out waiting for connection to be acquired.");
-        Assert.Equal(1, _pool.Count);
-
-        using var acquired = new ManualResetEventSlim(false);
-        var waitingTask = Task.Run(() =>
-        {
-            using var scope = new TransactionScope();
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            acquired.Set();
-            ReturnConnection(conn, owner);
-            scope.Complete();
-        });
-
-        // Give the waiting task time to block — it should NOT complete yet
-        Assert.False(acquired.Wait(TimeSpan.FromMilliseconds(500)),
-            "Waiting task should not have acquired a connection while pool is saturated");
-
-        // Release one connection to unblock the waiting task
-        releaseFirst.Set();
-
-        // Now the waiting task should complete
-        Assert.True(waitingTask.Wait(TimeSpan.FromSeconds(15)),
-            "Waiting task should have completed after a connection was released");
-        Assert.True(acquired.IsSet);
-
-        // Cleanup remaining held connections
-        Task.WaitAll(saturatingTask);
-    }
-
-    #endregion
-
-    #region Controlled Concurrency Tests
-
-    // Flaky under CI load only (never reproduces locally): the two worker tasks are
-    // scheduled via Task.Run on the thread pool. On a loaded agent the pool can be slow to
-    // spin up a worker, so task1 starts late and fails to signal task1Returned within
-    // task2's 10s wait, producing a WaitAll timeout. That is thread-pool starvation, not a
-    // pool/transaction defect.
-    [Trait("Category", "flaky")]
-    [Fact]
-    public void TwoThreads_SharedTransaction_AccessSameTransactedEntry()
-    {
-        // Arrange
-        // Use 3-phase synchronization so task1 gets AND returns before task2 requests.
-        // This ensures the connection is back in the transacted pool for task2 to reuse.
-        using var task1Returned = new ManualResetEventSlim(false);
-        using var task2Done = new ManualResetEventSlim(false);
-        DbConnectionInternal? connFromTask1 = null;
-        DbConnectionInternal? connFromTask2 = null;
-
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        var transaction = Transaction.Current;
-        Assert.NotNull(transaction);
-
-        // Act - two threads sharing the same transaction, sequenced so the
-        // transacted pool can vend the same connection to both.
-        var task1 = Task.Run(() =>
-        {
-            using var innerScope = new TransactionScope(transaction);
-            var owner = new SqlConnection();
-            connFromTask1 = GetConnection(owner);
-            Assert.NotNull(connFromTask1);
-
-            // Return the connection so it's available in the transacted pool
-            ReturnConnection(connFromTask1, owner);
-            innerScope.Complete();
-
-            task1Returned.Set(); // Signal: connection is back in the transacted pool
-        });
-
-        var task2 = Task.Run(() =>
-        {
-            // Wait until task1 has returned the connection to the transacted pool
-            Assert.True(task1Returned.Wait(TimeSpan.FromSeconds(10)),
-                "Timed out waiting for task1 to return its connection.");
-
-            using var innerScope = new TransactionScope(transaction);
-            var owner = new SqlConnection();
-            connFromTask2 = GetConnection(owner);
-            Assert.NotNull(connFromTask2);
-            ReturnConnection(connFromTask2, owner);
-            innerScope.Complete();
-        });
-
-        Task.WaitAll(task1, task2);
-
-        // Both tasks should have received the same connection via the transacted pool
-        Assert.Same(connFromTask1, connFromTask2);
-        scope.Complete();
-    }
-
-    [Fact]
-    public async Task TwoThreads_SeparateTransactions_Async_IsolatedTransactedEntries()
-    {
-        // Arrange
-        using var barrier = new SemaphoreSlim(0, 2);
-
-        // Act
-        var task1 = Task.Run(async () =>
-        {
-            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            var transaction = Transaction.Current;
-            var owner = new SqlConnection();
-            var conn = await GetConnectionAsync(owner, transaction: transaction);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            barrier.Release(); // Signal ready
-            await barrier.WaitAsync(); // Wait for other task
-
-            scope.Complete();
-        });
-
-        var task2 = Task.Run(async () =>
-        {
-            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            var transaction = Transaction.Current;
-            var owner = new SqlConnection();
-            var conn = await GetConnectionAsync(owner, transaction: transaction);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            barrier.Release(); // Signal ready
-            await barrier.WaitAsync(); // Wait for other task
-
-            scope.Complete();
-        });
-
-        await Task.WhenAll(task1, task2);
-
-        // Assert
-        AssertPoolMetrics();
-    }
-
-    #endregion
-
-    #region Pool Shutdown with Transactions Tests
-
-    [Fact]
-    public void PoolShutdown_AfterTransactionComplete_NoLeaks()
-    {
-        // Arrange
+        DbConnectionInternal connection;
         using (var scope = new TransactionScope())
         {
             var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-            scope.Complete();
-        }
+            connection = GetConnection(owner);
+            ReturnConnection(connection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
-        // Act
-        _pool.Shutdown();
-
-        // Assert
-        AssertPoolMetrics();
-    }
-
-    [Fact]
-    public void PoolShutdown_WhileConnectionHeld_NoException()
-    {
-        // Arrange
-        using var scope = new TransactionScope();
-        var owner = new SqlConnection();
-        var conn = GetConnection(owner);
-        Assert.NotNull(conn);
-
-        // Act - shutdown while connection is held (not yet returned)
-        _pool.Shutdown();
-
-        // Return after shutdown — the pool deactivates and disposes the connection
-        // rather than returning it to the pool. Verify this doesn't throw.
-        ReturnConnection(conn, owner);
-
-        // Assert
-        // The connection should have been deactivated and disposed (not returned to the pool).
-        // After Dispose(), IsConnectionDoomed is set to true and Pool is set to null.
-        Assert.True(conn.IsConnectionDoomed,
-            "Connection should be doomed after returning to a shut-down pool.");
-        Assert.Null(conn.Pool);
-    }
-
-    #endregion
-
-    #region Transaction Complete Before Return Tests
-
-    [Fact]
-    public void TransactionComplete_ThenReturn_ConnectionStillReturned()
-    {
-        // Arrange
-        var owner = new SqlConnection();
-        DbConnectionInternal conn;
-
-        using (var scope = new TransactionScope())
-        {
-            conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            scope.Complete();
-        }
-        // Transaction is fully disposed here
-
-        // Act - return connection after transaction ended
-        ReturnConnection(conn, owner);
-
-        // Assert - no leak, pool metrics consistent
-        AssertPoolMetrics();
-        Assert.True(_pool.Count > 0, "Pool should still have the connection");
-    }
-
-    #endregion
-
-    #region Sequential Transaction Isolation Tests
-
-    [Fact]
-    public void SequentialTransactions_EachGetsOwnTransactedEntry()
-    {
-        // Act - create multiple sequential transactions
-        for (int i = 0; i < 5; i++)
-        {
-            using var scope = new TransactionScope();
-            var transaction = Transaction.Current;
-            Assert.NotNull(transaction);
-
-            var owner = new SqlConnection();
-            var conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            // Only the current transaction should be tracked
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-            Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
-
-            scope.Complete();
-        }
-
-        // Assert - after all are done, pool should be clean
-        AssertPoolMetrics();
-    }
-
-    [Fact]
-    public async Task SequentialTransactions_Async_EachGetsOwnTransactedEntry()
-    {
-        // Act - create multiple sequential transactions
-        for (int i = 0; i < 5; i++)
-        {
-            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            var transaction = Transaction.Current;
-            Assert.NotNull(transaction);
-
-            var owner = new SqlConnection();
-            var conn = await GetConnectionAsync(owner, transaction: transaction);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-            Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
-
+            // Act
             scope.Complete();
         }
 
         // Assert
-        AssertPoolMetrics();
-    }
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
 
-    [Fact]
-    public void SequentialTransactions_CanReuseConnections()
-    {
-        // Act
-        DbConnectionInternal conn1;
-        DbConnectionInternal conn2;
-        Transaction? txn1;
-        Transaction? txn2;
-
-        using (var scope1 = new TransactionScope())
-        {
-            txn1 = Transaction.Current;
-            var owner1 = new SqlConnection();
-            conn1 = GetConnection(owner1);
-            Assert.NotNull(conn1);
-            ReturnConnection(conn1, owner1);
-            scope1.Complete();
-        }
-
-        using (var scope2 = new TransactionScope())
-        {
-            txn2 = Transaction.Current;
-            var owner2 = new SqlConnection();
-            conn2 = GetConnection(owner2);
-            Assert.NotNull(conn2);
-            ReturnConnection(conn2, owner2);
-            scope2.Complete();
-        }
-
-        // Assert
-        // The connection was returned to the general pool and picked up by the second transaction
-        Assert.NotSame(txn1, txn2);
-        Assert.Same(conn1, conn2);
-        AssertPoolMetrics();
-    }
-
-    #endregion
-
-    #region Transacted Pool Plumbing Tests
-
-    [Fact]
-    public void TransactionCompletion_ReturnsConnectionToIdleChannel()
-    {
-        // Arrange - park a connection in the transacted pool.
-        DbConnectionInternal conn;
-        using (var scope = new TransactionScope())
-        {
-            var owner = new SqlConnection();
-            conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
-
-            // While the transaction is live the connection is held by the transacted pool and is
-            // deliberately absent from the idle channel.
-            Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
-            Assert.Equal(0, _pool.IdleCount);
-
-            scope.Complete();
-        }
-
-        // Assert - completion drives TransactionEnded -> PutObjectFromTransactedPool, which puts
-        // the connection back into general circulation.
-        Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
-        Assert.Equal(1, _pool.IdleCount);
-        Assert.Equal(1, _pool.Count);
-
-        // The connection is now reusable by a caller with no ambient transaction.
+        // The released connection is reusable by a caller with no ambient transaction.
         var owner2 = new SqlConnection();
-        var conn2 = GetConnection(owner2);
-        Assert.Same(conn, conn2);
-        ReturnConnection(conn2, owner2);
+        var connection2 = GetConnection(owner2);
+        Assert.Same(connection, connection2);
+        ReturnConnection(connection2, owner2);
     }
 
+    /// <summary>
+    /// Rolling back must release the parked connection just as committing does; otherwise an
+    /// aborted transaction would strand its connection in the transacted store forever.
+    /// </summary>
+    [Fact]
+    public void TransactionRollback_ReturnsParkedConnectionToIdleChannel()
+    {
+        // Arrange
+        using (new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            var connection = GetConnection(owner);
+            ReturnConnection(connection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+            // Act - leaving the scope without calling Complete rolls the transaction back.
+        }
+
+        // Assert
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// A connection parked in the transacted store survives pool shutdown, because closing it
+    /// would abort a possibly distributed transaction. Once that transaction ends, the shut-down
+    /// pool must destroy the connection rather than return it to circulation.
+    /// </summary>
     [Fact]
     public void TransactionCompletion_AfterShutdown_DestroysConnection()
     {
-        // Arrange - park a connection in the transacted pool, then shut the pool down. The
-        // transacted connection survives the shutdown drain because closing it would abort the
-        // (possibly distributed) transaction.
-        DbConnectionInternal conn;
+        // Arrange
+        DbConnectionInternal connection;
         using (var scope = new TransactionScope())
         {
             var owner = new SqlConnection();
-            conn = GetConnection(owner);
-            Assert.NotNull(conn);
-            ReturnConnection(conn, owner);
+            connection = GetConnection(owner);
+            ReturnConnection(connection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
-            // Act
+            // Act - the shutdown drain must leave the transacted connection alone.
             _pool.Shutdown();
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
             scope.Complete();
         }
 
-        // Assert - a shut-down pool must not re-pool the connection when the transaction ends.
-        Assert.Empty(_pool.TransactedConnectionPool.TransactedConnections);
-        Assert.Equal(0, _pool.IdleCount);
-        Assert.Equal(0, _pool.Count);
-        Assert.True(conn.IsConnectionDoomed);
+        // Assert
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+        Assert.True(connection.IsConnectionDoomed,
+            "A shut-down pool must destroy a connection released by its transaction.");
     }
 
+    /// <summary>
+    /// TransactionEnded for a connection that was never parked must be a no-op. It must not push a
+    /// connection that is still checked out into the idle channel, where a second caller could
+    /// pick it up while the first is still using it.
+    /// </summary>
     [Fact]
-    public void TransactionEnded_UnknownConnection_DoesNotPoolConnection()
+    public void TransactionEnded_ForConnectionThatWasNeverParked_LeavesItCheckedOut()
     {
-        // Arrange - a connection that was never parked in the transacted pool.
+        // Arrange
         var owner = new SqlConnection();
-        var conn = GetConnection(owner);
-        Assert.NotNull(conn);
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
 
         using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
+        Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
         // Act
-        _pool.TransactionEnded(transaction!, conn);
+        _pool.TransactionEnded(transaction!, connection);
 
-        // Assert - nothing to remove, so the connection stays checked out.
-        Assert.Equal(0, _pool.IdleCount);
-        Assert.Equal(1, _pool.Count);
+        // Assert
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
-        ReturnConnection(conn, owner);
+        ReturnConnection(connection, owner);
         scope.Complete();
     }
 
+    #endregion
+
+    #region Connection Replacement
+
+    /// <summary>
+    /// Replacing a connection mid-transaction must carry the enlistment across, so the replacement
+    /// is the one that parks in the transacted store when it is returned.
+    /// </summary>
     [Fact]
     public void ReplaceConnection_CarriesEnlistedTransactionToNewConnection()
     {
         // Arrange
         using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
+        Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
         var owner = new SqlConnection();
         var oldConnection = GetConnection(owner);
         Assert.NotNull(oldConnection);
-        Assert.Equal(1, _pool.Count);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         // Act
         var newConnection = _pool.ReplaceConnection(
@@ -1005,36 +546,36 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             oldConnection,
             TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
-        // Assert - a distinct connection took over the old connection's slot and enlistment.
+        // Assert - a distinct connection took over the old connection's slot.
         Assert.NotNull(newConnection);
         Assert.NotSame(oldConnection, newConnection);
-        Assert.Equal(1, _pool.Count);
         Assert.True(oldConnection.IsConnectionDoomed);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         ReturnConnection(newConnection, owner);
 
-        // The replacement inherited the transaction, so it parks in the transacted pool.
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction!]);
+        // The replacement inherited the transaction, so it parks in the transacted store.
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction!));
 
         scope.Complete();
     }
 
     #endregion
 
-    #region Async Ambient Transaction Flow Tests
+    #region Async Ambient Transaction Flow
 
     /// <summary>
     /// A <see cref="TransactionScope"/> created without <see cref="TransactionScopeAsyncFlowOption.Enabled"/>
-    /// keeps the ambient transaction in thread-static storage, so it is not observable from the thread
-    /// pool thread the pool opens on. The pool must therefore take the transaction from the
-    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState, which is where SqlConnection.OpenAsync
-    /// captures it.
+    /// keeps the ambient transaction in thread-static storage, so it is not observable from the
+    /// thread pool thread the pool opens on. The pool must therefore take the transaction from the
+    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState. This test uses a transaction that
+    /// is never ambient anywhere, so AsyncState is the only way the pool can learn about it.
     /// </summary>
     [Fact]
     public async Task GetConnectionAsync_AmbientTransactionNotFlowed_StillEnlistsFromAsyncState()
     {
-        // Arrange - a transaction that is never ambient on any thread, so AsyncState is the only
-        // way the pool can learn about it.
+        // Arrange
         using var transaction = new CommittableTransaction();
         Assert.Null(Transaction.Current);
         Assert.Null(await Task.Run(() => Transaction.Current));
@@ -1048,10 +589,8 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         Assert.Equal(transaction, connection.EnlistedTransaction);
 
         ReturnConnection(connection, owner);
-
-        // Being enlisted, the connection parks in the transacted pool rather than the idle channel.
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
-        Assert.Equal(0, _pool.IdleCount);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction));
 
         transaction.Rollback();
     }
@@ -1059,8 +598,8 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     /// <summary>
     /// Assigning <see cref="Transaction.Current"/> writes to thread-static storage that the
     /// ExecutionContext does not unwind, so doing it on a thread pool thread would leave a stale
-    /// transaction behind for unrelated work later scheduled onto that same thread -- including the
-    /// login-time auto-enlistment that non-pooled connections perform against the ambient
+    /// transaction behind for unrelated work later scheduled onto that same thread -- including
+    /// the login-time auto-enlistment that non-pooled connections perform against the ambient
     /// transaction. The pool must pass the transaction explicitly instead of assigning it.
     /// </summary>
     [Fact]
@@ -1085,17 +624,18 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
     /// <summary>
     /// The synchronous path runs on the caller's thread, where the ambient transaction set by a
-    /// TransactionScope is directly observable and must still be honored.
+    /// TransactionScope is directly observable and must still be honored even though no
+    /// transaction is handed to the pool explicitly.
     /// </summary>
     [Fact]
     public void GetConnection_Sync_UsesAmbientTransactionFromCallersThread()
     {
         // Arrange
         using var scope = new TransactionScope();
-        var transaction = Transaction.Current;
+        Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
-        // Act - no transaction is handed to the pool explicitly; it must read Transaction.Current.
+        // Act
         var owner = new SqlConnection();
         var connection = GetConnection(owner);
 
@@ -1104,7 +644,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         Assert.Equal(transaction, connection.EnlistedTransaction);
 
         ReturnConnection(connection, owner);
-        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction!]);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
         scope.Complete();
     }
