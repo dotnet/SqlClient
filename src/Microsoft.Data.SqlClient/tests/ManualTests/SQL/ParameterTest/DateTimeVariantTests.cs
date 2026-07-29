@@ -124,6 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Type(
@@ -160,6 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleParameter_Variant(
@@ -196,6 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Type(
@@ -239,6 +242,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataRecordParameterToTVP_Variant(
@@ -282,6 +286,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReaderParameterToTVP_Type(
@@ -377,6 +382,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Type(
@@ -452,6 +458,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSqlDataReader_TVP_Variant(
@@ -527,6 +534,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Type(
@@ -584,6 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 expectedBaseTypeOverrides);
         }
 
+        [Trait("Category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(GetParameterCombinations), DisableDiscoveryEnumeration = true)]
         public void TestSimpleDataReader_Variant(
