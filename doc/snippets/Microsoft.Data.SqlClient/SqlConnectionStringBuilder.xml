@@ -1403,7 +1403,7 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
     </TransactionBinding>
     <TransparentNetworkIPResolution>
       <summary>
-        On .NET Framework, when the value of this key is set to <see langword="true" /> (the default), the driver runs multiple connect rounds across the DNS-resolved IP addresses, trying one address at a time with a 500 ms floor on the first attempt and progressively larger per-attempt timeouts, until a connection succeeds or the overall <c>Connect Timeout</c> is reached.
+        On .NET Framework, when the value of this key is set to <see langword="true" /> (the default), the driver runs multiple connect rounds across the DNS-resolved IP addresses, with a 500 ms floor on the first attempt and progressively larger per-attempt timeouts, until a connection succeeds or the overall <c>Connect Timeout</c> is reached.
       </summary>
       <value>
         A boolean value.
