@@ -388,7 +388,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch
                 {
-                    newConnection.DeactivateConnection();
+                    try
+                    {
+                        newConnection.DeactivateConnection();
+                    }
+                    catch
+                    {
+                        // Preserve the original failure; best-effort cleanup only.
+                    }
+
                     newConnection.Dispose();
                     throw;
                 }
