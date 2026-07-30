@@ -1403,7 +1403,7 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
     </TransactionBinding>
     <TransparentNetworkIPResolution>
       <summary>
-        On .NET Framework, when the value of this key is set to <see langword="true" /> (the default), the driver runs multiple connect rounds across the DNS-resolved IP addresses, with a 500 ms floor on the first attempt and progressively larger per-attempt timeouts, until a connection succeeds or the overall <c>Connect Timeout</c> is reached.
+        On .NET Framework, when the value of this key is set to <see langword="true" />, the driver runs multiple connect rounds across the DNS-resolved IP addresses, with a 500 ms floor on the first attempt and progressively larger per-attempt timeouts, until a connection succeeds or the overall <c>Connect Timeout</c> is reached.
       </summary>
       <value>
         A boolean value.
@@ -1416,13 +1416,13 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
           If the <c>Failover Partner</c> key is set, <c>Transparent Network IP Resolution</c> is ignored.
         </para>
         <para>
-          On .NET Framework, if <c>TransparentNetworkIPResolution</c> isn't specified in the connection string, the driver automatically disables TNIR when the data source is an Azure SQL endpoint (<c>.database.windows.net</c>, <c>.database.cloudapi.de</c>, <c>.database.usgovcloudapi.net</c>, <c>.database.chinacloudapi.cn</c>, or <c>.database.fabric.microsoft.com</c>), when the <c>Authentication</c> key is set to any Microsoft Entra ID method (Active Directory Password, Integrated, Interactive, Service Principal, Device Code Flow, Managed Identity, MSI, Default, or Workload Identity), or if <c>AccessToken</c> is set. For these automatic conditions, an explicit <c>TransparentNetworkIPResolution</c> value bypasses the automatic behavior: <c>True</c> enables TNIR, and <c>False</c> disables TNIR unconditionally. To restore the automatic behavior, remove the keyword from the connection string.
+          On .NET Framework, if <c>TransparentNetworkIPResolution</c> isn't specified in the connection string, the driver automatically disables TNIR when the data source is an Azure SQL endpoint (<c>.database.windows.net</c>, <c>.database.cloudapi.de</c>, <c>.database.usgovcloudapi.net</c>, <c>.database.chinacloudapi.cn</c>, or <c>.database.fabric.microsoft.com</c>), when the <c>Authentication</c> key is set to any Microsoft Entra ID method (<c>Active Directory Password</c>, <c>Active Directory Integrated</c>, <c>Active Directory Interactive</c>, <c>Active Directory Service Principal</c>, <c>Active Directory Device Code Flow</c>, <c>Active Directory Managed Identity</c>, <c>Active Directory MSI</c>, <c>Active Directory Default</c>, or <c>Active Directory Workload Identity</c>), or if <c>AccessToken</c> is set. For these automatic conditions, an explicit <c>TransparentNetworkIPResolution</c> value bypasses the automatic behavior: <c>True</c> enables TNIR, and <c>False</c> disables TNIR unconditionally. To restore the automatic behavior, remove the keyword from the connection string.
         </para>
         <para>
           On .NET (Core, .NET 5+), <c>TransparentNetworkIPResolution</c> isn't a recognized connection-string keyword. Setting it (with any value) throws <c>ArgumentException</c> (<c>KeywordNotSupported</c>) when the driver parses the connection string.
         </para>
         <para>
-          The value of this key must be <c>true</c>, <c>false</c>, <c>yes</c>, or <c>no</c>.
+          On .NET Framework, the value of this key must be <c>true</c>, <c>false</c>, <c>yes</c>, or <c>no</c>.
         </para>
         <para>
           A value of <c>yes</c> is treated the same as a value of <c>true</c>. A value of <c>no</c> is treated the same as a value of <c>false</c>.
