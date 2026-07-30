@@ -343,40 +343,84 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Verifies that the enclave's public key is bound to the signed report. A genuine VBS enclave places
-        // SHA-256(public key) in the first 32 bytes of the report's EnclaveData, which the report signature covers.
-        // Confirming this match ensures the key used to derive the session secret is the one committed to by the
-        // attested report. Mirrors the aas-ehd key binding on the AAS path.
+        /// <summary>
+        /// Verifies that the enclave's Diffie-Hellman public key is the one committed to by the signed
+        /// attestation report. A genuine VBS enclave writes SHA-256(public key) into the first 32 bytes of the
+        /// report's EnclaveData, and that EnclaveData is covered by the report signature that
+        /// <see cref="VerifyAttestationInfo"/> has already validated. Confirming this binding ensures the key used
+        /// to derive the session secret is the exact key the attested enclave committed to. This mirrors the
+        /// aas-ehd key binding performed on the AAS attestation path.
+        /// </summary>
+        /// <param name="enclaveReportPackage">
+        /// The signature-verified enclave report package. Its <c>Report.EnclaveData</c> supplies the committed
+        /// key hash.
+        /// </param>
+        /// <param name="enclavePublicKey">
+        /// The enclave public key that will be used to derive the session secret.
+        /// </param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the report's EnclaveData does not match SHA-256 of <paramref name="enclavePublicKey"/>, or
+        /// when the required report or key data is missing. In either case attestation is rejected.
+        /// </exception>
         private void VerifyEnclavePublicKeyBinding(EnclaveReportPackage enclaveReportPackage, EnclavePublicKey enclavePublicKey)
         {
-            const int reportDataLength = 32; // SHA-256 digest length
+            const int ReportDataLength = 32; // SHA-256 digest length
 
-            // The first 32 bytes of EnclaveData must equal SHA-256 of the key we will use to derive the session secret.
-            byte[] reportData = enclaveReportPackage.Report.EnclaveData;
+            // The first 32 bytes of EnclaveData must equal SHA-256 of the key we will use to derive the session
+            // secret. Read both inputs defensively so missing data results in a clean rejection rather than a
+            // NullReferenceException (SHA256 hashing also throws on a null input).
+            byte[] reportData = enclaveReportPackage?.Report?.EnclaveData;
+            byte[] publicKey = enclavePublicKey?.PublicKey;
+
+            if (reportData == null || reportData.Length < ReportDataLength || publicKey == null)
+            {
+                throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
+            }
+
+#if NET
+            // Hash directly into a stack buffer to avoid a heap allocation for the digest.
+            Span<byte> expectedBinding = stackalloc byte[ReportDataLength];
+            SHA256.HashData(publicKey, expectedBinding);
+
+            // Use a fixed-time comparison in this security-sensitive path so the check does not leak a timing
+            // signal about how many leading bytes matched.
+            bool bound = CryptographicOperations.FixedTimeEquals(
+                reportData.AsSpan(0, ReportDataLength), expectedBinding);
+#else
             byte[] expectedBinding;
             using (SHA256 sha256 = SHA256.Create())
             {
-                expectedBinding = sha256.ComputeHash(enclavePublicKey.PublicKey);
+                expectedBinding = sha256.ComputeHash(publicKey);
             }
 
-            bool bound = reportData != null && reportData.Length >= reportDataLength;
-            if (bound)
-            {
-                for (int index = 0; index < reportDataLength; index++)
-                {
-                    if (reportData[index] != expectedBinding[index])
-                    {
-                        bound = false;
-                        break;
-                    }
-                }
-            }
+            bool bound = FixedTimeEquals(reportData, expectedBinding, ReportDataLength);
+#endif
 
             if (!bound)
             {
                 throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
             }
         }
+
+#if !NET
+        // CryptographicOperations.FixedTimeEquals is unavailable on .NET Framework, so hand-roll an equivalent
+        // constant-time comparison of the first <paramref name="length"/> bytes for the key-binding check above.
+        private static bool FixedTimeEquals(byte[] left, byte[] right, int length)
+        {
+            if (left == null || right == null || left.Length < length || right.Length < length)
+            {
+                return false;
+            }
+
+            int accumulator = 0;
+            for (int index = 0; index < length; index++)
+            {
+                accumulator |= left[index] ^ right[index];
+            }
+
+            return accumulator == 0;
+        }
+#endif
 
         // Verifies the enclave policy matches expected policy.
         private void VerifyEnclavePolicy(EnclaveReportPackage enclaveReportPackage)
