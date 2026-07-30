@@ -1630,11 +1630,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that a connection creation failure enters the blocking-period error state when
         /// blocking is enabled for the pool, and stays out of it when blocking is disabled. The
         /// blocking policy is driven by the connection string's Pool Blocking Period:
-        /// Default/Auto enable blocking for a non-Azure host (localhost), AlwaysBlock forces it on,
+        /// Default/Auto enable blocking for a non-Azure host, AlwaysBlock forces it on,
         /// and NeverBlock suppresses it. FR-006, FR-007.
         /// </summary>
+        /// <remarks>
+        /// The Auto cases here assert the real Auto => "not an Azure endpoint" => blocking mapping,
+        /// so they cannot pin Pool Blocking Period to sidestep endpoint classification. They
+        /// deliberately avoid the data source "localhost": ADPHelper (used by the simulated-server
+        /// Azure routing tests) temporarily registers "localhost" as an Azure endpoint in the
+        /// process-wide ADP.s_azureSqlServerEndpoints list. Because a pool decides whether blocking
+        /// is enabled exactly once, in its constructor, a pool built inside that window would
+        /// classify localhost as Azure and never block, making these assertions flaky under
+        /// parallel collection execution.
+        /// </remarks>
         [Theory]
-        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for localhost
+        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=Auto;", true)]      // Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=NeverBlock;", false)]
         [InlineData("Pool Blocking Period=AlwaysBlock;", true)]
@@ -1642,7 +1652,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions($"Data Source=localhost;{blockingPeriodClause}"),
+                new SqlConnectionOptions($"Data Source=non-azure-test-host;{blockingPeriodClause}"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1668,13 +1678,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that once the pool enters the blocking period, subsequent synchronous requests
         /// fail fast with the cached exception without attempting another physical open.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock: this test needs blocking enabled but is not
+        /// testing endpoint classification, and leaving it on Auto would make it depend on
+        /// "localhost" not being registered as an Azure endpoint by a concurrently running test
+        /// (see ErrorOccurred_OnFailure_FollowsBlockingPeriod for the full explanation).
+        /// </remarks>
         [Fact]
         public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
         {
             // Arrange
             var factory = new CountingTimeoutConnectionFactory();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1708,12 +1724,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that clearing the pool while in the blocking-period error state resets the
         /// externally visible error indicator.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Clear_InErrorState_ResetsErrorOccurred()
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1744,6 +1764,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <see cref="FakeTimeProvider"/> so the test is deterministic and does not wait on
         /// wall-clock time. FR-006, FR-009.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Failure_ThenBlockingPeriodExpiry_AllowsSuccessfulCreate()
         {
@@ -1751,7 +1775,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var factory = new ToggleFailureConnectionFactory();
             var fakeTime = new FakeTimeProvider();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
