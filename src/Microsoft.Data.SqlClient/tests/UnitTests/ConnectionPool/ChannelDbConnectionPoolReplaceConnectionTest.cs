@@ -33,6 +33,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// cannot advance and race the assertions. Pass an explicit <paramref name="timeProvider"/>
         /// only when a test needs to drive time forward deterministically.
         /// </summary>
+        /// <remarks>
+        /// The connection string pins Pool Blocking Period to AlwaysBlock rather than relying on
+        /// the default (Auto). Auto derives the policy from ADP.IsAzureSqlServerEndpoint(DataSource),
+        /// which reads the process-wide mutable ADP.s_azureSqlServerEndpoints list. Other tests in
+        /// this assembly (e.g. ConnectionRoutingTestsAzure) register "localhost" as an Azure endpoint
+        /// for the duration of their run, and xUnit executes separate collections in parallel. Under
+        /// Auto that would classify our localhost pool as Azure, skip creating the blocking-period
+        /// error state entirely, and make every blocking-period assertion below flaky. Pinning the
+        /// policy makes these tests independent of that global state.
+        /// </remarks>
         private ChannelDbConnectionPool ConstructPool(
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroupOptions? poolGroupOptions = null,
@@ -48,7 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 idleTimeout: 0
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions
             );
@@ -547,7 +557,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void ReplaceConnection_NewPhysicalConnection_RespectsBlockingPeriod()
         {
-            // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
+            // Arrange — ConstructPool pins Pool Blocking Period=AlwaysBlock, so the blocking period is enabled.
             var pool = ConstructPool(_factory);
             SqlConnection owner = new();
 
@@ -589,7 +599,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void ReplaceConnection_NewPhysicalConnectionFails_EntersBlockingPeriod()
         {
-            // Arrange — localhost is non-Azure, so the pool's blocking period is enabled by default.
+            // Arrange — ConstructPool pins Pool Blocking Period=AlwaysBlock, so the blocking period is enabled.
             var pool = ConstructPool(_factory);
             SqlConnection owner = new();
 
