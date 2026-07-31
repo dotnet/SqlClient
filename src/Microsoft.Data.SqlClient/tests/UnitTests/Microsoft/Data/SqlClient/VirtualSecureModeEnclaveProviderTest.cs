@@ -27,9 +27,11 @@ public class VirtualSecureModeEnclaveProviderTest
     [Fact]
     public void VerifyEnclavePublicKeyBinding_GenuineKey_Succeeds()
     {
+        // Arrange
         byte[] enclaveKey = Encoding.UTF8.GetBytes("genuine-enclave-public-key-blob");
         EnclaveReportPackage package = BuildReportPackage(Sha256(enclaveKey));
 
+        // Act / Assert
         // Report commits to enclaveKey and the session uses enclaveKey: the binding holds, so no exception.
         InvokeVerifyEnclavePublicKeyBinding(package, new EnclavePublicKey(enclaveKey));
     }
@@ -40,6 +42,7 @@ public class VirtualSecureModeEnclaveProviderTest
     [Fact]
     public void VerifyEnclavePublicKeyBinding_SwappedKey_Throws()
     {
+        // Arrange
         byte[] committedKey = Encoding.UTF8.GetBytes("committed-enclave-public-key-blob");
         // The signed report commits to committedKey...
         EnclaveReportPackage package = BuildReportPackage(Sha256(committedKey));
@@ -47,8 +50,11 @@ public class VirtualSecureModeEnclaveProviderTest
         // ...but a different enclave public key is offered for the session.
         byte[] substitutedKey = Encoding.UTF8.GetBytes("substituted-enclave-public-key");
 
-        ArgumentException ex = Assert.Throws<ArgumentException>(
-            () => InvokeVerifyEnclavePublicKeyBinding(package, new EnclavePublicKey(substitutedKey)));
+        // Act
+        Action action = () => InvokeVerifyEnclavePublicKeyBinding(package, new EnclavePublicKey(substitutedKey));
+
+        // Assert
+        ArgumentException ex = Assert.Throws<ArgumentException>(action);
         Assert.Equal(Strings.VerifyEnclaveKeyBindingFailed, ex.Message);
     }
 
