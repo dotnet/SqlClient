@@ -28,11 +28,8 @@ parameters:
   - name: debug
     type: boolean
 
-  # The prefix to prepend to the job's display name:
-  #
-  #   [<prefix>] Run Managed Instance Tests
-  #
-  - name: displayNamePrefix
+  # The job's display name.
+  - name: displayName
     type: string
 
   # The verbosity level for the dotnet CLI commands.
@@ -80,7 +77,7 @@ parameters:
 
 jobs:
   - job: managed_instance_tests_job_${{ parameters.jobNameSuffix }}
-    displayName: '[${{ parameters.displayNamePrefix }}] Run Managed Instance Tests'
+    displayName: ${{ parameters.displayName }}
     timeoutInMinutes: ${{ parameters.timeout }}
 
     variables:
