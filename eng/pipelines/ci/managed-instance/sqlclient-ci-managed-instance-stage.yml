@@ -74,10 +74,10 @@ stages:
             useManagedSNI: ${{ useManagedSNI }}
             vmImage: ADO-MMS22-SQL22
             ${{ if eq(useManagedSNI, true) }}:
-              displayNamePrefix: 'Win : Managed SNI : ${{ runtime }}'
+              displayName: 'Win : Managed SNI : ${{ runtime }}'
               jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
             ${{ else }}:
-              displayNamePrefix: 'Win : Native SNI : ${{ runtime }}'
+              displayName: 'Win : Native SNI : ${{ runtime }}'
               jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
 
       - ${{ each runtime in parameters.netTestRuntimes }}:
@@ -91,10 +91,10 @@ stages:
             useManagedSNI: ${{ useManagedSNI }}
             vmImage: ADO-MMS22-SQL22
             ${{ if eq(useManagedSNI, true) }}:
-              displayNamePrefix: 'Win : Managed SNI : ${{ runtime }}'
+              displayName: 'Win : Managed SNI : ${{ runtime }}'
               jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
             ${{ else }}:
-              displayNamePrefix: 'Win : Native SNI : ${{ runtime }}'
+              displayName: 'Win : Native SNI : ${{ runtime }}'
               jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
 
     # ----------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ stages:
         parameters:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
-          displayNamePrefix: 'Linux : ${{ runtime }}'
+          displayName: 'Linux : ${{ runtime }}'
           jobNameSuffix: linux_${{ replace(runtime, '.', '_') }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           operatingSystem: Linux
