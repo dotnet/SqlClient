@@ -573,23 +573,42 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     #region Async Ambient Transaction Flow
 
     /// <summary>
-    /// A <see cref="TransactionScope"/> created without <see cref="TransactionScopeAsyncFlowOption.Enabled"/>
-    /// keeps the ambient transaction in thread-static storage, so it is not observable from the
-    /// thread pool thread the pool opens on. The pool must therefore take the transaction from the
-    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState. This test uses a transaction that
-    /// is never ambient anywhere, so AsyncState is the only way the pool can learn about it.
+    /// The case the AsyncState mechanism exists for. A <see cref="TransactionScope"/> created
+    /// without <see cref="TransactionScopeAsyncFlowOption.Enabled"/> -- the default -- keeps its
+    /// ambient transaction in thread-static storage, so it is ambient on the calling thread but
+    /// does not flow across an await onto the thread pool thread the pool opens on. The connection
+    /// must still enlist, because the transaction is captured on the caller's thread before the
+    /// open is scheduled (see SqlConnection.InternalOpenAsync).
+    ///
+    /// The open is started inside the scope but awaited outside it. That is not incidental: when
+    /// async flow is suppressed the continuation may resume on another thread, and a
+    /// TransactionScope must be disposed on the thread that created it. The scope is given an
+    /// explicit <see cref="CommittableTransaction"/> so that leaving the scope ends the scope
+    /// without ending the transaction the pool is still enlisting in.
     /// </summary>
     [Fact]
-    public async Task GetConnectionAsync_AmbientTransactionNotFlowed_StillEnlistsFromAsyncState()
+    public async Task GetConnectionAsync_WithAsyncFlowDisabled_StillEnlistsInAmbientTransaction()
     {
         // Arrange
         using var transaction = new CommittableTransaction();
-        Assert.Null(Transaction.Current);
-        Assert.Null(await Task.Run(() => Transaction.Current));
-
-        // Act
         var owner = new SqlConnection();
-        var connection = await GetConnectionAsync(owner, transaction);
+        Task<DbConnectionInternal> openTask;
+
+        using (var scope = new TransactionScope(transaction))
+        {
+            Assert.Equal(transaction, Transaction.Current);
+
+            // The transaction really is confined to this thread, so AsyncState is the only way
+            // the pool can learn about it.
+            Assert.Null(Task.Run(() => Transaction.Current).GetAwaiter().GetResult());
+
+            // Act - starting the open captures the ambient transaction synchronously, here, and
+            // hands the rest of the work to a thread pool thread.
+            openTask = GetConnectionAsync(owner);
+            scope.Complete();
+        }
+
+        var connection = await openTask;
 
         // Assert
         Assert.NotNull(connection);
@@ -603,7 +622,38 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     }
 
     /// <summary>
-    /// Assigning <see cref="Transaction.Current"/> writes to thread-static storage that the
+    /// The pool must take the transaction from AsyncState rather than from whatever is ambient on
+    /// the thread that happens to enter it. TryGetConnection is normally called synchronously from
+    /// the caller's thread, where the two agree -- but on the retry path
+    /// (SqlConnection.OpenAsyncRetry.Retry) the pool is re-entered from a continuation running on
+    /// an arbitrary thread, which has no ambient transaction. Reading Transaction.Current there
+    /// would silently drop the enlistment, or worse, pick up an unrelated transaction.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_EnteredFromThreadWithoutAmbientTransaction_EnlistsFromAsyncState()
+    {
+        // Arrange
+        using var transaction = new CommittableTransaction();
+        var owner = new SqlConnection();
+
+        // Act - enter the pool from a thread pool thread with no ambient transaction, the way a
+        // retry continuation does, carrying the transaction only in AsyncState.
+        var connection = await Task.Run(async () =>
+        {
+            Assert.Null(Transaction.Current);
+            return await GetConnectionAsync(owner, transaction);
+        });
+
+        // Assert
+        Assert.NotNull(connection);
+        Assert.Equal(transaction, connection.EnlistedTransaction);
+
+        ReturnConnection(connection, owner);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction));
+
+        transaction.Rollback();
+    }
     /// ExecutionContext does not unwind, so doing it on a thread pool thread would leave a stale
     /// transaction behind for unrelated work later scheduled onto that same thread -- including
     /// the login-time auto-enlistment that non-pooled connections perform against the ambient
