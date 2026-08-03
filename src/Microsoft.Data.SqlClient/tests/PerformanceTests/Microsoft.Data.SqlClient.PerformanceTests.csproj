@@ -42,6 +42,10 @@
                       VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
 
+  <!-- TODO (tracked by the perf-pipeline follow-up): remove this ItemGroup once the perf baseline    -->
+  <!-- moves off 7.1.0-preview1.26124.5, or once those two prerelease dependencies are published.    -->
+  <!-- This is a workaround pinned to one exact baseline version, so it is dead weight the moment    -->
+  <!-- the baseline is bumped - and silently so, since a stale condition simply never matches.       -->
   <!-- Microsoft.Data.SqlClient 7.1.0-preview1.26124.5 declares transitive dependencies on the      -->
   <!-- prerelease Microsoft.Data.SqlClient.Extensions.Abstractions and                              -->
   <!-- Microsoft.Data.SqlClient.Internal.Logging 1.0.0-preview1.26124.5 packages, which were never  -->

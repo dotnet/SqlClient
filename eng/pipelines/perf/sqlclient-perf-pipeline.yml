@@ -167,6 +167,12 @@ parameters:
 variables:
   - group: ADX Cluster Variables
 
+  # Pinned version of the Azure Data Explorer Python SDKs used by the ingestion step.  Kept as a
+  # single variable so the pin is bumped deliberately in one place (and so the eventual move to an
+  # internal governed feed only has to change the install command, not the version).
+  - name: KustoSdkVersion
+    value: '6.0.4'
+
   # Pre-computed testScriptArgs chunks (paulmedynski's review suggestion).  The Windows entry point
   # is PowerShell and binds '-PascalCase' params, while the Linux one is bash and parses
   # '--kebab-case' flags, so the argument STYLE differs by platform.  Assembling the final args from
@@ -335,8 +341,22 @@ extends:
             # python3-venv package (no ensurepip), so both a plain 'pip install' and
             # 'python3 -m venv' fail. pip itself is available, so install the Kusto SDKs
             # into the per-user site and bypass the PEP 668 marker.
-            python3 -m pip install --quiet --upgrade --user --break-system-packages \
-              azure-kusto-data azure-kusto-ingest
+            #
+            # Versions are pinned deliberately, for two reasons:
+            #   1. This step runs inside an authenticated AzureCLI@2 context holding a token for the
+            #      ADX cluster, so an unpinned floating install would let any newly published version
+            #      of these packages (or of their transitive deps) execute with those credentials.
+            #      A pinned version also keeps perf runs reproducible instead of silently changing
+            #      whenever upstream publishes.
+            #   2. Direct access to public PyPI is expected to be withdrawn for this org in the near
+            #      future, following the same path as npm and NuGet. When that happens this install
+            #      must be repointed at the governed internal feed; pinning now means that migration
+            #      is a feed swap rather than also absorbing an unbounded version jump.
+            # TODO: repoint at the internal governed Python feed once it is available, and drop the
+            #       public PyPI dependency entirely.
+            python3 -m pip install --quiet --user --break-system-packages \
+              --disable-pip-version-check --no-input \
+              "azure-kusto-data==$(KustoSdkVersion)" "azure-kusto-ingest==$(KustoSdkVersion)"
 
             runFiles=""
             resFiles=""
