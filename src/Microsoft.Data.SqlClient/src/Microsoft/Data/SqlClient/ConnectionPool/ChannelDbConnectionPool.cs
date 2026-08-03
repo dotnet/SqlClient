@@ -818,26 +818,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
             // is cancelled. We can only cancel based on our own timeout, which is set to the owningObject's
             // ConnectionTimeout.
-            // The ambient transaction is captured here, on the caller's thread, because
-            // Transaction.Current does not flow into the Task.Run below: a TransactionScope keeps
-            // the ambient transaction in thread-static storage unless it was created with
-            // TransactionScopeAsyncFlowOption.Enabled.
-            //
-            // The TaskCompletionSource's AsyncState takes priority: SqlConnection.OpenAsync
-            // captures the ambient transaction there at the point of the call, which stays correct
-            // even when a retry re-enters us from a continuation running on some other thread.
-            // We fall back to the caller's own ambient transaction so that this path behaves the
-            // same as the synchronous one for callers that don't supply the state.
+            // The ambient transaction is captured by the caller, on the caller's thread, and handed
+            // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
+            // We must not read Transaction.Current ourselves here: a TransactionScope keeps the
+            // ambient transaction in thread-static storage unless it was created with
+            // TransactionScopeAsyncFlowOption.Enabled, and on a retry we are re-entered from a
+            // continuation running on an arbitrary thread, so Transaction.Current at this point
+            // says nothing reliable about the caller's transaction.
             //
             // Note that we deliberately do not assign Transaction.Current on the thread pool
-            // thread. That assignment writes to thread-static storage which is *not* unwound when
-            // the ExecutionContext is restored, so it would outlive this open and be observed by
-            // unrelated work later scheduled onto the same thread pool thread -- including the
+            // thread either. That assignment writes to thread-static storage which is *not* unwound
+            // when the ExecutionContext is restored, so it would outlive this open and be observed
+            // by unrelated work later scheduled onto the same thread pool thread -- including the
             // login-time auto-enlistment that non-pooled connections perform against
             // Transaction.Current. The WaitHandle pool can get away with assigning it because it
             // processes pending opens on a dedicated non-thread-pool thread.
-            Transaction? ambientTransaction =
-                taskCompletionSource.Task.AsyncState as Transaction ?? ADP.GetCurrentTransaction();
+            Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
             Task.Run(async () =>
             {

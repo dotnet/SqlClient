@@ -113,16 +113,20 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     }
 
     /// <summary>
-    /// Opens a connection asynchronously, carrying <paramref name="transaction"/> in the
-    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState exactly as
-    /// SqlConnection.InternalOpenAsync does. The pool must take the transaction from there,
-    /// because the open runs on a thread pool thread the ambient transaction may not flow to.
+    /// Opens a connection asynchronously the way SqlConnection.InternalOpenAsync does: the ambient
+    /// transaction is captured here, on the caller's thread, and handed to the pool in the
+    /// <see cref="TaskCompletionSource{TResult}"/>'s AsyncState. The pool must take it from there,
+    /// because the open itself runs on a thread pool thread the ambient transaction may not flow
+    /// to, and on a retry the pool is re-entered from a continuation on an arbitrary thread.
     /// </summary>
+    /// <param name="owner">The owning connection.</param>
+    /// <param name="transaction">The transaction to hand to the pool. Defaults to the caller's
+    /// ambient transaction, matching what InternalOpenAsync captures.</param>
     private async Task<DbConnectionInternal> GetConnectionAsync(
         SqlConnection owner,
         Transaction? transaction = null)
     {
-        var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction);
+        var tcs = new TaskCompletionSource<DbConnectionInternal>(transaction ?? Transaction.Current);
         _pool.TryGetConnection(
             owner,
             taskCompletionSource: tcs,
@@ -661,24 +665,24 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     }
 
     /// <summary>
-    /// The asynchronous equivalent of the case above: when the ambient transaction does flow to
-    /// the caller (a TransactionScope created with
-    /// <see cref="TransactionScopeAsyncFlowOption.Enabled"/>) but the caller supplies no
-    /// transaction in the TaskCompletionSource's AsyncState, the pool must still pick it up. The
-    /// capture happens on the caller's thread before the open is scheduled, so the two paths agree
-    /// on what "the caller's transaction" means.
+    /// The asynchronous equivalent of the case above. The pool cannot read the caller's ambient
+    /// transaction itself, because the open runs on a thread pool thread it does not flow to, so
+    /// the caller captures it and passes it in AsyncState. Even with a scope created with
+    /// <see cref="TransactionScopeAsyncFlowOption.Enabled"/>, where the transaction is genuinely
+    /// ambient on the calling thread, that capture is what has to carry it through.
     /// </summary>
     [Fact]
-    public async Task GetConnectionAsync_WithoutAsyncState_UsesAmbientTransactionFromCallersThread()
+    public async Task GetConnectionAsync_UsesAmbientTransactionCapturedOnCallersThread()
     {
         // Arrange
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
-        // Act - note that no transaction is passed, so AsyncState is null.
+        // Act - no transaction is passed explicitly, so the helper captures the ambient one on
+        // this thread exactly as SqlConnection.InternalOpenAsync does.
         var owner = new SqlConnection();
-        var connection = await GetConnectionAsync(owner, transaction: null);
+        var connection = await GetConnectionAsync(owner);
 
         // Assert
         Assert.NotNull(connection);
