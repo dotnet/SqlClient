@@ -478,13 +478,46 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            // The disposition is decided while holding the connection's lock so that a transaction
-            // completing asynchronously on another thread cannot race with us, but the resulting
-            // I/O is performed outside of it.
+            // Note: this logic mirrors WaitHandleDbConnectionPool.ReturnObject
             ReturnDisposition disposition;
             lock (connection)
             {
-                disposition = DecideReturnDisposition(connection);
+                if (State is not Running || !connection.CanBePooled)
+                {
+                    // A transaction root that cannot be pooled must be put in stasis rather than
+                    // closed. Closing it would orphan the root transaction with no means to promote
+                    // itself to a full delegated transaction, or to commit or roll back.
+                    // System.Transactions keeps the connection owned (not lost) and is certain to
+                    // call the appropriate callback when the transaction ends.
+                    if (connection.IsTransactionRoot)
+                    {
+                        connection.SetInStasis();
+                        disposition = ReturnDisposition.HeldByTransaction;
+                    }
+                    else
+                    {
+                        disposition = ReturnDisposition.Destroy;
+                    }
+                }
+                else if (connection.EnlistedTransaction is { } transaction)
+                {
+                    // A connection that is still enlisted cannot be handed to a different customer
+                    // until its transaction actually completes, so it is parked in the transacted
+                    // store keyed by that transaction and comes back via
+                    // PutObjectFromTransactedPool when it ends.
+                    //
+                    // Transacted connections are deliberately not stamped with a returned time:
+                    // they are never proactively closed (doing so would abort a possibly
+                    // distributed transaction), so idle-timeout enforcement does not apply while
+                    // they are parked. They are stamped when they rejoin the idle channel in
+                    // PutObjectFromTransactedPool.
+                    TransactedConnectionPool.PutTransactedObject(transaction, connection);
+                    disposition = ReturnDisposition.HeldByTransaction;
+                }
+                else
+                {
+                    disposition = ReturnDisposition.Reuse;
+                }
             }
 
             switch (disposition)
@@ -503,62 +536,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // transaction ends.
                     break;
             }
-        }
-
-        /// <summary>
-        /// Decides what should happen to a returning connection that has already been deactivated
-        /// and is not doomed. Must be called while holding the connection's lock: parking a
-        /// connection in the transacted store has to be atomic with respect to a transaction
-        /// completing on another thread.
-        /// </summary>
-        /// <param name="connection">The connection being returned.</param>
-        /// <returns>The action the caller must take for this connection.</returns>
-        private ReturnDisposition DecideReturnDisposition(DbConnectionInternal connection)
-        {
-            // A connection is only fit to go back into circulation if the pool is still running,
-            // the connection itself is still poolable, and it isn't a transaction root that has
-            // already been detached from its pool.
-            bool isReusable =
-                State is Running &&
-                connection.CanBePooled &&
-                !(connection.IsTransactionRoot && connection.Pool is null);
-
-            if (!isReusable)
-            {
-                // A transaction root that cannot be pooled must be put in stasis rather than
-                // closed. Closing it would orphan the root transaction with no means to promote
-                // itself to a full delegated transaction, or to commit or roll back.
-                // System.Transactions keeps the connection owned (not lost) and is certain to
-                // hand it back to us when the transaction ends.
-                if (connection.IsTransactionRoot)
-                {
-                    connection.SetInStasis();
-                    return ReturnDisposition.HeldByTransaction;
-                }
-
-                return ReturnDisposition.Destroy;
-            }
-
-            // A connection that is still enlisted cannot be handed to a different customer until
-            // its transaction actually completes, so it is parked in the transacted store keyed by
-            // that transaction and comes back via PutObjectFromTransactedPool when it ends.
-            //
-            // NOTE: we do not hold a lock on State, so its value could have changed since the
-            // check above. That is acceptable because the DelegatedTransactionEnded event cleans
-            // the connection up appropriately regardless of the pool state.
-            //
-            // Transacted connections are deliberately not stamped with a returned time: they are
-            // never proactively closed (doing so would abort a possibly distributed transaction),
-            // so idle-timeout enforcement does not apply while they are parked. They are stamped
-            // when they rejoin the idle channel in PutObjectFromTransactedPool.
-            Transaction? transaction = connection.EnlistedTransaction;
-            if (transaction is not null)
-            {
-                TransactedConnectionPool.PutTransactedObject(transaction, connection);
-                return ReturnDisposition.HeldByTransaction;
-            }
-
-            return ReturnDisposition.Reuse;
         }
 
         /// <summary>
@@ -1396,32 +1373,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Transacting connections are exempt from idle-timeout and clear-generation eviction
             // (closing them would abort the transaction, which may be distributed), so only
             // liveness is checked here rather than the full IsLiveConnection gate.
-            if (connection.IsTransactionRoot)
+            bool isAlive = false;
+            try
             {
-                try
-                {
-                    // A dead transaction root must surface the underlying failure to the caller:
-                    // there is no way to recover the delegated transaction on another connection.
-                    connection.IsConnectionAlive(throwOnException: true);
-                }
-                catch
+                // A dead transaction root must surface the underlying failure to the caller, since
+                // there is no way to recover the delegated transaction on another connection. Any
+                // other dead connection is simply reported so the caller can pick up or open a
+                // different one. Either way the connection is dropped in the finally below.
+                isAlive = connection.IsConnectionAlive(throwOnException: connection.IsTransactionRoot);
+            }
+            finally
+            {
+                if (!isAlive)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
                         "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
                         Id,
                         connection.ObjectID);
                     RemoveConnection(connection);
-                    throw;
+                    connection = null;
                 }
-            }
-            else if (!connection.IsConnectionAlive())
-            {
-                SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
-                    Id,
-                    connection.ObjectID);
-                RemoveConnection(connection);
-                connection = null;
             }
 
             return connection;
