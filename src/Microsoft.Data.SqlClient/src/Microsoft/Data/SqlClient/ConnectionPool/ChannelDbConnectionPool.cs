@@ -821,9 +821,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // The ambient transaction is captured here, on the caller's thread, because
             // Transaction.Current does not flow into the Task.Run below: a TransactionScope keeps
             // the ambient transaction in thread-static storage unless it was created with
-            // TransactionScopeAsyncFlowOption.Enabled. We rely on the caller to capture the ambient
-            // transaction in the TaskCompletionSource's AsyncState, and then hand it to
-            // GetInternalConnection explicitly.
+            // TransactionScopeAsyncFlowOption.Enabled.
+            //
+            // The TaskCompletionSource's AsyncState takes priority: SqlConnection.OpenAsync
+            // captures the ambient transaction there at the point of the call, which stays correct
+            // even when a retry re-enters us from a continuation running on some other thread.
+            // We fall back to the caller's own ambient transaction so that this path behaves the
+            // same as the synchronous one for callers that don't supply the state.
             //
             // Note that we deliberately do not assign Transaction.Current on the thread pool
             // thread. That assignment writes to thread-static storage which is *not* unwound when
@@ -832,7 +836,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // login-time auto-enlistment that non-pooled connections perform against
             // Transaction.Current. The WaitHandle pool can get away with assigning it because it
             // processes pending opens on a dedicated non-thread-pool thread.
-            Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+            Transaction? ambientTransaction =
+                taskCompletionSource.Task.AsyncState as Transaction ?? ADP.GetCurrentTransaction();
 
             Task.Run(async () =>
             {

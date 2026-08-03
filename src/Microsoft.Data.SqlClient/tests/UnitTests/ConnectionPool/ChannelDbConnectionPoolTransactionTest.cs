@@ -28,6 +28,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     private const int DefaultCreationTimeoutInMilliseconds = 15000;
 
     private IDbConnectionPool _pool;
+    private MockSqlConnectionFactory _connectionFactory = null!;
 
     public ChannelDbConnectionPoolTransactionTest()
     {
@@ -72,8 +73,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             poolGroupOptions
         );
 
+        _connectionFactory = new MockSqlConnectionFactory();
+
         var pool = new ChannelDbConnectionPool(
-            new MockSqlConnectionFactory(),
+            _connectionFactory,
             dbConnectionPoolGroup,
             DbConnectionPoolIdentity.NoIdentity,
             new DbConnectionPoolProviderInfo(),
@@ -601,25 +604,33 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     /// transaction behind for unrelated work later scheduled onto that same thread -- including
     /// the login-time auto-enlistment that non-pooled connections perform against the ambient
     /// transaction. The pool must pass the transaction explicitly instead of assigning it.
+    ///
+    /// The connection factory runs on exactly the thread the pool does its open work on, so it is
+    /// used here to observe that thread's ambient transaction directly rather than inferring the
+    /// leak from thread pool reuse.
     /// </summary>
     [Fact]
-    public async Task GetConnectionAsync_DoesNotLeakAmbientTransactionOntoThreadPool()
+    public async Task GetConnectionAsync_DoesNotSetAmbientTransactionOnPoolWorkerThread()
     {
-        // Arrange & Act - several async opens under a transaction, each on a thread pool thread.
-        for (int i = 0; i < 8; i++)
-        {
-            using var transaction = new CommittableTransaction();
-            var owner = new SqlConnection();
-            var connection = await GetConnectionAsync(owner, transaction);
-            ReturnConnection(connection, owner);
-            transaction.Rollback();
-        }
+        // Arrange - a transaction the pool must enlist in but must not make ambient.
+        using var transaction = new CommittableTransaction();
+        Assert.Null(Transaction.Current);
 
-        // Assert - no thread pool thread was left with an ambient transaction.
-        for (int i = 0; i < 16; i++)
-        {
-            Assert.Null(await Task.Run(() => Transaction.Current));
-        }
+        // Act
+        var owner = new SqlConnection();
+        var connection = await GetConnectionAsync(owner, transaction);
+
+        // Assert - the open really did happen off the calling thread, and the pool left that
+        // thread's ambient transaction alone while still enlisting the connection.
+        Assert.Equal(1, _connectionFactory.CreateCount);
+        Assert.NotEqual(Environment.CurrentManagedThreadId, _connectionFactory.CreateThreadId);
+        Assert.Null(_connectionFactory.AmbientTransactionAtCreate);
+        Assert.Equal(transaction, connection.EnlistedTransaction);
+
+        ReturnConnection(connection, owner);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+        transaction.Rollback();
     }
 
     /// <summary>
@@ -649,12 +660,58 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         scope.Complete();
     }
 
+    /// <summary>
+    /// The asynchronous equivalent of the case above: when the ambient transaction does flow to
+    /// the caller (a TransactionScope created with
+    /// <see cref="TransactionScopeAsyncFlowOption.Enabled"/>) but the caller supplies no
+    /// transaction in the TaskCompletionSource's AsyncState, the pool must still pick it up. The
+    /// capture happens on the caller's thread before the open is scheduled, so the two paths agree
+    /// on what "the caller's transaction" means.
+    /// </summary>
+    [Fact]
+    public async Task GetConnectionAsync_WithoutAsyncState_UsesAmbientTransactionFromCallersThread()
+    {
+        // Arrange
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        Transaction? transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        // Act - note that no transaction is passed, so AsyncState is null.
+        var owner = new SqlConnection();
+        var connection = await GetConnectionAsync(owner, transaction: null);
+
+        // Assert
+        Assert.NotNull(connection);
+        Assert.Equal(transaction, connection.EnlistedTransaction);
+
+        ReturnConnection(connection, owner);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+        Assert.Equal(1, TransactedConnectionsFor(transaction!));
+
+        scope.Complete();
+    }
+
     #endregion
 
     #region Mock Classes
 
     internal class MockSqlConnectionFactory : SqlConnectionFactory
     {
+        /// <summary>
+        /// The value of <see cref="Transaction.Current"/> observed on the thread the pool used to
+        /// create the connection. On the asynchronous path that is the thread pool thread the pool
+        /// runs its open work on, so this is a direct observation of whether the pool assigned the
+        /// ambient transaction there.
+        /// </summary>
+        public Transaction? AmbientTransactionAtCreate { get; private set; }
+
+        /// <summary>
+        /// The managed thread the pool created the connection on.
+        /// </summary>
+        public int CreateThreadId { get; private set; }
+
+        public int CreateCount { get; private set; }
+
         protected override DbConnectionInternal CreateConnection(
             SqlConnectionOptions options,
             ConnectionPoolKey poolKey,
@@ -663,6 +720,9 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             DbConnection owningConnection,
             TimeoutTimer timeout)
         {
+            AmbientTransactionAtCreate = Transaction.Current;
+            CreateThreadId = Environment.CurrentManagedThreadId;
+            CreateCount++;
             return new MockDbConnectionInternal();
         }
     }
