@@ -60,7 +60,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob SqlBulkCopyRunnerConfig;
         public RunnerJob DataTypeReaderRunnerConfig;
         public RunnerJob AlwaysEncryptedDataTypeReaderRunnerConfig;
-        public RunnerJob AsyncLargeDataReadRunnerConfig;
+        public RunnerJob LargeDataReadRunnerConfig;
+        public RunnerJob AlwaysEncryptedLargeDataReadRunnerConfig;
         public RunnerJob MarsOverheadRunnerConfig;
         public RunnerJob ParallelAsyncConnectionRunnerConfig;
         public RunnerJob CancellationTokenReadAsyncRunnerConfig;

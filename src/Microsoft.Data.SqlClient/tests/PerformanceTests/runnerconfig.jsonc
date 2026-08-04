@@ -63,7 +63,15 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        "AsyncLargeDataReadRunnerConfig": {
+        "LargeDataReadRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 20,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        "AlwaysEncryptedLargeDataReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 20,
