@@ -7,10 +7,10 @@
 # =============================================================================
 # sqlclient-ci-kerberos-pipeline
 # =============================================================================
-# Daily Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
+# Kerberos authentication test pipeline for Microsoft.Data.SqlClient.
 # Replaces the Classic "Test-SqlClient-Kerberos-Azure" pipeline.
 #
-# Schedule: daily at 07:00 UTC on internal/main.
+# Triggered by successful runs of the sqlclient-ci-package pipeline.
 #
 # Job breakdown (10 total):
 #   Stage: windows           → 7 jobs  (net462 + net8/9/10 × NativeSNI/ManagedSNI)
@@ -34,18 +34,31 @@
 #   - REMOTE_NP_CONN_STRING   Named Pipe connection string to sqldrv-sql22
 # =============================================================================
 
-trigger: none   # Scheduled runs only — no CI trigger
-pr: none        # Not triggered by PRs
+trigger: none
+pr: none
 
-schedules:
-  - cron: '0 7 * * *'
-    displayName: Daily run (07:00 UTC)
-    branches:
-      include:
-        - internal/main
-    always: true
+# Trigger this pipeline after successful runs of the project-local sqlclient-ci-package pipeline.
+resources:
+  pipelines:
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
+      trigger: true
 
 name: $(date:yyyyMMdd)$(rev:.r)
+
+parameters:
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
 variables:
   # Our Kerberos environment doesn't change often, so we can define these variables here rather than
@@ -88,7 +101,8 @@ stages:
         displayName: Windows
         timeoutInMinutes: 90
         workspace:
-          clean: all    # Purge obj/artifacts from prior runs on self-hosted agents
+          # Clean the agent since our hosted pool will re-use agent instances between runs.
+          clean: all
         strategy:
           matrix:
             # Azure Pipelines exposes matrix variables as environment variables for each step.
@@ -122,10 +136,9 @@ stages:
             - ImageOverride -equals ADO-MMS22-SQL19
         steps:
 
-          - checkout: self
-            clean: true
-            fetchDepth: 1
-            fetchTags: false
+          # Keep source in lockstep with the upstream package build while retaining the pipeline
+          # definitions from the commit this run was queued against.
+          - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
 
           - template: /eng/pipelines/common/steps/install-dotnet.yml@self
             parameters:
@@ -186,6 +199,7 @@ stages:
               testFramework: $(testFramework)
               testRunTitle: Windows-$(testFramework)-ManagedSNI_$(managedSNI)
               artifactName: $(testFramework)-ManagedSNI_$(managedSNI)-$(System.JobId)
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
   # ===========================================================================
   # Stage 2 - Linux - .NET Core + Kerberos (3 jobs = 3 TFs)
@@ -218,10 +232,9 @@ stages:
 
         steps:
 
-          - checkout: self
-            clean: true
-            fetchDepth: 1
-            fetchTags: false
+          # Keep source in lockstep with the upstream package build while retaining the pipeline
+          # definitions from the commit this run was queued against.
+          - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
 
           # --- Install .NET SDK and runtimes ---
           - template: /eng/pipelines/common/steps/install-dotnet.yml@self
@@ -275,6 +288,7 @@ stages:
               testFramework: $(testFramework)
               testRunTitle: Linux-$(testFramework)
               artifactName: $(testFramework)-linux-$(System.JobId)
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
 
           # --- Kerberos cleanup (always runs) ---
           - template: /eng/pipelines/ci/kerberos/linux-cleanup-step.yml@self
