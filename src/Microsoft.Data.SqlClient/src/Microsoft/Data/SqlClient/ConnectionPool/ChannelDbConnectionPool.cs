@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
@@ -251,6 +252,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int MinPoolSize => PoolGroupOptions.MinPoolSize;
 
         /// <summary>
+        /// Indicates whether connections may be vended from (and parked in) the
+        /// <see cref="TransactedConnectionPool"/>. This mirrors automatic transaction enlistment:
+        /// when enlistment is disabled a connection is never bound to an ambient transaction, so
+        /// the transacted store must not be consulted.
+        /// </summary>
+        private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
+
+        /// <summary>
         /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
         /// warmup pass to a deterministic completion instead of polling pool counters. May be null
         /// (warmup never requested) or reference an already-completed pass (requests are coalesced);
@@ -313,7 +322,35 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void PutObjectFromTransactedPool(DbConnectionInternal connection)
         {
-            throw new NotImplementedException();
+            Debug.Assert(connection is not null,
+                "PutObjectFromTransactedPool was called with a null connection.");
+            Debug.Assert(connection.EnlistedTransaction is null,
+                "PutObjectFromTransactedPool was called with a connection that is still enlisted. " +
+                "The transaction must have ended and been detached before the connection returns to " +
+                "general circulation, otherwise it could be vended to a caller in a different transaction.");
+
+            // Called by the transacted connection pool once it has removed the connection from its
+            // list. We put the connection back into general circulation.
+            //
+            // NOTE: no locking is required here because if we're in this method we can safely
+            // presume that the caller is the only one using the connection, that all pre-push logic
+            // has been done, and that all transactions have ended.
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.",
+                Id,
+                connection.ObjectID);
+
+            if (State is Running && connection.CanBePooled)
+            {
+                connection.ResetConnection();
+                PutConnectionInIdleChannel(connection);
+            }
+            else
+            {
+                // RemoveConnection triggers replenishment, which is the channel pool's equivalent
+                // of the wait handle pool's QueuePoolCreateRequest.
+                RemoveConnection(connection);
+            }
         }
 
         /// <inheritdoc />
@@ -331,7 +368,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (newConnection is not null)
             {
-                // TODO: Full transaction enlistment support (Story 2).
+                // Carry the old connection's enlistment over to the replacement so that a connection
+                // replaced mid-transaction stays bound to the same transaction.
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
                 oldConnection.DeactivateConnection();
                 RemoveConnection(oldConnection);
@@ -373,7 +411,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         newConnection.PostPop(owningObject);
                     }
 
-                    // TODO: Full transaction enlistment support (Story 2).
+                    // Carry the old connection's enlistment over to the replacement so that a
+                    // connection replaced mid-transaction stays bound to the same transaction.
                     newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
 
                     // Place new into old's slot
@@ -422,12 +461,126 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.",
+                Id,
+                connection.ObjectID);
+
+            // Deactivate before inspecting the connection's transaction state. Deactivation is what
+            // detaches a completed transaction, so reading EnlistedTransaction beforehand could park
+            // a connection in the transacted pool under a transaction that has already ended.
+            connection.DeactivateConnection();
+
+            if (connection.IsConnectionDoomed)
+            {
+                // The connection is not fit for reuse -- just dispose of it.
+                RemoveConnection(connection);
+                return;
+            }
+
+            // Note: this logic mirrors WaitHandleDbConnectionPool.ReturnObject
+            ReturnDisposition disposition;
+            lock (connection)
+            {
+                if (State is not Running || !connection.CanBePooled)
+                {
+                    // A transaction root that cannot be pooled must be put in stasis rather than
+                    // closed. Closing it would orphan the root transaction with no means to promote
+                    // itself to a full delegated transaction, or to commit or roll back.
+                    // System.Transactions keeps the connection owned (not lost) and is certain to
+                    // call the appropriate callback when the transaction ends.
+                    if (connection.IsTransactionRoot)
+                    {
+                        connection.SetInStasis();
+                        disposition = ReturnDisposition.HeldByTransaction;
+                    }
+                    else
+                    {
+                        disposition = ReturnDisposition.Destroy;
+                    }
+                }
+                else if (connection.EnlistedTransaction is { } transaction)
+                {
+                    // A connection that is still enlisted cannot be handed to a different customer
+                    // until its transaction actually completes, so it is parked in the transacted
+                    // store keyed by that transaction and comes back via
+                    // PutObjectFromTransactedPool when it ends.
+                    //
+                    // Transacted connections are deliberately not stamped with a returned time:
+                    // they are never proactively closed (doing so would abort a possibly
+                    // distributed transaction), so idle-timeout enforcement does not apply while
+                    // they are parked. They are stamped when they rejoin the idle channel in
+                    // PutObjectFromTransactedPool.
+                    TransactedConnectionPool.PutTransactedObject(transaction, connection);
+                    disposition = ReturnDisposition.HeldByTransaction;
+                }
+                else
+                {
+                    disposition = ReturnDisposition.Reuse;
+                }
+            }
+
+            switch (disposition)
+            {
+                case ReturnDisposition.Reuse:
+                    PutConnectionInIdleChannel(connection);
+                    break;
+
+                case ReturnDisposition.Destroy:
+                    RemoveConnection(connection);
+                    break;
+
+                case ReturnDisposition.HeldByTransaction:
+                    // Nothing further to do. The connection is parked in the transacted store or
+                    // in stasis, and comes back through PutObjectFromTransactedPool once its
+                    // transaction ends.
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// The outcome of evaluating a connection that is being returned to the pool.
+        /// </summary>
+        private enum ReturnDisposition
+        {
+            /// <summary>
+            /// The connection is fit for general reuse and belongs in the idle channel.
+            /// </summary>
+            Reuse,
+
+            /// <summary>
+            /// The connection cannot be reused and must be closed.
+            /// </summary>
+            Destroy,
+
+            /// <summary>
+            /// The connection is owned by a live transaction, either parked in the transacted
+            /// store or held in stasis, and must not be touched by the pool until that
+            /// transaction ends.
+            /// </summary>
+            HeldByTransaction,
+        }
+
+        /// <summary>
+        /// Places a connection that is fit for general reuse into the idle channel, stamping its
+        /// idle-return time and dropping it if it is no longer live.
+        /// </summary>
+        /// <param name="connection">The connection to make available to other callers.</param>
+        private void PutConnectionInIdleChannel(DbConnectionInternal connection)
+        {
             // Stamp the return time before IsLiveConnection runs so the idle-expiry gate inside it
             // measures time-in-pool, not time-since-last-return. Without this, a connection whose
             // checkout exceeded IdleTimeout (e.g. a long-running query) would be wrongly evicted on
             // return even though it was actively in use on the wire. The same gating conditions are
             // applied here as in IsLiveConnection so we avoid the per-return timestamp read when
             // idle expiry is disabled or the legacy idle-timeout behavior is in effect.
+            //
+            // A connection parked in the transacted store does not pass through here, so it is not
+            // subject to idle timeout for as long as its transaction is live. That is intentional
+            // and matches WaitHandleDbConnectionPool: closing it would abort a possibly distributed
+            // transaction. It is stamped here when the transaction ends and
+            // PutObjectFromTransactedPool returns it to general circulation, so the idle clock
+            // starts from the moment it actually becomes available to other callers.
             if (!LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior &&
                 PoolGroupOptions.IdleTimeout != TimeSpan.Zero)
             {
@@ -440,26 +593,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.",
-                Id,
-                connection.ObjectID);
-            connection.DeactivateConnection();
-
-            if (connection.IsConnectionDoomed ||
-                !connection.CanBePooled ||
-                State == ShuttingDown)
+            if (!_idleChannel.TryWrite(connection))
             {
+                // The channel has been completed (pool is shutting down). Race window
+                // between the State check by the caller and TryWrite: destroy instead of pooling.
                 RemoveConnection(connection);
-            }
-            else
-            {
-                if (!_idleChannel.TryWrite(connection))
-                {
-                    // The channel has been completed (pool is shutting down). Race window
-                    // between the State check above and TryWrite: destroy instead of pooling.
-                    RemoveConnection(connection);
-                }
             }
         }
 
@@ -614,7 +752,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            throw new NotImplementedException();
+            Debug.Assert(transaction is not null, "null transaction?");
+            Debug.Assert(transactedObject is not null, "null transactedObject?");
+
+            // Note: the connection may still be associated with the transaction due to the explicit
+            // unbinding requirement.
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed",
+                Id,
+                transaction.GetHashCode(),
+                transactedObject.ObjectID);
+
+            // If the connection is in the transacted pool, remove it there and return it to general
+            // circulation. TransactedConnectionPool.TransactionEnded calls back into
+            // PutObjectFromTransactedPool for us once it has removed the connection from its list.
+            TransactedConnectionPool.TransactionEnded(transaction, transactedObject);
         }
 
         /// <inheritdoc />
@@ -640,10 +792,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
             {
+                // We're on the caller's thread, so the ambient transaction is directly observable.
                 var task = GetInternalConnection(
                         owningObject,
                         async: false,
-                        timeout);
+                        timeout,
+                        ADP.GetCurrentTransaction());
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -672,6 +826,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
             // is cancelled. We can only cancel based on our own timeout, which is set to the owningObject's
             // ConnectionTimeout.
+            // The ambient transaction is captured by the caller, on the caller's thread, and handed
+            // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
+            // We must not read Transaction.Current ourselves here: a TransactionScope keeps the
+            // ambient transaction in thread-static storage unless it was created with
+            // TransactionScopeAsyncFlowOption.Enabled, and on a retry we are re-entered from a
+            // continuation running on an arbitrary thread, so Transaction.Current at this point
+            // says nothing reliable about the caller's transaction.
+            //
+            // Note that we deliberately do not assign Transaction.Current on the thread pool
+            // thread either. That assignment writes to thread-static storage which is *not* unwound
+            // when the ExecutionContext is restored, so it would outlive this open and be observed
+            // by unrelated work later scheduled onto the same thread pool thread -- including the
+            // login-time auto-enlistment that non-pooled connections perform against
+            // Transaction.Current. The WaitHandle pool can get away with assigning it because it
+            // processes pending opens on a dedicated non-thread-pool thread.
+            Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+
             Task.Run(async () =>
             {
                 if (taskCompletionSource.Task.IsCompleted)
@@ -679,10 +850,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return;
                 }
 
-                // We're potentially on a new thread, so we need to properly set the ambient transaction.
-                // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
-                // so that we can access it here. Read: area for improvement.
-                // TODO: ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
                 DbConnectionInternal? connection = null;
 
                 try
@@ -690,7 +857,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection = await GetInternalConnection(
                         owningObject,
                         async: true,
-                        timeout
+                        timeout,
+                        ambientTransaction
                     ).ConfigureAwait(false);
 
                     if (!taskCompletionSource.TrySetResult(connection))
@@ -949,6 +1117,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="connection">The connection to be closed.</param>
         private void RemoveConnection(DbConnectionInternal connection)
         {
+            // A connection with a delegated transaction cannot be disposed of until the delegated
+            // transaction has actually completed; disposing it would abort the (possibly
+            // distributed) transaction. Leave it alone: when the transaction completes it comes
+            // back through PutObjectFromTransactedPool, which calls us again.
+            if (connection.IsTxRootWaitingForTxEnd)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Has Delegated Transaction, waiting to Dispose.",
+                    Id,
+                    connection.ObjectID);
+                return;
+            }
+
             _connectionSlots.TryRemove(connection);
 
             // Removing a connection from the pool opens a free slot.
@@ -1003,6 +1184,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
         /// <param name="timeout">The overall timeout budget for this connection request. Time spent waiting
         /// in the pool is deducted from the budget available for physical connection creation.</param>
+        /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread, or
+        /// null when the caller is not inside a transaction. It is passed explicitly rather than read
+        /// from <see cref="Transaction.Current"/> because this method may run on a thread pool thread
+        /// that the ambient transaction does not flow to.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when an OperationCanceledException is caught, indicating that the timeout period
@@ -1015,20 +1200,46 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection,
             bool async,
-            TimeoutTimer timeout)
+            TimeoutTimer timeout,
+            Transaction? ambientTransaction)
         {
             DbConnectionInternal? connection = null;
+
+            // When automatic enlistment is disabled, the connection must never be bound to the
+            // ambient transaction, so we neither consult the transacted store nor hand the
+            // transaction to activation. HasTransactionAffinity is derived from the connection
+            // string's Enlist keyword.
+            Transaction? transaction = HasTransactionAffinity ? ambientTransaction : null;
 
             // Derive a CancellationTokenSource from the TimeoutTimer so pool-internal wait operations
             // (channel reads, semaphore waits) are cancelled when the overall budget expires.
             using CancellationTokenSource cancellationTokenSource = timeout.CreateCancellationTokenSource();
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
-            // Continue looping until we create or retrieve a connection
-            do
+            // Continue looping until we create or retrieve a connection.
+            while (connection is null)
             {
                 try
                 {
+                    // A connection already enlisted in our transaction is always preferred, since
+                    // reusing it avoids promoting the transaction to a distributed one. This is
+                    // re-checked on every iteration so that a connection returned to the transacted
+                    // store while we were looping is picked up rather than being passed over in
+                    // favor of a fresh connection.
+                    if (transaction is not null)
+                    {
+                        connection = GetFromTransactedPool(transaction);
+                        if (connection is not null)
+                        {
+                            // Skip the liveness/idle/generation gate at the bottom of the loop:
+                            // GetFromTransactedPool has already probed liveness, and a transacted
+                            // connection is exempt from idle-timeout, load-balance and
+                            // clear-generation eviction because closing it would abort its
+                            // (possibly distributed) transaction.
+                            break;
+                        }
+                    }
+
                     // Optimistically try to get an idle connection from the channel
                     // Doesn't wait if the channel is empty, just returns null.
                     connection ??= GetIdleConnection();
@@ -1070,9 +1281,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection = null;
                 }
             }
-            while (connection is null);
 
-            PrepareConnection(owningConnection, connection);
+            PrepareConnection(owningConnection, connection, transaction);
             return connection;
         }
 
@@ -1139,6 +1349,54 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 ReturnInternalConnection(connection, owningObject);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Attempts to retrieve a connection that is already enlisted in the given transaction.
+        /// </summary>
+        /// <param name="transaction">The transaction the connection must already be enlisted in.</param>
+        /// <returns>A live connection already enlisted in the transaction, or null.</returns>
+        private DbConnectionInternal? GetFromTransactedPool(Transaction transaction)
+        {
+            DbConnectionInternal? connection = TransactedConnectionPool.GetTransactedObject(transaction);
+            if (connection is null)
+            {
+                return null;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.",
+                Id,
+                connection.ObjectID);
+
+            SqlClientDiagnostics.Metrics.ExitFreeConnection();
+
+            // Transacting connections are exempt from idle-timeout and clear-generation eviction
+            // (closing them would abort the transaction, which may be distributed), so only
+            // liveness is checked here rather than the full IsLiveConnection gate.
+            bool isAlive = false;
+            try
+            {
+                // A dead transaction root must surface the underlying failure to the caller, since
+                // there is no way to recover the delegated transaction on another connection. Any
+                // other dead connection is simply reported so the caller can pick up or open a
+                // different one. Either way the connection is dropped in the finally below.
+                isAlive = connection.IsConnectionAlive(throwOnException: connection.IsTransactionRoot);
+            }
+            finally
+            {
+                if (!isAlive)
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
+                        Id,
+                        connection.ObjectID);
+                    RemoveConnection(connection);
+                    connection = null;
+                }
+            }
+
+            return connection;
         }
 
         /// <summary>
