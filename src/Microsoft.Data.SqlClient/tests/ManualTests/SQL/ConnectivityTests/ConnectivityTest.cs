@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -270,9 +271,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: KILL not supported on Azure Synapse - Parse error at line: 1, column: 6: Incorrect syntax near '105'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
-        public static void ConnectionResiliencySPIDTest()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static void ConnectionResiliencySPIDTest(bool usePoolV2)
         {
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
+
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 ConnectRetryCount = 0,

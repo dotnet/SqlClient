@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
-        public int Count => _connectionSlots.ReservationCount;
+        public int Count => _connectionSlots.ConnectionCount;
 
         /// <inheritdoc />
         public int IdleCount => _idleChannel.Count;
@@ -448,6 +448,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
+            SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
             DeactivateAndRouteConnection(connection);
@@ -840,6 +842,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // processes pending opens on a dedicated non-thread-pool thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
+            // Try to satisfy the request synchronously from the idle channel before paying for a
+            // thread pool hop. WaitHandleDbConnectionPool makes the same non-blocking, non-creating
+            // attempt before enqueuing a pending open, so without this an async open against a warm
+            // pool would always complete asynchronously under this pool but synchronously under the
+            // other -- a behavioural difference callers can observe. We deliberately do not try to
+            // *create* a connection here; that can block on the wire and must stay off the caller's
+            // thread.
+            //
+            // Transactional requests are excluded: they must first consult the transacted store for
+            // a connection already enlisted in the same transaction, which only GetInternalConnection
+            // does. Taking a plain idle connection here would both miss that affinity and skip
+            // enlistment.
+            if (!(HasTransactionAffinity && ambientTransaction is not null))
+            {
+                DbConnectionInternal? idleConnection = GetIdleConnection();
+                if (idleConnection is not null)
+                {
+                    PrepareConnection(owningObject, idleConnection);
+                    SqlClientDiagnostics.Metrics.SoftConnectRequest();
+                    connection = idleConnection;
+                    return true;
+                }
+            }
+
             Task.Run(async () =>
             {
                 if (taskCompletionSource.Task.IsCompleted)
@@ -1022,6 +1048,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 if (connection is not null)
                 {
+                    SqlClientDiagnostics.Metrics.EnterPooledConnection();
+
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
@@ -1127,7 +1155,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            _connectionSlots.TryRemove(connection);
+            if (_connectionSlots.TryRemove(connection))
+            {
+                SqlClientDiagnostics.Metrics.ExitPooledConnection();
+            }
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
@@ -1135,6 +1166,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
+            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
             Pruner?.UpdateTimer();
@@ -1281,6 +1313,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             PrepareConnection(owningConnection, connection, transaction);
+            SqlClientDiagnostics.Metrics.SoftConnectRequest();
             return connection;
         }
 
@@ -1337,6 +1370,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.",
                     Id,
                     connection.ObjectID);
+
+                SqlClientDiagnostics.Metrics.ReclaimedConnectionRequest();
 
                 connection.DetachCurrentTransactionIfEnded();
                 DeactivateAndRouteConnection(connection);

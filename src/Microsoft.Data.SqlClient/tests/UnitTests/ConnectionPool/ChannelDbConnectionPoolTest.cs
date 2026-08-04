@@ -650,8 +650,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                         TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
-                    internalConnection = await taskCompletionSource.Task;
-                    pool.ReturnInternalConnection(internalConnection, owningObject);
+                    // The pool may satisfy the request synchronously from the idle channel, in
+                    // which case the task completion source is never signalled.
+                    if (!completed)
+                    {
+                        internalConnection = await taskCompletionSource.Task;
+                    }
+                    pool.ReturnInternalConnection(internalConnection!, owningObject);
 
                     Assert.NotNull(internalConnection);
                 });

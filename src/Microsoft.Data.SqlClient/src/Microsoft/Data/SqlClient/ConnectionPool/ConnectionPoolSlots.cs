@@ -61,6 +61,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly DbConnectionInternal?[] _connections;
         private readonly uint _capacity;
         private volatile int _reservations;
+        private volatile int _connectionCount;
 
         /// <summary>
         /// Constructs a ConnectionPoolSlots instance with the given fixed capacity.
@@ -83,13 +84,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _capacity = fixedCapacity;
             _reservations = 0;
+            _connectionCount = 0;
             _connections = new DbConnectionInternal?[fixedCapacity];
         }
 
         /// <summary>
-        /// Gets the total number of reservations currently held.
+        /// Gets the total number of reservations currently held. This includes reservations held on
+        /// behalf of connections that are still being opened and are therefore not yet tracked.
         /// </summary>
         internal int ReservationCount => _reservations;
+
+        /// <summary>
+        /// Gets the number of connections currently tracked by this collection. Unlike
+        /// <see cref="ReservationCount"/>, this excludes reservations held for connections that are
+        /// still being opened, so it reports connections that actually belong to the pool.
+        /// </summary>
+        internal int ConnectionCount => _connectionCount;
 
         /// <summary>
         /// Adds a connection to the collection.
@@ -128,6 +138,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
                     {
+                        Interlocked.Increment(ref _connectionCount);
                         reservation.Keep();
                         return connection;
                     }
@@ -163,6 +174,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
                 {
+                    Interlocked.Decrement(ref _connectionCount);
                     ReleaseReservation();
                     return true;
                 }
