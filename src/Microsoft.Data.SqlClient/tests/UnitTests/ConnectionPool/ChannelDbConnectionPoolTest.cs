@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// Unit tests for <see cref="ChannelDbConnectionPool"/> covering connection acquisition,
     /// timeouts, reuse, pool clearing, blocking-period behavior, and timeout-budget propagation.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolTest
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();

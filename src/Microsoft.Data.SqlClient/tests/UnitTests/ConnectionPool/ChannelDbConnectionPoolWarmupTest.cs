@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// Unit tests for background pool warmup and replenishment in
     /// <see cref="ChannelDbConnectionPool"/>. See <c>specs/003-pool-warmup/spec.md</c>.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolWarmupTest
     {
         #region Helpers
