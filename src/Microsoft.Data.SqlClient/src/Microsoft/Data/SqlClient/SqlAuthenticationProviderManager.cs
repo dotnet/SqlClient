@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient
                 // configured in <SqlClientAuthenticationProviders>:
                 //  * Neither applicationClientId nor useWamBroker -> use the
                 //    parameterless constructor (defaults to the SqlClient
-                //    first-party app id and enables WAM brokering on Windows).
+                //    first-party app id and enables brokering where supported).
                 //  * applicationClientId only -> prefer the
                 //    (ActiveDirectoryAuthenticationProviderOptions) constructor
                 //    when the Azure extension exposes it; otherwise fall back
@@ -238,8 +238,8 @@ namespace Microsoft.Data.SqlClient
         // Optional override for ActiveDirectoryAuthenticationProviderOptions.UseWamBroker
         // read from the app.config <SqlClientAuthenticationProviders useWamBroker="..."/> attribute.
         // null means the app did not configure the value, in which case we leave the
-        // provider's default behavior (WAM is implied by the SqlClient first-party app id and
-        // off otherwise) untouched.
+        // provider's default behavior (brokering is implied by the SqlClient first-party app id
+        // and off otherwise) untouched.
         private readonly bool? _useWamBroker = null;
 
         /// <summary>
