@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
@@ -202,6 +203,28 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Returns a point-in-time snapshot of the connections currently tracked by this collection.
+        /// The snapshot is best-effort: connections may be added or removed while it is being taken,
+        /// so callers must tolerate entries that have since left the pool. Intended for infrequent
+        /// bookkeeping passes (e.g. reclaiming emancipated connections), not for hot paths.
+        /// </summary>
+        internal List<DbConnectionInternal> Snapshot()
+        {
+            List<DbConnectionInternal> snapshot = new(_connections.Length);
+
+            for (int i = 0; i < _connections.Length; i++)
+            {
+                DbConnectionInternal? connection = Volatile.Read(ref _connections[i]);
+                if (connection is not null)
+                {
+                    snapshot.Add(connection);
+                }
+            }
+
+            return snapshot;
         }
 
         /// <summary>

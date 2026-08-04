@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Diagnostics;
@@ -546,6 +547,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
+            DeactivateAndRouteConnection(connection);
+        }
+
+        /// <summary>
+        /// Deactivates a connection that is already marked as owned by the pool (via
+        /// <see cref="DbConnectionInternal.PrePush"/>) and routes it to the idle channel, the
+        /// transacted pool, stasis, or destruction as appropriate. Shared by the normal return path
+        /// and by emancipated connection reclamation, which has already performed the
+        /// <c>PrePush</c> itself and must not re-validate ownership.
+        /// </summary>
+        /// <param name="connection">The connection to deactivate and route.</param>
+        private void DeactivateAndRouteConnection(DbConnectionInternal connection)
+        {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReturnInternalConnection | INFO | {0}, Connection {1}, Deactivating.",
                 Id,
@@ -1480,6 +1494,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         cancellationToken,
                         timeout);
 
+                    // Before parking on the idle channel (potentially for the full timeout), sweep
+                    // for connections whose owning SqlConnection was garbage collected without ever
+                    // being closed or disposed. Those "emancipated" connections still occupy pool
+                    // slots, so at MaxPoolSize every subsequent request would otherwise time out
+                    // forever. WaitHandleDbConnectionPool performs the same sweep before waiting.
+                    // This is deliberately confined to the slow path: it is O(MaxPoolSize) and
+                    // allocates a snapshot, so it must not run on the hot acquire path.
+                    if (connection is null && ReclaimEmancipatedConnections())
+                    {
+                        connection = GetIdleConnection();
+                    }
+
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
@@ -1524,6 +1550,67 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
 
             return connection;
+        }
+
+        /// <summary>
+        /// Reclaims connections whose owning <see cref="DbConnection"/> has been garbage collected
+        /// without being closed or disposed. Such connections are still tracked by the pool but can
+        /// never be returned by their owner, so without this sweep they would leak pool slots.
+        /// </summary>
+        /// <returns>True if at least one connection was reclaimed; otherwise, false.</returns>
+        private bool ReclaimEmancipatedConnections()
+        {
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}", Id);
+
+            List<DbConnectionInternal>? reclaimed = null;
+
+            foreach (DbConnectionInternal connection in _connectionSlots.Snapshot())
+            {
+                // TryEnter rather than Enter: IsEmancipated must be read under the connection lock to
+                // avoid racing PrePush/PostPop, but a connection that is currently locked is being
+                // actively handed out or returned and therefore is not emancipated anyway. Skipping
+                // it keeps this sweep from blocking the caller.
+                bool locked = false;
+                try
+                {
+                    Monitor.TryEnter(connection, ref locked);
+
+                    if (locked && connection.IsEmancipated)
+                    {
+                        // Do as little as possible under the lock: just claim the connection for the
+                        // pool and defer deactivation (which can make server round trips) until the
+                        // lock is released.
+                        connection.PrePush(null);
+                        (reclaimed ??= new List<DbConnectionInternal>()).Add(connection);
+                    }
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        Monitor.Exit(connection);
+                    }
+                }
+            }
+
+            if (reclaimed is null)
+            {
+                return false;
+            }
+
+            foreach (DbConnectionInternal connection in reclaimed)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.",
+                    Id,
+                    connection.ObjectID);
+
+                connection.DetachCurrentTransactionIfEnded();
+                DeactivateAndRouteConnection(connection);
+            }
+
+            return true;
         }
 
         /// <summary>
