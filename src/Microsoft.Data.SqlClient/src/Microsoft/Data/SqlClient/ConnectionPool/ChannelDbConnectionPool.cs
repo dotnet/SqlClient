@@ -322,8 +322,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void PutObjectFromTransactedPool(DbConnectionInternal connection)
         {
-            Debug.Assert(connection is not null,
-                "PutObjectFromTransactedPool was called with a null connection.");
             Debug.Assert(connection.EnlistedTransaction is null,
                 "PutObjectFromTransactedPool was called with a connection that is still enlisted. " +
                 "The transaction must have ended and been detached before the connection returns to " +
@@ -752,9 +750,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            Debug.Assert(transaction is not null, "null transaction?");
-            Debug.Assert(transactedObject is not null, "null transactedObject?");
-
             // Note: the connection may still be associated with the transaction due to the explicit
             // unbinding requirement.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
