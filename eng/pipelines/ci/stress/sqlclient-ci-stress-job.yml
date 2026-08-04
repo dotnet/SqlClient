@@ -84,6 +84,9 @@ jobs:
   - job: stress_tests_job_${{ parameters.jobNameSuffix }}
     displayName: '[${{ parameters.displayNamePrefix }}] Run Stress Tests'
 
+    workspace:
+      clean: all
+
     variables:
 
       # Whether this is an internal (ADO.Net project) or public (Public project) build.  Evaluated

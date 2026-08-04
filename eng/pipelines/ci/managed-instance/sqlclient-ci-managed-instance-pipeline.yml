@@ -76,8 +76,8 @@ parameters:
 # The stages to run.
 stages:
 
-  # Run the Managed Instance tests.  The target frameworks, .NET Framework runtimes, and SNI
-  # variants are defaulted by the stage template (all TFMs per OS, both SNI variants on Windows).
+  # Run the Managed Instance tests. The .NET and .NET Framework runtimes are defaulted by the stage
+  # template, which runs both native and managed SNI for .NET on Windows.
   - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-stage.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}

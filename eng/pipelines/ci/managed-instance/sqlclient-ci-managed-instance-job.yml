@@ -36,11 +36,11 @@ parameters:
   - name: dotnetVerbosity
     type: string
     values:
-    - quiet
-    - minimal
-    - normal
-    - detailed
-    - diagnostic
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
   # The suffix to append to the job name.
   - name: jobNameSuffix
@@ -54,13 +54,13 @@ parameters:
       - Windows
 
   # The .NET runtime (TFM) to build and run the tests for.
-  - name: targetFramework
+  - name: runtime
     type: string
 
   # The timeout, in minutes, for this job.
   - name: timeout
     type: number
-    default: 120
+    default: 90
 
   # True to use managed SNI on Windows.  Ignored on non-Windows, where managed SNI is always used.
   - name: useManagedSNI
@@ -79,6 +79,9 @@ jobs:
   - job: managed_instance_tests_job_${{ parameters.jobNameSuffix }}
     displayName: ${{ parameters.displayName }}
     timeoutInMinutes: ${{ parameters.timeout }}
+
+    workspace:
+      clean: all
 
     variables:
 
@@ -156,19 +159,6 @@ jobs:
           IsManagedInstance: true
           UseManagedSNIOnWindows: ${{ parameters.useManagedSNI }}
 
-      # On Windows, start the SQL Browser service so that named-pipes connections can be resolved.
-      - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
-        - pwsh: |
-            $svc_name = "SQLBrowser"
-            if ((Get-Service -Name "$svc_name" -ErrorAction SilentlyContinue) -ne $null) {
-                Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-                Set-Service -StartupType Automatic $svc_name
-                net start $svc_name
-                Get-Service $svc_name | Select-Object -Property Name, StartType, Status
-            }
-          displayName: Start Sql Browser
-          condition: eq(variables['Agent.OS'], 'Windows_NT')
-
       # Ensure the TestResults directory exists so publish steps don't fail when tests are skipped
       # due to a setup failure.
       - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
@@ -186,7 +176,8 @@ jobs:
       - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          targetFramework: ${{ parameters.targetFramework }}
+          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          targetFramework: ${{ parameters.runtime }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           referenceType: Package
           testSet: ''
@@ -201,6 +192,6 @@ jobs:
       - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          targetFramework: ${{ parameters.targetFramework }}
+          targetFramework: ${{ parameters.runtime }}
           operatingSystem: ${{ parameters.operatingSystem }}
           buildConfiguration: ${{ parameters.buildConfiguration }}

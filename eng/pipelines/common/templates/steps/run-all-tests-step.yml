@@ -16,6 +16,17 @@ parameters:
     type: boolean
     default: false
 
+  # The verbosity level for dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
   - name: targetFramework
     type: string
 
@@ -93,6 +104,7 @@ steps:
       projects: build.proj
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientUnit
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -102,6 +114,7 @@ steps:
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientUnit
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -120,6 +133,7 @@ steps:
         projects: build.proj
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientUnit
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
@@ -131,6 +145,7 @@ steps:
             -p:TestCodeCoverage=false
         ${{ else }}: # x86
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientUnit
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
@@ -151,6 +166,7 @@ steps:
       projects: build.proj
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientFunctional
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -162,6 +178,7 @@ steps:
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientFunctional
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -182,6 +199,7 @@ steps:
         projects: build.proj
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientFunctional
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
@@ -195,6 +213,7 @@ steps:
             -p:TestCodeCoverage=false
         ${{ else }}: # x86
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientFunctional
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:ReferenceType=${{ parameters.referenceType }}
@@ -217,6 +236,7 @@ steps:
       projects: build.proj
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientManual
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
@@ -229,6 +249,7 @@ steps:
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientManual
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}
@@ -251,6 +272,7 @@ steps:
         projects: build.proj
         ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientManual
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:TestSet=${{ parameters.testSet }}
@@ -265,6 +287,7 @@ steps:
             -p:TestCodeCoverage=false
         ${{ else }}: # x86
           arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
             -t:TestSqlClientManual
             -p:TestFramework=${{ parameters.targetFramework }}
             -p:TestSet=${{ parameters.testSet }}
@@ -288,6 +311,7 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
+        --verbosity ${{ parameters.dotnetVerbosity }}
         -t:TestSqlClientUnit
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
@@ -304,6 +328,7 @@ steps:
         command: build
         projects: build.proj
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientUnit
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -322,6 +347,7 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
+        --verbosity ${{ parameters.dotnetVerbosity }}
         -t:TestSqlClientFunctional
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:ReferenceType=${{ parameters.referenceType }}
@@ -340,6 +366,7 @@ steps:
         command: build
         projects: build.proj
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientFunctional
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:ReferenceType=${{ parameters.referenceType }}
@@ -359,6 +386,7 @@ steps:
       command: build
       projects: build.proj
       arguments: >-
+        --verbosity ${{ parameters.dotnetVerbosity }}
         -t:TestSqlClientManual
         -p:TestFramework=${{ parameters.targetFramework }}
         -p:TestSet=${{ parameters.testSet }}
@@ -379,6 +407,7 @@ steps:
         command: build
         projects: build.proj
         arguments: >-
+          --verbosity ${{ parameters.dotnetVerbosity }}
           -t:TestSqlClientManual
           -p:TestFramework=${{ parameters.targetFramework }}
           -p:TestSet=${{ parameters.testSet }}

@@ -85,15 +85,13 @@ function Resolve-PackageVersion {
         [Parameter(Mandatory)][string]$PackageName
     )
 
-    $package = Get-ChildItem "$Path/*.nupkg" |
-        Where-Object { $_.Name -match $Pattern } |
-        Select-Object -First 1
+    $packages = @(Get-ChildItem "$Path/*.nupkg" | Where-Object { $_.Name -match $Pattern })
 
-    if (-not $package) {
-        throw "$PackageName package not found in $Path"
+    if ($packages.Count -ne 1) {
+        throw "Expected exactly one $PackageName package in $Path, found $($packages.Count)"
     }
 
-    return [regex]::Match($package.Name, $Pattern).Groups[1].Value
+    return [regex]::Match($packages[0].Name, $Pattern).Groups[1].Value
 }
 
 # Patterns are anchored so the Microsoft.Data.SqlClient package does not also match extension
@@ -127,12 +125,14 @@ $packages = @(
 )
 
 foreach ($package in $packages) {
+    $artifactVersion = Resolve-PackageVersion $ArtifactDirectory $package.Pattern $package.Name
+
     if ($package.Variable -eq 'sqlServerPackageVersion' -and
         -not [string]::IsNullOrWhiteSpace($SqlServerVersionOverride)) {
         $version = $SqlServerVersionOverride
-        Write-Host "Overriding $($package.Name) version: $version"
+        Write-Host "Overriding $($package.Name) version from $artifactVersion to $version"
     } else {
-        $version = Resolve-PackageVersion $FeedPath $package.Pattern $package.Name
+        $version = $artifactVersion
         Write-Host "Resolved $($package.Name) version: $version"
     }
 
