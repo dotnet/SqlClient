@@ -102,6 +102,11 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
+      # Expose the pipeline OAuth token to the auto-injected APIScan task as shown in the Guardian
+      # APIScan YAML sample:
+      # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/apiscan-build-task#yaml-samples
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
       # APIScan per-job configuration for the DLL and PDB folders.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
