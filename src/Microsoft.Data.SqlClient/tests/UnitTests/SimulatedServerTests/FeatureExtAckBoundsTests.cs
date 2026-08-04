@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// </summary>
 // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
 // need since each test uses its own TDS Server with ephemeral listen port.
-[Collection("SimulatedServerTests")]
+[Collection(SimulatedServerTestCollection.Name)]
 public class FeatureExtAckBoundsTests : IDisposable
 {
     private readonly TdsServerFixture _fixture;
