@@ -12,6 +12,7 @@
 #                   Tests tab).
 #   artifactName  — Name of the published pipeline artifact that carries the
 #                   test results and coverage files.
+#   dotnetVerbosity — Verbosity for dotnet CLI build commands.
 
 parameters:
 
@@ -26,6 +27,16 @@ parameters:
   # Pipeline artifact name for test results and coverage.
   - name: artifactName
     type: string
+
+  # Verbosity for dotnet CLI build commands.
+  - name: dotnetVerbosity
+    type: string
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
 
 steps:
 
@@ -48,6 +59,7 @@ steps:
       arguments: >-
         -t:BuildSqlClient
         -p:Configuration=Release
+        --verbosity ${{ parameters.dotnetVerbosity }}
 
   # ---------------------------------------------------------------------------
   # Run tests in separate steps to permit focused retries.
@@ -64,6 +76,7 @@ steps:
         -t:TestSqlClientUnit
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
+        --verbosity ${{ parameters.dotnetVerbosity }}
 
   # Run the Functional Test suite.
   - task: DotNetCoreCLI@2
@@ -76,6 +89,7 @@ steps:
         -t:TestSqlClientFunctional
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
+        --verbosity ${{ parameters.dotnetVerbosity }}
 
   # Run the Manual Test suite.
   - task: DotNetCoreCLI@2
@@ -88,6 +102,7 @@ steps:
         -t:TestSqlClientManual
         -p:TestFramework=${{ parameters.testFramework }}
         -p:Configuration=Release
+        --verbosity ${{ parameters.dotnetVerbosity }}
 
   # ---------------------------------------------------------------------------
   # Publish results & coverage
