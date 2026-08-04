@@ -17,8 +17,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static Type SQLFallbackDNSCacheType = systemData.GetType("Microsoft.Data.SqlClient.SQLFallbackDNSCache");
         public static Type SQLDNSInfoType = systemData.GetType("Microsoft.Data.SqlClient.SQLDNSInfo");
         public static MethodInfo SQLFallbackDNSCacheGetDNSInfo = SQLFallbackDNSCacheType.GetMethod("GetDNSInfo", BindingFlags.Instance | BindingFlags.NonPublic);
-
-
+        // This uses the separately configured DNS-caching endpoint rather than the Managed Instance
+        // connection string, so it does not provide Managed Instance coverage.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDNSCachingSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         public void DNSCachingIsSupportedFlag()
         {
@@ -39,6 +39,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // This populates the cache from the separately configured DNS-caching endpoint rather than
+        // the Managed Instance connection string.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsDNSCachingSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         public void DNSCachingGetDNSInfo()
         {

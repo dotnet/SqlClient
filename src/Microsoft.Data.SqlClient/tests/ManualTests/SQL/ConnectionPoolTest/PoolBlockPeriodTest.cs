@@ -24,6 +24,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int CompareMargin = 2;
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
+        // This uses deliberately nonexistent Azure hostnames to test client-side pool blocking; it
+        // never connects to the configured Managed Instance.
         [OuterLoop()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("Azure with Default Policy must Disable blocking (*.database.windows.net)", new object[] { AzureEndpointSample })]
@@ -50,6 +52,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PoolBlockingPeriodAzureTest(connString, policy);
         }
 
+        // This uses deliberately nonexistent non-Azure hostnames to test client-side pool blocking;
+        // it never connects to the configured Managed Instance.
         [OuterLoop()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("NonAzure with Default Policy must Enable blocking", new object[] { NonExistentServer })]
@@ -73,6 +77,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PoolBlockingPeriodNonAzureTest(connString, policy);
         }
 
+        // This validates connection-string policy parsing against a nonexistent Azure hostname; it
+        // never connects to the configured Managed Instance.
         [OuterLoop()]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData("Test policy with Auto (lowercase)", "auto")]
