@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -63,9 +64,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void PooledConnectionsCounters_Functional()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void PooledConnectionsCounters_Functional(bool usePoolV2)
         {
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
+
             //create a pooled connection
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
 
