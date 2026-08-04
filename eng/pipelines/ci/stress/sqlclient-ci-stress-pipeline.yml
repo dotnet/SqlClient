@@ -21,7 +21,10 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
+# Pipeline completion triggers are evaluated using the branch filters in this pipeline's "Default
+# branch for manual and scheduled builds" definition. Because both pipelines use the same
+# repository, an eligible run executes this YAML from the triggering package run's branch and
+# commit, preserving branch-specific pipeline definitions.
 #
 # The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
 # the project, folder, and pipeline name, hence the verbose values below.
