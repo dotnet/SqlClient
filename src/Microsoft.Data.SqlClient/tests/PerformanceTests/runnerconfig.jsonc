@@ -55,7 +55,7 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        "DataTypeReaderAsyncRunnerConfig": {
+        "AlwaysEncryptedDataTypeReaderRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 20,

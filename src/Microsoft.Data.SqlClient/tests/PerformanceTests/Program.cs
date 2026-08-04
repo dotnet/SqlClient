@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -42,8 +42,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("SqlConnection", b => b.SqlConnectionRunnerConfig, typeof(SqlConnectionRunner)),
             new BenchmarkUnit("SqlCommand", b => b.SqlCommandRunnerConfig, typeof(SqlCommandRunner)),
             new BenchmarkUnit("SqlBulkCopy", b => b.SqlBulkCopyRunnerConfig, typeof(SqlBulkCopyRunner)),
-            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(DataTypeReaderRunner)),
-            new BenchmarkUnit("DataTypeReaderAsync", b => b.DataTypeReaderAsyncRunnerConfig, typeof(DataTypeReaderAsyncRunner)),
+            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.Plaintext)),
+            new BenchmarkUnit("AlwaysEncryptedDataTypeReader", b => b.AlwaysEncryptedDataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.AlwaysEncrypted)),
             new BenchmarkUnit("AsyncLargeDataRead", b => b.AsyncLargeDataReadRunnerConfig, typeof(AsyncLargeDataReadRunner)),
             new BenchmarkUnit("MarsOverhead", b => b.MarsOverheadRunnerConfig, typeof(MarsOverheadRunner)),
             new BenchmarkUnit("ParallelAsyncConnection", b => b.ParallelAsyncConnectionRunnerConfig, typeof(ParallelAsyncConnectionRunner)),
