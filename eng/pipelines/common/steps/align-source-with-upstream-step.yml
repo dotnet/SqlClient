@@ -36,6 +36,7 @@ steps:
   - checkout: self
     clean: true
     fetchDepth: 0
+    fetchTags: false
     persistCredentials: true
 
   # Align the working-tree source with the commit that built the upstream artifacts, so the projects
