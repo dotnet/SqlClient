@@ -1,0 +1,160 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# Runs the Kerberos integration tests for one OS, runtime, and SNI configuration using the exact
+# packages produced by the triggering sqlclient-ci-package pipeline.
+
+parameters:
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  - name: debug
+    type: boolean
+
+  - name: displayName
+    type: string
+
+  - name: dotnetVerbosity
+    type: string
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  - name: jobNameSuffix
+    type: string
+
+  - name: operatingSystem
+    type: string
+    values:
+      - Linux
+      - Windows
+
+  - name: poolName
+    type: string
+
+  - name: runtime
+    type: string
+
+  - name: useManagedSNI
+    type: boolean
+    default: false
+
+  - name: vmImage
+    type: string
+
+jobs:
+  - job: kerberos_tests_job_${{ parameters.jobNameSuffix }}
+    displayName: ${{ parameters.displayName }}
+    timeoutInMinutes: 90
+
+    workspace:
+      clean: all
+
+    pool:
+      name: ${{ parameters.poolName }}
+      demands:
+        - ImageOverride -equals ${{ parameters.vmImage }}
+
+    steps:
+
+      # Align source with the commit that produced the upstream packages while retaining the
+      # pipeline definitions from the commit at which this run was queued.
+      - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
+
+      - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
+        parameters:
+          sqlServerVersionOverride: 1.0.0
+
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x, 10.x]
+
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+      - task: NuGetAuthenticate@1
+        displayName: Authenticate NuGet feeds
+
+      - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
+        - template: /eng/pipelines/ci/kerberos/windows-setup-step.yml@self
+          parameters:
+            useManagedSNI: ${{ parameters.useManagedSNI }}
+
+      - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
+        - template: /eng/pipelines/ci/kerberos/linux-setup-step.yml@self
+          parameters:
+            kerberosDomain: $(KerberosDomain)
+            kerberosDomainOU: $(KerberosDomainOU)
+            kerberosDomainUser: $(KerberosDomainUser)
+            kerberosDomainPassword: $(KerberosDomainPassword)
+
+      # UnitTests and FunctionalTests cover environment-independent SPN, SSPI, and connection
+      # string behavior in normal CI. Run only ManualTests that use the Kerberos environment.
+      - task: DotNetCoreCLI@2
+        displayName: Run Kerberos Integration Tests
+        retryCountOnTaskFailure: 2
+        inputs:
+          command: build
+          projects: build.proj
+          arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
+            -t:TestSqlClientManual
+            -p:TestFramework=${{ parameters.runtime }}
+            -p:TestSet=3
+            -p:TestFilters="category!=failing&category!=flaky&category!=interactive&(FullyQualifiedName~KerberosTests|FullyQualifiedName~IntegratedAuthenticationTest|FullyQualifiedName~InstanceNameTest)"
+            -p:ReferenceType=Package
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: VSTest
+          testResultsFiles: $(Build.SourcesDirectory)/test_results/**/*.trx
+          mergeTestResults: true
+          testRunTitle: ${{ parameters.displayName }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
+
+      - pwsh: |
+          $resultsDir = "$(Build.SourcesDirectory)/test_results"
+          if (Test-Path -LiteralPath $resultsDir) {
+              Write-Host "##vso[task.setvariable variable=HasTestResultsDir]true"
+          } else {
+              Write-Host "##vso[task.setvariable variable=HasTestResultsDir]false"
+          }
+        displayName: Detect test_results directory
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          Set-Location "$(Build.SourcesDirectory)/test_results"
+          Get-ChildItem -Filter "*.coverage" -Recurse |
+            Rename-Item -NewName { "${{ parameters.runtime }}" + $_.Name }
+        displayName: Rename coverage files
+        condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Test Artifacts
+        condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
+        inputs:
+          targetPath: $(Build.SourcesDirectory)/test_results
+          artifact: ${{ parameters.runtime }}-${{ lower(parameters.operatingSystem) }}-$(System.JobId)
+
+      - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
+        - template: /eng/pipelines/ci/kerberos/linux-teardown-step.yml@self
+          parameters:
+            kerberosDomain: $(KerberosDomain)
+            kerberosDomainUser: $(KerberosDomainUser)
+            kerberosDomainPassword: $(KerberosDomainPassword)

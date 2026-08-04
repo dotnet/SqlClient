@@ -4,9 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template leaves the Active Directory domain and destroys Kerberos
-# credentials.  It should be referenced at the end of any job that called
-# linux-init-step.yml.
+# This template tears down the Linux Kerberos environment by leaving the Active Directory domain
+# and destroying credentials. It should be referenced at the end of any job that called
+# linux-setup-step.yml.
 #
 # All steps use condition: always() so that cleanup runs even when previous
 # steps fail.

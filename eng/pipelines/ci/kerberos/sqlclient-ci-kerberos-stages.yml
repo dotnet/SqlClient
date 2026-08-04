@@ -1,0 +1,119 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# Defines separate Windows and Linux Kerberos test stages followed by a merged coverage stage.
+
+parameters:
+
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  - name: debug
+    type: boolean
+
+  - name: dotnetVerbosity
+    type: string
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  - name: netFrameworkTestRuntimes
+    type: object
+    default: [net462]
+
+  - name: netTestRuntimes
+    type: object
+    default: [net8.0, net9.0, net10.0]
+
+stages:
+
+  - stage: windows
+    displayName: Windows
+    dependsOn: []
+    variables:
+      - group: kv-sqldrivers-shared
+    jobs:
+
+      # .NET Framework uses native SNI.
+      - ${{ each runtime in parameters.netFrameworkTestRuntimes }}:
+        - template: /eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayName: 'Win : Native SNI : ${{ runtime }}'
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
+            operatingSystem: Windows
+            poolName: ADO-Trusted-Domain-Win-WestUS2
+            runtime: ${{ runtime }}
+            useManagedSNI: false
+            vmImage: ADO-MMS22-SQL19
+
+      # .NET runs with both native and managed SNI.
+      - ${{ each runtime in parameters.netTestRuntimes }}:
+        - template: /eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayName: 'Win : Native SNI : ${{ runtime }}'
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
+            operatingSystem: Windows
+            poolName: ADO-Trusted-Domain-Win-WestUS2
+            runtime: ${{ runtime }}
+            useManagedSNI: false
+            vmImage: ADO-MMS22-SQL19
+
+        - template: /eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayName: 'Win : Managed SNI : ${{ runtime }}'
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
+            operatingSystem: Windows
+            poolName: ADO-Trusted-Domain-Win-WestUS2
+            runtime: ${{ runtime }}
+            useManagedSNI: true
+            vmImage: ADO-MMS22-SQL19
+
+  - stage: linux
+    displayName: Linux
+    dependsOn: []
+    variables:
+      - group: kv-sqldrivers-shared
+    jobs:
+
+      # Managed SNI is always used on non-Windows platforms.
+      - ${{ each runtime in parameters.netTestRuntimes }}:
+        - template: /eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayName: 'Linux : ${{ runtime }}'
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: linux_${{ replace(runtime, '.', '_') }}
+            operatingSystem: Linux
+            poolName: ADO-Trusted-Linux-WestUS2
+            runtime: ${{ runtime }}
+            vmImage: ADO-UB20-SQL22
+
+  - stage: merge
+    displayName: Merge Code Coverage
+    dependsOn:
+      - windows
+      - linux
+    condition: succeeded()
+    jobs:
+      - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          upload: false
