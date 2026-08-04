@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.RateLimiting;
@@ -251,10 +252,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool-exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -281,6 +288,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert
             Assert.Equal(firstConnection, extraConnection);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -350,10 +359,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -403,6 +418,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -424,10 +441,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -465,6 +488,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
