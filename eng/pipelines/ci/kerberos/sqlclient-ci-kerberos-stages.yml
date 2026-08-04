@@ -55,7 +55,7 @@ stages:
             poolName: ADO-Trusted-Domain-Win-WestUS2
             runtime: ${{ runtime }}
             useManagedSNI: false
-            vmImage: ADO-MMS22-SQL19
+            vmImage: ADO-Win25
 
       # .NET runs with both native and managed SNI.
       - ${{ each runtime in parameters.netTestRuntimes }}:
@@ -70,7 +70,7 @@ stages:
             poolName: ADO-Trusted-Domain-Win-WestUS2
             runtime: ${{ runtime }}
             useManagedSNI: false
-            vmImage: ADO-MMS22-SQL19
+            vmImage: ADO-Win25
 
         - template: /eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-job.yml@self
           parameters:
@@ -83,7 +83,7 @@ stages:
             poolName: ADO-Trusted-Domain-Win-WestUS2
             runtime: ${{ runtime }}
             useManagedSNI: true
-            vmImage: ADO-MMS22-SQL19
+            vmImage: ADO-Win25
 
   - stage: linux
     displayName: Linux
@@ -104,7 +104,7 @@ stages:
             operatingSystem: Linux
             poolName: ADO-Trusted-Linux-WestUS2
             runtime: ${{ runtime }}
-            vmImage: ADO-UB20-SQL22
+            vmImage: ADO-UB24
 
   - stage: merge
     displayName: Merge Code Coverage
