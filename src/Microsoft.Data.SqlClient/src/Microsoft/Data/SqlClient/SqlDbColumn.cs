@@ -160,6 +160,7 @@ namespace Microsoft.Data.SqlClient
                 : (MetaType.SqlVectorElementType)_metadata.scale switch
                 {
                     MetaType.SqlVectorElementType.Float32 => "float32",
+                    MetaType.SqlVectorElementType.Float16 => "float16",
                     // An unrecognised base type is reported rather than throwing, because
                     // reading metadata should not fail on a column the caller may ignore.
                     _ => _metadata.scale.ToString(CultureInfo.InvariantCulture),

@@ -870,6 +870,7 @@ DROP TABLE #Column_Aliases
                                 if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
                                 {
                                     int size = metadata.length;
+                                    bool isFloat16Vector = false;
                                     switch (metadata.metaType.NullableType)
                                     {
                                         case TdsEnums.SQLNCHAR:
@@ -878,12 +879,27 @@ DROP TABLE #Column_Aliases
                                             size /= 2;
                                             break;
                                         case TdsEnums.SQLVECTOR:
+                                            // A vector's dimension count is derived from the payload
+                                            // size, and its scale carries the base type.
                                             size = MetaType.GetVectorElementCount(metadata.length, metadata.scale);
+                                            isFloat16Vector = metadata.scale == (byte)MetaType.SqlVectorElementType.Float16;
                                             break;
                                         default:
                                             break;
                                     }
-                                    updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+
+                                    // The base type is only stated for float16, so that the
+                                    // declaration emitted for float32 vectors is unchanged from
+                                    // earlier versions and remains understood by servers which
+                                    // predate float16 support.
+                                    if (isFloat16Vector)
+                                    {
+                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0}, float16)", size);
+                                    }
+                                    else
+                                    {
+                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                                    }
                                 }
                                 else if (metadata.metaType.IsPlp && !(metadata.metaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
                                 {
@@ -1688,6 +1704,31 @@ DROP TABLE #Column_Aliases
             }
         }
 
+        /// <summary>
+        /// Rewrites a coerced vector payload so that its elements use the destination
+        /// column's base type, leaving payloads which already use that base type untouched.
+        /// </summary>
+        /// <remarks>
+        /// Unlike an ordinary parameter, a bulk copy declares the destination's base type in
+        /// the <c>INSERT BULK</c> statement, so the payload must use that base type. The
+        /// server cannot convert it, because binary16 and binary32 elements differ in size
+        /// and a mismatch is reported as a column length error.
+        /// </remarks>
+        private static object ConvertVectorToBaseType(object value, byte destinationElementType)
+        {
+            if (value is not byte[] payload)
+            {
+                // The value was coerced to something other than a vector payload, such as a
+                // data feed, which the existing write path handles.
+                return value;
+            }
+
+            // The payload is converted directly rather than through a strongly typed vector,
+            // so that .NET Framework, which has no System.Half, can also write to float16
+            // destinations.
+            return SqlTypes.SqlVector<float>.ConvertPayloadElementType(payload, destinationElementType);
+        }
+
         private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
         {
             coercedToDataFeed = false;
@@ -1772,6 +1813,23 @@ DROP TABLE #Column_Aliases
                         typeChanged = false; // Setting this to false as SqlParameter.CoerceValue will only set it to true when converting to a CLR type
                         break;
 
+                    case TdsEnums.SQLVECTOR:
+                        mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
+                        value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
+
+                        // The INSERT BULK declaration for a vector column states the
+                        // destination's base type, so the payload written to the wire must
+                        // use that base type too. A mismatch is rejected by the server as a
+                        // column length error rather than being converted, because binary16
+                        // and binary32 elements differ in size.
+                        //
+                        // This runs after coercion because the payload produced by coercion
+                        // uses the source value's own base type: a JSON string always yields
+                        // float32, which is how a float16 column reads back on frameworks
+                        // without System.Half.
+                        value = ConvertVectorToBaseType(value, metadata.scale);
+                        break;
+
                     case TdsEnums.SQLINTN:
                     case TdsEnums.SQLFLTN:
                     case TdsEnums.SQLFLT4:
@@ -1793,7 +1851,6 @@ DROP TABLE #Column_Aliases
                     case TdsEnums.SQLTIME:
                     case TdsEnums.SQLDATETIME2:
                     case TdsEnums.SQLDATETIMEOFFSET:
-                    case TdsEnums.SQLVECTOR:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         break;

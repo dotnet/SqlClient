@@ -831,11 +831,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         // Test to verify that the server and client negotiate
         // the common feature extension version.
-        // MDS currently supports vector feature ext version 0x1.
+        // MDS currently supports vector feature ext version 0x2,
+        // which adds the float16 base type to the float32 support in 0x1.
         [Theory]
-        [InlineData(true, 0x2, 0x1)]
-        [InlineData(false, 0x0, 0x0)]
+        // A server which supports the same version as the client negotiates that version.
+        [InlineData(true, 0x2, 0x2)]
+        // A server which supports a later version than the client falls back to the
+        // client's, since the client cannot interpret anything newer.
+        [InlineData(true, 0x3, 0x2)]
+        // A server which supports only the earlier version negotiates that instead.
         [InlineData(true, 0x1, 0x1)]
+        // A server which reports no support at all is rejected.
+        [InlineData(false, 0x0, 0x0)]
+        // A server which does not acknowledge the feature at all leaves it unnegotiated.
         [InlineData(true, 0xFF, 0x0)]
         public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
@@ -846,7 +854,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.EnableVectorFeatureExt = serverVersion == 0xFF ? false : true;
 
             byte expectedLoginReqFeatureExtId = (byte)TDSFeatureID.VectorSupport;
-            byte expectedLoginReqFeatureExtVersion = 0x1;
+            byte expectedLoginReqFeatureExtVersion = 0x2;
             byte actualLoginReqFeatureExtId = 0;
             byte actualLoginReqFeatureExtVersion = 0;
             byte actualFeatureExtAckId = 0;
