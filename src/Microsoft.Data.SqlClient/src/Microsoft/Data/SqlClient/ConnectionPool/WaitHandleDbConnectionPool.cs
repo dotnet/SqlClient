@@ -195,6 +195,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly TimeProvider _timeProvider;
         private readonly BlockingPeriodErrorState _errorState;
 
+        /// <summary>
+        /// The exception from the most recent failed physical connection open, retained purely so
+        /// that a subsequent pooled-open timeout can report it as an inner exception. Cleared on the
+        /// next successful open. Volatile rather than lock-protected: this is a best-effort
+        /// diagnostic snapshot, and a torn read across concurrent failures would at worst attach a
+        /// slightly older failure. See GH#3545.
+        /// </summary>
+        private volatile Exception _lastConnectionCreateException;
+
         internal Timer _cleanupTimer;
 
         private readonly TransactedConnectionPool _transactedConnectionPool;
@@ -287,6 +296,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
         public bool ErrorOccurred => _errorState.HasError;
+
+        /// <inheritdoc/>
+        public Exception LastConnectionCreateException => _lastConnectionCreateException;
 
         private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
 
@@ -551,12 +563,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", Id, newObj?.ObjectID);
 
+                // A successful open proves the server is reachable, so a previously recorded
+                // failure is no longer a useful explanation for a later timeout. See GH#3545.
+                _lastConnectionCreateException = null;
+
                 // A successful creation clears any prior error state and resets backoff.
                 _errorState.Clear();
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 ADP.TraceExceptionWithoutRethrow(e);
+
+                // Retain the failure so a caller that ultimately times out waiting for a pooled
+                // connection can report why creation kept failing. Recorded before the
+                // blocking-period check below so it is captured even when blocking is disabled
+                // and this method rethrows immediately. See GH#3545.
+                _lastConnectionCreateException = e;
 
                 if (!_connectionPoolGroup.IsBlockingPeriodEnabled())
                 {
@@ -809,7 +831,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         else if (timeout)
                         {
-                            next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
+                            next.Completion.TrySetException(
+                                ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout(_lastConnectionCreateException)));
                         }
                         else
                         {

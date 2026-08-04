@@ -50,6 +50,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         bool ErrorOccurred { get; }
 
         /// <summary>
+        /// The exception thrown by the most recent failed attempt to open a physical connection,
+        /// or null if no attempt has failed since the last successful open.
+        /// <para>
+        /// A caller that waits for a pooled connection and ultimately times out cannot otherwise
+        /// tell whether the pool was merely saturated or whether every creation attempt behind the
+        /// scenes was failing (e.g. the server refused the TCP connection). This property lets the
+        /// timeout be reported with the underlying failure attached as an inner exception. It is
+        /// diagnostic only and is not used to make control-flow decisions.
+        /// </para>
+        /// </summary>
+        Exception? LastConnectionCreateException { get; }
+
+        /// <summary>
         /// An id that uniqely identifies this connection pool.
         /// </summary>
         int Id { get; }

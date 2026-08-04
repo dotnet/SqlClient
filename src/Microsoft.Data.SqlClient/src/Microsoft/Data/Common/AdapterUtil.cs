@@ -1337,6 +1337,19 @@ namespace Microsoft.Data.Common
         internal static Exception PooledOpenTimeout()
             => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout));
 
+        /// <summary>
+        /// Builds the pooled-open timeout exception, attaching <paramref name="inner"/> (the most
+        /// recent physical connection creation failure observed by the pool) so a timeout caused by
+        /// repeated connection failures reports the underlying cause rather than only reporting
+        /// pool exhaustion. Falls back to the parameterless form when there is no such failure.
+        /// </summary>
+#nullable enable
+        internal static Exception PooledOpenTimeout(Exception? inner)
+            => inner is null
+                ? PooledOpenTimeout()
+                : ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout), inner);
+#nullable restore
+
         internal static Exception NonPooledOpenTimeout()
             => ADP.TimeoutException(StringsHelper.GetString(Strings.ADP_NonPooledOpenTimeout));
 #endregion

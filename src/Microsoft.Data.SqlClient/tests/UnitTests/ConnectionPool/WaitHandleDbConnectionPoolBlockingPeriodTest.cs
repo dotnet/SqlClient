@@ -201,6 +201,34 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     }
 
     /// <summary>
+    /// Verifies that the pool records the exception from a failed physical create and clears it
+    /// once a create succeeds, so a later pooled-open timeout reports the most recent cause rather
+    /// than a stale one (GH#3545).
+    /// </summary>
+    [Fact]
+    public void LastConnectionCreateException_RecordedOnFailure_ClearedOnSuccess()
+    {
+        // Arrange - NeverBlock keeps the error state from fast-failing the second request.
+        bool shouldFail = true;
+        var factory = new ConfigurableSqlConnectionFactory(_ =>
+            shouldFail ? throw SqlExceptionHelper.CreateSqlException("server unreachable") : new MockDbConnectionInternal());
+        var pool = CreatePool(factory, "Data Source=localhost;Pool Blocking Period=NeverBlock;");
+        using var owner = new SqlConnection();
+
+        Assert.Null(pool.LastConnectionCreateException);
+
+        // Act & Assert - the failure is recorded.
+        Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
+        Assert.IsType<SqlException>(pool.LastConnectionCreateException);
+
+        // Act & Assert - a subsequent success clears it.
+        shouldFail = false;
+        Assert.True(TryGetConnectionSync(pool, owner, out DbConnectionInternal? connection));
+        Assert.NotNull(connection);
+        Assert.Null(pool.LastConnectionCreateException);
+    }
+
+    /// <summary>
     /// Verifies that once the blocking period's exit timer fires, the next request retries the
     /// factory and a successful create recovers the pool: <see cref="WaitHandleDbConnectionPool.ErrorOccurred"/>
     /// returns to false and a connection is produced. Drives the exit timer deterministically with
