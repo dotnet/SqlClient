@@ -20,7 +20,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
             ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
 
-            return DataTestUtility.IsUsingNativeSNI() &&
+            return DataTestUtility.IsNotManagedInstance() &&
+                DataTestUtility.IsUsingNativeSNI() &&
                 service != null &&
                 service.Status == ServiceControllerStatus.Running;
         }
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingManagedSNI))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingManagedSNI), nameof(DataTestUtility.IsNotManagedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_ManagedSNI()
         {

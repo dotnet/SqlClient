@@ -3,14 +3,14 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# This job builds and runs the SqlClient Unit, Functional, and Manual test suites against an Azure
-# SQL Managed Instance.  The SqlClient NuGet packages produced by the sqlclient-ci-package pipeline
-# are downloaded into the local NuGet feed (packages/) and the test projects are built in "Package"
-# mode (ReferenceType=Package) against the exact package versions produced by that pipeline.
+# This job builds and runs the SqlClient Manual test suite against an Azure SQL Managed Instance.
+# The SqlClient NuGet packages produced by the sqlclient-ci-package pipeline are downloaded into the
+# local NuGet feed (packages/) and the test project is built in "Package" mode
+# (ReferenceType=Package) against the exact package versions produced by that pipeline.
 #
-# The Managed Instance connection strings are provided by the "ADO Test Configuration Properties"
-# variable group (SQL_MI_TCP_CONN_STRING and SQL_MI_NP_CONN_STRING).  This job runs on the
-# Managed-Instance-pool, whose agents have network line-of-sight to the Managed Instance.
+# The Managed Instance TCP connection string is provided by the "ADO Test Configuration Properties"
+# variable group (SQL_MI_TCP_CONN_STRING).  This job runs on the Managed-Instance-pool, whose agents
+# have network line-of-sight to the Managed Instance.
 #
 # This template defines a job named 'managed_instance_tests_job_<suffix>' that can be depended on by
 # downstream jobs.
@@ -85,17 +85,9 @@ jobs:
 
     variables:
 
-      # Import the variable group that provides the Managed Instance connection strings
-      # (SQL_MI_TCP_CONN_STRING and SQL_MI_NP_CONN_STRING) and other test configuration.
+      # Import the variable group that provides the Managed Instance TCP connection string
+      # (SQL_MI_TCP_CONN_STRING) and other test configuration.
       - group: ADO Test Configuration Properties
-
-      # Path to the strong-name key used to sign the test assemblies.  The sqlclient-ci-package
-      # driver assemblies are signed and grant InternalsVisibleTo to the test assemblies signed with
-      # the dedicated test key's public key, so the tests must be signed with that key.  build.proj
-      # reads this from the environment and forwards it to the unit-test build (TestSigningKeyPath);
-      # the value is populated by the 'Download Test Signing Key' step below.
-      - name: TestSigningKeyPath
-        value: $(testSigningKey.secureFilePath)
 
     # The Managed-Instance-pool agents have network line-of-sight to the Managed Instance.
     pool:
@@ -133,16 +125,6 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 
-      # Download the dedicated test strong-name key so the test assemblies can be signed with the
-      # key whose public key the signed sqlclient-ci-package driver assemblies grant
-      # InternalsVisibleTo to.  The downloaded path is surfaced via the TestSigningKeyPath variable
-      # above.
-      - task: DownloadSecureFile@1
-        displayName: Download Test Signing Key
-        name: testSigningKey
-        inputs:
-          secureFile: sqlclient-test-key.snk
-
       # Write the config.jsonc file pointing the tests at the Managed Instance.  Integrated security
       # and managed identity are not supported against the Managed Instance, and IsManagedInstance
       # opts the test suite into Managed-Instance-specific behavior.
@@ -153,7 +135,8 @@ jobs:
           # password is used here; pass an empty string for the required saPassword parameter.
           saPassword: ''
           TCPConnectionString: $(SQL_MI_TCP_CONN_STRING)
-          NPConnectionString: $(SQL_MI_NP_CONN_STRING)
+          # Azure SQL Managed Instance exposes TDS over TCP and does not support Named Pipes.
+          NPConnectionString: ''
           SupportsIntegratedSecurity: false
           ManagedIdentitySupported: false
           IsManagedInstance: true
@@ -170,24 +153,29 @@ jobs:
       - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
         displayName: 'Gate: Mark Setup Succeeded'
 
-      # Build and run the Unit, Functional, and Manual test suites for this job's .NET runtime.  A
-      # blank testSet lets build.proj run all manual tests (its default), matching the Classic
-      # pipeline.
-      - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          targetFramework: ${{ parameters.runtime }}
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          referenceType: Package
-          testSet: ''
-          operatingSystem: ${{ parameters.operatingSystem }}
-          abstractionsPackageVersion: $(abstractionsPackageVersion)
-          loggingPackageVersion: $(loggingPackageVersion)
-          mdsPackageVersion: $(sqlClientPackageVersion)
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          # The Managed Instance pipeline does not run the quarantined flaky tests.
-          runFlakyTests: false
+      # Run ManualTests sets 1, 2, and 3 against the Managed Instance using the exact upstream
+      # package versions.  UnitTests and FunctionalTests do not exercise the configured instance.
+      # Set AE is omitted because this pipeline does not provision its separate AE, enclave, and AKV
+      # resources.  build.proj's default filter also excludes failing, flaky, and interactive tests.
+      - task: DotNetCoreCLI@2
+        displayName: Run Managed Instance Tests
+        condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+        inputs:
+          command: build
+          projects: build.proj
+          arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
+            -t:TestSqlClientManual
+            -p:TestFramework=${{ parameters.runtime }}
+            -p:TestSet=123
+            -p:ReferenceType=Package
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestResultsFolderPath=TestResults
+        retryCountOnTaskFailure: 2
 
       - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
         parameters:
