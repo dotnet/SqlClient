@@ -660,6 +660,7 @@ public class TransactedConnectionPoolTest
         public SqlConnectionFactory ConnectionFactory => throw new NotImplementedException();
         public int Count => throw new NotImplementedException();
         public bool ErrorOccurred => throw new NotImplementedException();
+        public Exception? LastConnectionCreateException => null;
         public int Id { get; } = 1;
         public int IdleCount => throw new NotImplementedException();
         public DbConnectionPoolIdentity Identity => throw new NotImplementedException();

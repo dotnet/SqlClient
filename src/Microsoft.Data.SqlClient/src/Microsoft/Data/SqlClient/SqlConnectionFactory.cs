@@ -337,6 +337,12 @@ namespace Microsoft.Data.SqlClient
             int retriesLeft = 10;
             int timeBetweenRetriesMilliseconds = 1;
 
+            // Tracks the most recent physical connection failure observed by the pool we last
+            // consulted, so a pooled-open timeout can report it as an inner exception rather than
+            // only reporting pool exhaustion. Hoisted out of the loop because the final give-up
+            // throw below is outside the pool variable's scope. See GH#3545.
+            Exception lastConnectionCreateException = null;
+
             do
             {
                 DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(owningConnection);
@@ -436,12 +442,14 @@ namespace Microsoft.Data.SqlClient
 
                     if (connection is null)
                     {
+                        lastConnectionCreateException = connectionPool.LastConnectionCreateException;
+
                         // connection creation failed on semaphore waiting or if max pool reached
                         if (connectionPool.IsRunning)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.GetConnection|RES|CPOOL> {0}, GetConnection failed because a pool timeout occurred.", ObjectId);
                             // If GetConnection failed while the pool is running, the pool timeout occurred.
-                            throw ADP.PooledOpenTimeout();
+                            throw ADP.PooledOpenTimeout(lastConnectionCreateException);
                         }
 
                         // We've hit the race condition, where the pool was shut down after we
@@ -458,7 +466,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.GetConnection|RES|CPOOL> {0}, GetConnection failed because a pool timeout occurred and all retries were exhausted.", ObjectId);
                 // exhausted all retries or timed out - give up
-                throw ADP.PooledOpenTimeout();
+                throw ADP.PooledOpenTimeout(lastConnectionCreateException);
             }
 
             return true;
