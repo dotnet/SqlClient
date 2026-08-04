@@ -3148,6 +3148,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not replace the connection because it is no longer in the connection pool..
+        /// </summary>
+        internal static string SQL_ConnectionPoolReplaceConnectionFailed {
+            get {
+                return ResourceManager.GetString("SQL_ConnectionPoolReplaceConnectionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection pool has been shut down..
         /// </summary>
         internal static string SQL_ConnectionPoolShutDown {

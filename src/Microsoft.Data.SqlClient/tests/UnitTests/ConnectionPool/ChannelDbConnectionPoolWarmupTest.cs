@@ -46,7 +46,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 idleTimeout: idleTimeout);
 
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                // Pool Blocking Period is pinned to AlwaysBlock so the tests that assert the pool
+                // enters its blocking-period error state do not depend on endpoint classification.
+                // Under Auto, blocking is enabled only when the data source is not an Azure
+                // endpoint, and ADPHelper (used by the simulated-server Azure routing tests)
+                // temporarily registers "localhost" as an Azure endpoint in the process-wide
+                // ADP.s_azureSqlServerEndpoints list. A pool evaluates blocking exactly once, in its
+                // constructor, so a pool built inside that window would never block - making those
+                // assertions flaky under parallel collection execution.
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions);
 
@@ -335,11 +343,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// does enter the pool's blocking-period error state. Warmup then stops the pass rather than
         /// spinning on the persistent failure.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): the background warmup thread added in #4452 races the assertion so the
-        // pool's error-state transition is observed late (Assert Expected:True/Actual:False).
-        // Not a defect in this PR.
-        [Trait("Category", "flaky")]
         [Fact]
         public async Task Warmup_AllCreationsFail_AbsorbedAndEntersErrorState()
         {
@@ -371,11 +374,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// exception rather than attempting a fresh on-demand open. The pool remains operational and
         /// resumes creating on demand once the blocking period expires.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): the background warmup thread added in #4452 races the assertion so the
-        // pool's error-state transition is observed late (Assert Expected:True/Actual:False).
-        // Not a defect in this PR.
-        [Trait("Category", "flaky")]
         [Fact]
         public async Task Warmup_Fails_UserRequestFastFailsDuringBlockingPeriod()
         {
@@ -401,11 +399,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// request (rather than warmup itself) keeps the two behaviors independent, and awaiting the
         /// warmup task makes the stand-down deterministic.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): the background warmup thread added in #4452 races the assertion so the
-        // pool's error-state transition is observed late (Assert Expected:True/Actual:False).
-        // Not a defect in this PR.
-        [Trait("Category", "flaky")]
         [Fact]
         public async Task Warmup_RespectsErrorState_StandsDownWhileBlocking()
         {
