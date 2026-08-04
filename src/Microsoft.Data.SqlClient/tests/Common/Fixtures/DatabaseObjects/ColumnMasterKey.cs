@@ -50,7 +50,7 @@ public abstract class ColumnMasterKey : DatabaseObject<ColumnMasterKey.CreationP
             byte[] signature = State.Provider.SignColumnMasterKeyMetadata(State.KeyPath, State.AllowEnclaveComputations);
             string signatureString = BitConverter.ToString(signature).Replace("-", "");
 
-            enclaveStatement = ", ENCLAVE_COMPUTATIONS (SIGNATURE = 0x" + signatureString;
+            enclaveStatement = ", ENCLAVE_COMPUTATIONS (SIGNATURE = 0x" + signatureString + ")";
         }
         else
         {

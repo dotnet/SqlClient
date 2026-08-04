@@ -7,83 +7,82 @@ using System.Linq;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
-namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeReaderRunner
+namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeReaderRunner;
+
+public abstract class DataTypeReaderRunnerBase : BaseRunner
 {
-    public abstract class DataTypeReaderRunnerBase : BaseRunner
+    protected SqlConnection _connection;
+    protected Table _table;
+
+    protected IEnumerable<DataType> AvailableTypes =>
+        s_datatypes.Others
+            .Concat(s_datatypes.Numerics)
+            .Concat(s_datatypes.Decimals)
+            .Concat(s_datatypes.DateTimes)
+            .Concat(s_datatypes.Characters)
+            .Concat(s_datatypes.Binary)
+            .Concat(s_datatypes.MaxTypes);
+
+    protected abstract RunnerJob Configuration { get; }
+
+    public abstract IEnumerable<DataType> ExecutedTypes { get; }
+
+    [ParamsSource(nameof(ExecutedTypes))]
+    public DataType Type { get; set; }
+
+    protected abstract SqlConnection OpenConnection();
+
+    protected abstract Table CreateTable();
+
+    protected virtual void OnCleanup() { }
+
+    [GlobalSetup]
+    public void Setup()
     {
-        protected SqlConnection _connection;
-        protected Table _table;
+        long rowCount = Configuration.RowCount;
 
-        protected IEnumerable<DataType> AvailableTypes =>
-            s_datatypes.Others
-                .Concat(s_datatypes.Numerics)
-                .Concat(s_datatypes.Decimals)
-                .Concat(s_datatypes.DateTimes)
-                .Concat(s_datatypes.Characters)
-                .Concat(s_datatypes.Binary)
-                .Concat(s_datatypes.MaxTypes);
+        _connection = OpenConnection();
 
-        protected abstract RunnerJob Configuration { get; }
+        _table = CreateTable()
+            .InsertBulkRows(rowCount, _connection);
+    }
 
-        public abstract IEnumerable<DataType> ExecutedTypes { get; }
-
-        [ParamsSource(nameof(ExecutedTypes))]
-        public DataType Type { get; set; }
-
-        protected abstract SqlConnection OpenConnection();
-
-        protected abstract Table CreateTable();
-
-        protected virtual void OnCleanup() { }
-
-        [GlobalSetup]
-        public void Setup()
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        using (_connection)
         {
-            long rowCount = Configuration.RowCount;
+            _table.DropTable(_connection);
 
-            _connection = OpenConnection();
-
-            _table = CreateTable()
-                .InsertBulkRows(rowCount, _connection);
+            OnCleanup();
         }
 
-        [GlobalCleanup]
-        public void Cleanup()
-        {
-            using (_connection)
-            {
-                _table.DropTable(_connection);
+        SqlConnection.ClearAllPools();
+    }
 
-                OnCleanup();
-            }
+    [IterationCleanup]
+    public void ResetConnection()
+    {
+        SqlConnection.ClearAllPools();
+    }
 
-            SqlConnection.ClearAllPools();
-        }
+    [Benchmark]
+    public async Task ReadAsync()
+    {
+        await using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
+        await using SqlDataReader reader = await sqlCommand.ExecuteReaderAsync();
 
-        [IterationCleanup]
-        public void ResetConnection()
-        {
-            SqlConnection.ClearAllPools();
-        }
+        while (await reader.ReadAsync())
+        { }
+    }
 
-        [Benchmark]
-        public async Task ReadAsync()
-        {
-            await using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
-            await using SqlDataReader reader = await sqlCommand.ExecuteReaderAsync();
+    [Benchmark]
+    public void Read()
+    {
+        using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
+        using SqlDataReader reader = sqlCommand.ExecuteReader();
 
-            while (await reader.ReadAsync())
-            { }
-        }
-
-        [Benchmark]
-        public void Read()
-        {
-            using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
-            using SqlDataReader reader = sqlCommand.ExecuteReader();
-
-            while (reader.Read())
-            { }
-        }
+        while (reader.Read())
+        { }
     }
 }
