@@ -1,0 +1,174 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# Builds and runs the SqlClient Unit and Functional test suites in Package reference mode against
+# the exact packages produced by the triggering sqlclient-ci-package run.
+
+parameters:
+
+  # The build configuration to use when building the test projects.
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+
+  # The display name for the generated job.
+  - name: displayName
+    type: string
+
+  # The verbosity level for dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # The unique suffix to append to the generated job name.
+  - name: jobNameSuffix
+    type: string
+
+  # The operating system on which to run the tests; macOS selects the Azure Pipelines pool.
+  - name: operatingSystem
+    type: string
+    values:
+      - Linux
+      - macOS
+      - Windows
+
+  # The target framework to build and run.
+  - name: runtime
+    type: string
+
+  # The timeout, in minutes, for the generated job.
+  - name: timeout
+    type: number
+    default: 90
+
+  # True to use managed SNI on Windows; ignored on non-Windows platforms.
+  - name: useManagedSNI
+    type: boolean
+    default: false
+
+  # The agent image to use.
+  - name: vmImage
+    type: string
+
+jobs:
+  # Build and run Unit and Functional tests for one OS, runtime, and SNI combination.
+  - job: unit_functional_tests_job_${{ parameters.jobNameSuffix }}
+    displayName: ${{ parameters.displayName }}
+    timeoutInMinutes: ${{ parameters.timeout }}
+
+    workspace:
+      clean: all
+
+    variables:
+      - name: isInternalBuild
+        value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
+
+    pool:
+      ${{ if eq(parameters.operatingSystem, 'macOS') }}:
+        name: Azure Pipelines
+        vmImage: ${{ parameters.vmImage }}
+      ${{ else }}:
+        ${{ if eq(variables.isInternalBuild, true) }}:
+          name: ADO-1ES-Pool
+        ${{ else }}:
+          name: ADO-CI-1ES-Pool
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
+
+    steps:
+
+      # Align the checkout with the commit that produced the upstream packages.
+      - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
+
+      # Download the exact driver packages produced by the triggering pipeline.
+      - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
+        parameters:
+          sqlServerVersionOverride: 1.0.0
+
+      # Install the SDK and all runtimes required by the test matrix.
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x, 10.x]
+
+      # Restore the repository's local dotnet tools.
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+      # Authenticate package restore against the configured NuGet feeds.
+      - task: NuGetAuthenticate@1
+        displayName: Authenticate NuGet feeds
+
+      # Configure the test suite's Windows SNI implementation.
+      - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          saPassword: ''
+          UseManagedSNIOnWindows: ${{ parameters.useManagedSNI }}
+
+      # Ensure test result publishing has a stable source directory.
+      - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+        displayName: Create TestResults Directory
+
+      # Record that setup completed so both test tasks can run independently.
+      - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
+        displayName: 'Gate: Mark Setup Succeeded'
+
+      # Run non-flaky SqlClient Unit tests against the downloaded packages.
+      - task: DotNetCoreCLI@2
+        displayName: Run Unit Tests
+        condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+        inputs:
+          command: build
+          projects: build.proj
+          arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
+            -t:TestSqlClientUnit
+            -p:TestFramework=${{ parameters.runtime }}
+            -p:ReferenceType=Package
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestResultsFolderPath=TestResults
+
+      # Run non-flaky SqlClient Functional tests against the downloaded packages.
+      - task: DotNetCoreCLI@2
+        displayName: Run Functional Tests
+        condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+        inputs:
+          command: build
+          projects: build.proj
+          arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
+            -t:TestSqlClientFunctional
+            -p:TestFramework=${{ parameters.runtime }}
+            -p:ReferenceType=Package
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestResultsFolderPath=TestResults
+
+      # Publish test results and coverage artifacts even when a test task fails.
+      - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          targetFramework: ${{ parameters.runtime }}
+          ${{ if eq(parameters.operatingSystem, 'macOS') }}:
+            operatingSystem: Mac
+          ${{ else }}:
+            operatingSystem: ${{ parameters.operatingSystem }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}
