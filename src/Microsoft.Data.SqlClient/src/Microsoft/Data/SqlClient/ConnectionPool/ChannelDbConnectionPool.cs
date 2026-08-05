@@ -823,11 +823,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // ConnectionTimeout.
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
-            // We must not read Transaction.Current ourselves here: a TransactionScope keeps the
-            // ambient transaction in thread-static storage unless it was created with
-            // TransactionScopeAsyncFlowOption.Enabled, and on a retry we are re-entered from a
-            // continuation running on an arbitrary thread, so Transaction.Current at this point
-            // says nothing reliable about the caller's transaction.
+            //
+            // We must not read Transaction.Current inside the Task.Run below instead. A
+            // TransactionScope created with TransactionScopeAsyncFlowOption.Enabled stores the
+            // transaction in an AsyncLocal, which does flow onto the pool's worker thread, so that
+            // would appear to work. But Enabled is not the default: a plain TransactionScope keeps
+            // the transaction in thread-static storage, which does not flow, and reading
+            // Transaction.Current on the worker would silently fail to enlist. The WaitHandle pool
+            // enlists correctly in that case, so this is also a compatibility requirement.
+            // AsyncState is correct under both options.
+            //
+            // This does not make the suppressed-flow pattern work -- the caller's own scope is
+            // still broken past the first await -- but it keeps the connection in the transaction
+            // the caller intended rather than silently running outside it.
             //
             // Note that we deliberately do not assign Transaction.Current on the thread pool
             // thread either. That assignment writes to thread-static storage which is *not* unwound

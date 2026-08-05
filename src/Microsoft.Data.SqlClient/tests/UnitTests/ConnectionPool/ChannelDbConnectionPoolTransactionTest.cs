@@ -575,13 +575,17 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     /// <summary>
     /// A <see cref="TransactionScope"/> created without
     /// <see cref="TransactionScopeAsyncFlowOption.Enabled"/> -- the default -- keeps its ambient
-    /// transaction in thread-static storage, so it does not flow across an await onto the thread
-    /// pool thread the pool opens on. The connection must still enlist, because the transaction is
-    /// captured on the caller's thread before the open is scheduled (see
-    /// SqlConnection.InternalOpenAsync). This covers that end to end; it does not distinguish
-    /// AsyncState from the caller's ambient transaction, which agree here. See
+    /// transaction in thread-static storage, so it does not flow onto the thread pool thread the
+    /// pool opens on. The connection must still enlist, because the transaction is captured on the
+    /// caller's thread before the open is scheduled (see SqlConnection.InternalOpenAsync).
+    ///
+    /// This is one of three guards on that capture. With Enabled the transaction rides an
+    /// AsyncLocal and is live on the pool's worker thread, so reading Transaction.Current there
+    /// would pass every other test in this class -- and silently stop enlisting for the default
+    /// option, which the WaitHandle pool handles correctly. This case is the realistic shape of
+    /// that regression; see also
     /// <see cref="GetConnectionAsync_EnteredFromThreadWithoutAmbientTransaction_EnlistsFromAsyncState"/>
-    /// for the case that separates them.
+    /// and <see cref="GetConnectionAsync_DoesNotSetAmbientTransactionOnPoolWorkerThread"/>.
     ///
     /// The open is started inside the scope but awaited outside it. That is not incidental:
     /// awaiting inside resumes the continuation on a thread pool thread, and disposing the scope
