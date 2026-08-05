@@ -37,8 +37,8 @@ variables:
   # and pinned version live in this ADO.Net-project variable group rather than in the repo. Consumed
   # by eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml.
   #
-  # MicrosoftInternalAnalyzersFeed
-  # MicrosoftInternalAnalyzersVersion
+  # InternalAnalyzersFeed
+  # InternalAnalyzersVersion
   - group: 'internal-analyzers-variables-v1'
 
   # Well-Known Variables ###################################################
