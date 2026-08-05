@@ -633,6 +633,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     /// (SqlConnection.OpenAsyncRetry.Retry) the pool is re-entered from a continuation running on
     /// an arbitrary thread, which has no ambient transaction. Reading Transaction.Current there
     /// would silently drop the enlistment, or worse, pick up an unrelated transaction.
+    ///
+    /// No TransactionScope is opened here, so this thread already stands in for that continuation:
+    /// the transaction exists but is not ambient anywhere, and AsyncState is the only channel
+    /// carrying it.
     /// </summary>
     [Fact]
     public async Task GetConnectionAsync_EnteredFromThreadWithoutAmbientTransaction_EnlistsFromAsyncState()
@@ -640,14 +644,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         // Arrange
         using var transaction = new CommittableTransaction();
         var owner = new SqlConnection();
+        Assert.Null(Transaction.Current);
 
-        // Act - enter the pool from a thread pool thread with no ambient transaction, the way a
-        // retry continuation does, carrying the transaction only in AsyncState.
-        var connection = await Task.Run(async () =>
-        {
-            Assert.Null(Transaction.Current);
-            return await GetConnectionAsync(owner, transaction);
-        });
+        // Act - carry the transaction only in AsyncState, the way a retry continuation does.
+        var connection = await GetConnectionAsync(owner, transaction);
 
         // Assert
         Assert.NotNull(connection);
