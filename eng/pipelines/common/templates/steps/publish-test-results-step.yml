@@ -37,14 +37,8 @@ steps:
     mergeTestResults: true
     buildPlatform: '${{parameters.platform }}'
     buildConfiguration: '${{parameters.buildConfiguration }}'
-    ${{ if eq(parameters.operatingSystem, 'Windows') }}:
-      testResultsFiles: 'TestResults/*.trx'
-      testRunTitle: 'Windows Tests'
-    ${{ else }}:
-      testResultsFiles: |
-        TestResults/*.trx
-        TestResults/**/*.coverage
-      testRunTitle: 'Unix Tests'
+    testResultsFiles: 'TestResults/*.trx'
+    testRunTitle: '${{ parameters.operatingSystem }} Tests'
   condition: succeededOrFailed()
 
 - powershell: |
