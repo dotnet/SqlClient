@@ -278,7 +278,7 @@
     </EnableAnalyzersArgument>
 
     <!--
-      MicrosoftInternalAnalyzersVersion
+      InternalAnalyzersVersion
       Applies to:     Build* targets, only when InternalAnalyzers is true
       Description:    Version of the Microsoft.Internal.Analyzers package to restore. It has no
                       default (see Directory.Packages.props); the private ADO.Net pipeline pins it.
@@ -288,8 +288,8 @@
                       boundary from this orchestrating build into the child "dotnet build".
       Default value:  [blank]
     -->
-    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(MicrosoftInternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
-      -p:MicrosoftInternalAnalyzersVersion=$(MicrosoftInternalAnalyzersVersion)
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
+      -p:InternalAnalyzersVersion=$(InternalAnalyzersVersion)
     </EnableAnalyzersArgument>
 
     <!--
