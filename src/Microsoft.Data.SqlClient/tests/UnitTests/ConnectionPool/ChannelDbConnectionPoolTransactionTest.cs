@@ -598,9 +598,12 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         {
             Assert.Equal(transaction, Transaction.Current);
 
+#if NET
             // The transaction really is confined to this thread, so AsyncState is the only way
-            // the pool can learn about it.
+            // the pool can learn about it. .NET Framework flows the ambient transaction through
+            // ExecutionContext whatever the async flow option says, so this only holds on .NET.
             Assert.Null(Task.Run(() => Transaction.Current).GetAwaiter().GetResult());
+#endif
 
             // Act - starting the open captures the ambient transaction synchronously, here, and
             // hands the rest of the work to a thread pool thread.
@@ -674,10 +677,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner = new SqlConnection();
         var connection = await GetConnectionAsync(owner, transaction);
 
-        // Assert - the open really did happen off the calling thread, and the pool left that
+        // Assert - the open really did happen on a thread pool thread, and the pool left that
         // thread's ambient transaction alone while still enlisting the connection.
         Assert.Equal(1, _connectionFactory.CreateCount);
-        Assert.NotEqual(Environment.CurrentManagedThreadId, _connectionFactory.CreateThreadId);
+        Assert.True(_connectionFactory.CreatedOnThreadPoolThread);
         Assert.Null(_connectionFactory.AmbientTransactionAtCreate);
         Assert.Equal(transaction, connection.EnlistedTransaction);
 
@@ -760,9 +763,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         public Transaction? AmbientTransactionAtCreate { get; private set; }
 
         /// <summary>
-        /// The managed thread the pool created the connection on.
+        /// Whether the pool created the connection on a thread pool thread, which is what makes
+        /// assigning the ambient transaction there unsafe.
         /// </summary>
-        public int CreateThreadId { get; private set; }
+        public bool CreatedOnThreadPoolThread { get; private set; }
 
         public int CreateCount { get; private set; }
 
@@ -775,7 +779,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             TimeoutTimer timeout)
         {
             AmbientTransactionAtCreate = Transaction.Current;
-            CreateThreadId = Environment.CurrentManagedThreadId;
+            CreatedOnThreadPoolThread = Thread.CurrentThread.IsThreadPoolThread;
             CreateCount++;
             return new MockDbConnectionInternal();
         }
