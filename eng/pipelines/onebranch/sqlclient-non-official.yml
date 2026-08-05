@@ -100,9 +100,8 @@ extends:
       # container is where our build steps actually execute.
       #
       # These two must be kept compatible.  Windows containers can only run on a host whose OS
-      # version is compatible with the container's base image, so when we bumped the container to
-      # Windows Server 2025 (ltsc2025) we must also move the host to 2025.  A mismatch (e.g. a 2025
-      # container on a 2022 host) fails to start the container unless Hyper-V isolation is forced.
+      # version is compatible with the container's base image.  A mismatch (e.g. a 2025 container on
+      # a 2022 host) fails to start the container unless Hyper-V isolation is forced.
       WindowsHostVersion:
         Version: 2025
 
@@ -221,6 +220,10 @@ extends:
 
       roslyn:
         # Note, requires RoslynAnalyzers task to be added as a separate step
+        # The Roslyn-specific Guardian collector/sanitizer requires SARIF v1, so our analysis build
+        # deliberately emits v1. Other, generic Guardian tooling expects SARIF v2 and may log
+        # processing errors (for example, Post Analysis's SDL artifact report) even though Roslyn
+        # collection and Guardian policy ingestion succeed.
         enabled: true
         break: ${{ parameters.breakOnSdlError }}
 

@@ -90,39 +90,15 @@
 #   leak internal tooling and breach its internal-use license. So the leaf-project analysis above
 #   (AnalysisLevel=latest-all) covers the CA* rules but NOT the IA* rules.
 #
-#   The IA* rules can only be run from the PRIVATE ADO.Net project pipelines (which build the
-#   internal dotnet-sqlclient mirror), where a Microsoft-internal NuGet feed is reachable. Options
-#   for closing the gap there, WITHOUT touching the public feed:
-#     1. Add an internal-only feed to a private NuGet.config (or <packageSourceMapping>) that is used
-#        only by the ADO.Net pipelines, restore Microsoft.Internal.Analyzers as a PrivateAssets=all
-#        analyzer reference gated on an "InternalAnalyzers" property, and set the SDL ruleset. Gate
-#        the whole thing on a variable that is only true in the private project.
-#     2. Instead of Copy Logs Only, let the RoslynAnalyzers@3 task run in a build-driving mode in the
-#        private pipeline. The task pulls Microsoft.Internal.Analyzers from its own internal source
-#        and runs the IA* rules itself -- but it must drive the compile directly (not via build.proj's
-#        <Exec> children; see the 0-SARIF note above), e.g. by pointing it at the .slnx/leaf csproj.
-#     3. Run the standalone Guardian CLI Roslyn tool in the private pipeline against the leaf
-#        projects with the internal ruleset + package, and collect its SARIF the same way.
-#   Whichever option is chosen, keep it fenced to the private project so the public repo/feed and
-#   public CI never reference the internal package.
+#   The IA* rules can only be run from the PRIVATE ADO.Net project pipelines, where a Microsoft-
+#   internal NuGet feed is reachable.  We add an internal-only feed to a custom NuGet.config
+#   that is used only by the ADO.Net pipelines,  This allows the Microsoft.Internal.Analyzers to be
+#   restored and used.
 #
 # ISOLATION:
 #   This template is self-contained and safe to run at any point in a job -- before or after a real
 #   build -- because the analysis build writes its binaries to a separate location and never touches
-#   the real build output. We pass IsolatedBuildPath to build.proj, which redirects every project's
-#   binary output (bin) under "$(Agent.TempDirectory)/roslyn/bin/", leaving the real artifacts/
-#   folder untouched, and forces a full (non-incremental) recompile so the analyzers see every
-#   source file. The per-project SARIF logs are written next to each .csproj under the source tree
-#   (only bin is redirected), which is where the Copy Logs Only step collects them from.
-#
-#   The analysis build shares the default obj/ intermediate directory with a real build, but it
-#   still cannot corrupt real build output. --no-incremental does not run Clean or delete anything;
-#   it only disables the incremental/up-to-date checks and forces a full recompile. Real output is
-#   safe because bin is redirected to the isolated path -- the isolated build only writes to the
-#   isolated bin, never the real artifacts/ bin. Every downstream step in
-#   build-buildproj-job.yml operates on $(BUILD_OUTPUT) (= artifacts/): DLL signing, the APIScan
-#   copies, packing, NuGet signing, and the copy to the job output. None of them read obj/, so
-#   rebuilding the shared intermediates has no effect on them.
+#   the real build output, using the IsolatedBuildPath build.proj property.
 
 parameters:
   # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
@@ -144,7 +120,7 @@ parameters:
       - SqlServer
 
 steps:
-  # Step 0: Internal SDL analyzers (IA*) setup.
+  # Internal SDL analyzers (IA*) setup.
   #
   # The internal "IA*" rules ship in Microsoft.Internal.Analyzers, a Microsoft-internal, confidential
   # package (see the "NOTE ON THE INTERNAL IA* RULES" section above). This template is only ever run
@@ -154,7 +130,7 @@ steps:
   # InternalAnalyzersFeed variable (defined in the ADO.Net project), so it is not committed
   # to the public repo.
 
-  # Step 0a: Generate a private NuGet.config that adds the internal feed hosting
+  # Step 1: Generate a private NuGet.config that adds the internal feed hosting
   # Microsoft.Internal.Analyzers. In packageSourceMapping the longest matching package-pattern wins,
   # so Microsoft.Internal.* resolves ONLY from the internal feed (that pattern is more specific than
   # the "*" on governed/local), while every other package still resolves from governed/local.
@@ -163,18 +139,23 @@ steps:
   # for the analysis restore, leaving the committed root NuGet.config (with its <clear/>) untouched.
   - pwsh: |
       $ErrorActionPreference = 'Stop'
-        $feed = '$(InternalAnalyzersFeed)'
+
+      # The internal feed must be supplied by the ADO.Net project pipeline via the
+      # InternalAnalyzersFeed variable.
+      $feed = '$(InternalAnalyzersFeed)'
       if ([string]::IsNullOrWhiteSpace($feed)) {
           Write-Error "InternalAnalyzersFeed is not set. Define it in the ADO.Net project with the internal feed that hosts Microsoft.Internal.Analyzers."
           exit 1
       }
+
       # Microsoft.Internal.Analyzers has no default version (see Directory.Packages.props); the
-        # pipeline must pin it via the InternalAnalyzersVersion variable.
-        $version = '$(InternalAnalyzersVersion)'
+      # pipeline must pin it via the InternalAnalyzersVersion variable.
+      $version = '$(InternalAnalyzersVersion)'
       if ([string]::IsNullOrWhiteSpace($version)) {
           Write-Error "InternalAnalyzersVersion is not set. Define it in the ADO.Net project with the Microsoft.Internal.Analyzers version to use."
           exit 1
       }
+
       $cfg = Join-Path '$(Agent.TempDirectory)' 'internal-analyzers-nuget.config'
       $lines = @(
           '<?xml version="1.0" encoding="utf-8"?>'
@@ -193,37 +174,31 @@ steps:
           '</configuration>'
       )
       Set-Content -Path $cfg -Value $lines -Encoding utf8
+
       # Do not log the file contents: they include the confidential internal feed URL. Log only the path.
       Write-Host "Wrote internal NuGet.config to $cfg"
+
       # Quote the config path so a temp path containing spaces is not mis-parsed as multiple args.
       Write-Host "##vso[task.setvariable variable=internalAnalyzersArgs]-p:InternalAnalyzers=true -p:InternalAnalyzersNugetConfig=`"$cfg`" -p:InternalAnalyzersVersion=$version"
     displayName: 'Internal analyzers: generate private NuGet.config'
 
-  # Step 0b: Authenticate to the internal Azure Artifacts feed so the leaf restores can pull
+  # Step 2: Authenticate to the internal Azure Artifacts feed so the leaf restores can pull
   # Microsoft.Internal.Analyzers. NuGetAuthenticate sets up the Azure Artifacts credential provider
   # for feeds the build identity can access in this organization.
   - task: NuGetAuthenticate@1
     displayName: 'Internal analyzers: authenticate internal feed'
 
-  # Step 1: Isolated analysis build. Compiles the package with EnableAnalyzers=true so that every
-  # leaf "dotnet build" that build.proj execs turns on the full Roslyn analyzer set (see
-  # src/Directory.Build.props) and emits a per-project "*.csproj.<guid>.sarif" log next to each
-  # project. IsolatedBuildPath redirects bin to a temp location so this never disturbs real build
-  # output. We use DotNetCoreCLI@2 (the .NET SDK's MSBuild), so there is no Visual Studio dependency.
+  # Step 3: Isolated analysis build. Compiles the package with EnableAnalyzers=true so that every
+  # leaf "dotnet build" that build.proj execs turns on the full Roslyn analyzer set.
   - task: DotNetCoreCLI@2
     displayName: 'Build for Roslyn analysis - build.proj Build${{ parameters.packageShortName }}'
     inputs:
       command: build
       projects: '$(REPO_ROOT)/build.proj'
-      # GOTCHA: Keep arguments as a single folded value (>-). Blank lines would be parsed as
-      #         multiple arguments and fail.
-      #
       # Note: BuildNumber and PackageVersion are intentionally omitted. This build only produces
       # analyzer logs; versioning has no effect on the analysis.
       #
-      # $(internalAnalyzersArgs) is set by Step 0 to "-p:InternalAnalyzers=true
-      # -p:InternalAnalyzersNugetConfig=<generated config> -p:InternalAnalyzersVersion=<ver>"
-      # so the internal IA* rules also run.
+      # $(internalAnalyzersArgs) is set by Step 1.
       arguments: >-
         -t:Build${{ parameters.packageShortName }}
         -p:Configuration=Release
@@ -234,15 +209,11 @@ steps:
         $(internalAnalyzersArgs)
         ${{ parameters.dependencyArguments }}
 
-  # Step 2: Fail fast if the analysis build produced no SARIF for THIS package. The RoslynAnalyzers
-  # task in Copy Logs Only mode (Step 3) has NO "fail on no logs" option -- it exits 0 even when it
-  # finds zero logs. Without this guard, a regression that stops the analyzers from emitting SARIF
-  # (e.g. EnableAnalyzers failing to propagate into the leaf builds, or ErrorLog being dropped) would
-  # let the analysis silently pass. We match the specific project file name for this package rather
-  # than any *.csproj.*.sarif, so a stray/unrelated SARIF cannot mask a package that produced none.
+  # Step 4: Fail fast if the analysis build produced no SARIF for THIS package. The RoslynAnalyzers
+  # task in Copy Logs Only mode (Step 5) has NO "fail on no logs" option -- it exits 0 even when it
+  # finds zero logs.
   - pwsh: |
-      # SARIF files are named "<projectFileName>.<guid>.sarif" (from ErrorLog =
-      # $(MSBuildProjectFullPath).<guid>.sarif). Map this package to its project file name.
+      # SARIF files are named "<projectFileName>.<guid>.sarif". Map this package to its project file name.
       # NOTE: keep this in sync with the *ProjectPath properties in build.proj.
       $expectedCsproj = switch ('${{ parameters.packageShortName }}') {
           'Abstractions' { 'Abstractions.csproj' }
@@ -264,10 +235,9 @@ steps:
       }
     displayName: 'Verify Roslyn analysis produced SARIF logs'
 
-  # Step 3: Collect the analysis results. In Copy Logs Only mode the task does not build or re-run
-  # the compiler -- it just gathers and sanitizes the *.csproj.*.sarif logs produced by Step 1 and
-  # hands them to Guardian/SDL. No msBuildVersion / msBuildArchitecture / VS setup is involved, and
-  # no OAuth token is needed (nothing is queried from Azure DevOps).
+  # Step 5: Collect the analysis results. In Copy Logs Only mode the task does not build or re-run
+  # the compiler -- it just gathers and sanitizes the *.csproj.*.sarif logs produced by Step 3 and
+  # hands them to Guardian/SDL.
   - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
     displayName: 'Roslyn Analyzers (collect) - build.proj Build${{ parameters.packageShortName }}'
     inputs:

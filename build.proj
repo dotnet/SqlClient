@@ -219,9 +219,7 @@
       Applies to:     Build* targets (driver and extension projects)
       Description:    When true, turns on the full set of Roslyn analyzers for every project that is
                       compiled and makes each project emit a per-project SARIF v1 log (see the
-                      EnableAnalyzers block in src/Directory.Build.props). This is consumed by the
-                      SDL Roslyn Analyzers pipeline step, which builds with EnableAnalyzers=true and
-                      then collects the SARIF logs in "Copy Logs Only" mode.
+                      EnableAnalyzers block in src/Directory.Build.props).
 
                       The flag is forwarded to each project's own "dotnet build" invocation via
                       EnableAnalyzersArgument. This forwarding is required because .NET [Roslyn]
@@ -244,10 +242,9 @@
       InternalAnalyzers
       Applies to:     Build* targets (driver and extension projects)
       Description:    When true (and EnableAnalyzers is also true), additionally runs the internal
-                      Microsoft.Internal.Analyzers ("IA*") Roslyn rules that the SDL Roslyn Analyzers
-                      task would otherwise run (see the InternalAnalyzers block in
-                      src/Directory.Build.props). The Microsoft.Internal.Analyzers package is
-                      Microsoft-internal and confidential, so this flag is set ONLY by the private
+                      Microsoft.Internal.Analyzers ("IA*") Roslyn rules (see the InternalAnalyzers
+                      block in src/Directory.Build.props). The Microsoft.Internal.Analyzers package
+                      is Microsoft-internal and confidential, so this flag is set ONLY by the private
                       ADO.Net project pipelines, which have access to an internal NuGet feed. The
                       public build and public CI never set it.
 
@@ -267,10 +264,7 @@
       Applies to:     Build* targets, only when InternalAnalyzers is true
       Description:    Path to the private NuGet.config (generated at runtime by the private ADO.Net
                       pipeline) that adds the internal feed hosting Microsoft.Internal.Analyzers. It
-                      is forwarded into each leaf "dotnet build" as -p:RestoreConfigFile, because the
-                      leaf compile runs its own restore in a separate <Exec> process and, like all
-                      global properties, RestoreConfigFile does not cross that <Exec> boundary. The
-                      outer build.proj restore intentionally keeps the default config.
+                      is forwarded into each leaf "dotnet build" as -p:RestoreConfigFile.
       Default value:  [blank]
     -->
     <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
@@ -282,10 +276,6 @@
       Applies to:     Build* targets, only when InternalAnalyzers is true
       Description:    Version of the Microsoft.Internal.Analyzers package to restore. It has no
                       default (see Directory.Packages.props); the private ADO.Net pipeline pins it.
-                      It is forwarded into each leaf "dotnet build" because the package version is
-                      consumed by Directory.Packages.props (central package management) during the
-                      leaf compile, and - like all global properties - it does not cross the <Exec>
-                      boundary from this orchestrating build into the child "dotnet build".
       Default value:  [blank]
     -->
     <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
