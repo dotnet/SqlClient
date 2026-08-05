@@ -598,12 +598,15 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         {
             Assert.Equal(transaction, Transaction.Current);
 
-#if NET
             // The transaction really is confined to this thread, so AsyncState is the only way
-            // the pool can learn about it. .NET Framework flows the ambient transaction through
-            // ExecutionContext whatever the async flow option says, so this only holds on .NET.
-            Assert.Null(Task.Run(() => Transaction.Current).GetAwaiter().GetResult());
-#endif
+            // the pool can learn about it. Probed on a dedicated thread rather than with
+            // Task.Run: blocking on a queued task lets the runtime execute it inline on this
+            // thread, which would observe this thread's own ambient transaction and prove nothing.
+            Transaction? observedOnAnotherThread = null;
+            var probe = new Thread(() => observedOnAnotherThread = Transaction.Current);
+            probe.Start();
+            probe.Join();
+            Assert.Null(observedOnAnotherThread);
 
             // Act - starting the open captures the ambient transaction synchronously, here, and
             // hands the rest of the work to a thread pool thread.
