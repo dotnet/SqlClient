@@ -573,18 +573,23 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     #region Async Ambient Transaction Flow
 
     /// <summary>
-    /// The case the AsyncState mechanism exists for. A <see cref="TransactionScope"/> created
-    /// without <see cref="TransactionScopeAsyncFlowOption.Enabled"/> -- the default -- keeps its
-    /// ambient transaction in thread-static storage, so it is ambient on the calling thread but
-    /// does not flow across an await onto the thread pool thread the pool opens on. The connection
-    /// must still enlist, because the transaction is captured on the caller's thread before the
-    /// open is scheduled (see SqlConnection.InternalOpenAsync).
+    /// A <see cref="TransactionScope"/> created without
+    /// <see cref="TransactionScopeAsyncFlowOption.Enabled"/> -- the default -- keeps its ambient
+    /// transaction in thread-static storage, so it does not flow across an await onto the thread
+    /// pool thread the pool opens on. The connection must still enlist, because the transaction is
+    /// captured on the caller's thread before the open is scheduled (see
+    /// SqlConnection.InternalOpenAsync). This covers that end to end; it does not distinguish
+    /// AsyncState from the caller's ambient transaction, which agree here. See
+    /// <see cref="GetConnectionAsync_EnteredFromThreadWithoutAmbientTransaction_EnlistsFromAsyncState"/>
+    /// for the case that separates them.
     ///
-    /// The open is started inside the scope but awaited outside it. That is not incidental: when
-    /// async flow is suppressed the continuation may resume on another thread, and a
-    /// TransactionScope must be disposed on the thread that created it. The scope is given an
-    /// explicit <see cref="CommittableTransaction"/> so that leaving the scope ends the scope
-    /// without ending the transaction the pool is still enlisting in.
+    /// The open is started inside the scope but awaited outside it. That is not incidental:
+    /// awaiting inside resumes the continuation on a thread pool thread, and disposing the scope
+    /// there throws "A TransactionScope must be disposed on the same thread that it was created."
+    /// That is the very limitation TransactionScopeAsyncFlowOption.Enabled exists to remove, so a
+    /// test of the suppressed case cannot avoid it. The scope is given an explicit
+    /// <see cref="CommittableTransaction"/> so that leaving the scope ends the scope without
+    /// ending the transaction the pool is still enlisting in.
     /// </summary>
     [Fact]
     public async Task GetConnectionAsync_WithAsyncFlowDisabled_StillEnlistsInAmbientTransaction()
@@ -597,16 +602,6 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         using (var scope = new TransactionScope(transaction))
         {
             Assert.Equal(transaction, Transaction.Current);
-
-            // The transaction really is confined to this thread, so AsyncState is the only way
-            // the pool can learn about it. Probed on a dedicated thread rather than with
-            // Task.Run: blocking on a queued task lets the runtime execute it inline on this
-            // thread, which would observe this thread's own ambient transaction and prove nothing.
-            Transaction? observedOnAnotherThread = null;
-            var probe = new Thread(() => observedOnAnotherThread = Transaction.Current);
-            probe.Start();
-            probe.Join();
-            Assert.Null(observedOnAnotherThread);
 
             // Act - starting the open captures the ambient transaction synchronously, here, and
             // hands the rest of the work to a thread pool thread.
