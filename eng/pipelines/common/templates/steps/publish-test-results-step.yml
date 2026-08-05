@@ -29,6 +29,11 @@ parameters:
       - Mac
       - Windows
 
+  # Optional test run title. When empty, preserve the historical OS-based title.
+  - name: testRunTitle
+    type: string
+    default: ''
+
 steps:
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
@@ -38,7 +43,12 @@ steps:
     buildPlatform: '${{parameters.platform }}'
     buildConfiguration: '${{parameters.buildConfiguration }}'
     testResultsFiles: 'TestResults/*.trx'
-    testRunTitle: '${{ parameters.operatingSystem }} Tests'
+    ${{ if ne(parameters.testRunTitle, '') }}:
+      testRunTitle: '${{ parameters.testRunTitle }}'
+    ${{ elseif eq(parameters.operatingSystem, 'Windows') }}:
+      testRunTitle: 'Windows Tests'
+    ${{ else }}:
+      testRunTitle: 'Unix Tests'
   condition: succeededOrFailed()
 
 - powershell: |
