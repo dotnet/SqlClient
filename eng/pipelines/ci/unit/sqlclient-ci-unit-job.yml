@@ -184,6 +184,7 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
           targetFramework: ${{ parameters.runtime }}
+          testRunTitle: ${{ parameters.displayName }}
           ${{ if eq(parameters.operatingSystem, 'macOS') }}:
             operatingSystem: Mac
           ${{ else }}:
