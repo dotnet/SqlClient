@@ -252,10 +252,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private int MinPoolSize => PoolGroupOptions.MinPoolSize;
 
         /// <summary>
-        /// Indicates whether connections may be vended from (and parked in) the
-        /// <see cref="TransactedConnectionPool"/>. This mirrors automatic transaction enlistment:
-        /// when enlistment is disabled a connection is never bound to an ambient transaction, so
-        /// the transacted store must not be consulted.
+        /// Indicates whether the pool automatically enlists connections in the ambient transaction.
+        /// When disabled, the ambient transaction is neither used to consult the
+        /// <see cref="TransactedConnectionPool"/> nor handed to activation.
+        ///
+        /// This governs the ambient transaction only. A caller may still enlist explicitly via
+        /// SqlConnection.EnlistTransaction, and such a connection is parked in the transacted store
+        /// on return regardless of this flag, since it is bound to a transaction either way.
         /// </summary>
         private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
 
@@ -333,18 +336,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // NOTE: no locking is required here because if we're in this method we can safely
             // presume that the caller is the only one using the connection, that all pre-push logic
             // has been done, and that all transactions have ended.
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.",
-                Id,
-                connection.ObjectID);
-
             if (State is Running && connection.CanBePooled)
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended; returning connection to pool.",
+                    Id,
+                    connection.ObjectID);
+
                 connection.ResetConnection();
                 PutConnectionInIdleChannel(connection);
             }
             else
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended; destroying unpoolable connection.",
+                    Id,
+                    connection.ObjectID);
+
                 // RemoveConnection triggers replenishment, which is the channel pool's equivalent
                 // of the wait handle pool's QueuePoolCreateRequest.
                 RemoveConnection(connection);
@@ -758,9 +766,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 transaction.GetHashCode(),
                 transactedObject.ObjectID);
 
-            // If the connection is in the transacted pool, remove it there and return it to general
-            // circulation. TransactedConnectionPool.TransactionEnded calls back into
-            // PutObjectFromTransactedPool for us once it has removed the connection from its list.
+            // Removal from the transacted list happens synchronously inside this call, and
+            // TransactedConnectionPool.TransactionEnded calls back into PutObjectFromTransactedPool
+            // itself to return the connection to general circulation.
+            //
+            // We deliberately do not call PutObjectFromTransactedPool ourselves afterwards: that
+            // callback is conditional on the connection actually having been found in the list.
+            // A transaction can complete while the application still holds the connection, in which
+            // case the connection was never parked, and returning it here would hand a connection
+            // that is still in use to another caller. In that case the connection instead reaches
+            // the pool through the normal ReturnInternalConnection path when it is closed.
+            // This mirrors WaitHandleDbConnectionPool.TransactionEnded.
             TransactedConnectionPool.TransactionEnded(transaction, transactedObject);
         }
 
@@ -1368,8 +1384,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.",
+                "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped from transacted pool.",
                 Id,
+                transaction.GetHashCode(),
                 connection.ObjectID);
 
             SqlClientDiagnostics.Metrics.ExitFreeConnection();
