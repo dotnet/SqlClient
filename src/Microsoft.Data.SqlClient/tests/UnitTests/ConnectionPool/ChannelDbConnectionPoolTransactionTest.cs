@@ -659,14 +659,19 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         transaction.Rollback();
     }
-    /// ExecutionContext does not unwind, so doing it on a thread pool thread would leave a stale
-    /// transaction behind for unrelated work later scheduled onto that same thread -- including
-    /// the login-time auto-enlistment that non-pooled connections perform against the ambient
-    /// transaction. The pool must pass the transaction explicitly instead of assigning it.
+
+    /// <summary>
+    /// The pool must enlist the connection in the caller's transaction without making that
+    /// transaction ambient on the thread it opens on. Assigning Transaction.Current writes to
+    /// thread-static storage that ExecutionContext does not unwind, so doing it on a thread pool
+    /// thread would leave a stale transaction behind for unrelated work later scheduled onto that
+    /// same thread -- including the login-time auto-enlistment that non-pooled connections perform
+    /// against the ambient transaction. The pool must pass the transaction explicitly instead of
+    /// assigning it.
     ///
-    /// The connection factory runs on exactly the thread the pool does its open work on, so it is
-    /// used here to observe that thread's ambient transaction directly rather than inferring the
-    /// leak from thread pool reuse.
+    /// The connection factory runs inside the pool's own open work, so it observes what the pool
+    /// made ambient there. That is an observation of the code under test rather than of whichever
+    /// thread happened to run it, so it does not depend on thread identity or scheduling.
     /// </summary>
     [Fact]
     public async Task GetConnectionAsync_DoesNotSetAmbientTransactionOnPoolWorkerThread()
@@ -679,10 +684,9 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner = new SqlConnection();
         var connection = await GetConnectionAsync(owner, transaction);
 
-        // Assert - the open really did happen on a thread pool thread, and the pool left that
-        // thread's ambient transaction alone while still enlisting the connection.
+        // Assert - the pool left the worker's ambient transaction alone while still enlisting the
+        // connection.
         Assert.Equal(1, _connectionFactory.CreateCount);
-        Assert.True(_connectionFactory.CreatedOnThreadPoolThread);
         Assert.Null(_connectionFactory.AmbientTransactionAtCreate);
         Assert.Equal(transaction, connection.EnlistedTransaction);
 
@@ -764,12 +768,6 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         /// </summary>
         public Transaction? AmbientTransactionAtCreate { get; private set; }
 
-        /// <summary>
-        /// Whether the pool created the connection on a thread pool thread, which is what makes
-        /// assigning the ambient transaction there unsafe.
-        /// </summary>
-        public bool CreatedOnThreadPoolThread { get; private set; }
-
         public int CreateCount { get; private set; }
 
         protected override DbConnectionInternal CreateConnection(
@@ -781,7 +779,6 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             TimeoutTimer timeout)
         {
             AmbientTransactionAtCreate = Transaction.Current;
-            CreatedOnThreadPoolThread = Thread.CurrentThread.IsThreadPoolThread;
             CreateCount++;
             return new MockDbConnectionInternal();
         }
