@@ -1,0 +1,59 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This pipeline runs the SqlClient Unit and Functional test suites in "Package" mode against the
+# NuGet packages produced by sqlclient-ci-package. It is triggered by successful runs of that
+# pipeline.
+#
+# This pipeline is defined in both the Public and ADO.Net projects, but it is only triggered by the
+# sqlclient-ci-package pipeline in the same project.
+
+name: $(DayOfYear)$(Rev:rr)
+
+pr: none
+trigger: none
+
+resources:
+  pipelines:
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
+      trigger: true
+
+parameters:
+
+  # The build configuration to use when building the test projects.
+  - name: buildConfiguration
+    displayName: Test Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to emit debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # The verbosity level for dotnet CLI commands.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+stages:
+  # Run the Unit and Functional test matrices on Windows, Linux, and macOS.
+  - template: /eng/pipelines/ci/unit/sqlclient-ci-unit-stages.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

@@ -10,6 +10,9 @@
 #   - Windows: net462 with native SNI, plus net8/9/10 with native and managed SNI (7 jobs).
 #   - Linux: net8/9/10 with managed SNI (3 jobs).
 #   - Coverage: merge reports from all test jobs (1 job).
+#
+# This pipeline is registered in the ADO.Net (internal) project ONLY, because it depends on the
+# Kerberos pools and domains accessible from that project.
 
 name: $(date:yyyyMMdd)$(rev:.r)
 
