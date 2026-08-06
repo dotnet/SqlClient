@@ -9,7 +9,6 @@
 # Job breakdown:
 #   - Windows: net462 with native SNI, plus net8/9/10 with native and managed SNI (7 jobs).
 #   - Linux: net8/9/10 with managed SNI (3 jobs).
-#   - Coverage: merge reports from all test jobs (1 job).
 
 name: $(date:yyyyMMdd)$(rev:.r)
 

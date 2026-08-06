@@ -56,15 +56,6 @@ jobs:
     displayName: ${{ parameters.displayName }}
     timeoutInMinutes: 90
 
-    variables:
-      ${{ if eq(parameters.operatingSystem, 'Windows') }}:
-        ${{ if eq(parameters.useManagedSNI, true) }}:
-          sniSuffix: -ManagedSNI
-        ${{ else }}:
-          sniSuffix: -NativeSNI
-      ${{ else }}:
-        sniSuffix: ''
-
     workspace:
       clean: all
 
@@ -136,30 +127,6 @@ jobs:
           mergeTestResults: true
           testRunTitle: ${{ parameters.displayName }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
-
-      - pwsh: |
-          $resultsDir = "$(Build.SourcesDirectory)/test_results"
-          if (Test-Path -LiteralPath $resultsDir) {
-              Write-Host "##vso[task.setvariable variable=HasTestResultsDir]true"
-          } else {
-              Write-Host "##vso[task.setvariable variable=HasTestResultsDir]false"
-          }
-        displayName: Detect test_results directory
-        condition: succeededOrFailed()
-
-      - pwsh: |
-          Set-Location "$(Build.SourcesDirectory)/test_results"
-          Get-ChildItem -Filter "*.coverage" -Recurse |
-            Rename-Item -NewName { "${{ parameters.runtime }}$(sniSuffix)-" + $_.Name }
-        displayName: Rename coverage files
-        condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
-
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Test Artifacts
-        condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
-        inputs:
-          targetPath: $(Build.SourcesDirectory)/test_results
-          artifact: ${{ parameters.runtime }}-${{ lower(parameters.operatingSystem) }}$(sniSuffix)-$(System.JobId)
 
       - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
         - template: /eng/pipelines/ci/kerberos/linux-teardown-step.yml@self
