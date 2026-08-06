@@ -1,0 +1,19 @@
+<!--
+  Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+  file to you under the MIT license.
+-->
+<Project>
+  <!--
+    The RoslynAnalyzers@3 pipeline task runs in Copy Logs Only mode and succeeds even when it finds
+    no logs. Verify that, when analysis is enabled, the build produced the SARIF file(s) that we
+    expect.
+  -->
+  <Target Name="VerifyRoslynAnalysisLog"
+          AfterTargets="CoreCompile"
+          Condition="'$(EnableAnalyzers)' == 'true'">
+    <Error Condition="'$(ErrorLog)' == ''"
+           Text="Roslyn analysis did not configure an ErrorLog for $(MSBuildProjectFullPath)." />
+    <Error Condition="'$(ErrorLog)' != '' AND !Exists('$(ErrorLog)')"
+           Text="Roslyn analysis did not produce the expected SARIF log: $(ErrorLog)" />
+  </Target>
+</Project>

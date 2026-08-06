@@ -329,9 +329,9 @@
     <!--
       InternalAnalyzersNugetConfig
       Applies to:     Build* targets, only when InternalAnalyzers is true
-      Description:    Path to the private NuGet.config (generated at runtime by the private ADO.Net
-                      pipeline) that adds the internal feed hosting Microsoft.Internal.Analyzers. It
-                      is forwarded into each leaf "dotnet build" as -p:RestoreConfigFile.
+      Description:    Path to the analysis NuGet.config that adds the internal feed hosting
+                      Microsoft.Internal.Analyzers. It is forwarded into each leaf "dotnet build"
+                      as -p:RestoreConfigFile.
       Default value:  [blank]
     -->
     <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
