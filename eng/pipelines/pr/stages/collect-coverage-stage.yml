@@ -61,11 +61,14 @@ stages:
 
           # Part 2) Publish merged results to the pipeline results/artifacts
 
-          # Publish the merged coverage file as a pipeline artifact
+          # Publish the merged coverage file as a pipeline artifact.
+          #
+          # The artifact name includes the job attempt number so that re-running a failed job does
+          # not collide with the artifact published by a previous attempt.
           - task: PublishPipelineArtifact@1
             displayName: Publish coverage artifact
             inputs:
-              artifact: merged_coverage
+              artifact: merged_coverage_attempt$(System.JobAttempt)
               targetPath: "${{ variables.workingDir }}/merge"
 
           # Publish the merged coverage file as coverage results so they can be viewed in ADO UI.

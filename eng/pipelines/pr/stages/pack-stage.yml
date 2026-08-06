@@ -121,9 +121,15 @@ stages:
             displayName: Output Build Output Tree
             condition: succeededOrFailed()
 
-          # Upload the build output as the artifact of the job
+          # Upload the build output as the artifact of the job.
+          #
+          # The artifact name includes the job attempt number because pipeline artifact names must
+          # be unique within a build. Re-running a failed job would otherwise attempt to publish
+          # an artifact that already exists and fail with:
+          #   "Artifact build_and_pack_projects already exists for build <id>."
           - publish: $(BUILD_OUTPUT)
-            artifact: build_and_pack_projects
+            artifact: build_and_pack_projects_attempt$(System.JobAttempt)
+            displayName: Publish Build Output
             condition: succeededOrFailed()
 
 

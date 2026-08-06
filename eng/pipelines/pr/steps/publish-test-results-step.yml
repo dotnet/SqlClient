@@ -31,7 +31,7 @@ parameters:
     type: string
 
   # Absolute path to the test results folder. This folder will be published to the artifact defined
-  # by ${{ testResultsArtifactBaseName }}_$(System.JobId)
+  # by ${{ testResultsArtifactBaseName }}_$(System.JobId)_attempt$(System.JobAttempt)
   - name: testResultsPath
     type: string
 
@@ -52,11 +52,15 @@ steps:
       testRunTitle: "${{ parameters.platformDisplayName }}_${{ parameters.testDisplayName }}"
     condition: succeededOrFailed()
 
-  # Publish the test results as artifacts for the pipeline
+  # Publish the test results as artifacts for the pipeline.
+  #
+  # The artifact name includes the job attempt number because System.JobId is stable across
+  # attempts of the same job. Without it, re-running a failed test job would fail with
+  # "Artifact ... already exists for build <id>."
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Test Artifacts'
     inputs:
-      artifact: ${{ parameters.testResultsArtifactBaseName }}_$(System.JobId)
+      artifact: ${{ parameters.testResultsArtifactBaseName }}_$(System.JobId)_attempt$(System.JobAttempt)
       targetPath: ${{ parameters.testResultsPath }}
     condition: succeededOrFailed()
 
