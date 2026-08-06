@@ -48,10 +48,11 @@ parameters:
 
   # A list of packages that the package being built with this job depends on. Each entry in the
   # object should have the fields:
-  # * artifactName - (Optional) Name of the artifact published in a previous job that contains the
-  #   desired version of the dependency.  Omit to reference a package that is NOT built in this run
-  #   (e.g. a previously published SqlServer package): the version argument is still applied, but no
-  #   artifact is downloaded, so the dependency is restored from NuGet instead of the local feed.
+  # * artifactName - Name of the artifact published in a previous job that contains the desired
+  #   version of the dependency. Set to an empty string to reference a package that is NOT built in
+  #   this run (e.g. a previously published SqlServer package): the version argument is still
+  #   applied, but no artifact is downloaded, so the dependency is restored from NuGet instead of
+  #   the local feed.
   # * shortName - Short name of the dependency. This name should correspond to the short name used
   #   when building the package via build.proj
   # * version - Pre-computed version of the dependency (from compute-versions stage).
@@ -87,6 +88,13 @@ parameters:
       - 'SqlClient'
       - 'SqlServer'
 
+  # Suffix appended to PackageVersion to select the canonical build.proj version property.
+  - name: versionPropertySuffix
+    type: string
+    values:
+      - SqlClient
+      - SqlServer
+
   # Package version (required). Pre-computed by compute-versions stage.
   - name: packageVersion
     type: string
@@ -108,16 +116,6 @@ jobs:
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
 
-      # Choose the "PackageVersion" property-name suffix for this job's package.  This is how we
-      # build the build.proj property name that specifies this package's version, either
-      # PackageVersionSqlClient (shared by the entire SqlClient family), or PackageVersionSqlServer.
-      # Deciding the suffix once here keeps the mapping out of the individual build/pack/analysis
-      # templates.
-      ${{ if eq(parameters.packageShortName, 'SqlServer') }}:
-        versionPropertySuffix: SqlServer
-      ${{ else }}:
-        versionPropertySuffix: SqlClient
-
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
@@ -135,12 +133,9 @@ jobs:
                 Write-Host "##vso[task.setvariable variable=sqlServerVersionArgument]$(sqlServerVersionArgument) -p:PackageVersionSqlServer=${{ package.version }}"
               displayName: "Append SqlServer Version Argument - ${{ package.shortName }}"
 
-          # Download the pipeline artifact for this dependency package, when it was built in this
-          # run.  Dependencies without an artifactName are restored from NuGet instead (e.g. a
-          # previously published SqlServer package), so no download is needed.  Use an explicit
-          # non-empty check (coalesce handles a missing key) rather than relying on a bare string
-          # in the boolean if-expression.
-          - ${{ if ne(coalesce(package.artifactName, ''), '') }}:
+          # Download the pipeline artifact for this dependency package when it was built in this
+          # run. An explicitly empty artifactName restores the dependency from NuGet instead.
+          - ${{ if ne(package.artifactName, '') }}:
             - task: DownloadPipelineArtifact@2
               displayName: "Download Artifact - ${{ package.shortName }}"
               inputs:
@@ -160,7 +155,7 @@ jobs:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
           revision: ${{ parameters.revision }}
-          versionPropertySuffix: $(versionPropertySuffix)
+          versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
@@ -170,7 +165,7 @@ jobs:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
           revision: ${{ parameters.revision }}
-          versionPropertySuffix: $(versionPropertySuffix)
+          versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
@@ -218,7 +213,7 @@ jobs:
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
           revision: ${{ parameters.revision }}
-          versionPropertySuffix: $(versionPropertySuffix)
+          versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:

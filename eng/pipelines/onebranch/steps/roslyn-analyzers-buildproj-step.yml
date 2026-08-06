@@ -65,7 +65,7 @@ steps:
         -p:ReferenceType=Package
         -p:SkipDependencyPack=true
         -p:BuildNumber=${{ parameters.revision }}
-        ${{ parameters.dependencyArguments }}
         -p:PackageVersion${{ parameters.versionPropertySuffix }}=${{ parameters.packageVersion }}
+        ${{ parameters.dependencyArguments }}
       msBuildVersion: 17.0
       setupCommandLinePicker: vs2022

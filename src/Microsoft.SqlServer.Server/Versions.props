@@ -14,10 +14,9 @@
   -->
 
   <!--
-    Import guard: set on first import so that subsequent imports of this file are skipped.
-    Directory.Packages.props imports all Versions.props early in Package mode; the guard
-    prevents each csproj's own conditional import from re-importing and re-evaluating
-    version properties.
+    Import guard: set on first import so that subsequent conditional imports of this file are
+    skipped. Directory.Packages.props imports this file early in Package mode; without the guard,
+    MSBuild ignores the duplicate csproj import but emits warning MSB4011.
   -->
   <PropertyGroup>
     <SqlServerVersionsImported>true</SqlServerVersionsImported>
@@ -28,11 +27,7 @@
     <!-- Last version shipped to NuGet. Update after each release. -->
     <SqlServerPublishedVersion>1.0.0</SqlServerPublishedVersion>
 
-    <!--
-      This is the *next* version to release of SqlServer. Update this when the next version is
-      decided.
-      @TODO: Determine how versions should be updated in release branches vs main
-    -->
+    <!-- This is the *next* version to release of SqlServer. Update this after each release. -->
     <SqlServerNextVersion>1.1.0-preview1</SqlServerNextVersion>
   </PropertyGroup>
 

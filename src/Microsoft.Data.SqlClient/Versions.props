@@ -19,9 +19,8 @@
     and the AlwaysEncrypted.AzureKeyVaultProvider) share these SqlClient* version properties
     (package, file, and assembly).  Microsoft.SqlServer.Server is versioned separately.
 
-    Import guard: set on first import so that subsequent imports of this file are skipped.
-    src/Directory.Build.props imports this file for every project; the guard prevents re-importing
-    and re-evaluating version properties.
+    Import guard: set on first import so that subsequent conditional imports of this file are
+    skipped. Without the guard, MSBuild ignores the duplicate import but emits warning MSB4011.
   -->
   <PropertyGroup>
     <SqlClientVersionsImported>true</SqlClientVersionsImported>

@@ -98,17 +98,19 @@
 
     <!--
       PackageVersionSqlClient
-      Applies to:     BuildSqlClient*, PackSqlClient, BuildLogging, PackLogging, BuildAbstractions,
-                      PackAbstractions, BuildAzure, PackAzure, BuildAkvProvider, PackAkvProvider,
-                      TestSqlClient, TestSqlClientFunctional, TestSqlClientManual, TestAzure
-                      (with -p:ReferenceType=Package)
+      Applies to:
+        Build:        BuildSqlClient*, BuildLogging, BuildAbstractions, BuildAzure, BuildAkvProvider
+        Pack:         PackSqlClient, PackLogging, PackAbstractions, PackAzure, PackAkvProvider
+        Test:         TestSqlClient, TestSqlClientFunctional, TestSqlClientManual, TestAzure
+                      (Package reference mode only)
       Description:    Specifies the version of the SqlClient *family*.  All family packages
                       (Microsoft.Data.SqlClient, Internal.Logging, Extensions.Abstractions,
                       Extensions.Azure, and the AlwaysEncrypted.AzureKeyVaultProvider) share this
                       single version, which is used both as the assigned package/assembly version
                       when building/packing a family package and as the dependency version when a
-                      family package references another.  If omitted, the version defaults to the
-                      value calculated by Versions.props.
+                      family package references another. Build and Pack targets use it in both
+                      reference modes; Test targets consume it only in Package reference mode. If
+                      omitted, the version defaults to the value calculated by Versions.props.
 
       Default value:  [blank]
       Example:        7.0.0-preview4
@@ -120,7 +122,10 @@
 
     <!--
       PackageVersionSqlServer
-      Applies to:     BuildSqlServer
+      Applies to:
+        Build:        BuildSqlServer and BuildSqlClient* in Package reference mode
+        Pack:         PackSqlServer and PackSqlClient in Package reference mode
+        Test:         TestSqlClientUnit and TestSqlClientManual in Package reference mode
       Description:    Specifies the package version to use for Microsoft.SqlServer.Server. If this
                       is specified, it will be used preferentially: assembly version and file
                       version will be derived from the specified package version.

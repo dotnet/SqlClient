@@ -80,8 +80,8 @@ steps:
         -p:PackBuild=false
         -p:ReferenceType=Package
         -p:BuildNumber="${{ parameters.revision }}"
-        ${{ parameters.dependencyArguments }}
         -p:PackageVersion${{ parameters.versionPropertySuffix }}="${{ parameters.packageVersion }}"
+        ${{ parameters.dependencyArguments }}
 
   - script: tree /a /f $(BUILD_OUTPUT)
     displayName: Output Build Output Tree

@@ -256,13 +256,10 @@ namespace Microsoft.Data.SqlClient.Test.Stress
                 return "<unknown>";
             }
 
-            // Look for the PackageVersion field, falling back to FileVersion.
-            var field = type.GetField(
-                "PackageVersion",
-                BindingFlags.NonPublic | BindingFlags.Static)
-                ?? type.GetField(
-                "FileVersion",
-                BindingFlags.NonPublic | BindingFlags.Static);
+            // Prefer PackageVersion, falling back to FileVersion.
+            var field =
+                type.GetField("PackageVersion", BindingFlags.NonPublic | BindingFlags.Static)
+                ?? type.GetField("FileVersion", BindingFlags.NonPublic | BindingFlags.Static);
 
             if (field is null)
             {

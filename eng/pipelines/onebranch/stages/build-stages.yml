@@ -105,6 +105,7 @@ stages:
           revision: '$(versionRevision)'
           packageFullName: 'Microsoft.Data.SqlClient.Internal.Logging'
           packageShortName: 'Logging'
+          versionPropertySuffix: 'SqlClient'
           packageVersion: '$(sqlClientPackageVersion)'
 
 
@@ -126,6 +127,7 @@ stages:
             revision: '$(versionRevision)'
             packageFullName: 'Microsoft.SqlServer.Server'
             packageShortName: 'SqlServer'
+            versionPropertySuffix: 'SqlServer'
             packageVersion: '$(sqlServerPackageVersion)'
 
   # ====================================================================
@@ -166,6 +168,7 @@ stages:
           revision: '$(versionRevision)'
           packageFullName: 'Microsoft.Data.SqlClient.Extensions.Abstractions'
           packageShortName: 'Abstractions'
+          versionPropertySuffix: 'SqlClient'
           packageVersion: '$(sqlClientPackageVersion)'
 
   # ====================================================================
@@ -216,11 +219,13 @@ stages:
                 shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
             - ${{ else }}:
-              - shortName: 'SqlServer'
+              - artifactName: ''
+                shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
           revision: '$(versionRevision)'
           packageFullName: 'Microsoft.Data.SqlClient'
           packageShortName: 'SqlClient'
+          versionPropertySuffix: 'SqlClient'
           packageVersion: '$(sqlClientPackageVersion)'
 
       # Build Microsoft.Data.SqlClient.Extensions.Azure
@@ -246,6 +251,7 @@ stages:
           revision: '$(versionRevision)'
           packageFullName: 'Microsoft.Data.SqlClient.Extensions.Azure'
           packageShortName: 'Azure'
+          versionPropertySuffix: 'SqlClient'
           packageVersion: '$(sqlClientPackageVersion)'
 
   # ====================================================================
@@ -297,11 +303,13 @@ stages:
                 shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
             - ${{ else }}:
-              - shortName: 'SqlServer'
+              - artifactName: ''
+                shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
           revision: '$(versionRevision)'
           packageFullName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
           packageShortName: 'AkvProvider'
+          versionPropertySuffix: 'SqlClient'
           packageVersion: '$(sqlClientPackageVersion)'
 
   # ====================================================================

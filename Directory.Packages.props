@@ -14,7 +14,8 @@
     below can reference its computed version values for sibling package pinning.
 
     Each Versions.props sets an import-guard property (SqlClientVersionsImported /
-    SqlServerVersionsImported) on first load so that re-imports become no-ops.
+    SqlServerVersionsImported) on first load. This skips later conditional imports and avoids
+    MSB4011 warnings; MSBuild would otherwise ignore the duplicate import.
   -->
   <!--
     The SqlClient family version (src/Microsoft.Data.SqlClient/Versions.props) is imported for
