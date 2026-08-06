@@ -11,6 +11,11 @@ parameters:
     type: object
     default: []
 
+  # Base name of the artifact to publish the merged coverage report to. The job attempt number is
+  # appended to this to prevent collision across re-runs of the job.
+  - name: coverageArtifactBaseName
+    type: string
+
 stages:
   - stage: collect_code_coverage
     displayName: "Collect code coverage"
@@ -68,7 +73,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish coverage artifact
             inputs:
-              artifact: merged_coverage_attempt$(System.JobAttempt)
+              artifact: ${{ parameters.coverageArtifactBaseName }}_attempt$(System.JobAttempt)
               targetPath: "${{ variables.workingDir }}/merge"
 
           # Publish the merged coverage file as coverage results so they can be viewed in ADO UI.

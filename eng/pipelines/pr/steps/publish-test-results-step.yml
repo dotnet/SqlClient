@@ -31,7 +31,7 @@ parameters:
     type: string
 
   # Absolute path to the test results folder. This folder will be published to the artifact defined
-  # by ${{ testResultsArtifactBaseName }}_$(System.JobId)_attempt$(System.JobAttempt)
+  # by ${{ parameters.testResultsArtifactBaseName }}_$(System.JobId)_attempt$(System.JobAttempt)
   - name: testResultsPath
     type: string
 
