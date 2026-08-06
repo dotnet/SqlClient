@@ -22,10 +22,9 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Pipeline completion triggers are evaluated using the branch filters in this pipeline's "Default
-# branch for manual and scheduled builds" definition. Because both pipelines use the same
-# repository, an eligible run executes this YAML from the triggering package run's branch and
-# commit, preserving branch-specific pipeline definitions.
+# The resource branch filter limits completion triggers to the intended upstream branch. Because
+# both pipelines use the same repository, an eligible run executes this YAML from the triggering
+# package run's branch and commit, preserving branch-specific pipeline definitions.
 resources:
   pipelines:
 
@@ -40,7 +39,10 @@ resources:
     # added to the project, this resource will fail to resolve and the folder path must be added.
     - pipeline: sqlclient-ci-package
       source: sqlclient-ci-package
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:

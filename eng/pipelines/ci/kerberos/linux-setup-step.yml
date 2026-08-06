@@ -46,7 +46,6 @@ steps:
       DOMAIN="${{ parameters.kerberosDomain }}"
       DOMAIN_OU="${{ parameters.kerberosDomainOU }}"
       DOMAIN_USER="${{ parameters.kerberosDomainUser }}"
-      DOMAIN_PASSWORD="${{ parameters.kerberosDomainPassword }}"
       DOMAIN_UPPER=$(echo "$DOMAIN" | tr '[:lower:]' '[:upper:]')
 
       echo "Domain:   $DOMAIN"
@@ -99,6 +98,8 @@ steps:
       sudo ip addr
       sudo ip route
     displayName: Initialize Kerberos (domain join + kinit)
+    env:
+      DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}
 
   - pwsh: |
       Install-Module -Name SqlServer -Force -Confirm:$false
