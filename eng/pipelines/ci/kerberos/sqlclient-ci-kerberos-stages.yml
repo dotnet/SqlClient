@@ -3,7 +3,7 @@
 # file to you under the MIT license.  See the LICENSE file in the project root for more information.
 ####################################################################################################
 
-# Defines separate Windows and Linux Kerberos test stages followed by a merged coverage stage.
+# Defines separate Windows and Linux Kerberos test stages.
 
 parameters:
 
@@ -105,15 +105,3 @@ stages:
             poolName: ADO-Trusted-Linux-WestUS2
             runtime: ${{ runtime }}
             vmImage: ADO-UB24
-
-  - stage: merge
-    displayName: Merge Code Coverage
-    dependsOn:
-      - windows
-      - linux
-    condition: succeeded()
-    jobs:
-      - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          upload: false
