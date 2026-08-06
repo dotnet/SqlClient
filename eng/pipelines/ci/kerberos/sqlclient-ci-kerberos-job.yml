@@ -56,6 +56,15 @@ jobs:
     displayName: ${{ parameters.displayName }}
     timeoutInMinutes: 90
 
+    variables:
+      ${{ if eq(parameters.operatingSystem, 'Windows') }}:
+        ${{ if eq(parameters.useManagedSNI, true) }}:
+          sniSuffix: -ManagedSNI
+        ${{ else }}:
+          sniSuffix: -NativeSNI
+      ${{ else }}:
+        sniSuffix: ''
+
     workspace:
       clean: all
 
@@ -141,7 +150,7 @@ jobs:
       - pwsh: |
           Set-Location "$(Build.SourcesDirectory)/test_results"
           Get-ChildItem -Filter "*.coverage" -Recurse |
-            Rename-Item -NewName { "${{ parameters.runtime }}" + $_.Name }
+            Rename-Item -NewName { "${{ parameters.runtime }}$(sniSuffix)-" + $_.Name }
         displayName: Rename coverage files
         condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
 
@@ -150,7 +159,7 @@ jobs:
         condition: and(succeededOrFailed(), eq(variables['HasTestResultsDir'], 'true'))
         inputs:
           targetPath: $(Build.SourcesDirectory)/test_results
-          artifact: ${{ parameters.runtime }}-${{ lower(parameters.operatingSystem) }}-$(System.JobId)
+          artifact: ${{ parameters.runtime }}-${{ lower(parameters.operatingSystem) }}$(sniSuffix)-$(System.JobId)
 
       - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
         - template: /eng/pipelines/ci/kerberos/linux-teardown-step.yml@self
