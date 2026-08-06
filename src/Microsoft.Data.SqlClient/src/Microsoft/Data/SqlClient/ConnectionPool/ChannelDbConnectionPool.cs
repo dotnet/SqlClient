@@ -377,6 +377,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Carry the old connection's enlistment over to the replacement so that a connection
                 // replaced mid-transaction stays bound to the same transaction.
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+
+                // newConnection came from the idle channel, so it already holds a slot of its own.
+                // Releasing oldConnection's slot here keeps the pool's count accurate. This is
+                // deliberately different from the create-new branch below, which hands oldConnection's
+                // slot to the replacement via _connectionSlots.TryReplace and therefore only disposes
+                // it -- calling RemoveConnection there would signal a free slot that does not exist.
                 oldConnection.DeactivateConnection();
                 RemoveConnection(oldConnection);
             }
@@ -472,9 +478,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Id,
                 connection.ObjectID);
 
-            // Deactivate before inspecting the connection's transaction state. Deactivation is what
-            // detaches a completed transaction, so reading EnlistedTransaction beforehand could park
-            // a connection in the transacted pool under a transaction that has already ended.
+            // Deactivate before inspecting the connection, because DeactivateConnection mutates both
+            // of the gates we branch on below:
+            //  - Deactivate() dooms the connection when async commands are still outstanding, which
+            //    the IsConnectionDoomed check must observe.
+            //  - DeactivateConnection dooms it via DoNotPoolThisConnection when the load-balance
+            //    timeout has elapsed, which the CanBePooled check must observe.
+            // WaitHandleDbConnectionPool.DeactivateObject orders it the same way.
             connection.DeactivateConnection();
 
             if (connection.IsConnectionDoomed)
@@ -484,7 +494,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            // Note: this logic mirrors WaitHandleDbConnectionPool.ReturnObject
+            // Note: this logic mirrors WaitHandleDbConnectionPool.ReturnObject, minus one dead
+            // branch. Its Running path also checks IsTransactionRoot && Pool == null -> SetInStasis,
+            // under its own "how did we get here if the pool is null?" TODO. A connection cannot
+            // arrive here without a pool, because this method is called through the connection's own
+            // Pool reference. The branch is redundant in any case: putting a transaction root in
+            // stasis is exactly what the first case below does when the connection cannot be pooled.
             ReturnDisposition disposition;
             lock (connection)
             {
@@ -837,10 +852,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
             // is cancelled. We can only cancel based on our own timeout, which is set to the owningObject's
             // ConnectionTimeout.
+            //
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
             //
-            // We must not read Transaction.Current inside the Task.Run below instead. A
+            // We must not read Transaction.Current inside the Task.Run below. A
             // TransactionScope created with TransactionScopeAsyncFlowOption.Enabled stores the
             // transaction in an AsyncLocal, which does flow onto the pool's worker thread, so that
             // would appear to work. But Enabled is not the default: a plain TransactionScope keeps

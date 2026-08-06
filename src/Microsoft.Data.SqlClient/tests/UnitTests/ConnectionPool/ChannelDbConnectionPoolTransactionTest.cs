@@ -168,6 +168,19 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             ? connections.Count
             : 0;
 
+    /// <summary>
+    /// Asserts which transaction a connection is bound to, complementing the pool-state assertions:
+    /// AssertPoolState says where the connection was filed, this says what it is actually enlisted
+    /// in. Pass null to assert the connection is not enlisted at all.
+    /// </summary>
+    /// <remarks>
+    /// Compared by equality rather than reference because the EnlistedTransaction setter stores a
+    /// clone, so that the connection does not hold the caller's transaction past the end of its
+    /// using block.
+    /// </remarks>
+    private static void AssertEnlistedIn(Transaction? expected, DbConnectionInternal connection) =>
+        Assert.Equal(expected, connection.EnlistedTransaction);
+
     #endregion
 
     #region Connection Return Routing
@@ -188,6 +201,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner = new SqlConnection();
         var connection = GetConnection(owner);
         Assert.NotNull(connection);
+        AssertEnlistedIn(transaction, connection);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         // Act
@@ -196,6 +210,10 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         // Assert
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
         Assert.Equal(1, TransactedConnectionsFor(transaction!));
+
+        // The connection stays bound to the transaction while parked, which is what makes it
+        // ineligible for a caller in any other transaction.
+        AssertEnlistedIn(transaction, connection);
 
         scope.Complete();
     }
@@ -211,20 +229,22 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner = new SqlConnection();
         var connection = GetConnection(owner);
         Assert.NotNull(connection);
+        AssertEnlistedIn(null, connection);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         // Act
         ReturnConnection(connection, owner);
 
         // Assert
+        AssertEnlistedIn(null, connection);
         AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
     }
 
     /// <summary>
-    /// The pool deactivates a returning connection before reading its enlistment, and deactivation
-    /// is what detaches a completed transaction. A connection returned after its transaction has
-    /// already ended must therefore land in the idle channel, not be parked under a dead
-    /// transaction where nothing would ever release it.
+    /// A connection whose transaction has already ended must land in the idle channel, not be
+    /// parked under a dead transaction where nothing would ever release it. The enlistment is
+    /// dropped when the transaction completes, so by the time the connection is returned there is
+    /// nothing left to park it under.
     /// </summary>
     [Fact]
     public void ReturnConnection_AfterTransactionCompleted_ReturnsToIdleChannel()
@@ -236,8 +256,12 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         {
             connection = GetConnection(owner);
             Assert.NotNull(connection);
+            AssertEnlistedIn(Transaction.Current, connection);
             scope.Complete();
         }
+
+        // The completed transaction detached itself from the connection.
+        AssertEnlistedIn(null, connection);
 
         // Act - the transaction is fully disposed by this point.
         ReturnConnection(connection, owner);
@@ -261,10 +285,15 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var connection = GetConnection(owner);
         Assert.NotNull(connection);
 
+        // The ambient transaction exists but must not reach the connection.
+        Assert.NotNull(Transaction.Current);
+        AssertEnlistedIn(null, connection);
+
         // Act
         ReturnConnection(connection, owner);
 
         // Assert
+        AssertEnlistedIn(null, connection);
         AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
 
         scope.Complete();
@@ -326,6 +355,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         // Assert
         Assert.Same(connection1, connection2);
+        AssertEnlistedIn(transaction, connection2);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         ReturnConnection(connection2, owner2);
@@ -350,6 +380,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner1 = new SqlConnection();
         var connection1 = await GetConnectionAsync(owner1, transaction);
         Assert.NotNull(connection1);
+        AssertEnlistedIn(transaction, connection1);
         ReturnConnection(connection1, owner1);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
@@ -359,6 +390,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         // Assert
         Assert.Same(connection1, connection2);
+        AssertEnlistedIn(transaction, connection2);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         ReturnConnection(connection2, owner2);
@@ -381,13 +413,15 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         var owner1 = new SqlConnection();
         var connection1 = GetConnection(owner1);
+        AssertEnlistedIn(outerTransaction, connection1);
         ReturnConnection(connection1, owner1);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
         // Act - RequiresNew starts an unrelated transaction.
+        Transaction? innerTransaction;
         using (var innerScope = new TransactionScope(TransactionScopeOption.RequiresNew))
         {
-            Transaction? innerTransaction = Transaction.Current;
+            innerTransaction = Transaction.Current;
             Assert.NotEqual(outerTransaction, innerTransaction);
 
             var owner2 = new SqlConnection();
@@ -395,7 +429,14 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
             // Assert - a fresh connection, because connection1 belongs to the outer transaction.
             Assert.NotSame(connection1, connection2);
+            AssertEnlistedIn(innerTransaction, connection2);
+            AssertEnlistedIn(outerTransaction, connection1);
             AssertPoolState(count: 2, idleCount: 0, transactedCount: 1);
+
+            // The store holds only the outer transaction's connection, so connection2 was newly
+            // created rather than taken from the store.
+            Assert.Equal(1, TransactedConnectionsFor(outerTransaction!));
+            Assert.Equal(0, TransactedConnectionsFor(innerTransaction!));
 
             ReturnConnection(connection2, owner2);
             AssertPoolState(count: 2, idleCount: 0, transactedCount: 2);
@@ -409,6 +450,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         // connection stays parked.
         AssertPoolState(count: 2, idleCount: 1, transactedCount: 1);
         Assert.Equal(1, TransactedConnectionsFor(outerTransaction!));
+        Assert.Equal(0, TransactedConnectionsFor(innerTransaction!));
 
         outerScope.Complete();
     }
@@ -440,10 +482,14 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         // Assert
         AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
 
+        // The transaction released it, so it carries no enlistment into general circulation.
+        AssertEnlistedIn(null, connection);
+
         // The released connection is reusable by a caller with no ambient transaction.
         var owner2 = new SqlConnection();
         var connection2 = GetConnection(owner2);
         Assert.Same(connection, connection2);
+        AssertEnlistedIn(null, connection2);
         ReturnConnection(connection2, owner2);
     }
 
@@ -455,10 +501,11 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     public void TransactionRollback_ReturnsParkedConnectionToIdleChannel()
     {
         // Arrange
+        DbConnectionInternal connection;
         using (new TransactionScope())
         {
             var owner = new SqlConnection();
-            var connection = GetConnection(owner);
+            connection = GetConnection(owner);
             ReturnConnection(connection, owner);
             AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
 
@@ -467,6 +514,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         // Assert
         AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+        AssertEnlistedIn(null, connection);
     }
 
     /// <summary>
@@ -500,30 +548,69 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     }
 
     /// <summary>
-    /// TransactionEnded for a connection that was never parked must be a no-op. It must not push a
-    /// connection that is still checked out into the idle channel, where a second caller could
-    /// pick it up while the first is still using it.
+    /// TransactionEnded on its own, with none of the surrounding lifecycle events, must be a no-op
+    /// for a connection that was never parked. Only parking hands the connection to the pool, so
+    /// even an enlisted connection is still checked out here, and pushing it into the idle channel
+    /// would let a second caller pick it up while the first is still using it.
     /// </summary>
     [Fact]
-    public void TransactionEnded_ForConnectionThatWasNeverParked_LeavesItCheckedOut()
+    public void TransactionEnded_ForEnlistedConnectionThatWasNeverParked_LeavesItCheckedOut()
     {
         // Arrange
-        var owner = new SqlConnection();
-        var connection = GetConnection(owner);
-        Assert.NotNull(connection);
-
         using var scope = new TransactionScope();
         Transaction? transaction = Transaction.Current;
         Assert.NotNull(transaction);
 
-        // Act
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
+
+        // The connection is enlisted, but checked out rather than parked.
+        AssertEnlistedIn(transaction, connection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        // Act - the completion notification arrives on its own, with no detach and no return.
         _pool.TransactionEnded(transaction!, connection);
+
+        // Assert - nothing to release, and the enlistment is untouched.
+        AssertEnlistedIn(transaction, connection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        // It still reaches the pool through the normal return path.
+        ReturnConnection(connection, owner);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+        scope.Complete();
+    }
+
+    /// <summary>
+    /// A transaction can complete while the application still holds its connection. The connection
+    /// was never parked, so there is nothing for the completion to release, and pushing it into the
+    /// idle channel would hand a connection that is still in use to a second caller.
+    /// </summary>
+    [Fact]
+    public void TransactionCompletes_WhileConnectionStillCheckedOut_LeavesItCheckedOut()
+    {
+        // Arrange
+        var owner = new SqlConnection();
+        DbConnectionInternal connection;
+        using (var scope = new TransactionScope())
+        {
+            connection = GetConnection(owner);
+            Assert.NotNull(connection);
+            AssertEnlistedIn(Transaction.Current, connection);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+            // Act - the transaction completes with the connection still checked out.
+            scope.Complete();
+        }
 
         // Assert
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
+        // It reaches the pool only when its owner returns it.
         ReturnConnection(connection, owner);
-        scope.Complete();
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
     }
 
     #endregion
@@ -545,6 +632,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         var owner = new SqlConnection();
         var oldConnection = GetConnection(owner);
         Assert.NotNull(oldConnection);
+        AssertEnlistedIn(transaction, oldConnection);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
         // Act
@@ -553,9 +641,11 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             oldConnection,
             TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
-        // Assert - a distinct connection took over the old connection's slot.
+        // Assert - a distinct connection took over the old connection's slot, carrying the
+        // enlistment with it.
         Assert.NotNull(newConnection);
         Assert.NotSame(oldConnection, newConnection);
+        AssertEnlistedIn(transaction, newConnection);
         Assert.True(oldConnection.IsConnectionDoomed);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
 
