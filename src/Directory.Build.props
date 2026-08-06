@@ -60,7 +60,7 @@
       IMPORTANT: Do NOT append ",version=2". The Guardian Roslyn sanitizer deserializes each log as
       SARIF v1.
     -->
-    <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString().Substring(0,8)).sarif</ErrorLog>
+    <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString()).sarif</ErrorLog>
     <!--
       The analysis pass must record every diagnostic instead of stopping at the first one, so it
       overrides the repo-wide TreatWarningsAsErrors=true set above. Genuine compiler errors still
