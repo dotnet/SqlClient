@@ -131,12 +131,13 @@ jobs:
       # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-      # Perform Roslyn analysis before building, since this step will clobber build output.
+      # Run Roslyn analysis. This step is self-contained: it performs its own build into an
+      # isolated output location, so it can run at any point in the job without clobbering the
+      # real build output below.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
           dependencyArguments: $(dependencyPackageArguments)
           packageShortName: ${{ parameters.packageShortName }}
-          packageVersion: ${{ parameters.packageVersion }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/onebranch/steps/build-buildproj-step.yml@self

@@ -32,6 +32,59 @@
     <!-- <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors> -->
   </PropertyGroup>
 
+  <!-- Roslyn Analysis ========================================================================= -->
+  <!--
+    When EnableAnalyzers is set, run as many Roslyn analyzers as possible and emit a per-project
+    SARIF v1 log. Official builds will process these logs via the RoslynAnalyzers task in "Copy Logs
+    Only" mode.
+  -->
+  <PropertyGroup Condition="'$(EnableAnalyzers)' == 'true'">
+    <RunAnalyzers>true</RunAnalyzers>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!--
+      Turn on every rule the SDK ships, at the latest level, plus the IDE code-style analyzers.
+    -->
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <!--
+      IDE code-style (IDExxxx) rules ship in the SDK; their configuration (which rules fire, at what
+      severity, and the style preferences they check) lives in our .editorconfig files.
+    -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!--
+      Emit one uniquely-named SARIF log per project for the RoslynAnalyzers "Copy Logs Only"
+      collector.   It globs *.csproj.*.sarif, and $(MSBuildProjectFullPath) ends in .csproj, so
+      "$(MSBuildProjectFullPath).<guid>.sarif" matches; the GUID avoids collisions across the
+      multiple target frameworks a single project builds.
+
+      IMPORTANT: Do NOT append ",version=2". The Guardian Roslyn sanitizer deserializes each log as
+      SARIF v1.
+    -->
+    <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString()).sarif</ErrorLog>
+    <!--
+      The analysis pass must record every diagnostic instead of stopping at the first one, so it
+      overrides the repo-wide TreatWarningsAsErrors=true set above. Genuine compiler errors still
+      fail the build.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Internal Analysis (IA* rules) - private ADO.Net pipelines only ========================== -->
+  <!--
+    When InternalAnalyzers is set (by the private ADO.Net pipeline), additionally reference the
+    Microsoft.Internal.Analyzers package so the internal "IA*" rules run inside the analysis pass
+    and contribute to the per-project SARIF log.
+
+    This is deliberately gated on EnableAnalyzers as well as InternalAnalyzers, so it only takes
+    effect as part of the analysis pass above.
+
+    PrivateAssets="all" keeps it a build-only analyzer that never flows into the shipped NuGet
+    package's dependency graph.
+  -->
+  <ItemGroup Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true'">
+    <PackageReference Include="Microsoft.Internal.Analyzers" PrivateAssets="all" IncludeAssets="analyzers" />
+  </ItemGroup>
+
   <!-- Versioning ====================================================== -->
   <!--
     Versions for packages are assigned in the project's Versions.props file. Below, we provide
