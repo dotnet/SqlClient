@@ -38,6 +38,18 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
+  # The name of the pool to run in.
+  - name: poolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-MMS25-SQL25
+
 stages:
 
   - stage: verify_nuget_packages_stage
@@ -55,8 +67,9 @@ stages:
         displayName: Verify NuGet Package Metadata
 
         pool:
-          name: Azure Pipelines
-          vmImage: windows-latest
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         variables:
           # The directory where all package artifacts will be downloaded.

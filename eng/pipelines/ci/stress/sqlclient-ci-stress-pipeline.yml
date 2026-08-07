@@ -90,6 +90,13 @@ stages:
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
+      # This pipeline does not import the CI build variables, so the pool must be
+      # named explicitly.
+      ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
+        poolName: ADO-1ES-Pool
+      ${{ else }}:
+        poolName: ADO-CI-1ES-Pool
+      vmImage: ADO-UB24-SQL25
 
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
