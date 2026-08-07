@@ -201,7 +201,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings), DisableDiscoveryEnumeration = true)]
-        [Trait("Category", "flaky")]
         public static void ReadStream_ReadsStreamDataCorrectly(string connectionString)
         {
             ReadStream(connectionString);
