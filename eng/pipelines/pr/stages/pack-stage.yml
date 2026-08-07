@@ -42,6 +42,17 @@ parameters:
   - name: packArtifactBaseName
     type: string
 
+  # The name of the pool to run in.
+  - name: poolName
+    type: string
+    # This variable is provided by the 'sqlclient-testconfig-v1' variable group.
+    default: $(PoolNameDefault)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-UB24-SQL25
+
 stages:
   - stage: ${{ parameters.stageName }}
     displayName: Build and Pack Projects
@@ -52,7 +63,9 @@ stages:
         displayName: Build and Pack Projects
 
         pool:
-          vmImage: 'ubuntu-latest'
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         steps:
           # Install dotnet

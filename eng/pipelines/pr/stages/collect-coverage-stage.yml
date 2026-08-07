@@ -16,6 +16,17 @@ parameters:
   - name: coverageArtifactBaseName
     type: string
 
+  # The name of the pool to run in.
+  - name: poolName
+    type: string
+    # This variable is provided by the 'sqlclient-testconfig-v1' variable group.
+    default: $(PoolNameDefault)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-UB24-SQL25
+
 stages:
   - stage: collect_code_coverage
     displayName: "Collect code coverage"
@@ -26,7 +37,9 @@ stages:
         displayName: "Collect Code Coverage"
 
         pool:
-          vmImage: ubuntu-latest
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         variables:
 
