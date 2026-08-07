@@ -344,7 +344,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection.ObjectID);
 
                 connection.ResetConnection();
-                PutConnectionInIdleChannel(connection);
+
+                // probeLiveness: false because we are running on the System.Transactions
+                // transaction-completion callback thread (see DbConnectionInternal
+                // .DelegatedTransactionEnded, whose contract requires the caller to hold a lock on
+                // the connection). DbConnectionInternal.IsConnectionAlive polls the socket, and we
+                // do not want to do socket work while holding that lock on a thread we do not own.
+                // WaitHandleDbConnectionPool does not probe here either; it simply calls
+                // ResetConnection followed by PutNewObject. The connection is still validated on
+                // its way back out of the idle channel, so a connection that died during the
+                // transaction is detected before it is vended. The idle-expiry, load-balance and
+                // clear-generation checks all still run below; only the socket poll is skipped.
+                PutConnectionInIdleChannel(connection, probeLiveness: false);
             }
             else
             {
@@ -384,6 +395,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // slot to the replacement via _connectionSlots.TryReplace and therefore only disposes
                 // it -- calling RemoveConnection there would signal a free slot that does not exist.
                 oldConnection.DeactivateConnection();
+
+                // RemoveConnection early-returns without freeing the slot when the connection is a
+                // transaction root awaiting its transaction's end, which would leave the pool
+                // holding two reservations for one logical connection. That cannot happen here:
+                // IsTxRootWaitingForTxEnd is set only by SetInStasis, and the only path that puts a
+                // pooled connection in stasis is ReturnInternalConnection. oldConnection is checked
+                // out by owningObject at this point, so it has not been returned and cannot be in
+                // stasis. Being a transaction root is not sufficient; the connection must also have
+                // been returned. The slot is therefore always released here.
+                //
+                // If that ever changes, the outcome is a transient over-reservation rather than a
+                // leak: the connection comes back through PutObjectFromTransactedPool when its
+                // transaction ends, which calls RemoveConnection again once stasis has been
+                // terminated, and the slot is reclaimed then.
                 RemoveConnection(oldConnection);
             }
             else
@@ -587,7 +612,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// idle-return time and dropping it if it is no longer live.
         /// </summary>
         /// <param name="connection">The connection to make available to other callers.</param>
-        private void PutConnectionInIdleChannel(DbConnectionInternal connection)
+        /// <param name="probeLiveness">
+        /// Whether to poll the physical connection to confirm it is still alive. Pass false when
+        /// running on a thread that must not block, such as a System.Transactions completion
+        /// callback. The idle-expiry, load-balance timeout and clear-generation checks run
+        /// regardless; only the socket poll is suppressed.
+        /// </param>
+        private void PutConnectionInIdleChannel(DbConnectionInternal connection, bool probeLiveness = true)
         {
             // Stamp the return time before IsLiveConnection runs so the idle-expiry gate inside it
             // measures time-in-pool, not time-since-last-return. Without this, a connection whose
@@ -608,7 +639,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 connection.SetReturnedTime(_timeProvider.GetUtcNow().UtcDateTime);
             }
 
-            if (!IsLiveConnection(connection))
+            if (!IsLiveConnection(connection, probeLiveness))
             {
                 RemoveConnection(connection);
                 return;
@@ -1104,8 +1135,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Checks that the provided connection is live and unexpired and closes it if needed.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="probeLiveness">
+        /// Whether to poll the physical connection to confirm it is still alive. Pass false when
+        /// running on a thread that must not block; the remaining checks are all cheap and local.
+        /// </param>
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
-        private bool IsLiveConnection(DbConnectionInternal connection)
+        private bool IsLiveConnection(DbConnectionInternal connection, bool probeLiveness = true)
         {
             // Connection has been sitting idle longer than the configured idle timeout.
             // Checked before the (potentially expensive) liveness probe so an idle-expired
@@ -1125,8 +1160,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return false;
             }
 
-            // Broken physical connection
-            if (!connection.IsConnectionAlive())
+            // Broken physical connection. Skipped when the caller cannot afford to block: this
+            // polls the socket, so it must not run on a thread we do not own.
+            if (probeLiveness && !connection.IsConnectionAlive())
             {
                 return false;
             }
@@ -1147,8 +1183,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Closes the provided connection and removes it from the pool.
+        /// Closes the provided connection and removes it from the pool, freeing its slot.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Not guaranteed: a connection that is a transaction root awaiting its transaction's end
+        /// is left alone and its slot stays reserved, because disposing it would abort a possibly
+        /// distributed transaction. Callers that treat this method as "the slot is now free" must
+        /// tolerate that, including <see cref="Clear"/> and the <see cref="Shutdown"/> drain, which
+        /// can therefore complete while the pool still owns a connection.
+        /// </para>
+        /// <para>
+        /// In practice no current caller reaches that early return, because a connection in stasis
+        /// is filed in neither the idle channel nor the transacted store, and every caller sources
+        /// its connection from one of those or from a connection that is still checked out. The
+        /// guard is retained to match WaitHandleDbConnectionPool.DestroyObject and to keep the
+        /// invariant enforced if a future caller does reach it.
+        /// </para>
+        /// </remarks>
         /// <param name="connection">The connection to be closed.</param>
         private void RemoveConnection(DbConnectionInternal connection)
         {

@@ -99,6 +99,17 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
     }
 
     /// <summary>
+    /// Replaces the fixture's pool with one capped at <paramref name="maxPoolSize"/>, so a test can
+    /// exhaust it and observe what happens to a caller that has to wait.
+    /// </summary>
+    private void ReplaceFixturePool(int maxPoolSize)
+    {
+        _pool.Shutdown();
+        _pool.Clear();
+        _pool = CreatePool(maxPoolSize: maxPoolSize);
+    }
+
+    /// <summary>
     /// Opens a connection synchronously. The pool reads the ambient transaction off the calling
     /// thread on this path.
     /// </summary>
@@ -322,6 +333,41 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
             "A connection returned to a shut-down pool should be destroyed, not pooled.");
         Assert.Null(connection.Pool);
         AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// A doomed connection is destroyed even when it is still enlisted. The doomed check runs
+    /// before the transacted decision precisely so that a connection unfit for reuse is never
+    /// parked in the transacted store, where it would be handed to the next caller in that same
+    /// transaction.
+    /// </summary>
+    [Fact]
+    public void ReturnConnection_WhenDoomedWhileEnlisted_DestroysWithoutParking()
+    {
+        // Arrange
+        using var scope = new TransactionScope();
+        Transaction? transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        var owner = new SqlConnection();
+        var connection = GetConnection(owner);
+        Assert.NotNull(connection);
+        AssertEnlistedIn(transaction, connection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        // The connection breaks while it is enlisted and checked out.
+        ((MockDbConnectionInternal)connection).Doom();
+        Assert.True(connection.IsConnectionDoomed);
+
+        // Act
+        ReturnConnection(connection, owner);
+
+        // Assert - destroyed rather than parked under its transaction, and its slot is released.
+        Assert.Equal(0, TransactedConnectionsFor(transaction!));
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+        Assert.Null(connection.Pool);
+
+        scope.Complete();
     }
 
     #endregion
@@ -611,6 +657,262 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         // It reaches the pool only when its owner returns it.
         ReturnConnection(connection, owner);
         AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// Releasing a parked connection runs on the System.Transactions transaction-completion
+    /// callback thread, under DbConnectionInternal.DelegatedTransactionEnded's requirement that the
+    /// caller holds a lock on the connection. The pool must not poll the socket there, so the
+    /// liveness probe is suppressed on that path and the connection is pooled without it.
+    /// WaitHandleDbConnectionPool likewise does not probe when returning a connection from the
+    /// transacted store. A connection that died during the transaction is still caught, just later:
+    /// it is validated on its way back out of the idle channel, before it can be vended.
+    /// </summary>
+    [Fact]
+    public void TransactionCommit_ReturningParkedConnection_DoesNotProbeLiveness()
+    {
+        // Arrange
+        MockDbConnectionInternal connection;
+        using (var scope = new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            connection = Assert.IsType<MockDbConnectionInternal>(GetConnection(owner));
+            ReturnConnection(connection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+            // Report the connection as dead and ignore any probes made while arranging, so the
+            // assertions below describe only what the completion path itself did.
+            connection.IsDead = true;
+            connection.LivenessProbeCount = 0;
+
+            // Act
+            scope.Complete();
+        }
+
+        // Assert - the completion path pooled it without asking whether it was alive.
+        Assert.Equal(0, connection.LivenessProbeCount);
+        AssertPoolState(count: 1, idleCount: 1, transactedCount: 0);
+
+        // The deferred check still catches it: vending probes the connection, finds it dead, and
+        // discards it rather than handing a broken connection to the caller.
+        var owner2 = new SqlConnection();
+        var connection2 = GetConnection(owner2);
+        Assert.NotSame(connection, connection2);
+        Assert.True(connection.LivenessProbeCount > 0);
+        ReturnConnection(connection2, owner2);
+    }
+
+    /// <summary>
+    /// The counterpart to <see cref="TransactionCommit_ReturningParkedConnection_DoesNotProbeLiveness"/>:
+    /// suppressing the probe is specific to the transaction-completion path. An ordinary return
+    /// runs on the caller's own thread, where blocking is acceptable, so it still probes and drops
+    /// a dead connection immediately instead of leaving it to be discovered later.
+    /// </summary>
+    [Fact]
+    public void ReturnConnection_WhenDeadAndNotEnlisted_ProbesLivenessAndDestroysIt()
+    {
+        // Arrange
+        var owner = new SqlConnection();
+        var connection = Assert.IsType<MockDbConnectionInternal>(GetConnection(owner));
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+        connection.IsDead = true;
+        connection.LivenessProbeCount = 0;
+
+        // Act
+        ReturnConnection(connection, owner);
+
+        // Assert
+        Assert.True(connection.LivenessProbeCount > 0);
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// A connection parked in the transacted store still holds its pool slot, so with MaxPoolSize
+    /// reached and everything parked, a caller outside the transaction cannot be served and must
+    /// wait. Ending the transaction has to wake it: the release path writes the connection into the
+    /// idle channel, which completes the waiter. If it did not, the caller would block until its
+    /// own timeout even though a connection had become available.
+    /// </summary>
+    [Fact]
+    public async Task TransactionEnd_WithPoolExhaustedByParkedConnection_WakesWaitingCaller()
+    {
+        // Arrange - a pool of exactly one connection, parked under a transaction.
+        ReplaceFixturePool(maxPoolSize: 1);
+
+        DbConnectionInternal parkedConnection;
+        var waiter = new TaskCompletionSource<DbConnectionInternal>(state: null);
+
+        using (var scope = new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            parkedConnection = GetConnection(owner);
+            ReturnConnection(parkedConnection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+            // A second caller with no ambient transaction. The pool is at MaxPoolSize and the idle
+            // channel is empty, and the parked connection belongs to a transaction this caller is
+            // not in, so it cannot be served now. Suppress the ambient transaction so the request
+            // is genuinely unrelated rather than being handed the parked connection by affinity.
+            using (new TransactionScope(TransactionScopeOption.Suppress))
+            {
+                bool completedSynchronously = _pool.TryGetConnection(
+                    new SqlConnection(),
+                    waiter,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                    out DbConnectionInternal? immediateConnection);
+
+                Assert.False(completedSynchronously);
+                Assert.Null(immediateConnection);
+            }
+
+            Assert.False(waiter.Task.IsCompleted, "The caller must wait while the only connection is parked.");
+
+            // Act
+            scope.Complete();
+        }
+
+        // Assert - the waiter was handed the released connection rather than timing out.
+        DbConnectionInternal servedConnection = await waiter.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        Assert.Same(parkedConnection, servedConnection);
+        AssertEnlistedIn(null, servedConnection);
+        AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// Clear cannot destroy a connection parked in the transacted store, because doing so would
+    /// abort a possibly distributed transaction, and the parked connection is not in the idle
+    /// channel that Clear drains. It is instead retired lazily: Clear bumps the generation counter,
+    /// and when the transaction ends the release path sees the stale generation and destroys the
+    /// connection rather than returning it to circulation. This is the channel pool's substitute
+    /// for WaitHandleDbConnectionPool's eager DoNotPoolThisConnection sweep, so the lag between
+    /// Clear returning and the connection actually going away is expected.
+    /// </summary>
+    [Fact]
+    public void Clear_WhileConnectionIsParked_RetiresItOnTransactionEndInsteadOfRepooling()
+    {
+        // Arrange
+        DbConnectionInternal connection;
+        using (var scope = new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            connection = GetConnection(owner);
+            ReturnConnection(connection, owner);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+
+            // Act - Clear runs while the connection is parked and its transaction is live.
+            _pool.Clear();
+
+            // Assert - it survives Clear, still parked and still holding its slot.
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 1);
+            Assert.False(connection.IsConnectionDoomed);
+
+            scope.Complete();
+        }
+
+        // Assert - on release the stale generation is detected, so the connection is destroyed
+        // instead of being handed to the next caller.
+        Assert.True(connection.IsConnectionDoomed);
+        Assert.Null(connection.Pool);
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+
+        // The next caller therefore gets a freshly created connection, not the cleared one.
+        var owner2 = new SqlConnection();
+        var connection2 = GetConnection(owner2);
+        Assert.NotSame(connection, connection2);
+        ReturnConnection(connection2, owner2);
+    }
+
+    #endregion
+
+    #region Stasis
+    /// <summary>
+    /// A transaction root that cannot be pooled is put in stasis rather than destroyed: closing it
+    /// would orphan the root transaction with no way to commit or roll back. Stasis is not the
+    /// transacted store. The connection is filed nowhere, so it is invisible to the idle channel,
+    /// to <see cref="ChannelDbConnectionPool.Clear"/> and to pruning, but it still holds its pool
+    /// slot. The slot comes back when the transaction ends and the connection unwinds through
+    /// PutObjectFromTransactedPool.
+    /// </summary>
+    [Fact]
+    public void ReturnConnection_NonPoolableTransactionRoot_EntersStasisThenReleasesSlotOnTransactionEnd()
+    {
+        // Arrange
+        MockDbConnectionInternal connection;
+        using (var scope = new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            connection = Assert.IsType<MockDbConnectionInternal>(GetConnection(owner));
+
+            // A root that cannot be pooled. Deliberately not doomed: IsConnectionDoomed would
+            // short-circuit the return path before the stasis decision is ever reached.
+            connection.IsRoot = true;
+            connection.MarkDoNotPool();
+            Assert.False(connection.CanBePooled);
+            Assert.False(connection.IsConnectionDoomed);
+
+            // Act
+            ReturnConnection(connection, owner);
+
+            // Assert - in stasis: holding its slot, but filed in neither the idle channel nor the
+            // transacted store, so no other caller can reach it.
+            Assert.True(connection.IsTxRootWaitingForTxEnd);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+            // It survives a Clear that would have destroyed any pooled connection, because Clear
+            // drains the idle channel and a connection in stasis is not in it.
+            _pool.Clear();
+            Assert.True(connection.IsTxRootWaitingForTxEnd);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+            scope.Complete();
+        }
+
+        // Assert - the transaction ended, stasis terminated, and because the connection still
+        // cannot be pooled it was destroyed rather than returned to circulation. Its slot is free.
+        Assert.False(connection.IsTxRootWaitingForTxEnd);
+        Assert.Null(connection.Pool);
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
+    }
+
+    /// <summary>
+    /// The transaction-root counterpart to
+    /// <see cref="ReturnConnection_ToShutDownPool_DestroysConnection"/>. A shut-down pool destroys
+    /// an ordinary connection on return, but a transaction root must still go to stasis instead, or
+    /// shutting down a pool would abort a live transaction. The slot stays outstanding until the
+    /// transaction ends, which is why a completed Shutdown does not imply the pool owns nothing.
+    /// </summary>
+    [Fact]
+    public void ReturnConnection_TransactionRootToShutDownPool_EntersStasisRatherThanBeingDestroyed()
+    {
+        // Arrange
+        MockDbConnectionInternal connection;
+        using (var scope = new TransactionScope())
+        {
+            var owner = new SqlConnection();
+            connection = Assert.IsType<MockDbConnectionInternal>(GetConnection(owner));
+            connection.IsRoot = true;
+
+            _pool.Shutdown();
+
+            // Act
+            ReturnConnection(connection, owner);
+
+            // Assert - not destroyed, unlike the non-root case.
+            Assert.True(connection.IsTxRootWaitingForTxEnd);
+            Assert.False(connection.IsConnectionDoomed);
+            Assert.NotNull(connection.Pool);
+            AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
+
+            scope.Complete();
+        }
+
+        // Assert - the pool is not Running, so the connection is destroyed on the way out of
+        // stasis rather than pooled, and only now does the pool's count reach zero.
+        Assert.False(connection.IsTxRootWaitingForTxEnd);
+        Assert.True(connection.IsConnectionDoomed);
+        Assert.Null(connection.Pool);
+        AssertPoolState(count: 0, idleCount: 0, transactedCount: 0);
     }
 
     #endregion
@@ -903,6 +1205,43 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
 
         protected override void Deactivate()
         {
+        }
+
+        internal void Doom() => DoomThisConnection();
+
+        /// <summary>
+        /// Marks the connection unfit for pooling without dooming it. This is the distinction the
+        /// pool cares about: <see cref="DbConnectionInternal.IsConnectionDoomed"/> short-circuits
+        /// the return path before the transacted decision, whereas a merely non-poolable connection
+        /// still reaches it and can be put in stasis.
+        /// </summary>
+        internal void MarkDoNotPool() => DoNotPoolThisConnection();
+
+        /// <summary>
+        /// When true, the connection reports itself as the root of a delegated transaction, which
+        /// is what makes the pool put it in stasis rather than destroy it.
+        /// </summary>
+        internal bool IsRoot { get; set; }
+
+        internal override bool IsTransactionRoot => IsRoot;
+
+        /// <summary>
+        /// When true, the connection reports itself as dead from
+        /// <see cref="IsConnectionAlive"/>, simulating a physical connection that died while the
+        /// pool was not looking.
+        /// </summary>
+        internal bool IsDead { get; set; }
+
+        /// <summary>
+        /// Counts calls to <see cref="IsConnectionAlive"/>. Settable so a test can zero it after
+        /// arranging and observe only the probes made by the operation under test.
+        /// </summary>
+        internal int LivenessProbeCount { get; set; }
+
+        internal override bool IsConnectionAlive(bool throwOnException = false)
+        {
+            LivenessProbeCount++;
+            return !IsDead;
         }
 
         public override string ToString() => $"MockConnection_{MockId}";
