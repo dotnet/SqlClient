@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// policy that governs which assemblies the driver is willing to load while
 /// resolving a server-supplied UDT assembly-qualified name.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class UdtAssemblyPolicyTest
 {
     /// <summary>

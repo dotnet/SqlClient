@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// at all, which runs the type's static constructor.  These tests assert that
 /// neither happens.
 /// </remarks>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class UdtAssemblyLoadHardeningTest
 {
     /// <summary>
