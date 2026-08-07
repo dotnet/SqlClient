@@ -52,9 +52,19 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// <see cref="BlockingPeriodErrorState"/> uses it as its clock so the exit timer can be driven
     /// deterministically; otherwise the system clock is used.
     /// </summary>
+    /// <remarks>
+    /// The default connection string pins Pool Blocking Period to AlwaysBlock so the tests that
+    /// assert the pool enters its blocking-period error state do not depend on endpoint
+    /// classification. Under Auto, blocking is enabled only when the data source is not an Azure
+    /// endpoint, and ADPHelper (used by the simulated-server Azure routing tests) temporarily
+    /// registers "localhost" as an Azure endpoint in the process-wide
+    /// ADP.s_azureSqlServerEndpoints list. A pool resolves whether blocking is enabled exactly
+    /// once, at construction, so a pool built inside that window would never block - making those
+    /// assertions flaky under parallel collection execution.
+    /// </remarks>
     private WaitHandleDbConnectionPool CreatePool(
         SqlConnectionFactory connectionFactory,
-        string connectionString = "Data Source=localhost;",
+        string connectionString = "Data Source=localhost;Pool Blocking Period=AlwaysBlock;",
         TimeProvider? timeProvider = null)
     {
         var poolGroupOptions = new DbConnectionPoolGroupOptions(

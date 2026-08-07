@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// Unit tests for background pool warmup and replenishment in
     /// <see cref="ChannelDbConnectionPool"/>. See <c>specs/003-pool-warmup/spec.md</c>.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolWarmupTest
     {
         #region Helpers
@@ -45,7 +46,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 idleTimeout: idleTimeout);
 
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                // Pool Blocking Period is pinned to AlwaysBlock so the tests that assert the pool
+                // enters its blocking-period error state do not depend on endpoint classification.
+                // Under Auto, blocking is enabled only when the data source is not an Azure
+                // endpoint, and ADPHelper (used by the simulated-server Azure routing tests)
+                // temporarily registers "localhost" as an Azure endpoint in the process-wide
+                // ADP.s_azureSqlServerEndpoints list. A pool evaluates blocking exactly once, in its
+                // constructor, so a pool built inside that window would never block - making those
+                // assertions flaky under parallel collection execution.
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 poolGroupOptions);
 

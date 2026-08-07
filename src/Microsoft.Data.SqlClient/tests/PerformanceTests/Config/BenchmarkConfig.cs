@@ -5,10 +5,11 @@
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
 #if WINDOWS
-using BenchmarkDotNet.Diagnostics.Windows.Configs;
+using BenchmarkDotNet.Diagnostics.Windows;
 #endif
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -32,6 +33,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 .AddDiagnoser(MemoryDiagnoser.Default)
                 .AddDiagnoser(ThreadingDiagnoser.Default)
                 .AddExporter(MarkdownExporter.GitHub)
+                // Emit the BenchmarkDotNet "full" JSON report (*-report-full.json) so the perf
+                // pipeline can translate results into the Kusto performance-results schema.
+                .AddExporter(JsonExporter.Full)
                 .AddJob(
                     Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
                     .WithLaunchCount(runnerJob.LaunchCount)
@@ -48,7 +52,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             if (UseNativeMemoryAndEtwProfiler)
             {
                 config = config
-                    .AddDiagnoser(NativeMemoryProfiler.Default)
+                    .AddDiagnoser(new NativeMemoryProfiler())
                     .AddDiagnoser(new EtwProfiler());
             }
 #endif

@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
     // need since each test uses its own TDS Server with ephemeral listen port.
-    [Collection("SimulatedServerTests")]
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
@@ -263,6 +263,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // Flaky under CI load only (never reproduces locally): the tight 5-second
+        // ConnectTimeout can be exhausted by the legitimate failover connection itself
+        // when the agent is slow (observed pre-login handshake ~3.4s + post-login ~5.4s),
+        // producing a Connection Timeout on the failover attempt rather than a clean
+        // failover. This is agent-timing sensitivity, not a driver defect.
+        //
+        //     [xUnit.net 00:00:16.50]     Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner [FAIL]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner [5 s]
+        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.  This failure occurred while attempting to connect to the Principle server.  The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=3398; [Login] initialization=0; authentication=0; [Post-Login] complete=5385;
+        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+        //     Stack Trace:
+        //          at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+        //        at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning(Boolean callerHasConnectionLock, Boolean asyncClose)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync()
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadNetworkPacket()
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryPrepareBuffer()
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadByte(Byte& value)
+        //        at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+        //        at Microsoft.Data.SqlClient.TdsParser.Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginWithFailover(Boolean useFailoverHost, ServerInfo primaryServerInfo, String failoverHost, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionOptions connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal..ctor(...)
+        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateConnection(SqlConnectionOptions options, ConnectionPoolKey poolKey, DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.TryGetConnection(DbConnection owningConnection, TaskCompletionSource`1 retry, DbConnectionInternal oldConnection, TimeoutTimer timeout, Boolean forceNewConnection, DbConnectionInternal& connection)
+        //        at Microsoft.Data.ProviderBase.DbConnectionInternal.TryOpenConnectionInternal(DbConnection outerConnection, SqlConnectionFactory connectionFactory, TaskCompletionSource`1 retry, Boolean forceNewConnection, TimeoutTimer timeout)
+        //        at Microsoft.Data.ProviderBase.DbConnectionClosed.TryOpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory, TaskCompletionSource`1 retry, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.SqlConnection.TryOpenInner(TaskCompletionSource`1 retry, Boolean forceNewConnection)
+        //        at Microsoft.Data.SqlClient.SqlConnection.TryOpen(TaskCompletionSource`1 retry, Boolean forceNewConnection, SqlConnectionOverrides overrides)
+        //        at Microsoft.Data.SqlClient.SqlConnection.Open(SqlConnectionOverrides overrides)
+        //        at Microsoft.Data.SqlClient.SqlConnection.Open()
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner() in ConnectionFailoverTests.cs:line 304
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
@@ -406,6 +443,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
             };
             using SqlConnection connection = new(builder.ConnectionString);

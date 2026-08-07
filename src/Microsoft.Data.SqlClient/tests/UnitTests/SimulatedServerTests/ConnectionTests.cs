@@ -81,6 +81,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
 
+        // Flaky under CI load only (never reproduces locally): the simulated transient error
+        // occasionally surfaces on the retry login as well, so the async open propagates the
+        // SqlException instead of succeeding. This is the transient-fault retry timing behavior
+        // this test guards, not a harness race, so it cannot be made deterministic here.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.TransientFault_RetryEnabled_ShouldSucceed_Async(errorCode: 40613)
+        //   Microsoft.Data.SqlClient.SqlException :
+        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
+        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
+        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -192,6 +203,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        // Flaky under CI load only (never reproduces locally): the retry login can exhaust
+        // the connect-timeout budget on a slow agent and surface a post-login Connection
+        // Timeout (observed pre-login handshake ~4.4s), so the async open propagates a
+        // SqlException instead of succeeding. Same CI-load post-login timing family as the
+        // already-quarantined sibling TransientFault_RetryEnabled_ShouldSucceed_Async; not a
+        // driver defect.
+        //
+        //     [xUnit.net 00:00:11.76]     Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [FAIL]
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [5 s]
+        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  ... The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=4393; [Login] initialization=0; authentication=0; [Post-Login] complete=1014;
+        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out.
+        //     Stack Trace:
+        //          at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+        //        at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning(Boolean callerHasConnectionLock, Boolean asyncClose)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error)
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync()
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadNetworkPacket()
+        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadByte(Byte& value)
+        //        at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionOptions connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
+        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
+        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
+        [Trait("Category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

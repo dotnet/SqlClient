@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// Unit tests for <see cref="ChannelDbConnectionPool"/> covering connection acquisition,
     /// timeouts, reuse, pool clearing, blocking-period behavior, and timeout-budget propagation.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolTest
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
@@ -858,6 +859,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Replace Connection Tests
+
+        /// <summary>
+        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
+        /// replaces a checked-out connection with a new, distinct connection instance.
+        /// </summary>
+        [Fact]
+        public void TestReplaceConnection()
+        {
+            // Arrange
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(SuccessfulConnectionFactory, timeProvider: fakeTime);
+            SqlConnection owner = new();
+
+            pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? oldConnection);
+
+            Assert.NotNull(oldConnection);
+
+            var newConnection = pool.ReplaceConnection(owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            Assert.NotNull(newConnection);
+            Assert.NotSame(oldConnection, newConnection);
+        }
+
+        #endregion
+
         #region Not Implemented Method Tests
 
         /// <summary>
@@ -872,20 +902,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act & Assert
             Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestReplaceConnection()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
         }
 
         /// <summary>
@@ -1615,11 +1631,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that a connection creation failure enters the blocking-period error state when
         /// blocking is enabled for the pool, and stays out of it when blocking is disabled. The
         /// blocking policy is driven by the connection string's Pool Blocking Period:
-        /// Default/Auto enable blocking for a non-Azure host (localhost), AlwaysBlock forces it on,
+        /// Default/Auto enable blocking for a non-Azure host, AlwaysBlock forces it on,
         /// and NeverBlock suppresses it. FR-006, FR-007.
         /// </summary>
+        /// <remarks>
+        /// The Auto cases here assert the real Auto => "not an Azure endpoint" => blocking mapping,
+        /// so they cannot pin Pool Blocking Period to sidestep endpoint classification. They
+        /// deliberately avoid the data source "localhost": ADPHelper (used by the simulated-server
+        /// Azure routing tests) temporarily registers "localhost" as an Azure endpoint in the
+        /// process-wide ADP.s_azureSqlServerEndpoints list. Because a pool decides whether blocking
+        /// is enabled exactly once, in its constructor, a pool built inside that window would
+        /// classify localhost as Azure and never block, making these assertions flaky under
+        /// parallel collection execution.
+        /// </remarks>
         [Theory]
-        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for localhost
+        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=Auto;", true)]      // Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=NeverBlock;", false)]
         [InlineData("Pool Blocking Period=AlwaysBlock;", true)]
@@ -1627,7 +1653,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions($"Data Source=localhost;{blockingPeriodClause}"),
+                new SqlConnectionOptions($"Data Source=non-azure-test-host;{blockingPeriodClause}"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1653,13 +1679,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that once the pool enters the blocking period, subsequent synchronous requests
         /// fail fast with the cached exception without attempting another physical open.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock: this test needs blocking enabled but is not
+        /// testing endpoint classification, and leaving it on Auto would make it depend on
+        /// "localhost" not being registered as an Azure endpoint by a concurrently running test
+        /// (see ErrorOccurred_OnFailure_FollowsBlockingPeriod for the full explanation).
+        /// </remarks>
         [Fact]
         public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
         {
             // Arrange
             var factory = new CountingTimeoutConnectionFactory();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1693,12 +1725,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that clearing the pool while in the blocking-period error state resets the
         /// externally visible error indicator.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Clear_InErrorState_ResetsErrorOccurred()
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1729,6 +1765,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <see cref="FakeTimeProvider"/> so the test is deterministic and does not wait on
         /// wall-clock time. FR-006, FR-009.
         /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Failure_ThenBlockingPeriodExpiry_AllowsSuccessfulCreate()
         {
@@ -1736,7 +1776,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var factory = new ToggleFailureConnectionFactory();
             var fakeTime = new FakeTimeProvider();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -2239,6 +2279,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// advancing virtual time deterministically expires only the short-timeout
         /// caller's CTS without consuming any wall-clock time.
         /// </remarks>
+        //
+        // Flaky/hang-prone under CI load: caller A runs TryGetConnection on a background
+        // task that blocks on the pool's channel wait. The test then calls
+        // fakeTime.Advance(2s) to fire A's timeout CTS. If Advance runs before A has
+        // subscribed its wait to the fake time provider, A's cancellation is missed and A
+        // blocks forever, so `await callerATask` never returns — the testhost sits idle
+        // until the 10-minute --blame-hang timeout aborts the whole run. This is a
+        // virtual-time-vs-subscription race in the test, not a pool defect; it cannot be
+        // made deterministic without a barrier guaranteeing A is parked before Advance.
+        //
+        //     The active test run was aborted. Reason: Test host process crashed
+        //     Data collector 'Blame' message: The specified inactivity time of 10 minutes has elapsed. Collecting hang dumps from testhost and its child processes.
+        //     The test running when the crash occurred:
+        //     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest.ConcurrentCallers_ShouldTimeoutIndependently
+        //     testhost_7576_20260724T235829_hangdump.dmp
+        [Trait("Category", "flaky")]
         [Fact]
         public async Task ConcurrentCallers_ShouldTimeoutIndependently()
         {
@@ -2353,3 +2409,4 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
     }
 }
+

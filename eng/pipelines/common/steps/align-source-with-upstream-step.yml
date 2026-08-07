@@ -1,0 +1,55 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This template checks out the repository and aligns the working-tree source with the exact commit
+# that produced the artifacts consumed from an upstream (triggering) pipeline resource (e.g.
+# sqlclient-ci-package).  This keeps the source that gets built and tested in lockstep with the
+# upstream artifacts' API surface.
+#
+# IMPORTANT: Pipeline definitions and @self templates are compiled from the triggered branch tip at
+# queue time, but file-based tasks still read scripts from the runtime working tree.  After aligning
+# the source, this template restores eng/pipelines from the queued commit so compiled pipeline steps
+# and their scripts remain in lockstep.
+#
+# The consuming pipeline MUST declare the upstream pipeline as a resource whose alias matches the
+# upstreamPipeline parameter, e.g.:
+#
+#   resources:
+#     pipelines:
+#       - pipeline: sqlclient-ci-package
+#         source: sqlclient-ci-package
+#         trigger: true
+
+parameters:
+
+  # The upstream pipeline resource alias whose source commit the working tree should be aligned to.
+  # This must match a resource declared under resources.pipelines in the consuming pipeline.
+  - name: upstreamPipeline
+    type: string
+    default: sqlclient-ci-package
+
+steps:
+
+  # Check out the repo with full history so the working tree can be reset to an arbitrary commit.
+  - checkout: self
+    clean: true
+    fetchDepth: 0
+
+  # Align the working-tree source with the commit that built the upstream artifacts, so the projects
+  # compile against the matching (internal) API surface.  When the upstream commit is unavailable
+  # (e.g. some manual runs), skip this step and use the checked-out source as-is.
+  - pwsh: |
+      $ErrorActionPreference = 'Stop'
+      $sha = "$(resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit)"
+      $pipelineSourceSha = git rev-parse HEAD
+      if ($LASTEXITCODE -ne 0) { throw "Failed to resolve the queued pipeline commit." }
+      Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
+      git checkout --force $sha
+      if ($LASTEXITCODE -ne 0) { throw "Failed to check out upstream commit $sha." }
+      Write-Host "Restoring eng/pipelines from queued pipeline commit $pipelineSourceSha"
+      git checkout --force $pipelineSourceSha -- eng/pipelines
+      if ($LASTEXITCODE -ne 0) { throw "Failed to restore eng/pipelines from $pipelineSourceSha." }
+    displayName: Align Source With Upstream Commit
+    condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')

@@ -322,7 +322,99 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout)
         {
-            throw new NotImplementedException();
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
+
+            // First, prefer to get an idle connection from the pool. 
+            // If one is available, we can avoid the cost of creating a new connection.
+            DbConnectionInternal? newConnection = GetIdleConnection();
+
+            if (newConnection is not null)
+            {
+                // TODO: Full transaction enlistment support (Story 2).
+                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                oldConnection.DeactivateConnection();
+                RemoveConnection(oldConnection);
+            }
+            else
+            {
+                _errorState?.ThrowIfActive();
+
+                // Unlike OpenNewInternalConnection, this direct create intentionally bypasses
+                // _connectionCreationRateLimiter. This mirrors the behavior in WaitHandleDbConnectionPool.ReplaceConnection.
+                try
+                {
+                    newConnection = ConnectionFactory.CreatePooledConnection(owningObject, this, timeout);
+                }
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
+                {
+                    // A failed physical open means the server is unreachable, so enter the blocking
+                    // period exactly as OpenNewInternalConnection and WaitHandleDbConnectionPool.CreateObject
+                    // do: subsequent opens fast-fail until the period expires. Activation failures in the
+                    // try below are intentionally excluded -- the server proved reachable -- matching the
+                    // WaitHandle pool, where PrepareConnection runs outside CreateObject's error-state catch.
+                    // We exclude OperationCanceledException (caller-side timeout/cancellation, not a physical
+                    // failure) and only enter while Running, mirroring OpenNewInternalConnection.
+                    if (State == Running)
+                    {
+                        _errorState?.Enter(ex);
+                    }
+
+                    throw;
+                }
+
+                try
+                {
+                    newConnection.ClearGeneration = _clearGeneration;
+
+                    lock (newConnection)
+                    {
+                        // PostPop requires a lock on the connection.
+                        newConnection.PostPop(owningObject);
+                    }
+
+                    // TODO: Full transaction enlistment support (Story 2).
+                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
+
+                    // Place new into old's slot
+                    bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
+
+                    if (!replaced)
+                    {
+                        // Should never happen (oldConnection is checked out, so its slot is stable),
+                        // but guard against vending a connection the pool isn't tracking.
+                        throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolReplaceConnectionFailed));
+                    }
+                }
+                catch
+                {
+                    try
+                    {
+                        newConnection.DeactivateConnection();
+                    }
+                    catch
+                    {
+                        // Preserve the original failure; best-effort cleanup only.
+                    }
+
+                    newConnection.Dispose();
+                    throw;
+                }
+
+                // A successful open clears the blocking period, mirroring OpenNewInternalConnection.
+                _errorState?.Clear();
+
+                // Only retire the old connection after the replacement is fully activated and we know we won't fail.
+                oldConnection.DeactivateConnection();
+                oldConnection.Dispose();
+            }
+
+            SqlClientDiagnostics.Metrics.SoftConnectRequest();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, connection replaced successfully.", Id);
+
+            return newConnection;
         }
 
         /// <inheritdoc />
@@ -1023,10 +1115,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be activated.</param>
+        /// <param name="transaction">The transaction to enlist the connection in, or null to activate cleanly.</param>
         /// <exception cref="Exception">
         /// Thrown when any exception occurs during connection activation.
         /// </exception>
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection, Transaction? transaction = null)
         {
             lock (connection)
             {
@@ -1036,8 +1129,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                //TODO: pass through transaction
-                connection.ActivateConnection(null);
+                connection.ActivateConnection(transaction);
             }
             catch
             {
