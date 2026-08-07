@@ -133,17 +133,22 @@ public class UdtAssemblyPolicyTest
         Assert.True(UdtAssemblyPolicy.IsSqlServerTypesAssembly(
             new AssemblyName("microsoft.sqlserver.types")));
         Assert.True(UdtAssemblyPolicy.IsAllowed(
-            new AssemblyName("Microsoft.SqlServer.Types")));
+            new AssemblyName("Microsoft.SqlServer.Types"), null));
     }
 
     /// <summary>
-    /// Verifies that pinning normalizes both the version and the public key
-    /// token, so a server that omits or forges the token cannot cause a
-    /// partial-name bind that an unsigned same-named assembly could satisfy.
+    /// Verifies that permitting the built-in types assembly also normalizes both
+    /// its version and its public key token, so a server that omits or forges
+    /// the token cannot cause a partial-name bind that an unsigned same-named
+    /// assembly could satisfy.  The two must happen together: the exemption is
+    /// granted on the simple name alone, so an unpinned reference would let an
+    /// arbitrary assembly borrow the name.
     /// </summary>
     [Fact]
-    public void PinSqlServerTypesIdentity_PinsVersionAndPublicKeyToken()
+    public void IsAllowed_SqlServerTypes_PinsVersionAndPublicKeyToken()
     {
+        using PolicyScope scope = new(strict: false);
+
         // A reference as an attacker-controlled server might send it: the right
         // simple name, but a bogus version and no strong-name identity.
         AssemblyName asmRef = new("Microsoft.SqlServer.Types")
@@ -151,7 +156,7 @@ public class UdtAssemblyPolicyTest
             Version = new Version(1, 2, 3, 4),
         };
 
-        UdtAssemblyPolicy.PinSqlServerTypesIdentity(asmRef, new Version(14, 0, 0, 0));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(asmRef, new Version(14, 0, 0, 0)));
 
         Assert.Equal(new Version(14, 0, 0, 0), asmRef.Version);
         Assert.Equal(
@@ -164,13 +169,35 @@ public class UdtAssemblyPolicyTest
     /// server rather than trusting it.
     /// </summary>
     [Fact]
-    public void PinSqlServerTypesIdentity_OverwritesServerSuppliedToken()
+    public void IsAllowed_SqlServerTypes_OverwritesServerSuppliedToken()
     {
+        using PolicyScope scope = new(strict: false);
+
         AssemblyName asmRef = new(
             "Microsoft.SqlServer.Types, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0123456789abcdef");
 
-        UdtAssemblyPolicy.PinSqlServerTypesIdentity(asmRef, new Version(11, 0, 0, 0));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(asmRef, new Version(11, 0, 0, 0)));
 
+        Assert.Equal(
+            SqlServerTypesPublicKeyToken,
+            ToHex(asmRef.GetPublicKeyToken()));
+    }
+
+    /// <summary>
+    /// Verifies that the public key token is still pinned when no type system
+    /// version is available to pin the version to, which is the case for callers
+    /// that have no connection context.
+    /// </summary>
+    [Fact]
+    public void IsAllowed_SqlServerTypes_WithoutVersion_StillPinsToken()
+    {
+        using PolicyScope scope = new(strict: false);
+
+        AssemblyName asmRef = new("Microsoft.SqlServer.Types, Version=1.0.0.0");
+
+        Assert.True(UdtAssemblyPolicy.IsAllowed(asmRef, null));
+
+        Assert.Equal(new Version(1, 0, 0, 0), asmRef.Version);
         Assert.Equal(
             SqlServerTypesPublicKeyToken,
             ToHex(asmRef.GetPublicKeyToken()));
@@ -192,7 +219,7 @@ public class UdtAssemblyPolicyTest
     {
         using PolicyScope scope = new(strict: strict);
 
-        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
     }
 
     /// <summary>
@@ -204,7 +231,7 @@ public class UdtAssemblyPolicyTest
     {
         using PolicyScope scope = new(legacy: true);
 
-        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
     }
 
     #endregion
@@ -223,12 +250,12 @@ public class UdtAssemblyPolicyTest
 
         using (PolicyScope restricted = new())
         {
-            Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(loadedName)));
+            Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(loadedName), null));
         }
 
         using (PolicyScope strict = new(strict: true))
         {
-            Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(loadedName)));
+            Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(loadedName), null));
         }
     }
 
@@ -250,7 +277,7 @@ public class UdtAssemblyPolicyTest
         foreach (AssemblyName reference in references)
         {
             Assert.True(
-                UdtAssemblyPolicy.IsAllowed(new AssemblyName(reference.Name!)),
+                UdtAssemblyPolicy.IsAllowed(new AssemblyName(reference.Name!), null),
                 $"Expected referenced assembly '{reference.Name}' to be permitted.");
         }
     }
@@ -272,9 +299,9 @@ public class UdtAssemblyPolicyTest
         using PolicyScope scope = new(strict: strict);
         PolicyScope.SetAllowList(UnknownAssemblyName);
 
-        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
         Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(
-            $"{UnknownAssemblyName}, Version=9.9.9.9, Culture=neutral, PublicKeyToken=0123456789abcdef")));
+            $"{UnknownAssemblyName}, Version=9.9.9.9, Culture=neutral, PublicKeyToken=0123456789abcdef"), null));
     }
 
     /// <summary>
@@ -287,7 +314,7 @@ public class UdtAssemblyPolicyTest
         using PolicyScope scope = new(strict: true);
         PolicyScope.SetAllowList($" ; {UnknownAssemblyName.ToUpperInvariant()} ; ");
 
-        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
     }
 
     /// <summary>
@@ -304,19 +331,19 @@ public class UdtAssemblyPolicyTest
 
         // Exact match.
         Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(
-            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0123456789abcdef")));
+            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0123456789abcdef"), null));
 
         // Wrong version.
         Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(
-            $"{UnknownAssemblyName}, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0123456789abcdef")));
+            $"{UnknownAssemblyName}, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0123456789abcdef"), null));
 
         // Wrong public key token.
         Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(
-            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=fedcba9876543210")));
+            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral, PublicKeyToken=fedcba9876543210"), null));
 
         // No public key token at all.
         Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(
-            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral")));
+            $"{UnknownAssemblyName}, Version=1.0.0.0, Culture=neutral"), null));
     }
 
     /// <summary>
@@ -330,8 +357,8 @@ public class UdtAssemblyPolicyTest
         using PolicyScope scope = new(strict: true);
         PolicyScope.SetAllowList($", , Version=bogus ; {UnknownAssemblyName}");
 
-        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
-        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName("Some.Other.Assembly")));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
+        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName("Some.Other.Assembly"), null));
     }
 
     /// <summary>
@@ -343,13 +370,13 @@ public class UdtAssemblyPolicyTest
     {
         using PolicyScope scope = new(strict: true);
 
-        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
 
         AppDomain.CurrentDomain.SetData(
             UdtAssemblyPolicy.AllowListAppContextDataName,
             UnknownAssemblyName);
 
-        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName)));
+        Assert.True(UdtAssemblyPolicy.IsAllowed(new AssemblyName(UnknownAssemblyName), null));
     }
 
     /// <summary>
@@ -361,7 +388,7 @@ public class UdtAssemblyPolicyTest
     {
         using PolicyScope scope = new();
 
-        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName()));
+        Assert.False(UdtAssemblyPolicy.IsAllowed(new AssemblyName(), null));
     }
 
     #endregion

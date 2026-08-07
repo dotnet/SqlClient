@@ -180,6 +180,52 @@ public class UdtAssemblyLoadHardeningTest
         Assert.Equal(typeof(NotAUserDefinedType), metaData.udt.Type);
     }
 
+    /// <summary>
+    /// Verifies that a type name carrying no assembly part is still rejected.
+    /// </summary>
+    /// <remarks>
+    /// Type.GetType resolves a bare type name against the core library without
+    /// ever consulting the assembly resolver, so the assembly load policy is
+    /// structurally bypassed for such a name.  The SqlUserDefinedTypeAttribute
+    /// check is the only gate that stands in its way, and this test locks that
+    /// in: a server that sends "System.String" must not end up with the driver
+    /// invoking members on System.String.
+    /// </remarks>
+    [Theory]
+    [InlineData("System.String")]
+    [InlineData("System.Diagnostics.Process")]
+    public void CheckGetExtendedUDTInfo_TypeNameWithoutAssembly_IsRejected(string typeName)
+    {
+        using PolicyScope scope = new();
+
+        SqlConnection connection = new(ConnectionString);
+        SqlMetaDataPriv metaData = CreateUdtMetaData(typeName);
+
+        Exception exception = Record.Exception(
+            () => connection.CheckGetExtendedUDTInfo(metaData, fThrow: true));
+
+        Assert.NotNull(exception);
+        Assert.Null(metaData.udt.Type);
+    }
+
+    /// <summary>
+    /// Verifies that a bare type name is rejected without throwing at the call
+    /// sites that ask not to throw, which is how GetFieldType probes UDT
+    /// metadata.
+    /// </summary>
+    [Fact]
+    public void CheckGetExtendedUDTInfo_TypeNameWithoutAssembly_DoesNotThrowWhenNotRequested()
+    {
+        using PolicyScope scope = new();
+
+        SqlConnection connection = new(ConnectionString);
+        SqlMetaDataPriv metaData = CreateUdtMetaData("System.String");
+
+        connection.CheckGetExtendedUDTInfo(metaData, fThrow: false);
+
+        Assert.Null(metaData.udt.Type);
+    }
+
     #endregion
 
     #region Helpers

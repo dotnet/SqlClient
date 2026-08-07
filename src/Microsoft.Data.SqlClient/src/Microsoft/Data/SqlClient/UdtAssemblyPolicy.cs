@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -100,14 +99,6 @@ internal static class UdtAssemblyPolicy
     private static readonly object s_lock = new();
 
     /// <summary>
-    /// Incremented every time an assembly is loaded into the process.  Used to
-    /// invalidate <see cref="s_knownAssemblyNames"/>.  Written with
-    /// <see cref="Interlocked"/> from the <see cref="AppDomain.AssemblyLoad"/>
-    /// callback and only read while <see cref="s_lock"/> is held.
-    /// </summary>
-    private static int s_assemblyLoadVersion;
-
-    /// <summary>
     /// Set to true once the <see cref="AppDomain.AssemblyLoad"/> handler has
     /// been attached.  The handler is attached lazily so that applications that
     /// never read a UDT value never pay for it.
@@ -118,14 +109,14 @@ internal static class UdtAssemblyPolicy
     /// The simple names of every assembly that is loaded into the process, plus
     /// the simple names of every assembly they statically reference.  Null when
     /// it has not been built yet.
+    ///
+    /// Once built, the set is maintained incrementally by the
+    /// <see cref="AppDomain.AssemblyLoad"/> handler rather than rebuilt, so an
+    /// application that loads assemblies while reading UDTs does not repeatedly
+    /// pay for a full enumeration of the process's assemblies and their
+    /// reference lists.
     /// </summary>
     private static HashSet<string>? s_knownAssemblyNames;
-
-    /// <summary>
-    /// The value of <see cref="s_assemblyLoadVersion"/> at the time
-    /// <see cref="s_knownAssemblyNames"/> was built.
-    /// </summary>
-    private static int s_knownAssemblyNamesVersion = -1;
 
     /// <summary>
     /// The raw allow list string that <see cref="s_allowList"/> was parsed
@@ -180,34 +171,28 @@ internal static class UdtAssemblyPolicy
         string.Equals(asmRef.Name, SqlServerTypesAssemblyName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Pins the identity of the built-in SQL Server CLR types assembly.
+    /// Decides whether the driver may load the assembly named by
+    /// <paramref name="asmRef"/>, pinning the identity of the built-in SQL
+    /// Server CLR types assembly as a side effect when that is what it names.
     ///
-    /// The version is normalized to the type system version negotiated for the
-    /// connection, which is long-standing behavior: the server advertises the
-    /// version it holds, and the client instantiates the version it has.
-    ///
-    /// The public key token is normalized to the token that Microsoft signs the
-    /// assembly with.  Without this, a server that omits the token (or supplies
-    /// a different one) would cause a partial-name bind that an unsigned
-    /// same-named assembly on the probing path could satisfy.
+    /// Pinning and the decision are deliberately performed by a single call so
+    /// that it is not possible to consult the policy without also pinning: the
+    /// built-in exemption is granted on the simple name alone, so an unpinned
+    /// reference would let an unsigned assembly that merely borrows the name
+    /// satisfy it.
     /// </summary>
-    /// <param name="asmRef">The assembly reference to normalize, in place.</param>
-    /// <param name="typeSystemAssemblyVersion">
-    /// The type system assembly version negotiated for the connection.
+    /// <param name="asmRef">
+    /// The server-supplied assembly reference.  It is normalized in place when
+    /// it names the built-in SQL Server CLR types assembly.
     /// </param>
-    internal static void PinSqlServerTypesIdentity(AssemblyName asmRef, Version typeSystemAssemblyVersion)
-    {
-        asmRef.Version = typeSystemAssemblyVersion;
-        asmRef.SetPublicKeyToken((byte[])s_sqlServerTypesPublicKeyToken.Clone());
-    }
-
-    /// <summary>
-    /// Determines whether the driver is permitted to load the assembly named by
-    /// <paramref name="asmRef"/>.
-    /// </summary>
-    /// <param name="asmRef">The server-supplied assembly reference.</param>
+    /// <param name="typeSystemAssemblyVersion">
+    /// The type system assembly version negotiated for the connection, used to
+    /// pin the version of the built-in SQL Server CLR types assembly.  Null
+    /// when no connection context is available, in which case only the public
+    /// key token is pinned and the loader picks the version.
+    /// </param>
     /// <returns>True when the assembly may be loaded.</returns>
-    internal static bool IsAllowed(AssemblyName asmRef)
+    internal static bool IsAllowed(AssemblyName asmRef, Version? typeSystemAssemblyVersion)
     {
         UdtAssemblyLoadMode mode = Mode;
 
@@ -222,11 +207,12 @@ internal static class UdtAssemblyPolicy
             return false;
         }
 
-        // The built-in types assembly is always permitted.  Its identity has
-        // already been pinned by the caller, so this cannot be satisfied by an
-        // arbitrary assembly that merely borrows the name.
+        // The built-in types assembly is always permitted, but only once its
+        // identity has been pinned, so the exemption cannot be satisfied by an
+        // arbitrary assembly that borrows the name.
         if (IsSqlServerTypesAssembly(asmRef))
         {
+            PinSqlServerTypesIdentity(asmRef, typeSystemAssemblyVersion);
             return true;
         }
 
@@ -244,6 +230,33 @@ internal static class UdtAssemblyPolicy
     }
 
     /// <summary>
+    /// Pins the identity of the built-in SQL Server CLR types assembly.
+    ///
+    /// The version is normalized to the type system version negotiated for the
+    /// connection, which is long-standing behavior: the server advertises the
+    /// version it holds, and the client instantiates the version it has.
+    ///
+    /// The public key token is normalized to the token that Microsoft signs the
+    /// assembly with.  Without this, a server that omits the token (or supplies
+    /// a different one) would cause a partial-name bind that an unsigned
+    /// same-named assembly on the probing path could satisfy.
+    /// </summary>
+    /// <param name="asmRef">The assembly reference to normalize, in place.</param>
+    /// <param name="typeSystemAssemblyVersion">
+    /// The type system assembly version negotiated for the connection, or null
+    /// to leave the version unconstrained.
+    /// </param>
+    private static void PinSqlServerTypesIdentity(AssemblyName asmRef, Version? typeSystemAssemblyVersion)
+    {
+        if (typeSystemAssemblyVersion is not null)
+        {
+            asmRef.Version = typeSystemAssemblyVersion;
+        }
+
+        asmRef.SetPublicKeyToken((byte[])s_sqlServerTypesPublicKeyToken.Clone());
+    }
+
+    /// <summary>
     /// Discards all cached state.  Intended for use by tests, which need to
     /// observe the effect of changing the allow list or the policy switches.
     /// </summary>
@@ -254,7 +267,6 @@ internal static class UdtAssemblyPolicy
             s_allowList = null;
             s_allowListSource = null;
             s_knownAssemblyNames = null;
-            s_knownAssemblyNamesVersion = -1;
         }
     }
 
@@ -389,8 +401,9 @@ internal static class UdtAssemblyPolicy
 
     /// <summary>
     /// Returns the set of assembly simple names that are loaded into the
-    /// process or referenced by an assembly that is, rebuilding it only if an
-    /// assembly has been loaded since it was last built.
+    /// process or referenced by an assembly that is, building it on first use
+    /// and thereafter relying on the <see cref="AppDomain.AssemblyLoad"/>
+    /// handler to keep it current.
     /// </summary>
     private static HashSet<string> GetKnownAssemblyNames()
     {
@@ -398,9 +411,7 @@ internal static class UdtAssemblyPolicy
 
         lock (s_lock)
         {
-            int version = s_assemblyLoadVersion;
-
-            if (s_knownAssemblyNames is not null && s_knownAssemblyNamesVersion == version)
+            if (s_knownAssemblyNames is not null)
             {
                 return s_knownAssemblyNames;
             }
@@ -409,51 +420,60 @@ internal static class UdtAssemblyPolicy
 
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (assembly.IsDynamic)
-                {
-                    // A dynamic assembly has no manifest to read references
-                    // from, and it cannot be a target of Assembly.Load by name
-                    // anyway.
-                    continue;
-                }
-
-                string? name = assembly.GetName().Name;
-                if (!string.IsNullOrEmpty(name))
-                {
-                    names.Add(name!);
-                }
-
-                try
-                {
-                    foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
-                    {
-                        if (!string.IsNullOrEmpty(reference.Name))
-                        {
-                            names.Add(reference.Name!);
-                        }
-                    }
-                }
-                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
-                {
-                    // Reading the reference list can fail for assemblies loaded
-                    // from a byte array or produced by a trimmer.  Losing one
-                    // assembly's references only makes the policy stricter.
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "UdtAssemblyPolicy.GetKnownAssemblyNames | INFO | Unable to read references of '{0}'.",
-                        name);
-                }
+                AddAssemblyNames(names, assembly);
             }
 
             s_knownAssemblyNames = names;
-            s_knownAssemblyNamesVersion = version;
 
             return names;
         }
     }
 
     /// <summary>
-    /// Attaches the assembly load handler that invalidates the cached
-    /// known-assembly-name set, if it has not been attached already.
+    /// Adds the simple name of <paramref name="assembly"/> and the simple names
+    /// of every assembly it statically references to <paramref name="names"/>.
+    /// </summary>
+    private static void AddAssemblyNames(HashSet<string> names, Assembly assembly)
+    {
+        if (assembly.IsDynamic)
+        {
+            // A dynamic assembly has no manifest to read references from, and
+            // it cannot be a target of Assembly.Load by name anyway.
+            return;
+        }
+
+        string? name = null;
+
+        try
+        {
+            name = assembly.GetName().Name;
+            if (!string.IsNullOrEmpty(name))
+            {
+                names.Add(name!);
+            }
+
+            foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
+            {
+                if (!string.IsNullOrEmpty(reference.Name))
+                {
+                    names.Add(reference.Name!);
+                }
+            }
+        }
+        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+        {
+            // Reading the name or the reference list can fail for assemblies
+            // loaded from a byte array or produced by a trimmer.  Losing one
+            // assembly's references only makes the policy stricter.
+            SqlClientEventSource.Log.TryTraceEvent(
+                "UdtAssemblyPolicy.AddAssemblyNames | INFO | Unable to read references of '{0}'.",
+                name);
+        }
+    }
+
+    /// <summary>
+    /// Attaches the assembly load handler that keeps the cached
+    /// known-assembly-name set current, if it has not been attached already.
     /// </summary>
     private static void EnsureAssemblyLoadHandlerAttached()
     {
@@ -464,8 +484,18 @@ internal static class UdtAssemblyPolicy
                 return;
             }
 
-            AppDomain.CurrentDomain.AssemblyLoad += static (_, _) =>
-                Interlocked.Increment(ref s_assemblyLoadVersion);
+            AppDomain.CurrentDomain.AssemblyLoad += static (_, args) =>
+            {
+                lock (s_lock)
+                {
+                    // Nothing to update if the set has not been built yet; it
+                    // will pick the assembly up when it is.
+                    if (s_knownAssemblyNames is not null)
+                    {
+                        AddAssemblyNames(s_knownAssemblyNames, args.LoadedAssembly);
+                    }
+                }
+            };
 
             s_assemblyLoadHandlerAttached = true;
         }

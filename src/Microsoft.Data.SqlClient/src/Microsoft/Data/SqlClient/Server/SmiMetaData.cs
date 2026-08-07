@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -377,7 +378,21 @@ namespace Microsoft.Data.SqlClient.Server
                 // Fault-in UDT clr types on access if have assembly-qualified name
                 if (_clrType == null && SqlDbType.Udt == _databaseType && _udtAssemblyQualifiedName != null)
                 {
-                    _clrType = Type.GetType(_udtAssemblyQualifiedName, true);
+                    // The assembly-qualified name can originate from the server,
+                    // and loading an assembly runs its module initializer, so
+                    // the resolution goes through the same policy that
+                    // SqlConnection.ResolveTypeAssembly applies. There is no
+                    // connection context here, so no type system version is
+                    // available to pin the built-in SQL CLR types assembly to;
+                    // its public key token is still pinned.
+                    _clrType = Type.GetType(
+                        typeName: _udtAssemblyQualifiedName,
+                        assemblyResolver: static asmRef =>
+                            UdtAssemblyPolicy.IsAllowed(asmRef, typeSystemAssemblyVersion: null)
+                                ? Assembly.Load(asmRef)
+                                : throw SQL.UdtAssemblyNotAllowed(asmRef.Name),
+                        typeResolver: null,
+                        throwOnError: true);
                 }
                 return _clrType;
             }
