@@ -54,6 +54,17 @@
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" VersionOverride="1.0.0" />
   </ItemGroup>
 
+  <!-- Baseline API availability =========================================== -->
+  <!-- In Package mode the perf pipeline can pin an older released MDS as the baseline.  APIs that   -->
+  <!-- were introduced after that baseline don't exist there, so benchmarks using them must fall     -->
+  <!-- back to an older equivalent.  MDS 6.0 introduced SqlJson / SqlDataReader.GetSqlJson, so       -->
+  <!-- MDS_SQLJSON_SUPPORTED is defined unless a pre-6.0 baseline package is pinned.  Project mode   -->
+  <!-- and Package mode without an explicit version always build against a current MDS.              -->
+  <PropertyGroup>
+    <MdsPackageMajorVersion Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''">$([System.Text.RegularExpressions.Regex]::Match('$(MdsPackageVersion)', '^[0-9]+').Value)</MdsPackageMajorVersion>
+    <DefineConstants Condition="'$(MdsPackageMajorVersion)' == '' or '$(MdsPackageMajorVersion)' &gt;= '6'">$(DefineConstants);MDS_SQLJSON_SUPPORTED</DefineConstants>
+  </PropertyGroup>
+
   <!-- Other references -->
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />

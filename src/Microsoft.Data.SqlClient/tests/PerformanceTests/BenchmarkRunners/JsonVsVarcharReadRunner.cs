@@ -110,9 +110,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 // Exercise the SqlJson accessor path so the JSON case captures
                 // JSON-type handling overhead rather than the shared string path.
+                // Older baseline packages (pre-6.0) have no GetSqlJson, so they
+                // fall back to the string accessor.
                 while (reader.Read())
                 {
+#if MDS_SQLJSON_SUPPORTED
                     _ = reader.GetSqlJson(0).Value;
+#else
+                    _ = reader.GetString(0);
+#endif
                 }
             }
             else
@@ -135,7 +141,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 while (await reader.ReadAsync())
                 {
+#if MDS_SQLJSON_SUPPORTED
                     _ = reader.GetSqlJson(0).Value;
+#else
+                    _ = await reader.GetFieldValueAsync<string>(0);
+#endif
                 }
             }
             else
