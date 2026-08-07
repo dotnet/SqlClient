@@ -144,6 +144,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 #if MDS_SQLJSON_SUPPORTED
                     _ = reader.GetSqlJson(0).Value;
 #else
+                    // Older baseline packages (pre-6.0) have no GetSqlJson, and
+                    // there is no async SqlJson accessor to fall back to. Use the
+                    // same GetFieldValueAsync<string> call the VARCHAR case uses so
+                    // the async benchmark keeps measuring an async read path rather
+                    // than a synchronous accessor over already-buffered data.
                     _ = await reader.GetFieldValueAsync<string>(0);
 #endif
                 }
