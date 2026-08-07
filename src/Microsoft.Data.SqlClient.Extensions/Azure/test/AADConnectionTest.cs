@@ -85,8 +85,10 @@ public class AADConnectionTest
         ConnectAndDisconnect(connStr);
     }
 
-    // This test works on main in the existing jobs (like Win22_Sql22), but
-    // fails in the Azure project tests on a similar agent/image:
+    // This test was skipped in the 6.0/6.1 CI jobs because SupportsIntegratedSecurity
+    // was passed as a runtime variable to a compile-time pipeline expression. After that
+    // configuration was fixed, the test began running and exposed that the CI environment
+    // does not provide the Entra-integrated user context required by Active Directory Integrated:
     //
     //   Failed Microsoft.Data.SqlClient.Extensions.Azure.Test.AADConnectionTest.ADIntegratedUsingSSPI [59 ms]
     //   Error Message:
