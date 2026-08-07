@@ -671,15 +671,16 @@ namespace Microsoft.Data.SqlClient
 
             ThrowIfReconnectionHasBeenCanceled();
 
-            // Lock on _stateObj prevents race with close/cancel
-            if (!_internalEndExecuteInitiated)
-            {
-                lock (_stateObj)
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
-            }
-
+            // Note: We intentionally do NOT lock on _stateObj here.
+            // Taking lock(_stateObj) would prevent Cancel() from acquiring the stateObj
+            // monitor to send a TDS attention signal while FinishExecuteReader may be
+            // blocked on a synchronous network read (e.g., waiting for metadata after
+            // partial results like RAISERROR WITH NOWAIT). This caused cancellation to
+            // hang until the full query completed. See GitHub issue #4424.
+            //
+            // Concurrent close is handled by parser state checks within TryRun
+            // (detects Broken/Closed state). Cancel() uses Monitor.TryEnter with polling
+            // and checks parser state in its loop, so it handles concurrency safely.
             return EndExecuteReaderInternal(asyncResult);
         }
 

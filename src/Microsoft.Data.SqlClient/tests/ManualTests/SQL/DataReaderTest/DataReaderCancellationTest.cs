@@ -82,5 +82,252 @@ from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
                 Assert.True(stopwatch.ElapsedMilliseconds < 10000, "Cancellation did not trigger on time.");
             }
         }
+        /// <summary>
+        /// Validates that async cancellation sends a TDS attention signal to SQL Server
+        /// when the server has sent partial results (RAISERROR WITH NOWAIT at severity 10)
+        /// followed by a blocking operation (WAITFOR). Without the fix for GitHub issue #4424,
+        /// cancellation would hang until WAITFOR completed naturally.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationSendsAttention_WhenPartialResultsReceived()
+        {
+            // Severity 10 informational message flushed via NOWAIT sends a partial TDS
+            // response, then WAITFOR blocks for 60s. Cancellation should send attention
+            // and abort within seconds.
+            const string query = @"
+RAISERROR('partial result', 10, 1) WITH NOWAIT;
+WAITFOR DELAY '00:01:00';
+SELECT 1 AS Result;";
+
+            using (var cts = new CancellationTokenSource())
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 90;
+
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    // Start ExecuteReaderAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // The 60-second WAITFOR gives a wide window during which
+                    // cancellation must send a TDS attention signal to the server.
+                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WAITFOR. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
+
+                    // Cancellation during async read may surface as either
+                    // OperationCanceledException or SqlException (attention ack).
+                    System.Exception caughtException = null;
+                    try
+                    {
+                        using (var reader = await execTask)
+                        {
+                            // If we reach here, cancellation failed to abort ExecuteReaderAsync while it was waiting
+                            // for metadata after a partial response (e.g., RAISERROR WITH NOWAIT).
+                            Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
+                        }
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        // Attention acknowledgment from server manifests as SqlException
+                        caughtException = ex;
+                    }
+
+                    await cancelTask;
+                    stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
+                    // Ensure the CTS actually fired — guards against false positives
+                    // from unrelated SqlExceptions.
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
+                    // The key assertion: cancellation should complete well before the
+                    // 60-second WAITFOR. Allow up to 30 seconds for CI variability.
+                    Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                        $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent to the server.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates that cancellation during ExecuteReaderAsync itself sends a TDS attention
+        /// signal when the server is blocked before returning any result set metadata.
+        /// With WAITFOR as the first statement, ExecuteReaderAsync should never return a
+        /// reader — cancellation must abort the operation during the await.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationDuringExecuteReaderAsync_SendsAttention()
+        {
+            // WAITFOR as the first statement means no metadata is returned until it
+            // completes. ExecuteReaderAsync will be blocked in the async completion path.
+            const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
+
+            using (var cts = new CancellationTokenSource())
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 90;
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    // Start ExecuteReaderAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // WAITFOR as the first statement blocks for 60s, giving a wide
+                    // window during which cancellation must send TDS attention.
+                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WAITFOR. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
+
+                    System.Exception caughtException = null;
+                    try
+                    {
+                        // ExecuteReaderAsync should be cancelled via attention before
+                        // a reader is ever returned.
+                        using (var reader = await execTask)
+                        {
+                            // If we reach here, cancellation failed to abort ExecuteReaderAsync.
+                            Assert.Fail("ExecuteReaderAsync should have been cancelled before returning a reader.");
+                        }
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        caughtException = ex;
+                    }
+
+                    await cancelTask;
+                    stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
+                    Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                        $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent during ExecuteReaderAsync.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates that cancelling an infinite WHILE loop via CancellationToken does not
+        /// hang forever. This is the exact repro from GitHub issue #44.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationOfInfiniteWhileLoop_DoesNotHang()
+        {
+            // Infinite loop that never completes — only cancellation via attention can stop it.
+            const string query = @"
+WHILE 1 = 1
+BEGIN
+    DECLARE @x INT = 1
+END";
+
+            using (var cts = new CancellationTokenSource())
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 0; // No timeout — rely solely on cancellation
+
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+
+                    // Start ExecuteNonQueryAsync without awaiting so we can trigger
+                    // cancellation from a separate thread once the query is in flight.
+                    // The infinite WHILE loop guarantees the server will remain busy
+                    // until an attention signal aborts it.
+                    Task execTask = command.ExecuteNonQueryAsync(cts.Token);
+
+                    // Cancel from another thread after briefly yielding to ensure the
+                    // async operation has been dispatched and reached the server-side
+                    // WHILE loop. This avoids the flakiness of a preemptive timer that
+                    // could fire before the query is actually in flight.
+                    Task cancelTask = Task.Run(async () =>
+                    {
+                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        cts.Cancel();
+                    });
+
+                    System.Exception caughtException = null;
+                    try
+                    {
+                        // Watchdog: if cancellation regresses, don't hang the test suite.
+                        // Use Task.WhenAny with a 45s delay as a hard timeout.
+                        Task completed = await Task.WhenAny(execTask, Task.Delay(System.TimeSpan.FromSeconds(45)));
+
+                        if (completed != execTask)
+                        {
+                            // Watchdog fired — best-effort cleanup
+                            command.Cancel();
+                            connection.Close();
+                            Assert.Fail("ExecuteNonQueryAsync did not complete within 45s watchdog timeout. " +
+                                "Cancellation via attention signal likely failed.");
+                        }
+
+                        await execTask; // Propagate any exception
+                        Assert.Fail("ExecuteNonQueryAsync should have been cancelled.");
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        caughtException = ex;
+                    }
+
+                    await cancelTask;
+                    stopwatch.Stop();
+
+                    Assert.NotNull(caughtException);
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
+                    // Must complete well within 30s — without the fix this hangs forever.
+                    Assert.True(stopwatch.ElapsedMilliseconds < 30000,
+                        $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent for infinite WHILE loop.");
+                }
+
+                // Verify the connection is still usable after cancellation.
+                using (var verifyCmd = new SqlCommand("SELECT 1", connection))
+                {
+                    object result = await verifyCmd.ExecuteScalarAsync();
+                    Assert.Equal(1, (int)result);
+                }
+            }
+        }
     }
 }
