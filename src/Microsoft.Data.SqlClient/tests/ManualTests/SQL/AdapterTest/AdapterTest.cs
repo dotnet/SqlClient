@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SqlVariantTest()
         {
-            string tableName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("AdapterTest");
             // good test for null values and unicode strings
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ParameterTest_AllTypes()
         {
-            string procName = DataTestUtility.GenerateObjectName();
+            string procName = DataTestUtility.GetShortName("AdapterTest");
             string spCreateAllTypes =
                 "CREATE PROCEDURE " + procName + " " +
                 "@Cnumeric numeric(10,2) OUTPUT, " +
@@ -936,8 +936,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateNullTest()
         {
-            string tableName = DataTestUtility.GenerateObjectName();
-            string procName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("AdapterTest");
+            string procName = DataTestUtility.GetShortName("AdapterTest");
             string createTable = "CREATE TABLE " + tableName + "(cvarbin VARBINARY(7000), cimage IMAGE)";
 
             string createSP =
@@ -993,8 +993,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateOffsetTest()
         {
-            string tableName = DataTestUtility.GenerateObjectName();
-            string procName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("AdapterTest");
+            string procName = DataTestUtility.GetShortName("AdapterTest");
             string createTable = "CREATE TABLE " + tableName + "(cvarbin VARBINARY(7000), cimage IMAGE)";
 
             string createSP =

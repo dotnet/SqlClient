@@ -20,26 +20,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup))]
         public void FedAuthTokenRefreshTest()
         {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);
 
             try
             {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, new UserAssignedManagedIdentityProvider());
 
-                string connectionString = DataTestUtility.AADPasswordConnectionString;
+                string connectionString = DataTestUtility.GetUserIdentityConnectionString();
 
-                using SqlConnection connection = new SqlConnection(connectionString);
+                using SqlConnection connection = new(connectionString);
                 connection.Open();
 
-                string oldTokenHash = "";
-                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out oldTokenHash);
+                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out string oldTokenHash);
                 Assert.True(oldExpiryDateTime != null, "Failed to make token expiry to expire in one minute.");
 
                 // Convert and display the old expiry into local time which should be in 1 minute from now
@@ -56,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(result != string.Empty, "The connection's command must return a value");
 
                 // The new connection will use the same FedAuthToken but will refresh it first as it will expire in 1 minute.
-                using (SqlConnection connection2 = new SqlConnection(connectionString))
+                using (SqlConnection connection2 = new(connectionString))
                 {
                     connection2.Open();
 
@@ -80,9 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (original is not null)
                 {
                     // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, original);
                 }
             }
         }
