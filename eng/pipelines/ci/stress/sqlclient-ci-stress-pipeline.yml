@@ -21,7 +21,9 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
+# The resource branch filters limit completion triggers to the intended upstream branches. Because
+# both pipelines use the same repository, an eligible run executes this YAML from the triggering
+# package run's branch and commit, preserving branch-specific pipeline definitions.
 #
 # The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
 # the project, folder, and pipeline name, hence the verbose values below.
@@ -44,7 +46,11 @@ resources:
     # per-project approach instead of this single shared definition).
     - pipeline: sqlclient-ci-package
       source: sqlclient-ci-package
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - main
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
