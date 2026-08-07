@@ -87,7 +87,7 @@ public class AADConnectionTest
 
     // This test requires a signed-in user identity configured for Entra Integrated
     // authentication and is excluded from non-interactive test runs by default.
-    [Trait("Category", "Interactive")]
+    [Trait("Category", "interactive")]
     [ConditionalFact(
         typeof(Config),
         nameof(Config.SupportsIntegratedSecurity),
