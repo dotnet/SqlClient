@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -54,20 +54,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Creates a new SqlEnclaveSession and adds it to the cache
-        internal SqlEnclaveSession CreateSession(EnclaveSessionParameters enclaveSessionParameters, byte[] sharedSecret, long sessionId, out long counter)
+        // Adds a new SqlEnclaveSession to the cache
+        internal void CreateSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSession, out long counter)
         {
             string cacheKey = GenerateCacheKey(enclaveSessionParameters);
-            SqlEnclaveSession enclaveSession = null;
             lock (enclaveCacheLock)
             {
-                enclaveSession = new SqlEnclaveSession(sharedSecret, sessionId);
                 enclaveMemoryCache.Set<SqlEnclaveSession>(cacheKey, enclaveSession,
                     absoluteExpirationRelativeToNow: s_enclaveCacheTimeout);
                 counter = Interlocked.Increment(ref _counter);
             }
-
-            return enclaveSession;
         }
 
         // Generates the cache key for the enclave session cache

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -79,55 +79,34 @@ namespace Microsoft.Data.SqlClient
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        protected override SqlEnclaveSession CreateEnclaveSessionCore(
+            byte[] enclaveAttestationInfo,
+            SqlEnclaveAttestationParameters attestationParameters,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength)
         {
-            sqlEnclaveSession = null;
-            counter = 0;
-            try
+            if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
             {
-                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
-                if (sqlEnclaveSession == null)
-                {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
-                    {
-                        byte[] nonce = customData;
+                byte[] nonce = customData;
 
-                        IdentityModelEventSource.ShowPII = true;
+                IdentityModelEventSource.ShowPII = true;
 
-                        // Deserialize the payload
-                        AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
+                // Deserialize the payload
+                AzureAttestationInfo attestInfo = new AzureAttestationInfo(enclaveAttestationInfo);
 
-                        // Validate the attestation info
-                        VerifyAzureAttestationInfo(enclaveSessionParameters.AttestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
+                // Validate the attestation info
+                VerifyAzureAttestationInfo(enclaveSessionParameters.AttestationUrl, attestInfo.EnclaveType, attestInfo.AttestationToken.AttestationToken, attestInfo.Identity, nonce);
 
-                        // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
+                // Set up shared secret and validate signature
+                byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, attestationParameters.ClientDiffieHellmanKey);
 
-                        // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out counter);
-                    }
-                    else
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
-                }
+                return new SqlEnclaveSession(sharedSecret, attestInfo.SessionId);
             }
-            finally
+            else
             {
-                // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
-                // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happen.
-                // Case 1: When the first request successfully creates the session, then all outstanding GetEnclaveSession will use the current session.
-                // Case 2: When the first request unable to create the enclave session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
-                UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
             }
-        }
-
-        // When overridden in a derived class, looks up and evicts an enclave session from the enclave session cache, if the provider implements session caching.
-        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
         #endregion
 
