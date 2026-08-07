@@ -130,6 +130,66 @@ if ([string]::IsNullOrEmpty($SqlPassword)) {
 
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 
+####################################################################################################
+# Resolve the Python 3 interpreter up front.
+#
+# The harness shells out to python for the interleave/compare/result-count steps, but 'python3' is a
+# Unix-ism: on Windows the interpreter is normally 'python.exe' (or the 'py' launcher), and a stock
+# image additionally ships App Execution Alias STUBS named python.exe/python3.exe under WindowsApps
+# that resolve via Get-Command yet only open the Microsoft Store.  So both "command not found" and
+# "command found but useless" are realistic here.
+#
+# Failing on that later is actively misleading: Get-BenchmarkResultCount swallows a failed python
+# call and returns 0, so a missing interpreter surfaces as "the run produced no benchmark results"
+# - a benchmark problem - instead of "python is not installed".  Resolve once, probe it for real,
+# and fail fast with an accurate message.
+####################################################################################################
+
+function Resolve-Python3 {
+    foreach ($candidate in @(
+        @{ Name = 'python3'; Pre = @() },
+        @{ Name = 'python';  Pre = @() },
+        @{ Name = 'py';      Pre = @('-3') }
+    )) {
+        $cmd = Get-Command $candidate.Name -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if (-not $cmd) { continue }
+
+        # Probe the interpreter instead of trusting that it resolved: the Store alias stubs exit
+        # non-zero (or print a Store prompt) rather than reporting a version.
+        $previousPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        $global:LASTEXITCODE = 0
+        try {
+            $version = (& $cmd.Source @($candidate.Pre + '--version') 2>&1 | Out-String).Trim()
+        } catch {
+            $version = ''
+        } finally {
+            $ErrorActionPreference = $previousPreference
+        }
+
+        if ($LASTEXITCODE -eq 0 -and $version -match 'Python\s+3\.') {
+            return [pscustomobject]@{
+                Source  = $cmd.Source
+                PreArgs = $candidate.Pre
+                Version = $version
+            }
+        }
+        Write-Host "  '$($candidate.Name)' resolved to $($cmd.Source) but is not a usable Python 3 (ignored)."
+    }
+    return $null
+}
+
+$python = Resolve-Python3
+if (-not $python) {
+    throw ("Python 3 is required by the perf harness (interleave_perf.py / compare_perf.py) but no " +
+           "usable interpreter was found. Tried 'python3', 'python' and 'py -3' on PATH. Install " +
+           "Python 3 on the perf VM (and make sure it is not just the Microsoft Store alias stub).")
+}
+$PythonExe = $python.Source
+$PythonPreArgs = $python.PreArgs
+Write-Host "Using Python interpreter: $PythonExe ($($python.Version))"
+
 # Record VM-side run metadata (e.g. the perf VM hostname) for the agent-side Kusto translation.
 "MACHINE_NAME=$env:COMPUTERNAME" | Set-Content -Path (Join-Path $ResultsDir "runinfo.env") -Encoding ASCII
 
@@ -204,6 +264,13 @@ try { Invoke-Native { dotnet --info } "dotnet --info failed" } catch { Write-War
 
 Write-Host "Ensuring database [$DbName] exists on $SqlServer ..."
 
+# Pass the 'sa' password to sqlcmd via SQLCMDPASSWORD rather than -P.  A process's command line is
+# readable by other users on the box (Get-CimInstance Win32_Process, Process Explorer, WMI auditing),
+# so -P leaks the password for the lifetime of each sqlcmd invocation, whereas another process's
+# environment block is not.  sqlcmd reads SQLCMDPASSWORD natively; set it once here for every sqlcmd
+# call below.
+$env:SQLCMDPASSWORD = $SqlPassword
+
 $sqlcmd = Get-Command sqlcmd -ErrorAction SilentlyContinue
 if ($sqlcmd) {
     # Relax Stop around the native sqlcmd call so a benign stderr write cannot abort the run before
@@ -211,7 +278,7 @@ if ($sqlcmd) {
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 `
+        & $sqlcmd.Source -S $SqlServer -U sa -C -b -l 30 `
             -Q "IF DB_ID('$DbName') IS NULL CREATE DATABASE [$DbName];"
     } finally {
         $ErrorActionPreference = $previousPreference
@@ -244,7 +311,7 @@ try {
 
 # --- §2.11 Capture the SQL instance configuration (confirm the lab tuning actually took effect) ---
 try {
-    & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 -h -1 -W `
+    & $sqlcmd.Source -S $SqlServer -U sa -C -b -l 30 -h -1 -W `
         -Q "SET NOCOUNT ON;
             SELECT name, value_in_use FROM sys.configurations
               WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
@@ -262,7 +329,7 @@ try {
 $previousPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
-    & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 15 `
+    & $sqlcmd.Source -S $SqlServer -U sa -C -b -l 15 `
         -Q "SET NOCOUNT ON; USE [$DbName]; SELECT 1;" *> $null
 } finally {
     $ErrorActionPreference = $previousPreference
@@ -400,7 +467,7 @@ print(total)
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        $out = $py | python3 - $Root
+        $out = $py | & $PythonExe @PythonPreArgs - $Root
     } finally {
         $ErrorActionPreference = $previousPreference
     }
@@ -437,20 +504,51 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
         $psi.UseShellExecute = $false
         $psi.WorkingDirectory = $runDir
 
-        $proc = [System.Diagnostics.Process]::Start($psi)
-
         $mask = Get-AffinityMask $env:PERF_CLIENT_CPUS
         # Use a non-zero check, not '-gt 0': a mask that pins CPU 63 sets the [long] sign bit and
         # is therefore negative, yet is still a valid ProcessorAffinity value.
-        if ($null -ne $mask -and $mask -ne 0) {
+        $pinning = ($null -ne $mask -and $mask -ne 0)
+
+        # Pin BEFORE Start(), not after.  On Windows a new process inherits the creating process's
+        # affinity, so temporarily narrowing this PowerShell process's affinity means the child is
+        # constrained from its very first instruction.  Assigning $proc.ProcessorAffinity after
+        # Start() returns leaves process startup, assembly loading, JIT and BenchmarkDotNet's own
+        # setup running on arbitrary cores - including the CPUs reserved for SQL Server - which is
+        # precisely the cross-talk the pinning exists to eliminate.
+        $self = Get-Process -Id $PID
+        $previousAffinity = $null
+        if ($pinning) {
+            try {
+                $previousAffinity = $self.ProcessorAffinity
+                $self.ProcessorAffinity = [System.IntPtr]$mask
+            } catch {
+                Write-Warning "Could not pre-set affinity on the launching process: $_"
+                $previousAffinity = $null
+            }
+        } else {
+            Write-Warning "PERF_CLIENT_CPUS unset; running without CPU pinning."
+        }
+
+        try {
+            $proc = [System.Diagnostics.Process]::Start($psi)
+        } finally {
+            # Restore the harness's own affinity immediately; the child has already inherited the
+            # narrowed mask, and leaving the harness pinned would also constrain the build and
+            # result-collection work that follows.
+            if ($null -ne $previousAffinity) {
+                try { $self.ProcessorAffinity = $previousAffinity } catch { }
+            }
+        }
+
+        if ($pinning) {
+            # Belt and braces: re-assert on the child in case inheritance did not apply, and confirm
+            # the effective mask in the log.
             try {
                 $proc.ProcessorAffinity = [System.IntPtr]$mask
                 Write-Host "Pinned benchmark client (PID $($proc.Id)) to CPUs $($env:PERF_CLIENT_CPUS) (mask 0x$($mask.ToString('X')))."
             } catch {
                 Write-Warning "Failed to set ProcessorAffinity: $_"
             }
-        } else {
-            Write-Warning "PERF_CLIENT_CPUS unset; running without CPU pinning."
         }
 
         Save-CpuTelemetry $Label "before"
@@ -531,7 +629,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
         $interleaveArgs += "--fail-on-regression"
     }
     Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
-    Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
+    Invoke-Native { & $PythonExe @PythonPreArgs (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
@@ -559,7 +657,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
         Write-Host "Regression gate ENABLED: a candidate-slower regression (> $RegressionThreshold%) will fail the run."
         $compareArgs += "--fail-on-regression"
     }
-    Invoke-Native { python3 (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
+    Invoke-Native { & $PythonExe @PythonPreArgs (Join-Path $ScriptDir "compare_perf.py") @compareArgs } "Comparison failed"
     # Surface the comparison as the top-level run summary (collect-results.yml attaches results\*.md).
     Copy-Item -Force (Join-Path $comparisonDir "comparison.md") (Join-Path $ResultsDir "summary.md")
 
