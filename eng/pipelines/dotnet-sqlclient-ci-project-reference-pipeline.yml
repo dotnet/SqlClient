@@ -125,8 +125,8 @@ parameters:
   #
   # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
   # across every SQL Server image.  .NET 10.0 coverage is provided by the
-  # primaryTargetFrameworks parameter below, which applies to the SQL Server
-  # 2022 and Azure SQL configurations.
+  # primaryTargetFrameworksUnix parameter below, which applies to the SQL
+  # Server 2022 and Azure SQL configurations.
   #
   - name: targetFrameworksUnix
     displayName: Target Frameworks on Unix
@@ -136,8 +136,13 @@ parameters:
   # The target frameworks used by the primary test configurations (local SQL
   # Server 2022 and Azure SQL) on Windows.
   #
-  # .NET 10.0 is validated here so that unit, functional, and manual tests get
+  # net10.0 is included here so that unit, functional, and manual tests get
   # .NET 10 coverage without paying for it on every legacy SQL Server image.
+  #
+  # Note: The driver itself does not ship a net10.0 target framework, so the
+  # net10.0 test assemblies resolve the net9.0 driver build.  These jobs
+  # therefore validate the driver running on the .NET 10 runtime, rather than
+  # a net10.0 build of the driver.
   #
   - name: primaryTargetFrameworks
     displayName: Target Frameworks on Windows (SQL 2022 and Azure SQL)

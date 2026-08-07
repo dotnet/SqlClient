@@ -31,6 +31,10 @@ parameters:
   # These configurations carry the broadest coverage, so newer runtimes are
   # validated here first before being enabled across every configuration.
   #
+  # Note: The driver does not ship a net10.0 target framework, so net10.0 test
+  # assemblies resolve the net9.0 driver build.  Including net10.0 here
+  # validates the driver running on the .NET 10 runtime.
+  #
   - name: primaryTargetFrameworks
     type: object
     default: [net462, net8.0, net9.0, net10.0]
