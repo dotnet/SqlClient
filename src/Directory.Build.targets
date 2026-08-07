@@ -4,9 +4,11 @@
 -->
 <Project>
   <!--
-    The RoslynAnalyzers@3 pipeline task runs in Copy Logs Only mode and succeeds even when it finds
-    no logs. Verify that, when analysis is enabled, the build produced the SARIF file(s) that we
-    expect.
+    Confirm that, when analysis is enabled, the build produced the SARIF file(s) that we expect.
+    Each src/ project that is built should produce a SARIF log whose path is specified by the
+    ErrorLog property defined in src/Directory.Build.props.  We perform this check here, rather
+    than post-build, because the build.proj targets may build multiple projects, and the SARIF paths
+    are difficult to predict.
   -->
   <Target Name="VerifyRoslynAnalysisLog"
           AfterTargets="CoreCompile"
