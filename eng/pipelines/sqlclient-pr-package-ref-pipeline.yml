@@ -131,6 +131,11 @@ extends:
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
+    # Keep the primary (SQL 2022 / Azure SQL) configurations on the same set of
+    # target frameworks as everything else.  Only the CI-SqlClient pipeline
+    # opts in to the broader .NET 10.0 coverage on those configurations.
+    primaryTargetFrameworks: ${{ parameters.targetFrameworks }}
+    primaryTargetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
