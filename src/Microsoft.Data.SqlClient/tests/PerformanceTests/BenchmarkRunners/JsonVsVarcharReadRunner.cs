@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// </summary>
     public class JsonVsVarcharReadRunner : BaseRunner
     {
-        private static long s_rowCount;
+        private long _rowCount;
         private string _jsonTableName;
         private string _varcharTableName;
         private string _connectionString;
@@ -32,7 +32,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [GlobalSetup]
         public void Setup()
         {
-            s_rowCount = s_config.Benchmarks.JsonVsVarcharReadRunnerConfig.RowCount;
+#if !MDS_GE_6
+            // This build targets a pre-6.0 MDS baseline that has no GetSqlJson, so the JSON
+            // benchmarks below read through the string accessor instead. Results for
+            // ColumnType=JSON therefore measure a DIFFERENT code path than a current-MDS build
+            // and must not be compared against one.
+            Console.Error.WriteLine(
+                "WARNING: JsonVsVarcharReadRunner was built against a pre-6.0 Microsoft.Data.SqlClient " +
+                "baseline. The ColumnType=JSON benchmarks fall back to the string accessor and are " +
+                "NOT comparable with results from a current-MDS build.");
+#endif
+            _rowCount = s_config.Benchmarks.JsonVsVarcharReadRunnerConfig.RowCount;
             _connectionString = s_config.ConnectionString;
 
             string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
@@ -45,11 +55,22 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             using var conn = new SqlConnection(_connectionString);
             conn.Open();
 
-            // Create JSON table
+            // Create JSON table. The native JSON column type requires SQL Server 2025+ or Azure
+            // SQL; on older servers this fails with a parse/type error, so surface why.
             using (var cmd = new SqlCommand(
                 $"CREATE TABLE {_jsonTableName} (Id INT IDENTITY PRIMARY KEY, Data JSON)", conn))
             {
-                cmd.ExecuteNonQuery();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    throw new InvalidOperationException(
+                        "JsonVsVarcharReadRunner requires a server with native JSON column support " +
+                        "(SQL Server 2025+ or Azure SQL). Disable this runner in runnerconfig.jsonc " +
+                        "when targeting an older server.", ex);
+                }
             }
 
             // Create VARCHAR(MAX) table
@@ -62,7 +83,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // Bulk insert identical data into both tables
             var dt = new System.Data.DataTable();
             dt.Columns.Add("Data", typeof(string));
-            for (int i = 0; i < s_rowCount; i++)
+            for (long i = 0; i < _rowCount; i++)
             {
                 dt.Rows.Add(sampleJson);
             }
@@ -90,12 +111,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 cmd.ExecuteNonQuery();
             }
-            
+
             using (var cmd = new SqlCommand($"DROP TABLE IF EXISTS {_varcharTableName}", conn))
             {
                 cmd.ExecuteNonQuery();
             }
-            
+
             SqlConnection.ClearAllPools();
         }
 
@@ -114,7 +135,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 // fall back to the string accessor.
                 while (reader.Read())
                 {
-#if MDS_SQLJSON_SUPPORTED
+#if MDS_GE_6
                     _ = reader.GetSqlJson(0).Value;
 #else
                     _ = reader.GetString(0);
@@ -141,7 +162,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 while (await reader.ReadAsync())
                 {
-#if MDS_SQLJSON_SUPPORTED
+#if MDS_GE_6
                     _ = reader.GetSqlJson(0).Value;
 #else
                     // Older baseline packages (pre-6.0) have no GetSqlJson, and
