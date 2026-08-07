@@ -25,6 +25,26 @@ parameters:
     type: object
     default: [net8.0, net9.0, net10.0]
 
+  # The target frameworks to build and run tests for on Windows, for the
+  # primary test configurations (local SQL Server 2025 and Azure SQL).
+  #
+  # These configurations carry the broadest coverage, so newer runtimes are
+  # validated here first before being enabled across every configuration.
+  #
+  # Note: The driver does not ship a net10.0 target framework, so net10.0 test
+  # assemblies resolve the net9.0 driver build.  Including net10.0 here
+  # validates the driver running on the .NET 10 runtime.
+  #
+  - name: primaryTargetFrameworks
+    type: object
+    default: [net462, net8.0, net9.0, net10.0]
+
+  # The target frameworks to build and run tests for on Unix, for the primary
+  # test configurations (local SQL Server 2025 and Azure SQL).
+  - name: primaryTargetFrameworksUnix
+    type: object
+    default: [net8.0, net9.0, net10.0]
+
   # Netcore Version for Test Utilities
   - name: netcoreVersionTestUtils
     type: object
@@ -412,7 +432,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win25_Sql25: ADO-MMS25-SQL25
-          TargetFrameworks: ${{parameters.targetFrameworks }}
+          TargetFrameworks: ${{parameters.primaryTargetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -485,7 +505,7 @@ stages:
           images:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             Win11_Azure_Sql: ADO-CI-Win11
-          TargetFrameworks: ${{parameters.targetFrameworks }}
+          TargetFrameworks: ${{parameters.primaryTargetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -542,7 +562,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Ubuntu24_Sql25: ADO-UB24-SQL25
-          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+          TargetFrameworks: ${{parameters.primaryTargetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
@@ -565,7 +585,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Ubuntu24_Azure_Sql: ADO-UB24-SQL25
-          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+          TargetFrameworks: ${{parameters.primaryTargetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
