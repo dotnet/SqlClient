@@ -616,12 +616,12 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        # macOS with local SQL Server 2022, x64 build platform.
-        mac_sql_22:
+        # macOS with local SQL Server 2025 (docker), x64 build platform.
+        mac_sql_25:
           pool: Azure Pipelines
           hostedPool: true
           images:
-            MacOSLatest_Sql22: macos-latest
+            MacOSLatest_Sql25: macos-latest
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
