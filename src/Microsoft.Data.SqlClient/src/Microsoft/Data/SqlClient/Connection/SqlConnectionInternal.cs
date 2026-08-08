@@ -3933,8 +3933,8 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <param name="connectionOptions">The parsed connection options.</param>
         /// <param name="isAccessTokenProvided">
         /// True when the caller supplied a federated authentication access token directly, either
-        /// via <see cref="SqlConnection.AccessToken"/> or
-        /// <see cref="SqlConnection.AccessTokenCallback"/>.
+        /// via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessToken"/> or
+        /// <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback"/>.
         /// </param>
         /// <returns>
         /// True when TNIR should be disabled. TNIR is disabled by default for Azure SQL endpoints

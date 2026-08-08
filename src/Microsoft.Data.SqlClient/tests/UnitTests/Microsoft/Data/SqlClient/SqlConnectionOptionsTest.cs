@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData("my.test.server", true, true, false)]
         [InlineData("test.database.windows.net", true, true, false)]
         [InlineData("test.database.windows.net", false, true, false)]
-        public void TestShouldDisableTnirWithAccessToken(
+        public void TestShouldDisableTnirWithCallerSuppliedToken(
             string dataSource,
             bool isAccessTokenProvided,
             bool tnirExplicitlySpecified,

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -765,6 +766,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Minimal concrete <see cref="SspiContextProvider"/> so tests can assign a non-null value.
+        /// Never used to authenticate, so <see cref="GenerateContext"/> is not exercised.
+        /// </summary>
+        private sealed class TestSspiContextProvider : SspiContextProvider
+        {
+            protected override bool GenerateContext(
+                ReadOnlySpan<byte> incomingBlob,
+                IBufferWriter<byte> outgoingBlobWriter,
+                SspiAuthenticationParameters authParams)
+                => throw new NotSupportedException();
+        }
+
+        /// <summary>
         /// Setting one authentication-related property must not silently drop the others from the
         /// connection pool key. Previously, assigning <see cref="SqlConnection.SspiContextProvider"/>
         /// rebuilt the pool key with a null <see cref="SqlConnection.AccessTokenCallback"/> (and a
@@ -782,7 +796,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 conn.AccessTokenCallback = callback;
                 Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
 
-                conn.SspiContextProvider = null;
+                conn.SspiContextProvider = new TestSspiContextProvider();
 
                 Assert.Same(callback, conn.AccessTokenCallback);
                 Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
@@ -793,10 +807,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 conn.AccessToken = "token";
                 Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
 
-                conn.SspiContextProvider = null;
+                conn.SspiContextProvider = new TestSspiContextProvider();
 
                 Assert.Equal("token", conn.AccessToken);
                 Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
+            }
+        }
+
+        /// <summary>
+        /// The reciprocal of the above: assigning a token must not drop an already-configured
+        /// <see cref="SqlConnection.SspiContextProvider"/> from the pool key.
+        /// </summary>
+        [Fact]
+        public void SspiContextProviderIsPreservedInPoolKeyWhenAccessTokenStateIsSet()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                SspiContextProvider provider = new TestSspiContextProvider();
+                conn.SspiContextProvider = provider;
+
+                conn.AccessToken = "token";
+
+                Assert.Same(provider, conn.SspiContextProvider);
+                Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                SspiContextProvider provider = new TestSspiContextProvider();
+                conn.SspiContextProvider = provider;
+
+                conn.AccessTokenCallback = callback;
+
+                Assert.Same(provider, conn.SspiContextProvider);
+                Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
             }
         }
 
