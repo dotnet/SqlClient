@@ -43,10 +43,10 @@ parameters:
   - name: agentImage
     displayName: Agent Image
     type: string
-    default: ADO-UB24
+    default: ADO-UB24-SQL25
     values:
-      - ADO-UB24
-      - ADO-Win25
+      - ADO-UB24-SQL25
+      - ADO-MMS25-SQL25
 
   # The build configuration to use, either Debug or Release.
   - name: buildConfiguration
