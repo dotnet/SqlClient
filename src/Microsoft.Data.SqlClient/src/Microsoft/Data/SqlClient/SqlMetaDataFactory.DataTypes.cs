@@ -75,6 +75,7 @@ internal sealed partial class SqlMetaDataFactory
         AddUniqueIdentifierType();
         AddSqlVariantType();
         AddRowVersionType();
+        AddVectorType();
 
         dataTypesDataTable.EndLoadData();
         dataTypesDataTable.AcceptChanges();
@@ -349,6 +350,41 @@ internal sealed partial class SqlMetaDataFactory
             {
                 typeRow[MinimumVersionKey] = minimumVersion;
             }
+
+            dataTypesDataTable.Rows.Add(typeRow);
+        }
+
+        void AddVectorType()
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(SqlDbTypeExtensions.Vector, isMultiValued: false);
+            DataRow typeRow = dataTypesDataTable.NewRow();
+
+            typeRow[DbMetaDataColumnNames.TypeName] = metaType.TypeName;
+            typeRow[DbMetaDataColumnNames.ProviderDbType] = (int)metaType.SqlDbType;
+            // A vector is transported as an 8 byte header followed by its elements, and
+            // the whole value must fit within a single TDS packet.
+            typeRow[DbMetaDataColumnNames.ColumnSize] = TdsEnums.MAXSIZE;
+            // A vector column declares its number of dimensions, and optionally its base
+            // type. The base type is omitted here because it defaults to float32.
+            typeRow[DbMetaDataColumnNames.CreateFormat] = $"{metaType.TypeName}({{0}})";
+            typeRow[DbMetaDataColumnNames.CreateParameters] = "dimensions";
+            typeRow[DbMetaDataColumnNames.DataType] = metaType.ClassType.FullName;
+            typeRow[DbMetaDataColumnNames.IsAutoIncrementable] = false;
+            // The DataType for a vector is a byte array, which is how it is transported
+            // rather than how it is best represented.
+            typeRow[DbMetaDataColumnNames.IsBestMatch] = false;
+            typeRow[DbMetaDataColumnNames.IsCaseSensitive] = false;
+            typeRow[DbMetaDataColumnNames.IsConcurrencyType] = false;
+            typeRow[DbMetaDataColumnNames.IsFixedLength] = false;
+            typeRow[DbMetaDataColumnNames.IsFixedPrecisionScale] = false;
+            typeRow[DbMetaDataColumnNames.IsLong] = false;
+            typeRow[DbMetaDataColumnNames.IsNullable] = true;
+            typeRow[DbMetaDataColumnNames.IsSearchable] = false;
+            typeRow[DbMetaDataColumnNames.IsSearchableWithLike] = false;
+            // A vector literal is written as a JSON array in a string literal.
+            typeRow[DbMetaDataColumnNames.LiteralPrefix] = "'";
+            typeRow[DbMetaDataColumnNames.LiteralSuffix] = "'";
+            typeRow[MinimumVersionKey] = "17.00.000.0";
 
             dataTypesDataTable.Rows.Add(typeRow);
         }

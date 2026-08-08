@@ -774,6 +774,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     case MetaType.SqlVectorElementType.Float32:
                         return SqlVector<float>.CreateNull(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNull(elementCount);
+                        #else
+                        // System.Half is unavailable, so a float16 vector has no faithful
+                        // strongly typed representation and is surfaced as single precision.
+                        return SqlVector<float>.CreateNull(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -782,6 +790,13 @@ namespace Microsoft.Data.SqlClient
             {
                 case MetaType.SqlVectorElementType.Float32:
                     return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return new SqlVector<Half>((byte[])_sqlBufferReturnValue.Value);
+                    #else
+                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -2385,6 +2400,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
                         try
