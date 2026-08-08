@@ -5,6 +5,9 @@
 using System;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
+#if NETFRAMEWORK
+using SqlConnectionInternal = global::Microsoft.Data.SqlClient.Connection.SqlConnectionInternal;
+#endif
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
@@ -62,6 +65,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 
             // Assert
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
+        }
+
+        /// <summary>
+        /// TNIR is disabled by default whenever federated authentication is in play, including when
+        /// the token is supplied directly through <c>AccessToken</c> or <c>AccessTokenCallback</c>,
+        /// unless the user explicitly specified the TNIR keyword.
+        /// </summary>
+        [Theory]
+        // Non-Azure endpoint, no explicit TNIR keyword: access token (or callback) disables TNIR.
+        [InlineData("my.test.server", false, false, false)]
+        [InlineData("my.test.server", true, false, true)]
+        // Azure endpoint always disables TNIR when the keyword is absent.
+        [InlineData("test.database.windows.net", false, false, true)]
+        [InlineData("test.database.windows.net", true, false, true)]
+        // An explicit TNIR keyword always wins, regardless of access token or endpoint.
+        [InlineData("my.test.server", true, true, false)]
+        [InlineData("test.database.windows.net", true, true, false)]
+        [InlineData("test.database.windows.net", false, true, false)]
+        public void TestShouldDisableTnirWithCallerSuppliedToken(
+            string dataSource,
+            bool isAccessTokenProvided,
+            bool tnirExplicitlySpecified,
+            bool expectedValue)
+        {
+            SqlConnectionStringBuilder builder = new() { DataSource = dataSource };
+            if (tnirExplicitlySpecified)
+            {
+                builder.TransparentNetworkIPResolution = true;
+            }
+
+            SqlConnectionOptions connectionOptions = new(builder.ConnectionString);
+
+            Assert.Equal(
+                expectedValue,
+                SqlConnectionInternal.ShouldDisableTnir(connectionOptions, isAccessTokenProvided));
         }
 #endif
         /// <summary>
