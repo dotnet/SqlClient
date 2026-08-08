@@ -255,7 +255,15 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // ("https://login.microsoftonline.com/{tenantId}/oauth2/authorize"), so the tenant is
             // taken from the first path segment rather than the last.
 
-            ParseAuthority(parameters.Authority, out string authority, out string audience, out string msalAuthority);
+            if (!TryParseAuthority(parameters.Authority, out string authority, out string audience, out string msalAuthority))
+            {
+                throw new Extensions.Azure.AuthenticationException(
+                    parameters.AuthenticationMethod,
+                    $"The authority '{parameters.Authority}' is not a valid Entra ID authority. " +
+                    "Expected an absolute HTTPS URL containing a tenant, " +
+                    "e.g. 'https://login.microsoftonline.com/<tenant>'.");
+            }
+
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
@@ -438,6 +446,11 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
+        catch (Extensions.Azure.AuthenticationException)
+        {
+            // Already shaped for the caller; don't re-wrap it below.
+            throw;
+        }
         catch (MsalException ex)
         {
             // Check for an explicitly retryable error.
@@ -555,18 +568,30 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// <param name="msalAuthority">
     /// Receives the normalized authority (host + tenant) suitable for MSAL's <c>WithAuthority</c>.
     /// </param>
+    /// <returns>
+    /// <c>true</c> if the authority URL is a well-formed, absolute HTTPS URL carrying a tenant
+    /// segment; otherwise <c>false</c>.
+    /// </returns>
     /// <remarks>
+    /// <para>
     /// The tenant is taken from the first path segment rather than the last so that trailing
     /// endpoint suffixes (<c>/oauth2/authorize</c>, <c>/oauth2/v2.0/token</c>, etc.) are ignored.
+    /// </para>
+    /// <para>
+    /// Entra ID authorities are always absolute HTTPS URLs, so anything else is rejected rather
+    /// than guessed at. Both MSAL (<c>WithAuthority</c>) and Azure.Identity
+    /// (<c>TokenCredentialOptions.AuthorityHost</c>) require an absolute URI as well, so an
+    /// unparseable authority cannot produce a working credential.
+    /// </para>
     /// </remarks>
-    internal static void ParseAuthority(
+    internal static bool TryParseAuthority(
         string authorityUrl,
         out string authorityHost,
         out string tenant,
         out string msalAuthority)
     {
         if (Uri.TryCreate(authorityUrl, UriKind.Absolute, out Uri? uri) &&
-            (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
+            uri.Scheme == Uri.UriSchemeHttps)
         {
             string path = uri.AbsolutePath.Trim('/');
             int slashIndex = path.IndexOf('/');
@@ -576,16 +601,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             {
                 authorityHost = uri.GetLeftPart(UriPartial.Authority) + "/";
                 msalAuthority = authorityHost + tenant;
-                return;
+                return true;
             }
         }
 
-        // Fall back to the legacy behavior of splitting at the last separator when the authority
-        // isn't an absolute HTTP(S) URL, or when it carries no tenant segment.
-        int separatorIndex = authorityUrl.LastIndexOf('/');
-        authorityHost = authorityUrl.Remove(separatorIndex + 1);
-        tenant = authorityUrl.Substring(separatorIndex + 1);
-        msalAuthority = authorityUrl;
+        authorityHost = string.Empty;
+        tenant = string.Empty;
+        msalAuthority = string.Empty;
+        return false;
     }
 
     private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
