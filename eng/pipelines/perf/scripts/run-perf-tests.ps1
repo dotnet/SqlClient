@@ -25,6 +25,14 @@ param(
     [string]$Framework = "net9.0",
     [string]$ResultsSubdir = "perf-results",
     [string]$BaselineVersion = "",
+    # Alternative to -BaselineVersion: benchmark against Microsoft.Data.SqlClient built from ANOTHER
+    # git ref of this repository (e.g. 'main') instead of a released NuGet package.  Used by the PR
+    # perf pipeline, which compares the branch under test against the source it would merge into.
+    # The two baseline selectors are mutually exclusive.
+    [string]$BaselineSourceRef = "",
+    # Remote used to obtain the baseline ref when it cannot be fetched from the copied checkout's own
+    # 'origin' (e.g. the source tree reached the VM without its .git directory, or origin needs auth).
+    [string]$BaselineRepoUrl = "https://github.com/dotnet/SqlClient.git",
     [string]$RegressionThreshold = "10",
     # When set, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
     # Off by default so deltas are reported without blocking until the gate is trusted.
@@ -116,6 +124,7 @@ Write-Host "  Framework       : $Framework"
 Write-Host "  Results dir     : $ResultsDir"
 Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
 Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
+Write-Host "  Baseline ref    : $(if ($BaselineSourceRef) { $BaselineSourceRef } else { '<none>' })"
 Write-Host "  SQL_SERVER      : $SqlServer"
 Write-Host "  PERF_CLIENT_CPUS: $($env:PERF_CLIENT_CPUS)"
 Write-Host "  PERF_SQL_CPUS   : $($env:PERF_SQL_CPUS)"
@@ -123,6 +132,11 @@ Write-Host "=================================================================="
 
 if (-not (Test-Path $PerfProject)) {
     throw "Performance test project not found at $PerfProject"
+}
+# The two baseline selectors describe different builds of the same "baseline" pass, so requesting
+# both is always a mistake; fail fast rather than silently honouring one of them.
+if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and (-not [string]::IsNullOrEmpty($BaselineSourceRef))) {
+    throw "-BaselineVersion and -BaselineSourceRef are mutually exclusive."
 }
 if ([string]::IsNullOrEmpty($SqlPassword)) {
     throw "SQL_PASSWORD environment variable is not set (expected from the perf template)."
@@ -316,10 +330,11 @@ Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; In
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
-# Two passes are executed so the pipeline can compare the branch under test against a released
-# baseline:
-#   * baseline  -> Microsoft.Data.SqlClient restored from NuGet.org at $BaselineVersion
-#                  (ReferenceType=Package + CPM VersionOverride).  Skipped when no baseline is given.
+# Two passes are executed so the pipeline can compare the branch under test against a baseline:
+#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at $BaselineVersion
+#                  (ReferenceType=Package + CPM VersionOverride), or - when $BaselineSourceRef is
+#                  given instead - the driver built from another git ref of this repository (e.g.
+#                  'main', used by the PR perf pipeline).  Skipped when neither is given.
 #   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
 #
 # Each pass runs from its own directory; its BenchmarkDotNet artifacts are collected into
@@ -340,6 +355,78 @@ function Write-BaselineNuGetConfig {
   </packageSources>
 </configuration>
 '@ | Set-Content -Path $BaselineNuGetConfig -Encoding UTF8
+}
+
+# --- Source baseline (-BaselineSourceRef) ---------------------------------------------------------
+# Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
+# pass can build the driver from that source instead of restoring a released package.  The tree is
+# placed OUTSIDE the checkout so it is never picked up by the candidate build, by the results copy,
+# or by a repo-root glob.
+$BaselineSrcDir = Join-Path (Split-Path -Parent $RepoRoot) "sqlclient-perf-baseline-src"
+
+# Prefers the copied checkout's own 'origin' (no extra network round-trip, and it resolves the ref
+# exactly as the pipeline's repository does); falls back to a shallow clone of -BaselineRepoUrl when
+# the source tree arrived without .git, or when origin is unreachable/needs credentials.
+# Returns a hashtable with the baseline perf project path and the '<ref>@<sha>' label.
+function Initialize-BaselineSource {
+    param([Parameter(Mandatory)][string]$Ref)
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        throw "git is required for -BaselineSourceRef but was not found on the VM."
+    }
+
+    if (Test-Path $BaselineSrcDir) { Remove-Item -Recurse -Force $BaselineSrcDir }
+
+    $acquired = $false
+    # git writes progress/diagnostics to stderr, which Windows PowerShell 5.1 promotes to a
+    # TERMINATING error under $ErrorActionPreference='Stop' even on success (see Invoke-Native
+    # above).  These probes are allowed to fail - that is what the clone fallback is for - so relax
+    # the preference and judge them solely by $LASTEXITCODE.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        # '.git' is a directory in a normal clone but a FILE in a git worktree, so Test-Path (which
+        # matches either) is what is wanted here.
+        if (Test-Path (Join-Path $RepoRoot ".git")) {
+            Write-Host "Fetching baseline ref '$Ref' from the checkout's origin ..."
+            # Fetch into a private remote-tracking namespace so an existing local branch of the same
+            # name (the checkout may itself be on 'main') is never used in place of the fetched ref.
+            & git -C $RepoRoot fetch --no-tags --depth 1 origin "+refs/heads/${Ref}:refs/remotes/perfbaseline/$Ref" 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                & git -C $RepoRoot worktree prune 2>&1 | Out-Null
+                & git -C $RepoRoot worktree add --detach $BaselineSrcDir "refs/remotes/perfbaseline/$Ref" 2>&1 | Out-Null
+                if ($LASTEXITCODE -eq 0) { $acquired = $true }
+            }
+            if (-not $acquired) {
+                Write-Warning "Could not materialise '$Ref' from the checkout's origin; falling back to $BaselineRepoUrl."
+            }
+        }
+
+        if (-not $acquired) {
+            Write-Host "Cloning baseline ref '$Ref' from $BaselineRepoUrl ..."
+            if (Test-Path $BaselineSrcDir) { Remove-Item -Recurse -Force $BaselineSrcDir }
+            & git clone --quiet --depth 1 --branch $Ref $BaselineRepoUrl $BaselineSrcDir 2>&1 | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to clone baseline ref '$Ref' from $BaselineRepoUrl (exit $LASTEXITCODE)."
+            }
+        }
+
+        $sha = & git -C $BaselineSrcDir rev-parse --short HEAD 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sha)) { $sha = "unknown" }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+
+    $baselineProject = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj"
+    if (-not (Test-Path $baselineProject)) {
+        throw "Baseline source tree at $BaselineSrcDir has no performance test project ($baselineProject)."
+    }
+
+    # Label recorded in the comparison output so a run states exactly which baseline commit it used.
+    $label = "$Ref@$($sha.Trim())"
+    Write-Host "Baseline source ready: $BaselineSrcDir ($label)"
+
+    return @{ Project = $baselineProject; Label = $label }
 }
 
 # Convert a CPU range like "16-31" (or a comma list "16,17,18") into an affinity bitmask.
@@ -408,24 +495,27 @@ print(total)
     return [int]($out.Trim())
 }
 
-# Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) and collects its artifacts into
-# results\<label>. $ExtraArgs are appended to both the build and run invocations.
-function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
+# Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) from $Project and collects its
+# artifacts into results\<label>. $ExtraArgs are appended to both the build and run invocations.
+# $Project is the candidate's perf project for every pass except a source-baseline pass, which
+# builds the baseline ref's own perf project.
+function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs) {
     $runDir = Join-Path $RepoRoot "perf-run-$Label"
     if (Test-Path $runDir) { Remove-Item -Recurse -Force $runDir }
     New-Item -ItemType Directory -Force -Path $runDir | Out-Null
 
     Write-Host "------------------------------------------------------------------"
     Write-Host " Pass: $Label"
+    Write-Host "   Project   : $Project"
     Write-Host "   Extra args: $($ExtraArgs -join ' ')"
     Write-Host "------------------------------------------------------------------"
 
     Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
-    Invoke-Native { dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+    Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
 
     Push-Location $runDir
     try {
-        $runArgs = @("run", "--project", $PerfProject, "-c", $Configuration, "-f", $Framework, "--no-build") + $ExtraArgs
+        $runArgs = @("run", "--project", $Project, "-c", $Configuration, "-f", $Framework, "--no-build") + $ExtraArgs
         Write-Host "Starting benchmarks ($Label): dotnet $($runArgs -join ' ')"
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = "dotnet"
@@ -484,17 +574,17 @@ function Invoke-PerfPass([string]$Label, [string[]]$ExtraArgs) {
     }
 }
 
-# Build-Variant <label> <extra build args...>
+# Build-Variant <label> <project> <extra build args...>
 # Builds the PerformanceTests app once into perf-build-<label> so the interleaved orchestrator can
-# invoke it repeatedly without rebuilding.  Distinct output dirs are mandatory (both variants share
-# the project's default bin path).
+# invoke it repeatedly without rebuilding.  Distinct output dirs are mandatory (both variants would
+# otherwise share the project's default bin path).
 function Build-Variant {
-    param([string]$Label, [string[]]$ExtraArgs = @())
+    param([string]$Label, [string]$Project, [string[]]$ExtraArgs = @())
     $outDir = Join-Path $RepoRoot "perf-build-$Label"
     if (Test-Path $outDir) { Remove-Item -Recurse -Force $outDir }
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-    Write-Host "Building '$Label' variant ($Configuration, $Framework) into $outDir ..."
-    $buildArgs = @("build", $PerfProject, "-c", $Configuration, "-f", $Framework, "--nologo", "-v", "minimal", "-o", $outDir) + $ExtraArgs
+    Write-Host "Building '$Label' variant ($Configuration, $Framework) from $Project into $outDir ..."
+    $buildArgs = @("build", $Project, "-c", $Configuration, "-f", $Framework, "--nologo", "-v", "minimal", "-o", $outDir) + $ExtraArgs
     # Route the build output to the host/transcript (Out-Host) so it is visible AND does not land on
     # this function's success stream: '$dir = Build-Variant ...' otherwise captures the entire build
     # log into the return value, hiding build errors and corrupting the returned exe-dir path.
@@ -502,19 +592,38 @@ function Build-Variant {
     return $outDir
 }
 
-if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interleaved")) {
+# --- Resolve how the baseline pass is produced ----------------------------------------------------
+# Both baseline flavours end up as "a perf project plus build args"; resolving them once here keeps
+# the interleaved and sequential paths below identical for the package and source baselines.
+$BaselineLabel = ""
+$BaselineProject = $PerfProject
+$BaselineBuildArgs = @()
+
+if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+    # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
+    Write-BaselineNuGetConfig
+    $BaselineLabel = $BaselineVersion
+    $BaselineBuildArgs = @(
+        "-p:ReferenceType=Package",
+        "-p:MdsPackageVersion=$BaselineVersion",
+        "-p:RestoreConfigFile=$BaselineNuGetConfig"
+    )
+} elseif (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
+    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
+    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
+    $baselineSource = Initialize-BaselineSource -Ref $BaselineSourceRef
+    $BaselineLabel = $baselineSource.Label
+    $BaselineProject = $baselineSource.Project
+}
+
+if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ####################################################################################################
-    Write-BaselineNuGetConfig
-    $baselineExeDir = Build-Variant "baseline" @(
-        "-p:ReferenceType=Package",
-        "-p:MdsPackageVersion=$BaselineVersion",
-        "-p:RestoreConfigFile=$BaselineNuGetConfig"
-    )
-    $currentExeDir = Build-Variant "current" @()
+    $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
+    $currentExeDir = Build-Variant "current" $PerfProject @()
 
     $interleaveArgs = @(
         "--baseline-exe-dir", $baselineExeDir,
@@ -523,7 +632,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
         "--results-dir", $ResultsDir,
         "--threshold", $RegressionThreshold,
         "--reps", $ConfirmationRuns,
-        "--baseline-version", $BaselineVersion,
+        "--baseline-version", $BaselineLabel,
         "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
     )
     if ($FailOnRegression) {
@@ -533,23 +642,18 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
     Write-Host "Running interleaved benchmarks (best-of-$ConfirmationRuns) ..."
     Invoke-Native { python3 (Join-Path $ScriptDir "interleave_perf.py") @interleaveArgs } "Interleaved run failed"
 
-} elseif (-not [string]::IsNullOrEmpty($BaselineVersion)) {
+} elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
-    Write-BaselineNuGetConfig
-    Invoke-PerfPass "baseline" @(
-        "-p:ReferenceType=Package",
-        "-p:MdsPackageVersion=$BaselineVersion",
-        "-p:RestoreConfigFile=$BaselineNuGetConfig"
-    )
-    Invoke-PerfPass "current" @()
+    Invoke-PerfPass "baseline" $BaselineProject $BaselineBuildArgs
+    Invoke-PerfPass "current" $PerfProject @()
 
-    Write-Host "Comparing current branch against baseline $BaselineVersion ..."
+    Write-Host "Comparing current branch against baseline $BaselineLabel ..."
     $comparisonDir = Join-Path $ResultsDir "comparison"
     New-Item -ItemType Directory -Force -Path $comparisonDir | Out-Null
     $compareArgs = @(
         "--baseline-dir", (Join-Path $ResultsDir "baseline"),
         "--current-dir", (Join-Path $ResultsDir "current"),
-        "--baseline-version", $BaselineVersion,
+        "--baseline-version", $BaselineLabel,
         "--threshold", $RegressionThreshold,
         "--out-md", (Join-Path $comparisonDir "comparison.md"),
         "--out-json", (Join-Path $comparisonDir "comparison.json")
@@ -565,8 +669,8 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and ($RunMode -eq "interle
 
 } else {
     # --- No baseline: current-only run (no comparison) --------------------------------------------
-    Write-Host "No -BaselineVersion supplied; running current only (no comparison)."
-    Invoke-PerfPass "current" @()
+    Write-Host "Neither -BaselineVersion nor -BaselineSourceRef supplied; running current only (no comparison)."
+    Invoke-PerfPass "current" $PerfProject @()
 }
 
 Write-Host "Collected results:"
