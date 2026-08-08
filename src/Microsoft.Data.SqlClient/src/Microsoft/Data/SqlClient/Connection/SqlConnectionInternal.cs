@@ -149,6 +149,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// True when the caller supplied a federated authentication access token directly, either
         /// as a literal token via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessToken"/> or as a token provider
         /// via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback"/>.
+        /// </summary>
         /// <remarks>
         /// Both paths represent the same "caller-supplied token" authentication mode, so they must
         /// always be treated identically. Use this property rather than testing the underlying
