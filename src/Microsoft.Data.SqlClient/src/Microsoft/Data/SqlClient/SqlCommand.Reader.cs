@@ -111,10 +111,7 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            // @TODO: Do we want to use a command scope here like nonquery and xml? or is operation id ok?
-            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            Exception e = null;
-
+            using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteReader | API | Object Id {ObjectID}");
             // @TODO: Do we want to have a correlation trace event here like nonquery and xml?
             // @TODO: Basically, this doesn't follow the same pattern as nonquery, scalar, or xml. Doesn't seem right.
@@ -137,7 +134,7 @@ namespace Microsoft.Data.SqlClient
             // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception ex)
             {
-                e = ex;
+                diagnosticScope.SetException(ex);
 
                 if (ex is SqlException sqlException)
                 {
@@ -150,15 +147,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: true);
-
-                if (e is not null)
-                {
-                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                }
-                else
-                {
-                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                }
             }
         }
 
