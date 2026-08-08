@@ -231,8 +231,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private readonly DbConnectionPoolIdentity _identity;
 
-        private string _instanceName = string.Empty;
-
         /// <summary>
         /// This is used to preserve the authentication context object if we decide to cache it for
         /// subsequent connections in the same pool. This will finally end up in
