@@ -53,8 +53,8 @@ parameters:
     #
     # Any pool specified here must contain images with the following names:
     #
-    #   - ADO-MMS22-SQL22
-    #   - ADO-UB22-SQL22
+    #   - ADO-MMS25-SQL25
+    #   - ADO-UB24-SQL25
     #
     default: $(ci_var_defaultPoolName)
 
@@ -219,7 +219,7 @@ stages:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
               parameters:
                 saPassword: $(saPassword)
-          vmImage: ADO-UB22-SQL22
+          vmImage: ADO-UB24-SQL25
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -277,11 +277,11 @@ stages:
                 # These variables are from an Azure DevOps Library variable
                 # group.
                 fileStreamDirectory: $(FileStreamDirectory)
-                sqlRootPath: $(SQL22RootPath)
-          # The ADO-MMS22-SQL22 image includes a local SQL Server that supports
+                SQLRootPath: $(SQL25RootPath)
+          # The ADO-MMS25-SQL25 image includes a local SQL Server that supports
           # integrated security.
           supportsIntegratedSecurity: true
-          vmImage: ADO-MMS22-SQL22
+          vmImage: ADO-MMS25-SQL25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
