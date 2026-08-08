@@ -9,6 +9,13 @@ parameters:
     type: boolean
     default: false
 
+  # When true, add a gate stage that detects redundant PR triggers (e.g. Draft <-> Open state
+  # transitions with no new commits).  When a redundant trigger is detected, all subsequent stages
+  # are skipped and the pipeline succeeds without performing any work.
+  - name: skipRedundantTrigger
+    type: boolean
+    default: false
+
   # The target frameworks to build and run tests for on Windows.
   #
   # These are _not_ the target frameworks to build the driver packages for.
@@ -123,6 +130,29 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
+  # When skipRedundantTrigger is enabled, add a gate stage that detects PR triggers caused by
+  # state-only transitions (Draft <-> Open).  If the trigger is redundant, the no-op stage's
+  # condition evaluates to false (skipped), which causes secrets_stage to implicitly skip via
+  # its default succeeded() condition, cascading to all downstream stages.
+  - ${{ if eq(parameters.skipRedundantTrigger, true) }}:
+    - template: /eng/pipelines/stages/detect-redundant-trigger-stage.yml@self
+      parameters:
+        debug: ${{ parameters.debug }}
+
+    - stage: skip_redundant_trigger_stage
+      displayName: Skip Redundant Trigger
+      dependsOn: detect_redundant_trigger_stage
+      condition: eq(dependencies.detect_redundant_trigger_stage.outputs['detect_redundant_trigger.detect.meaningful'], 'true')
+      jobs:
+        - job: proceed
+          displayName: Build is meaningful
+          pool:
+            vmImage: ubuntu-latest
+          steps:
+            - checkout: none
+            - bash: echo "PR Trigger gate passed — proceeding with build and test."
+              displayName: Confirm
+
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
