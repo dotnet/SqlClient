@@ -645,6 +645,11 @@ stages:
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
+              # NOTE: This key is also the generated stage name, and is
+              # referenced by branch policies / required status checks, so it is
+              # deliberately left unchanged.  The 'Sql19' suffix remains
+              # accurate: these tests target a remote Enclave-enabled SQL Server
+              # 2019.  Only the agent image has moved to Ubuntu 24.
               Ubuntu20_Enclave_Sql19: ADO-UB24-SQL25
             TargetFrameworks: ${{parameters.targetFrameworksUnix }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
