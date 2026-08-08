@@ -144,7 +144,7 @@ internal static class UserAgent
             MaxLenOverall,
             PayloadVersion,
             DriverName,
-            ThisAssembly.NuGetPackageVersion,
+            ThisAssembly.PackageVersion,
             RuntimeInformation.ProcessArchitecture,
             osType,
             RuntimeInformation.OSDescription,

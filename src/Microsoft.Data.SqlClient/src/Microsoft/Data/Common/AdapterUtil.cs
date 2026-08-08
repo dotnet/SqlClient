@@ -837,7 +837,7 @@ namespace Microsoft.Data.Common
             // NOTE: Using lazy thread-safety since we don't care if two threads both happen to update the value at the same time
             if (s_systemDataVersion is null)
             {
-                s_systemDataVersion = new Version(ThisAssembly.InformationalVersion);
+                s_systemDataVersion = new Version(ThisAssembly.FileVersion);
             }
 
             return s_systemDataVersion;
