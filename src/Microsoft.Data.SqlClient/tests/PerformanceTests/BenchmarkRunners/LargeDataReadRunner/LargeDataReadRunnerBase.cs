@@ -28,14 +28,6 @@ public abstract class LargeDataReadRunnerBase : BaseRunner
     public int DataSizeBytes { get; set; }
 
     /// <summary>
-    /// Size of the client-side read buffer used to drain the VARBINARY(MAX) column.
-    /// Kept small (8 KB) and large (1 MB) to observe whether buffer size relative to
-    /// the payload materially changes throughput.
-    /// </summary>
-    [Params(8_192, 1_048_576)]
-    public int ReadBufferBytes { get; set; }
-
-    /// <summary>
     /// CommandBehavior to use when executing the reader.
     /// SequentialAccess is expected to be faster for large payloads. Default is included
     /// to facilitate comparison with Always Encrypted (which doesn't support SequentialAccess.)

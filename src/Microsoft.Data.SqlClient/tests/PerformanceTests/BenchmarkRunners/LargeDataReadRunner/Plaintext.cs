@@ -15,6 +15,14 @@ public class Plaintext : LargeDataReadRunnerBase
     public override IEnumerable<CommandBehavior> ExecutedCommandBehaviors =>
         [CommandBehavior.Default, CommandBehavior.SequentialAccess];
 
+    /// <summary>
+    /// Size of the client-side read buffer used to drain the VARBINARY(MAX) column.
+    /// Kept small (8 KB) and large (1 MB) to observe whether buffer size relative to
+    /// the payload materially changes throughput.
+    /// </summary>
+    [Params(8_192, 1_048_576)]
+    public int ReadBufferBytes { get; set; }
+
     protected override SqlConnection OpenConnection()
     {
         SqlConnection conn = new(s_config.ConnectionString);
