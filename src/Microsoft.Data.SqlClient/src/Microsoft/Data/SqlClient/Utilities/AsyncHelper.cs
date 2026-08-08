@@ -836,7 +836,10 @@ namespace Microsoft.Data.SqlClient.Utilities
             continuationTask.ContinueWith(
                 static task =>
                 {
-                    SqlClientEventSource.Log.TryTraceEvent($"Unobserved task exception: {task.Exception}");
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent($"Unobserved task exception: {task.Exception}");
+                    }
                     _ = task.Exception;
                 },
                 CancellationToken.None,
