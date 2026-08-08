@@ -60,8 +60,16 @@ parameters:
 jobs:
   - job: SyncGitHub
     displayName: Sync GitHub to ADO
+    # This pipeline only ever runs in the ADO.Net project, but the pool is
+    # selected conditionally to match the convention used by the other
+    # pipelines in this repo.
     pool:
-      vmImage: 'ubuntu-latest'
+      ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
+        name: ADO-1ES-Pool
+      ${{ else }}:
+        name: ADO-CI-1ES-Pool
+      demands:
+        - imageOverride -equals ADO-UB24-SQL25
 
     steps:
       # Check out the ADO repo with full history so we can compare branches.

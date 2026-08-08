@@ -53,6 +53,18 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the pool to run in.
+  - name: poolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-UB24-SQL25
+
 jobs:
 
   - job: pack_logging_package_job
@@ -61,8 +73,15 @@ jobs:
     dependsOn: ${{ parameters.dependsOn }}
 
     pool:
-      name: Azure Pipelines
-      vmImage: ubuntu-latest
+      name: ${{ parameters.poolName }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      # Images provided by 1ES must be selected using a demand.
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 

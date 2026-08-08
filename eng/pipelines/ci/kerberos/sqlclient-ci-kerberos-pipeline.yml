@@ -296,3 +296,7 @@ stages:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:
           upload: false
+          # This pipeline does not import the CI build variables, so the pool
+          # must be named explicitly.  Reuse the Linux stage's pool and image.
+          poolName: ADO-Trusted-Linux-WestUS2
+          vmImage: ADO-UB20-SQL22
