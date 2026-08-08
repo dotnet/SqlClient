@@ -249,10 +249,21 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // More information:
             //
             //   https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
+            //
+            // The authority URL provided by the server may be a bare tenant endpoint
+            // ("https://login.microsoftonline.com/{tenantId}") or an ADAL v1 style endpoint
+            // ("https://login.microsoftonline.com/{tenantId}/oauth2/authorize"), so the tenant is
+            // taken from the first path segment rather than the last.
 
-            int separatorIndex = parameters.Authority.LastIndexOf('/');
-            string authority = parameters.Authority.Remove(separatorIndex + 1);
-            string audience = parameters.Authority.Substring(separatorIndex + 1);
+            if (!TryParseAuthority(parameters.Authority, out string authority, out string audience, out string msalAuthority))
+            {
+                throw new Extensions.Azure.AuthenticationException(
+                    parameters.AuthenticationMethod,
+                    $"The authority '{parameters.Authority}' is not a valid Entra ID authority. " +
+                    "Expected an absolute HTTPS URL containing a tenant, " +
+                    "e.g. 'https://login.microsoftonline.com/<tenant>'.");
+            }
+
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
@@ -316,9 +327,9 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
-                new(parameters.Authority, redirectUri, _applicationClientId, _iWin32WindowFunc);
+                new(msalAuthority, redirectUri, _applicationClientId, _iWin32WindowFunc);
             #else
-                new(parameters.Authority, redirectUri, _applicationClientId);
+                new(msalAuthority, redirectUri, _applicationClientId);
             #endif
 
             AuthenticationResult? result = null;
@@ -435,6 +446,11 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
+        catch (Extensions.Azure.AuthenticationException)
+        {
+            // Already shaped for the caller; don't re-wrap it below.
+            throw;
+        }
         catch (MsalException ex)
         {
             // Check for an explicitly retryable error.
@@ -531,6 +547,68 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 $"Unexpected error: {ex.Message}",
                 ex);
         }
+    }
+
+    /// <summary>
+    /// Splits an Entra ID authority URL (the STSURL provided by the server in the FEDAUTHINFO TDS
+    /// token) into the authority host and the tenant.
+    /// </summary>
+    /// <param name="authorityUrl">
+    /// The authority URL, e.g. <c>https://login.microsoftonline.com/{tenantId}</c>. Some services
+    /// (for example the Dataverse/Dynamics 365 TDS endpoint) return an ADAL v1 style URL such as
+    /// <c>https://login.microsoftonline.com/{tenantId}/oauth2/authorize</c>.
+    /// </param>
+    /// <param name="authorityHost">
+    /// Receives the authority host with a trailing slash, e.g. <c>https://login.microsoftonline.com/</c>.
+    /// </param>
+    /// <param name="tenant">
+    /// Receives the tenant (the first path segment of the authority URL), which may be a tenant id,
+    /// a domain name, or one of the <c>common</c>/<c>organizations</c>/<c>consumers</c> placeholders.
+    /// </param>
+    /// <param name="msalAuthority">
+    /// Receives the normalized authority (host + tenant) suitable for MSAL's <c>WithAuthority</c>.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> if the authority URL is a well-formed, absolute HTTPS URL carrying a tenant
+    /// segment; otherwise <c>false</c>.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The tenant is taken from the first path segment rather than the last so that trailing
+    /// endpoint suffixes (<c>/oauth2/authorize</c>, <c>/oauth2/v2.0/token</c>, etc.) are ignored.
+    /// </para>
+    /// <para>
+    /// Entra ID authorities are always absolute HTTPS URLs, so anything else is rejected rather
+    /// than guessed at. Both MSAL (<c>WithAuthority</c>) and Azure.Identity
+    /// (<c>TokenCredentialOptions.AuthorityHost</c>) require an absolute URI as well, so an
+    /// unparseable authority cannot produce a working credential.
+    /// </para>
+    /// </remarks>
+    internal static bool TryParseAuthority(
+        string authorityUrl,
+        out string authorityHost,
+        out string tenant,
+        out string msalAuthority)
+    {
+        if (Uri.TryCreate(authorityUrl, UriKind.Absolute, out Uri? uri) &&
+            uri.Scheme == Uri.UriSchemeHttps)
+        {
+            string path = uri.AbsolutePath.Trim('/');
+            int slashIndex = path.IndexOf('/');
+            tenant = slashIndex < 0 ? path : path.Substring(0, slashIndex);
+
+            if (tenant.Length > 0)
+            {
+                authorityHost = uri.GetLeftPart(UriPartial.Authority) + "/";
+                msalAuthority = authorityHost + tenant;
+                return true;
+            }
+        }
+
+        authorityHost = string.Empty;
+        tenant = string.Empty;
+        msalAuthority = string.Empty;
+        return false;
     }
 
     private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParameters parameters,
