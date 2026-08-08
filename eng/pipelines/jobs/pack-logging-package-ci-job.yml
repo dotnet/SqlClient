@@ -74,8 +74,14 @@ jobs:
 
     pool:
       name: ${{ parameters.poolName }}
-      demands:
-        - imageOverride -equals ${{ parameters.vmImage }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.vmImage }}
+      # Images provided by 1ES must be selected using a demand.
+      ${{ else }}:
+        demands:
+          - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 
