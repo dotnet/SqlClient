@@ -1182,7 +1182,7 @@ namespace Microsoft.Data.SqlClient
                         // Or AccessToken is not null, mean token based authentication is used.
                         if ((_connHandler.ConnectionOptions != null
                             && _connHandler.ConnectionOptions.Authentication != SqlAuthenticationMethod.NotSpecified)
-                            || _connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)
+                            || _connHandler.IsAccessTokenProvided)
                         {
                             fedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
                         }
@@ -1219,7 +1219,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                    ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
+                    (_connHandler.IsAccessTokenProvided && !trustServerCert);
 
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;

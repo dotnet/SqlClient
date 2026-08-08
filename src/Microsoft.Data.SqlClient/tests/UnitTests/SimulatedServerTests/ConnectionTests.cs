@@ -764,6 +764,65 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// Setting one authentication-related property must not silently drop the others from the
+        /// connection pool key. Previously, assigning <see cref="SqlConnection.SspiContextProvider"/>
+        /// rebuilt the pool key with a null <see cref="SqlConnection.AccessTokenCallback"/> (and a
+        /// null <see cref="SqlConnection.AccessToken"/>), so the token was never handed to the
+        /// internal connection even though the public property still reported it as set.
+        /// </summary>
+        [Fact]
+        public void AccessTokenStateIsPreservedInPoolKeyWhenSspiContextProviderIsSet()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
+
+                conn.SspiContextProvider = null;
+
+                Assert.Same(callback, conn.AccessTokenCallback);
+                Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
+
+                conn.SspiContextProvider = null;
+
+                Assert.Equal("token", conn.AccessToken);
+                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
+            }
+        }
+
+        /// <summary>
+        /// <see cref="SqlConnection.AccessToken"/> and <see cref="SqlConnection.AccessTokenCallback"/>
+        /// are mutually exclusive, so neither setter can ever clobber a live value of the other.
+        /// </summary>
+        [Fact]
+        public void AccessTokenAndAccessTokenCallbackAreMutuallyExclusive()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                Assert.Throws<InvalidOperationException>(() => conn.AccessToken = "token");
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = callback);
+            }
+        }
+
         [Theory]
         [InlineData(9, 0, 2047)] // SQL Server 2005
         [InlineData(10, 0, 2531)] // SQL Server 2008

@@ -763,8 +763,15 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(ConnectionOptions);
                 }
 
-                // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
+                // Need to call ConnectionString_Set to do proper pool group check.
+                // Preserve the other authentication state so it isn't dropped from the pool key
+                // (see the ConnectionString setter, which is the reference for this pattern).
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: value,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: _sspiContextProvider));
                 _accessToken = value;
             }
         }
@@ -787,7 +794,12 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(ConnectionOptions);
                 }
 
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: value,
+                    sspiContextProvider: _sspiContextProvider));
                 _accessTokenCallback = value;
             }
         }
@@ -804,7 +816,12 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
                 }
 
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
         }

@@ -145,6 +145,19 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Probably a good idea to introduce a delegate type
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        /// <summary>
+        /// True when the caller supplied a federated authentication access token directly, either
+        /// as a literal token via <see cref="SqlConnection.AccessToken"/> or as a token provider
+        /// via <see cref="SqlConnection.AccessTokenCallback"/>.
+        /// </summary>
+        /// <remarks>
+        /// Both paths represent the same "caller-supplied token" authentication mode, so they must
+        /// always be treated identically. Use this property rather than testing the underlying
+        /// fields individually.
+        /// </remarks>
+        internal bool IsAccessTokenProvided =>
+            _accessTokenInBytes != null || _accessTokenCallback != null;
+
         // @TODO: Should be private and accessed via internal property
         // @TODO: Rename to match naming conventions
         internal bool _cleanSQLDNSCaching = false;
@@ -3115,7 +3128,9 @@ namespace Microsoft.Data.SqlClient.Connection
             #if NET
             bool isParallel = connectionOptions.MultiSubnetFailover;
             #else
-            bool disableTnir = ShouldDisableTnir(connectionOptions);
+            bool disableTnir = ShouldDisableTnir(
+                connectionOptions,
+                isAccessTokenProvided: IsAccessTokenProvided);
             bool isParallel = connectionOptions.MultiSubnetFailover ||
                               (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
             #endif
@@ -3911,12 +3926,29 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         #if NETFRAMEWORK
-        private bool ShouldDisableTnir(SqlConnectionOptions connectionOptions)
+        /// <summary>
+        /// Determines whether Transparent Network IP Resolution (TNIR) should be disabled for this
+        /// connection attempt.
+        /// </summary>
+        /// <param name="connectionOptions">The parsed connection options.</param>
+        /// <param name="isAccessTokenProvided">
+        /// True when the caller supplied a federated authentication access token directly, either
+        /// via <see cref="SqlConnection.AccessToken"/> or
+        /// <see cref="SqlConnection.AccessTokenCallback"/>.
+        /// </param>
+        /// <returns>
+        /// True when TNIR should be disabled. TNIR is disabled by default for Azure SQL endpoints
+        /// and for federated authentication, but an explicit
+        /// <c>TransparentNetworkIPResolution</c> keyword always takes precedence.
+        /// </returns>
+        internal static bool ShouldDisableTnir(
+            SqlConnectionOptions connectionOptions,
+            bool isAccessTokenProvided)
         {
             bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
             // @TODO: Turn into a HashSet and just check the list instead of this MESS.
-            bool isFedAuthEnabled = _accessTokenInBytes != null ||
+            bool isFedAuthEnabled = isAccessTokenProvided ||
                                     #pragma warning disable 0618 // Type or member is obsolete
                                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                     #pragma warning restore 0618 // Type or member is obsolete
