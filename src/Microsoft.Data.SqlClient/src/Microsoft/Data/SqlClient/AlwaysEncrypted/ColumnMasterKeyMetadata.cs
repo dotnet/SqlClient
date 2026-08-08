@@ -137,6 +137,7 @@ internal readonly ref struct ColumnMasterKeyMetadata : IDisposable
     /// </returns>
     /// <exception cref="CryptographicException">Thrown when the signing operation fails.</exception>
     public byte[] Sign() =>
+        // CodeQL [SM03799] Required for an external standard: Always Encrypted signs column master key metadata with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-master-key-transact-sql?view=sql-server-ver16)
         _rsa.SignHash(_hash, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
 
     /// <summary>
@@ -148,6 +149,7 @@ internal readonly ref struct ColumnMasterKeyMetadata : IDisposable
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="signature"/> is <see langword="null"/>.</exception>"
     public bool Verify(byte[] signature) =>
+        // CodeQL [SM03799] Required for an external standard: Always Encrypted signs column master key metadata with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-master-key-transact-sql?view=sql-server-ver16)
         _rsa.VerifyHash(_hash, signature, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
 
     /// <summary>
