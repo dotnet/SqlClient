@@ -45,6 +45,19 @@ namespace Microsoft.Data.SqlClient
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
         private readonly List<IDbConnectionPool> _poolsToRelease;
         private readonly Timer _pruningTimer;
+        private readonly TimeSpan _pruningDueTime;
+        private readonly TimeSpan _pruningPeriod;
+
+        // Guards every state transition of _pruningTimer.
+        //
+        // Lock ordering: _pruningTimerLock is outermost. StopPruningTimerIfIdle takes it and then
+        // the release-list locks, so neither may be held when arming. It deliberately reads
+        // _connectionPoolGroups without taking "this" (the dictionary is swapped wholesale, so
+        // reading the reference is safe), which keeps the lock graph acyclic.
+        private readonly object _pruningTimerLock = new object();
+        private bool _pruningTimerEnabled;
+        private bool _pruningTimerDisposed;
+
         private Dictionary<ConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
 
         #endregion
@@ -52,18 +65,36 @@ namespace Microsoft.Data.SqlClient
         #region Constructors
         
         protected SqlConnectionFactory()
+            : this(PruningDueTime, PruningPeriod)
         {
+        }
+
+        /// <summary>
+        /// Constructs a factory with a custom pruning cadence. Intended for tests, which would
+        /// otherwise have to wait minutes for the default schedule to produce an observable
+        /// result.
+        /// </summary>
+        protected SqlConnectionFactory(TimeSpan pruningDueTime, TimeSpan pruningPeriod)
+        {
+            _pruningDueTime = pruningDueTime;
+            _pruningPeriod = pruningPeriod;
             _connectionPoolGroups = new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
+
+            // The timer is created disarmed. It is armed on demand whenever there is something to
+            // prune and disarmed again by the callback once everything has drained, so that an
+            // idle process is not woken every pruning period for the life of the process.
             _pruningTimer = ADP.UnsafeCreateTimer(
                 PruneConnectionPoolGroups,
                 state: null,
-                PruningDueTime,
-                PruningPeriod);
+                Timeout.InfiniteTimeSpan,
+                Timeout.InfiniteTimeSpan);
             
             #if NET
             SubscribeToAssemblyLoadContextUnload();
+            #else
+            SubscribeToAppDomainUnload();
             #endif
         }
         
@@ -74,6 +105,20 @@ namespace Microsoft.Data.SqlClient
         internal static SqlConnectionFactory Instance { get; } = new SqlConnectionFactory(); 
         
         internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
+
+        /// <summary>
+        /// Whether the pruning timer is currently armed. Test hook.
+        /// </summary>
+        internal bool IsPruningTimerActive
+        {
+            get
+            {
+                lock (_pruningTimerLock)
+                {
+                    return _pruningTimerEnabled;
+                }
+            }
+        }
         
         #endregion
 
@@ -115,7 +160,8 @@ namespace Microsoft.Data.SqlClient
         
         internal DbConnectionInternal CreateNonPooledConnection(
             DbConnection owningConnection,
-            DbConnectionPoolGroup poolGroup)
+            DbConnectionPoolGroup poolGroup,
+            TimeoutTimer timeout)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
             Debug.Assert(poolGroup is not null, "null poolGroup?");
@@ -125,7 +171,8 @@ namespace Microsoft.Data.SqlClient
                 poolGroup.PoolKey,
                 poolGroup.ProviderInfo,
                 pool: null,
-                owningConnection);
+                owningConnection,
+                timeout);
             if (newConnection is not null)
             {
                 SqlClientDiagnostics.Metrics.HardConnectRequest();
@@ -138,7 +185,8 @@ namespace Microsoft.Data.SqlClient
 
         internal DbConnectionInternal CreatePooledConnection(
             DbConnection owningConnection,
-            IDbConnectionPool pool)
+            IDbConnectionPool pool,
+            TimeoutTimer timeout)
         {
             Debug.Assert(pool != null, "null pool?");
 
@@ -147,7 +195,8 @@ namespace Microsoft.Data.SqlClient
                 pool.PoolGroup.PoolKey,
                 pool.PoolGroup.ProviderInfo,
                 pool,
-                owningConnection);
+                owningConnection,
+                timeout);
 
             if (newConnection is null)
             {
@@ -251,6 +300,12 @@ namespace Microsoft.Data.SqlClient
                 
                 Debug.Assert(connectionPoolGroup != null, "how did we not create a pool entry?");
                 Debug.Assert(userConnectionOptions != null, "how did we not have user connection options?");
+
+                // Registering a pool group is the only way pruning work enters the factory: pools
+                // and pool groups are only ever queued for release while a group is still
+                // registered, and the timer cannot disarm until every collection is empty. Armed
+                // outside lock(this) to keep _pruningTimerLock outermost.
+                EnsurePruningTimerRunning();
             }
             else if (userConnectionOptions is null)
             {
@@ -290,7 +345,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 _poolsToRelease.Add(pool);
             }
-            
+
             SqlClientDiagnostics.Metrics.EnterInactiveConnectionPool();
             SqlClientDiagnostics.Metrics.ExitActiveConnectionPool();
         }
@@ -313,6 +368,8 @@ namespace Microsoft.Data.SqlClient
             DbConnection owningConnection,
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionInternal oldConnection,
+            TimeoutTimer timeout,
+            bool forceNewConnection,
             out DbConnectionInternal connection)
         {
             Debug.Assert(owningConnection is not null, "null owningConnection?");
@@ -384,6 +441,7 @@ namespace Microsoft.Data.SqlClient
                                 retry,
                                 oldConnection,
                                 poolGroup,
+                                timeout,
                                 cancellationTokenSource);
 
                             // Place this new task in the slot so any future work will be queued behind it
@@ -407,21 +465,21 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
 
-                    connection = CreateNonPooledConnection(owningConnection, poolGroup);
+                    connection = CreateNonPooledConnection(owningConnection, poolGroup, timeout);
 
                     SqlClientDiagnostics.Metrics.EnterNonPooledConnection();
                 }
                 else
                 {
-                    if (((SqlConnection)owningConnection).ForceNewConnection)
+                    if (forceNewConnection)
                     {
                         Debug.Assert(oldConnection is not DbConnectionClosed, "Force new connection, but there is no old connection");
                         
-                        connection = connectionPool.ReplaceConnection(owningConnection, oldConnection);
+                        connection = connectionPool.ReplaceConnection(owningConnection, oldConnection, timeout);
                     }
                     else
                     {
-                        if (!connectionPool.TryGetConnection(owningConnection, retry, out connection))
+                        if (!connectionPool.TryGetConnection(owningConnection, retry, timeout, out connection))
                         {
                             return false;
                         }
@@ -573,7 +631,8 @@ namespace Microsoft.Data.SqlClient
             ConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection)
+            DbConnection owningConnection,
+            TimeoutTimer timeout)
         {
             SqlConnectionOptions opt = options;
             ConnectionPoolKey key = poolKey;
@@ -628,6 +687,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionInternal sseConnection = new SqlConnectionInternal(
                         identity,
                         sseopt,
+                        timeout,
                         key.Credential,
                         providerInfo: null,
                         newPassword: string.Empty,
@@ -641,8 +701,14 @@ namespace Microsoft.Data.SqlClient
                         //     used below to connect to the SQL Express User Instance.
                         instanceName = sseConnection.UserInstanceName;
 
-                        // Set future transient fault handling based on connection options
-                        sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+                        // Set future transient fault handling based on connection options.
+                        // sqlOwningConnection is null for background warmup/replenishment creations,
+                        // which have no owning connection to carry this state forward; only propagate
+                        // it when an owning connection is present (matches the null-safe reads above).
+                        if (sqlOwningConnection != null)
+                        {
+                            sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+                        }
 
                         if (!instanceName.StartsWith(@"\\.\", StringComparison.Ordinal))
                         {
@@ -678,6 +744,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlConnectionInternal(
                 identity,
                 opt,
+                timeout,
                 key.Credential,
                 poolGroupProviderInfo,
                 newPassword: string.Empty,
@@ -731,7 +798,8 @@ namespace Microsoft.Data.SqlClient
                     opt.MaxPoolSize,
                     connectionTimeout,
                     opt.LoadBalanceTimeout,
-                    opt.Enlist);
+                    opt.Enlist,
+                    opt.IdleTimeout);
             }
             return poolingOptions;
         }
@@ -742,8 +810,8 @@ namespace Microsoft.Data.SqlClient
 
             Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
             Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
-            
-            return new SqlMetaDataFactory(xmlStream, internalConnection.ServerVersion);
+
+            return new SqlMetaDataFactory(xmlStream, internalConnection.Capabilities);
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
@@ -752,6 +820,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionInternal oldConnection,
             DbConnectionPoolGroup poolGroup,
+            TimeoutTimer timeout,
             CancellationTokenSource cancellationTokenSource)
         {
             return task.ContinueWith(
@@ -762,11 +831,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         ADP.SetCurrentTransaction(retry.Task.AsyncState as System.Transactions.Transaction);
                         
-                        DbConnectionInternal newConnection = CreateNonPooledConnection(owningConnection, poolGroup);
+                        DbConnectionInternal newConnection = CreateNonPooledConnection(owningConnection, poolGroup, timeout);
                         
                         if (oldConnection?.State == ConnectionState.Open)
                         {
-                            oldConnection.PrepareForReplaceConnection();
                             oldConnection.Dispose();
                         }
                         
@@ -905,7 +973,88 @@ namespace Microsoft.Data.SqlClient
                 }
                 _connectionPoolGroups = newConnectionPoolGroups;
             }
+
+            // Everything above may have drained the last of the pending work. If so, park the
+            // timer rather than waking the process every pruning period forever.
+            StopPruningTimerIfIdle();
         }
+
+        /// <summary>
+        /// Arms the pruning timer if it is not already running.
+        /// </summary>
+        /// <remarks>
+        /// The caller must publish the new pool group before calling this, and must not hold
+        /// lock(this). <see cref="StopPruningTimerIfIdle"/> re-reads all three collections under
+        /// <see cref="_pruningTimerLock"/>, so it can never disarm on behalf of work that has
+        /// already been published.
+        /// </remarks>
+        private void EnsurePruningTimerRunning()
+        {
+            lock (_pruningTimerLock)
+            {
+                if (_pruningTimerEnabled || _pruningTimerDisposed)
+                {
+                    return;
+                }
+
+                _pruningTimerEnabled = true;
+                _pruningTimer.Change(_pruningDueTime, _pruningPeriod);
+
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.EnsurePruningTimerRunning|RES|INFO|CPOOL> {0}, pruning timer started", ObjectId);
+            }
+        }
+
+        /// <summary>
+        /// Disarms the pruning timer if there is nothing left to prune. Called at the tail of
+        /// <see cref="PruneConnectionPoolGroups"/>.
+        /// </summary>
+        private void StopPruningTimerIfIdle()
+        {
+            lock (_pruningTimerLock)
+            {
+                if (!_pruningTimerEnabled || _pruningTimerDisposed || HasPruningWork())
+                {
+                    return;
+                }
+
+                _pruningTimerEnabled = false;
+                _pruningTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.StopPruningTimerIfIdle|RES|INFO|CPOOL> {0}, pruning timer stopped, nothing left to prune", ObjectId);
+            }
+        }
+
+        /// <summary>
+        /// Whether any of the three collections walked by <see cref="PruneConnectionPoolGroups"/>
+        /// still hold work. Must be called while holding <see cref="_pruningTimerLock"/>.
+        /// </summary>
+        private bool HasPruningWork()
+        {
+            // _connectionPoolGroups is replaced wholesale rather than mutated in place, so reading
+            // the reference without lock(this) is safe and avoids a lock-ordering inversion.
+            if (_connectionPoolGroups.Count != 0)
+            {
+                return true;
+            }
+
+            lock (_poolsToRelease)
+            {
+                if (_poolsToRelease.Count != 0)
+                {
+                    return true;
+                }
+            }
+
+            lock (_poolGroupsToRelease)
+            {
+                return _poolGroupsToRelease.Count != 0;
+            }
+        }
+
+        /// <summary>
+        /// Runs a single pruning pass synchronously on the calling thread. Test hook.
+        /// </summary>
+        internal void RunPruningPass() => PruneConnectionPoolGroups(state: null);
         
         private void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
         {
@@ -940,12 +1089,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-        #if NET
+        /// <summary>
+        /// Disposes the pruning timer and drains the pools when the hosting assembly load context
+        /// (.NET) or app domain (.NET Framework) is going away.
+        /// </summary>
         private void Unload(object sender, EventArgs e)
         {
             try
             {
-                _pruningTimer.Dispose();
+                lock (_pruningTimerLock)
+                {
+                    _pruningTimerDisposed = true;
+                    _pruningTimerEnabled = false;
+                    _pruningTimer.Dispose();
+                }
             }
             finally
             {
@@ -953,6 +1110,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        #if NET
         private void SqlConnectionFactoryAssemblyLoadContext_Unloading(AssemblyLoadContext obj)
         {
             Unload(obj, EventArgs.Empty);
@@ -962,6 +1120,12 @@ namespace Microsoft.Data.SqlClient
         {
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
+        }
+        #else
+        private void SubscribeToAppDomainUnload()
+        {
+            AppDomain.CurrentDomain.DomainUnload += Unload;
+            AppDomain.CurrentDomain.ProcessExit += Unload;
         }
         #endif
         

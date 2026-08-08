@@ -2,11 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-
-#nullable enable
 
 namespace Microsoft.Data.SqlClient.Tests.Common
 {
@@ -60,16 +56,32 @@ namespace Microsoft.Data.SqlClient.Tests.Common
 
         /// <summary>
         /// Disposes all elements in the current instance. Each element will be checked for
-        /// <c>null</c> before disposing it.
+        /// <c>null</c> before disposing it. All elements are disposed even if earlier disposals
+        /// throw; any exceptions are collected and rethrown as an <see cref="AggregateException"/>
+        /// after all elements have been attempted.
         /// </summary>
         public void Dispose()
         {
+            List<Exception>? exceptions = null;
+
             foreach (T element in _elements)
             {
-                element?.Dispose();
+                try
+                {
+                    element?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    (exceptions ??= new List<Exception>()).Add(ex);
+                }
             }
 
             GC.SuppressFinalize(this);
+
+            if (exceptions is not null)
+            {
+                throw new AggregateException(exceptions);
+            }
         }
 
         /// <inheritdoc/>

@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "2")]
     public class SqlCommandReliabilityTest : IDisposable
     {
         private const int ConcurrentParallelExecutions = 3;
@@ -369,7 +370,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // In Managed SNI by Named pipe connection, SqlCommand doesn't respect timeout. "ActiveIssue 12167"
         // Synapse: Does not support WAITFOR DELAY.
         // Restricted to non azure: https://github.com/dotnet/SqlClient/issues/3821
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingNativeSNI), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(UpdateLockedTable_Data), DisableDiscoveryEnumeration = true)]
         public void UpdateLockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {

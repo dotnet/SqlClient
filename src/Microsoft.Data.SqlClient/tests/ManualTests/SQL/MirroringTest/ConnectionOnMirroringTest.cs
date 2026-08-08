@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class ConnectionOnMirroringTest
     {
         private static ManualResetEvent workerCompletedEvent = new ManualResetEvent(false);

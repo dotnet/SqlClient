@@ -1,0 +1,83 @@
+name: Remove Author attention needed Label
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  remove-label:
+    # Only run on PR comments with '/ready' from the PR author
+    if: >-
+      github.repository == 'dotnet/SqlClient' &&
+      github.event.issue.pull_request != null &&
+      github.event.comment.user.login == github.event.issue.user.login &&
+      startsWith(github.event.comment.body, '/ready')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Remove 'Author attention needed' label
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const labelName = 'Author attention needed';
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Check if the label exists on the PR
+            const labels = await github.paginate(github.rest.issues.listLabelsOnIssue, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const hasLabel = labels.some(label => label.name === labelName);
+
+            if (!hasLabel) {
+              core.info(`PR #${issue_number} does not have the '${labelName}' label. No action taken.`);
+              return;
+            }
+
+            await github.rest.issues.removeLabel({
+              owner,
+              repo,
+              issue_number,
+              name: labelName,
+            });
+            core.info(`Removed '${labelName}' label from PR #${issue_number}`);
+
+            // Re-request reviews from existing reviewers (paginate to include all reviews)
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number: issue_number,
+              per_page: 100,
+            });
+
+            // Collect unique reviewers (exclude the PR author)
+            const author = context.payload.issue.user.login;
+            const reviewers = [...new Set(
+              reviews
+                .filter(r => r.user?.type === 'User')
+                .map(r => r.user?.login)
+                .filter(login => login && login !== author)
+            )];
+
+            if (reviewers.length > 0) {
+              try {
+                await github.rest.pulls.requestReviewers({
+                  owner,
+                  repo,
+                  pull_number: issue_number,
+                  reviewers: reviewers.slice(0, 15),
+                });
+                core.info(`Re-requested reviews from: ${reviewers.join(', ')}`);
+              } catch (err) {
+                core.warning(`Failed to re-request reviewers: ${err.message}`);
+              }
+            } else {
+              core.info('No previous reviewers to re-request.');
+            }

@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Monitoring
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public class MonitorMetrics
     {

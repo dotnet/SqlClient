@@ -13,13 +13,23 @@
       package. It should be in the form: (Major).(Minor).(Patch)[-(Suffix)(BuildNumber)]
   -->
 
+  <!--
+    Import guard: set on first import so that subsequent imports of this file are skipped.
+    Directory.Packages.props imports all Versions.props early in Package mode; the guard
+    prevents each csproj's own conditional import from re-importing and re-evaluating
+    version properties.
+  -->
+  <PropertyGroup>
+    <SqlClientVersionsImported>true</SqlClientVersionsImported>
+  </PropertyGroup>
+
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
       This is the *next* version to release of SqlClient. Update this after a version is released.
       @TODO: Determine how versions should be updated in release branches vs main
     -->
-    <SqlClientVersionDefault>7.1.0-preview1</SqlClientVersionDefault>
+    <SqlClientVersionDefault>7.1.0-preview2</SqlClientVersionDefault>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->

@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 
     internal class EnclaveDiffieHellmanInfo
     {
-        public int Size => sizeof(int) + sizeof(int) + PublicKey?.Length ?? 0 + PublicKeySignature?.Length ?? 0;
+        public int Size => sizeof(int) + sizeof(int) + (PublicKey?.Length ?? 0) + (PublicKeySignature?.Length ?? 0);
 
         public byte[] PublicKey { get; private set; }
 

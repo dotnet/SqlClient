@@ -6,7 +6,10 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="Versions.props" Condition="'$(SqlServerVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlServerAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlServerFileVersion)</FileVersion>

@@ -5,27 +5,59 @@
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
+#if WINDOWS
+using BenchmarkDotNet.Diagnostics.Windows;
+#endif
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     public static class BenchmarkConfig
     {
-        public static ManualConfig s_instance(RunnerJob runnerJob) => 
-            DefaultConfig.Instance
-            .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
-            .AddDiagnoser(MemoryDiagnoser.Default)
-            .AddDiagnoser(ThreadingDiagnoser.Default)
-            .AddExporter(MarkdownExporter.GitHub)
-            .AddJob(
-                Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
-                .WithLaunchCount(runnerJob.LaunchCount)
-                .WithInvocationCount(runnerJob.InvocationCount)
-                .WithIterationCount(runnerJob.IterationCount)
-                .WithWarmupCount(runnerJob.WarmupCount)
-                .WithUnrollFactor(1)
-                .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
-            );
+        /// <summary>
+        /// When set to true, attaches the NativeMemoryProfiler and EtwProfiler diagnosers
+        /// so native memory allocations and ETW traces are captured for each benchmark run.
+        /// This is only supported on Windows; the value is ignored on other OSes since the
+        /// underlying diagnosers are compiled out (see the "WINDOWS" compile constant, which
+        /// is only set when building on Windows in the PerformanceTests.csproj file).
+        /// </summary>
+        public static bool UseNativeMemoryAndEtwProfiler { get; set; }
+
+        public static ManualConfig s_instance(RunnerJob runnerJob)
+        {
+            ManualConfig config = DefaultConfig.Instance
+                .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
+                .WithOption(ConfigOptions.DontOverwriteResults, true)
+                .AddDiagnoser(MemoryDiagnoser.Default)
+                .AddDiagnoser(ThreadingDiagnoser.Default)
+                .AddExporter(MarkdownExporter.GitHub)
+                // Emit the BenchmarkDotNet "full" JSON report (*-report-full.json) so the perf
+                // pipeline can translate results into the Kusto performance-results schema.
+                .AddExporter(JsonExporter.Full)
+                .AddJob(
+                    Job.MediumRun.WithToolchain(InProcessEmitToolchain.Instance)
+                    .WithLaunchCount(runnerJob.LaunchCount)
+                    .WithInvocationCount(runnerJob.InvocationCount)
+                    .WithIterationCount(runnerJob.IterationCount)
+                    .WithWarmupCount(runnerJob.WarmupCount)
+                    .WithUnrollFactor(1)
+                    .WithStrategy(BenchmarkDotNet.Engines.RunStrategy.Throughput)
+                    .WithEnvironmentVariable("COMPlus_gcServer", "1")
+                )
+                .WithOptions(ConfigOptions.JoinSummary);
+
+#if WINDOWS
+            if (UseNativeMemoryAndEtwProfiler)
+            {
+                config = config
+                    .AddDiagnoser(new NativeMemoryProfiler())
+                    .AddDiagnoser(new EtwProfiler());
+            }
+#endif
+
+            return config;
+        }
     }
 }

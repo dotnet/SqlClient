@@ -235,6 +235,15 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal void SetClosed()
         {
+            // Idempotent: once closed, _reader is null and _disposalTokenSource may already
+            // have been disposed by Dispose(). Calling Cancel() again would throw
+            // ObjectDisposedException, so bail out. SqlDataReader can invoke SetClosed()
+            // after the consumer has already disposed the stream.
+            if (_reader == null)
+            {
+                return;
+            }
+
             _disposalTokenSource.Cancel();
             _reader = null;
 
@@ -250,8 +259,15 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                // Set the stream as closed
-                SetClosed();
+                if (_reader != null)
+                {
+                    // Set the stream as closed
+                    SetClosed();
+                }
+                // Safe to call unconditionally: the _reader != null guard above ensures SetClosed()
+                // (and thus Cancel()) runs at most once, and CancellationTokenSource.Dispose()
+                // is idempotent, so repeated Dispose() calls do not throw.
+                _disposalTokenSource.Dispose();
             }
 
             base.Dispose(disposing);

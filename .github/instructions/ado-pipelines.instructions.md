@@ -22,7 +22,7 @@ Top-level CI/PR pipeline files:
 - `dotnet-sqlclient-ci-project-reference-pipeline.yml` — CI with Project references (Release)
 - `sqlclient-pr-package-ref-pipeline.yml` — PR validation with Package references
 - `sqlclient-pr-project-ref-pipeline.yml` — PR validation with Project references
-- `stress/stress-tests-pipeline.yml` — Stress test pipeline and templates
+- `ci/stress/sqlclient-ci-stress-pipeline.yml` — Stress test pipeline and templates
 
 Reusable templates are organized under:
 - `common/templates/jobs/` — Job templates (`ci-build-nugets-job`, `ci-code-coverage-job`, `ci-run-tests-job`)
@@ -49,7 +49,7 @@ Key parameters:
 - `runAlwaysEncryptedTests` — include AE test set; default `true`
 - `runLegacySqlTests` — include SQL Server 2016/2017 manual-test legs; default `true`
 - `debug` — enable debug output; default `false`
-- `dotnetVerbosity` — MSBuild verbosity; default `normal`
+- `dotnetVerbosity` — build verbosity; default `normal`
 
 ## Build Stage Order
 
@@ -63,7 +63,7 @@ Stages execute in dependency order (Package reference mode requires artifacts fr
 7. `verify_nuget_packages_stage` — Verify NuGet package metadata
 8. `ci_run_tests_stage` — Run MDS and AKV test suites
 
-Stress testing is no longer a stage threaded through `dotnet-sqlclient-ci-core.yml`; it lives under `eng/pipelines/stress/` as a separate pipeline flow.
+Stress testing is no longer a stage threaded through `dotnet-sqlclient-ci-core.yml`; it lives under `eng/pipelines/ci/stress/` as a separate pipeline flow.
 
 When adding a new build stage, respect the dependency graph and pass artifact names/versions to downstream stages.
 
@@ -109,6 +109,20 @@ Test timeout — `--blame-hang-timeout 10m` (configured in `build.proj` and thre
 - `assemblyBuildNumber` derived from first segment of `Build.BuildNumber` (16-bit safe)
 - `localFeedPath` = `$(Build.SourcesDirectory)/packages` — local NuGet feed for inter-package deps
 - `packagePath` = `$(Build.SourcesDirectory)/output` — NuGet pack output
+
+## Variable Naming — Avoid `{COMMAND}ARGUMENTS` Names
+
+The dotnet CLI (via System.CommandLine) reads environment variables named `{COMMAND}ARGUMENTS` and silently injects their content into the parsed arguments for that subcommand. Because Azure DevOps automatically exposes all pipeline variables as uppercased environment variables, a pipeline variable named `runArguments` becomes `RUNARGUMENTS`, which `dotnet run` reads and injects into the application's `args[]` — bypassing the `--` separator.
+
+**Forbidden variable names** (any casing):
+- `runArguments` — injected into `dotnet run`
+- `buildArguments` — injected into `dotnet build`
+- `testArguments` — injected into `dotnet test`
+- Any name matching `{dotnet-subcommand}Arguments`
+
+**Use instead**: `dotnetBuildOpts`, `dotnetRunOpts`, `stressTestArgs`, or other names that do not match the `{COMMAND}ARGUMENTS` pattern.
+
+This affects ALL .NET SDK versions (8.0+). The injection is invisible in `[command]` log lines, making it extremely hard to diagnose. The only symptom is the application receiving unexpected arguments.
 
 ## Conventions When Editing Pipelines
 

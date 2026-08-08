@@ -59,6 +59,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner";
 
     /// <summary>
+    /// The name of the app context switch that controls whether failover
+    /// alternation should use legacy behavior for login-phase SQL errors.
+    /// </summary>
+    private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -118,7 +125,21 @@ internal static class LocalAppContextSwitches
     private const string UseConnectionPoolV2String =
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
-    #if NET && _WINDOWS
+    /// <summary>
+    /// The name of the app context switch that controls whether to preserve
+    /// legacy idle-timeout behavior in connection pooling.
+    /// </summary>
+    private const string UseLegacyIdleTimeoutBehaviorString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether pool operations
+    /// should count against the caller's overall ConnectTimeout budget.
+    /// </summary>
+    private const string UseOverallConnectTimeoutForPoolWaitString =
+        "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
+
+    #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
     /// managed SNI implementation instead of the native SNI implementation on
@@ -183,6 +204,11 @@ internal static class LocalAppContextSwitches
     private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
 
     /// <summary>
+    /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
     /// </summary>
     private static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
@@ -222,7 +248,17 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
 
-    #if NET && _WINDOWS
+    /// <summary>
+    /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
+    /// </summary>
+    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
+
+    #if NET
     /// <summary>
     /// The cached value of the UseManagedNetworking switch.
     /// </summary>
@@ -410,6 +446,19 @@ internal static class LocalAppContextSwitches
             ref s_ignoreServerProvidedFailoverPartner);
 
     /// <summary>
+    /// When set to true, LoginWithFailover preserves legacy behavior and may
+    /// alternate to the failover partner on login-phase SQL errors where the
+    /// parser state is not Closed.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyFailoverAlternationOnLoginSqlErrors =>
+        AcquireAndReturn(
+            UseLegacyFailoverAlternationOnLoginSqlErrorsString,
+            defaultValue: false,
+            ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
     /// field with type Timestamp/RowVersion would return an empty byte array.
     /// This switch controls whether to preserve that behaviour on newer
@@ -539,7 +588,31 @@ internal static class LocalAppContextSwitches
             defaultValue: false,
             ref s_useConnectionPoolV2);
 
-    #if NET && _WINDOWS
+    /// <summary>
+    /// When set to true (the default), pooling preserves historical idle-timeout behavior.
+    /// When set to false, configured Connection Idle Timeout is enforced by the pool.
+    /// </summary>
+    public static bool UseLegacyIdleTimeoutBehavior =>
+        AcquireAndReturn(
+            UseLegacyIdleTimeoutBehaviorString,
+            defaultValue: true,
+            ref s_useLegacyIdleTimeoutBehavior);
+
+    /// <summary>
+    /// When set to true, pool operations count against the
+    /// caller's ConnectTimeout budget. This includes waits and async operations.
+    /// When false, pool operations receive a full ConnectTimeout and
+    /// network calls receive a further full ConnectTimeout.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseOverallConnectTimeoutForPoolWait =>
+        AcquireAndReturn(
+            UseOverallConnectTimeoutForPoolWaitString,
+            defaultValue: false,
+            ref s_useOverallConnectTimeoutForPoolWait);
+
+    #if NET
     /// <summary>
     /// When set to true, .NET on Windows will use the managed SNI
     /// implementation instead of the native SNI implementation.
@@ -548,24 +621,22 @@ internal static class LocalAppContextSwitches
     /// trimmed away when the corresponding AppContext switch is set at compile
     /// time. In such cases, this property will return a constant value, even if
     /// the AppContext switch is set or reset at runtime. See the
-    /// ILLink.Substitutions.Windows.xml and ILLink.Substitutions.Unix.xml
-    /// resource files for details.
+    /// ILLink.Substitutions.xml resource file for details.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is false on Windows and true on non-Windows platforms.
     /// </summary>
     public static bool UseManagedNetworking
     {
         get
         {
+            if (!OsConstants.IsWindows)
+            {
+                return true;
+            }
+
             if (s_useManagedNetworking != SwitchValue.None)
             {
                 return s_useManagedNetworking == SwitchValue.True;
-            }
-
-            if (!OperatingSystem.IsWindows())
-            {
-                s_useManagedNetworking = SwitchValue.True;
-                return true;
             }
 
             if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
@@ -578,12 +649,6 @@ internal static class LocalAppContextSwitches
             return false;
         }
     }
-    #elif NET
-    /// <summary>
-    /// .NET Core on Unix does not support native SNI, so this will always be
-    /// true.
-    /// </summary>
-    public static bool UseManagedNetworking => true;
     #else
     /// <summary>
     /// .NET Framework does not support the managed SNI, so this will always be

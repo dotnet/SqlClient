@@ -50,6 +50,16 @@ parameters:
   - name: mdsPackageVersion
     type: string
 
+  # The name of the SqlServer pipeline artifacts to download.
+  - name: sqlServerArtifactsName
+    type: string
+    default: SqlServer.Artifacts
+
+  # The version of the SqlServer package to depend on when referenceType is 'Package'.
+  - name: sqlServerPackageVersion
+    type: string
+    default: $(sqlServerPackageVersion)
+
   # Jobs to run after the test jobs complete, if any.
   - name: postTestJobs
     type: jobList
@@ -114,13 +124,14 @@ stages:
                   loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+                  sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+                  sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
-                  isArm64: ${{ eq(config.value.isArm64, 'true') }}
                   saPassword: $(saPassword)
                   ${{if ne(config.value.configProperties, '{}') }}:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
@@ -150,13 +161,14 @@ stages:
                     loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+                    sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+                    sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
-                    isArm64: ${{ eq(config.value.isArm64, 'true') }}
                     saPassword: $(saPassword)
                     ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:

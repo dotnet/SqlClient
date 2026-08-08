@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -16,6 +16,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public static class SqlServerTypesTest
     {
         private const string BuiltInUdtSelectQuery =
@@ -35,6 +36,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void GetSchemaTableTest()
         {
             string db = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString).InitialCatalog;
@@ -61,6 +65,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void GetValueTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -219,6 +226,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void TestUdtSchemaMetadata()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -373,6 +383,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        #if NETFRAMEWORK
+        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        #endif
         public static void TestSqlServerTypesInsertAndRead()
         {
             string tableName = DataTestUtility.GetLongName("Type");

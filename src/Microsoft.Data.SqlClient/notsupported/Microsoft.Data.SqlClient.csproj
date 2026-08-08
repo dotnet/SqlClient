@@ -73,7 +73,10 @@
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="../Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="../Versions.props" Condition="'$(SqlClientVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(SqlClientAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(SqlClientFileVersion)</FileVersion>
@@ -112,14 +115,21 @@
   </ItemGroup>
 
   <!--
-    Reference to Abstractions package. Even though the ref project has a reference to the
-    abstractions package, the binaries will not be copied into this project's output, so we need to
-    make our own reference to the package to ensure it is brought in for compilation.
+    Reference to SqlServer and Abstractions packages. Even though the ref project has a reference to
+    these packages, their binaries will not be copied into this project's output, so we need to make
+    our own reference to them to ensure they are brought in for compilation.
   -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+  <!-- .NET Framework and .NET Standard 2.0 don't need to reference SqlServer. -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
@@ -156,7 +166,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
@@ -170,7 +179,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>

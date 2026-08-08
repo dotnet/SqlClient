@@ -15,6 +15,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class JsonTest
     {
         private const string JsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
@@ -74,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -96,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int rowsAffected = command.ExecuteNonQuery();
             ValidateRowsAffected(rowsAffected);
 
-            //Test 2 
+            //Test 2
             //Write a SqlString type as json
             parameter.Value = new SqlString(JsonDataString);
             int rowsAffected2 = command.ExecuteNonQuery();
@@ -120,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRowsAffected(rowsAffected4);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonWriteAsync()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -141,7 +142,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int rowsAffected = await command.ExecuteNonQueryAsync();
             ValidateRowsAffected(rowsAffected);
 
-            //Test 2 
+            //Test 2
             //Write a SqlString type as json
             parameter.Value = new SqlString(JsonDataString);
             int rowsAffected2 = await command.ExecuteNonQueryAsync();
@@ -165,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRowsAffected(rowsAffected4);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -205,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateRows(reader2);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonReadAsync()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -245,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             await ValidateRowsAsync(reader2);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestNullJson()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -268,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ValidateNullJson(reader);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonAPIs()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -299,10 +300,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWithMARS()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString + "MultipleActiveResultSets=True;");
+            SqlConnectionStringBuilder csbMarsEnabledTcp = new(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true };
+            using SqlConnection connection = new(csbMarsEnabledTcp.ConnectionString);
             connection.Open();
 
             using Table jsonTable1 = new(connection, nameof(TestJsonWithMARS), "(Data json)");
@@ -339,7 +341,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureServer), nameof(DataTestUtility.IsNotManagedInstance))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonSPParams()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);

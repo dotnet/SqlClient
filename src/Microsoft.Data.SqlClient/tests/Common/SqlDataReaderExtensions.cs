@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Threading.Tasks;
+
 namespace Microsoft.Data.SqlClient.Tests.Common
 {
     /// <summary>
@@ -22,6 +24,19 @@ namespace Microsoft.Data.SqlClient.Tests.Common
         }
 
         /// <summary>
+        /// Reads all result sets in the provided <paramref name="dataReader"/> and discards them
+        /// asynchronously.
+        /// </summary>
+        /// <param name="dataReader">Reader to flush results from.</param>
+        public static async Task FlushAllResultsAsync(this SqlDataReader dataReader)
+        {
+            do
+            {
+                await dataReader.FlushResultSetAsync();
+            } while (await dataReader.NextResultAsync());
+        }
+
+        /// <summary>
         /// Reads all results in the current result set of the provided <paramref name="dataReader"/>
         /// and discards them.
         /// </summary>
@@ -29,6 +44,19 @@ namespace Microsoft.Data.SqlClient.Tests.Common
         public static void FlushResultSet(this SqlDataReader dataReader)
         {
             while (dataReader.Read())
+            {
+                // Discard results.
+            }
+        }
+
+        /// <summary>
+        /// Reads all results in the current result set of the provided <paramref name="dataReader"/>
+        /// and discards them asynchronously.
+        /// </summary>
+        /// <param name="dataReader">Reader to flush results from.</param>
+        public static async Task FlushResultSetAsync(this SqlDataReader dataReader)
+        {
+            while (await dataReader.ReadAsync())
             {
                 // Discard results.
             }

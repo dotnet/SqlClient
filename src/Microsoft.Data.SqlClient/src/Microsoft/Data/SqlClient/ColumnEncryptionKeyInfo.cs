@@ -1,8 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -16,10 +17,9 @@ namespace Microsoft.Data.SqlClient
         internal readonly byte[] DecryptedKeyBytes;
         internal readonly byte[] KeyIdBytes;
         internal readonly byte[] DatabaseIdBytes;
-        internal readonly byte[] KeyMetadataVersionBytes;
+        internal readonly ulong KeyMetadataVersion;
 
         private static readonly string _decryptedKeyName = "DecryptedKey";
-        private static readonly string _keyMetadataVersionName = "KeyMetadataVersion";
         private static readonly string _className = "ColumnEncryptionKeyInfo";
         private static readonly string _bytePackageName = "BytePackage";
         private static readonly string _serializeToBufferMethodName = "SerializeToBuffer";
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="databaseId">database id for this column encryption key</param>
         /// <param name="keyMetadataVersion">key metadata version for this column encryption key</param>
         /// <param name="keyid">key id for this column encryption key</param>
-        internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, byte[] keyMetadataVersion, int keyid)
+        internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, ulong keyMetadataVersion, int keyid)
         {
 
             if (decryptedKey == null)
@@ -43,19 +43,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
             }
-            if (keyMetadataVersion == null)
-            {
-                throw SQL.NullArgumentInConstructorInternal(_keyMetadataVersionName, _className);
-            }
-            if (0 == keyMetadataVersion.Length)
-            {
-                throw SQL.EmptyArgumentInConstructorInternal(_keyMetadataVersionName, _className);
-            }
 
             KeyId = keyid;
             DatabaseId = databaseId;
             DecryptedKeyBytes = decryptedKey;
-            KeyMetadataVersionBytes = keyMetadataVersion;
+            KeyMetadataVersion = keyMetadataVersion;
 
             //Covert keyId to Bytes
             ushort keyIdUShort;
@@ -96,7 +88,8 @@ namespace Microsoft.Data.SqlClient
             lengthForSerialization += DecryptedKeyBytes.Length;
             lengthForSerialization += KeyIdBytes.Length;
             lengthForSerialization += DatabaseIdBytes.Length;
-            lengthForSerialization += KeyMetadataVersionBytes.Length;
+            // KeyMetadataVersion is of type ulong which is 8 bytes
+            lengthForSerialization += sizeof(ulong);
             return lengthForSerialization;
         }
 
@@ -131,8 +124,8 @@ namespace Microsoft.Data.SqlClient
 
             Buffer.BlockCopy(DatabaseIdBytes, 0, bytePackage, startOffset, DatabaseIdBytes.Length);
             startOffset += DatabaseIdBytes.Length;
-            Buffer.BlockCopy(KeyMetadataVersionBytes, 0, bytePackage, startOffset, KeyMetadataVersionBytes.Length);
-            startOffset += KeyMetadataVersionBytes.Length;
+            BinaryPrimitives.WriteUInt64LittleEndian(bytePackage.AsSpan(startOffset), KeyMetadataVersion);
+            startOffset += sizeof(ulong);
             Buffer.BlockCopy(KeyIdBytes, 0, bytePackage, startOffset, KeyIdBytes.Length);
             startOffset += KeyIdBytes.Length;
             Buffer.BlockCopy(DecryptedKeyBytes, 0, bytePackage, startOffset, DecryptedKeyBytes.Length);

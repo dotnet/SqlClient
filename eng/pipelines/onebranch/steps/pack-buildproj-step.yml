@@ -56,13 +56,14 @@ parameters:
     type: string
 
 steps:
-  - task: MSBuild@1
+  - task: DotNetCoreCLI@2
     displayName: 'build.proj - Pack${{ parameters.packageShortName }}'
     inputs:
-      solution: '$(REPO_ROOT)/build.proj'
-      configuration: '${{ parameters.buildConfiguration }}'
-      msbuildArguments: >-
+      command: build
+      projects: '$(REPO_ROOT)/build.proj'
+      arguments: >-
         -t:Pack${{ parameters.packageShortName }}
+        -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackBuild=false
         -p:ReferenceType=Package
         -p:BuildNumber="$(Build.BuildNumber)"

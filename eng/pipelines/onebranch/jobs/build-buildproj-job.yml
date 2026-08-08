@@ -102,12 +102,9 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
-      # APIScan configuration for the package being built by this job.
-      ob_sdl_apiscan_enabled: true
+      # APIScan per-job configuration for the DLL and PDB folders.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
-      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
-      ob_sdl_apiscan_versionNumber: ${{ parameters.fileVersion }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
@@ -128,7 +125,11 @@ jobs:
               targetPath: $(REPO_ROOT)/packages
 
       # Install the .NET SDK.
-      - template: /eng/pipelines/steps/install-dotnet.yml@self
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+      # Restore dotnet local tools (pwsh, apicompat, etc.). Required by build.proj targets
+      # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
       # Perform Roslyn analysis before building, since this step will clobber build output.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self

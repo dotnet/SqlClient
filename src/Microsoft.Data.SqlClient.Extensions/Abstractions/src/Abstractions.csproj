@@ -22,7 +22,10 @@
   </ItemGroup>
 
   <!-- Versioning ====================================================== -->
-  <Import Project="Versions.props" />
+  <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
+       in Package mode).  The guard property inside Versions.props makes this a no-op on the
+       second import. -->
+  <Import Project="Versions.props" Condition="'$(AbstractionsVersionsImported)' != 'true'" />
   <PropertyGroup>
     <AssemblyVersion>$(AbstractionsAssemblyVersion)</AssemblyVersion>
     <FileVersion>$(AbstractionsFileVersion)</FileVersion>
@@ -71,9 +74,9 @@
   <!-- Reference to Logging  -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
-                      Condition="'$(ReferenceType)' != 'Package' "/>
+                      Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
-                      Condition="'$(ReferenceType)' == 'Package' "/>
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

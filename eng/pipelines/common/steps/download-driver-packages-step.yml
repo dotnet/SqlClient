@@ -1,0 +1,74 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This template downloads the SqlClient driver packages published by the sqlclient-ci-package
+# pipeline, copies them into the local NuGet feed (packages/), and resolves the exact package
+# versions from the .nupkg filenames.  The resolved versions are exposed as job-scoped pipeline
+# variables for use by downstream build/test steps:
+#
+#   sqlClientPackageVersion     Microsoft.Data.SqlClient
+#   sqlServerPackageVersion     Microsoft.SqlServer.Server
+#   abstractionsPackageVersion  Microsoft.Data.SqlClient.Extensions.Abstractions
+#   loggingPackageVersion       Microsoft.Data.SqlClient.Internal.Logging
+#   azurePackageVersion         Microsoft.Data.SqlClient.Extensions.Azure
+#
+# The consuming pipeline MUST declare the triggering pipeline as a resource whose alias matches the
+# pipelineResource parameter, e.g.:
+#
+#   resources:
+#     pipelines:
+#       - pipeline: sqlclient-ci-package
+#         source: sqlclient-ci-package
+#         trigger: true
+
+parameters:
+
+  # The pipeline resource alias to download the packages from.  This must match a resource declared
+  # under resources.pipelines in the consuming pipeline.
+  - name: pipelineResource
+    type: string
+    default: sqlclient-ci-package
+
+  # The name of the artifact published by the triggering pipeline that contains the .nupkg/.snupkg
+  # files.
+  - name: artifactName
+    type: string
+    default: SqlClient-Driver-Packages
+
+  # The local NuGet feed directory to copy the downloaded packages into.
+  - name: feedPath
+    type: string
+    default: $(Build.SourcesDirectory)/packages
+
+  # Optional override for the Microsoft.SqlServer.Server version.  When set, this value is used for
+  # the sqlServerPackageVersion variable instead of the version resolved from the artifact .nupkg
+  # filename.  Temporary workaround: the CI 'X.Y.Z-ci' prerelease of Microsoft.SqlServer.Server is
+  # treated as a downgrade of the '>= X.Y.Z' stable dependency that Microsoft.SqlServer.Types pulls
+  # in (NU1605); passing the released stable version avoids the downgrade.  Overall package
+  # versioning is being addressed separately.
+  - name: sqlServerVersionOverride
+    type: string
+    default: ''
+
+steps:
+
+  # Download the SqlClient driver packages published by the triggering pipeline into the pipeline
+  # workspace.
+  - download: ${{ parameters.pipelineResource }}
+    artifact: ${{ parameters.artifactName }}
+    displayName: Download SqlClient Driver Packages
+
+  # Copy the downloaded packages into the local NuGet feed and resolve the exact package versions
+  # from the .nupkg filenames, exposing each as a pipeline variable.
+  - task: PowerShell@2
+    displayName: Stage Packages and Resolve Versions
+    inputs:
+      pwsh: true
+      targetType: filePath
+      filePath: $(Build.SourcesDirectory)/eng/pipelines/common/steps/download-driver-packages.ps1
+      arguments: >-
+        -FeedPath "${{ parameters.feedPath }}"
+        -ArtifactDirectory "$(Pipeline.Workspace)/${{ parameters.pipelineResource }}/${{ parameters.artifactName }}"
+        -SqlServerVersionOverride "${{ parameters.sqlServerVersionOverride }}"

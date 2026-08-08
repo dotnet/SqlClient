@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "1")]
     public static class AsyncTimeoutTest
     {
         static string delayQuery2s = "WAITFOR DELAY '00:00:02'";

@@ -2,13 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
@@ -110,7 +107,7 @@ public abstract class CertificateFixtureBase : IDisposable
                     ephemeral.Export(X509ContentType.Pkcs12, password),
                     password,
                     keyStorageFlags,
-                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults) 
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults)
                     {
                         PreserveStorageProvider = true,
                         PreserveKeyName = true
@@ -211,7 +208,7 @@ catch [Exception]
             for (int attempt = 1; attempt <= retries; ++attempt)
             {
                 using Process psProcess = new() { StartInfo = startInfo };
-            
+
                 psProcess.Start();
                 commandOutput = psProcess.StandardOutput.ReadToEnd();
 
@@ -227,15 +224,15 @@ catch [Exception]
                 {
                     return new X509Certificate2(Convert.FromBase64String(commandOutput), password, X509KeyStorageFlags.Exportable);
                 }
-                
+
                 Console.WriteLine(
                     $"PowerShell command failed with exit code {code} on " +
                     $"attempt {attempt} of {retries}; " +
                     $"retrying in {delay} seconds...");
-                
+
                 Thread.Sleep(TimeSpan.FromSeconds(delay));
             }
-                
+
             throw new Exception(
                 "PowerShell command raised exception: " +
                 $"{commandOutput}; command was: {formattedCommand}");

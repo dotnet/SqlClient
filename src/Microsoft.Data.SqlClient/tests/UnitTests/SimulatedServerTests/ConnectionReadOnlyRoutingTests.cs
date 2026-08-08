@@ -11,7 +11,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Collection("SimulatedServerTests")]
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionReadOnlyRoutingTests
     {
         [Fact]
@@ -71,14 +73,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     router.Start();
                     routingLayers.Push(router);
                     lastEndpoint = router.EndPoint;
-                    lastConnectionString = (new SqlConnectionStringBuilder() { 
+                    lastConnectionString = (new SqlConnectionStringBuilder() {
                         DataSource = $"localhost,{lastEndpoint.Port}",
                         ApplicationIntent = ApplicationIntent.ReadOnly,
                         Encrypt = false
                     }).ConnectionString;
                 }
 
-                SqlConnectionStringBuilder builder = new(lastConnectionString) { ApplicationIntent = ApplicationIntent.ReadOnly };
+                SqlConnectionStringBuilder builder = new(lastConnectionString)
+                {
+                    ApplicationIntent = ApplicationIntent.ReadOnly,
+                    Pooling = false,
+                    // The whole routing chain must complete within a single Connect Timeout
+                    // budget. Allow ample time so the many-hop chain rides out thread-pool
+                    // congestion under parallel CI runs instead of tripping a timeout.
+                    ConnectTimeout = 60
+                };
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
             }
@@ -114,8 +124,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     router.Start();
                     routingLayers.Push(router);
                     lastEndpoint = router.EndPoint;
-                    lastConnectionString = (new SqlConnectionStringBuilder() { 
-                        DataSource = $"localhost,{lastEndpoint.Port}", 
+                    lastConnectionString = (new SqlConnectionStringBuilder() {
+                        DataSource = $"localhost,{lastEndpoint.Port}",
                         ApplicationIntent = ApplicationIntent.ReadOnly,
                         Encrypt = false
                     }).ConnectionString;
@@ -123,7 +133,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 SqlConnectionStringBuilder builder = new(lastConnectionString) {
                     ApplicationIntent = ApplicationIntent.ReadOnly,
-                    Encrypt = false
+                    Encrypt = false,
+                    Pooling = false,
+                    // The async non-pooled open runs the entire routing chain in a single
+                    // thread-pool-scheduled continuation, so it must finish within one Connect
+                    // Timeout budget. The default 15s can be exceeded under CI thread-pool
+                    // congestion (12 in-process TdsServers contend for the same starved pool),
+                    // producing a flaky NonPooledOpenTimeout. Allow ample time to ride it out.
+                    ConnectTimeout = 60
                 };
                 using SqlConnection connection = new(builder.ConnectionString);
                 await connection.OpenAsync();

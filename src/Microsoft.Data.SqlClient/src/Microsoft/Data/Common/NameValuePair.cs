@@ -11,10 +11,10 @@ namespace Microsoft.Data.Common
     [Serializable]
     internal sealed class NameValuePair
     {
-        readonly private string _name;
-        readonly private string _value;
+        private readonly string _name;
+        private readonly string _value;
         [OptionalField(VersionAdded = 2)]
-        readonly private int _length;
+        private readonly int _length;
         private NameValuePair _next;
 
         internal NameValuePair(string name, string value, int length)

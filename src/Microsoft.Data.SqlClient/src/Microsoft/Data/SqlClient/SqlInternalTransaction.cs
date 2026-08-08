@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         Context = 5,     // only valid in proc.
     }
 
-    sealed internal class SqlInternalTransaction
+    internal sealed class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 
@@ -181,12 +181,8 @@ namespace Microsoft.Data.SqlClient
                     Zombie();
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
 #if NETFRAMEWORK
                 ADP.TraceExceptionWithoutRethrow(e);
 #endif
@@ -215,10 +211,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (processFinallyBlock)
                 {
-                    // Always ensure we're zombied; 2005 will send an EnvChange that
-                    // will cause the zombie, but only if we actually go to the wire;
-                    // 7.0 and 2000 won't send the env change, so we have to handle
-                    // them ourselves.
+                    // Always ensure we're zombied; the server will send an EnvChange
+                    // that will cause the zombie, but only if we actually go to the wire.
                     Zombie();
                 }
             }
@@ -243,13 +237,9 @@ namespace Microsoft.Data.SqlClient
                     _innerConnection.ExecuteTransaction(TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
                     ZombieParent();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
-
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }
@@ -350,18 +340,11 @@ namespace Microsoft.Data.SqlClient
                     // server transaction level.  This transaction has been completed.
                     Zombie();
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
+                    CheckTransactionLevelAndZombie();
 
-                        if (!_disposing)
-                        {
-                            throw;
-                        }
-                    }
-                    else
+                    if (!_disposing)
                     {
                         throw;
                     }
@@ -394,12 +377,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     _innerConnection.ExecuteTransaction(TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }
@@ -426,13 +406,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     _innerConnection.ExecuteTransaction(TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
                 }
-                catch (Exception e)
+                catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (ADP.IsCatchableExceptionType(e))
-                    {
-                        CheckTransactionLevelAndZombie();
-                    }
-
+                    CheckTransactionLevelAndZombie();
                     throw;
                 }
             }
@@ -480,7 +456,7 @@ namespace Microsoft.Data.SqlClient
             _parent = null;
         }
 
-        internal string TraceString() => string.Format(/*IFormatProvider*/ null, 
+        internal string TraceString() => string.Format(/*IFormatProvider*/ null,
             "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
             ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
 

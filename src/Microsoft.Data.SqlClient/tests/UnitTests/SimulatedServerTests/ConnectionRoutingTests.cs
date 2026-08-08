@@ -10,7 +10,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
-    [Collection("SimulatedServerTests")]
+    // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
+    // need since each test uses its own TDS Server with ephemeral listen port.
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionRoutingTests
     {
         [Theory]
@@ -94,6 +96,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -147,7 +150,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, router.PreLoginCount);
             if (multiSubnetFailoverEnabled)
             {
-                Assert.True(server.PreLoginCount > 1);
+                // MultiSubnetFailover fan-out count is DNS/timing-dependent; only assert a
+                // completed pre-login at the routed location.
+                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1);
             }
             else
             {
@@ -156,7 +161,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange
@@ -194,7 +198,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Act
             var e = Assert.Throws<SqlException>(connection.Open);
 
-            // Assert 
+            // Assert
             Assert.Equal(ConnectionState.Closed, connection.State);
             Assert.Contains("Connection Timeout Expired", e.Message);
         }

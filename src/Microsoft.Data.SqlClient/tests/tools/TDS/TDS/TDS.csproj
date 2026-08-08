@@ -4,4 +4,10 @@
     <AssemblyName>Microsoft.SqlServer.TDS</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+
+  <!-- Sign when a test key is provided so signed test assemblies can reference this. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
 </Project>

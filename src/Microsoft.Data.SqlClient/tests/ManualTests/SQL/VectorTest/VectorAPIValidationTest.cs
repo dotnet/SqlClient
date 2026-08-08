@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 {
+    [Trait("Set", "3")]
     public sealed class VectorAPIValidationTest
     {
         // We need these testcases to validate ref assembly for vector APIs

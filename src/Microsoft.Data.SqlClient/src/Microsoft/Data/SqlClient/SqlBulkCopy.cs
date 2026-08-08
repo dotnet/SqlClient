@@ -17,6 +17,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -154,11 +155,16 @@ namespace Microsoft.Data.SqlClient
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
+        // Column aliases has 3 columns and n rows
 
         private const int MetaDataResultId = 1;
 
         private const int CollationResultId = 2;
         private const int CollationId = 3;
+
+        private const int ColumnAliasesResultId = 3;
+        private const int ColumnCanonicalNameColumnId = 0;
+        private const int ColumnAliasColumnId = 1;
 
         private const int MAX_LENGTH = 0x7FFFFFFF;
 
@@ -472,11 +478,12 @@ namespace Microsoft.Data.SqlClient
             }
             else if (!string.IsNullOrEmpty(CatalogName))
             {
-                CatalogName = SqlServerEscapeHelper.EscapeStringAsLiteral(SqlServerEscapeHelper.EscapeIdentifier(CatalogName));
+                CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
+            string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -495,6 +502,15 @@ namespace Microsoft.Data.SqlClient
             //
             // See: https://learn.microsoft.com/sql/relational-databases/graphs/sql-graph-architecture#syscolumns
             //
+            // Other columns have aliases assigned to them. The SQL Graph columns $node_id, $edge_id,
+            // $to_id and $from_id are actually aliases for columns with different canonical names.
+            // SqlBulkCopy generates these mappings by searching for columns with the below graph_type
+            // values.
+            //
+            //   2 = GRAPH_ID_COMPUTED = $node_id, $edge_id
+            //   5 = GRAPH_FROM_ID_COMPUTED = $from_id
+            //   8 = GRAPH_TO_ID_COMPUTED = $to_id
+            //
             // The column-name query is built as dynamic SQL and executed via sp_executesql so
             // that it is not compiled (and rejected) on SQL Server versions that lack the
             // graph_type column (e.g. SQL 2016).  CatalogName and escapedObjectName are
@@ -512,6 +528,11 @@ namespace Microsoft.Data.SqlClient
             // we use STRING_AGG in that case and the COALESCE method otherwise.
             //
             // See: https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql
+            //
+            // All of this is wrapped in an test against HAS_PERMS_BY_NAME. This test verifies that
+            // the user possesses the necessary permissions to access sys.all_columns. If they do not
+            // @Column_Names will remain NULL (and be coalesced to *) and SqlBulkCopy will degrade
+            // gracefully, silently dropping support for hidden columns and column aliases.
             return $"""
 SELECT @@TRANCOUNT;
 
@@ -521,6 +542,14 @@ DECLARE @Column_Name_Query_FILTER NVARCHAR(MAX);
 DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
+DECLARE @Has_Sys_All_Columns_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
+
+CREATE TABLE #Column_Aliases
+(
+    [Canonical_Column_Name] SYSNAME,
+    [Canonical_Column_Id] INT,
+    [Aliased_Column_Name] SYSNAME
+)
 
 IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
@@ -533,17 +562,35 @@ BEGIN
     SET @Column_Name_Query_SORT = N'ORDER BY [column_id] ASC';
 END
 
-IF EXISTS (SELECT TOP 1 * FROM sys.all_columns WHERE [object_id] = OBJECT_ID('sys.all_columns') AND [name] = 'graph_type')
+IF @Has_Sys_All_Columns_Permissions = 1
 BEGIN
-    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
-END
-ELSE
-BEGIN
-    SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
-END
-SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {CatalogName}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
+    IF EXISTS (SELECT TOP 1 * FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{catalogNameStringLiteral}.[sys].[all_columns]') AND [name] = 'graph_type')
+    BEGIN
+        SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
 
-EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
+        EXEC sp_executesql N'
+        INSERT INTO #Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
+            SELECT [name], [column_id], ''$to_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 8
+        UNION ALL
+            SELECT [name], [column_id], ''$from_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 5
+        UNION ALL
+            SELECT [name], [column_id], ''$edge_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$edge[_]id[_]%''
+        UNION ALL
+            SELECT [name], [column_id], ''$node_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$node[_]id[_]%''',
+        N'@Object_ID INT', @Object_ID = @Object_ID
+    END
+    ELSE
+    BEGIN
+        SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID';
+    END
+    SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {catalogNameStringLiteral}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
+
+    EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
+
+    DELETE FROM #Column_Aliases
+    WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
+END
+
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
 
 SET FMTONLY ON;
@@ -551,6 +598,12 @@ EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
 SET FMTONLY OFF;
 
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+
+SELECT [Canonical_Column_Name], [Aliased_Column_Name]
+FROM #Column_Aliases
+ORDER BY [Canonical_Column_Id] ASC
+
+DROP TABLE #Column_Aliases
 """;
         }
 
@@ -647,9 +700,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // Keep track of any result columns that we don't have a local
             // mapping for.
             #if NETFRAMEWORK
-            HashSet<string> unmatchedColumns = new();
+            HashSet<string> unmatchedColumns = new(StringComparer.OrdinalIgnoreCase);
             #else
-            HashSet<string> unmatchedColumns = new(_localColumnMappings.Count);
+            HashSet<string> unmatchedColumns = new(_localColumnMappings.Count, StringComparer.OrdinalIgnoreCase);
             #endif
 
             // Start by assuming all locally mapped Destination columns will be
@@ -657,6 +710,50 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             for (int i = 0; i < _localColumnMappings.Count; ++i)
             {
                 unmatchedColumns.Add(_localColumnMappings[i].DestinationColumn);
+            }
+
+            // Apply any necessary column aliases. If an aliased name exists in the
+            // local column mappings but the canonical name does not, update them.
+            Result columnAliasResults = internalResults[ColumnAliasesResultId];
+            for (int i = 0; i < columnAliasResults.Count; i++)
+            {
+                Row aliasRow = columnAliasResults[i];
+                SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
+                SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
+
+                if (canonicalName.IsNull || aliasedName.IsNull)
+                {
+                    continue;
+                }
+
+                string canonical = canonicalName.Value;
+                bool canonicalNameExists = unmatchedColumns.Contains(canonical)
+                    // The destination columns might be escaped. If so, search for those instead
+                    || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
+
+                if (canonicalNameExists)
+                {
+                    continue;
+                }
+
+                // The canonical name does not exist. Look for a local column mapping which matches
+                // the alias (or its escaped variant) and replace its name with its canonical name.
+                string alias = aliasedName.Value;
+                string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
+
+                for (int j = 0; j < _localColumnMappings.Count; j++)
+                {
+                    if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
+                        || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
+                    {
+                        unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
+
+                        unmatchedColumns.Add(canonical);
+                        _localColumnMappings[j].MappedDestinationColumn = canonical;
+
+                        break;
+                    }
+                }
             }
 
             // Flag to remember whether or not we need to append a comma before
@@ -682,7 +779,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     // Are we missing a mapping between the result column and
                     // this local column (by ordinal or name)?
                     if (localColumn._destinationColumnOrdinal != metadata.ordinal
-                        && UnquotedName(localColumn._destinationColumnName) != metadata.column)
+                        && UnquotedName(localColumn.MappedDestinationColumn) != metadata.column)
                     {
                         // Yes, so move on to the next local column.
                         continue;
@@ -692,7 +789,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     matched = true;
 
                     // Remove it from our unmatched set.
-                    unmatchedColumns.Remove(localColumn.DestinationColumn);
+                    unmatchedColumns.Remove(localColumn.MappedDestinationColumn);
 
                     // Check for column types that we refuse to bulk load, even
                     // though we found a match.
@@ -1009,12 +1106,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             _internalTransaction = null;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
                         ADP.TraceExceptionWithoutRethrow(e);
                     }
                 }
@@ -1263,16 +1356,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     _hasMoreRowToCopy = ReadFromRowSource(); // Synchronous calls for DataRows and DataTable won't block. For IDataReader, it may block.
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (_isAsyncBulkCopy && ADP.IsCatchableExceptionType(ex))
                 {
-                    if (_isAsyncBulkCopy)
-                    {
-                        return Task.FromException<bool>(ex);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return Task.FromException<bool>(ex);
                 }
                 finally
                 {
@@ -1778,12 +1864,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 return value;
             }
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                if (!ADP.IsCatchableExceptionType(e))
-                {
-                    throw;
-                }
                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
@@ -2441,7 +2523,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     source.SetResult(null);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2650,7 +2732,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     source.TrySetResult(null); // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2727,7 +2809,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2780,18 +2862,17 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         task,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: state =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
+                            Task continuedTask = state.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                             if (continuedTask == null)
                             {
                                 // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                             }
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true));
+                        onFailure: static (state, _) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        onCancellation: static state => state.CopyBatchesAsyncContinuedOnError(cleanupParser: true));
 
                     return source.Task;
                 }
@@ -2800,7 +2881,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     return CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -2842,28 +2923,27 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         writeTask,
                         source,
                         state: this,
-                        onSuccess: (object state) =>
+                        onSuccess: state =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
                             try
                             {
-                                sqlBulkCopy.RunParser();
-                                sqlBulkCopy.CommitTransaction();
+                                state.RunParser();
+                                state.CommitTransaction();
                             }
                             catch (Exception)
                             {
-                                sqlBulkCopy.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
+                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
                                 throw;
                             }
 
                             // Always call back into CopyBatchesAsync
-                            sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                            state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false));
+                        onFailure: static (state, _ ) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false));
                     return source.Task;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -3035,7 +3115,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 _localColumnMappings = null;
 
@@ -3114,21 +3194,20 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
                         AsyncHelper.SetTimeoutExceptionWithState(
-                            completion: cancellableReconnectTS,
-                            timeout: BulkCopyTimeout,
+                            taskCompletionSource: cancellableReconnectTS,
+                            timeoutInSeconds: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static state =>
-                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()),
+                            onTimeout: static state => SQL.BulkLoadInvalidDestinationTable(state, SQL.CR_ReconnectTimeout()),
                             cancellationToken: CancellationToken.None
                         );
 
                         AsyncHelper.ContinueTaskWithState(
-                            task: cancellableReconnectTS.Task,
-                            completion: source,
+                            taskToContinue:cancellableReconnectTS.Task,
+                            taskCompletionSource: source,
                             state: regReconnectCancel,
-                            onSuccess: (object state) =>
+                            onSuccess: state =>
                             {
-                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
+                                state.Value.Dispose();
                                 if (_parserLock != null)
                                 {
                                     _parserLock.Release();
@@ -3138,10 +3217,22 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                        );
+                            onFailure: (state, exception) =>
+                            {
+                                state.Value.Dispose();
+
+                                // Convert exception and set it on the source
+                                // Note: This is safe because the helper will only try to set the
+                                //    exception and b/c it is already set will pass without setting
+                                //    to the original exception.
+                                Exception convertedException = SQL.BulkLoadInvalidDestinationTable(
+                                    _destinationTableName,
+                                    exception);
+                                source.TrySetException(convertedException);
+                            },
+                            onCancellation: static regReconnectCancel2 =>
+                                regReconnectCancel2.Value.Dispose());
+
                         return;
                     }
                     else
@@ -3201,7 +3292,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     WriteToServerInternalRestContinuedAsync(internalResults, cts, source); // internalResults is valid here.
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {
@@ -3278,7 +3369,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     return resultTask;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
                 {

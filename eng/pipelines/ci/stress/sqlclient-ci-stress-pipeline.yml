@@ -1,0 +1,100 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This pipeline runs the stress test suite against the SqlClient projects, building them
+# transitively as necessary, triggered by successful runs of the sqlclient-ci-package pipeline:
+#
+# Public project:
+#   Triggering pipeline:  sqlclient-ci-package
+#   Pipeline name:        sqlclient-ci-stress
+#
+# ADO.Net project:
+#   Triggering pipeline:  sqlclient-ci-package
+#   Pipeline name:        sqlclient-ci-stress
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Do not trigger this pipeline for PRs, commits, or schedules.
+pr: none
+trigger: none
+
+# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
+#
+# The pipeline identifiers are displayed in the Azure DevOps UI, so it is helpful if they indicate
+# the project, folder, and pipeline name, hence the verbose values below.
+#
+resources:
+  pipelines:
+
+    # Trigger this pipeline when the sqlclient-ci-package pipeline completes successfully.
+    #
+    # 'project' is omitted so the resource resolves to the sqlclient-ci-package pipeline in the
+    # *current* ADO project.  This scopes the trigger per project automatically: the Public
+    # registration is triggered only by Public's sqlclient-ci-package, and the ADO.Net registration
+    # only by ADO.Net's.
+    #
+    # IMPORTANT: 'source' is the bare pipeline name with no folder path.  This REQUIRES the
+    # sqlclient-ci-package name to be UNIQUE within BOTH the Public and ADO.Net projects.  Azure
+    # DevOps only allows omitting the folder when the name is unambiguous; if a second pipeline with
+    # this name is ever added to either project, this resource will fail to resolve and the folder
+    # path must be added back (which, because the folders differ per project, would then require a
+    # per-project approach instead of this single shared definition).
+    - pipeline: sqlclient-ci-package
+      source: sqlclient-ci-package
+      trigger: true
+
+# Pipeline parameters, visible in the Azure DevOps UI.
+parameters:
+
+  # The build configuration to use; defaults to Release.
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+      - Debug
+      - Release
+
+  # True to emit debug information and steps.
+  - name: debug
+    displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # When true, test failures produce warnings (SucceededWithIssues) but do not fail the pipeline.
+  # When false (default), test failures fail the pipeline.
+  - name: warnOnTestFailure
+    displayName: Warn (not fail) on test failure
+    type: boolean
+    default: false
+
+  # Dotnet CLI verbosity level.
+  - name: dotnetVerbosity
+    displayName: dotnet CLI Verbosity
+    type: string
+    default: normal
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+# The stages to run.
+stages:
+
+  # Generate secrets.  We use these for the local SQL Server 'sa' logins.
+  - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+
+  # Run the stress tests.
+  - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
+    parameters:
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+      debug: ${{ parameters.debug }}
+      warnOnTestFailure: ${{ parameters.warnOnTestFailure }}
+      dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

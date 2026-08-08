@@ -1,0 +1,136 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This step configures an existing SQL Server running on the local Windows host.  For example, our
+# 1ES Hosted Pool has images like ADO-MMS22-SQL22 that come with SQL Server 2022 pre-installed and
+# running.
+
+parameters:
+
+  - name: enableLocalDB
+    type: boolean
+
+  # Path to use for file stream tests.
+  - name: fileStreamDirectory
+    type: string
+
+  - name: localDbAppName
+    type: string
+
+  - name: localDbSharedInstanceName
+    type: string
+
+  # Password to use for the SA account. This should be generated from the generate-secrets-stage.
+  - name: saPassword
+    type: string
+
+steps:
+  # GOTCHA: We must use the Windows-only powershell task here instead of the cross-platform pwsh
+  # task because we call some Windows-specific cmdlets.
+
+  # Enable TCP and NP protocols on the default SQL Server instance
+  - powershell: |
+      try
+      {
+        echo "> 1. Acquire WMI handle"
+        Import-Module "sqlps"
+        $smo = 'Microsoft.SqlServer.Management.Smo.'
+        $wmi = new-object ($smo + 'Wmi.ManagedComputer')
+
+
+        Write-Host "WMI Information:"
+        $wmi
+
+        echo "> 2. Enable TCP on the default instance"
+        $Tcp = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='MSSQLSERVER']/ServerProtocol[@Name='Tcp']")
+        $Tcp.IsEnabled = $true
+        $Tcp.Alter()
+
+        Write-Host "TCP Information:"
+        $Tcp
+
+        echo "> 3. Enable named pipes on the default instance"
+        $Np = $wmi.GetSmoObject("ManagedComputer[@Name='$env:COMPUTERNAME']/ ServerInstance[@Name='MSSQLSERVER']/ServerProtocol[@Name='Np']")
+        $Np.IsEnabled = $true
+        $Np.Alter()
+
+        Write-Host "NP Information:"
+        $Np
+      }
+      catch
+      {
+        $error[0] | format-list -force
+        throw
+      }
+
+      New-NetFirewallRule -DisplayName "SQL TCP Ports" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action allow
+      $sqlSrvPath = (Get-WmiObject win32_service | ?{$_.DisplayName -eq 'SQL Server (MSSQLSERVER)'} | select @{Name="Path"; Expression={$_.PathName.split('"')[1]}}).Path
+      New-NetFirewallRule -DisplayName "sqlservr.exe" -Program "$sqlSrvPath"
+    displayName: 'Enable TCP, NP & Firewall [Win]'
+    retryCountOnTaskFailure: 2
+
+  # Set the SA password on the default instance
+  - powershell: |
+      # Propagate parameters to PS variables ###############################
+      $password = "${{ parameters.saPassword }}"
+
+      # Connect to database and update SA account ##########################
+      Import-Module "sqlps"
+      $machineName = $env:COMPUTERNAME
+
+      Invoke-Sqlcmd -ServerInstance "$machineName" @"
+          ALTER LOGIN [sa] ENABLE;
+          ALTER LOGIN [sa] WITH PASSWORD = '$password';
+      "@
+    displayName: 'Set SA Password [Win]'
+    retryCountOnTaskFailure: 5
+
+  # Create folder for file stream tests
+  - powershell: |
+      New-Item -Path ${{ parameters.fileStreamDirectory }} -ItemType Directory
+    displayName: 'Create FileStreamFolder'
+    retryCountOnTaskFailure: 1
+    continueOnError: true
+
+  # Install northwind database
+  - powershell: |
+      # Propagate parameters to PS variables ###############################
+      $repoRoot = "$(REPO_ROOT)"
+      echo "repoRoot= $repoRoot"
+
+      # Install Northwind Database #########################################
+      Import-Module "sqlps"
+      $machineName = $env:COMPUTERNAME
+
+      # Delete any existing northwind database
+      Invoke-Sqlcmd `
+          -ServerInstance "$machineName" `
+          -Database "master" `
+          -Query @"
+              IF DB_ID(N'Northwind') IS NOT NULL
+                BEGIN
+              ALTER DATABASE [Northwind] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+              DROP DATABASE [Northwind];
+              END
+      "@
+
+      # Install northwind database via script
+      $scriptPath = "$repoRoot\tools\testsql\createNorthwindDb.sql"
+      Invoke-Sqlcmd -ServerInstance "$machineName" -Database "master" -InputFile $scriptPath
+    displayName: 'Create Northwind Database [Win]'
+    retryCountOnTaskFailure: 1
+
+  # Start and share the LocalDB instance.
+  - ${{ if eq(parameters.enableLocalDB, true) }}:
+    - powershell: |
+        SqlLocalDB info
+        SqlLocalDB info ${{ parameters.localDbAppName }}
+        SqlLocalDB share ${{ parameters.localDbAppName }} ${{ parameters.localDbSharedInstanceName }}
+        SqlLocalDB start ${{ parameters.localDbAppName }}
+        SqlLocalDB info ${{ parameters.localDbAppName }}
+
+        sqlcmd -S "(localdb)\.\${{ parameters.localDbSharedInstanceName }}" -q "SELECT @@VERSION"
+      displayName: 'Enable LocalDB [Win]'
