@@ -896,7 +896,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
 
-            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup);
             Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
 
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
@@ -912,7 +912,7 @@ namespace Microsoft.Data.ProviderBase
         {
             Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
 
-            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            SqlMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup);
             Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
 
             return metaDataFactory.GetSchemaAsync(outerConnection, collectionName, restrictions, cancellationToken);

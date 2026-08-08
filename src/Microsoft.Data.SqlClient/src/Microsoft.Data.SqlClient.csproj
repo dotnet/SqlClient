@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -232,12 +232,6 @@
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
                       Condition="'$(TargetFramework)' != 'net462'">
       <LogicalName>ILLink.Substitutions.xml</LogicalName>
-    </EmbeddedResource>
-
-    <!-- Used by SqlMetaDataFactory to construct its DataSet -->
-    <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
-      <Link>Resources\Microsoft.Data.SqlCLient.SqlMetaData.xml</Link>
-      <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
 
     <!-- Base strings in English -->
