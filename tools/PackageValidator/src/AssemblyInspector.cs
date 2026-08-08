@@ -232,6 +232,7 @@ internal static class AssemblyInspector
 
         // The token is defined by the CLI spec as the low 8 bytes of the SHA-1 hash of the public
         // key, emitted in reverse (little-endian) order.
+        // CodeQL [SM02196] Required for an external standard: ECMA-335 defines the strong-name public key token as a SHA-1 hash; this is an identity computation, not a security boundary.
         byte[] hash = SHA1.HashData(publicKey);
         var token = new byte[8];
         for (int i = 0; i < 8; i++)
