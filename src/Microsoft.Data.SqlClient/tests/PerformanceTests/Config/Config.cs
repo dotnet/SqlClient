@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public bool UseConnectionPoolV2;
 
         public bool WaitForProfiler;
+        public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
 
         /// <summary>

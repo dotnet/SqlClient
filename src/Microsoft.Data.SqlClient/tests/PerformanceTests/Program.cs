@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private void SetupConfigurations()
         {
-            // If the config file specifies to use managed SNI on Windows, 
+            // If the config file specifies to use managed SNI on Windows,
             // enable the appropriate AppContext switch to use the managed SNI implementation.
             if (_config.UseManagedSniOnWindows)
             {
@@ -145,8 +145,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
                 _config.UseConnectionPoolV2);
 
-            // If the config file specifies to use optimized async behavior, 
-            // enable packet multiplexing feature and other optimizations in SqlClient 
+            // If the config file specifies to use optimized async behavior,
+            // enable packet multiplexing feature and other optimizations in SqlClient
             // by setting the appropriate AppContext switches.
             if(_config.UseOptimizedAsyncBehaviour)
             {
@@ -154,7 +154,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", false);
             }
 
-            // If the config file specifies to wait for a profiler, 
+            // If the config file specifies to use the NativeMemoryProfiler and ETW profiler,
+            // propagate the setting to BenchmarkConfig so it can attach these Windows-only
+            // diagnosers when building each benchmark's ManualConfig.
+            BenchmarkConfig.UseNativeMemoryAndEtwProfiler = _config.UseNativeMemoryAndETWProfiler;
+
+            // If the config file specifies to wait for a profiler,
             // display the process ID and wait for user input before starting the benchmarks.
             // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
             // those modes run unattended, so blocking on Console.ReadKey() would hang automation.

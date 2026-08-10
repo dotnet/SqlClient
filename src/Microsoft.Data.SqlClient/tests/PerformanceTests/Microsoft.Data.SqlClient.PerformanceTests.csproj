@@ -7,6 +7,16 @@
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
   </PropertyGroup>
 
+  <!-- OS Constants ==================================================== -->
+  <!--
+      The WINDOWS constant is only defined when using OS-specific TFMs, so we need to explicitly
+      define it when we are building on Windows. This constant is used to gate inclusion of the
+      memory usage analyzer.
+  -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
   <!-- Items to remove -->
   <ItemGroup>
     <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
@@ -57,5 +67,7 @@
   <!-- Other references -->
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows"
+                      Condition="'$(OS)' == 'Windows_NT'" />
   </ItemGroup>
 </Project>
