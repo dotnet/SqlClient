@@ -1372,7 +1372,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             $"SqlInternalConnectionTds.OnFeatureExtAck | ADV | " +
-                            $"Object ID {0}, " +
+                            $"Object ID {ObjectID}, " +
                             $"Received feature extension acknowledgement for federated authentication");
                     }
 
@@ -1636,7 +1636,7 @@ namespace Microsoft.Data.SqlClient.Connection
                             SqlClientEventSource.Log.TryTraceEvent(
                                 $"SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                                 $"Object ID {ObjectID}, " +
-                                $"Unknown value for UTF8 support", ObjectID);
+                                $"Unknown value for UTF8 support");
                         }
 
                         throw SQL.ParsingError();
@@ -3740,7 +3740,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         {
                             SqlClientEventSource.Log.TryTraceEvent(
                                 $"SqlInternalConnectionTds.LoginWithFailover | " +
-                                $"Routed to {RoutingInfo.ServerName}", RoutingInfo.ServerName);
+                                $"Routed to {RoutingInfo.ServerName}");
                         }
 
                         _parser?.Disconnect();
