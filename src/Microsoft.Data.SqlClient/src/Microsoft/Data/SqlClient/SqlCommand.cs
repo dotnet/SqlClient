@@ -550,14 +550,14 @@ namespace Microsoft.Data.SqlClient
                     _commandTimeout = value;
                 }
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_CommandTimeout | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"Command Timeout value {value}, " +
-                        $"Client Connection Id {Connection?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_CommandTimeout | API | " +
+                    "Object Id {0}, " +
+                    "Command Timeout value {1}, " +
+                    "Client Connection Id {2}",
+                    ObjectID,
+                    value,
+                    Connection?.ClientConnectionId);
             }
         }
 
@@ -577,14 +577,14 @@ namespace Microsoft.Data.SqlClient
                     _commandText = value;
                 }
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_CommandText | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"String Value = '{value}', " +
-                        $"Client Connection Id {Connection?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_CommandText | API | " +
+                    "Object Id {0}, " +
+                    "String Value = '{1}', " +
+                    "Client Connection Id {2}",
+                    ObjectID,
+                    value,
+                    Connection?.ClientConnectionId);
             }
         }
 
@@ -614,14 +614,14 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // @TODO: Either move this outside the if block or move all the other instances inside the if block.
-                    if (SqlClientEventSource.Log.IsTraceEnabled())
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "SqlCommand.Set_CommandType | API | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Command Type value {(int)value}, " +
-                            $"Client Connection Id {Connection?.ClientConnectionId}");
-                    }
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "SqlCommand.Set_CommandType | API | " +
+                        "Object Id {0}, " +
+                        "Command Type value {1}, " +
+                        "Client Connection Id {2}",
+                        ObjectID,
+                        (int)value,
+                        Connection?.ClientConnectionId);
                 }
             }
         }
@@ -680,13 +680,12 @@ namespace Microsoft.Data.SqlClient
 
                 _activeConnection = value;
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_Connection | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"Client Connection Id {value?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Connection | API | " +
+                    "Object Id {0}, " +
+                    "Client Connection Id {1}",
+                    ObjectID,
+                    value?.ClientConnectionId);
             }
         }
 
@@ -723,12 +722,10 @@ namespace Microsoft.Data.SqlClient
             {
                 _sqlDep = null;
                 _notification = value;
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_Notification | API | " +
-                        $"Object Id {ObjectID}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Notification | API | " +
+                    "Object Id {0}",
+                    ObjectID);
             }
         }
 
@@ -803,14 +800,14 @@ namespace Microsoft.Data.SqlClient
 
                 _transaction = value;
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_Transaction | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"Internal Transaction Id {value?.InternalTransaction?.TransactionId}, " +
-                        $"Client Connection Id {Connection?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_Transaction | API | " +
+                    "Object Id {0}, " +
+                    "Internal Transaction Id {1}, " +
+                    "Client Connection Id {2}",
+                    ObjectID,
+                    value?.InternalTransaction?.TransactionId,
+                    Connection?.ClientConnectionId);
             }
         }
 
@@ -835,14 +832,14 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.InvalidUpdateRowSource(value);
                 }
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.UpdatedRowSource | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"Updated Row Source value {(int)value}, " +
-                        $"Client Connection Id {Connection?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.UpdatedRowSource | API | " +
+                    "Object Id {0}, " +
+                    "Updated Row Source value {1}, " +
+                    "Client Connection Id {2}",
+                    ObjectID,
+                    (int)value,
+                    Connection?.ClientConnectionId);
             }
         }
 
@@ -961,13 +958,12 @@ namespace Microsoft.Data.SqlClient
             {
                 // @TODO: Does this need a trace event, we have one in Transaction?
                 Transaction = (SqlTransaction)value;
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        "SqlCommand.Set_DbTransaction | API | " +
-                        $"Object Id {ObjectID}, " +
-                        $"Client Connection Id {Connection?.ClientConnectionId}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.Set_DbTransaction | API | " +
+                    "Object Id {0}, " +
+                    "Client Connection Id {1}",
+                    ObjectID,
+                    Connection?.ClientConnectionId);
             }
         }
 
@@ -1088,15 +1084,16 @@ namespace Microsoft.Data.SqlClient
             // via another thread.
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.Cancel | API | Object Id {ObjectID}");
-            if (SqlClientEventSource.Log.IsCorrelationEnabled())
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                    "SqlCommand.Cancel | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
-            }
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.Cancel | API | Correlation | " +
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             SqlStatistics statistics = null;
             try
@@ -1182,14 +1179,14 @@ namespace Microsoft.Data.SqlClient
         public SqlCommand Clone()
         {
             SqlCommand clone = new SqlCommand(this);
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlCommand.Clone | API | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Clone Object Id {clone.ObjectID}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}");
-            }
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.Clone | API | " +
+                "Object Id {0}, " +
+                "Clone Object Id {1}, " +
+                "Client Connection Id {2}",
+                ObjectID,
+                clone.ObjectID,
+                _activeConnection?.ClientConnectionId);
 
             return clone;
         }
@@ -1206,14 +1203,14 @@ namespace Microsoft.Data.SqlClient
             #endif
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.Prepare | API | Object Id {ObjectID}");
-            if (SqlClientEventSource.Log.IsCorrelationEnabled())
-            {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                    "SqlCommand.Prepare | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"ActivityID {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}");
-            }
+            SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                "SqlCommand.Prepare | API | Correlation | " +
+                "Object Id {0}, " +
+                "ActivityID {1}, " +
+                "Client Connection Id {2}",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId);
 
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -1854,14 +1851,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        if (SqlClientEventSource.Log.IsTraceEnabled())
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent(
-                                $"SqlCommand.OnStatementCompleted | Info | " +
-                                $"Object Id {ObjectID}, " +
-                                $"Record Count {recordCount}, " +
-                                $"Client Connection Id {_activeConnection?.ClientConnectionId}");
-                        }
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "SqlCommand.OnStatementCompleted | Info | " +
+                            "Object Id {0}, " +
+                            "Record Count {1}, " +
+                            "Client Connection Id {2}",
+                            ObjectID,
+                            recordCount,
+                            _activeConnection?.ClientConnectionId);
 
                         handler(this, new StatementCompletedEventArgs(recordCount));
                     }
@@ -2937,13 +2934,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_activeConnection is not null, "must have an open connection to UnPrepare");
             Debug.Assert(!_inPrepare, "_inPrepare should be false!");
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlCommand.UnPrepare | Info | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Current Prepared Handle {_prepareHandle}");
-            }
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.UnPrepare | Info | " +
+                "Object Id {0}, " +
+                "Current Prepared Handle {1}",
+                ObjectID,
+                _prepareHandle);
 
             _execType = EXECTYPE.PREPAREPENDING;
 
@@ -2958,12 +2954,10 @@ namespace Microsoft.Data.SqlClient
 
             _cachedMetaData = null;
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    $"SqlCommand.UnPrepare | Info | " +
-                    $"Object Id {ObjectID}, Command unprepared.");
-            }
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.UnPrepare | Info | " +
+                "Object Id {0}, Command unprepared.",
+                ObjectID);
         }
 
         private void ValidateAsyncCommand()
@@ -3068,15 +3062,16 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(completionTask is not null);
 
-            if (SqlClientEventSource.Log.IsTraceEnabled())
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    $"SqlCommand.VerifyEndExecuteState | API | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                    $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
-            }
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlCommand.VerifyEndExecuteState | API | " +
+                "Object Id {0}, " +
+                "Client Connection Id {1}, " +
+                "MARS={2}, " +
+                "AsyncCommandInProgress={3}",
+                ObjectID,
+                _activeConnection?.ClientConnectionId,
+                _activeConnection?.Parser?.MARSOn,
+                _activeConnection?.AsyncCommandInProgress);
 
             if (completionTask.IsCanceled)
             {
@@ -3271,14 +3266,14 @@ namespace Microsoft.Data.SqlClient
 
                 TdsParser parser = activeConnection?.Parser;
 
-                if (SqlClientEventSource.Log.IsTraceEnabled())
-                {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        $"SqlCommand.SetActiveConnectionAndResult | API | " +
-                        $"Object ID {activeConnection.ObjectID}, " +
-                        $"Client Connection ID {activeConnection.ClientConnectionId}, " +
-                        $"MARS={parser?.MARSOn}");
-                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.SetActiveConnectionAndResult | API | " +
+                    "Object ID {0}, " +
+                    "Client Connection ID {1}, " +
+                    "MARS={2}",
+                    activeConnection.ObjectID,
+                    activeConnection.ClientConnectionId,
+                    parser?.MARSOn);
 
                 if (parser == null || parser.State == TdsParserState.Closed || parser.State == TdsParserState.Broken)
                 {
