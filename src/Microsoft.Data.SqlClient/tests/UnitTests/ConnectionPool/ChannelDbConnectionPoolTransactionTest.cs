@@ -150,6 +150,20 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         _pool.ReturnInternalConnection(connection, owner);
 
     /// <summary>
+    /// Awaits a task with a timeout so a test that expects a waiter to be served fails with a clear
+    /// message instead of hanging. Written against <see cref="Task.WhenAny(Task[])"/> because
+    /// Task.WaitAsync does not exist on .NET Framework.
+    /// </summary>
+    private static async Task<T> WithTimeout<T>(Task<T> task, TimeSpan timeout)
+    {
+        Task completed = await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false);
+        Assert.True(
+            ReferenceEquals(completed, task),
+            $"Timed out after {timeout.TotalSeconds:0.#}s waiting for the task to complete.");
+        return await task.ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Asserts the pool's accounting after a step.
     /// </summary>
     /// <param name="count">Total connections owned by the pool, checked out or not. A connection
@@ -773,7 +787,7 @@ public class ChannelDbConnectionPoolTransactionTest : IDisposable
         }
 
         // Assert - the waiter was handed the released connection rather than timing out.
-        DbConnectionInternal servedConnection = await waiter.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        DbConnectionInternal servedConnection = await WithTimeout(waiter.Task, TimeSpan.FromSeconds(15));
         Assert.Same(parkedConnection, servedConnection);
         AssertEnlistedIn(null, servedConnection);
         AssertPoolState(count: 1, idleCount: 0, transactedCount: 0);
