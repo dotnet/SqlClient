@@ -117,13 +117,14 @@ SELECT 1 AS Result;";
                     // cancellation must send a TDS attention signal to the server.
                     Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
 
-                    // Cancel from another thread after briefly yielding to ensure the
-                    // async operation has been dispatched and reached the server-side
-                    // WAITFOR. This avoids the flakiness of a preemptive timer that
-                    // could fire before the query is actually in flight.
+                    // Cancel only after the server has flushed the RAISERROR NOWAIT packet so we know we're in the
+                    // "partial results received" state that regressed in #4424.
+                    var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
                     Task cancelTask = Task.Run(async () =>
                     {
-                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(5)));
                         cts.Cancel();
                     });
 
