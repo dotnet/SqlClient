@@ -222,29 +222,26 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             string[] scopes = [scope];
             TokenRequestContext tokenRequestContext = new(scopes);
 
-            // We split audience from Authority URL here. Audience can be one of
+            // We split the tenant from the Authority URL here. The tenant can be one of
             // the following:
             //
-            //   - The Entra ID authority audience enumeration
             //   - The tenant ID, which can be:
             //     - A GUID (the ID of your Entra ID instance), for
             //       single-tenant applications
             //     - A domain name associated with your Entra ID instance (also
             //       for single-tenant applications)
-            //   - One of these placeholders as a tenant ID in place of the
-            //     Entra ID authority audience enumeration:
+            //   - One of these placeholders, which select an Entra ID authority
+            //     audience instead of a specific tenant:
             //     - `organizations` for a multitenant application
             //     - `consumers` to sign in users only with their personal
             //       accounts
             //     - `common` to sign in users with their work and school
             //       accounts or their personal Microsoft accounts
             //
-            // MSAL will throw a meaningful exception if you specify both the
-            // Entra ID authority audience and the tenant ID.
-            //
-            // If you don't specify an audience, your app will target Entra ID
-            // and personal Microsoft accounts as an audience.  (That is, it
-            // will behave as though `common` were specified.)
+            // If no tenant is specified, the app targets Entra ID and personal
+            // Microsoft accounts as an audience.  (That is, it behaves as though
+            // `common` were specified.)  We always have a tenant here, because the
+            // server supplies one in the STSURL.
             //
             // More information:
             //
@@ -255,7 +252,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // ("https://login.microsoftonline.com/{tenantId}/oauth2/authorize"), so the tenant is
             // taken from the first path segment rather than the last.
 
-            if (!TryParseAuthority(parameters.Authority, out string authority, out string audience, out string msalAuthority))
+            if (!TryParseAuthority(parameters.Authority, out string authorityHost, out string tenant, out string msalAuthority))
             {
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
@@ -268,8 +265,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
-                // Cache DefaultAzureCredenial based on scope, authority, audience, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authority, scope, audience, clientId);
+                // Cache DefaultAzureCredenial based on scope, authority host, tenant, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityHost, scope, tenant, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -277,8 +274,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
-                // Cache ManagedIdentityCredential based on scope, authority, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authority, scope, string.Empty, clientId);
+                // Cache ManagedIdentityCredential based on scope, authority host, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityHost, scope, string.Empty, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -286,8 +283,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
-                // Cache ClientSecretCredential based on scope, authority, audience, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authority, scope, audience, clientId);
+                // Cache ClientSecretCredential based on scope, authority host, tenant, and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authorityHost, scope, tenant, clientId);
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
@@ -296,8 +293,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
             {
-                // Cache WorkloadIdentityCredential based on authority and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authority, string.Empty, string.Empty, clientId);
+                // Cache WorkloadIdentityCredential based on authority host and clientId
+                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authorityHost, string.Empty, string.Empty, clientId);
                 // If either tenant id, client id, or the token file path are not specified when fetching the token,
                 // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
@@ -942,8 +939,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
             {
-                AuthorityHost = new Uri(tokenCredentialKey._authority),
-                TenantId = tokenCredentialKey._audience,
+                AuthorityHost = new Uri(tokenCredentialKey._authorityHost),
+                TenantId = tokenCredentialKey._tenant,
                 ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
             };
 
@@ -987,23 +984,23 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 : ManagedIdentityId.FromUserAssignedClientId(tokenCredentialKey._clientId);
             ManagedIdentityCredentialOptions managedIdentityCredentialOptions = new(managedIdentityId)
             {
-                AuthorityHost = new Uri(tokenCredentialKey._authority)
+                AuthorityHost = new Uri(tokenCredentialKey._authorityHost)
             };
 
             return new TokenCredentialData(new ManagedIdentityCredential(managedIdentityCredentialOptions), GetHash(secret));
         }
         else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
         {
-            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authorityHost) };
 
-            return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
+            return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._tenant, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
         }
         else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
         {
             // The WorkloadIdentityCredentialOptions object initialization populates its instance members
             // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
             // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
-            WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+            WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(tokenCredentialKey._authorityHost) };
 
             if (tokenCredentialKey._clientId is not null)
             {
@@ -1083,17 +1080,27 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     internal class TokenCredentialKey
     {
         public readonly Type _tokenCredentialType;
-        public readonly string _authority;
+
+        /// <summary>The authority host with a trailing slash, e.g. "https://login.microsoftonline.com/".</summary>
+        public readonly string _authorityHost;
+
         public readonly string _scope;
-        public readonly string _audience;
+
+        /// <summary>
+        /// The tenant, which may be a tenant id, a domain name, or one of the
+        /// `common` / `organizations` / `consumers` placeholders. Empty when the credential
+        /// type doesn't take a tenant.
+        /// </summary>
+        public readonly string _tenant;
+
         public readonly string? _clientId;
 
-        public TokenCredentialKey(Type tokenCredentialType, string authority, string scope, string audience, string? clientId)
+        public TokenCredentialKey(Type tokenCredentialType, string authorityHost, string scope, string tenant, string? clientId)
         {
             _tokenCredentialType = tokenCredentialType;
-            _authority = authority;
+            _authorityHost = authorityHost;
             _scope = scope;
-            _audience = audience;
+            _tenant = tenant;
             _clientId = clientId;
         }
 
@@ -1102,15 +1109,15 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (obj != null && obj is TokenCredentialKey tcKey)
             {
                 return _tokenCredentialType == tcKey._tokenCredentialType
-                    && string.CompareOrdinal(_authority, tcKey._authority) == 0
+                    && string.CompareOrdinal(_authorityHost, tcKey._authorityHost) == 0
                     && string.CompareOrdinal(_scope, tcKey._scope) == 0
-                    && string.CompareOrdinal(_audience, tcKey._audience) == 0
+                    && string.CompareOrdinal(_tenant, tcKey._tenant) == 0
                     && string.CompareOrdinal(_clientId, tcKey._clientId) == 0
                 ;
             }
             return false;
         }
 
-        public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authority, _scope, _audience, _clientId).GetHashCode();
+        public override int GetHashCode() => Tuple.Create(_tokenCredentialType, _authorityHost, _scope, _tenant, _clientId).GetHashCode();
     }
 }

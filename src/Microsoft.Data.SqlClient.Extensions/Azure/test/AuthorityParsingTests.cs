@@ -80,6 +80,12 @@ public class AuthorityParsingTests
             "organizations",
             "https://login.microsoftonline.com/organizations"
         },
+        {
+            "https://login.microsoftonline.com/consumers",
+            "https://login.microsoftonline.com/",
+            "consumers",
+            "https://login.microsoftonline.com/consumers"
+        },
     };
 
     [Theory]
