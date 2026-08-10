@@ -32,12 +32,15 @@ namespace Microsoft.Data.SqlClient
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.ExecuteScalar | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.ExecuteScalar | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
             
             SqlStatistics statistics = null;
             bool success = false;
@@ -221,17 +224,23 @@ namespace Microsoft.Data.SqlClient
         
         private Task<object> ExecuteScalarAsyncInternal(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.InternalExecuteScalarAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.ExecuteScalarAsyncInternal | API " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.InternalExecuteScalarAsync | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.ExecuteScalarAsyncInternal | API " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             _parentOperationStarted = true;

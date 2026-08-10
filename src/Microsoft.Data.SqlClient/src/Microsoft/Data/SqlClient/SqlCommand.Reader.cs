@@ -69,24 +69,30 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                    "SqlCommand.EndExecuteReader | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
+                if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                {
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                        "SqlCommand.EndExecuteReader | API | Correlation | " +
+                        $"Object Id {ObjectID}, " +
+                        $"Activity Id {ActivityCorrelator.Current}, " +
+                        $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                        $"Command Text '{CommandText}'");
+                }
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         public new SqlDataReader ExecuteReader()
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.ExecuteReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.ExecuteReader | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             SqlStatistics statistics = null;
             try
@@ -210,12 +216,15 @@ namespace Microsoft.Data.SqlClient
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             // @TODO: Yknow, we use this all over the place. It could be factored out.
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.ExecuteDbDataReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.ExecuteDbDataReader | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             return ExecuteReader(behavior);
         }
@@ -365,12 +374,15 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(completion is not null, "CompletionSource should not be null");
 
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             // Read SNI does not have catches for async exceptions, handle here.
             try
@@ -653,12 +665,15 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
 
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.EndExecuteReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.EndExecuteReaderAsync | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException is not null)
@@ -685,12 +700,15 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.EndExecuteReaderInternal | API | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.EndExecuteReaderInternal | API | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"MARS={_activeConnection?.Parser?.MARSOn}, " +
+                    $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            }
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -933,18 +951,24 @@ namespace Microsoft.Data.SqlClient
             CommandBehavior commandBehavior,
             CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.InternalExecuteReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Behavior {(int)commandBehavior}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.InternalExecuteReaderAsync | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.InternalExecuteReaderAsync | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Behavior {(int)commandBehavior}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalExecuteReaderAsync | INFO | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             Guid operationId = !_parentOperationStarted ? s_diagnosticListener.WriteCommandBefore(this, _transaction) : Guid.Empty;
 
@@ -1037,12 +1061,15 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, bool isInternal, string endMethod)
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.InternalEndExecuteReader | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalEndExecuteReader | INFO | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"MARS={_activeConnection?.Parser?.MARSOn}, " +
+                    $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            }
 
             VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
@@ -1364,13 +1391,16 @@ namespace Microsoft.Data.SqlClient
 
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as SQLBATCH, " +
-                            $"Command Text '{CommandText}'");
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlCommand.RunExecuteReaderTds | Info | " +
+                                $"Object Id {ObjectID}, " +
+                                $"Activity Id {ActivityCorrelator.Current}, " +
+                                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                                $"Command executed as SQLBATCH, " +
+                                $"Command Text '{CommandText}'");
+                        }
                     }
 
                     string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
@@ -1451,13 +1481,16 @@ namespace Microsoft.Data.SqlClient
                     rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as RPC, " +
-                            $"RPC Name '{rpc.rpcName}'");
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlCommand.RunExecuteReaderTds | Info | " +
+                                $"Object Id {ObjectID}, " +
+                                $"Activity Id {ActivityCorrelator.Current}, " +
+                                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                                $"Command executed as RPC, " +
+                                $"RPC Name '{rpc.rpcName}'");
+                        }
                     }
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
@@ -1485,13 +1518,16 @@ namespace Microsoft.Data.SqlClient
 
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as RPC, " +
-                            $"RPC Name '{CommandText}'");
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlCommand.RunExecuteReaderTds | Info | " +
+                                $"Object Id {ObjectID}, " +
+                                $"Activity Id {ActivityCorrelator.Current}, " +
+                                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                                $"Command executed as RPC, " +
+                                $"RPC Name '{CommandText}'");
+                        }
                     }
 
                     // Turn set options ON

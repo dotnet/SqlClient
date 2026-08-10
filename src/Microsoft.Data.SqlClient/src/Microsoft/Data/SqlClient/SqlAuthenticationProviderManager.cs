@@ -66,11 +66,14 @@ namespace Microsoft.Data.SqlClient
                 // When strong-name signing is enabled, build a fully-qualified AssemblyName
                 // that includes the expected public key token.
 
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    $": Attempting to load Azure extension assembly={azureAssemblyName} with " +
-                    "expected public key token=" +
-                    BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Attempting to load Azure extension assembly={azureAssemblyName} with " +
+                        "expected public key token=" +
+                        BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
+                }
 
                 var qualifiedName = new AssemblyName(azureAssemblyName);
                 qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
@@ -94,11 +97,14 @@ namespace Microsoft.Data.SqlClient
 
                     if (actualToken is null || !actualToken.AsSpan().SequenceEqual(s_azurePublicKeyToken))
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            $": Azure extension assembly={assembly.GetName()} has an " +
-                            "unexpected public key token; " +
-                            "no default Active Directory provider installed");
+                        if (SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                nameof(SqlAuthenticationProviderManager) +
+                                $": Azure extension assembly={assembly.GetName()} has an " +
+                                "unexpected public key token; " +
+                                "no default Active Directory provider installed");
+                        }
                         return;
                     }
                 }
@@ -106,10 +112,13 @@ namespace Microsoft.Data.SqlClient
 
                 #else
 
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    $": Attempting to load Azure extension assembly={azureAssemblyName} without " +
-                    "strong name verification; ensure this assembly is from a trusted source");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Attempting to load Azure extension assembly={azureAssemblyName} without " +
+                        "strong name verification; ensure this assembly is from a trusted source");
+                }
 
                 var assembly = Assembly.Load(azureAssemblyName);
 
@@ -117,18 +126,24 @@ namespace Microsoft.Data.SqlClient
 
                 if (assembly is null)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        nameof(SqlAuthenticationProviderManager) +
-                        $": Azure extension assembly={azureAssemblyName} not found; " +
-                        "no default Active Directory provider installed");
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Azure extension assembly={azureAssemblyName} not found; " +
+                            "no default Active Directory provider installed");
+                    }
                     return;
                 }
 
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension assembly={assembly.GetName()} found; " +
-                    "attempting to set as default provider for all Active " +
-                    "Directory authentication methods");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension assembly={assembly.GetName()} found; " +
+                        "attempting to set as default provider for all Active " +
+                        "Directory authentication methods");
+                }
 
                 // Look for the authentication provider class.
                 const string className = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider";
@@ -136,10 +151,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (type is null)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        nameof(SqlAuthenticationProviderManager) +
-                        $": Azure extension does not contain class={className}; " +
-                        "no default Active Directory provider installed");
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Azure extension does not contain class={className}; " +
+                            "no default Active Directory provider installed");
+                    }
 
                     return;
                 }
@@ -169,10 +187,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (instance is null)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent(
-                        nameof(SqlAuthenticationProviderManager) +
-                        $": Failed to instantiate Azure extension class={className}; " +
-                        "no default Active Directory provider installed");
+                    if (SqlClientEventSource.Log.IsTraceEnabled())
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            nameof(SqlAuthenticationProviderManager) +
+                            $": Failed to instantiate Azure extension class={className}; " +
+                            "no default Active Directory provider installed");
+                    }
 
                     return;
                 }
@@ -195,10 +216,13 @@ namespace Microsoft.Data.SqlClient
                 SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, instance);
                 SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, instance);
 
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension class={className} installed as " +
-                    "provider for all Active Directory authentication methods");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension class={className} installed as " +
+                        "provider for all Active Directory authentication methods");
+                }
             }
             // All of these exceptions mean we couldn't find or instantiate the
             // Azure extension's authentication provider, in which case we
@@ -219,11 +243,14 @@ namespace Microsoft.Data.SqlClient
                       TypeInitializationException or
                       TypeLoadException)
             {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension assembly={azureAssemblyName} not found or " +
-                    "not usable; no default provider installed; " +
-                    $"{ex.GetType().Name}: {ex.Message}");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension assembly={azureAssemblyName} not found or " +
+                        "not usable; no default provider installed; " +
+                        $"{ex.GetType().Name}: {ex.Message}");
+                }
             }
             // Any other exceptions are fatal.
         }

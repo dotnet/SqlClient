@@ -44,12 +44,15 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
             #endif
 
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.BeginExecuteNonQuery | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.BeginExecuteNonQuery | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             return BeginExecuteNonQueryInternal(
                 CommandBehavior.Default,
@@ -68,12 +71,15 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                    "SqlCommand.EndExecuteNonQuery | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
+                if (SqlClientEventSource.Log.IsCorrelationEnabled())
+                {
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                        "SqlCommand.EndExecuteNonQuery | API | Correlation | " +
+                        $"Object Id {ObjectID}, " +
+                        $"Activity Id {ActivityCorrelator.Current}, " +
+                        $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                        $"Command Text '{CommandText}'");
+                }
             }
         }
 
@@ -91,12 +97,15 @@ namespace Microsoft.Data.SqlClient
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteNonQuery | API | Object Id {ObjectID}");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.ExecuteNonQuery | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.ExecuteNonQuery | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -159,12 +168,15 @@ namespace Microsoft.Data.SqlClient
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
         private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             return BeginExecuteNonQueryInternal(
                 CommandBehavior.Default,
@@ -343,12 +355,15 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException is not null)
@@ -421,12 +436,15 @@ namespace Microsoft.Data.SqlClient
             bool isInternal, // @TODO: is this ever true?
             [CallerMemberName] string endMethod = "")
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.InternalEndExecuteNonQuery | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalEndExecuteNonQuery | INFO | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"MARS={_activeConnection?.Parser.MARSOn}, " +
+                    $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            }
 
             VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
@@ -526,11 +544,14 @@ namespace Microsoft.Data.SqlClient
             bool isRetry = false,
             [CallerMemberName] string methodName = "")
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlCommand.InternalExecuteNonQuery | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            if (SqlClientEventSource.Log.IsTraceEnabled())
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+            }
 
             bool isAsync = completion is not null;
             usedCache = false;
@@ -575,24 +596,30 @@ namespace Microsoft.Data.SqlClient
 
                 // We should never get here for a retry since we only have retries for parameters.
                 Debug.Assert(!isRetry);
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlCommand.InternalExecuteNonQuery | INFO | " +
-                    $"Object Id {ObjectID}," +
-                    $" RPC execute method name {methodName}, " +
-                    $"isAsync {isAsync}, " +
-                    $"isRetry {isRetry}");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                        $"Object Id {ObjectID}," +
+                        $" RPC execute method name {methodName}, " +
+                        $"isAsync {isAsync}, " +
+                        $"isRetry {isRetry}");
+                }
 
                 task = RunExecuteNonQueryTds(methodName, isAsync, timeout, asyncWrite);
             }
             else
             {
                 // Otherwise, use a full-fledged execute that can handle parameters and sprocs
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlCommand.InternalExecuteNonQuery | INFO | " +
-                    $"Object Id {ObjectID}, " +
-                    $"RPC execute method name {methodName}, " +
-                    $"isAsync {isAsync}, " +
-                    $"isRetry {isRetry}");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "SqlCommand.InternalExecuteNonQuery | INFO | " +
+                        $"Object Id {ObjectID}, " +
+                        $"RPC execute method name {methodName}, " +
+                        $"isAsync {isAsync}, " +
+                        $"isRetry {isRetry}");
+                }
 
                 SqlDataReader reader = RunExecuteReader(
                     CommandBehavior.Default,
@@ -632,12 +659,15 @@ namespace Microsoft.Data.SqlClient
             SqlConnection.ExecutePermission.Demand();
             #endif
 
-            SqlClientEventSource.Log.TryCorrelationTraceEvent(
-                "SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+            if (SqlClientEventSource.Log.IsCorrelationEnabled())
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | " +
+                    $"Object Id {ObjectID}, " +
+                    $"Activity Id {ActivityCorrelator.Current}, " +
+                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                    $"Command Text '{CommandText}'");
+            }
 
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
@@ -790,12 +820,15 @@ namespace Microsoft.Data.SqlClient
 
                 // We just send over the raw text with no annotation - no parameters are sent over,
                 // no data reader is returned.
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlCommand.RunExecuteNonQueryTds | Info | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"Command executed as SQLBATCH, Command Text '{CommandText}'");
+                if (SqlClientEventSource.Log.IsTraceEnabled())
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "SqlCommand.RunExecuteNonQueryTds | Info | " +
+                        $"Object Id {ObjectID}, " +
+                        $"Activity Id {ActivityCorrelator.Current}, " +
+                        $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
+                        $"Command executed as SQLBATCH, Command Text '{CommandText}'");
+                }
 
                 Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(
                     CommandText,
