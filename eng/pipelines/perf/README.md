@@ -135,7 +135,11 @@ mutually exclusive and the script fails fast if both are supplied). On the VM th
    under measurement is the baseline ref's source via `ProjectReference` — mirroring how the
    `current` variant is built from this branch. No NuGet baseline config is involved.
 3. Labels the comparison `"<ref>@<short-sha>"` (e.g. `main@a1b2c3d`) so a run states exactly which
-   baseline commit it was measured against.
+   baseline commit it was measured against, and writes that label to
+   `<results>/baseline-label.txt`. The PR pipeline reads that file after the results are copied
+   back and tags the build `Baseline <ref>@<short-sha>`, so the exact baseline commit is visible in
+   the ADO build list. (The pipeline cannot produce this tag on its own — at compile time it only
+   knows the ref name, which would tag every run identically.)
 
 Because each side builds its own harness, a benchmark added by the PR simply shows up as `new` in
 the comparison (and one removed by the PR as `removed`) instead of failing the run. Both passes
@@ -224,6 +228,9 @@ Two tables:
   `DriverName|CommitHash|PipelineRunId`), driver/machine/agent, `OperatingSystem` (`Windows`/`Linux`),
   `Architecture` (`x64`/`x86`), `RunType` (`Sequential`/`Interweaved`), pipeline id + build URL,
   branch + `BranchCategory`, `VersionString`, commit hash/date, `IsComparableBase`, `IngestedAt`.
+  `BranchCategory` buckets the ref as `main`, `release`, `dev`, `feature`, `pull_request` or
+  `other`. The internal ADO mirror's `internal/` prefix is stripped first, so `internal/main` and
+  `internal/release/*` land in the same buckets as their public counterparts.
 - **`PerfBenchmarkResult`** — one row per benchmark: `BenchmarkId` (PK =
   `DerivedRunId|BenchmarkName|MethodName|ParameterSignature`), timings in **milliseconds**
   (BenchmarkDotNet reports nanoseconds; values are divided by 1,000,000), percentiles, throughput,

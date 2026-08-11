@@ -223,16 +223,31 @@ extends:
     # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.  There is no
     # Kusto translation/ingestion here by design.
     steps:
-      # Tag the build with the baseline ref used for the comparison so runs are identifiable at a
-      # glance in the ADO build list.  Runs first so the tag is applied even if a later step fails;
-      # omitted entirely when no baseline pass is requested.
+      # Tag the build with the baseline that was actually measured.  The label is produced on the VM
+      # by the run script (as '<ref>@<sha>') and copied back with the results, because the resolved
+      # commit is not knowable at compile time - the pipeline only has the ref name, which would tag
+      # every run identically.
       # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL path and a
       # colon trips ADO's "potentially dangerous Request.Path" filter.
       - ${{ if ne(parameters.baselineSourceRef, '') }}:
         - bash: |
-            echo "##vso[build.addbuildtag]Baseline ${{ parameters.baselineSourceRef }}"
-          displayName: 'Tag build with baseline ref'
+            set -euo pipefail
+            labelFile="$RESULTS_DIR/baseline-label.txt"
+            if [ -f "$labelFile" ]; then
+                label="$(tr -d '\r\n' < "$labelFile")"
+            else
+                # The run script never got as far as resolving the baseline (e.g. the build failed
+                # before the baseline pass); fall back to the requested ref so the run is still
+                # identifiable.
+                echo "##vso[task.logissue type=warning]No baseline-label.txt in results; tagging with the requested ref only."
+                label="${BASELINE_REF}"
+            fi
+            echo "##vso[build.addbuildtag]Baseline ${label}"
+          displayName: 'Tag build with baseline commit'
           condition: succeededOrFailed()
+          env:
+            RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
+            BASELINE_REF: ${{ parameters.baselineSourceRef }}
 
       - task: Bash@3
         displayName: 'Show performance results'

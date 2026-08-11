@@ -616,6 +616,14 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     $BaselineProject = $baselineSource.Project
 }
 
+# Record the resolved baseline label (for a source baseline this is '<ref>@<sha>') in the results
+# tree.  The results directory is copied back to the agent, so a post-test step can read this and
+# tag the build with the exact baseline that was measured - something the pipeline itself cannot do,
+# since the SHA is only known once the ref has been resolved here on the VM.
+if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
+    Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
+}
+
 if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
