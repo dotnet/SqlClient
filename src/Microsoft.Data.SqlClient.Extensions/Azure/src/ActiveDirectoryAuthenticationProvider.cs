@@ -265,7 +265,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
-                // Cache DefaultAzureCredenial based on scope, authority host, tenant, and clientId
+                // Cache DefaultAzureCredential based on scope, authority host, tenant, and clientId
                 TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityHost, scope, tenant, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
@@ -588,11 +588,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         out string msalAuthority)
     {
         if (Uri.TryCreate(authorityUrl, UriKind.Absolute, out Uri? uri) &&
-            uri.Scheme == Uri.UriSchemeHttps)
+            uri.Scheme == Uri.UriSchemeHttps &&
+            uri.Segments.Length > 1)
         {
-            string path = uri.AbsolutePath.Trim('/');
-            int slashIndex = path.IndexOf('/');
-            tenant = slashIndex < 0 ? path : path.Substring(0, slashIndex);
+            // Segments[0] is always the leading "/", so the tenant is Segments[1]. Each segment
+            // keeps its trailing separator when further segments follow, e.g. the segments of
+            // "/{tenant}/oauth2/authorize" are [ "/", "{tenant}/", "oauth2/", "authorize" ].
+            tenant = uri.Segments[1].TrimEnd('/');
 
             if (tenant.Length > 0)
             {

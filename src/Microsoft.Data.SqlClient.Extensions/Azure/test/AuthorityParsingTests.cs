@@ -111,6 +111,8 @@ public class AuthorityParsingTests
     // A tenant is required; an authority without one cannot yield a usable credential.
     [InlineData("https://login.microsoftonline.com")]
     [InlineData("https://login.microsoftonline.com/")]
+    // An empty leading path segment leaves no tenant to authenticate against.
+    [InlineData("https://login.microsoftonline.com//oauth2/authorize")]
     // The server may omit the STSURL entirely.
     [InlineData("")]
     public void TryParseAuthority_RejectsAuthorityWithoutTenant(string authorityUrl)
