@@ -202,6 +202,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
+            // Reclamation, unlike pruning, applies to every pool configuration: a caller can leak a
+            // connection whatever the pool's sizing or idle timeout, and a fixed-size pool is the
+            // case where a leaked slot hurts most. The timer inside is created disarmed and only
+            // runs while callers are parked, so an unblocked pool pays nothing for it.
+            Reclaimer = new PoolReclaimer(this, _timeProvider);
+
             State = Running;
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -777,6 +783,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
+            }
+
+            // Stop the background reclaim sweep before draining, for the same reason as the pruning
+            // timer: an in-flight sweep must not route a reclaimed connection back into the channel
+            // after the drain below has already passed it.
+            try
+            {
+                Reclaimer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Reclaimer.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
@@ -1509,13 +1528,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
-                    if (async)
+                    //
+                    // That FIFO guarantee is also why the reclaim sweep above cannot simply be retried
+                    // on this thread while we wait: cancelling the read to re-sweep would send us to
+                    // the back of the queue behind callers that arrived later. Instead we register
+                    // with the reclaimer, which sweeps on a timer for as long as anyone is parked and
+                    // routes anything it reclaims back through this channel, waking us here.
+                    if (connection is null)
                     {
-                        connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        connection ??= ReadChannelSyncOverAsync(cancellationToken);
+                        Reclaimer.EnterParkedWait();
+                        try
+                        {
+                            connection = async
+                                ? await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false)
+                                : ReadChannelSyncOverAsync(cancellationToken);
+                        }
+                        finally
+                        {
+                            Reclaimer.ExitParkedWait();
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -1558,7 +1589,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// never be returned by their owner, so without this sweep they would leak pool slots.
         /// </summary>
         /// <returns>True if at least one connection was reclaimed; otherwise, false.</returns>
-        private bool ReclaimEmancipatedConnections()
+        internal bool ReclaimEmancipatedConnections()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}", Id);
@@ -1999,6 +2030,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Id,
                 pruned);
         }
+        #endregion
+
+        #region Reclamation
+        /// <summary>
+        /// Drives background sweeps for emancipated connections while callers are parked on the idle
+        /// channel. Unlike <see cref="Pruner"/> this is always present, because a connection can leak
+        /// in any pool configuration, including a fixed-size one.
+        /// </summary>
+        internal PoolReclaimer Reclaimer { get; }
         #endregion
     }
 }
