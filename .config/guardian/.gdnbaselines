@@ -126,7 +126,7 @@
       "memberOf": [
         "default"
       ],
-      "justification": "ApiScan documentationnotfound on microsoft.data.sqlclient.extensions.abstractions.dll for microsoft.data.sqlclient!Microsoft.Data.SqlClient.SqlAuthenticationProviderManager. The change will be fixed soon with a new design change, this is a temporary suppression to unblock the release. The baseline will be removed once the fix is in place.",
+      "justification": "Temporary suppression for ApiScan documentationnotfound in microsoft.data.sqlclient.extensions.abstractions.dll for Microsoft.Data.SqlClient.SqlAuthenticationProviderManager. Remove once the documentation issue is fixed.",
       "createdDate": "2026-08-11 00:00:00Z"
     }
   }
