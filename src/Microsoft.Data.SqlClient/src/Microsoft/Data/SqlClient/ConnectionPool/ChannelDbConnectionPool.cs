@@ -1596,7 +1596,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             List<DbConnectionInternal>? reclaimed = null;
 
-            foreach (DbConnectionInternal connection in _connectionSlots.Snapshot())
+            foreach (DbConnectionInternal connection in _connectionSlots)
             {
                 // TryEnter rather than Enter: IsEmancipated must be read under the connection lock to
                 // avoid racing PrePush/PostPop, but a connection that is currently locked is being
