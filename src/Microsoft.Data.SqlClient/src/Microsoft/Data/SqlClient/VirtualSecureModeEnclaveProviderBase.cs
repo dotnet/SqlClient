@@ -372,7 +372,7 @@ namespace Microsoft.Data.SqlClient
             byte[] reportData = enclaveReportPackage?.Report?.EnclaveData;
             byte[] publicKey = enclavePublicKey?.PublicKey;
 
-            if (reportData == null || reportData.Length < ReportDataLength || publicKey == null)
+            if (reportData == null || reportData.Length < ReportDataLength || publicKey == null || publicKey.Length == 0)
             {
                 throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
             }
