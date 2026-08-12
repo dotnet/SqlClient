@@ -209,7 +209,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
-        public int Count => _connectionSlots.ReservationCount;
+        /// <remarks>
+        /// Reports connections that actually belong to the pool, not
+        /// <see cref="ConnectionPoolSlots.ReservationCount"/>, which also counts reservations held
+        /// for connections that are still being opened. The distinction matters to the SQL Express
+        /// user instance path in <see cref="SqlConnectionFactory.CreateConnection"/>: it treats
+        /// <c>Count &lt;= 0</c> as "nothing in the pool yet", opens a probe connection, and caches the
+        /// resolved instance name on the pool's provider info. Counting an in-flight open here sends
+        /// the first caller down the cached branch instead, where it reads an instance name that
+        /// nothing has set yet.
+        /// </remarks>
+        public int Count => _connectionSlots.ConnectionCount;
 
         /// <inheritdoc />
         public int IdleCount => _idleChannel.Count;
@@ -496,6 +506,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
+            SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -1091,6 +1103,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 if (connection is not null)
                 {
+                    SqlClientDiagnostics.Metrics.EnterPooledConnection();
+
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
@@ -1217,7 +1231,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            _connectionSlots.TryRemove(connection);
+            if (_connectionSlots.TryRemove(connection))
+            {
+                SqlClientDiagnostics.Metrics.ExitPooledConnection();
+            }
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
@@ -1225,6 +1242,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
+            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
             Pruner?.UpdateTimer();
@@ -1370,6 +1388,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             PrepareConnection(owningConnection, connection, transaction);
+            SqlClientDiagnostics.Metrics.SoftConnectRequest();
             return connection;
         }
 

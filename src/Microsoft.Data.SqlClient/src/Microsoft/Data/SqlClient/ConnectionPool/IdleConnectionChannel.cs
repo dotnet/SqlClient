@@ -56,6 +56,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (connection is not null)
                 {
                     Interlocked.Increment(ref _count);
+                    SqlClientDiagnostics.Metrics.EnterFreeConnection();
                 }
                 return true;
             }
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (connection is not null)
                 {
                     Interlocked.Decrement(ref _count);
+                    SqlClientDiagnostics.Metrics.ExitFreeConnection();
                 }
 
                 return true;
@@ -93,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connection is not null)
             {
                 Interlocked.Decrement(ref _count);
+                SqlClientDiagnostics.Metrics.ExitFreeConnection();
             }
 
             return connection;
