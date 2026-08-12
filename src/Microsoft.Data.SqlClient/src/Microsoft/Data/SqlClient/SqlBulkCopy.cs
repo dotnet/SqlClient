@@ -82,6 +82,8 @@ namespace Microsoft.Data.SqlClient
             _results = new List<Result>();
         }
 
+        internal int Count => _results.Count;
+
         internal Result this[int idx] => _results[idx];
 
         // Callback function for the tdsparser
@@ -151,11 +153,11 @@ namespace Microsoft.Data.SqlClient
             public readonly bool IsDataFeed;
         }
 
-        // The initial query will return three tables.
+        // The initial query will return three tables, and may return a fourth for column aliases.
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
-        // Column aliases has 3 columns and n rows
+        // Column aliases has 2 columns and n rows
 
         private const int MetaDataResultId = 1;
 
@@ -484,6 +486,50 @@ namespace Microsoft.Data.SqlClient
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
+            bool resolveColumnAliases = ShouldResolveColumnAliases();
+            string createColumnAliasesTableQuery = resolveColumnAliases
+                ? """
+
+CREATE TABLE #Column_Aliases
+(
+    [Canonical_Column_Name] SYSNAME,
+    [Canonical_Column_Id] INT,
+    [Aliased_Column_Name] SYSNAME
+)
+"""
+                : string.Empty;
+            string populateColumnAliasesQuery = resolveColumnAliases
+                ? $"""
+
+        EXEC sp_executesql N'
+        INSERT INTO #Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
+            SELECT [name], [column_id], ''$to_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 8
+        UNION ALL
+            SELECT [name], [column_id], ''$from_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 5
+        UNION ALL
+            SELECT [name], [column_id], ''$edge_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$edge[_]id[_]%''
+        UNION ALL
+            SELECT [name], [column_id], ''$node_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$node[_]id[_]%''',
+        N'@Object_ID INT', @Object_ID = @Object_ID
+"""
+                : string.Empty;
+            string removeShadowedColumnAliasesQuery = resolveColumnAliases
+                ? $"""
+
+    DELETE FROM #Column_Aliases
+    WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
+"""
+                : string.Empty;
+            string selectColumnAliasesQuery = resolveColumnAliases
+                ? """
+
+SELECT [Canonical_Column_Name], [Aliased_Column_Name]
+FROM #Column_Aliases
+ORDER BY [Canonical_Column_Id] ASC
+
+DROP TABLE #Column_Aliases
+"""
+                : string.Empty;
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -543,13 +589,7 @@ DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
 DECLARE @Has_Sys_All_Columns_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
-
-CREATE TABLE #Column_Aliases
-(
-    [Canonical_Column_Name] SYSNAME,
-    [Canonical_Column_Id] INT,
-    [Aliased_Column_Name] SYSNAME
-)
+{createColumnAliasesTableQuery}
 
 IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
@@ -567,17 +607,7 @@ BEGIN
     IF EXISTS (SELECT TOP 1 * FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{catalogNameStringLiteral}.[sys].[all_columns]') AND [name] = 'graph_type')
     BEGIN
         SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
-
-        EXEC sp_executesql N'
-        INSERT INTO #Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
-            SELECT [name], [column_id], ''$to_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 8
-        UNION ALL
-            SELECT [name], [column_id], ''$from_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 5
-        UNION ALL
-            SELECT [name], [column_id], ''$edge_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$edge[_]id[_]%''
-        UNION ALL
-            SELECT [name], [column_id], ''$node_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$node[_]id[_]%''',
-        N'@Object_ID INT', @Object_ID = @Object_ID
+{populateColumnAliasesQuery}
     END
     ELSE
     BEGIN
@@ -586,9 +616,7 @@ BEGIN
     SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {catalogNameStringLiteral}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
 
     EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
-
-    DELETE FROM #Column_Aliases
-    WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
+{removeShadowedColumnAliasesQuery}
 END
 
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
@@ -598,12 +626,7 @@ EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
 SET FMTONLY OFF;
 
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
-
-SELECT [Canonical_Column_Name], [Aliased_Column_Name]
-FROM #Column_Aliases
-ORDER BY [Canonical_Column_Id] ASC
-
-DROP TABLE #Column_Aliases
+{selectColumnAliasesQuery}
 """;
         }
 
@@ -614,7 +637,8 @@ DROP TABLE #Column_Aliases
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             // Check if we have valid cached metadata for the current destination table
-            if (CachedMetadata != null)
+            if (CachedMetadata != null
+                && (!ShouldResolveColumnAliases() || CachedMetadata.Count > ColumnAliasesResultId))
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
                 result = CachedMetadata;
@@ -714,44 +738,47 @@ DROP TABLE #Column_Aliases
 
             // Apply any necessary column aliases. If an aliased name exists in the
             // local column mappings but the canonical name does not, update them.
-            Result columnAliasResults = internalResults[ColumnAliasesResultId];
-            for (int i = 0; i < columnAliasResults.Count; i++)
+            if (internalResults.Count > ColumnAliasesResultId)
             {
-                Row aliasRow = columnAliasResults[i];
-                SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
-                SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
-
-                if (canonicalName.IsNull || aliasedName.IsNull)
+                Result columnAliasResults = internalResults[ColumnAliasesResultId];
+                for (int i = 0; i < columnAliasResults.Count; i++)
                 {
-                    continue;
-                }
+                    Row aliasRow = columnAliasResults[i];
+                    SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
+                    SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
 
-                string canonical = canonicalName.Value;
-                bool canonicalNameExists = unmatchedColumns.Contains(canonical)
-                    // The destination columns might be escaped. If so, search for those instead
-                    || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
-
-                if (canonicalNameExists)
-                {
-                    continue;
-                }
-
-                // The canonical name does not exist. Look for a local column mapping which matches
-                // the alias (or its escaped variant) and replace its name with its canonical name.
-                string alias = aliasedName.Value;
-                string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
-
-                for (int j = 0; j < _localColumnMappings.Count; j++)
-                {
-                    if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
-                        || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
+                    if (canonicalName.IsNull || aliasedName.IsNull)
                     {
-                        unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
+                        continue;
+                    }
 
-                        unmatchedColumns.Add(canonical);
-                        _localColumnMappings[j].MappedDestinationColumn = canonical;
+                    string canonical = canonicalName.Value;
+                    bool canonicalNameExists = unmatchedColumns.Contains(canonical)
+                        // The destination columns might be escaped. If so, search for those instead
+                        || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
 
-                        break;
+                    if (canonicalNameExists)
+                    {
+                        continue;
+                    }
+
+                    // The canonical name does not exist. Look for a local column mapping which matches
+                    // the alias (or its escaped variant) and replace its name with its canonical name.
+                    string alias = aliasedName.Value;
+                    string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
+
+                    for (int j = 0; j < _localColumnMappings.Count; j++)
+                    {
+                        if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
+                            || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
+                        {
+                            unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
+
+                            unmatchedColumns.Add(canonical);
+                            _localColumnMappings[j].MappedDestinationColumn = canonical;
+
+                            break;
+                        }
                     }
                 }
             }
@@ -1632,6 +1659,33 @@ DROP TABLE #Column_Aliases
             query.Append(typeName);
         }
 
+        private bool ShouldResolveColumnAliases()
+        {
+            if (_localColumnMappings is null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _localColumnMappings.Count; i++)
+            {
+                if (IsGraphColumnAlias(_localColumnMappings[i].DestinationColumn))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsGraphColumnAlias(string name)
+        {
+            string unquotedName = UnquotedName(name);
+            return string.Equals(unquotedName, "$node_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$edge_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$from_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$to_id", StringComparison.OrdinalIgnoreCase);
+        }
+
         private string UnquotedName(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -2330,6 +2384,8 @@ DROP TABLE #Column_Aliases
                 _localColumnMappings.ValidateCollection();
                 foreach (SqlBulkCopyColumnMapping bulkCopyColumn in _localColumnMappings)
                 {
+                    bulkCopyColumn.MappedDestinationColumn = null;
+
                     if (bulkCopyColumn._internalSourceColumnOrdinal == -1)
                     {
                         unspecifiedColumnOrdinals = true;
