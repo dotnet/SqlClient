@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Xunit;
 using System.Data;
 using System.Data.Common;
@@ -658,6 +659,9 @@ public class TransactedConnectionPoolTest
     {
         public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; } = new();
         public SqlConnectionFactory ConnectionFactory => throw new NotImplementedException();
+        // TransactedConnectionPool reports free-connection counts through its owning pool, so this
+        // has to be a real sink rather than a throwing stub.
+        public SqlClientMetrics Metrics => SqlClientDiagnostics.Metrics;
         public int Count => throw new NotImplementedException();
         public bool ErrorOccurred => throw new NotImplementedException();
         public int Id { get; } = 1;

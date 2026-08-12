@@ -108,6 +108,21 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
 
 #if NET
+        /// <summary>
+        /// Creates a metrics instance that is not published as EventCounters and is therefore
+        /// isolated from the process-wide <see cref="SqlClientDiagnostics.Metrics"/> instance.
+        /// </summary>
+        /// <remarks>
+        /// Intended for tests, which give a component its own counters so that assertions are not
+        /// perturbed by unrelated connection activity elsewhere in the process. Counter increments
+        /// operate on plain fields and do not depend on the counters being enabled, so a disabled
+        /// instance still records every value a test needs to observe.
+        /// </remarks>
+        internal static SqlClientMetrics CreateIsolated()
+            => new(SqlClientEventSource.Log, enableMetrics: false);
+#endif
+
+#if NET
         private static void IncrementPlatformSpecificCounter(ref long counter)
             => Interlocked.Increment(ref counter);
 

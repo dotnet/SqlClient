@@ -303,12 +303,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 #if NET
         #region Metric parity
 
-        // The metric counters are process-wide and other suites run in parallel, so these tests
-        // assert that a counter advanced by at least the expected amount rather than by exactly it.
-        // The rate counters only ever increase, which makes that assertion stable under concurrency.
+        // Each test gives its pool its own metrics instance, so the counters observe only that
+        // pool's activity and can be asserted exactly. They run against both pool implementations
+        // so that any divergence in what the channel pool emits shows up as a failing test rather
+        // than as a silent telemetry gap.
         //
-        // These run against both pool implementations so that any divergence in the counters the
-        // channel pool emits shows up as a failing test rather than as a silent telemetry gap.
+        // Counters emitted outside the pool are still process-wide: DbConnectionInternal reports
+        // active-connection and stasis counts against the global instance, so those are not
+        // asserted here.
 
         /// <summary>
         /// Identifies which pool implementation a parameterized metric test exercises.
@@ -323,10 +325,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Builds the requested pool implementation behind the shared pool interface.
+        /// Builds the requested pool implementation behind the shared pool interface, reporting to
+        /// the supplied metrics instance.
         /// </summary>
         private static IDbConnectionPool ConstructPool(
             PoolImplementation implementation,
+            SqlClientMetrics metrics,
             SqlConnectionFactory connectionFactory,
             string connectionString = "Data Source=localhost;",
             int maxPoolSize = 50,
@@ -341,44 +345,99 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     connectionFactory,
                     poolGroup,
                     DbConnectionPoolIdentity.NoIdentity,
-                    new DbConnectionPoolProviderInfo()),
+                    new DbConnectionPoolProviderInfo(),
+                    timeProvider: null,
+                    metrics: metrics),
 
                 PoolImplementation.Channel => new ChannelDbConnectionPool(
                     connectionFactory,
                     poolGroup,
                     DbConnectionPoolIdentity.NoIdentity,
-                    new DbConnectionPoolProviderInfo()),
+                    new DbConnectionPoolProviderInfo(),
+                    connectionCreationRateLimiter: null,
+                    timeProvider: null,
+                    metrics: metrics),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(implementation)),
             };
         }
 
         /// <summary>
-        /// Verifies that creating a physical connection counts a hard connect, covering Story 2
-        /// scenario 1.
+        /// Asserts the exact value of every counter a pool is responsible for. Any counter not named
+        /// by the caller is expected to be zero, so an unexpected emission fails the test.
+        /// </summary>
+        /// <remarks>
+        /// The active-connection gauges are not parameters because they are mechanically derived:
+        /// each connect increments one and the matching disconnect decrements it.
+        /// </remarks>
+        private static void AssertCounters(
+            SqlClientMetrics metrics,
+            long hardConnects = 0,
+            long hardDisconnects = 0,
+            long softConnects = 0,
+            long softDisconnects = 0,
+            long pooledConnections = 0,
+            long freeConnections = 0,
+            long reclaimedConnections = 0)
+        {
+            Dictionary<string, long> expected = new()
+            {
+                ["_hardConnectsRate"] = hardConnects,
+                ["_hardDisconnectsRate"] = hardDisconnects,
+                ["_activeHardConnections"] = hardConnects - hardDisconnects,
+                ["_softConnectsRate"] = softConnects,
+                ["_softDisconnectsRate"] = softDisconnects,
+                ["_activeSoftConnections"] = softConnects - softDisconnects,
+                ["_pooledConnections"] = pooledConnections,
+                ["_freeConnections"] = freeConnections,
+                ["_reclaimedConnections"] = reclaimedConnections,
+            };
+
+            // Reported as a single message listing only the counters that differ. Comparing the
+            // dictionaries directly would be truncated by the assertion formatter, which hides the
+            // one counter the test is about.
+            List<string> mismatches = new();
+            foreach (KeyValuePair<string, long> counter in expected)
+            {
+                long actual = MetricReader.Read(metrics, counter.Key);
+                if (actual != counter.Value)
+                {
+                    mismatches.Add($"{counter.Key}: expected {counter.Value}, actual {actual}");
+                }
+            }
+
+            Assert.True(mismatches.Count == 0, string.Join(Environment.NewLine, mismatches));
+        }
+
+        /// <summary>
+        /// Verifies the counters emitted when the pool creates a physical connection to satisfy a
+        /// request, covering Story 2 scenario 1.
         /// </summary>
         [Theory]
         [InlineData(PoolImplementation.WaitHandle)]
         [InlineData(PoolImplementation.Channel)]
-        public void NewConnection_CountsHardConnect(PoolImplementation implementation)
+        public void NewConnection_CountsHardConnectAndPooledConnection(PoolImplementation implementation)
         {
             // Arrange
-            IDbConnectionPool pool = ConstructPool(implementation, new SuccessfulSqlConnectionFactory());
+            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
             SqlConnection owner = new();
-
-            long before = MetricReader.Read("_hardConnectsRate");
 
             // Act
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
 
-            // Assert
+            // Assert - the connection was handed straight to the caller, so it never became free.
             Assert.NotNull(connection);
-            Assert.True(MetricReader.Read("_hardConnectsRate") >= before + 1);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                pooledConnections: 1);
         }
 
         /// <summary>
-        /// Verifies that retrieving an idle connection counts a soft connect, covering Story 2
-        /// scenario 3.
+        /// Verifies the counters emitted when a request is satisfied from the idle pool rather than
+        /// by creating a connection, covering Story 2 scenario 3.
         /// </summary>
         [Theory]
         [InlineData(PoolImplementation.WaitHandle)]
@@ -386,24 +445,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void IdleConnectionReuse_CountsSoftConnect(PoolImplementation implementation)
         {
             // Arrange
-            IDbConnectionPool pool = ConstructPool(implementation, new SuccessfulSqlConnectionFactory());
+            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
             pool.ReturnInternalConnection(connection!, owner);
 
-            long before = MetricReader.Read("_softConnectsRate");
-
             // Act
             Assert.True(pool.TryGetConnection(new SqlConnection(), null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? reused));
 
-            // Assert
+            // Assert - the second request was served without a second physical connect.
             Assert.Same(connection, reused);
-            Assert.True(MetricReader.Read("_softConnectsRate") >= before + 1);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 2,
+                softDisconnects: 1,
+                pooledConnections: 1);
         }
 
         /// <summary>
-        /// Verifies that returning a connection to the idle pool counts a soft disconnect, covering
+        /// Verifies the counters emitted when a connection is returned to the idle pool, covering
         /// Story 2 scenario 4.
         /// </summary>
         [Theory]
@@ -412,22 +475,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Return_CountsSoftDisconnect(PoolImplementation implementation)
         {
             // Arrange
-            IDbConnectionPool pool = ConstructPool(implementation, new SuccessfulSqlConnectionFactory());
+            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
 
-            long before = MetricReader.Read("_softDisconnectsRate");
-
             // Act
             pool.ReturnInternalConnection(connection!, owner);
 
-            // Assert
-            Assert.True(MetricReader.Read("_softDisconnectsRate") >= before + 1);
+            // Assert - the connection is still pooled, and is now also free.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1);
         }
 
         /// <summary>
-        /// Verifies that destroying a physical connection counts a hard disconnect, covering Story 2
+        /// Verifies the counters emitted when a physical connection is destroyed, covering Story 2
         /// scenario 2.
         /// </summary>
         [Theory]
@@ -436,25 +504,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Destroy_CountsHardDisconnect(PoolImplementation implementation)
         {
             // Arrange
-            IDbConnectionPool pool = ConstructPool(implementation, new SuccessfulSqlConnectionFactory());
+            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
             pool.ReturnInternalConnection(connection!, owner);
 
-            long before = MetricReader.Read("_hardDisconnectsRate");
-
             // Act
             pool.Clear();
 
-            // Assert
-            Assert.True(MetricReader.Read("_hardDisconnectsRate") >= before + 1);
+            // Assert - every gauge the connection contributed to is back to zero.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                hardDisconnects: 1,
+                softConnects: 1,
+                softDisconnects: 1);
         }
 
         /// <summary>
-        /// Verifies that replacing a connection counts a hard disconnect for the connection it
-        /// discards. The channel pool swaps the new connection into the old connection's slot, so
-        /// the pooled-connection gauge is deliberately left untouched.
+        /// Verifies the counters emitted when a checked-out connection is replaced. The channel pool
+        /// swaps the new connection into the old connection's slot, so the pooled-connection gauge
+        /// is deliberately left untouched.
         /// </summary>
         /// <remarks>
         /// This is not parameterized over the wait handle pool: that implementation disposes the
@@ -465,21 +537,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_CountsHardDisconnectForDiscardedConnection()
         {
             // Arrange
-            ChannelDbConnectionPool pool = ConstructPool(new SuccessfulSqlConnectionFactory());
+            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
+            IDbConnectionPool pool = ConstructPool(PoolImplementation.Channel, metrics, new SuccessfulSqlConnectionFactory());
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection));
             Assert.NotNull(oldConnection);
 
-            long beforeDisconnects = MetricReader.Read("_hardDisconnectsRate");
-            long beforePooled = MetricReader.Read("_pooledConnections");
-
             // Act
             DbConnectionInternal newConnection = pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
-            // Assert
+            // Assert - two physical connections were opened and one was retired, leaving the pooled
+            // count unchanged because the replacement inherited the slot.
             Assert.NotSame(oldConnection, newConnection);
-            Assert.True(MetricReader.Read("_hardDisconnectsRate") >= beforeDisconnects + 1);
-            Assert.Equal(beforePooled, MetricReader.Read("_pooledConnections"));
+            AssertCounters(
+                metrics,
+                hardConnects: 2,
+                hardDisconnects: 1,
+                softConnects: 2,
+                pooledConnections: 1);
         }
 
         #endregion
@@ -590,21 +665,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
 #if NET
     /// <summary>
-    /// Reads the private counter fields of the process-wide <see cref="SqlClientMetrics"/> instance.
-    /// The counters are not otherwise observable without an EventCounter listener and its polling
-    /// interval, which would make these tests slow and timing dependent.
+    /// Reads the private counter fields of a <see cref="SqlClientMetrics"/> instance. The counters
+    /// are not otherwise observable without an EventCounter listener and its polling interval,
+    /// which would make these tests slow and timing dependent.
     /// </summary>
     internal static class MetricReader
     {
         /// <summary>
         /// Reads the current value of the named counter field.
         /// </summary>
+        /// <param name="metrics">The metrics instance to read from.</param>
         /// <param name="fieldName">Private field name declared on <see cref="SqlClientMetrics"/>.</param>
-        internal static long Read(string fieldName)
+        internal static long Read(SqlClientMetrics metrics, string fieldName)
         {
             FieldInfo? field = typeof(SqlClientMetrics).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(field);
-            return (long)field!.GetValue(SqlClientDiagnostics.Metrics)!;
+            return (long)field!.GetValue(metrics)!;
         }
     }
 #endif

@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -163,9 +164,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
-            TimeProvider? timeProvider = null)
+            TimeProvider? timeProvider = null,
+            SqlClientMetrics? metrics = null)
         {
             ConnectionFactory = connectionFactory;
+            // metrics is injected only by tests, so a pool's counters can be asserted without
+            // interference from unrelated connection activity elsewhere in the process.
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
             PoolGroup = connectionPoolGroup;
             PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             ProviderInfo = connectionPoolProviderInfo;
@@ -180,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _timeProvider = timeProvider ?? TimeProvider.System;
 
             _connectionSlots = new(MaxPoolSize);
-            _idleChannel = new();
+            _idleChannel = new(Metrics);
             if (PoolGroup.IsBlockingPeriodEnabled())
             {
                 _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: _timeProvider);
@@ -213,6 +218,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         public SqlConnectionFactory ConnectionFactory { get; }
+
+        /// <inheritdoc />
+        public SqlClientMetrics Metrics { get; }
 
         /// <inheritdoc />
         /// <remarks>
@@ -494,7 +502,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // The physical connection was opened (and counted by HardConnectRequest in the
                     // factory) before activation failed, so balance the counter here. The
                     // connection never occupied a slot, so the pooled gauge is untouched.
-                    SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+                    Metrics.HardDisconnectRequest();
                     throw;
                 }
 
@@ -508,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // The replacement took over the old connection's slot, so the pooled gauge is
                 // already correct and only the hard-disconnect counter needs balancing. Traced as a
                 // destroy so the connection's exit is visible in the pooler trace stream.
-                SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+                Metrics.HardDisconnectRequest();
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Disposed.",
@@ -516,7 +524,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     oldConnection.ObjectID);
             }
 
-            SqlClientDiagnostics.Metrics.SoftConnectRequest();
+            Metrics.SoftConnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, connection replaced successfully.", Id);
@@ -527,7 +535,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
-            SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+            Metrics.SoftDisconnectRequest();
 
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
@@ -1152,7 +1160,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         Id,
                         connection.ObjectID);
 
-                    SqlClientDiagnostics.Metrics.EnterPooledConnection();
+                    Metrics.EnterPooledConnection();
 
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
@@ -1323,7 +1331,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     Id,
                     connection.ObjectID);
 
-                SqlClientDiagnostics.Metrics.ExitPooledConnection();
+                Metrics.ExitPooledConnection();
             }
 
             // Removing a connection from the pool opens a free slot.
@@ -1332,7 +1340,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
-            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+            Metrics.HardDisconnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Disposed.",
@@ -1496,7 +1504,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             PrepareConnection(owningConnection, connection, transaction);
-            SqlClientDiagnostics.Metrics.SoftConnectRequest();
+            Metrics.SoftConnectRequest();
             return connection;
         }
 
@@ -1584,7 +1592,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 transaction.GetHashCode(),
                 connection.ObjectID);
 
-            SqlClientDiagnostics.Metrics.ExitFreeConnection();
+            Metrics.ExitFreeConnection();
 
             // Transacting connections are exempt from idle-timeout and clear-generation eviction
             // (closing them would abort the transaction, which may be distributed), so only

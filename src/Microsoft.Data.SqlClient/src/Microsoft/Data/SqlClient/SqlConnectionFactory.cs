@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
             }
 
-            SqlClientDiagnostics.Metrics.HardConnectRequest();
+            pool.Metrics.HardConnectRequest();
             newConnection.MakePooledConnection(pool);
 
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);

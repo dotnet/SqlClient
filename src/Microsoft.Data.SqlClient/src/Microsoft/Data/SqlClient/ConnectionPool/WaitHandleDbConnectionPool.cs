@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -208,7 +209,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
-            TimeProvider timeProvider = null)
+            TimeProvider timeProvider = null,
+            SqlClientMetrics metrics = null)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -241,6 +243,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             _connectionFactory = connectionFactory;
+            // metrics is injected only by tests, so a pool's counters can be asserted without
+            // interference from unrelated connection activity elsewhere in the process.
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
             _connectionPoolGroup = connectionPoolGroup;
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
@@ -285,6 +290,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int IdleCount => _stackNew.Count + _stackOld.Count;
 
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
+
+        /// <inheritdoc/>
+        public SqlClientMetrics Metrics { get; }
 
         public bool ErrorOccurred => _errorState.HasError;
 
@@ -402,7 +410,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                         // If we obtained one from the old stack, destroy it.
 
-                        SqlClientDiagnostics.Metrics.ExitFreeConnection();
+                        Metrics.ExitFreeConnection();
 
                         // Transaction roots must survive even aging out (TxEnd event will clean them up).
                         bool shouldDestroy = true;
@@ -502,14 +510,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 Debug.Assert(obj != null, "null connection is not expected");
 
-                SqlClientDiagnostics.Metrics.ExitFreeConnection();
+                Metrics.ExitFreeConnection();
                 DestroyObject(obj);
             }
             while (_stackOld.TryPop(out obj))
             {
                 Debug.Assert(obj != null, "null connection is not expected");
 
-                SqlClientDiagnostics.Metrics.ExitFreeConnection();
+                Metrics.ExitFreeConnection();
                 DestroyObject(obj);
             }
 
@@ -546,7 +554,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     _objectList.Add(newObj);
                     _totalObjects = _objectList.Count;
 
-                    SqlClientDiagnostics.Metrics.EnterPooledConnection();
+                    Metrics.EnterPooledConnection();
                 }
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", Id, newObj?.ObjectID);
@@ -738,12 +746,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Removed from pool.", Id, obj.ObjectID);
 
-                    SqlClientDiagnostics.Metrics.ExitPooledConnection();
+                    Metrics.ExitPooledConnection();
                 }
                 obj.Dispose();
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Disposed.", Id, obj.ObjectID);
 
-                SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+                Metrics.HardDisconnectRequest();
             }
         }
 
@@ -1143,7 +1151,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             connection = obj;
 
-            SqlClientDiagnostics.Metrics.SoftConnectRequest();
+            Metrics.SoftConnectRequest();
 
             return true;
         }
@@ -1181,7 +1189,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (newConnection != null)
             {
-                SqlClientDiagnostics.Metrics.SoftConnectRequest();
+                Metrics.SoftConnectRequest();
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
@@ -1219,7 +1227,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> {0}, Connection {1}, Popped from general pool.", Id, obj.ObjectID);
 
-                SqlClientDiagnostics.Metrics.ExitFreeConnection();
+                Metrics.ExitFreeConnection();
             }
             return obj;
         }
@@ -1237,7 +1245,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", Id, obj.ObjectID);
 
-                    SqlClientDiagnostics.Metrics.ExitFreeConnection();
+                    Metrics.ExitFreeConnection();
 
                     if (obj.IsTransactionRoot)
                     {
@@ -1389,7 +1397,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _stackNew.Push(obj);
             _waitHandles.PoolSemaphore.Release(1);
 
-            SqlClientDiagnostics.Metrics.EnterFreeConnection();
+            Metrics.EnterFreeConnection();
 
         }
 
@@ -1414,7 +1422,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             Debug.Assert(obj != null, "null obj?");
 
-            SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+            Metrics.SoftDisconnectRequest();
 
             // Once a connection is closing (which is the state that we're in at
             // this point in time) you cannot delegate a transaction to or enlist
@@ -1531,7 +1539,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 DbConnectionInternal obj = reclaimedObjects[i];
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.", Id, obj.ObjectID);
 
-                SqlClientDiagnostics.Metrics.ReclaimedConnectionRequest();
+                Metrics.ReclaimedConnectionRequest();
 
                 emancipatedObjectFound = true;
 
