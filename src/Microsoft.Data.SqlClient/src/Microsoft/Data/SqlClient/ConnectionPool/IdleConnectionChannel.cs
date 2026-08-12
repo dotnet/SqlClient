@@ -21,14 +21,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
         private readonly ChannelReader<DbConnectionInternal?> _reader;
         private readonly ChannelWriter<DbConnectionInternal?> _writer;
-        private readonly SqlClientMetrics _metrics;
+        private readonly ISqlClientMetrics _metrics;
         private volatile int _count;
 
         /// <param name="metrics">
         /// The metrics sink of the pool that owns this channel. Defaults to the process-wide
         /// instance so tests can construct a channel without a pool.
         /// </param>
-        internal IdleConnectionChannel(SqlClientMetrics? metrics = null)
+        internal IdleConnectionChannel(ISqlClientMetrics? metrics = null)
         {
             var channel = Channel.CreateUnbounded<DbConnectionInternal?>();
             _reader = channel.Reader;

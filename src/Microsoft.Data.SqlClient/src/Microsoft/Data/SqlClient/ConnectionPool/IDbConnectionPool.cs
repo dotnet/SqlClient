@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// instance. Making it a pool property lets a test give a pool its own counters so
         /// assertions are not perturbed by unrelated connection activity elsewhere in the process.
         /// </remarks>
-        SqlClientMetrics Metrics { get; }
+        ISqlClientMetrics Metrics { get; }
 
         /// <summary>
         /// The number of connections currently managed by the pool.

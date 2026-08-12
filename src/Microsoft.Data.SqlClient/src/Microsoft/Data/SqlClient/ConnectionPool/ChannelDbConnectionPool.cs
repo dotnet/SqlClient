@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
             TimeProvider? timeProvider = null,
-            SqlClientMetrics? metrics = null)
+            ISqlClientMetrics? metrics = null)
         {
             ConnectionFactory = connectionFactory;
             // metrics is injected only by tests, so a pool's counters can be asserted without
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
-            TransactedConnectionPool = new(this);
+            TransactedConnectionPool = new(this, Metrics);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
             // timeProvider is injected only by tests so idle-timeout expiry and the blocking-period
             // exit timer can be driven deterministically; in production it is null and falls back to
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
-        public SqlClientMetrics Metrics { get; }
+        public ISqlClientMetrics Metrics { get; }
 
         /// <inheritdoc />
         /// <remarks>

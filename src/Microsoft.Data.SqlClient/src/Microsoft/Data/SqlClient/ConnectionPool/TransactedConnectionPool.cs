@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
@@ -62,6 +63,7 @@ internal class TransactedConnectionPool
     #region Fields
     private static int _objectTypeCount;
     internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+    private readonly ISqlClientMetrics _metrics;
 
     #endregion
 
@@ -69,14 +71,16 @@ internal class TransactedConnectionPool
     /// Initializes a new instance of the TransactedConnectionPool class for the specified connection pool.
     /// </summary>
     /// <param name="pool">The main connection pool that this transacted pool is associated with.</param>
+    /// <param name="metrics">The metrics instance to report counters to.</param>
     /// <remarks>
     /// The transacted connection pool works as a companion to the main connection pool,
     /// temporarily holding connections that are enlisted in transactions until those
     /// transactions complete.
     /// </remarks>
-    internal TransactedConnectionPool(IDbConnectionPool pool)
+    internal TransactedConnectionPool(IDbConnectionPool pool, ISqlClientMetrics metrics)
     {
         Pool = pool;
+        _metrics = metrics;
         TransactedConnections = new Dictionary<Transaction, TransactedConnectionList>();
         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
     }
@@ -263,7 +267,7 @@ internal class TransactedConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         }
 
-        Pool.Metrics.EnterFreeConnection();
+        _metrics.EnterFreeConnection();
     }
 
     /// <summary>
@@ -344,7 +348,7 @@ internal class TransactedConnectionPool
             // TODO: can we give this responsibility to the main pool?
             // The bi-directional dependency between the main pool and this pool
             // is messy and hard to understand.
-            Pool.Metrics.ExitFreeConnection();
+            _metrics.ExitFreeConnection();
             Pool.PutObjectFromTransactedPool(transactedObject);
         }
     }

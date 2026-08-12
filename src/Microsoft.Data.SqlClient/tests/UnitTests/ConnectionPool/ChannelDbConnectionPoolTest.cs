@@ -13,6 +13,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -1365,6 +1366,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
+            internal SuccessfulSqlConnectionFactory()
+            {
+            }
+
+            /// <summary>
+            /// Constructs a factory reporting to <paramref name="metrics"/> instead of the
+            /// process-wide default, so a test can assert exact counters on the same instance
+            /// used by the pool under test.
+            /// </summary>
+            internal SuccessfulSqlConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
             /// <summary>
             /// Gets the last timeout budget passed through by the pool to the factory.
             /// </summary>

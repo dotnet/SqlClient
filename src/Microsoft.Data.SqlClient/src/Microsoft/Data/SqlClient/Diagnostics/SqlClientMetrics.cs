@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 #if NETFRAMEWORK
     [PermissionSet(SecurityAction.LinkDemand, Name = "FullTrust")]
 #endif
-    internal sealed partial class SqlClientMetrics
+    internal sealed partial class SqlClientMetrics : ISqlClientMetrics
     {
 #if NETFRAMEWORK
         private const string PerformanceCounterCategoryName = ".NET Data Provider for SqlServer";
@@ -108,21 +108,6 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         }
 
 #if NET
-        /// <summary>
-        /// Creates a metrics instance that is not published as EventCounters and is therefore
-        /// isolated from the process-wide <see cref="SqlClientDiagnostics.Metrics"/> instance.
-        /// </summary>
-        /// <remarks>
-        /// Intended for tests, which give a component its own counters so that assertions are not
-        /// perturbed by unrelated connection activity elsewhere in the process. Counter increments
-        /// operate on plain fields and do not depend on the counters being enabled, so a disabled
-        /// instance still records every value a test needs to observe.
-        /// </remarks>
-        internal static SqlClientMetrics CreateIsolated()
-            => new(SqlClientEventSource.Log, enableMetrics: false);
-#endif
-
-#if NET
         private static void IncrementPlatformSpecificCounter(ref long counter)
             => Interlocked.Increment(ref counter);
 
@@ -139,10 +124,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             => counter?.Decrement();
 #endif
 
-        /// <summary>
-        /// The number of actual connections that are being made to servers
-        /// </summary>
-        internal void HardConnectRequest()
+        /// <inheritdoc />
+        public void HardConnectRequest()
         {
 #if NET
             IncrementPlatformSpecificCounter(ref _activeHardConnections);
@@ -150,10 +133,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             IncrementPlatformSpecificCounter(ref _hardConnectsRate);
         }
 
-        /// <summary>
-        /// The number of actual disconnects that are being made to servers
-        /// </summary>
-        internal void HardDisconnectRequest()
+        /// <inheritdoc />
+        public void HardDisconnectRequest()
         {
 #if NET
             DecrementPlatformSpecificCounter(ref _activeHardConnections);
@@ -161,10 +142,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             IncrementPlatformSpecificCounter(ref _hardDisconnectsRate);
         }
 
-        /// <summary>
-        /// The number of connections we get from the pool
-        /// </summary>
-        internal void SoftConnectRequest()
+        /// <inheritdoc />
+        public void SoftConnectRequest()
         {
 #if NET
             IncrementPlatformSpecificCounter(ref _activeSoftConnections);
@@ -172,10 +151,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             IncrementPlatformSpecificCounter(ref _softConnectsRate);
         }
 
-        /// <summary>
-        /// The number of connections we return to the pool
-        /// </summary>
-        internal void SoftDisconnectRequest()
+        /// <inheritdoc />
+        public void SoftDisconnectRequest()
         {
 #if NET
             DecrementPlatformSpecificCounter(ref _activeSoftConnections);
@@ -183,154 +160,116 @@ namespace Microsoft.Data.SqlClient.Diagnostics
             IncrementPlatformSpecificCounter(ref _softDisconnectsRate);
         }
 
-        /// <summary>
-        /// The number of connections that are not using connection pooling
-        /// </summary>
-        internal void EnterNonPooledConnection()
+        /// <inheritdoc />
+        public void EnterNonPooledConnection()
         {
             IncrementPlatformSpecificCounter(ref _nonPooledConnections);
         }
 
-        /// <summary>
-        /// The number of connections that are not using connection pooling
-        /// </summary>
-        internal void ExitNonPooledConnection()
+        /// <inheritdoc />
+        public void ExitNonPooledConnection()
         {
             DecrementPlatformSpecificCounter(ref _nonPooledConnections);
         }
 
-        /// <summary>
-        /// The number of connections that are managed by the connection pool
-        /// </summary>
-        internal void EnterPooledConnection()
+        /// <inheritdoc />
+        public void EnterPooledConnection()
         {
             IncrementPlatformSpecificCounter(ref _pooledConnections);
         }
 
-        /// <summary>
-        /// The number of connections that are managed by the connection pool
-        /// </summary>
-        internal void ExitPooledConnection()
+        /// <inheritdoc />
+        public void ExitPooledConnection()
         {
             DecrementPlatformSpecificCounter(ref _pooledConnections);
         }
 
-        /// <summary>
-        /// The number of unique connection strings
-        /// </summary>
-        internal void EnterActiveConnectionPoolGroup()
+        /// <inheritdoc />
+        public void EnterActiveConnectionPoolGroup()
         {
             IncrementPlatformSpecificCounter(ref _activeConnectionPoolGroups);
         }
 
-        /// <summary>
-        /// The number of unique connection strings
-        /// </summary>
-        internal void ExitActiveConnectionPoolGroup()
+        /// <inheritdoc />
+        public void ExitActiveConnectionPoolGroup()
         {
             DecrementPlatformSpecificCounter(ref _activeConnectionPoolGroups);
         }
 
-        /// <summary>
-        /// The number of unique connection strings waiting for pruning
-        /// </summary>
-        internal void EnterInactiveConnectionPoolGroup()
+        /// <inheritdoc />
+        public void EnterInactiveConnectionPoolGroup()
         {
             IncrementPlatformSpecificCounter(ref _inactiveConnectionPoolGroups);
         }
 
-        /// <summary>
-        /// The number of unique connection strings waiting for pruning
-        /// </summary>
-        internal void ExitInactiveConnectionPoolGroup()
+        /// <inheritdoc />
+        public void ExitInactiveConnectionPoolGroup()
         {
             DecrementPlatformSpecificCounter(ref _inactiveConnectionPoolGroups);
         }
 
-        /// <summary>
-        /// The number of connection pools
-        /// </summary>
-        internal void EnterActiveConnectionPool()
+        /// <inheritdoc />
+        public void EnterActiveConnectionPool()
         {
             IncrementPlatformSpecificCounter(ref _activeConnectionPools);
         }
 
-        /// <summary>
-        /// The number of connection pools
-        /// </summary>
-        internal void ExitActiveConnectionPool()
+        /// <inheritdoc />
+        public void ExitActiveConnectionPool()
         {
             DecrementPlatformSpecificCounter(ref _activeConnectionPools);
         }
 
-        /// <summary>
-        /// The number of connection pools
-        /// </summary>
-        internal void EnterInactiveConnectionPool()
+        /// <inheritdoc />
+        public void EnterInactiveConnectionPool()
         {
             IncrementPlatformSpecificCounter(ref _inactiveConnectionPools);
         }
 
-        /// <summary>
-        /// The number of connection pools
-        /// </summary>
-        internal void ExitInactiveConnectionPool()
+        /// <inheritdoc />
+        public void ExitInactiveConnectionPool()
         {
             DecrementPlatformSpecificCounter(ref _inactiveConnectionPools);
         }
 
-        /// <summary>
-        /// The number of connections currently in-use
-        /// </summary>
-        internal void EnterActiveConnection()
+        /// <inheritdoc />
+        public void EnterActiveConnection()
         {
             IncrementPlatformSpecificCounter(ref _activeConnections);
         }
 
-        /// <summary>
-        /// The number of connections currently in-use
-        /// </summary>
-        internal void ExitActiveConnection()
+        /// <inheritdoc />
+        public void ExitActiveConnection()
         {
             DecrementPlatformSpecificCounter(ref _activeConnections);
         }
 
-        /// <summary>
-        /// The number of connections currently available for use
-        /// </summary>
-        internal void EnterFreeConnection()
+        /// <inheritdoc />
+        public void EnterFreeConnection()
         {
             IncrementPlatformSpecificCounter(ref _freeConnections);
         }
 
-        /// <summary>
-        /// The number of connections currently available for use
-        /// </summary>
-        internal void ExitFreeConnection()
+        /// <inheritdoc />
+        public void ExitFreeConnection()
         {
             DecrementPlatformSpecificCounter(ref _freeConnections);
         }
 
-        /// <summary>
-        /// The number of connections currently waiting to be made ready for use
-        /// </summary>
-        internal void EnterStasisConnection()
+        /// <inheritdoc />
+        public void EnterStasisConnection()
         {
             IncrementPlatformSpecificCounter(ref _stasisConnections);
         }
 
-        /// <summary>
-        /// The number of connections currently waiting to be made ready for use
-        /// </summary>
-        internal void ExitStasisConnection()
+        /// <inheritdoc />
+        public void ExitStasisConnection()
         {
             DecrementPlatformSpecificCounter(ref _stasisConnections);
         }
 
-        /// <summary>
-        ///  The number of connections we reclaim from GC'd external connections
-        /// </summary>
-        internal void ReclaimedConnectionRequest()
+        /// <inheritdoc />
+        public void ReclaimedConnectionRequest()
         {
             IncrementPlatformSpecificCounter(ref _reclaimedConnections);
         }

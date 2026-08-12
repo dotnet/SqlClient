@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             TimeProvider timeProvider = null,
-            SqlClientMetrics metrics = null)
+            ISqlClientMetrics metrics = null)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _pooledDbAuthenticationContexts = new ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                                                                                                                                                         capacity: 2);
 
-            _transactedConnectionPool = new TransactedConnectionPool(this);
+            _transactedConnectionPool = new TransactedConnectionPool(this, Metrics);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
             State = Running;
@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
         /// <inheritdoc/>
-        public SqlClientMetrics Metrics { get; }
+        public ISqlClientMetrics Metrics { get; }
 
         public bool ErrorOccurred => _errorState.HasError;
 

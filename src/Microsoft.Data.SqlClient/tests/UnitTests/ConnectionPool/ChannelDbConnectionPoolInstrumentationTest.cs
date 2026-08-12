@@ -9,7 +9,6 @@ using System.Data.Common;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.RateLimiting;
@@ -300,7 +299,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-#if NET
         #region Metric parity
 
         // Each test gives its pool its own metrics instance, so the counters observe only that
@@ -330,7 +328,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         private static IDbConnectionPool ConstructPool(
             PoolImplementation implementation,
-            SqlClientMetrics metrics,
+            ISqlClientMetrics metrics,
             SqlConnectionFactory connectionFactory,
             string connectionString = "Data Source=localhost;",
             int maxPoolSize = 50,
@@ -371,7 +369,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// each connect increments one and the matching disconnect decrements it.
         /// </remarks>
         private static void AssertCounters(
-            SqlClientMetrics metrics,
+            FakeSqlClientMetrics metrics,
             long hardConnects = 0,
             long hardDisconnects = 0,
             long softConnects = 0,
@@ -380,29 +378,38 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             long freeConnections = 0,
             long reclaimedConnections = 0)
         {
-            Dictionary<string, long> expected = new()
+            (string Name, long Expected, long Actual)[] counters =
             {
-                ["_hardConnectsRate"] = hardConnects,
-                ["_hardDisconnectsRate"] = hardDisconnects,
-                ["_activeHardConnections"] = hardConnects - hardDisconnects,
-                ["_softConnectsRate"] = softConnects,
-                ["_softDisconnectsRate"] = softDisconnects,
-                ["_activeSoftConnections"] = softConnects - softDisconnects,
-                ["_pooledConnections"] = pooledConnections,
-                ["_freeConnections"] = freeConnections,
-                ["_reclaimedConnections"] = reclaimedConnections,
+                ("hardConnects", hardConnects, metrics.HardConnects),
+                ("hardDisconnects", hardDisconnects, metrics.HardDisconnects),
+                ("activeHardConnections", hardConnects - hardDisconnects, metrics.ActiveHardConnections),
+                ("softConnects", softConnects, metrics.SoftConnects),
+                ("softDisconnects", softDisconnects, metrics.SoftDisconnects),
+                ("activeSoftConnections", softConnects - softDisconnects, metrics.ActiveSoftConnections),
+                ("pooledConnections", pooledConnections, metrics.PooledConnections),
+                ("freeConnections", freeConnections, metrics.FreeConnections),
+                ("reclaimedConnections", reclaimedConnections, metrics.ReclaimedConnections),
+
+                // Not emitted through a pool's metrics instance, so any non-zero value here means a
+                // counter has moved to the pool that the tests have not accounted for.
+                ("nonPooledConnections", 0, metrics.NonPooledConnections),
+                ("activeConnectionPoolGroups", 0, metrics.ActiveConnectionPoolGroups),
+                ("inactiveConnectionPoolGroups", 0, metrics.InactiveConnectionPoolGroups),
+                ("activeConnectionPools", 0, metrics.ActiveConnectionPools),
+                ("inactiveConnectionPools", 0, metrics.InactiveConnectionPools),
+                ("activeConnections", 0, metrics.ActiveConnections),
+                ("stasisConnections", 0, metrics.StasisConnections),
             };
 
-            // Reported as a single message listing only the counters that differ. Comparing the
-            // dictionaries directly would be truncated by the assertion formatter, which hides the
-            // one counter the test is about.
+            // Reported as a single message listing only the counters that differ. Asserting on a
+            // collection instead would be truncated by the assertion formatter, which hides the one
+            // counter the test is about.
             List<string> mismatches = new();
-            foreach (KeyValuePair<string, long> counter in expected)
+            foreach ((string name, long expected, long actual) in counters)
             {
-                long actual = MetricReader.Read(metrics, counter.Key);
-                if (actual != counter.Value)
+                if (actual != expected)
                 {
-                    mismatches.Add($"{counter.Key}: expected {counter.Value}, actual {actual}");
+                    mismatches.Add($"{name}: expected {expected}, actual {actual}");
                 }
             }
 
@@ -419,8 +426,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void NewConnection_CountsHardConnectAndPooledConnection(PoolImplementation implementation)
         {
             // Arrange
-            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
-            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
 
             // Act
@@ -445,8 +452,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void IdleConnectionReuse_CountsSoftConnect(PoolImplementation implementation)
         {
             // Arrange
-            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
-            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
@@ -475,8 +482,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Return_CountsSoftDisconnect(PoolImplementation implementation)
         {
             // Arrange
-            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
-            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
@@ -504,8 +511,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Destroy_CountsHardDisconnect(PoolImplementation implementation)
         {
             // Arrange
-            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
-            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory());
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
             Assert.NotNull(connection);
@@ -537,8 +544,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void ReplaceConnection_CountsHardDisconnectForDiscardedConnection()
         {
             // Arrange
-            SqlClientMetrics metrics = SqlClientMetrics.CreateIsolated();
-            IDbConnectionPool pool = ConstructPool(PoolImplementation.Channel, metrics, new SuccessfulSqlConnectionFactory());
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(PoolImplementation.Channel, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection));
             Assert.NotNull(oldConnection);
@@ -558,7 +565,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         #endregion
-#endif
 
         #region Test classes
 
@@ -662,28 +668,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
     }
-
-#if NET
-    /// <summary>
-    /// Reads the private counter fields of a <see cref="SqlClientMetrics"/> instance. The counters
-    /// are not otherwise observable without an EventCounter listener and its polling interval,
-    /// which would make these tests slow and timing dependent.
-    /// </summary>
-    internal static class MetricReader
-    {
-        /// <summary>
-        /// Reads the current value of the named counter field.
-        /// </summary>
-        /// <param name="metrics">The metrics instance to read from.</param>
-        /// <param name="fieldName">Private field name declared on <see cref="SqlClientMetrics"/>.</param>
-        internal static long Read(SqlClientMetrics metrics, string fieldName)
-        {
-            FieldInfo? field = typeof(SqlClientMetrics).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(field);
-            return (long)field!.GetValue(metrics)!;
-        }
-    }
-#endif
 
     /// <summary>
     /// xUnit assertion helper for substring matching over a captured trace stream.
