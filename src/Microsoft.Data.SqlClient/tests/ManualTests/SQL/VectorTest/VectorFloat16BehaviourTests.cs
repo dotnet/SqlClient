@@ -192,6 +192,58 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
+    [ConditionalTheory(nameof(IsSupported))]
+    [InlineData("float16", "float32")]
+    [InlineData("float32", "float16")]
+    [InlineData("float16", "float16")]
+    public void BulkCopyPreservesNullsBetweenColumnsOfEitherBaseType(string sourceBaseType, string destinationBaseType)
+    {
+        Table source = sourceBaseType == "float16" ? _float16Table : _float32Table;
+        Table destination = destinationBaseType == "float16" ? _float16Table : _float32Table;
+
+        // Interleaved, so that a row's nullness cannot be satisfied by position alone.
+        Insert(source, DBNull.Value);
+        Insert(source, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Insert(source, DBNull.Value);
+        Insert(source, DBNull.Value);
+
+        using SqlConnection sourceConnection = new(_connectionString);
+        sourceConnection.Open();
+        using SqlCommand selectCommand =
+            new($"SELECT {ColumnName} FROM {source.Name} ORDER BY Id", sourceConnection);
+        using SqlDataReader sourceReader = selectCommand.ExecuteReader();
+
+        using SqlConnection destinationConnection = new(_connectionString);
+        destinationConnection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = destination.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(sourceReader);
+        }
+
+        using SqlCommand verifyCommand =
+            new($"SELECT TOP 4 {ColumnName} FROM {destination.Name} ORDER BY Id DESC", destinationConnection);
+        using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
+
+        // Read back in descending order, so the expected pattern is the reverse of the
+        // order the rows were inserted in.
+        foreach (bool expectedNull in new[] { true, true, false, true })
+        {
+            Assert.True(verifyReader.Read());
+            Assert.Equal(expectedNull, verifyReader.IsDBNull(0));
+
+            if (expectedNull)
+            {
+                Assert.Equal(DBNull.Value, verifyReader.GetValue(0));
+            }
+            else
+            {
+                Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
+            }
+        }
+    }
+
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceIntoFloat16Column()
     {
