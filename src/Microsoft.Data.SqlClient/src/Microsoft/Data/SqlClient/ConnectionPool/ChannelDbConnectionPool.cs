@@ -1501,6 +1501,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             PrepareConnection(owningConnection, connection, transaction);
             Metrics.SoftConnectRequest();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
+
             return connection;
         }
 
@@ -1683,6 +1687,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
                 WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.RequestWarmup | INFO | {0}, Scheduled warmup loop. Count={1}, MinPoolSize={2}", Id, Count, MinPoolSize);
             }
             catch (Exception ex)
             {
@@ -1714,6 +1721,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private async Task RunWarmupLoopAsync()
         {
+            int warmedUp = 0;
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop starting. Count={1}, MinPoolSize={2}", Id, Count, MinPoolSize);
+
             try
             {
                 CancellationToken token;
@@ -1803,6 +1815,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         break;
                     }
 
+                    warmedUp++;
+
                     // OpenNewInternalConnection is synchronous and blocks the loop's thread for
                     // the duration of the physical open. Yield between creations so a multi-
                     // connection warmup returns its thread-pool worker to the scheduler between
@@ -1810,6 +1824,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // responsive to cancellation. There is no sync-over-async anywhere in this path.
                     await Task.Yield();
                 }
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop finished. Warmed up {1} connections. Count={2}", Id, warmedUp, Count);
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
@@ -1818,7 +1835,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // rather than absorbed into a pool that keeps running in a potentially corrupted
                 // state; the finally below still releases the single-loop guard on that path.
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop failed, absorbing: {1}", Id, ex);
+                    "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop failed, absorbing. Warmed up {1} connections: {2}", Id, warmedUp, ex);
             }
             finally
             {
