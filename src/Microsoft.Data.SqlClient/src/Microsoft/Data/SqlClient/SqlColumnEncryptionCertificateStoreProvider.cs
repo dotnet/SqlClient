@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
         /// Gets a string array containing valid certificate locations.
         /// </summary>
         private static string[] ValidCertificateLocations =>
-            Environment.OSVersion.Platform == PlatformID.Win32NT
+            OsConstants.IsWindows
                 ? [CertLocationLocalMachine, CertLocationCurrentUser]
                 : [CertLocationCurrentUser];
 
@@ -158,14 +158,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Extract the store location where the cert is stored
-            if (storeLocationSpan.IsEmpty
-                && Environment.OSVersion.Platform == PlatformID.Win32NT)
+            if (storeLocationSpan.IsEmpty && OsConstants.IsWindows)
             {
                 // Default to Local Machine on Windows. Non-Windows platforms only support CurrentUser
                 storeLocation = StoreLocation.LocalMachine;
             }
             else if (storeLocationSpan.Equals(CertLocationLocalMachine.AsSpan(), StringComparison.OrdinalIgnoreCase)
-                && Environment.OSVersion.Platform == PlatformID.Win32NT)
+                && OsConstants.IsWindows)
             {
                 storeLocation = StoreLocation.LocalMachine;
             }

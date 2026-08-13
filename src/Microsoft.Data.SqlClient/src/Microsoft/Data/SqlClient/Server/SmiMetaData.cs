@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal static readonly SmiMetaData DefaultDateTimeOffset = new SmiMetaData(SqlDbType.DateTimeOffset, 10, 0, 7, SqlCompareOptions.None);     // SqlDbType.DateTimeOffset
         // No default for generic UDT
 
-        internal static SmiMetaData DefaultNVarChar => 
+        internal static SmiMetaData DefaultNVarChar =>
             new SmiMetaData(
                 DefaultNVarChar_NoCollation.SqlDbType,
                 DefaultNVarChar_NoCollation.MaxLength,
@@ -530,7 +530,7 @@ namespace Microsoft.Data.SqlClient.Server
             _extendedProperties = smdDflt._extendedProperties;  // This is ok due to immutability
         }
 
-        virtual internal string TraceString(int indent)
+        internal virtual string TraceString(int indent)
         {
             string indentStr = new string(' ', indent);
             string fields = string.Empty;
@@ -847,7 +847,7 @@ namespace Microsoft.Data.SqlClient.Server
 
     // SmiStorageMetaData
     //
-    //  This class represents the addition of storage-level attributes to the hierarchy (i.e. attributes from 
+    //  This class represents the addition of storage-level attributes to the hierarchy (i.e. attributes from
     //  underlying table, source variables, or whatever).
     //
     //  Most values use Null (either IsNullable == true or CLR null) to indicate "Not specified" state.  Selection

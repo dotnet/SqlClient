@@ -4,72 +4,59 @@
 
 using System;
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
+
+#nullable enable
 
 namespace Microsoft.Data.SqlClient.TestUtilities
 {
     public class Config
     {
-        public string TCPConnectionString = null;
-        public string NPConnectionString = null;
-        public string TCPConnectionStringHGSVBS = null;
-        public string TCPConnectionStringNoneVBS = null;
-        public string TCPConnectionStringAASSGX = null;
-        public string AADAuthorityURL = null;
-        public string AADPasswordConnectionString = null;
-        public string AADServicePrincipalId = null;
-        public string AADServicePrincipalSecret = null;
-        public string AzureKeyVaultURL = null;
-        public string AzureKeyVaultTenantId = null;
-        public string LocalDbAppName = null;
-        public string LocalDbSharedInstanceName = null;
+        private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+        {
+            AllowTrailingCommas = true,
+            IncludeFields = true,
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+        };
+
+        public string? TCPConnectionString = null;
+        public string? NPConnectionString = null;
+        public string? TCPConnectionStringHGSVBS = null;
+        public string? TCPConnectionStringNoneVBS = null;
+        public string? TCPConnectionStringAASSGX = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
+        public string? AADAuthorityURL = null;
+        public string? AADPasswordConnectionString = null;
+        public string? AADServicePrincipalId = null;
+        public string? AADServicePrincipalSecret = null;
+        public string? AzureKeyVaultURL = null;
+        public string? AzureKeyVaultTenantId = null;
         public bool SupportsIntegratedSecurity = false;
-        public bool ManagedIdentitySupported = true;
-        public string FileStreamDirectory = null;
+        public string? LocalDbAppName = null;
+        public string? LocalDbSharedInstanceName = null;
+        public string? FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
-        public string DNSCachingConnString = null;
-        public string DNSCachingServerCR = null;  // this is for the control ring
-        public string DNSCachingServerTR = null;  // this is for the tenant ring
-        public bool IsAzureSynapse = false; // True for Azure Data Warehouse/Synapse
+        public string? DNSCachingConnString = null;
+        public string? DNSCachingServerCR = null;  // this is for the control ring
+        public string? DNSCachingServerTR = null;  // this is for the tenant ring
         public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
-        public string EnclaveAzureDatabaseConnString = null;
-        public string UserManagedIdentityClientId = null;
-        public string PowerShellPath = null;
-        public string KerberosDomainPassword = null;
-        public string KerberosDomainUser = null;
+        public string? EnclaveAzureDatabaseConnString = null;
+        public bool ManagedIdentitySupported = true;
+        public string? UserManagedIdentityClientId = null;
+        public string? PowerShellPath = null;
+        public string? AliasName = null;
+        public string? KerberosDomainPassword = null;
+        public string? KerberosDomainUser = null;
         public bool IsManagedInstance = false;
-        public string AliasName = null;
 
-        public static Config Load(string configPath = @"config.json")
+        public static Config Load(string configPath)
         {
-            // Allow an override of the config path via an environment variable.
-            configPath = Environment.GetEnvironmentVariable("TEST_MDS_CONFIG") ?? configPath;
-
-            Config config;
-            try
-            {
-                using (StreamReader r = new StreamReader(configPath))
-                {
-                    config = JsonConvert.DeserializeObject<Config>(r.ReadToEnd())
-                        ?? throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'.");
-                }
-            }
-            catch
-            {
-                throw;
-            }
-
-            static void SetFromEnv(string envVar, ref string configValue)
-            {
-                string envValue = Environment.GetEnvironmentVariable(envVar);
-                if (!string.IsNullOrEmpty(envValue))
-                {
-                    configValue = envValue;
-                }
-            }
+            Config config = LoadInternal(Environment.GetEnvironmentVariable("TEST_MDS_CONFIG")) ??
+                            LoadInternal(configPath) ??
+                            throw new FileNotFoundException("Could not find test configuration file.");
 
             // Allow environment variables to override individual config values.
             SetFromEnv("MDS_TCPConnectionString", ref config.TCPConnectionString);
@@ -77,10 +64,53 @@ namespace Microsoft.Data.SqlClient.TestUtilities
             return config;
         }
 
-        public static void UpdateConfig(Config updatedConfig, string configPath = @"config.json")
+        public static Config Load()
         {
-            string config = JsonConvert.SerializeObject(updatedConfig);
+            // Load config from environment variable first, jsonc file second, json file last.
+            Config config = LoadInternal(Environment.GetEnvironmentVariable("TEST_MDS_CONFIG")) ??
+                            LoadInternal("config.jsonc") ??
+                            LoadInternal("config.json") ??
+                            throw new FileNotFoundException("Could not find test configuration file.");
+
+            // Allow environment variables to override individual config values.
+            SetFromEnv("MDS_TCPConnectionString", ref config.TCPConnectionString);
+
+            return config;
+        }
+
+        public static void UpdateConfig(Config updatedConfig, string configPath = @"config.jsonc")
+        {
+            string config = JsonSerializer.Serialize(updatedConfig, JsonSerializerOptions);
             File.WriteAllText(configPath, config);
+        }
+
+        private static Config? LoadInternal(string? configPath)
+        {
+            if (configPath is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                using StreamReader sr = new StreamReader(configPath);
+                return JsonSerializer.Deserialize<Config>(sr.ReadToEnd(), JsonSerializerOptions) ??
+                       throw new InvalidOperationException($"Failed to deserialize config from '{configPath}'");
+            }
+            catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+            {
+                // File did not exist at the path given. We will try a different location.
+                return null;
+            }
+        }
+
+        private static void SetFromEnv(string envVar, ref string? configValue)
+        {
+            string? envValue = Environment.GetEnvironmentVariable(envVar);
+            if (!string.IsNullOrEmpty(envValue))
+            {
+                configValue = envValue;
+            }
         }
     }
 }

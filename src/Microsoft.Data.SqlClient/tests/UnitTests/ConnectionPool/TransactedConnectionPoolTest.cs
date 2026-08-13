@@ -713,6 +713,8 @@ public class TransactedConnectionPoolTest
 
         public override string ServerVersion => "Mock";
 
+        public override ConnectionCapabilities Capabilities => new();
+
         public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {
             throw new NotImplementedException();

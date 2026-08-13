@@ -13,6 +13,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
@@ -43,13 +44,17 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteXmlReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             return BeginExecuteXmlReaderInternal(
                 CommandBehavior.SequentialAccess,
@@ -71,33 +76,41 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent(
                     "SqlCommand.EndExecuteXmlReader | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
+                    "Object Id {0}, " +
+                    "Activity Id {1}, " +
+                    "Client Connection Id {2}, " +
+                    "Command Text '{3}'",
+                    ObjectID,
+                    ActivityCorrelator.Current,
+                    _activeConnection.ClientConnectionId,
+                    CommandText);
             }
         }
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader/*'/>
         public XmlReader ExecuteXmlReader()
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-            
+
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteXmlReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -142,11 +155,11 @@ namespace Microsoft.Data.SqlClient
             IsProviderRetriable
                 ? InternalExecuteXmlReaderWithRetryAsync(cancellationToken)
                 : InternalExecuteXmlReaderAsync(cancellationToken);
-        
+
         #endregion
-        
+
         #region Private Methods
-        
+
         private static XmlReader CompleteXmlReader(SqlDataReader dataReader, bool isAsync)
         {
             XmlReader xmlReader = null;
@@ -185,11 +198,15 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
-            
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
+
             return BeginExecuteXmlReaderInternal(
                 CommandBehavior.SequentialAccess,
                 callback,
@@ -215,7 +232,7 @@ namespace Microsoft.Data.SqlClient
                 // Reset _pendingCancel upon entry into any Execute - used to synchronize state
                 // between entry into Execute* API and the thread obtaining the stateObject.
                 _pendingCancel = false;
-                
+
                 // Special case - done outside of try/catches to prevent putting a stateObj back
                 // into pool when we should not.
                 ValidateAsyncCommand();
@@ -247,7 +264,7 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite,
                         isRetry);
 
-                    // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong 
+                    // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong
                 }
                 catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
@@ -261,13 +278,13 @@ namespace Microsoft.Data.SqlClient
                 if (writeTask is not null)
                 {
                     AsyncHelper.ContinueTaskWithState(
-                        task: writeTask,
-                        completion: localCompletion,
-                        state: Tuple.Create(this, localCompletion),
-                        onSuccess: static state =>
+                        taskToContinue: writeTask,
+                        taskCompletionSource: localCompletion,
+                        state1: this,
+                        state2: localCompletion,
+                        onSuccess: static (sqlCommand, localCompletion) =>
                         {
-                            var parameters = (Tuple<SqlCommand, TaskCompletionSource<object>>)state;
-                            parameters.Item1.BeginExecuteXmlReaderInternalReadStage(parameters.Item2);
+                            sqlCommand.BeginExecuteXmlReaderInternalReadStage(localCompletion);
                         });
                 }
                 else
@@ -333,7 +350,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.ReadSni(completion);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
@@ -352,21 +369,21 @@ namespace Microsoft.Data.SqlClient
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
-                
+
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                
+
                 source.SetException(e);
             }
             else if (task.IsCanceled)
             {
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                
+
                 source.SetCanceled();
             }
             else
             {
                 s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                
+
                 source.SetResult(task.Result);
             }
         }
@@ -374,13 +391,17 @@ namespace Microsoft.Data.SqlClient
         private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
-            
+
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException is not null)
@@ -389,9 +410,9 @@ namespace Microsoft.Data.SqlClient
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
-            
+
             ThrowIfReconnectionHasBeenCanceled();
-            
+
             // Locking _stateObj prevents races with close/cancel.
             // If we have already initiated the End call internally, we have already done that, so
             // no point doing it again.
@@ -405,7 +426,7 @@ namespace Microsoft.Data.SqlClient
 
             return EndExecuteXmlReaderInternal(asyncResult);
         }
-        
+
         private XmlReader EndExecuteXmlReaderInternal(IAsyncResult asyncResult)
         {
             bool success = false;
@@ -443,27 +464,31 @@ namespace Microsoft.Data.SqlClient
                 WriteEndExecuteEvent(success, sqlExceptionNumber, isSynchronous: false);
             }
         }
-        
+
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
-            
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
+
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
-            
+
             // Connection can be used as state in RegisterForConnectionCloseNotification continuation
             // to avoid an allocation so use it as the state value if possible but it can be changed if
             // you need it for a more important piece of data that justifies the tuple allocation later
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>(_activeConnection);
-            
+
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
             {
@@ -476,7 +501,7 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
 
-            // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection 
+            // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
             if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
             {
@@ -516,34 +541,34 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<XmlReader> source = context.TaskCompletionSource;
 
                     context.Dispose();
-                        
+
                     command.CleanupAfterExecuteXmlReaderAsync(task, source, operationId);
                 },
                 scheduler: TaskScheduler.Default);
             }
-            catch (Exception e) 
+            catch (Exception e)
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                
+
                 source.SetException(e);
             }
 
             return returnedTask;
         }
-        
+
         private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
             RetryLogicProvider.ExecuteAsync(
                 sender: this,
                 () => InternalExecuteXmlReaderAsync(cancellationToken),
                 cancellationToken);
-        
+
         #endregion
 
         internal sealed class ExecuteXmlReaderAsyncCallContext
             : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
         {
             public SqlCommand Command => _owner;
-            
+
             public Guid OperationId { get; set; }
 
             public TaskCompletionSource<XmlReader> TaskCompletionSource => _source;

@@ -156,6 +156,13 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
 
+        /// <summary>
+        /// Delegate invoked after a SQL batch response is prepared but before it is
+        /// sent to the client. Tests can use this to inject or replace tokens in the
+        /// response message.
+        /// </summary>
+        public Action<TDSMessage> OnSQLBatchCompleted { get; set; }
+
         public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
 
 
@@ -472,6 +479,9 @@ namespace Microsoft.SqlServer.TDS.Servers
                 // Update session with the new packet size
                 session.PacketSize = (uint)Arguments.PacketSize;
             }
+
+            // Allow tests to modify or inject tokens into the response
+            OnSQLBatchCompleted?.Invoke(responseMessage[0]);
 
             return responseMessage;
         }

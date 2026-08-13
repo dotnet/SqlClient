@@ -58,10 +58,16 @@ namespace Microsoft.SqlServer.TDS
             }
             else if (buildVersion.Major == 8)
             {
+                // SQL Server 2000. This version is no longer supported by the
+                // client; the simulated server can still emit it so that the
+                // client's rejection of unsupported versions can be exercised.
                 return SqlServer2000;
             }
             else if (buildVersion.Major == 7)
             {
+                // SQL Server 7.0. This version is no longer supported by the
+                // client; the simulated server can still emit it so that the
+                // client's rejection of unsupported versions can be exercised.
                 return SqlServer7_0;
             }
             else
@@ -97,7 +103,11 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            return tdsVersion >= SqlServer7_0 && tdsVersion <= SqlServer2012;
+            // The simulated server can speak any TDS version up to 2012,
+            // including the legacy 7.0/2000 versions. Emitting those legacy
+            // versions lets tests verify that the client rejects servers whose
+            // TDS version is no longer supported.
+            return tdsVersion <= SqlServer2012;
         }
     }
 }

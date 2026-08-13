@@ -1,0 +1,76 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This template installs a single .NET SDK and zero or more .NET Runtimes.  The
+# SDK version is always read from the root global.json file.  The Runtimes to
+# install, if any, may be provided as an array of version strings.
+#
+# The UseDotNet@2 task installs the SDK/Runtimes for the agent's native
+# architecture, including ARM64.  (The historical ARM64 workaround for
+# https://github.com/microsoft/azure-pipelines-tasks/issues/20300 is no longer
+# needed now that the task correctly detects win-arm64 in v271+.)
+
+parameters:
+
+  # True to force installation of the x86 build (e.g. for x86 test runs on an
+  # x64 host).  When false, UseDotNet@2 installs for the agent's native
+  # architecture.
+  - name: forceX86
+    type: boolean
+    default: false
+
+  # True to emit debug information and steps.
+  - name: debug
+    type: boolean
+    default: false
+
+  # The directory to install to.
+  - name: installDir
+    type: string
+    default: $(Agent.ToolsDirectory)/dotnet
+
+  # The list of .NET Runtimes to install, if any.  These must adhere to the
+  # format expected by the UseDotNet@2 task:
+  #
+  # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/use-dotnet-v2
+  #
+  - name: runtimes
+    type: object
+    default: []
+
+steps:
+
+  # Install the SDK listed in the global.json file.
+  #
+  # retryCountOnTaskFailure is set because UseDotNet@2 fails intermittently
+  # in CI due to transient network/CDN issues when downloading the SDK.
+  - task: UseDotNet@2
+    displayName: Install .NET SDK (global.json)
+    retryCountOnTaskFailure: 3
+    inputs:
+      installationPath: ${{ parameters.installDir }}
+      packageType: sdk
+      useGlobalJson: true
+    ${{ if parameters.forceX86 }}:
+      env:
+        PROCESSOR_ARCHITECTURE: x86
+
+  # Install the desired Runtimes, if any.
+  - ${{ each version in parameters.runtimes }}:
+    - task: UseDotNet@2
+      displayName: Install .NET ${{ version }} Runtime
+      retryCountOnTaskFailure: 3
+      inputs:
+        installationPath: ${{ parameters.installDir }}
+        packageType: runtime
+        version: ${{ version }}
+      ${{ if parameters.forceX86 }}:
+        env:
+          PROCESSOR_ARCHITECTURE: x86
+
+  # Report what was installed.
+  - pwsh: dotnet --info
+    displayName: Report installed .NET SDK and Runtimes

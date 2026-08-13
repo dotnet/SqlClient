@@ -12,6 +12,7 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public class AKVUnitTests : IClassFixture<AzureKeyVaultKeyFixture>
     {
         const string EncryptionAlgorithm = "RSA_OAEP";

@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <summary>
     /// Tests for output parameters.
     /// </summary>
+    [Trait("Set", "3")]
     public class OutputParameterTests
     {
         /// <summary>
@@ -65,7 +66,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="collation">Name of a SQL Server collation which encodes text in the given code page.</param>
         /// <param name="codePage">ID of the codepage which should be used by SQL Server and the driver to encode and decode text.</param>
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(OutputParameterCodePages))]
         public void CollatedStringInOutputParameter_DecodesSuccessfully(string collation, int codePage)
         {

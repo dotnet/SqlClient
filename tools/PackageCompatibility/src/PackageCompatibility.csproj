@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+
+    <TargetFrameworks>net481;net10.0</TargetFrameworks>
+
+    <RootNamespace>Microsoft.Data.SqlClient.Tools.PackageCompatibility</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- SqlClient Packages -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+
+    <!-- Include the Azure package if a version for it was specified. -->
+    <PackageReference
+      Include="Microsoft.Data.SqlClient.Extensions.Azure"
+      Condition="'$(AzureVersion)' != ''" />
+  </ItemGroup>
+
+  <!--
+    Define AZURE_EXTENSIONS so that C# code can use #if AZURE_EXTENSIONS to guard references to
+    types from the optional Extensions.Azure package.  Without this, the build would fail when the
+    package is absent because the compiler would still try to resolve those type references.  See
+    PackageVersions.Partial.cs for usage.
+  -->
+  <PropertyGroup Condition="'$(AzureVersion)' != ''">
+    <DefineConstants>$(DefineConstants);AZURE_EXTENSIONS</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Other Packages -->
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>PackageCompatibility.Test</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Generate code with the SqlClient package versions. -->
+  <Import Project="GeneratePackageVersions.targets" />
+
+</Project>

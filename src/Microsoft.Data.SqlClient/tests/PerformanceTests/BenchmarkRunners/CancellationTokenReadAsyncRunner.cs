@@ -1,0 +1,119 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using BenchmarkDotNet.Attributes;
+
+namespace Microsoft.Data.SqlClient.PerformanceTests
+{
+    /// <summary>
+    /// Benchmarks measuring CancellationToken overhead during ReadAsync iteration.
+    /// Reproduces issue #2408.
+    /// </summary>
+    public class CancellationTokenReadAsyncRunner : BaseRunner
+    {
+        private static long s_rowCount;
+        private string _tableName;
+        private string _connectionString;
+        private string _query;
+        private CancellationTokenSource _cts;
+        private CancellationToken _token;
+
+        /// <summary>
+        /// Whether to pass a CancellationToken to ReadAsync.
+        /// </summary>
+        [Params(true, false)]
+        public bool UseCancellationToken { get; set; }
+
+        [GlobalSetup]
+        public void Setup()
+        {
+            s_rowCount = s_config.Benchmarks.CancellationTokenReadAsyncRunnerConfig.RowCount;
+            _connectionString = s_config.ConnectionString;
+            string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
+            _tableName = $"[perf_CancelToken_{machineHash}_{Guid.NewGuid():N}]";
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+
+            using var createCmd = new SqlCommand(
+                $"CREATE TABLE {_tableName} (Id INT IDENTITY PRIMARY KEY, Value INT)", conn);
+            createCmd.ExecuteNonQuery();
+
+            // Bulk insert rows
+            using var bulkCopy = new SqlBulkCopy(conn)
+            {
+                DestinationTableName = _tableName,
+                BatchSize = 10000
+            };
+
+            var dt = new System.Data.DataTable();
+            dt.Columns.Add("Value", typeof(int));
+            for (int i = 0; i < s_rowCount; i++)
+            {
+                dt.Rows.Add(i * 2);
+            }
+            bulkCopy.ColumnMappings.Add("Value", "Value");
+            bulkCopy.WriteToServer(dt);
+
+            _query = $"SELECT Id, Value FROM {_tableName}";
+        }
+
+        [GlobalCleanup]
+        public void Cleanup()
+        {
+            using var conn = new SqlConnection(_connectionString);
+            conn.Open();
+            using var cmd = new SqlCommand($"DROP TABLE IF EXISTS {_tableName}", conn);
+            cmd.ExecuteNonQuery();
+            SqlConnection.ClearAllPools();
+        }
+
+        // Allocate the CancellationTokenSource in [IterationSetup] / dispose it in
+        // [IterationCleanup] so the CTS alloc/dispose cost is excluded from the measurement
+        // and only the per-row ReadAsync(CancellationToken) overhead is captured.
+        [IterationSetup]
+        public void IterationSetup()
+        {
+            if (UseCancellationToken)
+            {
+                _cts = new CancellationTokenSource();
+                _token = _cts.Token;
+            }
+            else
+            {
+                _cts = null;
+                _token = CancellationToken.None;
+            }
+        }
+
+        [IterationCleanup]
+        public void IterationCleanup()
+        {
+            _cts?.Dispose();
+            _cts = null;
+        }
+
+        [Benchmark]
+        public async Task ReadAsyncWithOrWithoutToken()
+        {
+            using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var cmd = new SqlCommand(_query, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (UseCancellationToken)
+            {
+                while (await reader.ReadAsync(_token))
+                { }
+            }
+            else
+            {
+                while (await reader.ReadAsync())
+                { }
+            }
+        }
+    }
+}

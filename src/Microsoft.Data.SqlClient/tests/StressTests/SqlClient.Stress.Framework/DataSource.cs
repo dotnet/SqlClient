@@ -5,7 +5,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     /// <summary>
     /// supported source types - values for 'type' attribute for 'source' node in App.config

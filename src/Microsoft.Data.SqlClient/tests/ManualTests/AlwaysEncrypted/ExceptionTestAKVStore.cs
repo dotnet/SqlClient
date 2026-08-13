@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public class ExceptionTestAKVStore : IClassFixture<SQLSetupStrategyAzureKeyVault>
     {
         private const string MasterKeyEncAlgo = "RSA_OAEP";

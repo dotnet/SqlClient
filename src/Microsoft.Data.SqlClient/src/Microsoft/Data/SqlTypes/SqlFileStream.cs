@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlTypes
             FileOptions options,
             long allocationSize)
         {
-            if (!ADP.IsWindows)
+            if (!OsConstants.IsWindows)
             {
                 throw new PlatformNotSupportedException(Strings.SqlFileStream_NotSupported);
             }
