@@ -291,7 +291,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseLegacyTransactionScopeIsolationBehavior
     {
-        get => GetSwitchValue("s_useLegacyTransactionScopeIsolationBehavior");
+        get => GetSwitchPropertyValue(nameof(UseLegacyTransactionScopeIsolationBehavior));
         set => SetSwitchValue("s_useLegacyTransactionScopeIsolationBehavior", value);
     }
 

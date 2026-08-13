@@ -2406,8 +2406,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 // does not preserve the SQL Server session isolation level on every
                 // server (notably Azure SQL DB), so without re-asserting the level the
                 // second and later opens inside the scope would silently run at the
-                // database default. The SET batch piggybacks the queued reset on its
-                // TDS header, so no extra round trip is added.
+                // database default. The queued reset piggybacks this batch's TDS
+                // header, so the reset itself costs nothing extra, but the SET batch
+                // is an additional round trip on re-checkout.
                 ReassertSessionIsolationLevel(transaction.IsolationLevel);
             }
         }
@@ -2433,8 +2434,12 @@ namespace Microsoft.Data.SqlClient.Connection
                     isoSql = "SERIALIZABLE";
                     break;
                 case System.Transactions.IsolationLevel.Snapshot:
-                    isoSql = "SNAPSHOT";
-                    break;
+                    // Switching to SNAPSHOT while a transaction is active causes SQL
+                    // Server to fail and roll back that transaction. On this path the
+                    // preserved transaction is always still open, and it was already
+                    // begun under snapshot isolation by the transaction manager
+                    // request, so there is nothing to re-assert.
+                    return;
                 default:
                     // Unspecified / Chaos: nothing meaningful to assert.
                     return;
