@@ -14,6 +14,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 using static Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest;
@@ -28,6 +29,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class DbConnectionPoolInstrumentationTest
     {
+        /// <summary>
+        /// Identifies which pool implementation a parameterized metric test exercises.
+        /// </summary>
+        public enum PoolImplementation
+        {
+            /// <summary>The legacy <see cref="WaitHandleDbConnectionPool"/>.</summary>
+            WaitHandle,
+
+            /// <summary>The <see cref="ChannelDbConnectionPool"/>.</summary>
+            Channel,
+        }
+
         /// <summary>
         /// Builds the pool group shared by both pool implementations.
         /// </summary>
@@ -52,29 +65,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 poolGroupOptions);
         }
 
-        #region Metric parity
-
-        // Each test gives its pool its own metrics instance, so the counters observe only that
-        // pool's activity and can be asserted exactly. They run against both pool implementations
-        // so that any divergence in what the channel pool emits shows up as a failing test rather
-        // than as a silent telemetry gap.
-        //
-        // Counters emitted outside the pool are still process-wide: DbConnectionInternal reports
-        // active-connection and stasis counts against the global instance, so those are not
-        // asserted here.
-
-        /// <summary>
-        /// Identifies which pool implementation a parameterized metric test exercises.
-        /// </summary>
-        public enum PoolImplementation
-        {
-            /// <summary>The legacy <see cref="WaitHandleDbConnectionPool"/>.</summary>
-            WaitHandle,
-
-            /// <summary>The <see cref="ChannelDbConnectionPool"/>.</summary>
-            Channel,
-        }
-
         /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface, reporting to
         /// the supplied metrics instance.
@@ -97,7 +87,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     poolGroup,
                     DbConnectionPoolIdentity.NoIdentity,
                     new DbConnectionPoolProviderInfo(),
-                    timeProvider: null,
+                    timeProvider: new FakeTimeProvider(),
                     metrics: metrics),
 
                 PoolImplementation.Channel => new ChannelDbConnectionPool(
@@ -106,7 +96,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     DbConnectionPoolIdentity.NoIdentity,
                     new DbConnectionPoolProviderInfo(),
                     connectionCreationRateLimiter: null,
-                    timeProvider: null,
+                    timeProvider: new FakeTimeProvider(),
                     metrics: metrics),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(implementation)),
@@ -422,8 +412,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 freeConnections: 1,
                 activeConnections: 0);
         }
-
-        #endregion
 
         #region Test classes
 
