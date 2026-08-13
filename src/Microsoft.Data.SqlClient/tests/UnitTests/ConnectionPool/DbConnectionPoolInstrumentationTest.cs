@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.RateLimiting;
+using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
@@ -21,10 +22,12 @@ using static Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnecti
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
     /// <summary>
-    /// Verifies the diagnostic instrumentation of <see cref="ChannelDbConnectionPool"/>: the pool
-    /// metrics counters emitted across the connection lifecycle.
+    /// Verifies the diagnostic instrumentation shared by <see cref="ChannelDbConnectionPool"/> and
+    /// <see cref="WaitHandleDbConnectionPool"/>: the pool metrics counters emitted across the
+    /// connection lifecycle, parameterized over both pool implementations via
+    /// <see cref="PoolImplementation"/> wherever their behavior is expected to match.
     /// </summary>
-    public class ChannelDbConnectionPoolInstrumentationTest
+    public class DbConnectionPoolInstrumentationTest
     {
         /// <summary>
         /// Builds a pool for instrumentation tests. Defaults mirror
@@ -141,8 +144,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// by the caller is expected to be zero, so an unexpected emission fails the test.
         /// </summary>
         /// <remarks>
-        /// The active-connection gauges are not parameters because they are mechanically derived:
-        /// each connect increments one and the matching disconnect decrements it.
+        /// <paramref name="activeConnections"/> is a parameter, not derived from the soft-connect
+        /// counters, precisely because it is not guaranteed to move in lockstep with them: this is
+        /// the counter https://github.com/dotnet/SqlClient/issues/3640 broke by deactivating a
+        /// transacted connection twice on its way back to general circulation, which decremented
+        /// activeConnections an extra time without touching softConnects/softDisconnects at all.
         /// </remarks>
         private static void AssertCounters(
             FakeSqlClientMetrics metrics,
@@ -152,7 +158,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             long softDisconnects = 0,
             long pooledConnections = 0,
             long freeConnections = 0,
-            long reclaimedConnections = 0)
+            long reclaimedConnections = 0,
+            long activeConnections = 0)
         {
             (string Name, long Expected, long Actual)[] counters =
             {
@@ -165,6 +172,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ("pooledConnections", pooledConnections, metrics.PooledConnections),
                 ("freeConnections", freeConnections, metrics.FreeConnections),
                 ("reclaimedConnections", reclaimedConnections, metrics.ReclaimedConnections),
+                ("activeConnections", activeConnections, metrics.ActiveConnections),
 
                 // Not emitted through a pool's metrics instance, so any non-zero value here means a
                 // counter has moved to the pool that the tests have not accounted for.
@@ -173,7 +181,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ("inactiveConnectionPoolGroups", 0, metrics.InactiveConnectionPoolGroups),
                 ("activeConnectionPools", 0, metrics.ActiveConnectionPools),
                 ("inactiveConnectionPools", 0, metrics.InactiveConnectionPools),
-                ("activeConnections", 0, metrics.ActiveConnections),
                 ("stasisConnections", 0, metrics.StasisConnections),
             };
 
@@ -215,7 +222,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 metrics,
                 hardConnects: 1,
                 softConnects: 1,
-                pooledConnections: 1);
+                pooledConnections: 1,
+                activeConnections: 1);
         }
 
         /// <summary>
@@ -245,7 +253,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hardConnects: 1,
                 softConnects: 2,
                 softDisconnects: 1,
-                pooledConnections: 1);
+                pooledConnections: 1,
+                activeConnections: 1);
         }
 
         /// <summary>
@@ -337,7 +346,107 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hardConnects: 2,
                 hardDisconnects: 1,
                 softConnects: 2,
-                pooledConnections: 1);
+                pooledConnections: 1,
+                activeConnections: 1);
+        }
+
+        /// <summary>
+        /// Regression test for https://github.com/dotnet/SqlClient/issues/3640. Returning a
+        /// connection while it is still enlisted in a transaction parks it in the transacted
+        /// store rather than handing it back for reuse, but the connection is still deactivated
+        /// exactly once. When the transaction later ends and the connection rejoins the idle
+        /// pool, that hand-off must not deactivate it a second time, or activeConnections is
+        /// decremented twice for a single logical checkout.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void TransactionCommit_ReleasingParkedConnection_KeepsActiveConnectionCountBalanced(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
+
+            using (TransactionScope scope = new())
+            {
+                SqlConnection owner = new();
+                Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+                Assert.NotNull(connection);
+
+                // Act - the connection is still enlisted, so it is parked rather than reused.
+                pool.ReturnInternalConnection(connection!, owner);
+
+                // Assert - the park deactivates the connection exactly once.
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 1,
+                    softDisconnects: 1,
+                    pooledConnections: 1,
+                    freeConnections: 1,
+                    activeConnections: 0);
+
+                scope.Complete();
+            }
+
+            // Assert - once the transaction commits and the connection rejoins the idle pool, the
+            // counters must be unchanged from the park above. If the #3640 bug pattern were
+            // reintroduced (deactivating on the way out of the transacted store, rather than
+            // resetting), activeConnections would go negative here.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1,
+                activeConnections: 0);
+        }
+
+        /// <summary>
+        /// Same regression as <see cref="TransactionCommit_ReleasingParkedConnection_KeepsActiveConnectionCountBalanced"/>,
+        /// but the transaction is rolled back rather than committed. Rollback and commit both end
+        /// the transaction through the same completion callback, so this covers that the fix does
+        /// not depend on the outcome of the transaction.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void TransactionRollback_ReleasingParkedConnection_KeepsActiveConnectionCountBalanced(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
+
+            using (TransactionScope scope = new())
+            {
+                SqlConnection owner = new();
+                Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+                Assert.NotNull(connection);
+
+                pool.ReturnInternalConnection(connection!, owner);
+
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 1,
+                    softDisconnects: 1,
+                    pooledConnections: 1,
+                    freeConnections: 1,
+                    activeConnections: 0);
+
+                // Act - scope disposed without Complete(), rolling the transaction back.
+            }
+
+            // Assert - same expectation as the commit case: no extra deactivation on rollback.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1,
+                activeConnections: 0);
         }
 
         #endregion

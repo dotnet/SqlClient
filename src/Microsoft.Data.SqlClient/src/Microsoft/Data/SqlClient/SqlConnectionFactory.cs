@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
                 timeout);
             if (newConnection is not null)
             {
-                SqlClientDiagnostics.Metrics.HardConnectRequest();
+                Metrics.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
             }
             
@@ -711,7 +711,8 @@ namespace Microsoft.Data.SqlClient
                         newSecurePassword: null,
                         redirectedUserInstance: false,
                         applyTransientFaultHandling: applyTransientFaultHandling,
-                        sspiContextProvider: key.SspiContextProvider);
+                        sspiContextProvider: key.SspiContextProvider,
+                        metrics: Metrics);
                     using (sseConnection)
                     {
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
@@ -772,7 +773,8 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback,
-                key.SspiContextProvider);
+                key.SspiContextProvider,
+                metrics: Metrics);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)

@@ -12,6 +12,7 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
@@ -77,6 +78,12 @@ namespace Microsoft.Data.ProviderBase
 
         // Constructor for internal connections
         internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString)
+            : this(state, hidePassword, allowSetConnectionString, metrics: null)
+        {
+        }
+
+        // Constructor for internal connections
+        internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString, ISqlClientMetrics metrics)
         {
             AllowSetConnectionString = allowSetConnectionString;
             ShouldHidePassword = hidePassword;
@@ -87,6 +94,7 @@ namespace Microsoft.Data.ProviderBase
             // Without this initialization, ReturnedTime would default to DateTime.MinValue, which would cause
             // IsLiveConnection to immediately evict every new connection whenever IdleTimeout is configured.
             ReturnedTime = CreateTime;
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
         }
 
         #region Properties
@@ -178,6 +186,16 @@ namespace Microsoft.Data.ProviderBase
         /// The pooler that the connection came from (Pooled connections only)
         /// </summary>
         internal IDbConnectionPool Pool { get; private set; }
+
+        /// <summary>
+        /// The metrics sink this connection reports its activation state to. Supplied by the
+        /// <see cref="SqlConnectionFactory"/> that created this connection, from its own injected
+        /// instance, rather than derived from <see cref="Pool"/>: the metrics sink is not
+        /// inherently tied to a pool, and a connection is not necessarily pooled at all. Defaults
+        /// to the process-wide instance when no metrics sink is supplied to the constructor (e.g.
+        /// a test double constructed directly), so it still reports somewhere.
+        /// </summary>
+        internal ISqlClientMetrics Metrics { get; }
 
         public abstract string ServerVersion { get; }
 
@@ -368,7 +386,7 @@ namespace Microsoft.Data.ProviderBase
 
             Activate(transaction);
 
-            SqlClientDiagnostics.Metrics.EnterActiveConnection();
+            Metrics.EnterActiveConnection();
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -522,7 +540,7 @@ namespace Microsoft.Data.ProviderBase
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
-            SqlClientDiagnostics.Metrics.ExitActiveConnection();
+            Metrics.ExitActiveConnection();
 
             if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {

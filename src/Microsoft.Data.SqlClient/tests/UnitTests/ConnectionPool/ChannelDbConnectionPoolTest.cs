@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.RateLimiting;
@@ -1398,7 +1399,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
-                return new StubDbConnectionInternal();
+                return new StubDbConnectionInternal(Metrics);
             }
         }
 
@@ -1430,6 +1431,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
+            internal StubDbConnectionInternal(ISqlClientMetrics? metrics = null)
+                : base(ConnectionState.Open, true, false, metrics)
+            {
+            }
+
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
 
@@ -1442,12 +1448,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             public override void EnlistTransaction(Transaction transaction)
             {
-                return;
+                if (transaction != null)
+                {
+                    EnlistedTransaction = transaction;
+                }
             }
 
             protected override void Activate(Transaction transaction)
             {
-                return;
+                EnlistedTransaction = transaction;
             }
 
             protected override void Deactivate()
