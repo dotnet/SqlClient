@@ -779,57 +779,82 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Setting one authentication-related property must not silently drop the others from the
-        /// connection pool key. Previously, assigning <see cref="SqlConnection.SspiContextProvider"/>
-        /// rebuilt the pool key with a null <see cref="SqlConnection.AccessTokenCallback"/> (and a
-        /// null <see cref="SqlConnection.AccessToken"/>), so the token was never handed to the
-        /// internal connection even though the public property still reported it as set.
+        /// SSPI is an alternative to token-based authentication, so <see cref="SqlConnection.SspiContextProvider"/>
+        /// is mutually exclusive with both <see cref="SqlConnection.AccessToken"/> and
+        /// <see cref="SqlConnection.AccessTokenCallback"/>, in either assignment order.
         /// </summary>
         [Fact]
-        public void AccessTokenStateIsPreservedInPoolKeyWhenSspiContextProviderIsSet()
+        public void SspiContextProviderAndAccessTokenStateAreMutuallyExclusive()
         {
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
                 (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
 
+            // Token first, then provider.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                Assert.Throws<InvalidOperationException>(
+                    () => conn.SspiContextProvider = new TestSspiContextProvider());
+            }
+
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.AccessTokenCallback = callback;
-                Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
+                Assert.Throws<InvalidOperationException>(
+                    () => conn.SspiContextProvider = new TestSspiContextProvider());
+            }
 
+            // Provider first, then token.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
                 conn.SspiContextProvider = new TestSspiContextProvider();
+                Assert.Throws<InvalidOperationException>(() => conn.AccessToken = "token");
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.SspiContextProvider = new TestSspiContextProvider();
+                Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = callback);
+            }
+        }
+
+        /// <summary>
+        /// Clearing one authentication property must not drop the others from the connection pool key.
+        /// The setters rebuild the key on every assignment, and previously hard-coded the sibling
+        /// values to null, so clearing one property silently discarded another that was still set.
+        /// </summary>
+        [Fact]
+        public void ClearingOneAuthPropertyPreservesTheOthersInPoolKey()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            // Clearing the provider must not discard an access token.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                conn.SspiContextProvider = null;
+
+                Assert.Equal("token", conn.AccessToken);
+                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
+            }
+
+            // Clearing the provider must not discard an access token callback.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                conn.SspiContextProvider = null;
 
                 Assert.Same(callback, conn.AccessTokenCallback);
                 Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
             }
 
-            using (SqlConnection conn = new("Data Source=localhost"))
-            {
-                conn.AccessToken = "token";
-                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
-
-                conn.SspiContextProvider = new TestSspiContextProvider();
-
-                Assert.Equal("token", conn.AccessToken);
-                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
-            }
-        }
-
-        /// <summary>
-        /// The reciprocal of the above: assigning a token must not drop an already-configured
-        /// <see cref="SqlConnection.SspiContextProvider"/> from the pool key.
-        /// </summary>
-        [Fact]
-        public void SspiContextProviderIsPreservedInPoolKeyWhenAccessTokenStateIsSet()
-        {
-            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
-                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
-
+            // Clearing token state must not discard a context provider.
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 SspiContextProvider provider = new TestSspiContextProvider();
                 conn.SspiContextProvider = provider;
-
-                conn.AccessToken = "token";
+                conn.AccessToken = null;
 
                 Assert.Same(provider, conn.SspiContextProvider);
                 Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
@@ -839,8 +864,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 SspiContextProvider provider = new TestSspiContextProvider();
                 conn.SspiContextProvider = provider;
-
-                conn.AccessTokenCallback = callback;
+                conn.AccessTokenCallback = null;
 
                 Assert.Same(provider, conn.SspiContextProvider);
                 Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);

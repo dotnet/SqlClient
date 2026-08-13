@@ -73,8 +73,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         /// unless the user explicitly specified the TNIR keyword.
         /// </summary>
         [Theory]
-        // Non-Azure endpoint, no explicit TNIR keyword: access token (or callback) disables TNIR.
+        // Non-Azure endpoint, no explicit TNIR keyword, no token: TNIR stays enabled.
         [InlineData("my.test.server", false, false, false)]
+        // Non-Azure endpoint, no explicit TNIR keyword, token supplied: TNIR is disabled.
         [InlineData("my.test.server", true, false, true)]
         // Azure endpoint always disables TNIR when the keyword is absent.
         [InlineData("test.database.windows.net", false, false, true)]

@@ -151,9 +151,19 @@ namespace Microsoft.Data.SqlClient.Connection
         /// via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback"/>.
         /// </summary>
         /// <remarks>
-        /// Both paths represent the same "caller-supplied token" authentication mode, so they must
-        /// always be treated identically. Use this property rather than testing the underlying
-        /// fields individually.
+        /// <para>
+        /// Use this property wherever the only question is whether the caller supplied a token at
+        /// all, and the two paths are equivalent: the prelogin FEDAUTHREQUIRED handshake, server
+        /// certificate validation, and Transparent Network IP Resolution. Those all key off the
+        /// authentication <em>mode</em>, so treating the two paths differently would be a bug.
+        /// </para>
+        /// <para>
+        /// Do <b>not</b> use this property where the two paths diverge. Login feature-extension
+        /// negotiation must keep testing the fields individually because they select different
+        /// federated authentication library types: <c>_accessTokenCallback</c> requests
+        /// <see cref="TdsEnums.FedAuthLibrary.MSAL"/>, while <c>_accessTokenInBytes</c> requests
+        /// <see cref="TdsEnums.FedAuthLibrary.SecurityToken"/> and carries the token bytes.
+        /// </para>
         /// </remarks>
         internal bool IsAccessTokenProvided =>
             _accessTokenInBytes != null || _accessTokenCallback != null;
