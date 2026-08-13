@@ -693,7 +693,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "ChannelDbConnectionPool.PutConnectionInIdleChannel | INFO | {0}, Connection {1}, Pushing to general pool.",
+                "ChannelDbConnectionPool.PutConnectionInIdleChannel | INFO | {0}, Connection {1}, Writing to idle channel.",
                 Id,
                 connection.ObjectID);
 
@@ -1239,7 +1239,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 idleTimeout != TimeSpan.Zero &&
                 _timeProvider.GetUtcNow().UtcDateTime - connection.ReturnedTime > idleTimeout)
             {
-                TraceNotLive(connection, "exceeded the connection idle timeout");
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, exceeded the connection idle timeout and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
@@ -1247,42 +1250,35 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // polls the socket, so it must not run on a thread we do not own.
             if (probeLiveness && !connection.IsConnectionAlive())
             {
-                TraceNotLive(connection, "found dead");
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, found dead and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
             // Connection has been alive longer than the load balance timeout
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
             {
-                TraceNotLive(connection, "exceeded the load balance timeout");
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, exceeded the load balance timeout and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
             // Connection was created before the last Clear, so it's stale.
             if (connection.ClearGeneration != _clearGeneration)
             {
-                TraceNotLive(connection, "was created before the last Clear");
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, was created before the last Clear and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
             return true;
         }
-
-        /// <summary>
-        /// Emits the trace for a connection that failed the <see cref="IsLiveConnection"/> gate.
-        /// Split out so each rejection reason is reported individually: the caller only sees that
-        /// the connection was discarded, which on its own does not explain whether the pool is
-        /// churning because of idle timeout, load balancing, a Clear, or genuine server failures.
-        /// </summary>
-        /// <param name="connection">The connection that failed the liveness gate.</param>
-        /// <param name="reason">Why the connection was rejected, phrased to read as
-        /// "Connection {id}, {reason} and removed."</param>
-        private void TraceNotLive(DbConnectionInternal connection, string reason) =>
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "ChannelDbConnectionPool.TraceNotLive | INFO | {0}, Connection {1}, {2} and removed.",
-                Id,
-                connection.ObjectID,
-                reason);
 
         /// <summary>
         /// Closes the provided connection and removes it from the pool, freeing its slot.
@@ -1380,7 +1376,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "ChannelDbConnectionPool.GetIdleConnection | INFO | {0}, Connection {1}, Popped from general pool.",
+                    "ChannelDbConnectionPool.GetIdleConnection | INFO | {0}, Connection {1}, Read from idle channel.",
                     Id,
                     connection.ObjectID);
 
