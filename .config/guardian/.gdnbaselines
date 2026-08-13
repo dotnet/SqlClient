@@ -119,15 +119,6 @@
         "default"
       ],
       "createdDate": "2026-07-23 11:29:23Z"
-    },
-    "ed88d73ca41890d1e3d1e94bb67a93b82ea582c60ac6f496223b89c2da201f62": {
-      "signature": "ed88d73ca41890d1e3d1e94bb67a93b82ea582c60ac6f496223b89c2da201f62",
-      "alternativeSignatures": [],
-      "memberOf": [
-        "default"
-      ],
-      "justification": "Temporary suppression for ApiScan documentationnotfound in microsoft.data.sqlclient.extensions.abstractions.dll for Microsoft.Data.SqlClient.SqlAuthenticationProviderManager. Remove once the documentation issue is fixed.",
-      "createdDate": "2026-08-11 00:00:00Z"
     }
   }
 }
