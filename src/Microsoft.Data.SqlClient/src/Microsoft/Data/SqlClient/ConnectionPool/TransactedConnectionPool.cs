@@ -82,7 +82,7 @@ internal class TransactedConnectionPool
         Pool = pool;
         _metrics = metrics;
         TransactedConnections = new Dictionary<Transaction, TransactedConnectionList>();
-        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
+        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", Id, Pool.Id);
     }
 
     #region Properties
@@ -156,7 +156,7 @@ internal class TransactedConnectionPool
 
         if (transactedObject != null)
         {
-            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         }
         return transactedObject;
     }
@@ -196,7 +196,7 @@ internal class TransactedConnectionPool
                 {
                     // TODO: validate that we're not adding the same connection twice?
                     // Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
                     connections.Add(transactedObject);
                 }
             }
@@ -230,13 +230,13 @@ internal class TransactedConnectionPool
                         lock (connections)
                         {
                             Debug.Assert(0 > connections.IndexOf(transactedObject), "adding to pool a second time?");
-                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Pushing.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
                             connections.Add(transactedObject);
                         }
                     }
                     else
                     {
-                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Adding List to transacted pool.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Adding List to transacted pool.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
 
                         // add the connection/transacted object to the list
                         newConnections.Add(transactedObject);
@@ -264,7 +264,7 @@ internal class TransactedConnectionPool
                     }
                 }
             }
-            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.PutTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Added.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         }
 
         _metrics.EnterFreeConnection();
@@ -288,7 +288,7 @@ internal class TransactedConnectionPool
     /// </remarks>
     internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
     {
-        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", Id, transaction.GetHashCode(), transactedObject.ObjectID);
         TransactedConnectionList? connections;
         int entry = -1;
 
@@ -321,7 +321,7 @@ internal class TransactedConnectionPool
                     // safely remove the list from the transacted pool.
                     if (0 >= connections.Count)
                     {
-                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
+                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Removing List from transacted pool.", Id, transaction.GetHashCode());
                         TransactedConnections.Remove(transaction);
 
                         // we really need to dispose our connection list; it may have 
@@ -337,7 +337,7 @@ internal class TransactedConnectionPool
             }
             else
             {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transacted pool not yet created prior to transaction completing. Connection may be leaked.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
+                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transacted pool not yet created prior to transaction completing. Connection may be leaked.", Id, transaction.GetHashCode(), transactedObject.ObjectID);
             }
         }
 

@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // cadence so operators can tell why a very large Connection Idle Timeout samples less
                 // frequently than the default 10-second interval.
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.PoolPruner|RES|INFO|CPOOL> Idle timeout {0}s derived a pruning interval of {1}s with {2} samples (max {3}).",
+                    "<prov.PoolPruner.PoolPruner|RES|INFO|CPOOL> Idle timeout {0}s derived a pruning interval of {1}s with {2} samples (max {3}).",
                     idleTimeoutSeconds, intervalSeconds, sampleSize, MaxSampleSize);
             }
 
