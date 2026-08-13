@@ -3,10 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -29,11 +27,12 @@ public class VirtualSecureModeEnclaveProviderTest
     {
         // Arrange
         byte[] enclaveKey = Encoding.UTF8.GetBytes("genuine-enclave-public-key-blob");
-        EnclaveReportPackage package = BuildReportPackage(Sha256(enclaveKey));
+        EnclaveReportPackage testPackage = BuildReportPackage(Sha256(enclaveKey));
+        EnclavePublicKey testKey = new EnclavePublicKey(enclaveKey);
 
         // Act / Assert
         // Report commits to enclaveKey and the session uses enclaveKey: the binding holds, so no exception.
-        InvokeVerifyEnclavePublicKeyBinding(package, new EnclavePublicKey(enclaveKey));
+        VirtualizationBasedSecurityEnclaveProviderBase.VerifyEnclavePublicKeyBinding(testPackage, testKey);
     }
 
     /// <summary>
@@ -43,15 +42,20 @@ public class VirtualSecureModeEnclaveProviderTest
     public void VerifyEnclavePublicKeyBinding_SwappedKey_Throws()
     {
         // Arrange
-        byte[] committedKey = Encoding.UTF8.GetBytes("committed-enclave-public-key-blob");
+        byte[] committedKeyBytes = Encoding.UTF8.GetBytes("committed-enclave-public-key-blob");
+
         // The signed report commits to committedKey...
-        EnclaveReportPackage package = BuildReportPackage(Sha256(committedKey));
+        EnclaveReportPackage testPackage = BuildReportPackage(Sha256(committedKeyBytes));
 
         // ...but a different enclave public key is offered for the session.
-        byte[] substitutedKey = Encoding.UTF8.GetBytes("substituted-enclave-public-key");
+        byte[] substitutedKeyBytes = Encoding.UTF8.GetBytes("substituted-enclave-public-key");
+        EnclavePublicKey substitutedKey = new EnclavePublicKey(substitutedKeyBytes);
+
 
         // Act
-        Action action = () => InvokeVerifyEnclavePublicKeyBinding(package, new EnclavePublicKey(substitutedKey));
+        Action action = () => VirtualizationBasedSecurityEnclaveProviderBase.VerifyEnclavePublicKeyBinding(
+            testPackage,
+            substitutedKey);
 
         // Assert
         ArgumentException ex = Assert.Throws<ArgumentException>(action);
@@ -85,26 +89,6 @@ public class VirtualSecureModeEnclaveProviderTest
         Array.Copy(enclaveDataFirst32, 0, payload, offset, 32); // EnclaveData: first 32 bytes = SHA-256(public key)
 
         return new EnclaveReportPackage(payload);
-    }
-
-    // Invokes the private binding method via reflection, unwrapping the reflection exception so the
-    // caller sees the real ArgumentException.
-    private static void InvokeVerifyEnclavePublicKeyBinding(EnclaveReportPackage package, EnclavePublicKey enclavePublicKey)
-    {
-        MethodInfo method = typeof(VirtualizationBasedSecurityEnclaveProviderBase)
-            .GetMethod("VerifyEnclavePublicKeyBinding", BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException("VerifyEnclavePublicKeyBinding not found");
-
-        var provider = new HostGuardianServiceEnclaveProvider();
-
-        try
-        {
-            method.Invoke(provider, new object[] { package, enclavePublicKey });
-        }
-        catch (TargetInvocationException ex) when (ex.InnerException != null)
-        {
-            throw ex.InnerException;
-        }
     }
 
     private static byte[] Sha256(byte[] data)
