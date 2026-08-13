@@ -66,12 +66,12 @@ since 2017 with production impact.
 
 | | |
 |---|---|
-| Code path | `SqlConnectionInternal.Deactivate()` — the pool **return** / close path |
-| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on pool return issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
-| Direction | **Scrub** session state on the way back into the pool |
+| Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
+| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is not enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
+| Direction | **Scrub** stale session state on the way out of the pool |
 | App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` |
 | Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
-| Cost | **One extra round trip on `Close()`**, paid only when a previous `Begin` raised the isolation level. The queued `sp_reset_connection` rides this batch's TDS header instead of the next user's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy close path did not make. |
+| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
 
 ---
 
@@ -141,7 +141,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Affected servers | On-prem SQL Server (reset does not clear) | Azure SQL DB (reset does clear) |
 | API surface | `SqlTransaction` **and** `TransactionScope` | `TransactionScope` only |
 | Trigger | TM `Begin` set a non-default level | Re-enlist short-circuit with a pending reset |
-| Code path | `Deactivate()` (pool **return** / close) | `Enlist()` (pool **checkout**) |
+| Code path | `Activate()` (pool **checkout**, not enlisted) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
@@ -152,11 +152,11 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 
 ## 5. Why neither fix subsumes the other
 
-**Would #4330 alone fix #146?** No. It runs only on pool **return** and only ever writes
-`READ COMMITTED`. The #146 repro never completes the transaction between the two opens, and
-even if the reset did run it would write the *wrong* level — the ambient level is
-`Serializable` / `ReadUncommitted`, not `READ COMMITTED`. Applying it there would make #146
-strictly worse, turning an Azure-only bug into a universal one.
+**Would #4330 alone fix #146?** No — and it is explicitly built not to make #146 worse. #4330
+only ever writes `READ COMMITTED`, which is the *wrong* level for the #146 repro (the ambient
+level there is `Serializable` / `ReadUncommitted`). Its scrub is therefore gated on the
+connection **not** being enlisted, so it never fires on the re-attach path #4335 owns. Without
+that gate it would turn #146 from an Azure-only bug into a universal one.
 
 **Would #4335 alone fix #96?** No. It fires only inside `Enlist()` on the
 "same transaction re-attach" branch — i.e. while an ambient `TransactionScope` is still open.
@@ -166,14 +166,16 @@ variant never goes through `Enlist()` at all, so the leak path is never reached.
 **Could one generalized fix cover both?** Only by conflating two opposite intents in a single
 place:
 
-- On pool **return**, the desired behavior is to *forget* the level (#96).
-- On pool **checkout inside a live scope**, the desired behavior is to *remember and re-apply*
-  it (#146).
+- On checkout of a connection with **no live transaction**, the desired behavior is to *forget*
+  the stale level (#96).
+- On checkout of a connection **re-attaching to a still-live scope**, the desired behavior is to
+  *remember and re-apply* it (#146).
 
-They live at opposite ends of the pooling lifecycle and require different values written,
-different trigger conditions, and different `Snapshot` semantics. Merging them would also mean
-a single app context switch governing two unrelated behavior changes, preventing an
-application from opting into one without the other.
+Both now sit on the checkout side of the pooling lifecycle, but they are distinguished by
+enlistment state and require different values written, different trigger conditions, and
+different `Snapshot` semantics. Merging them would also mean a single app context switch
+governing two unrelated behavior changes, preventing an application from opting into one
+without the other.
 
 ---
 
@@ -186,30 +188,40 @@ application from opting into one without the other.
 - Both rest on the same `sp_reset_connection` premise, which a reviewer need only validate once.
 - With both merged the end-to-end behavior becomes coherent:
   - inside a live scope, the ambient level is honored on every open (#4335);
-  - once the transaction ends and the connection is pooled, the level is scrubbed (#4330).
+  - once the transaction ends and the connection is vended again, the stale level is scrubbed
+    (#4330).
 - Two separate switches is the correct granularity: an application can opt out of the extra
   round trip introduced by either PR while keeping the other's fix.
 
 ### A note on cost
 
-Both PRs add one extra round trip; they differ only in *when* it is paid. #4330 pays it on
-`Close()`, once per connection that raised its isolation level. #4335 pays it on every pooled
-re-checkout inside a scope. Neither is free, and #4330's earlier claim of "no extra round trip"
-was incorrect: `PrepareResetConnection` performs no I/O of its own (it only sets a flag that is
-consumed at the next packet write), so the legacy close path sent nothing at all.
+Both PRs add one extra round trip; they differ only in *which* checkout pays it. #4330 pays it
+on the first `Open()` after a connection whose isolation level was raised is reused. #4335 pays
+it on every pooled re-checkout inside a scope. Neither is free, and #4330's earlier claim of "no
+extra round trip" was incorrect: `PrepareResetConnection` performs no I/O of its own (it only
+sets a flag that is consumed at the next packet write), so the legacy close path sent nothing at
+all.
 
-#4330 deliberately performs this I/O in `Deactivate()` rather than in `ResetConnection()`.
-`ResetConnection()` is also invoked by the pool from `PutObjectFromTransactedPool`, which runs on
-the `System.Transactions` transaction-completion callback thread while holding a lock on the
-connection; that call site explicitly avoids socket work on a thread it does not own. `Deactivate()`
-always runs on the closing thread and every pooled return passes through it, so it covers the same
-cases without breaking that contract.
+#4330 performs this I/O in `Activate()` rather than on the pool-return side. Two constraints
+rule out the return path:
+
+- On return the connection may still be enlisted in a live `TransactionScope`, because `Close()`
+  is routinely called inside the scope. Issuing `SET` there would downgrade the level for the
+  next connection vended into that same scope from the transacted pool — exactly the #146 defect.
+- `ResetConnection()`, the other pool-return hook, is also invoked by the pool from
+  `PutObjectFromTransactedPool`, which runs on the `System.Transactions` transaction-completion
+  callback thread while holding a lock on the connection; that call site explicitly avoids socket
+  work on a thread it does not own.
+
+`Activate()` is subject to neither: it always runs on the thread performing the checkout, the
+previous transaction has ended by then, and the enlistment gate keeps it out of #4335's way. It
+also means the cost is only paid by connections that are actually reused.
 
 ### Suggested review order
 
 1. **#4330** first — broader blast radius (all servers, both `SqlTransaction` and
    `TransactionScope`), long-standing and frequently requested, and self-contained on the
-   deactivate path.
+   activate path.
 2. **#4335** second — rebase onto #4330, then resolve the open performance question
    (unconditional `SET` vs. Azure-gated vs. deferring the `SET` so it prefixes the user's next
    batch).

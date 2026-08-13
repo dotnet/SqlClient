@@ -2049,6 +2049,35 @@ namespace Microsoft.Data.SqlClient.Connection
             FailoverPermissionDemand();
             #endif
 
+            // sp_reset_connection does not reset the session transaction isolation level, so when a
+            // previous Begin raised it we scrub it here, on checkout.
+            //
+            // This runs on checkout rather than on pool return for two reasons:
+            //
+            //  - On return the connection may still be enlisted in a live TransactionScope, because
+            //    Close is routinely called inside the scope. Issuing SET there would downgrade the
+            //    isolation level for any further connection vended into that same scope from the
+            //    transacted pool, which is the defect tracked by #146.
+            //  - ResetConnection, the other pool-return hook, is also invoked from
+            //    PutObjectFromTransactedPool on the System.Transactions transaction-completion
+            //    callback thread while holding a lock on the connection. That path deliberately
+            //    avoids socket work on a thread it does not own.
+            //
+            // Activate always runs on the thread performing the checkout, and by then the previous
+            // transaction has ended, so neither constraint applies. It also means the cost is only
+            // paid by connections that are actually reused.
+            //
+            // EnlistedTransaction is non-null here only when the connection is being re-vended into
+            // a transaction it is already enlisted in; scrubbing then would hit the same #146
+            // problem, so it is skipped.
+            if (_isolationLevelDirty &&
+                !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior &&
+                EnlistedTransaction is null &&
+                !IsConnectionDoomed)
+            {
+                ResetSessionIsolationLevel();
+            }
+
             // When we're required to automatically enlist in transactions and there is one we
             // enlist in it. On the other hand, if there isn't a transaction, and we are
             // currently enlisted in one, then we un-enlist from it.
@@ -2111,24 +2140,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         if (!IsConnectionDoomed)
                         {
                             ResetConnection();
-
-                            // sp_reset_connection (queued by ResetConnection above) does not reset
-                            // the session transaction isolation level, so when a previous Begin
-                            // changed it we issue an explicit SET here.
-                            //
-                            // This deliberately lives in Deactivate rather than in ResetConnection.
-                            // ResetConnection is also called by the connection pool from
-                            // PutObjectFromTransactedPool, which runs on the System.Transactions
-                            // transaction-completion callback thread while holding a lock on the
-                            // connection. That path is documented as avoiding socket work on a
-                            // thread it does not own, so it must stay free of network I/O.
-                            // Deactivate always runs on the thread that closed the connection, and
-                            // every pooled return passes through it, so this covers the same cases
-                            // without violating that contract.
-                            if (_isolationLevelDirty && !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior)
-                            {
-                                ResetSessionIsolationLevel();
-                            }
                         }
                     }
                 }
@@ -3980,20 +3991,21 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object so
-        // the next user of this pooled connection observes the default session isolation level.
+        // this user of the pooled connection observes the default session isolation level.
         //
-        // Called only from Deactivate, when _isolationLevelDirty is set. Runs synchronously because
-        // Deactivate is a synchronous pool-return path.
+        // Called only from Activate, when _isolationLevelDirty is set and the connection is not
+        // enlisted. Runs synchronously because Activate is a synchronous checkout path.
         //
-        // Cost: this is a real extra round trip on the closing thread, paid only when a previous
-        // Begin raised the session isolation level. The queued sp_reset_connection rides along on
-        // this batch's TDS header rather than on the next user's first command, so the reset itself
-        // is not billed twice, but the batch is an additional exchange the legacy path did not make.
+        // Cost: one extra round trip on the checking-out thread, paid only when a previous Begin
+        // raised the session isolation level and the connection is actually reused. The
+        // sp_reset_connection queued at deactivate time rides this batch's TDS header rather than
+        // the caller's first command, so the reset itself is not billed twice, but the batch is an
+        // additional exchange the legacy path did not make.
         private void ResetSessionIsolationLevel()
         {
             // Consumed unconditionally: whether the statement succeeds or is rejected by the
-            // server, there is no point re-issuing it every time this connection is returned to
-            // the pool.
+            // server, there is no point re-issuing it on every subsequent checkout of this
+            // connection.
             _isolationLevelDirty = false;
 
             try
@@ -4002,7 +4014,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
                     // Bounded by the connection's own connect timeout. Passing 0 here would map to
                     // long.MaxValue in TdsParserStateObject.SetTimeoutMilliseconds, which would let
-                    // an unresponsive server block SqlConnection.Close indefinitely.
+                    // an unresponsive server block SqlConnection.Open indefinitely.
                     timeout: ConnectionOptions.ConnectTimeout,
                     notificationRequest: null,
                     stateObj: _parser._physicalStateObj,

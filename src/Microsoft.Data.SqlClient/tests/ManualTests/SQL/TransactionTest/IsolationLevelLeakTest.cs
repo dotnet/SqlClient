@@ -13,8 +13,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // SqlTransaction / TransactionScope used to leave the pooled connection
     // with the elevated session isolation level. The next user of the pooled
     // connection would silently inherit it. The fix resets the session
-    // isolation level to READ COMMITTED when the connection is returned to
-    // the pool.
+    // isolation level to READ COMMITTED when the connection is next taken out
+    // of the pool.
     [Trait("Set", "3")]
     public static class IsolationLevelLeakTest
     {
@@ -95,6 +95,45 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                 c.Open();
                 Assert.Equal(spid1, GetSpid(c));
                 Assert.Equal("ReadCommitted", GetIso(c));
+            }
+        }
+
+        // Regression guard for the interaction with #146: closing a connection inside a live
+        // TransactionScope must not scrub the isolation level, because the transacted pool will
+        // hand the same physical connection back to the next Open in that same scope.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void TransactionScope_SecondConnectionInSameScopeKeepsIsolationLevel()
+        {
+            string cs = BuildPooledConnString("IsoLeakTest-TxScopeReuse");
+            try
+            {
+                using (var scope = new TransactionScope(
+                    TransactionScopeOption.RequiresNew,
+                    new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
+                    TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    int spid1;
+                    using (SqlConnection c = new SqlConnection(cs))
+                    {
+                        c.Open();
+                        spid1 = GetSpid(c);
+                        Assert.Equal("Serializable", GetIso(c));
+                    }
+
+                    // Same scope, connection returned to the transacted pool and vended again.
+                    using (SqlConnection c = new SqlConnection(cs))
+                    {
+                        c.Open();
+                        Assert.Equal(spid1, GetSpid(c));
+                        Assert.Equal("Serializable", GetIso(c));
+                    }
+
+                    scope.Complete();
+                }
+            }
+            finally
+            {
+                SqlConnection.ClearAllPools();
             }
         }
 
