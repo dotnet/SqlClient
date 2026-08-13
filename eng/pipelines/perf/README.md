@@ -12,7 +12,7 @@ database.
 | ---- | ------- |
 | `sqlclient-perf-pipeline.yml` | The main (manual/nightly) pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. Baseline = released NuGet package; ingests into Kusto. |
 | `sqlclient-perf-pr-pipeline.yml` | PR pipeline. Same template, same scripts, same options; baseline = **`main` branch source**; **no Kusto ingestion**. |
-| `sqlclient-perf-switch-pipeline.yml` | Switch experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
+| `sqlclient-perf-experiment-pipeline.yml` | Experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is a released package (`--baseline-version`), another git ref's source (`--baseline-source-ref`), or the same source with one runner-config switch flipped off (`--switch-under-test`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
@@ -152,7 +152,7 @@ the comparison (and one removed by the PR as `removed`) instead of failing the r
 share the single generated runner config (`RUNNER_CONFIG` / `DATATYPES_CONFIG` env vars), so
 connection string and behaviour flags are identical on both sides.
 
-## Switch experiment pipeline (`sqlclient-perf-switch-pipeline.yml`)
+## Experiment pipeline (`sqlclient-perf-experiment-pipeline.yml`)
 
 The three perf pipelines are the same benchmarks, template and scripts pointed at three different
 questions. Two of them vary the **source** under measurement; the third varies the **config**:
@@ -161,9 +161,9 @@ questions. Two of them vary the **source** under measurement; the third varies t
 | --- | --- | --- | --- |
 | Has this branch regressed against a released package? | `sqlclient-perf-pipeline.yml` | released NuGet package | queued branch |
 | Does my PR regress the branch it merges into? | `sqlclient-perf-pr-pipeline.yml` | `main` source | queued branch |
-| What does this switch cost or buy? | `sqlclient-perf-switch-pipeline.yml` | queued branch, switch **off** | queued branch, switch **on** |
+| What does this switch cost or buy? | `sqlclient-perf-experiment-pipeline.yml` | queued branch, switch **off** | queued branch, switch **on** |
 
-`sqlclient-perf-switch-pipeline.yml` picks one runner-config switch via the `switchUnderTest`
+`sqlclient-perf-experiment-pipeline.yml` picks one runner-config switch via the `switchUnderTest`
 queue-time parameter (`UseConnectionPoolV2`, `UseOptimizedAsyncBehaviour` or
 `UseManagedSniOnWindows`) and runs the baseline pass with it `false` and the current pass with it
 `true`. Both passes measure the **same commit** — the branch the run is queued on — so queue it on a
@@ -225,7 +225,7 @@ The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, sel
   that ref's driver source. Used by the PR pipeline.
 - **Baseline (switch experiment)**: no second build at all — `--switch-under-test` measures one
   source tree twice, so the scripts build the `current` variant once and point both passes at it,
-  differing only in the runner config each pass is handed. Used by the switch pipeline.
+  differing only in the runner config each pass is handed. Used by the experiment pipeline.
 
 The VM's `NuGet.config` exposes only the governed feed, and CPM rejects multiple unmapped sources
 (`NU1507`). The baseline pass therefore restores through a **dedicated single-source config**
@@ -387,9 +387,9 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 3. After the run, review the **run summary** (comparison, labelled `<ref>@<short-sha>`) and the
    `perf-results` artifact. The build is tagged **`Baseline <ref>`**.
 
-### Running the switch pipeline
+### Running the experiment pipeline
 
-1. Open the **switch** performance test pipeline (`sqlclient-perf-switch-pipeline.yml`) in Azure
+1. Open the **experiment** performance test pipeline (`sqlclient-perf-experiment-pipeline.yml`) in Azure
    DevOps and select **Run pipeline**.
 2. Choose the branch whose behaviour you want to measure — `main` to characterise the switch on its
    own, or a PR branch to characterise it against that change — and pick `switchUnderTest`. There is
@@ -407,7 +407,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | Baseline pass fails to compile: `CS1061 ... does not contain a definition for <member>` | A benchmark calls an MDS API newer than `baselineVersion`. Guard it with the `MDS_GE_<major>` constants and add an older fallback — see [Benchmarks must compile against the oldest baseline](#benchmarks-must-compile-against-the-oldest-baseline). |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
-| `--switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref` | A switch experiment was combined with a source baseline. The switch pipeline never does this; if you are invoking the scripts directly, clear the baseline selector — varying source and config at once makes the delta unattributable. |
+| `--switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref` | A switch experiment was combined with a source baseline. The experiment pipeline never does this; if you are invoking the scripts directly, clear the baseline selector — varying source and config at once makes the delta unattributable. |
 | Switch experiment shows a ~0% delta everywhere | Expected for benchmarks the switch does not touch. If *every* benchmark is flat, check the run log's `Switch A/B` line actually names the switch, and that the switch is one the driver reads at startup via the runner config. |
 | Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). The reason git gave is echoed into the build log and saved to `<results>/diagnostics/git-*.log`. |
 | `Fetching baseline ref ... from the checkout's origin` is the last line, then the job stalls | Should no longer happen. The checkout is copied to the VM without credentials (ADO's checkout task defaults to `persistCredentials: false`), so a fetch from an authenticated `origin` used to sit on a `Username for ...` prompt forever. All network git calls now run with `GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed, and a `GIT_NET_TIMEOUT_SECS` (default 300s) hard timeout, so this fails in under a second and falls back to cloning `baselineRepoUrl`. A fetch failure here is expected and harmless on ADO. |

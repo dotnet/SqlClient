@@ -207,7 +207,7 @@ extends:
     testResultsSubDir: perf-results
 
     testTimeoutMinutes: ${{ parameters.testTimeoutMinutes }}
-    jobName: SqlClientPerfSwitch
+    jobName: SqlClientPerfExperiment
 
     # Post-test steps run on the agent after results have been copied back.  The template already
     # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
