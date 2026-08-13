@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;

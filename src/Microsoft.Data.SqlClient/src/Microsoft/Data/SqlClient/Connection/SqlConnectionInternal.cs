@@ -3978,6 +3978,11 @@ namespace Microsoft.Data.SqlClient.Connection
         // because Deactivate is a synchronous pool-return path.
         private void ResetSessionIsolationLevel()
         {
+            // Consumed unconditionally: whether the statement succeeds or is rejected by the
+            // server, there is no point re-issuing it every time this connection is returned to
+            // the pool.
+            _isolationLevelDirty = false;
+
             try
             {
                 _parser.TdsExecuteSQLBatch(
@@ -3987,7 +3992,24 @@ namespace Microsoft.Data.SqlClient.Connection
                     stateObj: _parser._physicalStateObj,
                     sync: true);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
-                _isolationLevelDirty = false;
+            }
+            catch (SqlException) when (!IsConnectionDoomed)
+            {
+                // The server rejected the statement but the session itself is healthy (the parser
+                // dooms the connection for transport-level failures, so reaching here means a plain
+                // T-SQL error). Not every SQL Server-compatible endpoint accepts this statement:
+                // Azure Synapse Analytics dedicated SQL pools, for example, only support
+                // SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED.
+                //
+                // sp_reset_connection still ran, because it is carried as a flag on the header of
+                // the batch above and is processed by the server before the batch body. The
+                // connection is therefore no less clean than it was under the legacy behavior, so
+                // degrade gracefully and let it be pooled rather than destroying it.
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "<sc.SqlInternalConnectionTds.ResetSessionIsolationLevel|ADV> {0}, " +
+                    "server rejected the session isolation level reset; leaving the session " +
+                    "isolation level unchanged.",
+                    ObjectID);
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {

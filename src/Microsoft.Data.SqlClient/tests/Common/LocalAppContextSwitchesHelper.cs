@@ -291,7 +291,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// </summary>
     public bool? UseLegacyIsolationLevelBehavior
     {
-        get => GetSwitchValue("s_useLegacyIsolationLevelBehavior");
+        get => GetSwitchPropertyValue(nameof(UseLegacyIsolationLevelBehavior));
         set => SetSwitchValue("s_useLegacyIsolationLevelBehavior", value);
     }
 
