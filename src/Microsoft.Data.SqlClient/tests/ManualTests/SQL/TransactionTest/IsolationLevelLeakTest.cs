@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // connection would silently inherit it. The fix resets the session
     // isolation level to READ COMMITTED when the connection is returned to
     // the pool.
+    [Trait("Set", "3")]
     public static class IsolationLevelLeakTest
     {
         private const string GetIsoSql = @"
