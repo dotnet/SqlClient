@@ -66,12 +66,12 @@ since 2017 with production impact.
 
 | | |
 |---|---|
-| Code path | `SqlConnectionInternal.ResetConnection()` — the pool **return** / `Deactivate` path |
+| Code path | `SqlConnectionInternal.Deactivate()` — the pool **return** / close path |
 | Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on pool return issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** session state on the way back into the pool |
 | App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` |
 | Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
-| Cost | No extra round trip — the queued `sp_reset_connection` piggybacks the batch's TDS header |
+| Cost | **One extra round trip on `Close()`**, paid only when a previous `Begin` raised the isolation level. The queued `sp_reset_connection` rides this batch's TDS header instead of the next user's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy close path did not make. |
 
 ---
 
@@ -141,7 +141,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Affected servers | On-prem SQL Server (reset does not clear) | Azure SQL DB (reset does clear) |
 | API surface | `SqlTransaction` **and** `TransactionScope` | `TransactionScope` only |
 | Trigger | TM `Begin` set a non-default level | Re-enlist short-circuit with a pending reset |
-| Code path | `ResetConnection()` / `Deactivate` (pool **return**) | `Enlist()` (pool **checkout**) |
+| Code path | `Deactivate()` (pool **return** / close) | `Enlist()` (pool **checkout**) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
@@ -188,7 +188,22 @@ application from opting into one without the other.
   - inside a live scope, the ambient level is honored on every open (#4335);
   - once the transaction ends and the connection is pooled, the level is scrubbed (#4330).
 - Two separate switches is the correct granularity: an application can opt out of the extra
-  round trip introduced by #4335 while keeping the #96 leak fix, or vice versa.
+  round trip introduced by either PR while keeping the other's fix.
+
+### A note on cost
+
+Both PRs add one extra round trip; they differ only in *when* it is paid. #4330 pays it on
+`Close()`, once per connection that raised its isolation level. #4335 pays it on every pooled
+re-checkout inside a scope. Neither is free, and #4330's earlier claim of "no extra round trip"
+was incorrect: `PrepareResetConnection` performs no I/O of its own (it only sets a flag that is
+consumed at the next packet write), so the legacy close path sent nothing at all.
+
+#4330 deliberately performs this I/O in `Deactivate()` rather than in `ResetConnection()`.
+`ResetConnection()` is also invoked by the pool from `PutObjectFromTransactedPool`, which runs on
+the `System.Transactions` transaction-completion callback thread while holding a lock on the
+connection; that call site explicitly avoids socket work on a thread it does not own. `Deactivate()`
+always runs on the closing thread and every pooled return passes through it, so it covers the same
+cases without breaking that contract.
 
 ### Suggested review order
 

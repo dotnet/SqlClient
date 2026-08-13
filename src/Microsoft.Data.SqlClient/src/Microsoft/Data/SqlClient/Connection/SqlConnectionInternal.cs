@@ -2111,6 +2111,24 @@ namespace Microsoft.Data.SqlClient.Connection
                         if (!IsConnectionDoomed)
                         {
                             ResetConnection();
+
+                            // sp_reset_connection (queued by ResetConnection above) does not reset
+                            // the session transaction isolation level, so when a previous Begin
+                            // changed it we issue an explicit SET here.
+                            //
+                            // This deliberately lives in Deactivate rather than in ResetConnection.
+                            // ResetConnection is also called by the connection pool from
+                            // PutObjectFromTransactedPool, which runs on the System.Transactions
+                            // transaction-completion callback thread while holding a lock on the
+                            // connection. That path is documented as avoiding socket work on a
+                            // thread it does not own, so it must stay free of network I/O.
+                            // Deactivate always runs on the thread that closed the connection, and
+                            // every pooled return passes through it, so this covers the same cases
+                            // without violating that contract.
+                            if (_isolationLevelDirty && !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior)
+                            {
+                                ResetSessionIsolationLevel();
+                            }
                         }
                     }
                 }
@@ -3958,24 +3976,19 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
                 _currentLanguage = _originalLanguage;
-
-                // sp_reset_connection (set up by PrepareResetConnection above) does not reset the
-                // session transaction isolation level. When we know a previous Begin changed the
-                // level, issue an explicit SET so the next user of this pooled connection starts at
-                // READ COMMITTED. The batch piggybacks the queued sp_reset_connection on its TDS
-                // header, so the round trip is shared and no separate reset packet is sent later.
-                // Gated by an app-context switch for back-compat.
-                if (_isolationLevelDirty && !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior)
-                {
-                    ResetSessionIsolationLevel();
-                }
             }
         }
 
-        // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object
-        // so the next user of this pooled connection observes the default session isolation level.
-        // Called only from ResetConnection when _isolationLevelDirty is set; runs synchronously
-        // because Deactivate is a synchronous pool-return path.
+        // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object so
+        // the next user of this pooled connection observes the default session isolation level.
+        //
+        // Called only from Deactivate, when _isolationLevelDirty is set. Runs synchronously because
+        // Deactivate is a synchronous pool-return path.
+        //
+        // Cost: this is a real extra round trip on the closing thread, paid only when a previous
+        // Begin raised the session isolation level. The queued sp_reset_connection rides along on
+        // this batch's TDS header rather than on the next user's first command, so the reset itself
+        // is not billed twice, but the batch is an additional exchange the legacy path did not make.
         private void ResetSessionIsolationLevel()
         {
             // Consumed unconditionally: whether the statement succeeds or is rejected by the
@@ -3987,7 +4000,10 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser.TdsExecuteSQLBatch(
                     text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
-                    timeout: 0,
+                    // Bounded by the connection's own connect timeout. Passing 0 here would map to
+                    // long.MaxValue in TdsParserStateObject.SetTimeoutMilliseconds, which would let
+                    // an unresponsive server block SqlConnection.Close indefinitely.
+                    timeout: ConnectionOptions.ConnectTimeout,
                     notificationRequest: null,
                     stateObj: _parser._physicalStateObj,
                     sync: true);
