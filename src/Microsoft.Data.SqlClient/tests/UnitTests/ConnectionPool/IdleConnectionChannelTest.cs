@@ -5,8 +5,10 @@
 using System;
 using System.Data.Common;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
@@ -160,6 +162,91 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Complete
+
+        [Fact]
+        public void Complete_FirstCall_ReturnsTrue()
+        {
+            var channel = new IdleConnectionChannel();
+
+            Assert.True(channel.Complete());
+        }
+
+        [Fact]
+        public void Complete_SecondCall_ReturnsFalse()
+        {
+            var channel = new IdleConnectionChannel();
+            Assert.True(channel.Complete());
+
+            // Idempotent: a second Complete is a safe no-op and must not throw.
+            Assert.False(channel.Complete());
+        }
+
+        [Fact]
+        public void TryWrite_AfterComplete_ReturnsFalseAndDoesNotIncrementCount()
+        {
+            var channel = new IdleConnectionChannel();
+            channel.Complete();
+
+            Assert.False(channel.TryWrite(new StubDbConnectionInternal()));
+            Assert.False(channel.TryWrite(null));
+            Assert.Equal(0, channel.Count);
+        }
+
+        [Fact]
+        public void TryRead_AfterComplete_DrainsBufferedItems()
+        {
+            var channel = new IdleConnectionChannel();
+            channel.TryWrite(new StubDbConnectionInternal());
+            channel.TryWrite(new StubDbConnectionInternal());
+            Assert.Equal(2, channel.Count);
+
+            channel.Complete();
+
+            // Completion only stops new writes; already-buffered items remain readable.
+            Assert.True(channel.TryRead(out var first));
+            Assert.NotNull(first);
+            Assert.True(channel.TryRead(out var second));
+            Assert.NotNull(second);
+            Assert.Equal(0, channel.Count);
+
+            // Once drained, further reads return false.
+            Assert.False(channel.TryRead(out _));
+        }
+
+        [Fact]
+        public async Task ReadAsync_AfterCompleteAndDrain_ThrowsChannelClosedException()
+        {
+            var channel = new IdleConnectionChannel();
+            channel.TryWrite(new StubDbConnectionInternal());
+            channel.Complete();
+
+            // Buffered item is still readable.
+            var buffered = await channel.ReadAsync(CancellationToken.None);
+            Assert.NotNull(buffered);
+
+            // After the channel is drained, ReadAsync faults with ChannelClosedException.
+            await Assert.ThrowsAsync<ChannelClosedException>(
+                () => channel.ReadAsync(CancellationToken.None).AsTask());
+        }
+
+        [Fact]
+        public async Task ReadAsync_PendingWaiter_FaultsOnComplete()
+        {
+            // FR-007: a caller already parked in ReadAsync when shutdown completes the
+            // channel must be unblocked (not wait until its connection timeout).
+            var channel = new IdleConnectionChannel();
+
+            var readTask = channel.ReadAsync(CancellationToken.None);
+            Assert.False(readTask.IsCompleted);
+
+            channel.Complete();
+
+            await Assert.ThrowsAsync<ChannelClosedException>(() => readTask.AsTask());
+        }
+
+        #endregion
+
         #region Mixed operations
 
         [Fact]
@@ -229,6 +316,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         private class StubDbConnectionInternal : DbConnectionInternal
         {
             public override string ServerVersion => throw new NotImplementedException();
+
+            public override ConnectionCapabilities Capabilities => throw new NotImplementedException();
 
             public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
                 => throw new NotImplementedException();

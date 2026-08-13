@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace Monitoring
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     public interface IMonitorLoader
     {

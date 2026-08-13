@@ -19,11 +19,6 @@
     <!--<TargetOs>Windows_NT</TargetOs>-->
 
     <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
-
-    <!-- NOTE: These constants are prefixed with _ to keep them separate from .NET 5+ precompiler -->
-    <!--     flags. Those only apply to OS-specific target frameworks, and would interfere here.  -->
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'unix'">$(DefineConstants);_UNIX</DefineConstants>
-    <DefineConstants Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(DefineConstants);_WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <!-- Target Frameworks =============================================== -->
@@ -207,9 +202,16 @@
     <Error Condition="'$(_SqlServerPackageVersionTrimmed)' == ''"
       Text="SqlServerPackageVersion is required for SqlClient packaging. When packing via build.proj, set -p:PackageVersionSqlServer=&lt;version&gt;; when packing the project directly, set -p:SqlServerPackageVersion=&lt;version&gt;; otherwise ensure the SqlServer Versions.props import can resolve a value." />
 
-    <!-- Expand the SqlClientPackNuspec template with the computed package versions. -->
+    <!-- Expand the SqlClientPackNuspec template with computed version ranges. -->
     <PropertyGroup>
-      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsPackageVersion$','$(AbstractionsPackageVersion)').Replace('$LoggingPackageVersion$','$(LoggingPackageVersion)').Replace('$SqlServerPackageVersion$','$(SqlServerPackageVersion)'))</_SqlClientPackNuspecExpandedText>
+      <!-- Compute version ranges: [floor, (floor.Major+1).0.0) — ceiling derived from floor.
+           Use trimmed values to guard against whitespace passed via -p: arguments. -->
+      <_AbstractionsVersionRange>[$(_AbstractionsPackageVersionTrimmed), $([MSBuild]::Add($(_AbstractionsPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_AbstractionsVersionRange>
+      <_LoggingVersionRange>[$(_LoggingPackageVersionTrimmed), $([MSBuild]::Add($(_LoggingPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_LoggingVersionRange>
+      <_SqlServerVersionRange>[$(_SqlServerPackageVersionTrimmed), $([MSBuild]::Add($(_SqlServerPackageVersionTrimmed.Split('.')[0]), 1)).0.0)</_SqlServerVersionRange>
+    </PropertyGroup>
+    <PropertyGroup>
+      <_SqlClientPackNuspecExpandedText>$([System.IO.File]::ReadAllText('$(SqlClientPackNuspecTemplatePath)').Replace('$AbstractionsVersionRange$','$(_AbstractionsVersionRange)').Replace('$LoggingVersionRange$','$(_LoggingVersionRange)').Replace('$SqlServerVersionRange$','$(_SqlServerVersionRange)').Replace('$SniVersionRange$','$(SniVersionRange)'))</_SqlClientPackNuspecExpandedText>
     </PropertyGroup>
     <WriteLinesToFile File="$(SqlClientPackNuspecGeneratedPath)"
                       Lines="$(_SqlClientPackNuspecExpandedText)"
@@ -224,11 +226,13 @@
   <!-- Embedded resources ============================================== -->
   <ItemGroup>
     <!-- Linker directives to replace UseManagedNetworking with a constant if consumer specifies  -->
-    <!-- the app context switch in their csproj. This file only applies to netcore on windows.    -->
+    <!-- the app context switch in their csproj. This file only applies to netcore.               -->
     <!-- This file does not support pre-processor directives, so it must be conditionally         -->
     <!-- included into the build.                                                                 -->
     <EmbeddedResource Include="Resources\ILLink.Substitutions.xml"
-                      Condition="'$(NormalizedTargetOs)' == 'windows_nt' AND '$(TargetFramework)' != 'net462'" />
+                      Condition="'$(TargetFramework)' != 'net462'">
+      <LogicalName>ILLink.Substitutions.xml</LogicalName>
+    </EmbeddedResource>
 
     <!-- Used by SqlMetaDataFactory to construct its DataSet -->
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
@@ -302,6 +306,7 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.Threading.RateLimiting" />
     <PackageReference Include="System.ValueTuple" />
   </ItemGroup>
 
@@ -314,6 +319,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Threading.RateLimiting" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

@@ -562,6 +562,20 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        /// <summary>
+        /// Verifies that SqlCommand.Cancel() is a no-op when Connection is null,
+        /// rather than throwing a NullReferenceException. Regression test for #4327.
+        /// </summary>
+        [Fact]
+        public void Cancel_WithNullConnection_DoesNotThrow()
+        {
+            using SqlCommand cmd = new SqlCommand();
+            Assert.Null(cmd.Connection);
+
+            // Should be a no-op, not throw NullReferenceException
+            cmd.Cancel();
+        }
+
         private static SqlConnection GetNonConnectingConnection() =>
             new SqlConnection("Initial Catalog=a;Server=b;User ID=c;Password=d");
     }

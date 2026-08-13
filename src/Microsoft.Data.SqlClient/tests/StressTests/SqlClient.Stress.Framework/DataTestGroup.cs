@@ -12,9 +12,8 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-using DPStressHarness;
 
-namespace Stress.Data
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     /// <summary>
     ///  basic set of tests to run on each managed provider

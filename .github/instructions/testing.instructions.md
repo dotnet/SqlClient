@@ -14,8 +14,8 @@ src/Microsoft.Data.SqlClient/tests/
 ├── UnitTests/                # Unit tests with minimal dependencies
 └── tools/
     └── Microsoft.Data.SqlClient.TestUtilities/
-        ├── config.default.json   # Template configuration
-        └── config.json           # Local test configuration (git-ignored)
+        ├── config.default.jsonc  # Template configuration
+        └── config.jsonc          # Local test configuration (git-ignored)
 ```
 
 ## Test Categories
@@ -34,14 +34,14 @@ src/Microsoft.Data.SqlClient/tests/
 
 ### Manual Tests (`ManualTests/`)
 - Full integration tests with SQL Server
-- Require `config.json` setup
+- Require `config.jsonc` setup
 - Test real database operations
 - Include Always Encrypted, Entra ID tests
 
 ## Test Configuration
 
-### Setting Up `config.json`
-Copy `config.default.json` to `config.json` and configure:
+### Setting Up `config.jsonc`
+Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 ```json
 {
@@ -172,6 +172,45 @@ dotnet test ... --filter "FullyQualifiedName=Namespace.ClassName.MethodName"
 ```
 
 ## Writing Tests
+
+### Test Documentation Requirements
+
+To keep tests maintainable for contributors and AI agents, test intent must be documented at
+class and method level.
+
+#### Required XML Documentation
+- Add XML `<summary>` comments to every test class.
+- Add XML `<summary>` comments to every test method (`[Fact]`, `[Theory]`, conditional variants).
+- For helper methods used by tests, add XML `<summary>` comments and XML `<param>` / `<returns>`
+  where applicable.
+- For fixture and collection types, add XML `<summary>` comments describing why the fixture exists
+  (for example, serialization of console-mutating tests).
+
+#### What the Comments Must Explain
+- The behavior/contract being tested (not just restating the method name).
+- Why the scenario matters (for example: regression guard, parsing contract, sync/async parity,
+  isolation requirement).
+- For helper methods, what side effects occur (for example console redirection, file system
+  copying, process execution) and why they are needed.
+
+#### Style Guidance
+- Keep comments concise and factual.
+- Prefer behavior-focused wording over implementation trivia.
+- Avoid comments that merely repeat obvious code.
+- Use inline comments inside test methods only for non-obvious setup/act/assert details.
+
+#### Example
+```csharp
+/// <summary>
+/// Ensures malformed connection strings return a non-zero exit code and emit a parse error
+/// without verbose exception details.
+/// </summary>
+[Fact]
+public void AppRunWithMalformedConnectionStringReturnsOneAndWritesParseError()
+{
+        // Arrange / Act / Assert
+}
+```
 
 ### Test Structure
 ```csharp

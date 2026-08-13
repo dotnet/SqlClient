@@ -1,0 +1,21 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Common variables shared across all pipelines.
+
+variables:
+
+  ##########################################################################
+  # "Well-Known" Variables that are ok to use directly, anywhere in the pipeline.
+
+  # The root of our repo.
+  - name: REPO_ROOT
+    value: $(Build.SourcesDirectory)
+
+  # This is where our C# projects place their build outputs (see Directory.Build.props
+  # <ArtifactsPath>).
+  - name: BUILD_OUTPUT
+    value: $(REPO_ROOT)/artifacts

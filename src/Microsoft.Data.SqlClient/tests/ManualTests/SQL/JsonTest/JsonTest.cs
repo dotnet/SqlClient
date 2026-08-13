@@ -15,6 +15,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    [Trait("Set", "3")]
     public class JsonTest
     {
         private const string JsonDataString = "[{\"name\":\"Dave\",\"skills\":[\"Python\"]},{\"name\":\"Ron\",\"surname\":\"Peter\"}]";
@@ -96,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int rowsAffected = command.ExecuteNonQuery();
             ValidateRowsAffected(rowsAffected);
 
-            //Test 2 
+            //Test 2
             //Write a SqlString type as json
             parameter.Value = new SqlString(JsonDataString);
             int rowsAffected2 = command.ExecuteNonQuery();
@@ -141,7 +142,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int rowsAffected = await command.ExecuteNonQueryAsync();
             ValidateRowsAffected(rowsAffected);
 
-            //Test 2 
+            //Test 2
             //Write a SqlString type as json
             parameter.Value = new SqlString(JsonDataString);
             int rowsAffected2 = await command.ExecuteNonQueryAsync();

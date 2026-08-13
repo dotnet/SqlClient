@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,6 +13,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public sealed class DateOnlyReadTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
         private SQLSetupStrategy fixture;
@@ -41,10 +42,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // insert 1 row data
                 CustomerDateOnly customer = new CustomerDateOnly(
-                    45, 
-                    "Microsoft", 
-                    "Corporation", 
-                    new DateOnly(2001, 1, 31), 
+                    45,
+                    "Microsoft",
+                    "Corporation",
+                    new DateOnly(2001, 1, 31),
                     new TimeOnly(18, 36, 45));
 
                 DatabaseHelper.InsertCustomerDateOnlyData(sqlConn, null, tableName, customer);

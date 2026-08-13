@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+    [Trait("Set", "AE")]
     public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private readonly string dummyThumbprint;
@@ -68,8 +69,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {
@@ -113,8 +114,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {
@@ -171,8 +172,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {
@@ -217,8 +218,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {
@@ -249,8 +250,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {
@@ -283,8 +284,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand(
-                       $@"SELECT CustomerId, FirstName, LastName 
-                          FROM [{tableName}] 
+                       $@"SELECT CustomerId, FirstName, LastName
+                          FROM [{tableName}]
                           WHERE FirstName = @firstName",
                        sqlConnection))
                 {

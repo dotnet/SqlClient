@@ -34,6 +34,7 @@ When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient
 | Coding Style | [coding-style.md](/policy/coding-style.md) |
 | Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
+| Roadmap | [roadmap.md](roadmap.md) |
 | Review Process | [review-process.md](/policy/review-process.md) |
 | Support Policy | [SUPPORT.md](SUPPORT.md) |
 

@@ -69,22 +69,31 @@ dotnet build -t:<build_target> [optional_parameters]
 The command-line examples below will assume that `build.proj` is selected by default and will omit
 it from the `dotnet build` command.
 
+If no target is specified, `build.proj` runs the `BuildAll` target by default, which builds all
+projects, tests, samples, and tools for all supported OS combinations. To build only the driver
+projects, specify `-t:BuildDriver` explicitly.
+
 The following build targets can be used to build the following projects. All targets will implicitly build any other
 projects they depend on.
 
-| `<build_target>`            | Description                                                                     |
-|-----------------------------|---------------------------------------------------------------------------------|
-| `Build`                     | Builds all projects for all platforms                                           |
-| `BuildAbstractions`         | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
-| `BuildAkvProvider`          | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
-| `BuildAzure`                | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
-| `BuildLogging`              | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
-| `BuildSqlClient`            | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
-| `BuildSqlClientRef`         | Builds the reference assemblies for Microsoft.Data.SqlClient                    |
-| `BuildSqlClientUnsupported` | Builds the "unsupported platform" assemblies for Microsoft.Data.SqlClient       |
-| `BuildSqlClientUnix`        | Builds the Unix-specific implementation binaries of Microsoft.Data.SqlClient    |
-| `BuildSqlClientWindows`     | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
-| `BuildSqlServer`            | Builds Microsoft.SqlServer.Server                                               |
+| `<build_target>`              | Description                                                                     |
+|-------------------------------|---------------------------------------------------------------------------------|
+| `BuildAbstractions`           | Builds Microsoft.Data.SqlClient.Extensions.Abstractions                         |
+| `BuildAkvProvider`            | Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider           |
+| `BuildAll`                    | Builds all projects, tests, samples, and tools for all supported OS combinations (default target) |
+| `BuildAzure`                  | Builds Microsoft.Data.SqlClient.Extensions.Azure                                |
+| `BuildDriver`                 | Builds all driver projects for all platforms                                    |
+| `BuildLogging`                | Builds Microsoft.Data.SqlClient.Internal.Logging                                |
+| `BuildSamples`                | Builds the sample projects under `doc/samples/`                                 |
+| `BuildSqlClient`              | Builds all variants of Microsoft.Data.SqlClient, for all platforms              |
+| `BuildSqlClientNotSupported`  | Builds the "unsupported platform" assemblies for Microsoft.Data.SqlClient       |
+| `BuildSqlClientRef`           | Builds the reference assemblies for Microsoft.Data.SqlClient                    |
+| `BuildSqlClientUnix`          | Builds the Unix-specific implementation binaries of Microsoft.Data.SqlClient    |
+| `BuildSqlClientWindows`       | Builds the Windows-specific implementation binaries of Microsoft.Data.SqlClient |
+| `BuildSqlServer`              | Builds Microsoft.SqlServer.Server                                               |
+| `BuildTests`                  | Builds all test projects for all supported OS combinations                      |
+| `BuildTools`                  | Builds auxiliary tool/app projects and their test projects                      |
+| `Clean`                       | Removes build and test output directories                                       |
 
 A selection of parameters for build targets in `build.proj` can be found below:
 
@@ -107,10 +116,16 @@ placed in `artifacts/Microsoft.Data.SqlClient.ref/Project-<configuration>/<tfm>`
 
 #### Examples
 
-Build all projects:
+Build everything (all projects, tests, samples, and tools) using the default target:
 
 ```bash
-dotnet build -t:Build
+dotnet build
+```
+
+Build only the driver projects:
+
+```bash
+dotnet build -t:BuildDriver
 ```
 
 Build Microsoft.Data.SqlClient in Release configuration:
@@ -139,6 +154,7 @@ dotnet build -t:<test_target> [optional_parameters]
 | `<test_target>`            | Description                                                                                                                                         |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
+| `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
 | `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |
@@ -435,13 +451,14 @@ $ sqlcmd -S localhost -U sa -P password
 1> quit
 ```
 
-The default `runnerconfig.json` expects a database named `sqlclient-perf-db`,
-but you may change the config to use any existing database.  All tables in
-the database will be dropped when running the benchmarks.
+The default `runnerconfig.jsonc` expects a database named `sqlclient-perf-db`,
+but you may change the config to use any existing database.  The benchmarks
+create and drop their own tables (typically prefixed with `perf_`) in this
+database; other existing tables are left untouched.
 
 ### Configure Runner
 
-Configure the benchmarks by editing the `runnerconfig.json` file directly in the
+Configure the benchmarks by editing the `runnerconfig.jsonc` file directly in the
 `PerformanceTests` directory with an appropriate connection string and benchmark
 settings:
 
@@ -449,6 +466,9 @@ settings:
 {
   "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
   "UseManagedSniOnWindows": false,
+  "UseOptimizedAsyncBehaviour": true,
+  "WaitForProfiler": false,
+  "UseNativeMemoryAndETWProfiler": false,
   "Benchmarks":
   {
     "SqlConnectionRunnerConfig":
@@ -468,36 +488,51 @@ settings:
 Individual benchmarks may be enabled or disabled, and each has several
 benchmarking options for fine tuning.
 
-After making edits to `runnerconfig.json` you must perform a build which will
+The top-level flags control global runner behavior:
+
+| Flag | Description |
+| --- | --- |
+| `UseManagedSniOnWindows` | Enables the managed SNI implementation on Windows instead of native SNI. |
+| `UseOptimizedAsyncBehaviour` | Enables packet multiplexing and other async optimizations in SqlClient. |
+| `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. |
+| `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
+
+Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also
+read per-type test values from `datatypes.json` in the `PerformanceTests`
+directory. Like `runnerconfig.jsonc`, this file's location can be overridden
+with the `DATATYPES_CONFIG` environment variable.
+
+After making edits to `runnerconfig.jsonc` you must perform a build which will
 copy the file into the `artifacts` directory alongside the benchmark DLL.  By
-default, the benchmarks look for `runnerconfig.json` in the same directory as
+default, the benchmarks look for `runnerconfig.jsonc` in the same directory as
 the DLL.
 
 Optionally, to avoid polluting your git workspace and requiring a build after
-each config change, copy `runnerconfig.json` to a new file, make your edits
+each config change, copy `runnerconfig.jsonc` to a new file, make your edits
 there, and then specify the new file with the RUNNER_CONFIG environment
-variable.
+variable. The same approach works for `datatypes.json` via the
+`DATATYPES_CONFIG` environment variable.
 
 PowerShell:
 
 ```pwsh
-> copy runnerconfig.json $HOME\.configs\runnerconfig.json
+> copy runnerconfig.jsonc $HOME\.configs\runnerconfig.jsonc
 
-# Make edits to $HOME\.configs\runnerconfig.json
+# Make edits to $HOME\.configs\runnerconfig.jsonc
 
 # You must set the RUNNER_CONFIG environment variable for the current shell.
-> $env:RUNNER_CONFIG="${HOME}\.configs\runnerconfig.json"
+> $env:RUNNER_CONFIG="${HOME}\.configs\runnerconfig.jsonc"
 ```
 
 Bash:
 
 ```bash
-$ cp runnerconfig.json ~/.configs/runnerconfig.json
+$ cp runnerconfig.jsonc ~/.configs/runnerconfig.jsonc
 
-# Make edits to ~/.configs/runnerconfig.json
+# Make edits to ~/.configs/runnerconfig.jsonc
 
 # Optionally export RUNNER_CONFIG.
-$ export RUNNER_CONFIG=~/.configs/runnerconfig.json
+$ export RUNNER_CONFIG=~/.configs/runnerconfig.jsonc
 ```
 
 ### Run Benchmarks
@@ -517,5 +552,5 @@ Bash:
 # copy prepared by the build.
 $ dotnet run -c Release -f net9.0
 
-$ RUNNER_CONFIG=~/.configs/runnerconfig.json dotnet run -c Release -f net9.0
+$ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net9.0
 ```

@@ -36,6 +36,9 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const bool IntegratedSecurity = false;
         internal const SqlConnectionIPAddressPreference IpAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
+        // Default configured idle timeout is 5 minutes. Connection pool behavior is gated by
+        // LocalAppContextSwitches.UseLegacyIdleTimeoutBehavior for compatibility.
+        internal const int IdleTimeout = 300;
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const bool MultipleActiveResultSets = false;

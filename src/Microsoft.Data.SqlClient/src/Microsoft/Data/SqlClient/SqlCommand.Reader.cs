@@ -13,10 +13,10 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Security.Permissions;
-using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -71,10 +71,14 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent(
                     "SqlCommand.EndExecuteReader | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
+                    "Object Id {0}, " +
+                    "Activity Id {1}, " +
+                    "Client Connection Id {2}, " +
+                    "Command Text '{3}'",
+                    ObjectID,
+                    ActivityCorrelator.Current,
+                    _activeConnection?.ClientConnectionId,
+                    CommandText);
             }
         }
 
@@ -83,10 +87,14 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             SqlStatistics statistics = null;
             try
@@ -212,10 +220,14 @@ namespace Microsoft.Data.SqlClient
             // @TODO: Yknow, we use this all over the place. It could be factored out.
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteDbDataReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             return ExecuteReader(behavior);
         }
@@ -367,10 +379,14 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             // Read SNI does not have catches for async exceptions, handle here.
             try
@@ -381,7 +397,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.ReadSni(completion);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
@@ -436,7 +452,6 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Can we return the RPC here like BuildExecute does?
         private void BuildExecuteSql(
             CommandBehavior behavior,
-            string commandText,
             SqlParameterCollection parameters,
             ref _SqlRPC rpc)
         {
@@ -457,13 +472,13 @@ namespace Microsoft.Data.SqlClient
             SqlParameter sqlParam;
 
             // @batch_text
-            commandText ??= GetCommandText(behavior);
+            string text = GetCommandText(behavior);
             sqlParam = rpc.systemParams[0];
-            sqlParam.SqlDbType = (commandText.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
+            sqlParam.SqlDbType = (text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT
                 ? SqlDbType.NVarChar
                 : SqlDbType.NText;
-            sqlParam.Size = commandText.Length;
-            sqlParam.Value = commandText;
+            sqlParam.Size = text.Length;
+            sqlParam.Value = text;
             sqlParam.Direction = ParameterDirection.Input;
 
             // @batch_params
@@ -656,10 +671,14 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.EndExecuteReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException is not null)
@@ -688,10 +707,14 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlCommand.EndExecuteReaderInternal | API | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+                "Object Id {0}, " +
+                "Client Connection Id {1}, " +
+                "MARS={2}, " +
+                "AsyncCommandInProgress={3}",
+                ObjectID,
+                _activeConnection?.ClientConnectionId,
+                _activeConnection?.Parser?.MARSOn,
+                _activeConnection?.AsyncCommandInProgress);
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -936,16 +959,24 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.InternalExecuteReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Behavior {(int)commandBehavior}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Behavior {1}, " +
+                "Activity Id {2}, " +
+                "Client Connection Id {3}, " +
+                "Command Text '{4}'",
+                ObjectID,
+                (int)commandBehavior,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlCommand.InternalExecuteReaderAsync | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Client Connection Id {1}, " +
+                "Command Text '{2}'",
+                ObjectID,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             Guid operationId = !_parentOperationStarted ? s_diagnosticListener.WriteCommandBefore(this, _transaction) : Guid.Empty;
 
@@ -1040,10 +1071,14 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlCommand.InternalEndExecuteReader | INFO | " +
-                $"Object Id {ObjectID}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"MARS={_activeConnection?.Parser?.MARSOn}, " +
-                $"AsyncCommandInProgress={_activeConnection?.AsyncCommandInProgress}");
+                "Object Id {0}, " +
+                "Client Connection Id {1}, " +
+                "MARS={2}, " +
+                "AsyncCommandInProgress={3}",
+                ObjectID,
+                _activeConnection?.ClientConnectionId,
+                _activeConnection?.Parser?.MARSOn,
+                _activeConnection?.AsyncCommandInProgress);
 
             VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
@@ -1367,11 +1402,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as SQLBATCH, " +
-                            $"Command Text '{CommandText}'");
+                            "Object Id {0}, " +
+                            "Activity Id {1}, " +
+                            "Client Connection Id {2}, " +
+                            "Command executed as SQLBATCH, " +
+                            "Command Text '{3}'",
+                            ObjectID,
+                            ActivityCorrelator.Current,
+                            _activeConnection?.ClientConnectionId,
+                            CommandText);
                     }
 
                     string text = GetCommandText(cmdBehavior) + GetOptionsResetString(cmdBehavior);
@@ -1446,7 +1485,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         Debug.Assert(_execType is EXECTYPE.UNPREPARED, "Invalid execType!");
-                        BuildExecuteSql(cmdBehavior, commandText: null, _parameters, ref rpc);
+                        BuildExecuteSql(cmdBehavior, _parameters, ref rpc);
                     }
 
                     rpc.options = TdsEnums.RPC_NOMETADATA;
@@ -1454,11 +1493,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as RPC, " +
-                            $"RPC Name '{rpc.rpcName}'");
+                            "Object Id {0}, " +
+                            "Activity Id {1}, " +
+                            "Client Connection Id {2}, " +
+                            "Command executed as RPC, " +
+                            "RPC Name '{3}'",
+                            ObjectID,
+                            ActivityCorrelator.Current,
+                            _activeConnection?.ClientConnectionId,
+                            rpc.rpcName);
                     }
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
@@ -1488,11 +1531,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlCommand.RunExecuteReaderTds | Info | " +
-                            $"Object Id {ObjectID}, " +
-                            $"Activity Id {ActivityCorrelator.Current}, " +
-                            $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                            $"Command executed as RPC, " +
-                            $"RPC Name '{CommandText}'");
+                            "Object Id {0}, " +
+                            "Activity Id {1}, " +
+                            "Client Connection Id {2}, " +
+                            "Command executed as RPC, " +
+                            "RPC Name '{3}'",
+                            ObjectID,
+                            ActivityCorrelator.Current,
+                            _activeConnection?.ClientConnectionId,
+                            CommandText);
                     }
 
                     // Turn set options ON
@@ -1599,18 +1646,18 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask,
+                taskToContinue: writeTask,
                 state: _activeConnection,
-                onSuccess: state =>
+                onSuccess: sqlConnection =>
                 {
                     // This will throw if the connection is closed.
                     // @TODO: So... can we have something that specifically does that?
-                    ((SqlConnection)state).GetOpenTdsConnection();
+                    sqlConnection.GetOpenTdsConnection();
                     CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
-                onFailure: static (exception, state) =>
+                onFailure: static (sqlConnection, _) =>
                 {
-                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
+                    sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
                 });
         }
 
@@ -1632,7 +1679,7 @@ namespace Microsoft.Data.SqlClient
             AsyncHelper.SetTimeoutException(
                 completion,
                 timeout,
-                onFailure: static () => SQL.CR_ReconnectTimeout(),
+                onTimeout: static () => SQL.CR_ReconnectTimeout(),
                 timeoutCts.Token);
 
             // @TODO: With an object to pass around we can use the state-based version
@@ -1643,11 +1690,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (completion.Task.IsCompleted)
                     {
+                        timeoutCts.Cancel();
+                        timeoutCts.Dispose();
                         return;
                     }
 
                     Interlocked.CompareExchange(ref _reconnectionCompletionSource, null, completion);
                     timeoutCts.Cancel();
+                    timeoutCts.Dispose();
 
                     RunExecuteReaderTds(
                         cmdBehavior,
@@ -1672,6 +1722,16 @@ namespace Microsoft.Data.SqlClient
                             state: completion,
                             onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
                     }
+                },
+                onFailure: _ =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
+                },
+                onCancellation: () =>
+                {
+                    timeoutCts.Cancel();
+                    timeoutCts.Dispose();
                 });
         }
 
@@ -1703,14 +1763,13 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 AsyncHelper.ContinueTaskWithState(
-                    task: describeParameterEncryptionTask,
-                    completion: completion,
+                    taskToContinue: describeParameterEncryptionTask,
+                    taskCompletionSource: completion,
                     state: this,
-                    onSuccess: state =>
+                    onSuccess: sqlCommand =>
                     {
-                        SqlCommand command = (SqlCommand)state;
-                        command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(
+                        sqlCommand.GenerateEnclavePackage();
+                        sqlCommand.RunExecuteReaderTds(
                             cmdBehavior,
                             runBehavior,
                             returnStream,
@@ -1729,23 +1788,23 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             AsyncHelper.ContinueTaskWithState(
-                                task: subTask,
-                                completion: completion,
+                                taskToContinue: subTask,
+                                taskCompletionSource: completion,
                                 state: completion,
-                                onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+                                onSuccess: static state => state.SetResult(null));
                         }
                     },
-                    onFailure: static (exception, state) =>
+                    onFailure: static (sqlCommand, exception) =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                         if (exception is not null)
                         {
                             throw exception;
                         }
                     },
-                    onCancellation: static state =>
+                    onCancellation: static sqlCommand =>
                     {
-                        ((SqlCommand)state).CachedAsyncState?.ResetAsyncState();
+                        sqlCommand.CachedAsyncState?.ResetAsyncState();
                     });
 
                 task = completion.Task;

@@ -195,22 +195,22 @@ conditional tests are skipped.
 ## Manual Test Configuration
 
 Edit the source configuration file at `src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/
-config.json`. The test utilities project copies that file to the test output directory, where the manual tests load it
+config.jsonc`. The test utilities project copies that file to the test output directory, where the manual tests load it
 by default.
 
 The template file is:
 
-[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json)
+[src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc)
 
-`config.json` is git-ignored. If it does not exist, the test utilities project copies `config.default.json` to
-`config.json` before compile. You can also create it manually:
+`config.jsonc` is git-ignored. If it does not exist, the test utilities project copies `config.default.jsonc` to
+`config.jsonc` before compile. You can also create it manually:
 
 ```bash
-cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json \
-  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.json
+cp src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.jsonc \
+  src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.jsonc
 ```
 
-Update `config.json` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
+Update `config.jsonc` for your environment before running manual tests. The most important values for a basic run are `TCPConnectionString` and `NPConnectionString`.
 
 ```jsonc
 {
@@ -230,16 +230,16 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 }
 ```
 
-You can override the config file path with the `MDS_TEST_CONFIG` environment variable:
+You can override the config file path with the `TEST_MDS_CONFIG` environment variable:
 
 ```bash
-MDS_TEST_CONFIG=/path/to/config.json dotnet build -t:TestSqlClientManual -p:TestSet=2
+TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
-$env:MDS_TEST_CONFIG = "C:\path\to\config.json"
+$env:TEST_MDS_CONFIG = "C:\path\to\config.jsonc"
 dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
@@ -263,7 +263,6 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 | `SupportsIntegratedSecurity`     | Whether the user running tests has integrated-security access to the target SQL Server.     | `true` or `false`.                                                                     |
 | `LocalDbAppName`                 | Optional LocalDB instance name. Empty disables LocalDB testing.                             | `MSSQLLocalDB` or another local instance.                                              |
 | `LocalDbSharedInstanceName`      | Optional shared LocalDB instance name.                                                      | Used only when testing shared LocalDB.                                                 |
-| `SupportsFileStream`             | Whether FileStream tests are supported by the target.                                       | `true` or `false`.                                                                     |
 | `FileStreamDirectory`            | Directory used for FileStream database setup.                                               | Use an escaped absolute path in JSON.                                                  |
 | `UseManagedSNIOnWindows`         | Enables Managed SNI on Windows test coverage.                                               | `true` or `false`.                                                                     |
 | `DNSCachingConnString`           | Optional connection string for DNS caching tests.                                           | Used with DNS caching server settings.                                                 |
@@ -271,7 +270,6 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 | `DNSCachingServerTR`             | Optional DNS caching tenant-ring server.                                                    | Feature-specific tests only.                                                           |
 | `IsDNSCachingSupportedCR`        | Enables DNS caching control-ring tests.                                                     | `true` or `false`.                                                                     |
 | `IsDNSCachingSupportedTR`        | Enables DNS caching tenant-ring tests.                                                      | `true` or `false`.                                                                     |
-| `IsAzureSynapse`                 | Marks the target as Azure Synapse.                                                          | Some SQL Server-specific tests are skipped when `true`.                                |
 | `EnclaveAzureDatabaseConnString` | Optional Azure SQL database connection string for enclave tests.                            | Feature-specific tests only.                                                           |
 | `ManagedIdentitySupported`       | Whether managed identity tests should run.                                                  | Defaults to `true`. Set `false` if unavailable.                                        |
 | `UserManagedIdentityClientId`    | Optional client ID for user-assigned managed identity tests.                                | Feature-specific tests only.                                                           |

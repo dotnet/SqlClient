@@ -6,6 +6,7 @@
     <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="11.0.0-beta.25476.3" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.6.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="xunit.runner.console" Version="2.9.3" />
@@ -13,7 +14,8 @@
   <!-- SqlClient test dependencies. -->
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.13" />
+    <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.18" />
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="181.15.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
     <PackageVersion Include="System.Formats.Asn1" Version="10.0.3" />

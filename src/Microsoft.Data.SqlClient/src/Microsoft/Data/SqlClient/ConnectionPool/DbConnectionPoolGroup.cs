@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     // and once no pools remain, change state from Active->Idle->Disabled
     // Once Disabled, factory can remove its reference to the pool entry
 
-    sealed internal class DbConnectionPoolGroup
+    internal sealed class DbConnectionPoolGroup
     {
         private readonly SqlConnectionOptions _connectionOptions;
         private readonly ConnectionPoolKey _poolKey;
@@ -92,6 +92,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal DbConnectionPoolGroupOptions PoolGroupOptions => _poolGroupOptions;
 
         internal SqlMetaDataFactory MetaDataFactory { get; set; }
+
+        /// <summary>
+        /// Determines whether the blocking period is enabled for this pool group based on the
+        /// configured <see cref="PoolBlockingPeriod"/> and the target data source.
+        /// </summary>
+        internal bool IsBlockingPeriodEnabled()
+        {
+            return _connectionOptions.PoolBlockingPeriod switch
+            {
+                PoolBlockingPeriod.Auto => !ADP.IsAzureSqlServerEndpoint(_connectionOptions.DataSource),
+                PoolBlockingPeriod.AlwaysBlock => true,
+                PoolBlockingPeriod.NeverBlock => false,
+                _ => true
+            };
+        }
 
         internal int Clear()
         {

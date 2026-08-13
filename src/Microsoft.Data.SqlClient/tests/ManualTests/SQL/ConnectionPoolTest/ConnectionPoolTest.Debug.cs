@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // xUnit won't run tests in an abstract class.
     //
     // public static class ConnectionPoolTestDebug
+    [Trait("Set", "3")]
     public abstract class ConnectionPoolTestDebug
     {
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingManagedSNI))]

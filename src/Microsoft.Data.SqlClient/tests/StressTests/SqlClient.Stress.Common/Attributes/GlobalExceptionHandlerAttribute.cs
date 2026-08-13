@@ -4,7 +4,7 @@
 
 using System;
 
-namespace DPStressHarness
+namespace Microsoft.Data.SqlClient.Test.Stress
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
     public class GlobalExceptionHandlerAttribute : Attribute

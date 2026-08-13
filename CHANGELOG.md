@@ -6,6 +6,193 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.1.0-preview2] - 2026-07-09
+
+This update brings the following changes since the [7.1.0-preview1](release-notes/7.1/7.1.0-preview1.md) release.
+See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed descriptions.
+
+> **Important — package version alignment:** Starting with the [7.0.2](release-notes/7.0/7.0.2.md) release, the `Microsoft.Data.SqlClient` driver and its companion packages share a single aligned version. Preview 2 of the `7.1` line continues this alignment; the following packages now ship together as `7.1.0-preview2`:
+>
+> - `Microsoft.Data.SqlClient`
+> - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
+> - `Microsoft.Data.SqlClient.Extensions.Azure`
+> - `Microsoft.Data.SqlClient.Extensions.Abstractions`
+> - `Microsoft.Data.SqlClient.Internal.Logging`
+>
+> (`Microsoft.SqlServer.Server` continues to version independently and remains at `1.0.0`.)
+>
+> Applications that reference `Microsoft.Data.SqlClient.Extensions.Azure` must upgrade it to `7.1.0-preview2` when upgrading `Microsoft.Data.SqlClient` to `7.1.0-preview2`.
+>
+> **Compatibility guarantee:** All aligned assemblies ship with `FileVersion 7.1.0.x` and `AssemblyVersion 7.0.0.0`. The `AssemblyVersion` is unchanged from [7.0.2](release-notes/7.0/7.0.2.md), so upgrading from `7.0.2` to `7.1.0-preview2` does **not** require any new .NET Framework strong-name binding redirects. See the 7.0.2 release notes for the original `AssemblyVersion` alignment (the one-time breaking change that raised `AssemblyVersion` from `1.0.0.0` to `7.0.0.0` for `Extensions.Azure`, `Extensions.Abstractions`, and `Internal.Logging`; `AzureKeyVaultProvider` was already on `7.x`).
+
+### Added
+
+- Added `SqlConnection.GetSchemaAsync` overloads mirroring the existing synchronous shapes.
+  ([#3005](https://github.com/dotnet/SqlClient/pull/3005))
+
+- Added SQL Graph column-alias support (`$node_id`, `$edge_id`, `$from_id`, `$to_id`) as destination columns in `SqlBulkCopy`.
+  ([#3677](https://github.com/dotnet/SqlClient/pull/3677))
+
+- `SqlBatchCommand.CommandBehavior` (a driver-specific property that existed since batching was introduced but was previously ignored) is now honored during `SqlBatch` execution, and `SqlBatch.ExecuteReader` now respects the `CommandBehavior` value passed to it.
+  ([#4125](https://github.com/dotnet/SqlClient/pull/4125))
+
+- Added a `Connection Idle Timeout` connection-string keyword and matching `SqlConnectionStringBuilder.IdleTimeout` property to evict idle pooled connections (default `300` seconds; `0` disables). Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseLegacyIdleTimeoutBehavior=false`; the default preserves the historical pooling behavior. When enabled, idle-timeout enforcement applies to the existing connection pool as well.
+  ([#4295](https://github.com/dotnet/SqlClient/pull/4295))
+
+### Changed
+
+- The `Connect Timeout` budget can now be propagated through pool acquisition via a shared `TimeoutTimer`, so time spent waiting in the pool is deducted from the overall timeout. Enforcement is opt-in via `Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait=true`; the default (`false`) preserves the historical behavior where pool waits do not count against `Connect Timeout`. Adds a dependency on `Microsoft.Bcl.TimeProvider`.
+  ([#4270](https://github.com/dotnet/SqlClient/pull/4270))
+
+- Hardened `SqlConnection` internal state transitions with `Interlocked.CompareExchange` guards.
+  ([#4267](https://github.com/dotnet/SqlClient/pull/4267))
+
+- Removed legacy connection-options inheritance from internal APIs and simplified `TryOpenConnection` / `TryReplaceConnection` / pool interfaces.
+  ([#4235](https://github.com/dotnet/SqlClient/pull/4235),
+   [#4237](https://github.com/dotnet/SqlClient/pull/4237),
+   [#4261](https://github.com/dotnet/SqlClient/pull/4261),
+   [#4415](https://github.com/dotnet/SqlClient/pull/4415))
+
+- Added the SQL Server 2025 `json` data type to the `DataTypes` schema table returned by `SqlConnection.GetSchema`.
+  ([#3858](https://github.com/dotnet/SqlClient/pull/3858))
+
+- Added async generic helpers to reduce sync/async duplication.
+  ([#4334](https://github.com/dotnet/SqlClient/pull/4334))
+
+- Use hardcoded LCID mappings when decoding strings.
+  ([#4212](https://github.com/dotnet/SqlClient/pull/4212))
+
+- Reduced allocations by skipping lock acquisition on `SqlErrorCollection` counters when no errors exist, and by avoiding stack-trace materialization on expected `null`-return paths.
+  ([#4099](https://github.com/dotnet/SqlClient/pull/4099),
+   [#4102](https://github.com/dotnet/SqlClient/pull/4102),
+   [#4157](https://github.com/dotnet/SqlClient/pull/4157))
+
+- Improved accuracy of `EnclaveDiffieHellmanInfo.Size`.
+  ([#4346](https://github.com/dotnet/SqlClient/pull/4346))
+
+- `SqlVector<float>` now serializes and deserializes multibyte values as little-endian explicitly.
+  ([#3861](https://github.com/dotnet/SqlClient/pull/3861))
+
+- Updated the bundled .NET 10 SDK to `10.0.300`.
+  ([#4287](https://github.com/dotnet/SqlClient/pull/4287))
+
+- Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview2`, adding Windows Account Manager (WAM) broker support for Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview2.md).
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview2.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview2.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview2.md).
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlCommand.Cancel()` when the active connection has already been torn down.
+  ([#4372](https://github.com/dotnet/SqlClient/pull/4372))
+
+- Fixed Always Encrypted column master key signature verification incorrectly reusing cached results after a prior verification failure.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339))
+
+- Fixed missing bounds checks on TDS token and feature-extension-acknowledgment data lengths that could allow a spoofing server to trigger unbounded allocations.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340))
+
+- Fixed `SqlBulkCopy` failing in least-privilege environments.
+  ([#4306](https://github.com/dotnet/SqlClient/pull/4306))
+
+- Fixed Always Encrypted reads of `CekMdVersion` and `EkValueCount` to align with the TDS specification.
+  ([#4240](https://github.com/dotnet/SqlClient/pull/4240))
+
+- Fixed `LoginWithFailover` to validate parser state before continuing.
+  ([#4140](https://github.com/dotnet/SqlClient/pull/4140))
+
+- Fixed the SPN used during login to use the resolved port instead of the instance name when `Protocol=None` or `Protocol=Admin`.
+  ([#4180](https://github.com/dotnet/SqlClient/pull/4180))
+
+- Fixed a race in `SqlConnection.TryOpenInner` that could surface as `InvalidCastException`; the same race now returns a deterministic `InvalidOperationException`.
+  ([#4179](https://github.com/dotnet/SqlClient/pull/4179))
+
+- Fixed several `CancellationTokenSource` leaks across `SqlDataReader`, `SqlConnection` reconnect, `SqlCommand` reconnect timeout, and sequential-stream helpers.
+  ([#4009](https://github.com/dotnet/SqlClient/pull/4009))
+
+- Fixed server certificate documentation.
+  ([#4408](https://github.com/dotnet/SqlClient/pull/4408))
+
+### Removed
+
+- **Breaking:** Removed SQL Server 7.0 and SQL Server 2000 support, along with the `TypeSystem.SQLServer2000` enum value and the `Type System Version=SQL Server 2000` connection-string value. Connection strings that specify this value now throw `ArgumentException` when the connection is opened. Supported values are `Latest`, `SQL Server 2005`, `SQL Server 2008`, and `SQL Server 2012`.
+  ([#4015](https://github.com/dotnet/SqlClient/pull/4015))
+
+## [Stable Release 7.0.2] - 2026-06-24
+
+This update brings the following changes since the [7.0.1](release-notes/7.0/7.0.1.md) release.
+See the [full release notes](release-notes/7.0/7.0.2.md) for detailed descriptions.
+
+> **Important — package version alignment:** Starting with 7.0.2, the `Microsoft.Data.SqlClient` driver and its companion packages share a single aligned version. The following packages now ship together as `7.0.2`:
+>
+> - `Microsoft.Data.SqlClient`
+> - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
+> - `Microsoft.Data.SqlClient.Extensions.Azure`
+> - `Microsoft.Data.SqlClient.Extensions.Abstractions`
+> - `Microsoft.Data.SqlClient.Internal.Logging`
+>
+> (`Microsoft.SqlServer.Server` continues to version independently and remains at `1.0.0`.)
+>
+> Applications must reference the same versions of `Microsoft.Data.SqlClient` and its extensions for best compatibility. In particular, applications that reference `Microsoft.Data.SqlClient.Extensions.Azure` must upgrade it to `7.0.2` when upgrading `Microsoft.Data.SqlClient` to `7.0.2`.
+
+> **Breaking change (.NET Framework only):** As part of this alignment, the `AssemblyVersion` of `Microsoft.Data.SqlClient.Extensions.Azure`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` changed from `1.0.0.0` to `7.0.0.0`. On .NET Framework, `AssemblyVersion` is part of the strong-name identity, so applications that drop these assemblies into an existing deployment without rebuilding must rebuild against the 7.0.2 packages (or add binding redirects). Applications on .NET / .NET Core are not affected. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` already used a `7.x` assembly version and is unaffected.
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlCommand.Cancel()` when the active connection has already been torn down.
+  ([#4372](https://github.com/dotnet/SqlClient/pull/4372),
+   [#4373](https://github.com/dotnet/SqlClient/pull/4373))
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetBytes`/`GetChars` when called with a `null` destination buffer.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4206](https://github.com/dotnet/SqlClient/pull/4206))
+
+- Fixed Always Encrypted column master key signature verification incorrectly reusing cached results.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4343](https://github.com/dotnet/SqlClient/pull/4343))
+
+### Changed
+
+- Hardened TDS token parsing by adding data-length bounds checks for token and feature-extension-acknowledgment data.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4358](https://github.com/dotnet/SqlClient/pull/4358))
+
+- Released `Microsoft.Data.SqlClient.Extensions.Azure 7.0.2`, adding WAM broker support for Entra ID authentication modes on Windows. See [release notes](release-notes/Extensions/Azure/7.0/7.0.2.md).
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4388](https://github.com/dotnet/SqlClient/pull/4388))
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.0.2` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.2.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.2.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.2.md).
+
+## [Stable Release 6.1.6] - 2026-06-24
+
+This update brings the following changes since the [6.1.5](release-notes/6.1/6.1.5.md) release.
+See the [full release notes](release-notes/6.1/6.1.6.md) for detailed descriptions.
+
+### Added
+
+- Added Web Account Manager (WAM) broker support for the supported Entra ID authentication modes (Windows only), including the new `ActiveDirectoryAuthenticationProviderOptions` type with a `UseWamBroker` property, an `ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)` constructor overload, and a cross-platform `SetParentActivityOrWindowFunc(Func<object>)` method.
+  ([#4288](https://github.com/dotnet/SqlClient/pull/4288),
+   [#4387](https://github.com/dotnet/SqlClient/pull/4387))
+
+### Changed
+
+- Hardened TDS token parsing with data-length bounds checks to prevent unbounded memory allocation from a server spoofing length fields.
+  ([#4340](https://github.com/dotnet/SqlClient/pull/4340),
+   [#4359](https://github.com/dotnet/SqlClient/pull/4359))
+
+- Updated dependencies ([#4387](https://github.com/dotnet/SqlClient/pull/4387)):
+  - Updated `Microsoft.Identity.Client` to 4.84.2 (was 4.80.0)
+  - Added `Microsoft.Identity.Client.Broker` 4.84.2
+
+### Fixed
+
+- Fixed a `NullReferenceException` in `SqlDataReader.GetChars` on the PLP + `SequentialAccess` path when a `null` buffer was passed with a negative `bufferIndex`; it now throws `ArgumentOutOfRangeException`.
+  ([#4159](https://github.com/dotnet/SqlClient/pull/4159),
+   [#4205](https://github.com/dotnet/SqlClient/pull/4205))
+
+- Fixed column master key (CMK) signature verification caching where a cached verification failure could subsequently be reported as a valid signature.
+  ([#4339](https://github.com/dotnet/SqlClient/pull/4339),
+   [#4356](https://github.com/dotnet/SqlClient/pull/4356))
+
 ## [Preview Release 7.1.0-preview1] - 2026-04-29
 
 This update brings the following changes since the [7.0.0](release-notes/7.0/7.0.0.md) release.

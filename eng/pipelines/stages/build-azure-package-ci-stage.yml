@@ -331,4 +331,6 @@ stages:
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

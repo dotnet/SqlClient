@@ -8,6 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class SqlConnectionOptionsTest : IDisposable
     {
         // Ensure we restore the original app context switch values after each
