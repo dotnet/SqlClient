@@ -12,7 +12,7 @@ database.
 | ---- | ------- |
 | `sqlclient-perf-pipeline.yml` | The main (manual/nightly) pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. Baseline = released NuGet package; ingests into Kusto. |
 | `sqlclient-perf-pr-pipeline.yml` | PR pipeline. Same template, same scripts, same options; baseline = **`main` branch source**; **no Kusto ingestion**. |
-| `sqlclient-perf-experiment-pipeline.yml` | Experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
+| `sqlclient-perf-experiment.yml` | Experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is a released package (`--baseline-version`), another git ref's source (`--baseline-source-ref`), or the same source with one runner-config switch flipped off (`--switch-under-test`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
@@ -152,7 +152,7 @@ the comparison (and one removed by the PR as `removed`) instead of failing the r
 share the single generated runner config (`RUNNER_CONFIG` / `DATATYPES_CONFIG` env vars), so
 connection string and behaviour flags are identical on both sides.
 
-## Experiment pipeline (`sqlclient-perf-experiment-pipeline.yml`)
+## Experiment pipeline (`sqlclient-perf-experiment.yml`)
 
 The three perf pipelines are the same benchmarks, template and scripts pointed at three different
 questions. Two of them vary the **source** under measurement; the third varies the **config**:
@@ -161,9 +161,9 @@ questions. Two of them vary the **source** under measurement; the third varies t
 | --- | --- | --- | --- |
 | Has this branch regressed against a released package? | `sqlclient-perf-pipeline.yml` | released NuGet package | queued branch |
 | Does my PR regress the branch it merges into? | `sqlclient-perf-pr-pipeline.yml` | `main` source | queued branch |
-| What does this switch cost or buy? | `sqlclient-perf-experiment-pipeline.yml` | queued branch, switch **off** | queued branch, switch **on** |
+| What does this switch cost or buy? | `sqlclient-perf-experiment.yml` | queued branch, switch **off** | queued branch, switch **on** |
 
-`sqlclient-perf-experiment-pipeline.yml` picks one runner-config switch via the `switchUnderTest`
+`sqlclient-perf-experiment.yml` picks one runner-config switch via the `switchUnderTest`
 queue-time parameter (`UseConnectionPoolV2`, `UseOptimizedAsyncBehaviour` or
 `UseManagedSniOnWindows`) and runs the baseline pass with it `false` and the current pass with it
 `true`. Both passes measure the **same commit** — the branch the run is queued on — so queue it on a
@@ -389,7 +389,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 
 ### Running the experiment pipeline
 
-1. Open the **experiment** performance test pipeline (`sqlclient-perf-experiment-pipeline.yml`) in Azure
+1. Open the **experiment** performance test pipeline (`sqlclient-perf-experiment.yml`) in Azure
    DevOps and select **Run pipeline**.
 2. Choose the branch whose behaviour you want to measure — `main` to characterise the switch on its
    own, or a PR branch to characterise it against that change — and pick `switchUnderTest`. There is
