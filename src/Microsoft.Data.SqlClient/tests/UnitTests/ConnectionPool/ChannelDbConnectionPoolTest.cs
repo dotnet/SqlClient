@@ -234,6 +234,87 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies that an asynchronous request satisfied by an already-idle connection completes
+        /// inline on the caller's thread, rather than being dispatched to the thread pool.
+        /// </summary>
+        /// <remarks>
+        /// The thread pool hop costs several microseconds against a pooled open that otherwise
+        /// takes a few, so it dominates steady-state async workloads. Asserting that the
+        /// TaskCompletionSource is already completed the instant TryGetConnection returns is what
+        /// pins the fast path down: if the request were dispatched via Task.Run, completion could
+        /// not be observed synchronously here.
+        /// </remarks>
+        [Fact]
+        public async Task GetConnectionAsync_WithIdleConnection_ShouldCompleteInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            var completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert: the async contract is unchanged - the caller is still told to await the
+            // TaskCompletionSource - but the result is already there, with no thread pool hop.
+            Assert.False(completed);
+            Assert.Null(internalConnection);
+            Assert.True(taskCompletionSource.Task.IsCompleted);
+            Assert.Equal(pooledConnection, await taskCompletionSource.Task);
+
+            // The idle connection was reused rather than a second one being opened.
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that a synchronous request satisfied by an already-idle connection returns that
+        /// connection inline.
+        /// </summary>
+        [Fact]
+        public void GetConnection_WithIdleConnection_ShouldReturnInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            var completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
         /// Verifies that a waiting synchronous caller reuses a connection that is returned to an
         /// exhausted pool instead of creating a new physical connection.
         /// </summary>

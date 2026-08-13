@@ -850,11 +850,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (taskCompletionSource is null)
             {
                 // We're on the caller's thread, so the ambient transaction is directly observable.
+                Transaction? currentTransaction = ADP.GetCurrentTransaction();
+
+                // Fast path: when the pool can satisfy the request immediately, do it here rather
+                // than entering GetInternalConnection, which allocates a Task<DbConnectionInternal>
+                // and a timer-backed CancellationTokenSource before it knows whether it will ever
+                // need to wait. See TryGetPooledConnectionInline.
+                connection = TryGetPooledConnectionInline(owningObject, currentTransaction);
+                if (connection is not null)
+                {
+                    return true;
+                }
+
                 var task = GetInternalConnection(
                         owningObject,
                         async: false,
                         timeout,
-                        ADP.GetCurrentTransaction());
+                        currentTransaction);
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -908,6 +920,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Transaction.Current. The WaitHandle pool can get away with assigning it because it
             // processes pending opens on a dedicated non-thread-pool thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+
+            // Fast path: if the pool can satisfy this request right now, complete it on the
+            // caller's thread instead of dispatching to the thread pool.
+            //
+            // The Task.Run below costs a full thread pool dispatch plus a TaskCompletionSource
+            // handoff. That is unavoidable when we actually have to open a physical connection or
+            // wait for one to come back, but it dwarfs the work when an idle connection is already
+            // sitting in the channel - the common case for any pooled workload at steady state.
+            //
+            // This mirrors WaitHandleDbConnectionPool.TryGetConnection, whose async path also
+            // attempts an inline, non-blocking acquisition first (allowCreate: false) and only
+            // enqueues a PendingGetConnection when that misses. Like that path, we never open a
+            // physical connection inline, so the caller's thread is never blocked on network I/O.
+            //
+            // Exceptions are routed to the TaskCompletionSource rather than thrown synchronously,
+            // so the failure reaches the caller exactly as it would from the Task.Run path.
+            try
+            {
+                DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
+                if (pooled is not null)
+                {
+                    if (!taskCompletionSource.TrySetResult(pooled))
+                    {
+                        // The request was cancelled out from under us; don't leak the connection.
+                        ReturnInternalConnection(pooled, owningObject);
+                    }
+
+                    connection = null;
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                // TryGetPooledConnectionInline returns a connection to the pool itself if it fails
+                // after taking one, so there is nothing to release here.
+                taskCompletionSource.TrySetException(e);
+                connection = null;
+                return false;
+            }
 
             Task.Run(async () =>
             {
@@ -1262,6 +1313,73 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempts to satisfy a connection request from connections the pool already holds,
+        /// without blocking, waiting, or opening a physical connection.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the fast path shared by the sync and async entry points of
+        /// <see cref="TryGetConnection"/>. It performs the same two lookups the main loop in
+        /// <see cref="GetInternalConnection"/> begins with - the transacted store, then the idle
+        /// channel - and returns null the moment neither can satisfy the request, leaving the
+        /// caller to fall back to the full path.
+        /// </para>
+        /// <para>
+        /// Keeping this separate from <see cref="GetInternalConnection"/> is what makes it cheap.
+        /// That method is an async state machine that allocates a <see cref="Task{TResult}"/> even
+        /// when it completes synchronously, and it creates a timer-backed
+        /// <see cref="CancellationTokenSource"/> up front, before it knows whether it will ever
+        /// wait. Neither is needed to hand back a connection that is already sitting in the pool.
+        /// </para>
+        /// <para>
+        /// It deliberately does NOT call <see cref="OpenNewInternalConnection"/>: that blocks on
+        /// network I/O, which must not happen on an async caller's thread. Callers that miss here
+        /// go through <see cref="GetInternalConnection"/>, which may open a connection.
+        /// </para>
+        /// </remarks>
+        /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
+        /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread,
+        /// or null when the caller is not inside a transaction.</param>
+        /// <returns>An activated connection ready to be handed to the caller, or null when the pool
+        /// cannot satisfy the request without waiting or opening.</returns>
+        /// <exception cref="Exception">
+        /// Propagates any exception from activating or enlisting the connection. The connection is
+        /// returned to the pool before the exception escapes (see <see cref="PrepareConnection"/>).
+        /// </exception>
+        private DbConnectionInternal? TryGetPooledConnectionInline(
+            DbConnection owningConnection,
+            Transaction? ambientTransaction)
+        {
+            // When automatic enlistment is disabled the connection must never be bound to the
+            // ambient transaction, so we neither consult the transacted store nor hand the
+            // transaction to activation. Mirrors GetInternalConnection.
+            Transaction? transaction = HasTransactionAffinity ? ambientTransaction : null;
+
+            DbConnectionInternal? connection = null;
+
+            // A connection already enlisted in our transaction is always preferred, since reusing
+            // it avoids promoting the transaction to a distributed one.
+            if (transaction is not null)
+            {
+                connection = GetFromTransactedPool(transaction);
+            }
+
+            // GetIdleConnection only returns connections that passed IsLiveConnection, and
+            // GetFromTransactedPool has already probed liveness, so no further validation is
+            // needed here. GetInternalConnection re-checks after its channel wait because that
+            // wait can hand back a connection that bypassed both filters.
+            connection ??= GetIdleConnection();
+
+            if (connection is null)
+            {
+                return null;
+            }
+
+            PrepareConnection(owningConnection, connection, transaction);
+            return connection;
         }
 
         /// <summary>
