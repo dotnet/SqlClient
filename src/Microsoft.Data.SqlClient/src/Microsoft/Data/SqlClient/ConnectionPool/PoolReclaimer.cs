@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _timer.Change(SweepInterval, Timeout.InfiniteTimeSpan);
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.PoolReclaimer.EnterParkedWait|RES|INFO|CPOOL> {0}, sweep timer started", _pool.Id);
+                    "PoolReclaimer.EnterParkedWait | INFO | {0}, Sweep timer started.", _pool.Id);
             }
         }
 
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.PoolReclaimer.ExitParkedWait|RES|INFO|CPOOL> {0}, sweep timer stopped, no parked waiters", _pool.Id);
+                    "PoolReclaimer.ExitParkedWait | INFO | {0}, Sweep timer stopped, no parked waiters.", _pool.Id);
             }
         }
 
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // would tear down the process. A failed sweep is not fatal to the pool, so trace it
                 // and let the next sweep try again.
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.PoolReclaimer.OnSweepCallback|RES|CPOOL> {0}, sweep threw, continuing: {1}", _pool.Id, ex);
+                    "PoolReclaimer.OnSweepCallback | ERR | {0}, Sweep threw, continuing: {1}.", _pool.Id, ex);
             }
 
             lock (_lock)

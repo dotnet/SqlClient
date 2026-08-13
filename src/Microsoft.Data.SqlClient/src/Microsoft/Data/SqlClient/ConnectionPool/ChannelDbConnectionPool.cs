@@ -795,7 +795,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Reclaimer.Dispose threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, Reclaimer.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
@@ -1592,7 +1592,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal bool ReclaimEmancipatedConnections()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}", Id);
+                "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Sweeping for emancipated connections.", Id);
 
             List<DbConnectionInternal>? reclaimed = null;
 
@@ -1633,9 +1633,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             foreach (DbConnectionInternal connection in reclaimed)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.",
+                    "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Connection {1}, Reclaiming.",
                     Id,
                     connection.ObjectID);
+
+                // Matches WaitHandleDbConnectionPool so the number-of-reclaimed-connections counter
+                // is meaningful under pool V2 as well; it previously always read zero here.
+                Metrics.ReclaimedConnectionRequest();
 
                 connection.DetachCurrentTransactionIfEnded();
                 DeactivateAndRouteConnection(connection);

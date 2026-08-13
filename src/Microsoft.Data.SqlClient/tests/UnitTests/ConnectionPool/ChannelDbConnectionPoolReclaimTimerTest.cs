@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
@@ -80,6 +81,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Checks out a connection and roots its owner in a <see cref="GCHandle"/> rather than a
+        /// local. The owner stays alive until the caller frees the returned handle, which gives the
+        /// test exact control over when the connection becomes emancipated. A local cannot do this:
+        /// in a Debug build its stack slot roots the object for the rest of the enclosing method
+        /// even after it is assigned null, so the collection would never happen. The checkout runs
+        /// in its own non-inlined frame so no slot in the caller's frame ever holds the owner.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static DbConnectionInternal CheckOutAndRootOwner(ChannelDbConnectionPool pool, out GCHandle ownerRoot)
+        {
+            SqlConnection owner = new();
+            ownerRoot = GCHandle.Alloc(owner);
+
+            bool completed = pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection);
+
+            Assert.True(completed);
+            Assert.NotNull(connection);
+            return connection!;
+        }
+
+        /// <summary>
         /// Forces collection of an abandoned owner so its connection becomes emancipated.
         /// </summary>
         private static void CollectAbandonedOwners()
@@ -101,26 +127,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30), because);
                 Thread.Sleep(10);
-            }
-        }
-
-        /// <summary>
-        /// Guarantees the thread pool can start a queued work item promptly.
-        /// <see cref="ChannelDbConnectionPool.TryGetConnection"/> dispatches its async path through
-        /// <see cref="Task.Run(Action)"/>, so a test that needs a caller to actually reach its parked
-        /// wait depends on a worker being available. Other tests in this assembly block pool threads
-        /// on sockets and sync-over-async waits, and the pool's own thread injection only adds
-        /// threads at roughly one per second, which is slow enough to time this test out.
-        /// The raise is deliberately monotonic and never restored: lowering it again would pull the
-        /// floor out from under tests running in parallel with this one.
-        /// </summary>
-        private static void EnsureThreadPoolHeadroom()
-        {
-            ThreadPool.GetMinThreads(out int workerThreads, out int completionPortThreads);
-            int desired = Environment.ProcessorCount * 4;
-            if (workerThreads < desired)
-            {
-                ThreadPool.SetMinThreads(desired, completionPortThreads);
             }
         }
 
@@ -284,14 +290,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public async Task ParkedCaller_IsWokenBySweep_WhenConnectionIsEmancipatedAfterParking()
         {
-            EnsureThreadPoolHeadroom();
-
             var fakeTime = new FakeTimeProvider();
             var pool = ConstructPool(maxPoolSize: 1, timeProvider: fakeTime);
 
-            // Occupy the pool's only slot and abandon the owner. The connection is not yet
-            // collected, so it is not yet emancipated.
-            DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
+            // Occupy the pool's only slot. The owner is deliberately kept rooted until after the
+            // second caller has parked: a collection triggered by a test running in parallel would
+            // otherwise emancipate it early, letting the second caller's inline sweep succeed so it
+            // never parks and the case under test never arises.
+            DbConnectionInternal leaked = CheckOutAndRootOwner(pool, out GCHandle leakedOwnerRoot);
             Assert.Equal(1, pool.Count);
 
             // A second caller finds the pool exhausted and parks. Its inline sweep runs before the
@@ -313,6 +319,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Only now does the abandoned owner become collectable, which is precisely the case the
             // caller's own inline sweep cannot cover.
+            leakedOwnerRoot.Free();
             CollectAbandonedOwners();
             Assert.True(leaked.IsEmancipated);
 

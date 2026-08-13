@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -731,6 +732,85 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pooledConnections: 1,
                 freeConnections: 1,
                 stasisConnections: 0);
+        }
+
+        /// <summary>
+        /// Verifies that a connection whose owner was collected without being closed is reclaimed
+        /// and counted, in both pool implementations.
+        /// </summary>
+        /// <remarks>
+        /// The sweep is triggered the same way for both pools rather than by calling their internal
+        /// reclaim methods: the pool is capped at a single connection, that connection is leaked,
+        /// and a second caller then requests one. Each implementation reaches its own reclaim path
+        /// from that saturated request, so the test asserts observable behavior rather than a
+        /// specific internal entry point.
+        /// </remarks>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void EmancipatedConnection_IsReclaimedAndCounted(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(
+                implementation,
+                metrics,
+                new SuccessfulSqlConnectionFactory(metrics),
+                maxPoolSize: 1);
+
+            DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                pooledConnections: 1,
+                activeConnections: 1);
+
+            // The owner is only collectable now that the helper's frame has been popped.
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            Assert.True(leaked.IsEmancipated);
+
+            // Act - the pool's only slot is occupied by a connection nobody can return, so this
+            // request can only be served by reclaiming it.
+            Assert.True(pool.TryGetConnection(
+                new SqlConnection(),
+                null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? reclaimed));
+
+            // Assert - the same physical connection was handed out again, with no second connect.
+            // softDisconnects stays at zero: reclamation never balances the leaked checkout, so
+            // activeSoftConnections drifts up by one per leaked connection. That is long-standing
+            // WaitHandle behavior, asserted here to pin the two implementations to the same numbers.
+            Assert.Same(leaked, reclaimed);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 2,
+                softDisconnects: 0,
+                pooledConnections: 1,
+                reclaimedConnections: 1,
+                activeConnections: 1);
+        }
+
+        /// <summary>
+        /// Checks out a connection and drops the only reference to its owner. Kept in its own
+        /// non-inlined method so the owner becomes collectable as soon as this frame is popped; a
+        /// local in the calling test would stay rooted until the end of that method in a debug build.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static DbConnectionInternal CheckOutAndAbandonOwner(IDbConnectionPool pool)
+        {
+            SqlConnection owner = new();
+            Assert.True(pool.TryGetConnection(
+                owner,
+                null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection));
+            Assert.NotNull(connection);
+            return connection!;
         }
 
         #region Test classes
