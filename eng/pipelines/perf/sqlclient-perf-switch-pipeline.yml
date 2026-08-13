@@ -1,0 +1,235 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# SqlClient Switch Experiment Performance pipeline.
+#
+# Third sibling of sqlclient-perf-pipeline.yml and sqlclient-perf-pr-pipeline.yml.  It runs the SAME
+# benchmarks, on the SAME Perf Test Lab extends template (v1/Perf.Test.Job.yml@PerfTemplates),
+# through the SAME on-VM scripts.  What differs is the QUESTION it answers:
+#
+#   * perf pipeline     - "has this branch regressed against a released package?"   (source varies)
+#   * perf-pr pipeline  - "has this PR regressed the branch it merges into?"        (source varies)
+#   * THIS pipeline     - "what does this AppContext/runner switch cost or buy?"    (CONFIG varies)
+#
+# Both passes here build the SAME source (whatever branch the run is queued on); only ONE runner
+# config switch differs between them - baseline runs it OFF, current runs it ON.  Two separate
+# processes are required because these switches are latched process-wide (e.g. UseConnectionPoolV2 is
+# read and cached the first time a connection pool is created), so they cannot be toggled between
+# benchmarks inside a single run.  Queue this pipeline on a PR branch to ask "what does the switch do
+# to my change?", or on main to ask "what does the switch do to main?".
+#
+#   * No Kusto - switch-experiment results are NEVER ingested into the perf database, and this is why
+#                the mode lives in its own pipeline rather than as a flag on the other two:
+#                  - both PerfRun rows would share one DerivedRunId (driver|commit|pipelineRunId),
+#                    because both passes are the same commit in the same pipeline run;
+#                  - PerfRun.Config is stamped once per run, so the two rows could not record the
+#                    differing switch values that are the entire point of the experiment;
+#                  - nothing marks a row as an experiment, so the switch-ON pass would be
+#                    indistinguishable from an ordinary measurement of the branch and would distort
+#                    the very trends the other two pipelines exist to protect.
+#                Having no ADX variable group and no translate/ingest steps in this file makes that
+#                exclusion structural rather than a conditional someone can flip by accident.
+#                The comparison report and the raw BenchmarkDotNet artifacts are still published.
+#
+# Everything else - platform/VM provisioning, benchmark run model, noise controls - is identical to
+# the other two pipelines; see eng/pipelines/perf/README.md.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Manual/queue-time only.  A full perf run occupies a dedicated host for hours, and a switch
+# experiment is an investigation someone opts into deliberately, never an automatic gate.
+pr: none
+trigger: none
+
+parameters:
+
+  # The single runner-config switch under test.  Baseline runs it false, current runs it true, so the
+  # reported delta is "what turning this switch ON does".  Restricted to the switches the run scripts
+  # know how to stamp into the runner config; the scripts re-validate and fail fast on anything else.
+  - name: switchUnderTest
+    displayName: Switch under test (baseline=off vs current=on)
+    type: string
+    default: UseConnectionPoolV2
+    values:
+      - UseConnectionPoolV2
+      - UseOptimizedAsyncBehaviour
+      - UseManagedSniOnWindows
+
+  # Target OS for the perf VM and the benchmark client.
+  - name: platform
+    displayName: Platform
+    type: string
+    default: linux
+    values:
+      - linux
+      - windows
+
+  # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
+  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  - name: dotnetFramework
+    displayName: .NET Framework (TFM)
+    type: string
+    default: net9.0
+    values:
+      - net8.0
+      - net9.0
+      - net10.0
+
+  # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
+  # Matches the nightly pipeline rather than the PR pipeline: both passes here share ONE build (the
+  # source is identical on both sides), so there is no second driver build to pay for.
+  - name: testTimeoutMinutes
+    displayName: Test Timeout (minutes)
+    type: number
+    default: 180
+
+  # Percent difference (switch-on vs switch-off mean) the comparison flags.
+  - name: regressionThreshold
+    displayName: Difference Threshold (%)
+    type: number
+    default: 10
+
+  # Whether a confirmed "switch ON is slower than switch OFF" result should FAIL the run.
+  #
+  # NOTE: this maps onto the run scripts' --fail-on-regression gate, but it does NOT mean the same
+  # thing as it does in the other two pipelines.  There, a regression means the branch got worse and
+  # failing is a quality gate.  Here it is a RESULT: the switch made things slower.  That is often
+  # exactly what you queued the run to find out, so this defaults to false and should only be enabled
+  # when you are asserting "this switch must not be a slowdown" (e.g. before flipping its default).
+  - name: failIfSwitchSlower
+    displayName: Fail run if the switch is slower
+    type: boolean
+    default: false
+
+  # Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+  #   interleaved -> run one benchmark unit at a time, switch-off and switch-on back-to-back, and
+  #                  confirm any flagged difference across N passes (best-of-N).  Noise-resistant
+  #                  default, and especially valuable here because the two passes are otherwise
+  #                  identical, so any systematic drift between them is pure measurement noise.
+  #   sequential  -> legacy: run the whole switch-off suite, then the whole switch-on suite, compare.
+  - name: benchmarkRunMode
+    displayName: Benchmark run mode
+    type: string
+    default: interleaved
+    values:
+      - interleaved
+      - sequential
+
+  # Best-of-N: total interleaved passes for a flagged unit before a difference is confirmed
+  # (1 disables confirmation).  Only used when benchmarkRunMode = interleaved.
+  - name: confirmationRuns
+    displayName: Confirmation runs (best-of-N)
+    type: number
+    default: 3
+
+# Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
+# library variables: they are invariant for the SqlClient perf pipelines.
+#   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
+#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
+#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
+#                                               must match the ADO repository name.
+#
+# The other pipelines additionally expose UseManagedSniOnWindows / UseOptimizedAsyncBehaviour /
+# UseConnectionPoolV2 as queue-time flags applied to BOTH passes.  This pipeline deliberately does
+# not: an experiment that varies one switch while others are also moved off their checked-in defaults
+# produces a delta nobody can attribute.  Every switch except the one under test is therefore left at
+# its runnerconfig.jsonc default (which is what those parameters' defaults already are).
+#
+# NOTE: like sqlclient-perf-pr-pipeline.yml, this pipeline does NOT reference the 'ADX Cluster
+# Variables' group and has no translate/ingest steps.  See the header comment for why that is
+# structural here rather than conditional.
+variables:
+
+  # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
+  # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
+  # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
+  # keeps the single testScriptArgs below readable.  No baseline-selector args appear here at all:
+  # --switch-under-test IS the baseline selector for this pipeline, and the run scripts reject it
+  # being combined with --baseline-version / --baseline-source-ref.
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsCommon
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
+  - ${{ else }}:
+    - name: PerfArgsCommon
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --switch-under-test ${{ parameters.switchUnderTest }}'
+
+  # Gate flag, only when the run is asserting the switch must not be a slowdown.
+  - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failIfSwitchSlower, true)) }}:
+    - name: PerfArgsFail
+      value: '-FailOnRegression'
+  - ${{ elseif eq(parameters.failIfSwitchSlower, true) }}:
+    - name: PerfArgsFail
+      value: '--fail-on-regression'
+  - ${{ else }}:
+    - name: PerfArgsFail
+      value: ''
+
+# Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
+# have been onboarded with the Agent Pools and Service Connections required to consume it.
+resources:
+  repositories:
+    - repository: PerfTemplates
+      type: git
+      name: InternalDriverTools/PerfTest
+      ref: refs/heads/main
+
+# Consume the Perf Test Lab template.  The template defines the whole job/stage structure; we only
+# pass parameters into it.
+extends:
+  template: v1/Perf.Test.Job.yml@PerfTemplates
+  parameters:
+    platform: ${{ parameters.platform }}
+
+    # The entire driver source tree is copied to the VM so the benchmarks (which reference
+    # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
+    # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
+    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+
+    # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
+    # uses PowerShell, per the template's .sh/.ps1 convention.  Same scripts as the other two perf
+    # pipelines: the switch experiment is just a different baseline selector.
+    ${{ if eq(parameters.platform, 'windows') }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.ps1
+    ${{ else }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.sh
+
+    # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
+    # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).  Empty
+    # chunks collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsFail)'
+
+    # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
+    # copies this VM folder back to the agent, but always lands it at a fixed location:
+    # $(Build.ArtifactStagingDirectory)/results (and publishes it as the 'perf-results' artifact).
+    testResultsSubDir: perf-results
+
+    testTimeoutMinutes: ${{ parameters.testTimeoutMinutes }}
+    jobName: SqlClientPerfSwitch
+
+    # Post-test steps run on the agent after results have been copied back.  The template already
+    # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
+    # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.  There is no
+    # Kusto translation/ingestion here by design - see the header comment.
+    steps:
+      # Tag the build with the switch that was measured, so switch experiments are identifiable at a
+      # glance in the ADO build list and are never mistaken for an ordinary baseline comparison.
+      # Unlike the PR pipeline there is nothing to read back from the VM: the switch name is fixed at
+      # queue time, and both passes are the commit the run was queued on.
+      # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL path and a
+      # colon trips ADO's "potentially dangerous Request.Path" filter.
+      - bash: |
+          echo "##vso[build.addbuildtag]Switch ${{ parameters.switchUnderTest }}"
+        displayName: 'Tag build with switch under test'
+        condition: succeededOrFailed()
+
+      - task: Bash@3
+        displayName: 'Show performance results'
+        condition: succeededOrFailed()
+        inputs:
+          targetType: filePath
+          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+        env:
+          RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
