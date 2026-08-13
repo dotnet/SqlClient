@@ -443,6 +443,49 @@ BASELINE_SRC_LABEL=""
 # Prefers the copied checkout's own 'origin' (no extra network round-trip, and it resolves the ref
 # exactly as the pipeline's repository does); falls back to a shallow clone of --baseline-repo-url
 # when the source tree arrived without .git, or when origin is unreachable/needs credentials.
+#
+# The checkout is copied to the VM WITHOUT credentials (ADO's checkout task defaults to
+# persistCredentials:false), so a fetch from an authenticated origin has no way to succeed.  Every
+# git command that may touch the network is therefore run through git_net(), which guarantees it
+# fails fast and loudly instead of blocking the job on a credential prompt.
+GIT_NET_TIMEOUT_SECS="${GIT_NET_TIMEOUT_SECS:-300}"
+
+# git_net <log-name> <git args...>
+# Runs a network-facing git command non-interactively, under a hard timeout, capturing all output to
+# ${DIAG_DIR}/git-<log-name>.log.  Returns git's exit status (124 if the timeout fired).
+#
+#   * GIT_TERMINAL_PROMPT=0 turns "needs credentials" into an immediate error rather than a
+#     'Username for ...' prompt that waits forever with nothing on the console.
+#   * '-c credential.helper=' clears any configured helper (e.g. Git Credential Manager), which
+#     would otherwise try to prompt through its own UI/stdin and hang in the same way.
+#   * </dev/null stops git from consuming this script's stdin if it prompts anyway.
+#   * timeout is a last-resort backstop for any OTHER network stall (DNS, proxy blackhole, ...) so a
+#     single git call can never again burn the entire job.
+git_net() {
+    local logName="$1"; shift
+    local log="${DIAG_DIR}/git-${logName}.log"
+    local -a cmd=(git -c credential.helper= "$@")
+
+    if command -v timeout >/dev/null 2>&1; then
+        cmd=(timeout --signal=TERM --kill-after=30 "${GIT_NET_TIMEOUT_SECS}" "${cmd[@]}")
+    fi
+
+    GIT_TERMINAL_PROMPT=0 "${cmd[@]}" </dev/null >"${log}" 2>&1
+}
+
+# Echo the tail of a git_net log so a failure is explained in the build log instead of vanishing.
+report_git_failure() {
+    local logName="$1" status="$2"
+    local log="${DIAG_DIR}/git-${logName}.log"
+    if [[ "${status}" -eq 124 ]]; then
+        echo "  (git ${logName} timed out after ${GIT_NET_TIMEOUT_SECS}s)" >&2
+    else
+        echo "  (git ${logName} exited ${status})" >&2
+    fi
+    [[ -s "${log}" ]] && sed 's/^/  | /' "${log}" >&2
+    return 0
+}
+
 prepare_baseline_source() {
     local ref="$1"
 
@@ -454,19 +497,24 @@ prepare_baseline_source() {
     rm -rf "${BASELINE_SRC_DIR}"
 
     local acquired="false"
+    local status=0
     # '.git' is a directory in a normal clone but a FILE in a git worktree, so test for existence
     # rather than for a directory.
     if [[ -e "${REPO_ROOT}/.git" ]]; then
         echo "Fetching baseline ref '${ref}' from the checkout's origin ..."
         # Fetch into a private remote-tracking namespace so an existing local branch of the same name
         # (the checkout may itself be on 'main') is never used in place of the fetched ref.
-        if git -C "${REPO_ROOT}" fetch --no-tags --depth 1 origin \
-                "+refs/heads/${ref}:refs/remotes/perfbaseline/${ref}" >/dev/null 2>&1; then
+        if git_net fetch -C "${REPO_ROOT}" fetch --no-tags --depth 1 origin \
+                "+refs/heads/${ref}:refs/remotes/perfbaseline/${ref}"; then
             git -C "${REPO_ROOT}" worktree prune >/dev/null 2>&1 || true
             if git -C "${REPO_ROOT}" worktree add --detach "${BASELINE_SRC_DIR}" \
-                    "refs/remotes/perfbaseline/${ref}" >/dev/null 2>&1; then
+                    "refs/remotes/perfbaseline/${ref}" >"${DIAG_DIR}/git-worktree.log" 2>&1; then
                 acquired="true"
+            else
+                report_git_failure worktree "$?"
             fi
+        else
+            report_git_failure fetch "$?"
         fi
         [[ "${acquired}" == "true" ]] \
             || echo "WARNING: could not materialise '${ref}' from the checkout's origin; falling back to ${baselineRepoUrl}." >&2
@@ -475,7 +523,16 @@ prepare_baseline_source() {
     if [[ "${acquired}" != "true" ]]; then
         echo "Cloning baseline ref '${ref}' from ${baselineRepoUrl} ..."
         rm -rf "${BASELINE_SRC_DIR}"
-        git clone --quiet --depth 1 --branch "${ref}" "${baselineRepoUrl}" "${BASELINE_SRC_DIR}"
+        # NOTE: '|| status=$?' rather than 'if ! git_net ...' - the '!' would reset $? to 0 and the
+        # reported exit code would always be a misleading 0.
+        status=0
+        git_net clone clone --quiet --depth 1 --branch "${ref}" \
+            "${baselineRepoUrl}" "${BASELINE_SRC_DIR}" || status=$?
+        if [[ "${status}" -ne 0 ]]; then
+            report_git_failure clone "${status}"
+            echo "ERROR: could not obtain baseline ref '${ref}' from either the checkout's origin or ${baselineRepoUrl}." >&2
+            exit 1
+        fi
     fi
 
     BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"

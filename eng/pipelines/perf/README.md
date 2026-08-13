@@ -130,7 +130,12 @@ mutually exclusive and the script fails fast if both are supplied). On the VM th
    tries the copied checkout's own `origin` (`git fetch --depth 1` into a private
    `refs/remotes/perfbaseline/*` namespace, then `git worktree add --detach`), and falls back to a
    shallow `git clone` of `baselineRepoUrl` when the tree arrived without `.git` or `origin` needs
-   credentials.
+   credentials. On ADO the origin fetch is *expected* to fail — the checkout is copied to the VM
+   without credentials — so the clone fallback is the normal path there. Every network git call runs
+   non-interactively (`GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed) under a
+   `GIT_NET_TIMEOUT_SECS` timeout (default 300s), and its output is kept in
+   `<results>/diagnostics/git-*.log`, so a missing credential fails in under a second instead of
+   blocking the job on a prompt.
 2. Builds **that ref's own `PerformanceTests` project** as the `baseline` variant, so the driver
    under measurement is the baseline ref's source via `ProjectReference` — mirroring how the
    `current` variant is built from this branch. No NuGet baseline config is involved.
@@ -304,7 +309,8 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
-| Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). |
+| Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). The reason git gave is echoed into the build log and saved to `<results>/diagnostics/git-*.log`. |
+| `Fetching baseline ref ... from the checkout's origin` is the last line, then the job stalls | Should no longer happen. The checkout is copied to the VM without credentials (ADO's checkout task defaults to `persistCredentials: false`), so a fetch from an authenticated `origin` used to sit on a `Username for ...` prompt forever. All network git calls now run with `GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed, and a `GIT_NET_TIMEOUT_SECS` (default 300s) hard timeout, so this fails in under a second and falls back to cloning `baselineRepoUrl`. A fetch failure here is expected and harmless on ADO. |
 | Ingestion step skipped | `enableKustoIngestion` is `false`, or `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |

@@ -368,6 +368,71 @@ $BaselineSrcDir = Join-Path (Split-Path -Parent $RepoRoot) "sqlclient-perf-basel
 # exactly as the pipeline's repository does); falls back to a shallow clone of -BaselineRepoUrl when
 # the source tree arrived without .git, or when origin is unreachable/needs credentials.
 # Returns a hashtable with the baseline perf project path and the '<ref>@<sha>' label.
+# --- Non-interactive, time-bounded git ------------------------------------------------------------
+# The checkout is copied to the VM WITHOUT credentials (ADO's checkout task defaults to
+# persistCredentials:false), so a fetch from an authenticated origin has no way to succeed.  Every
+# git command that may touch the network goes through Invoke-GitNetwork so it fails fast and loudly
+# instead of blocking the job on a credential prompt.
+$GitNetTimeoutSecs = if ($env:GIT_NET_TIMEOUT_SECS) { [int]$env:GIT_NET_TIMEOUT_SECS } else { 300 }
+
+# Invoke-GitNetwork <log-name> <git args>
+# Runs git non-interactively under a hard timeout, capturing all output to
+# <DiagDir>/git-<log-name>.log.  Returns the exit code (124 if the timeout fired, matching the
+# convention GNU timeout uses in the bash script).
+#
+#   * GIT_TERMINAL_PROMPT=0 turns "needs credentials" into an immediate error rather than a
+#     'Username for ...' prompt that waits forever with nothing on the console.
+#   * '-c credential.helper=' clears any configured helper (Git Credential Manager is the default on
+#     Windows), which would otherwise pop its own prompt and hang in exactly the same way.
+#   * The hard kill is a last-resort backstop for any OTHER network stall (DNS, proxy blackhole,
+#     ...) so a single git call can never again burn the entire job.
+function Invoke-GitNetwork {
+    param(
+        [Parameter(Mandatory)][string]$LogName,
+        [Parameter(Mandatory)][string[]]$GitArgs
+    )
+
+    $log = Join-Path $DiagDir "git-$LogName.log"
+    $errLog = "$log.err"
+    $arguments = @("-c", "credential.helper=") + $GitArgs
+
+    $previousPrompt = $env:GIT_TERMINAL_PROMPT
+    $env:GIT_TERMINAL_PROMPT = "0"
+    try {
+        $proc = Start-Process -FilePath "git" -ArgumentList $arguments -NoNewWindow -PassThru `
+            -RedirectStandardOutput $log -RedirectStandardError $errLog
+        if (-not $proc.WaitForExit($GitNetTimeoutSecs * 1000)) {
+            try { $proc.Kill() } catch { }
+            # Give the kill a moment so the redirected handles are released before the log is read.
+            [void]$proc.WaitForExit(30 * 1000)
+            return 124
+        }
+        return $proc.ExitCode
+    } finally {
+        $env:GIT_TERMINAL_PROMPT = $previousPrompt
+        # Fold stderr into the single log so callers have one file to report.
+        if (Test-Path $errLog) {
+            Get-Content $errLog -ErrorAction SilentlyContinue | Add-Content -Path $log
+            Remove-Item $errLog -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+# Echo the tail of an Invoke-GitNetwork log so a failure is explained in the build log.
+function Write-GitFailure {
+    param([Parameter(Mandatory)][string]$LogName, [Parameter(Mandatory)][int]$ExitCode)
+
+    if ($ExitCode -eq 124) {
+        Write-Host "  (git $LogName timed out after ${GitNetTimeoutSecs}s)"
+    } else {
+        Write-Host "  (git $LogName exited $ExitCode)"
+    }
+    $log = Join-Path $DiagDir "git-$LogName.log"
+    if (Test-Path $log) {
+        Get-Content $log -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "  | $_" }
+    }
+}
+
 function Initialize-BaselineSource {
     param([Parameter(Mandatory)][string]$Ref)
 
@@ -381,7 +446,7 @@ function Initialize-BaselineSource {
     # git writes progress/diagnostics to stderr, which Windows PowerShell 5.1 promotes to a
     # TERMINATING error under $ErrorActionPreference='Stop' even on success (see Invoke-Native
     # above).  These probes are allowed to fail - that is what the clone fallback is for - so relax
-    # the preference and judge them solely by $LASTEXITCODE.
+    # the preference and judge them solely by the exit code.
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
@@ -391,11 +456,15 @@ function Initialize-BaselineSource {
             Write-Host "Fetching baseline ref '$Ref' from the checkout's origin ..."
             # Fetch into a private remote-tracking namespace so an existing local branch of the same
             # name (the checkout may itself be on 'main') is never used in place of the fetched ref.
-            & git -C $RepoRoot fetch --no-tags --depth 1 origin "+refs/heads/${Ref}:refs/remotes/perfbaseline/$Ref" 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) {
+            $exit = Invoke-GitNetwork "fetch" @(
+                "-C", $RepoRoot, "fetch", "--no-tags", "--depth", "1", "origin",
+                "+refs/heads/${Ref}:refs/remotes/perfbaseline/$Ref")
+            if ($exit -eq 0) {
                 & git -C $RepoRoot worktree prune 2>&1 | Out-Null
                 & git -C $RepoRoot worktree add --detach $BaselineSrcDir "refs/remotes/perfbaseline/$Ref" 2>&1 | Out-Null
                 if ($LASTEXITCODE -eq 0) { $acquired = $true }
+            } else {
+                Write-GitFailure "fetch" $exit
             }
             if (-not $acquired) {
                 Write-Warning "Could not materialise '$Ref' from the checkout's origin; falling back to $BaselineRepoUrl."
@@ -405,9 +474,11 @@ function Initialize-BaselineSource {
         if (-not $acquired) {
             Write-Host "Cloning baseline ref '$Ref' from $BaselineRepoUrl ..."
             if (Test-Path $BaselineSrcDir) { Remove-Item -Recurse -Force $BaselineSrcDir }
-            & git clone --quiet --depth 1 --branch $Ref $BaselineRepoUrl $BaselineSrcDir 2>&1 | Out-Host
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to clone baseline ref '$Ref' from $BaselineRepoUrl (exit $LASTEXITCODE)."
+            $exit = Invoke-GitNetwork "clone" @(
+                "clone", "--quiet", "--depth", "1", "--branch", $Ref, $BaselineRepoUrl, $BaselineSrcDir)
+            if ($exit -ne 0) {
+                Write-GitFailure "clone" $exit
+                throw "Could not obtain baseline ref '$Ref' from either the checkout's origin or $BaselineRepoUrl."
             }
         }
 
