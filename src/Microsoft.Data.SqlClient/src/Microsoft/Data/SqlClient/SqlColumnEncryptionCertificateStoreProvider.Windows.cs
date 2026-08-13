@@ -512,6 +512,7 @@ namespace Microsoft.Data.SqlClient
             RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             RSAPKCS1SignatureFormatter rsaFormatter = new RSAPKCS1SignatureFormatter(rsa);
             //Set the hash algorithm to SHA256.
             rsaFormatter.SetHashAlgorithm(HashingAlgorithm);
@@ -537,6 +538,7 @@ namespace Microsoft.Data.SqlClient
             RSA rsa = certificate.GetRSAPrivateKey();
 
             // Prepare RSAPKCS1SignatureFormatter for signing the passed in hash
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             RSAPKCS1SignatureDeformatter rsaDeFormatter = new RSAPKCS1SignatureDeformatter(rsa);
 
             //Set the hash algorithm to SHA256.

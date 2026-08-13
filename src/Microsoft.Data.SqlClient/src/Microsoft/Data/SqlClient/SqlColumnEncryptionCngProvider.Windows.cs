@@ -301,6 +301,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((dataToSign != null) && (dataToSign.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsaCngProvider.SignData(dataToSign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
@@ -317,6 +318,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((signature != null) && (signature.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsaCngProvider.VerifyData(dataToVerify, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
