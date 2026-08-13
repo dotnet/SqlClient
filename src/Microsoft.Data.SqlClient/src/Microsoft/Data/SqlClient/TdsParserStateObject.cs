@@ -4653,8 +4653,10 @@ namespace Microsoft.Data.SqlClient
         {
             private sealed partial class PacketData
             {
-                public readonly byte[] Buffer;
-                public readonly int Read;
+                // These are mutable so that instances can be recycled through the snapshot's
+                // free list instead of allocating a new node for every packet that is appended.
+                public byte[] Buffer;
+                public int Read;
 
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
@@ -4669,6 +4671,33 @@ namespace Microsoft.Data.SqlClient
                 {
                     Buffer = buffer;
                     Read = read;
+                }
+
+                /// <summary>
+                /// Re-initializes an instance taken from the free list so that it describes a new packet.
+                /// </summary>
+                public void Initialize(byte[] buffer, int read)
+                {
+                    Buffer = buffer;
+                    Read = read;
+                    NextPacket = null;
+                    PrevPacket = null;
+                    RunningDataSize = 0;
+                    ResetDebugState();
+                }
+
+                /// <summary>
+                /// Releases all references held by this instance before it is placed on the free list
+                /// so that recycling a node cannot keep a packet buffer alive.
+                /// </summary>
+                public void Reset()
+                {
+                    Buffer = null;
+                    Read = 0;
+                    NextPacket = null;
+                    PrevPacket = null;
+                    RunningDataSize = 0;
+                    ResetDebugState();
                 }
 
                 public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
@@ -4698,10 +4727,13 @@ namespace Microsoft.Data.SqlClient
 
                 internal void CheckDebugDataHash() => CheckDebugDataHashImpl();
 
+                internal void ResetDebugState() => ResetDebugStateImpl();
+
                 partial void SetDebugStackImpl(string value);
                 partial void SetDebugPacketIdImpl(int value);
                 partial void SetDebugDataHashImpl();
                 partial void CheckDebugDataHashImpl();
+                partial void ResetDebugStateImpl();
             }
 
 #if DEBUG
@@ -4844,6 +4876,13 @@ namespace Microsoft.Data.SqlClient
                 partial void SetDebugStackImpl(string value) => Stack = value;
 
                 partial void SetDebugPacketIdImpl(int value) => DebugPacketId = value;
+
+                partial void ResetDebugStateImpl()
+                {
+                    DebugPacketId = 0;
+                    Stack = null;
+                    Hash = null;
+                }
 
                 partial void SetDebugDataHashImpl()
                 {
@@ -4990,6 +5029,17 @@ namespace Microsoft.Data.SqlClient
             private PacketData _current;
             private PacketData _continuePacket;
 
+            /// <summary>
+            /// Head of a free list of <see cref="PacketData"/> instances, linked through
+            /// <see cref="PacketData.NextPacket"/>. A snapshot is taken and released for every async
+            /// continuation, so recycling these nodes avoids allocating one per packet per replay.
+            /// The list is bounded so that an unusually long replay cannot retain nodes indefinitely.
+            /// </summary>
+            private PacketData _sparePackets;
+            private int _sparePacketCount;
+
+            private const int MaxSparePacketCount = 16;
+
 #if DEBUG
             private int _packetCounter;
             private int _rollingPend = 0;
@@ -5069,7 +5119,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 #endif
-                PacketData packetData = new PacketData(buffer, read);
+                PacketData packetData = RentPacket(buffer, read);
 #if DEBUG
                 packetData.SetDebugStack(_stateObj._lastStack);
                 packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));
@@ -5145,9 +5195,7 @@ namespace Microsoft.Data.SqlClient
 
             internal void CaptureAsStart(TdsParserStateObject stateObj)
             {
-                _firstPacket = null;
-                _lastPacket = null;
-                _current = null;
+                ClearPackets();
 
                 _stateObj = stateObj;
                 _replayStateData ??= new StateObjectData();
@@ -5257,10 +5305,41 @@ namespace Microsoft.Data.SqlClient
 
             private void ClearPackets()
             {
+                PacketData current = _firstPacket;
+
                 _firstPacket = null;
                 _lastPacket = null;
                 _continuePacket = null;
                 _current = null;
+
+                // Return the nodes to the free list. The packet buffers themselves are not owned
+                // here, so Reset only drops this node's references to them.
+                while (current != null && _sparePacketCount < MaxSparePacketCount)
+                {
+                    PacketData next = current.NextPacket;
+                    current.Reset();
+                    current.NextPacket = _sparePackets;
+                    _sparePackets = current;
+                    _sparePacketCount++;
+                    current = next;
+                }
+            }
+
+            /// <summary>
+            /// Takes a <see cref="PacketData"/> from the free list, or allocates one when the list is empty.
+            /// </summary>
+            private PacketData RentPacket(byte[] buffer, int read)
+            {
+                PacketData packetData = _sparePackets;
+                if (packetData == null)
+                {
+                    return new PacketData(buffer, read);
+                }
+
+                _sparePackets = packetData.NextPacket;
+                _sparePacketCount--;
+                packetData.Initialize(buffer, read);
+                return packetData;
             }
 
             private void ClearState()
