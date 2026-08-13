@@ -167,6 +167,27 @@ The VM's `NuGet.config` exposes only the governed feed, and CPM rejects multiple
 (`NU1507`). The baseline pass therefore restores through a **dedicated single-source config**
 (`perf-baseline-nuget.config`, generated at runtime) pointing only at `https://api.nuget.org/v3/index.json`.
 
+### Benchmarks must compile against the oldest baseline
+
+The baseline pass compiles the **same** `PerformanceTests` sources against the *released* MDS
+package, so a benchmark that calls an API introduced after `baselineVersion` fails that pass with
+`CS1061`. The project defines cumulative `MDS_GE_<major>` constants from `MdsPackageVersion` (see
+`Microsoft.Data.SqlClient.PerformanceTests.csproj`); guard such calls and provide an older
+fallback:
+
+```csharp
+#if MDS_GE_6
+    _ = reader.GetSqlJson(0).Value;   // GetSqlJson was added in MDS 6.0
+#else
+    _ = reader.GetString(0);
+#endif
+```
+
+Project mode, Package mode with no pinned version, and unparsable version strings define every
+constant, since those builds reference a current MDS. Note that a fallback makes the baseline
+measure a **different code path** than the current pass — the affected benchmark's delta is not
+meaningful, so the runner should say so loudly at setup (see `JsonVsVarcharReadRunner`).
+
 ## Comparison output
 
 `compare_perf.py` matches benchmarks by `(Type, Method, Parameters)` and reports, per benchmark, the
@@ -308,6 +329,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | ------- | ------------------ |
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
+| Baseline pass fails to compile: `CS1061 ... does not contain a definition for <member>` | A benchmark calls an MDS API newer than `baselineVersion`. Guard it with the `MDS_GE_<major>` constants and add an older fallback — see [Benchmarks must compile against the oldest baseline](#benchmarks-must-compile-against-the-oldest-baseline). |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
 | Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). The reason git gave is echoed into the build log and saved to `<results>/diagnostics/git-*.log`. |
 | `Fetching baseline ref ... from the checkout's origin` is the last line, then the job stalls | Should no longer happen. The checkout is copied to the VM without credentials (ADO's checkout task defaults to `persistCredentials: false`), so a fetch from an authenticated `origin` used to sit on a `Username for ...` prompt forever. All network git calls now run with `GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed, and a `GIT_NET_TIMEOUT_SECS` (default 300s) hard timeout, so this fails in under a second and falls back to cloning `baselineRepoUrl`. A fetch failure here is expected and harmless on ADO. |
