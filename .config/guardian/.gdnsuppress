@@ -1,0 +1,25 @@
+{
+  "hydrated": false,
+  "properties": {
+    "helpUri": "https://eng.ms/docs/microsoft-security/security/azure-security/cloudai-security-fundamentals-engineering/security-integration/guardian-wiki/microsoft-guardian/general/suppressions"
+  },
+  "version": "1.0.0",
+  "suppressionSets": {
+    "default": {
+      "name": "default",
+      "createdDate": "2026-08-12 00:00:00Z",
+      "lastUpdatedDate": "2026-08-12 00:00:00Z"
+    }
+  },
+  "results": {
+    "ed88d73ca41890d1e3d1e94bb67a93b82ea582c60ac6f496223b89c2da201f62": {
+      "signature": "ed88d73ca41890d1e3d1e94bb67a93b82ea582c60ac6f496223b89c2da201f62",
+      "alternativeSignatures": [],
+      "memberOf": [
+        "default"
+      ],
+      "justification": "ApiScan documentationnotfound on microsoft.data.sqlclient.extensions.abstractions.dll for microsoft.data.sqlclient!Microsoft.Data.SqlClient.SqlAuthenticationProviderManager. The change will be fixed soon with a new design change, this is a temporary suppression to unblock the release. The suppression will be removed once the fix is in place.",
+      "createdDate": "2026-08-12 00:00:00Z"
+    }
+  }
+}

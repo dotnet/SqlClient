@@ -158,6 +158,18 @@ extends:
       baseline:
         baselineFile: $(Build.SourcesDirectory)/.config/guardian/.gdnbaselines
 
+      # Explicit suppressions for findings raised AFTER the baseline snapshot that we have
+      # reviewed and consciously accepted (e.g. APIScan false positives).  Without this,
+      # Guardian looks for a suppression file at the agent's default $(Agent.BuildDirectory)/.gdn
+      # location, which does not exist in this repo and produces:
+      #
+      #   "Suppression file expected at ...\.gdn\.gdnsuppress but not found."
+      #
+      # https://eng.ms/docs/microsoft-security/security/azure-security/cloudai-security-fundamentals-engineering/security-integration/guardian-wiki/microsoft-guardian/general/suppressions
+      suppression:
+        suppressionFile: $(Build.SourcesDirectory)/.config/guardian/.gdnsuppress
+        suppressionSet: default
+
       # Configure APIScan behaviour:
       #
       # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
