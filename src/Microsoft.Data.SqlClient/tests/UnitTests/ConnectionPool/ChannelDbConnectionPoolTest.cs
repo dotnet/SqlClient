@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Data;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.RateLimiting;
@@ -1432,7 +1431,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
             internal StubDbConnectionInternal(ISqlClientMetrics? metrics = null)
-                : base(ConnectionState.Open, true, false, metrics)
+                : base(metrics)
             {
             }
 

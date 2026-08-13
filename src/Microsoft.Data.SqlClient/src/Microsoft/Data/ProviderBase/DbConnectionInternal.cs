@@ -76,6 +76,12 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
+        // Constructor for internal connections that report to a specific metrics sink, reusing
+        // the same defaults as the parameterless constructor above.
+        protected DbConnectionInternal(ISqlClientMetrics metrics) : this(ConnectionState.Open, true, false, metrics)
+        {
+        }
+
         // Constructor for internal connections
         internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString)
             : this(state, hidePassword, allowSetConnectionString, metrics: null)

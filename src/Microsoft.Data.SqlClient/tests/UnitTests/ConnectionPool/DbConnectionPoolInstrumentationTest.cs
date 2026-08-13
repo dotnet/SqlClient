@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
-using System.Threading.RateLimiting;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
@@ -29,31 +28,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class DbConnectionPoolInstrumentationTest
     {
-        /// <summary>
-        /// Builds a pool for instrumentation tests. Defaults mirror
-        /// <see cref="ChannelDbConnectionPoolTest"/> so behavior is comparable across suites.
-        /// </summary>
-        /// <param name="connectionFactory">The factory used to create physical connections.</param>
-        /// <param name="connectionString">Connection string backing the pool group. Tests override
-        /// it to control the Pool Blocking Period.</param>
-        /// <param name="maxPoolSize">Maximum pool size.</param>
-        /// <param name="minPoolSize">Minimum pool size.</param>
-        /// <param name="idleTimeout">Connection Idle Timeout, in seconds.</param>
-        /// <param name="connectionCreationRateLimiter">Optional limiter throttling physical creates.</param>
-        private static ChannelDbConnectionPool ConstructPool(
-            SqlConnectionFactory connectionFactory,
-            string connectionString = "Data Source=localhost;",
-            int maxPoolSize = 50,
-            int minPoolSize = 0,
-            int idleTimeout = 0,
-            ConcurrencyLimiter? connectionCreationRateLimiter = null)
-            => new(
-                connectionFactory,
-                ConstructPoolGroup(connectionString, maxPoolSize, minPoolSize, idleTimeout),
-                DbConnectionPoolIdentity.NoIdentity,
-                new DbConnectionPoolProviderInfo(),
-                connectionCreationRateLimiter);
-
         /// <summary>
         /// Builds the pool group shared by both pool implementations.
         /// </summary>

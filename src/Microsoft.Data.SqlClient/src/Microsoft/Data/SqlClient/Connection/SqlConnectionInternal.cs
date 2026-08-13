@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
@@ -310,7 +309,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
             SspiContextProvider sspiContextProvider = null,
             ISqlClientMetrics metrics = null)
-            : base(ConnectionState.Open, true, false, metrics)
+            : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
