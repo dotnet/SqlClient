@@ -59,6 +59,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex1.Message);
         }
 
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task SignAndVerifyAsyncRejectInvalidAKVPath(string masterKeyPath)
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                new SqlClientCustomTokenCredential());
+
+            ArgumentException signException = await Assert.ThrowsAnyAsync<ArgumentException>(
+                () => azureKeyProvider.SignColumnMasterKeyMetadataAsync(masterKeyPath, false));
+
+            ArgumentException verifyException = await Assert.ThrowsAnyAsync<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(masterKeyPath, false, encryptedCek));
+
+            // The message is not anchored, so it matches whether or not the operation is flagged as
+            // a system operation and prefixes the text with "Internal error.".
+            string expectedMessage = masterKeyPath == null
+                ? "Azure Key Vault key path cannot be null."
+                : "Invalid Azure Key Vault key path specified";
+
+            Assert.Matches(expectedMessage, signException.Message);
+            Assert.Matches(expectedMessage, verifyException.Message);
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public async Task AsyncApisValidateArguments()
         {

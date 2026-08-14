@@ -319,19 +319,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
             byte[] plaintextKey = { 1, 2, 3 };
 
-            // Each iteration uses a distinct cache key, so a gate that is not released on cancellation
-            // would accumulate without bound.
-            for (int i = 0; i < 100; i++)
+            // A gate is only created once a caller reaches the cache, so the cancellation being
+            // exercised here must happen while a caller waits on a gate another caller holds.
+            // Each iteration uses a distinct cache key, so a gate that is abandoned rather than
+            // removed would accumulate without bound.
+            for (int i = 0; i < 20; i++)
             {
                 byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(
                     _fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey);
 
+                // The first caller takes the gate and holds it for the duration of the key vault
+                // round trip. It is not cancelled, so it always creates the entry.
+                Task<byte[]> gateOwner = Task.Run(() => akvProvider.DecryptColumnEncryptionKeyAsync(
+                    _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey));
+
+                // The remaining callers queue behind it and are cancelled while waiting.
                 using CancellationTokenSource cts = new();
+                Task<byte[]>[] waiters = new Task<byte[]>[8];
+                for (int j = 0; j < waiters.Length; j++)
+                {
+                    waiters[j] = Task.Run(() => akvProvider.DecryptColumnEncryptionKeyAsync(
+                        _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey, cts.Token));
+                }
+
                 cts.Cancel();
 
-                await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                    () => akvProvider.DecryptColumnEncryptionKeyAsync(
-                        _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey, cts.Token));
+                // A waiter either observed the cancellation or completed first; both are valid.
+                foreach (Task<byte[]> waiter in waiters)
+                {
+                    try
+                    {
+                        Assert.Equal(plaintextKey, await waiter);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                }
+
+                Assert.Equal(plaintextKey, await gateOwner);
             }
 
             Assert.Equal(0, GetEntryCreationGateCount(cekCacheName, akvProvider));
