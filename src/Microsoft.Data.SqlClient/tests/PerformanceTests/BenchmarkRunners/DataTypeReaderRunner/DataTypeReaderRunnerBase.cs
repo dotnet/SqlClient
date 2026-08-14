@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using Microsoft.Data.SqlClient.Tests.Common;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeReaderRunner;
 
@@ -72,8 +73,7 @@ public abstract class DataTypeReaderRunnerBase : BaseRunner
         await using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
         await using SqlDataReader reader = await sqlCommand.ExecuteReaderAsync();
 
-        while (await reader.ReadAsync())
-        { }
+        await reader.FlushResultSetAsync();
     }
 
     [Benchmark]
@@ -82,7 +82,6 @@ public abstract class DataTypeReaderRunnerBase : BaseRunner
         using SqlCommand sqlCommand = new($"SELECT * FROM {_table.Name}", _connection);
         using SqlDataReader reader = sqlCommand.ExecuteReader();
 
-        while (reader.Read())
-        { }
+        reader.FlushResultSet();
     }
 }
