@@ -20,8 +20,7 @@ public class Plaintext : LargeDataReadRunnerBase
     /// Kept small (8 KB) and large (1 MB) to observe whether buffer size relative to
     /// the payload materially changes throughput.
     /// </summary>
-    [Params(8_192, 1_048_576)]
-    public int ReadBufferBytes { get; set; }
+    public IEnumerable<int> ReadBufferBytes => [8_192, 1_048_576];
 
     protected override SqlConnection OpenConnection()
     {
@@ -35,11 +34,12 @@ public class Plaintext : LargeDataReadRunnerBase
         new(_connection, nameof(Plaintext), "(Id INT IDENTITY PRIMARY KEY, Data VARBINARY(MAX))");
 
     [Benchmark]
-    public void ReadLargeDataSync_GetBytes()
+    [ArgumentsSource(nameof(ReadBufferBytes))]
+    public void ReadLargeDataSync_GetBytes(int readBufferBytes)
     {
         using SqlCommand cmd = new($"SELECT Data FROM {_table.Name}", _connection);
         using SqlDataReader reader = cmd.ExecuteReader(CommandBehavior);
-        byte[] buffer = new byte[ReadBufferBytes];
+        byte[] buffer = new byte[readBufferBytes];
 
         while (reader.Read())
         {
@@ -54,11 +54,12 @@ public class Plaintext : LargeDataReadRunnerBase
     }
 
     [Benchmark]
-    public async Task ReadLargeDataAsync_GetStream()
+    [ArgumentsSource(nameof(ReadBufferBytes))]
+    public async Task ReadLargeDataAsync_GetStream(int readBufferBytes)
     {
         await using SqlCommand cmd = new($"SELECT Data FROM {_table.Name}", _connection);
         await using SqlDataReader reader = await cmd.ExecuteReaderAsync(CommandBehavior);
-        byte[] buffer = new byte[ReadBufferBytes];
+        byte[] buffer = new byte[readBufferBytes];
 
         while (await reader.ReadAsync())
         {
