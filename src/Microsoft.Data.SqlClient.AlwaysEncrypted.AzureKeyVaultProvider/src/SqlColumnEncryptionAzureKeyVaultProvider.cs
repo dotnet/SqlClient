@@ -415,11 +415,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // Compute the message to validate the signature
             message = new byte[encryptedColumnEncryptionKey.Length - signatureLength];
             Buffer.BlockCopy(encryptedColumnEncryptionKey, 0, message, 0, encryptedColumnEncryptionKey.Length - signatureLength);
-
-            if (message == null)
-            {
-                throw ADP.NullHashFound();
-            }
         }
 
         /// <summary>
@@ -521,16 +516,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                     throw ADP.HashLengthMismatch();
                 }
 
-                bool isSignatureValid = await KeyCryptographer
-                    .VerifyDataAsync(message, signature, masterKeyPath, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (!isSignatureValid)
-                {
-                    SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
-                    throw ADP.InvalidSignature();
-                }
-                SqlClientEventSource.Log.TryTraceEvent("Signature verified successfully.");
+                await ValidateSignatureAsync(masterKeyPath, message, signature, cancellationToken).ConfigureAwait(false);
 
                 return ConcatenateMessageAndSignature(message, signature);
             }
@@ -648,6 +634,27 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private void ValidateSignature(string masterKeyPath, byte[] message, byte[] signature)
         {
             if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
+            {
+                SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
+                throw ADP.InvalidSignature();
+            }
+            SqlClientEventSource.Log.TryTraceEvent("Signature verified successfully.");
+        }
+
+        /// <summary>
+        /// Asynchronous counterpart of <see cref="ValidateSignature(string, byte[], byte[])"/>.
+        /// </summary>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key in Azure Key Vault</param>
+        /// <param name="message">The signed message</param>
+        /// <param name="signature">The signature to verify</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async Task ValidateSignatureAsync(string masterKeyPath, byte[] message, byte[] signature, CancellationToken cancellationToken)
+        {
+            bool isSignatureValid = await KeyCryptographer
+                .VerifyDataAsync(message, signature, masterKeyPath, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!isSignatureValid)
             {
                 SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
                 throw ADP.InvalidSignature();
