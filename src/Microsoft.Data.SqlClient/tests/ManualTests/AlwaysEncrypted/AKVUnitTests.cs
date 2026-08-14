@@ -314,6 +314,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task ConcurrentAsyncDecryptionOfSameKeyIsDeduplicated()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] plaintextKey = { 1, 2, 3 };
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey);
+
+            Task<byte[]>[] decryptions = new Task<byte[]>[32];
+            for (int i = 0; i < decryptions.Length; i++)
+            {
+                decryptions[i] = Task.Run(() => akvProvider.DecryptColumnEncryptionKeyAsync(
+                    _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey));
+            }
+
+            byte[][] decryptedKeys = await Task.WhenAll(decryptions);
+
+            foreach (byte[] decryptedKey in decryptedKeys)
+            {
+                Assert.Equal(plaintextKey, decryptedKey);
+            }
+
+            // Concurrent misses for the same key must collapse into a single cache entry.
+            Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public async Task AsyncApisHonorCancellationToken()
         {
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
@@ -336,6 +361,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => akvProvider.VerifyColumnMasterKeyMetadataAsync(
                     _fixture.GeneratedKeyUri, true, signature, cts.Token));
+
+            // Cancellation is observed before argument validation, matching the base class.
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => akvProvider.DecryptColumnEncryptionKeyAsync(
+                    "https://my-key-vault.vault.azure.net/keys", EncryptionAlgorithm, encryptedKey, cts.Token));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]

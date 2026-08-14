@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using static System.Math;
@@ -26,6 +29,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private readonly MemoryCache _cache;
 
         private readonly int _maxSize;
+
+        /// <summary>
+        /// Gates concurrent asynchronous creation of the same cache entry, so that a burst of
+        /// concurrent misses for one key results in a single invocation of the create delegate.
+        /// Entries are removed once no caller holds or waits on them.
+        /// </summary>
+        private readonly ConcurrentDictionary<TKey, SemaphoreSlim> _entryCreationGates = new();
 
         /// <summary>
         /// Sets an absolute expiration time, relative to now.
@@ -70,7 +80,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
                 SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
-                if (_cache.Count == _maxSize)
+                if (_cache.Count >= _maxSize)
                 {
                     _cache.Compact(Max(0.10, 1.0 / _maxSize));
                 }
@@ -100,12 +110,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         /// <param name="key">The key for the cache entry.</param>
         /// <param name="createItem">The delegate function that will asynchronously create the cache entry if it does not exist.</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the wait for another caller's creation of the entry.</param>
         /// <returns>The cache entry.</returns>
         /// <remarks>
-        /// No lock is held while <paramref name="createItem"/> is awaited, so concurrent misses for the same key may each
-        /// invoke the factory. The operations performed by the factory are idempotent, so last write wins.
+        /// Concurrent misses for the same key are gated so that only one caller invokes <paramref name="createItem"/>; the others
+        /// await that caller and then observe the cached value. The gate is per key, so misses for different keys proceed in
+        /// parallel, and no lock is held by a blocked thread. Cancellation applies only to the caller requesting it: if the caller
+        /// that owns the gate is cancelled, the next waiter creates the entry using its own cancellation token.
         /// </remarks>
-        internal async Task<TValue> GetOrCreateAsync(TKey key, Func<Task<TValue>> createItem)
+        internal async Task<TValue> GetOrCreateAsync(TKey key, Func<Task<TValue>> createItem, CancellationToken cancellationToken = default)
         {
             if (TimeToLive <= TimeSpan.Zero)
             {
@@ -119,24 +132,49 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return cacheEntry;
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
+            SemaphoreSlim gate = _entryCreationGates.GetOrAdd(key, static _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            cacheEntry = await createItem().ConfigureAwait(false);
-
-            if (_cache.Count >= _maxSize)
+            try
             {
-                _cache.Compact(Max(0.10, 1.0 / _maxSize));
+                // Another caller may have created the entry while this one waited for the gate.
+                if (_cache.TryGetValue(key, out cacheEntry))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("Cached entry found.");
+                    return cacheEntry;
+                }
+
+                SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
+
+                cacheEntry = await createItem().ConfigureAwait(false);
+
+                if (_cache.Count >= _maxSize)
+                {
+                    _cache.Compact(Max(0.10, 1.0 / _maxSize));
+                }
+
+                MemoryCacheEntryOptions cacheEntryOptions = new()
+                {
+                    AbsoluteExpirationRelativeToNow = TimeToLive
+                };
+
+                _cache.Set(key, cacheEntry, cacheEntryOptions);
+                SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
+
+                return cacheEntry;
             }
-
-            MemoryCacheEntryOptions cacheEntryOptions = new()
+            finally
             {
-                AbsoluteExpirationRelativeToNow = TimeToLive
-            };
+                gate.Release();
 
-            _cache.Set(key, cacheEntry, cacheEntryOptions);
-            SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
-
-            return cacheEntry;
+                // Drop the gate once nobody holds or waits on it. A caller that fetched this instance
+                // just before removal may still use it, which at worst allows one duplicate creation.
+                if (gate.CurrentCount == 1)
+                {
+                    ICollection<KeyValuePair<TKey, SemaphoreSlim>> gates = _entryCreationGates;
+                    gates.Remove(new KeyValuePair<TKey, SemaphoreSlim>(key, gate));
+                }
+            }
         }
 
         /// <summary>

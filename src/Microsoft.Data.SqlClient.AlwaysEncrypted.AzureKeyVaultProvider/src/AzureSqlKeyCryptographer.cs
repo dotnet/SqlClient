@@ -97,8 +97,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <remarks>
-        /// The semaphore is never held while the network call to Azure Key Vault is in flight, so
-        /// concurrent misses may each fetch the same key. The fetch is idempotent, so last write wins.
+        /// Mirrors the deduplication of the synchronous path: only one caller fetches a given key from Azure Key Vault.
+        /// The semaphore is awaited rather than blocked on, so no thread is held while the fetch is in flight.
         /// </remarks>
         internal async Task AddKeyAsync(string keyIdentifierUri, CancellationToken cancellationToken = default)
         {
@@ -107,20 +107,24 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return;
             }
 
-            ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
-
-            // Fetch the KeyClient for the Key vault URI.
-            KeyClient keyClient = GetOrCreateKeyClient(vaultUri);
-
-            // Fetch the key from Azure Key Vault without holding any lock.
-            KeyVaultKey key = await FetchKeyFromKeyVaultAsync(keyClient, keyName, keyVersion, cancellationToken).ConfigureAwait(false);
-
-            // Allow only one thread to update the key dictionary at a time to remain consistent with the sync path.
+            // Allow only one caller to proceed to ensure thread safety
+            // as we will need to fetch key information from Azure Key Vault if the key is not found in cache.
             await _keyDictionarySemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
-                _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
+                if (!_keyDictionary.ContainsKey(keyIdentifierUri))
+                {
+                    ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
+
+                    // Fetch the KeyClient for the Key vault URI.
+                    KeyClient keyClient = GetOrCreateKeyClient(vaultUri);
+
+                    // Fetch the key from Azure Key Vault.
+                    KeyVaultKey key = await FetchKeyFromKeyVaultAsync(keyClient, keyName, keyVersion, cancellationToken).ConfigureAwait(false);
+
+                    _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
+                }
             }
             finally
             {

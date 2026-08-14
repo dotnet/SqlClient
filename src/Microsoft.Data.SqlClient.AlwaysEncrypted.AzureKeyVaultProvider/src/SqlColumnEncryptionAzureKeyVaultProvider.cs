@@ -159,13 +159,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to a trusted enclave</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <returns>The signature of the master key metadata</returns>
+        /// <remarks>
+        /// Argument validation failures are reported through the returned task rather than thrown synchronously.
+        /// </remarks>
         public override async Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, CancellationToken cancellationToken = default)
         {
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             try
             {
-                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
                 cancellationToken.ThrowIfCancellationRequested();
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
 
                 // Also validates key is of RSA type.
                 await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
@@ -211,17 +214,20 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="signature">Signature for the master key metadata</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
+        /// <remarks>
+        /// Argument validation failures are reported through the returned task rather than thrown synchronously.
+        /// </remarks>
         public override async Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, CancellationToken cancellationToken = default)
         {
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             try
             {
-                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
                 cancellationToken.ThrowIfCancellationRequested();
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
                 Tuple<string, bool, string> key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
                 return await _columnMasterKeyMetadataSignatureVerificationCache
-                    .GetOrCreateAsync(key, VerifyColumnMasterKeyMetadataAsync)
+                    .GetOrCreateAsync(key, VerifyColumnMasterKeyMetadataAsync, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally
@@ -291,21 +297,25 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <returns>Plain text column encryption key</returns>
+        /// <remarks>
+        /// Argument validation failures are reported through the returned task rather than thrown synchronously.
+        /// </remarks>
         public override async Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken = default)
         {
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Validate the input parameters
                 ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
                 ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
                 ValidateNotNull(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
                 ValidateNotEmpty(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
                 ValidateVersionByte(encryptedColumnEncryptionKey[0], s_firstVersion[0]);
-                cancellationToken.ThrowIfCancellationRequested();
 
                 return await _columnEncryptionKeyCache
-                    .GetOrCreateAsync(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKeyAsync)
+                    .GetOrCreateAsync(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKeyAsync, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally
@@ -467,17 +477,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="columnEncryptionKey">The plaintext column encryption key.</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <returns>Encrypted column encryption key</returns>
+        /// <remarks>
+        /// Argument validation failures are reported through the returned task rather than thrown synchronously.
+        /// </remarks>
         public override async Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey, CancellationToken cancellationToken = default)
         {
             long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Validate the input parameters
                 ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
                 ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
                 ValidateNotNull(columnEncryptionKey, nameof(columnEncryptionKey));
                 ValidateNotEmpty(columnEncryptionKey, nameof(columnEncryptionKey));
-                cancellationToken.ThrowIfCancellationRequested();
 
                 // Also validates whether the key is RSA one or not and then get the key size
                 await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
