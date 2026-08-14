@@ -1193,6 +1193,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
+
+                // The old connection was vended to the caller and is now destroyed rather than
+                // returned to the pool, so balance both the soft gauge (it was counted as a
+                // checkout) and the hard gauge (its physical connection is going away).
+                Metrics.SoftDisconnectRequest();
+                Metrics.HardDisconnectRequest();
             }
 
             return newConnection;

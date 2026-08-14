@@ -280,21 +280,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies the counters emitted when a checked-out connection is replaced. The channel pool
-        /// swaps the new connection into the old connection's slot, so the pooled-connection gauge
-        /// is deliberately left untouched.
+        /// Verifies the counters emitted when a checked-out connection is replaced. Both pools swap
+        /// the new connection in for the old one, so the caller's checkout is unchanged: the
+        /// replacement is a soft connect and retiring the old connection is a soft disconnect plus
+        /// a hard disconnect.
         /// </summary>
         /// <remarks>
-        /// This is not parameterized over the wait handle pool: that implementation disposes the
-        /// replaced connection directly rather than through its destroy path, so it emits neither
-        /// the hard disconnect nor the pooled-connection decrement.
+        /// The pooled-connection gauge differs by implementation. The channel pool reuses the old
+        /// connection's slot, so the gauge is deliberately left untouched. The wait handle pool
+        /// disposes the replaced connection directly rather than through its destroy path, so it
+        /// never emits the matching decrement.
         /// </remarks>
-        [Fact]
-        public void ReplaceConnection_CountsHardDisconnectForDiscardedConnection()
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle, 2)]
+        [InlineData(PoolImplementation.Channel, 1)]
+        public void ReplaceConnection_CountsDisconnectsForDiscardedConnection(
+            PoolImplementation implementation,
+            int expectedPooledConnections)
         {
             // Arrange
             FakeSqlClientMetrics metrics = new();
-            IDbConnectionPool pool = ConstructPool(PoolImplementation.Channel, metrics, new SuccessfulSqlConnectionFactory(metrics));
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new SuccessfulSqlConnectionFactory(metrics));
             SqlConnection owner = new();
             Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? oldConnection));
             Assert.NotNull(oldConnection);
@@ -302,15 +308,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Act
             DbConnectionInternal newConnection = pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
-            // Assert - two physical connections were opened and one was retired, leaving the pooled
-            // count unchanged because the replacement inherited the slot.
+            // Assert - two physical connections were opened and one was retired. The caller still
+            // holds exactly one connection, so the soft connect for the replacement is balanced by
+            // a soft disconnect for the connection it displaced.
             Assert.NotSame(oldConnection, newConnection);
             AssertCounters(
                 metrics,
                 hardConnects: 2,
                 hardDisconnects: 1,
                 softConnects: 2,
-                pooledConnections: 1,
+                softDisconnects: 1,
+                pooledConnections: expectedPooledConnections,
                 activeConnections: 1);
         }
 

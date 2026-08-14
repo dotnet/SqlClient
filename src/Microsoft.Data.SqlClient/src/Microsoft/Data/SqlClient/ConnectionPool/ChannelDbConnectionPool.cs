@@ -514,8 +514,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 oldConnection.Dispose();
 
                 // The replacement took over the old connection's slot, so the pooled gauge is
-                // already correct and only the hard-disconnect counter needs balancing. Traced as a
+                // already correct. The old connection was vended to the caller and is now destroyed
+                // rather than returned, so balance both the soft gauge (it was counted as a
+                // checkout) and the hard gauge (its physical connection is going away). Traced as a
                 // destroy so the connection's exit is visible in the pooler trace stream.
+                Metrics.SoftDisconnectRequest();
                 Metrics.HardDisconnectRequest();
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
