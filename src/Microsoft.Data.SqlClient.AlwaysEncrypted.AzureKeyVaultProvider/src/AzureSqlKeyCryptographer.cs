@@ -8,6 +8,7 @@ using Azure.Security.KeyVault.Keys.Cryptography;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -90,6 +91,44 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
+        /// Asynchronously adds the key, specified by the Key Identifier URI, to the cache.
+        /// Validates the key type and fetches the key from Azure Key Vault if it is not already cached.
+        /// </summary>
+        /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        /// <remarks>
+        /// The semaphore is never held while the network call to Azure Key Vault is in flight, so
+        /// concurrent misses may each fetch the same key. The fetch is idempotent, so last write wins.
+        /// </remarks>
+        internal async Task AddKeyAsync(string keyIdentifierUri, CancellationToken cancellationToken = default)
+        {
+            if (_keyDictionary.ContainsKey(keyIdentifierUri))
+            {
+                return;
+            }
+
+            ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
+
+            // Fetch the KeyClient for the Key vault URI.
+            KeyClient keyClient = GetOrCreateKeyClient(vaultUri);
+
+            // Fetch the key from Azure Key Vault without holding any lock.
+            KeyVaultKey key = await FetchKeyFromKeyVaultAsync(keyClient, keyName, keyVersion, cancellationToken).ConfigureAwait(false);
+
+            // Allow only one thread to update the key dictionary at a time to remain consistent with the sync path.
+            await _keyDictionarySemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
+            }
+            finally
+            {
+                _keyDictionarySemaphore.Release();
+            }
+        }
+
+        /// <summary>
         /// Returns the key specified by the Key Identifier URI
         /// </summary>
         /// <param name="keyIdentifierUri"></param>
@@ -133,6 +172,34 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             return cryptographyClient.VerifyData(RS256, message, signature).IsValid;
         }
 
+        /// <summary>
+        /// Asynchronously generates a signature based on the RSA PKCS#v1.5 scheme using a specified Azure Key Vault Key URL.
+        /// </summary>
+        /// <param name="message">The data to sign</param>
+        /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<byte[]> SignDataAsync(byte[] message, string keyIdentifierUri, CancellationToken cancellationToken = default)
+        {
+            CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            SignResult result = await cryptographyClient.SignDataAsync(RS256, message, cancellationToken).ConfigureAwait(false);
+            return result.Signature;
+        }
+
+        /// <summary>
+        /// Asynchronously verifies a signature based on the RSA PKCS#v1.5 scheme using a specified Azure Key Vault Key URL.
+        /// </summary>
+        /// <param name="message">The signed data</param>
+        /// <param name="signature">The signature to verify</param>
+        /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<bool> VerifyDataAsync(byte[] message, byte[] signature, string keyIdentifierUri, CancellationToken cancellationToken = default)
+        {
+            CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to verify data");
+            VerifyResult result = await cryptographyClient.VerifyDataAsync(RS256, message, signature, cancellationToken).ConfigureAwait(false);
+            return result.IsValid;
+        }
+
         internal byte[] UnwrapKey(KeyWrapAlgorithm keyWrapAlgorithm, byte[] encryptedKey, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
@@ -145,6 +212,36 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
             SqlClientEventSource.Log.TryTraceEvent("Sending request to wrap key.");
             return cryptographyClient.WrapKey(keyWrapAlgorithm, key).EncryptedKey;
+        }
+
+        /// <summary>
+        /// Asynchronously unwraps the given encrypted key using the specified Azure Key Vault key.
+        /// </summary>
+        /// <param name="keyWrapAlgorithm">The key wrap algorithm</param>
+        /// <param name="encryptedKey">The encrypted key to unwrap</param>
+        /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<byte[]> UnwrapKeyAsync(KeyWrapAlgorithm keyWrapAlgorithm, byte[] encryptedKey, string keyIdentifierUri, CancellationToken cancellationToken = default)
+        {
+            CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to unwrap key.");
+            UnwrapResult result = await cryptographyClient.UnwrapKeyAsync(keyWrapAlgorithm, encryptedKey, cancellationToken).ConfigureAwait(false);
+            return result.Key;
+        }
+
+        /// <summary>
+        /// Asynchronously wraps the given key using the specified Azure Key Vault key.
+        /// </summary>
+        /// <param name="keyWrapAlgorithm">The key wrap algorithm</param>
+        /// <param name="key">The key to wrap</param>
+        /// <param name="keyIdentifierUri">The key vault key identifier URI</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<byte[]> WrapKeyAsync(KeyWrapAlgorithm keyWrapAlgorithm, byte[] key, string keyIdentifierUri, CancellationToken cancellationToken = default)
+        {
+            CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            SqlClientEventSource.Log.TryTraceEvent("Sending request to wrap key.");
+            WrapResult result = await cryptographyClient.WrapKeyAsync(keyWrapAlgorithm, key, cancellationToken).ConfigureAwait(false);
+            return result.EncryptedKey;
         }
 
         private CryptographyClient GetCryptographyClient(string keyIdentifierUri)
@@ -171,6 +268,35 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             Azure.Response<KeyVaultKey> keyResponse = keyClient?.GetKey(keyName, keyVersion);
 
+            return ValidateKeyResponse(keyResponse, keyName, keyVersion);
+        }
+
+        /// <summary>
+        /// Asynchronously fetches the column master key from the Azure Key Vault.
+        /// </summary>
+        /// <param name="keyClient">The KeyClient instance</param>
+        /// <param name="keyName">The name of the Azure Key Vault key</param>
+        /// <param name="keyVersion">The version of the Azure Key Vault key</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async Task<KeyVaultKey> FetchKeyFromKeyVaultAsync(KeyClient keyClient, string keyName, string keyVersion, CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryTraceEvent("Fetching key name={0}", keyName);
+
+            Azure.Response<KeyVaultKey> keyResponse = keyClient is null
+                ? null
+                : await keyClient.GetKeyAsync(keyName, keyVersion, cancellationToken).ConfigureAwait(false);
+
+            return ValidateKeyResponse(keyResponse, keyName, keyVersion);
+        }
+
+        /// <summary>
+        /// Validates the response received from Azure Key Vault and ensures the returned key is an RSA key.
+        /// </summary>
+        /// <param name="keyResponse">The response returned by Azure Key Vault</param>
+        /// <param name="keyName">The name of the Azure Key Vault key</param>
+        /// <param name="keyVersion">The version of the Azure Key Vault key</param>
+        private static KeyVaultKey ValidateKeyResponse(Azure.Response<KeyVaultKey> keyResponse, string keyName, string keyVersion)
+        {
             // Handle the case where the key response is null or contains an error
             // This can happen if the key does not exist or if there is an issue with the KeyClient.
             // In such cases, we log the error and throw an exception.

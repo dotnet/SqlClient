@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using static System.Math;
 using Microsoft.Data.SqlClient.Internal;
@@ -87,6 +88,53 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 SqlClientEventSource.Log.TryTraceEvent("Cached entry found.");
             }
+
+            return cacheEntry;
+        }
+
+        /// <summary>
+        /// Asynchronous counterpart of <see cref="GetOrCreate(TKey, Func{TValue})"/>. Looks for the cache entry that maps to the
+        /// <paramref name="key"/> value. If it exists (cache hit) it will simply be returned. Otherwise, the
+        /// <paramref name="createItem"/> delegate function will be awaited to create the value. It will then get stored in the
+        /// cache and set the time-to-live before getting returned.
+        /// </summary>
+        /// <param name="key">The key for the cache entry.</param>
+        /// <param name="createItem">The delegate function that will asynchronously create the cache entry if it does not exist.</param>
+        /// <returns>The cache entry.</returns>
+        /// <remarks>
+        /// No lock is held while <paramref name="createItem"/> is awaited, so concurrent misses for the same key may each
+        /// invoke the factory. The operations performed by the factory are idempotent, so last write wins.
+        /// </remarks>
+        internal async Task<TValue> GetOrCreateAsync(TKey key, Func<Task<TValue>> createItem)
+        {
+            if (TimeToLive <= TimeSpan.Zero)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("Key caching found disabled, fetching key information.");
+                return await createItem().ConfigureAwait(false);
+            }
+
+            if (_cache.TryGetValue(key, out TValue cacheEntry))
+            {
+                SqlClientEventSource.Log.TryTraceEvent("Cached entry found.");
+                return cacheEntry;
+            }
+
+            SqlClientEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
+
+            cacheEntry = await createItem().ConfigureAwait(false);
+
+            if (_cache.Count >= _maxSize)
+            {
+                _cache.Compact(Max(0.10, 1.0 / _maxSize));
+            }
+
+            MemoryCacheEntryOptions cacheEntryOptions = new()
+            {
+                AbsoluteExpirationRelativeToNow = TimeToLive
+            };
+
+            _cache.Set(key, cacheEntry, cacheEntryOptions);
+            SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
 
             return cacheEntry;
         }

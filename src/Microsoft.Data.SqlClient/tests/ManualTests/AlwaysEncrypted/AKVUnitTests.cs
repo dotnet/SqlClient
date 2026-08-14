@@ -9,6 +9,7 @@ using System.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -197,8 +198,170 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        private static int GetCacheCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task EncryptAndDecryptColumnEncryptionKeyAsyncRoundTrips()
         {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(DataTestUtility.GetTokenCredential());
+
+            byte[] encryptedCek = await akvProvider.EncryptColumnEncryptionKeyAsync(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] decryptedCek = await akvProvider.DecryptColumnEncryptionKeyAsync(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCek);
+
+            Assert.Equal(s_columnEncryptionKey, decryptedCek);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncAndSyncEncryptedKeysAreInterchangeable()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(DataTestUtility.GetTokenCredential());
+
+            byte[] syncEncryptedCek = akvProvider.EncryptColumnEncryptionKey(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] asyncDecryptedCek = await akvProvider.DecryptColumnEncryptionKeyAsync(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, syncEncryptedCek);
+            Assert.Equal(s_columnEncryptionKey, asyncDecryptedCek);
+
+            byte[] asyncEncryptedCek = await akvProvider.EncryptColumnEncryptionKeyAsync(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] syncDecryptedCek = akvProvider.DecryptColumnEncryptionKey(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, asyncEncryptedCek);
+            Assert.Equal(s_columnEncryptionKey, syncDecryptedCek);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task SignAndVerifyColumnMasterKeyMetadataAsyncRoundTrips()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(DataTestUtility.GetTokenCredential());
+
+            byte[] signature = await akvProvider.SignColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, true);
+            Assert.True(await akvProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, true, signature));
+
+            // Signatures produced by the sync path must verify on the async path and vice versa.
+            byte[] syncSignature = akvProvider.SignColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, false);
+            Assert.True(await akvProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, false, syncSignature));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true, signature));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task DecryptedCekIsCachedDuringAsyncDecryption()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] plaintextKey1 = { 1, 2, 3 };
+            byte[] plaintextKey2 = { 0, 1, 2, 3 };
+            byte[] encryptedKey1 = await akvProvider.EncryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey1);
+            byte[] encryptedKey2 = await akvProvider.EncryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey2);
+
+            byte[] decryptedKey1 = await akvProvider.DecryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey1);
+            Assert.Equal(plaintextKey1, decryptedKey1);
+            Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
+            Assert.True(CekCacheContainsKey(encryptedKey1, akvProvider));
+
+            // A repeated decryption of the same encrypted key must be served from the cache.
+            decryptedKey1 = await akvProvider.DecryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey1);
+            Assert.Equal(plaintextKey1, decryptedKey1);
+            Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
+
+            byte[] decryptedKey2 = await akvProvider.DecryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey2);
+            Assert.Equal(plaintextKey2, decryptedKey2);
+            Assert.Equal(2, GetCacheCount(cekCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task CekCacheIsSharedBetweenSyncAndAsyncDecryption()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] plaintextKey = { 1, 2, 3 };
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey);
+
+            akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey);
+            Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
+
+            byte[] decryptedKey = await akvProvider.DecryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey);
+            Assert.Equal(plaintextKey, decryptedKey);
+            Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task CekCachingIsDisabledForAsyncDecryptionWhenTtlIsZero()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            akvProvider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
+            byte[] plaintextKey = { 1, 2, 3 };
+            byte[] encryptedKey = await akvProvider.EncryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey);
+
+            byte[] decryptedKey = await akvProvider.DecryptColumnEncryptionKeyAsync(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey);
+
+            Assert.Equal(plaintextKey, decryptedKey);
+            Assert.Equal(0, GetCacheCount(cekCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task SignatureVerificationResultIsCachedDuringAsyncVerification()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] signature = await akvProvider.SignColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, true);
+            byte[] signatureWithoutEnclave = await akvProvider.SignColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, false);
+
+            Assert.True(await akvProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, true, signature));
+            Assert.Equal(1, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
+
+            Assert.True(await akvProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, true, signature));
+            Assert.Equal(1, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
+
+            Assert.True(await akvProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.GeneratedKeyUri, false, signatureWithoutEnclave));
+            Assert.Equal(2, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncApisHonorCancellationToken()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(
+                _fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] signature = akvProvider.SignColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true);
+
+            using CancellationTokenSource cts = new();
+            cts.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => akvProvider.EncryptColumnEncryptionKeyAsync(
+                    _fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey, cts.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => akvProvider.DecryptColumnEncryptionKeyAsync(
+                    _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey, cts.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => akvProvider.SignColumnMasterKeyMetadataAsync(
+                    _fixture.GeneratedKeyUri, true, cts.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => akvProvider.VerifyColumnMasterKeyMetadataAsync(
+                    _fixture.GeneratedKeyUri, true, signature, cts.Token));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncApisValidateMasterKeyPath()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            string invalidKeyPath = "https://my-key-vault.vault.azure.net/keys";
+
+            ArgumentException ex1 = await Assert.ThrowsAsync<ArgumentException>(
+                () => akvProvider.EncryptColumnEncryptionKeyAsync(invalidKeyPath, EncryptionAlgorithm, s_columnEncryptionKey));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex1.Message);
+
+            ArgumentException ex2 = await Assert.ThrowsAsync<ArgumentException>(
+                () => akvProvider.DecryptColumnEncryptionKeyAsync(invalidKeyPath, EncryptionAlgorithm, s_columnEncryptionKey));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex2.Message);
+
+            ArgumentException ex3 = await Assert.ThrowsAsync<ArgumentException>(
+                () => akvProvider.SignColumnMasterKeyMetadataAsync(invalidKeyPath, true));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex3.Message);
+
+            ArgumentException ex4 = await Assert.ThrowsAsync<ArgumentException>(
+                () => akvProvider.VerifyColumnMasterKeyMetadataAsync(invalidKeyPath, true, s_columnEncryptionKey));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex4.Message);
+        }
+
+        private static int GetCacheCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)        {
             var cacheInstance = GetCacheInstance(cacheName, akvProvider);
             Type cacheType = cacheInstance.GetType();
             PropertyInfo countProperty = cacheType.GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
