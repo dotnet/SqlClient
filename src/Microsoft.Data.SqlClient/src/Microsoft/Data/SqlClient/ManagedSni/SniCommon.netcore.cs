@@ -44,69 +44,70 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal const int LocalDBBadRuntime = 57;
 
         /// <summary>
-        /// Validates the server's TLS certificate.
+        /// We either validate that the provided 'validationCert' matches the 'serverCert', or we validate that the server name in the 'serverCert' matches 'targetServerName'.
+        /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
+        /// This method is called as a result of callback for SSL Stream Certificate validation.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// Chain and name validation is performed by <see cref="System.Net.Security.SslStream"/>
-        /// before this method is invoked; its outcome is reported to us through
-        /// <paramref name="policyErrors"/>. This method is the SslStream certificate validation
-        /// callback, and it applies two checks in order:
-        /// </para>
-        /// <list type="number">
-        ///   <item>
-        ///     <description>
-        ///     <b>Chain / name validation.</b> Every flag set in <paramref name="policyErrors"/>
-        ///     is inspected and, unless it can be resolved (a name mismatch may still be satisfied
-        ///     by <paramref name="hostNameInCertificate"/>), validation fails with a descriptive
-        ///     <see cref="System.Security.Authentication.AuthenticationException"/>.
-        ///     <see cref="SslPolicyErrors.None"/> means the platform found no chain or name
-        ///     problems, so there is nothing to report in this step.
-        ///     </description>
-        ///   </item>
-        ///   <item>
-        ///     <description>
-        ///     <b>Certificate pinning.</b> When <paramref name="validationCertFileName"/> is
-        ///     supplied, the presented server certificate must additionally be a byte-for-byte
-        ///     match of the pinned certificate. The pin is <b>additive</b>: it never replaces or
-        ///     overrides chain / name validation, and a matching pin can never mask a policy
-        ///     error. If the pin file cannot be loaded or parsed, validation fails closed.
-        ///     </description>
-        ///   </item>
-        /// </list>
-        /// <para>
-        /// <paramref name="serverCert"/> is <see langword="null"/> when the server presented no
-        /// certificate, in which case <paramref name="policyErrors"/> has
-        /// <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/> set and validation fails in
-        /// step 1. The pin check in step 2 additionally guards against a null certificate so that
-        /// it always fails with an <see cref="System.Security.Authentication.AuthenticationException"/>
-        /// rather than a <see cref="NullReferenceException"/>.
-        /// </para>
+        /// When <paramref name="validationCertFileName"/> is supplied, the presented server
+        /// certificate is always compared against it, even when <paramref name="policyErrors"/> is
+        /// <see cref="SslPolicyErrors.None"/>. A configured pin that cannot be loaded or parsed, or
+        /// that does not match, fails the connection; it is never silently ignored.
         /// </remarks>
         /// <param name="connectionId">Connection ID/GUID for tracing</param>
         /// <param name="targetServerName">Server that client is expecting to connect to</param>
         /// <param name="hostNameInCertificate">Optional hostname to use for server certificate validation</param>
-        /// <param name="serverCert">X.509 certificate from the server, or null when the server presented none</param>
+        /// <param name="serverCert">X.509 certificate from the server</param>
         /// <param name="validationCertFileName">Path to an X.509 certificate file from the application to compare with the serverCert</param>
-        /// <param name="policyErrors">Chain / name validation result reported by SslStream</param>
+        /// <param name="policyErrors">Policy errors</param>
         /// <returns>True if certificate is valid</returns>
         internal static bool ValidateSslServerCertificate(Guid connectionId, string targetServerName, string hostNameInCertificate, X509Certificate serverCert, string validationCertFileName, SslPolicyErrors policyErrors)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
-                // Fast path: SslStream reported no chain / name problems and the caller did not
-                // supply a ServerCertificate pin, so there is nothing left for us to check.
+                // When a pin is configured, require it to match even if the platform trusts the cert.
                 if (string.IsNullOrEmpty(validationCertFileName) && policyErrors == SslPolicyErrors.None)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, targetServerName {1}, SSL Server certificate has no policy errors and no ServerCertificate pin was supplied; skipping pin checks.", args0: connectionId, args1: targetServerName);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, targetServerName {1}, SSL Server certificate has no policy errors and no ServerCertificate was supplied; skipping certificate comparison.", args0: connectionId, args1: targetServerName);
                     return true;
                 }
 
-                string serverNameToValidate = string.IsNullOrEmpty(hostNameInCertificate)
-                    ? targetServerName
-                    : hostNameInCertificate;
+                string serverNameToValidate;
+                if (!string.IsNullOrEmpty(hostNameInCertificate))
+                {
+                    serverNameToValidate = hostNameInCertificate;
+                }
+                else
+                {
+                    serverNameToValidate = targetServerName;
+                }
 
-                // Step 1: report any chain / name validation problem found by SslStream.
+                if (!string.IsNullOrEmpty(validationCertFileName))
+                {
+                    if (serverCert is null)
+                    {
+                        // The server presented no certificate (normally reported through
+                        // SslPolicyErrors.RemoteCertificateNotAvailable), so there is nothing to
+                        // compare the pin against.
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate was specified but the server presented no certificate. Certificate validation failed.", args0: connectionId);
+                        throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateNotAvailable);
+                    }
+
+                    using X509Certificate validationCertificate = LoadValidationCertificate(connectionId, validationCertFileName);
+
+                    if (serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server. Certificate validation passed.", args0: connectionId);
+                        return true;
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate doesn't match the certificate provided by the server. Certificate validation failed.", args0: connectionId);
+                        throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateDoesNotMatchServerCertificate);
+                    }
+                }
+
+                // If we get to this point then there is a ssl policy flag.
                 StringBuilder messageBuilder = new();
                 if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                 {
@@ -153,56 +154,20 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     throw ADP.SSLCertificateAuthenticationException(messageBuilder.ToString());
                 }
 
-                // Step 2: chain / name validation succeeded. When a ServerCertificate pin was
-                // supplied it is enforced additively on top of that result, so a matching pin can
-                // never mask a policy error and a clean chain / name result can never satisfy the pin.
-                if (!string.IsNullOrEmpty(validationCertFileName))
-                {
-                    ValidateCertificatePin(connectionId, serverCert, validationCertFileName);
-                }
-
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, certificate with subject: {1}, validated successfully.", args0: connectionId, args1: serverCert.Subject);
                 return true;
             }
         }
 
         /// <summary>
-        /// Enforces the <c>ServerCertificate</c> pin: the certificate presented by the server must
-        /// be a byte-for-byte match of the certificate loaded from
-        /// <paramref name="validationCertFileName"/>.
+        /// Loads the certificate specified by the <c>ServerCertificate</c> option, failing closed
+        /// when it cannot be loaded or parsed.
         /// </summary>
         /// <param name="connectionId">Connection ID/GUID for tracing</param>
-        /// <param name="serverCert">X.509 certificate from the server</param>
-        /// <param name="validationCertFileName">Path to the pinned X.509 certificate file</param>
+        /// <param name="validationCertFileName">Path to the X.509 certificate file</param>
         /// <exception cref="System.Security.Authentication.AuthenticationException">
-        /// Thrown when the server presented no certificate, when the pin file cannot be loaded or
-        /// parsed, or when the presented certificate does not match the pin.
+        /// Thrown when the file cannot be loaded or parsed.
         /// </exception>
-        private static void ValidateCertificatePin(Guid connectionId, X509Certificate serverCert, string validationCertFileName)
-        {
-            if (serverCert is null)
-            {
-                // Defense in depth: a null server certificate is normally reported through
-                // SslPolicyErrors.RemoteCertificateNotAvailable and rejected before we get here.
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate was specified but the server presented no certificate. Certificate validation failed.", args0: connectionId);
-                throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateNotAvailable);
-            }
-
-            using X509Certificate validationCertificate = LoadValidationCertificate(connectionId, validationCertFileName);
-
-            if (!serverCert.GetRawCertData().AsSpan().SequenceEqual(validationCertificate.GetRawCertData().AsSpan()))
-            {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate doesn't match the certificate provided by the server. Certificate validation failed.", args0: connectionId);
-                throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateDoesNotMatchServerCertificate);
-            }
-
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, ServerCertificate matches the certificate provided by the server.", args0: connectionId);
-        }
-
-        /// <summary>
-        /// Loads the pinned <c>ServerCertificate</c> from disk, failing closed when it cannot be
-        /// loaded or parsed.
-        /// </summary>
         private static X509Certificate LoadValidationCertificate(Guid connectionId, string validationCertFileName)
         {
             try
@@ -215,11 +180,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                // Fail closed: the caller explicitly asked us to pin against a specific
-                // certificate, so if we cannot load / parse that pin we must not accept the
-                // server certificate on the basis of chain / name validation alone. The exception
-                // details are traced separately; the user-facing message identifies the configured
-                // pin file path so operators can locate the misconfiguration.
+                // Fail closed: the caller explicitly asked us to compare against a specific
+                // certificate, so if we cannot load / parse it we must not fall back to validating
+                // by host name alone. The exception details are traced separately; the user-facing
+                // message identifies the configured file path so operators can locate the
+                // misconfiguration.
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, Exception occurred loading specified ServerCertificate '{1}': {2}. Failing certificate validation.", args0: connectionId, args1: validationCertFileName, args2: e.Message);
                 throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ServerCertificateFileLoadFailed, validationCertFileName));
             }

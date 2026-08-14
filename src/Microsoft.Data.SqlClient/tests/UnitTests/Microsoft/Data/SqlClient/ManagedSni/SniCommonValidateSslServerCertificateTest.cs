@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 {
     /// <summary>
     /// Tests for <see cref="SniCommon.ValidateSslServerCertificate"/> to ensure
-    /// that when a caller supplies a <c>ServerCertificate</c> pin the driver enforces the
-    /// pin as an *additive* check on top of normal TLS validation, and never accepts a
-    /// server certificate on the basis of chain / name validation alone.
+    /// that when a caller supplies a <c>ServerCertificate</c>, the driver always compares it
+    /// against the certificate presented by the server — including when the platform reported
+    /// no policy errors — and fails closed when the configured file cannot be loaded.
     ///
     /// The tests exercise the shared helper directly.
     /// </summary>
@@ -70,17 +70,39 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
-        /// A matching ServerCertificate pin must not mask a platform policy error.
-        /// This regression test guards the "additive" semantics: even when the pin bytes
-        /// match exactly, if the platform reported <see cref="SslPolicyErrors.RemoteCertificateChainErrors"/>
-        /// (or any other non-<c>None</c> flag), validation must still fail rather than
-        /// short-circuit on the pin.
+        /// An exact ServerCertificate match satisfies validation, which is the purpose of the
+        /// option: the caller has told us precisely which certificate to accept.  This preserves
+        /// the long-standing behavior for servers whose certificate would otherwise fail chain
+        /// validation (for example a self-signed or private-CA certificate).
         /// </summary>
         [Fact]
-        public void ValidateSslServerCertificate_MatchingPin_ChainErrors_Throws()
+        public void ValidateSslServerCertificate_MatchingPin_ChainErrors_ReturnsTrue()
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
             using TempCertFile pinFile = new(serverCert);
+
+            bool result = SniCommon.ValidateSslServerCertificate(
+                connectionId: Guid.NewGuid(),
+                targetServerName: "server.contoso.com",
+                hostNameInCertificate: null,
+                serverCert: serverCert,
+                validationCertFileName: pinFile.Path,
+                policyErrors: SslPolicyErrors.RemoteCertificateChainErrors);
+
+            Assert.True(result);
+        }
+
+        /// <summary>
+        /// A ServerCertificate mismatch fails even when the platform reported a policy error that
+        /// would otherwise be evaluated, because the caller's explicit choice of certificate takes
+        /// precedence.
+        /// </summary>
+        [Fact]
+        public void ValidateSslServerCertificate_MismatchedPin_ChainErrors_Throws()
+        {
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
+            using X509Certificate2 pinCert = CreateSelfSignedCertificate("other.contoso.com");
+            using TempCertFile pinFile = new(pinCert);
 
             Assert.Throws<AuthenticationException>(() =>
                 SniCommon.ValidateSslServerCertificate(
@@ -97,7 +119,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// certificate at all (<see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>,
         /// <c>serverCert == null</c>), the helper must fail with an
         /// <see cref="AuthenticationException"/> — not a <see cref="NullReferenceException"/>
-        /// from attempting to dereference the missing server certificate.
+        /// from attempting to dereference the missing server certificate during comparison.
         /// </summary>
         [Fact]
         public void ValidateSslServerCertificate_Pin_NullServerCert_NotAvailable_Throws()
@@ -118,7 +140,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// <summary>
         /// Defense in depth: a null server certificate is normally reported through
         /// <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>, but should the two ever
-        /// disagree, the pin check must still fail with an <see cref="AuthenticationException"/>
+        /// disagree, the comparison must still fail with an <see cref="AuthenticationException"/>
         /// rather than a <see cref="NullReferenceException"/>.
         /// </summary>
         [Fact]
@@ -162,9 +184,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// <summary>
         /// When a ServerCertificate pin is supplied but the file cannot be loaded
         /// (missing file, corrupt bytes, wrong format, etc.), validation must fail
-        /// closed rather than silently falling back to chain / name validation.  The caller
-        /// explicitly asked us to pin against a specific certificate, so we cannot
-        /// accept the connection on any weaker basis.
+        /// closed rather than silently ignoring the option and falling back to host name
+        /// validation.  The caller explicitly asked us to compare against a specific
+        /// certificate, so we cannot accept the connection on any weaker basis.
         /// </summary>
         [Fact]
         public void ValidateSslServerCertificate_UnreadablePinFile_PolicyNone_Throws()
