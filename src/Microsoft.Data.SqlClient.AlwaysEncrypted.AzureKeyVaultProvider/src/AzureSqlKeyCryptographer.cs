@@ -33,8 +33,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         /// <summary>
         /// SemaphoreSlim to ensure thread safety when accessing the key dictionary or making network calls to Azure Key Vault to fetch keys.
+        /// Used by the synchronous path only. The asynchronous path uses <see cref="_keyFetchLock"/> so that a synchronous caller
+        /// never blocks a thread waiting on an asynchronous, network bound fetch.
         /// </summary>
         private SemaphoreSlim _keyDictionarySemaphore = new(1, 1);
+
+        /// <summary>
+        /// Gates concurrent asynchronous fetches of the same key, so that only one caller retrieves a given key from
+        /// Azure Key Vault. Fetches of different keys are not serialized against one another.
+        /// </summary>
+        private readonly KeyedAsyncLock<string> _keyFetchLock = new();
 
         /// <summary>
         /// Holds references to the Azure Key Vault CryptographyClient objects and maps them to their corresponding Azure Key Vault Key Identifier (URI).
@@ -98,7 +106,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         /// <remarks>
         /// Mirrors the deduplication of the synchronous path: only one caller fetches a given key from Azure Key Vault.
-        /// The semaphore is awaited rather than blocked on, so no thread is held while the fetch is in flight.
+        /// The gate is per key and is only ever awaited, so no thread is blocked while a fetch is in flight and fetches of
+        /// different keys proceed in parallel. The gate is deliberately not shared with the synchronous path, because a
+        /// synchronous caller blocking on a gate held across an awaited network call would consume a thread pool thread for
+        /// the duration of that call. A synchronous and an asynchronous caller may therefore both fetch the same key; the
+        /// result is identical and the last write wins.
         /// </remarks>
         internal async Task AddKeyAsync(string keyIdentifierUri, CancellationToken cancellationToken = default)
         {
@@ -107,28 +119,23 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return;
             }
 
-            // Allow only one caller to proceed to ensure thread safety
-            // as we will need to fetch key information from Azure Key Vault if the key is not found in cache.
-            await _keyDictionarySemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-            try
+            using (await _keyFetchLock.AcquireAsync(keyIdentifierUri, cancellationToken).ConfigureAwait(false))
             {
-                if (!_keyDictionary.ContainsKey(keyIdentifierUri))
+                // Another caller may have fetched the key while this one waited for the gate.
+                if (_keyDictionary.ContainsKey(keyIdentifierUri))
                 {
-                    ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
-
-                    // Fetch the KeyClient for the Key vault URI.
-                    KeyClient keyClient = GetOrCreateKeyClient(vaultUri);
-
-                    // Fetch the key from Azure Key Vault.
-                    KeyVaultKey key = await FetchKeyFromKeyVaultAsync(keyClient, keyName, keyVersion, cancellationToken).ConfigureAwait(false);
-
-                    _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
+                    return;
                 }
-            }
-            finally
-            {
-                _keyDictionarySemaphore.Release();
+
+                ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
+
+                // Fetch the KeyClient for the Key vault URI.
+                KeyClient keyClient = GetOrCreateKeyClient(vaultUri);
+
+                // Fetch the key from Azure Key Vault.
+                KeyVaultKey key = await FetchKeyFromKeyVaultAsync(keyClient, keyName, keyVersion, cancellationToken).ConfigureAwait(false);
+
+                _keyDictionary.AddOrUpdate(keyIdentifierUri, key, (k, v) => key);
             }
         }
 
@@ -248,6 +255,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             return result.EncryptedKey;
         }
 
+        /// <summary>
+        /// Returns the CryptographyClient for the given key identifier URI, creating it if necessary.
+        /// </summary>
+        /// <remarks>
+        /// Concurrent callers may each construct a client, but all of them observe the single instance that wins the
+        /// race, so a key is never used through two different clients.
+        /// </remarks>
         private CryptographyClient GetCryptographyClient(string keyIdentifierUri)
         {
             if (_cryptoClientDictionary.TryGetValue(keyIdentifierUri, out CryptographyClient client))
@@ -255,9 +269,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return client;
             }
 
-            CryptographyClient cryptographyClient = new(GetKey(keyIdentifierUri).Id, TokenCredential);
-            _cryptoClientDictionary.TryAdd(keyIdentifierUri, cryptographyClient);
-            return cryptographyClient;
+            return _cryptoClientDictionary.GetOrAdd(
+                keyIdentifierUri,
+                uri => new CryptographyClient(GetKey(uri).Id, TokenCredential));
         }
 
         /// <summary>

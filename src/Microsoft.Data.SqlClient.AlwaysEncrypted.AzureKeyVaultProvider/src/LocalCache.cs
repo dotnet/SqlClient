@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
@@ -33,9 +31,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Gates concurrent asynchronous creation of the same cache entry, so that a burst of
         /// concurrent misses for one key results in a single invocation of the create delegate.
-        /// Entries are removed once no caller holds or waits on them.
         /// </summary>
-        private readonly ConcurrentDictionary<TKey, SemaphoreSlim> _entryCreationGates = new();
+        private readonly KeyedAsyncLock<TKey> _entryCreationLock = new();
 
         /// <summary>
         /// Sets an absolute expiration time, relative to now.
@@ -46,6 +43,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// Gets the count of the current entries for diagnostic purposes.
         /// </summary>
         internal int Count => _cache.Count;
+
+        /// <summary>
+        /// Gets the number of asynchronous creation gates currently retained.
+        /// Used in unit tests to verify that gates do not accumulate.
+        /// </summary>
+        internal int EntryCreationGateCount => _entryCreationLock.GateCount;
 
         /// <summary>
         /// Constructs a new <see cref="LocalCache{TKey, TValue}">LocalCache</see> object.
@@ -117,6 +120,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// await that caller and then observe the cached value. The gate is per key, so misses for different keys proceed in
         /// parallel, and no lock is held by a blocked thread. Cancellation applies only to the caller requesting it: if the caller
         /// that owns the gate is cancelled, the next waiter creates the entry using its own cancellation token.
+        /// <para>
+        /// When caching is disabled the gate is bypassed, because there is no entry for a waiting caller to observe and gating
+        /// would serialize callers without saving any work. Callers therefore reach the create delegate in parallel.
+        /// </para>
         /// </remarks>
         internal async Task<TValue> GetOrCreateAsync(TKey key, Func<Task<TValue>> createItem, CancellationToken cancellationToken = default)
         {
@@ -132,10 +139,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return cacheEntry;
             }
 
-            SemaphoreSlim gate = _entryCreationGates.GetOrAdd(key, static _ => new SemaphoreSlim(1, 1));
-            await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-            try
+            using (await _entryCreationLock.AcquireAsync(key, cancellationToken).ConfigureAwait(false))
             {
                 // Another caller may have created the entry while this one waited for the gate.
                 if (_cache.TryGetValue(key, out cacheEntry))
@@ -162,18 +166,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 SqlClientEventSource.Log.TryTraceEvent("Entry added to local cache.");
 
                 return cacheEntry;
-            }
-            finally
-            {
-                gate.Release();
-
-                // Drop the gate once nobody holds or waits on it. A caller that fetched this instance
-                // just before removal may still use it, which at worst allows one duplicate creation.
-                if (gate.CurrentCount == 1)
-                {
-                    ICollection<KeyValuePair<TKey, SemaphoreSlim>> gates = _entryCreationGates;
-                    gates.Remove(new KeyValuePair<TKey, SemaphoreSlim>(key, gate));
-                }
             }
         }
 

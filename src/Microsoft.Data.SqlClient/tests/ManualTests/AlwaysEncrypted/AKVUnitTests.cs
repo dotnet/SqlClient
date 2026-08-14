@@ -314,6 +314,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task CancelledAsyncDecryptionsDoNotAccumulateCreationGates()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
+            byte[] plaintextKey = { 1, 2, 3 };
+
+            // Each iteration uses a distinct cache key, so a gate that is not released on cancellation
+            // would accumulate without bound.
+            for (int i = 0; i < 100; i++)
+            {
+                byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(
+                    _fixture.GeneratedKeyUri, EncryptionAlgorithm, plaintextKey);
+
+                using CancellationTokenSource cts = new();
+                cts.Cancel();
+
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                    () => akvProvider.DecryptColumnEncryptionKeyAsync(
+                        _fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedKey, cts.Token));
+            }
+
+            Assert.Equal(0, GetEntryCreationGateCount(cekCacheName, akvProvider));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public async Task ConcurrentAsyncDecryptionOfSameKeyIsDeduplicated()
         {
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
@@ -391,12 +415,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex4.Message);
         }
 
-        private static int GetCacheCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)        {
+        private static int GetCacheCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
+        {
             var cacheInstance = GetCacheInstance(cacheName, akvProvider);
             Type cacheType = cacheInstance.GetType();
             PropertyInfo countProperty = cacheType.GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
             int countValue = (int)countProperty.GetValue(cacheInstance);
             return countValue;
+        }
+
+        private static int GetEntryCreationGateCount(string cacheName, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
+        {
+            var cacheInstance = GetCacheInstance(cacheName, akvProvider);
+            Type cacheType = cacheInstance.GetType();
+            PropertyInfo gateCountProperty = cacheType.GetProperty(
+                "EntryCreationGateCount", BindingFlags.Instance | BindingFlags.NonPublic);
+            return (int)gateCountProperty.GetValue(cacheInstance);
         }
 
         private static bool CekCacheContainsKey(byte[] encryptedCek, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
