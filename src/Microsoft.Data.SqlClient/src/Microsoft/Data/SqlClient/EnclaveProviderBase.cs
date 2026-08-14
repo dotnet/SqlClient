@@ -5,6 +5,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 
 // Enclave session locking model
@@ -81,6 +82,24 @@ namespace Microsoft.Data.SqlClient
         private static bool isSessionLockAcquired = false;
 
         private static readonly Object lockUpdateSessionLock = new Object();
+
+        // Asynchronous counterparts of the three fields above.
+        //
+        // The async attestation path deliberately uses its own gate rather than sharing
+        // 'sessionLockEvent' with the synchronous path. AutoResetEvent has no awaitable wait, and
+        // sharing a single SemaphoreSlim across both paths would let a synchronous caller block a
+        // thread for the whole duration of an awaited attestation HTTP round trip (and vice versa),
+        // which is exactly the thread-pool starvation this work is meant to remove. The two gates are
+        // therefore independent: at worst a concurrent sync and async cold start performs two
+        // attestations, which the existing design already tolerates (see the lock-timeout cases
+        // described above), and the session cache makes the outcome idempotent.
+        private static readonly SemaphoreSlim s_asyncSessionLockEvent = new SemaphoreSlim(1, 1);
+
+        private static int s_asyncLockTimeoutInMilliseconds = LockTimeoutMaxInMilliseconds;
+
+        private static bool s_isAsyncSessionLockAcquired = false;
+
+        private static readonly object s_asyncLockUpdateSessionLock = new object();
 
         // It is used to save the attestation url and nonce value across API calls
         protected static readonly MemoryCache ThreadRetryCache = new MemoryCache(new MemoryCacheOptions());
@@ -169,6 +188,144 @@ namespace Microsoft.Data.SqlClient
 
                     ThreadRetryCache.Set<string>(Thread.CurrentThread.ManagedThreadId.ToString(), retryThreadID,
                         absoluteExpirationRelativeToNow: s_threadRetryCacheTimeout);
+                }
+            }
+        }
+
+        // Helper method to get the enclave session from the cache if present.
+        // Asynchronous counterpart of GetEnclaveSessionHelper.
+        //
+        // Because C# async methods cannot declare 'out' parameters, the four values reported through
+        // 'out' parameters by the synchronous helper are returned as a tuple.
+        //
+        // This method intentionally duplicates rather than shares the synchronous helper's body: the
+        // synchronous path must remain byte-for-byte unchanged (FR-010), and the two paths use
+        // independent attestation gates (see s_asyncSessionLockEvent).
+        protected async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionHelperAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            bool shouldGenerateNonce,
+            bool isRetry,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            byte[] customData = null;
+            int customDataLength = 0;
+            SqlEnclaveSession sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out long counter);
+
+            if (sqlEnclaveSession == null)
+            {
+                bool sessionCacheLockTaken = false;
+                bool sameThreadRetry = false;
+                string currentThreadId = Thread.CurrentThread.ManagedThreadId.ToString();
+
+                // In case if on some thread we are running SQL workload which don't require attestation, then in those cases we don't want same thread to wait for the gate to be released.
+                // hence skipping it
+                string retryThreadID = ThreadRetryCache.Get<string>(currentThreadId);
+                if (!string.IsNullOrEmpty(retryThreadID))
+                {
+                    sameThreadRetry = true;
+                }
+                else if (!isRetry)
+                {
+                    // We are explicitly not releasing the gate here, as we want to hold it until the driver calls CreateEnclaveSessionAsync.
+                    // If we release it now, then multiple callers end up calling GetAttestationParameters which triggers the attestation workflow.
+                    sessionCacheLockTaken = await s_asyncSessionLockEvent
+                        .WaitAsync(Volatile.Read(ref s_asyncLockTimeoutInMilliseconds), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (sessionCacheLockTaken)
+                    {
+                        lock (s_asyncLockUpdateSessionLock)
+                        {
+                            s_isAsyncSessionLockAcquired = true;
+                        }
+                    }
+                }
+
+                // In case of a multi-threaded application, the first caller takes the gate and all the subsequent callers wait here either until the enclave
+                // session is created or the timeout happens.
+                if (sessionCacheLockTaken || sameThreadRetry || isRetry)
+                {
+                    // While the current caller was waiting for the gate we may already have completed the attestation elsewhere,
+                    // in which case we need to release the gate here.
+                    sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
+                    if (sqlEnclaveSession != null && !sameThreadRetry)
+                    {
+                        ReleaseAsyncSessionLock(restoreLockTimeout: false);
+                    }
+                }
+                else
+                {
+                    // In case we are unable to take the gate, then it represents either
+                    // 1. Another caller has an ongoing attestation request which is taking more time, may be due to a slow network, or
+                    // 2. The current workload doesn't require enclave computation, hence the driver is not invoking CreateEnclaveSessionAsync and sqlEnclaveSession is never set.
+                    // In both cases we need to reduce the timeout to 0 so that subsequent requests should not wait.
+                    Interlocked.Exchange(ref s_asyncLockTimeoutInMilliseconds, 0);
+                }
+
+                if (sqlEnclaveSession == null)
+                {
+                    if (shouldGenerateNonce)
+                    {
+                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                        {
+                            // Client decides to initiate the process of attesting the enclave and to establish a secure session with the enclave.
+                            // To ensure that server send new attestation request instead of replaying / re-sending the old token, we will create a nonce for current attestation request.
+                            byte[] nonce = new byte[NonceSize];
+                            rng.GetBytes(nonce);
+                            customData = nonce;
+                            customDataLength = nonce.Length;
+                        }
+                    }
+
+                    if (!sameThreadRetry)
+                    {
+                        retryThreadID = currentThreadId;
+                    }
+
+                    ThreadRetryCache.Set<string>(currentThreadId, retryThreadID,
+                        absoluteExpirationRelativeToNow: s_threadRetryCacheTimeout);
+                }
+            }
+
+            return (sqlEnclaveSession, counter, customData, customDataLength);
+        }
+
+        // Reset the async session gate. Asynchronous counterpart of UpdateEnclaveSessionLockStatus.
+        // This method performs no I/O, so a plain lock remains the correct (and cheapest) primitive.
+        //
+        // Unlike the synchronous counterpart, the gate is also released when the caller cancelled. A
+        // cancelled caller will never go on to create the session, so keeping the gate would stall
+        // every other async caller until the lock timeout expires. The synchronous path has no
+        // equivalent case because it has no cancellation.
+        protected void UpdateAsyncEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession, CancellationToken cancellationToken = default)
+        {
+            if (sqlEnclaveSession != null || cancellationToken.IsCancellationRequested)
+            {
+                ReleaseAsyncSessionLock(restoreLockTimeout: true);
+            }
+        }
+
+        // Releases the async attestation gate if it is currently held.
+        //
+        // Unlike AutoResetEvent.Set(), SemaphoreSlim.Release() throws when the semaphore is already
+        // full, so the release is guarded by s_isAsyncSessionLockAcquired. The guard preserves the
+        // synchronous design's "any caller may signal" semantics while keeping the release idempotent.
+        private static void ReleaseAsyncSessionLock(bool restoreLockTimeout)
+        {
+            lock (s_asyncLockUpdateSessionLock)
+            {
+                if (s_isAsyncSessionLockAcquired)
+                {
+                    s_isAsyncSessionLockAcquired = false;
+
+                    if (restoreLockTimeout)
+                    {
+                        Interlocked.Exchange(ref s_asyncLockTimeoutInMilliseconds, LockTimeoutMaxInMilliseconds);
+                    }
+
+                    s_asyncSessionLockEvent.Release();
                 }
             }
         }

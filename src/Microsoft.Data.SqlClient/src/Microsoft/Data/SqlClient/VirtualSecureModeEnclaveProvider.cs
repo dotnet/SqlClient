@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -74,6 +75,51 @@ namespace Microsoft.Data.SqlClient
                     {
                         return JsonSerializer.Deserialize<List<byte>>(stream)?.ToArray();
                     }
+                }
+                catch (Exception e)
+                {
+                    exception = e;
+                }
+            }
+
+            throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
+        }
+
+        // Makes a web request to the provided url and returns the response as a byte[].
+        // Asynchronous counterpart of MakeRequest: the HTTP round trip, the retry backoff and the
+        // JSON deserialization are all awaited rather than blocked on.
+        protected override async Task<byte[]> MakeRequestAsync(string url, CancellationToken cancellationToken)
+        {
+            Exception exception = null;
+
+            for (int n = 0; n < MaxNumRetries + 1 /* Initial attempt + numRetries */; n++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    if (n != 0)
+                    {
+                        await Task.Delay(EnclaveRetrySleepInSeconds * 1000, cancellationToken).ConfigureAwait(false);
+                    }
+
+#if NET
+                    using (Stream stream = await s_client.GetStreamAsync(url, cancellationToken).ConfigureAwait(false))
+#else
+                    using (Stream stream = await s_client.GetStreamAsync(url).ConfigureAwait(false))
+#endif
+                    {
+                        List<byte> payload = await JsonSerializer
+                            .DeserializeAsync<List<byte>>(stream, cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
+
+                        return payload?.ToArray();
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Cancellation is not an attestation failure; surface it to the caller unchanged.
+                    throw;
                 }
                 catch (Exception e)
                 {

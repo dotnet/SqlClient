@@ -8,6 +8,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Pkcs;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
@@ -146,6 +148,116 @@ namespace Microsoft.Data.SqlClient
             InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
 
+        // Asynchronous counterpart of GetEnclaveSession. Uses the async attestation gate so that
+        // callers never block a thread pool thread waiting for an in-flight attestation.
+        internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            bool generateCustomData,
+            bool isRetry,
+            CancellationToken cancellationToken = default)
+        {
+            return GetEnclaveSessionHelperAsync(enclaveSessionParameters, false, isRetry, cancellationToken);
+        }
+
+        // Asynchronous counterpart of GetAttestationParameters. This operation is CPU bound (key
+        // generation), so it completes synchronously.
+        internal override Task<SqlEnclaveAttestationParameters> GetAttestationParametersAsync(
+            string attestationUrl,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled<SqlEnclaveAttestationParameters>(cancellationToken);
+            }
+
+            try
+            {
+                return Task.FromResult(GetAttestationParameters(attestationUrl, customData, customDataLength));
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                return Task.FromException<SqlEnclaveAttestationParameters>(e);
+            }
+        }
+
+        // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
+        // trip (signing certificate download) asynchronously.
+        internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
+            byte[] attestationInfo,
+            ECDiffieHellman clientDHKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            SqlEnclaveSession sqlEnclaveSession = null;
+            long counter = 0;
+            try
+            {
+                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
+                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
+                if (sqlEnclaveSession == null)
+                {
+                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
+                    {
+                        // Deserialize the payload
+                        AttestationInfo info = new AttestationInfo(attestationInfo);
+
+                        // Verify enclave policy matches expected policy
+                        VerifyEnclavePolicy(info.EnclaveReportPackage);
+
+                        // Perform Attestation per VSM protocol
+                        await VerifyAttestationInfoAsync(
+                            enclaveSessionParameters.AttestationUrl,
+                            info.HealthReport,
+                            info.EnclaveReportPackage,
+                            cancellationToken).ConfigureAwait(false);
+
+                        // Set up shared secret and validate signature
+                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+
+                        // add session to cache
+                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
+                    }
+                    else
+                    {
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+                    }
+                }
+            }
+            finally
+            {
+                UpdateAsyncEnclaveSessionLockStatus(sqlEnclaveSession, cancellationToken);
+            }
+
+            return (sqlEnclaveSession, counter);
+        }
+
+        // Asynchronous counterpart of InvalidateEnclaveSession. Session eviction is an in-memory
+        // cache operation, so it completes synchronously.
+        internal override Task InvalidateEnclaveSessionAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            SqlEnclaveSession enclaveSessionToInvalidate,
+            CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            try
+            {
+                InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+                return Task.CompletedTask;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                return Task.FromException(e);
+            }
+        }
+
         #endregion
 
         #region Private helpers
@@ -186,6 +298,76 @@ namespace Microsoft.Data.SqlClient
 
         // Makes a web request to the provided url and returns the response as a byte[]
         protected abstract byte[] MakeRequest(string url);
+
+        // Performs Attestation per the protocol used by Virtual Secure Modules.
+        // Asynchronous counterpart of VerifyAttestationInfo.
+        private async Task VerifyAttestationInfoAsync(string attestationUrl, HealthReport healthReport, EnclaveReportPackage enclaveReportPackage, CancellationToken cancellationToken)
+        {
+            bool shouldRetryValidation;
+            bool shouldForceUpdateSigningKeys = false;
+            do
+            {
+                shouldRetryValidation = false;
+
+                // Get HGS Root signing certs from HGS
+                X509Certificate2Collection signingCerts =
+                    await GetSigningCertificateAsync(attestationUrl, shouldForceUpdateSigningKeys, cancellationToken).ConfigureAwait(false);
+
+                // Verify SQL Health report root chain of trust is the HGS root signing cert
+                if (!VerifyHealthReportAgainstRootCertificate(signingCerts, healthReport.Certificate, out X509ChainStatusFlags chainStatus) ||
+                    chainStatus != X509ChainStatusFlags.NoError)
+                {
+                    // In cases if we fail to validate the health report, it might be possible that we are using old signing keys
+                    // let's re-download the signing keys again and re-validate the health report
+                    if (!shouldForceUpdateSigningKeys)
+                    {
+                        shouldForceUpdateSigningKeys = true;
+                        shouldRetryValidation = true;
+                    }
+                    else
+                    {
+                        throw SQL.AttestationFailed(string.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
+                    }
+                }
+            } while (shouldRetryValidation);
+
+            // Verify enclave report is signed by IDK_S from health report
+            VerifyEnclaveReportSignature(enclaveReportPackage, healthReport.Certificate);
+        }
+
+        // Gets the root signing certificate for the provided attestation service.
+        // Asynchronous counterpart of GetSigningCertificate.
+        private async Task<X509Certificate2Collection> GetSigningCertificateAsync(string attestationUrl, bool forceUpdate, CancellationToken cancellationToken)
+        {
+            attestationUrl = GetAttestationUrl(attestationUrl);
+            X509Certificate2Collection signingCertificates = rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
+            if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
+            {
+                byte[] data = await MakeRequestAsync(attestationUrl, cancellationToken).ConfigureAwait(false);
+                var certificateCollection = new X509Certificate2Collection();
+
+                try
+                {
+                    SignedCms s = new SignedCms();
+                    s.Decode(data);
+                    certificateCollection.AddRange(s.Certificates);
+                }
+                catch (CryptographicException exception)
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
+                }
+
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection,
+                    absoluteExpirationRelativeToNow: s_rootSigningCertificateCacheTimeout);
+            }
+
+            return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
+        }
+
+        // Makes a web request to the provided url and returns the response as a byte[].
+        // Asynchronous counterpart of MakeRequest. This member is abstract rather than virtual so
+        // that derived providers cannot silently inherit a blocking implementation.
+        protected abstract Task<byte[]> MakeRequestAsync(string url, CancellationToken cancellationToken);
 
         // Gets the root signing certificate for the provided attestation service.
         // If the certificate does not exist in the cache, this will make a call to the

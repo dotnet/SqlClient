@@ -10,6 +10,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
@@ -128,6 +130,120 @@ namespace Microsoft.Data.SqlClient
         internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+        }
+
+        // Asynchronous counterpart of GetEnclaveSession. Uses the async attestation gate so that
+        // callers never block a thread pool thread waiting for an in-flight attestation.
+        internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            bool generateCustomData,
+            bool isRetry,
+            CancellationToken cancellationToken = default)
+        {
+            return GetEnclaveSessionHelperAsync(enclaveSessionParameters, generateCustomData, isRetry, cancellationToken);
+        }
+
+        // Asynchronous counterpart of GetAttestationParameters. This operation is CPU bound (key
+        // generation and buffer marshalling), so it completes synchronously.
+        internal override Task<SqlEnclaveAttestationParameters> GetAttestationParametersAsync(
+            string attestationUrl,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled<SqlEnclaveAttestationParameters>(cancellationToken);
+            }
+
+            try
+            {
+                return Task.FromResult(GetAttestationParameters(attestationUrl, customData, customDataLength));
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                return Task.FromException<SqlEnclaveAttestationParameters>(e);
+            }
+        }
+
+        // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
+        // trip (OpenID Connect metadata download) asynchronously.
+        internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
+            byte[] attestationInfo,
+            ECDiffieHellman clientDHKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            SqlEnclaveSession sqlEnclaveSession = null;
+            long counter = 0;
+            try
+            {
+                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
+                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
+                if (sqlEnclaveSession == null)
+                {
+                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) && customData != null && customDataLength > 0)
+                    {
+                        byte[] nonce = customData;
+
+                        IdentityModelEventSource.ShowPII = true;
+
+                        // Deserialize the payload
+                        AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
+
+                        // Validate the attestation info
+                        await VerifyAzureAttestationInfoAsync(
+                            enclaveSessionParameters.AttestationUrl,
+                            attestInfo.EnclaveType,
+                            attestInfo.AttestationToken.AttestationToken,
+                            attestInfo.Identity,
+                            nonce,
+                            cancellationToken).ConfigureAwait(false);
+
+                        // Set up shared secret and validate signature
+                        byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
+
+                        // add session to cache
+                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out counter);
+                    }
+                    else
+                    {
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+                    }
+                }
+            }
+            finally
+            {
+                // See UpdateEnclaveSessionLockStatus for the rationale; this releases the async gate.
+                UpdateAsyncEnclaveSessionLockStatus(sqlEnclaveSession, cancellationToken);
+            }
+
+            return (sqlEnclaveSession, counter);
+        }
+
+        // Asynchronous counterpart of InvalidateEnclaveSession. Session eviction is an in-memory
+        // cache operation, so it completes synchronously.
+        internal override Task InvalidateEnclaveSessionAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            SqlEnclaveSession enclaveSessionToInvalidate,
+            CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            try
+            {
+                InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+                return Task.CompletedTask;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                return Task.FromException(e);
+            }
         }
         #endregion
 
@@ -315,6 +431,83 @@ namespace Microsoft.Data.SqlClient
 
             // Validate claims in the token
             ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
+        }
+
+        // Performs Attestation per the protocol used by Azure Attestation Service.
+        // Asynchronous counterpart of VerifyAzureAttestationInfo.
+        private async Task VerifyAzureAttestationInfoAsync(
+            string attestationUrl,
+            EnclaveType enclaveType,
+            string attestationToken,
+            EnclavePublicKey enclavePublicKey,
+            byte[] nonce,
+            CancellationToken cancellationToken)
+        {
+            bool shouldForceUpdateSigningKeys = false;
+            string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
+
+            bool shouldRetryValidation;
+            bool isSignatureValid;
+            string exceptionMessage = string.Empty;
+            do
+            {
+                shouldRetryValidation = false;
+
+                // Get the OpenId config object for the signing keys
+                OpenIdConnectConfiguration openIdConfig =
+                    await GetOpenIdConfigForSigningKeysAsync(attestationInstanceUrl, shouldForceUpdateSigningKeys, cancellationToken)
+                        .ConfigureAwait(false);
+
+                // Verify the token signature against the signing keys downloaded from meta data end point
+                bool isKeySigningExpired;
+                isSignatureValid = VerifyTokenSignature(attestationToken, attestationInstanceUrl, openIdConfig.SigningKeys, out isKeySigningExpired, out exceptionMessage);
+
+                // In cases if we fail to validate the token, since we are using the old signing keys
+                // let's re-download the signing keys again and re-validate the token signature
+                if (!isSignatureValid && isKeySigningExpired && !shouldForceUpdateSigningKeys)
+                {
+                    shouldForceUpdateSigningKeys = true;
+                    shouldRetryValidation = true;
+                }
+            }
+            while (shouldRetryValidation);
+
+            if (!isSignatureValid)
+            {
+                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+            }
+
+            // Validate claims in the token
+            ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
+        }
+
+        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
+        // It also caches that information for 1 day to avoid DDOS attacks.
+        // Asynchronous counterpart of GetOpenIdConfigForSigningKeys: the metadata download is awaited
+        // instead of being blocked on with Task.Result.
+        private async Task<OpenIdConnectConfiguration> GetOpenIdConfigForSigningKeysAsync(string url, bool forceUpdate, CancellationToken cancellationToken)
+        {
+            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache.Get<OpenIdConnectConfiguration>(url);
+            if (forceUpdate || openIdConnectConfig == null)
+            {
+                // Compute the meta data endpoint
+                string openIdMetadataEndpoint = url + AttestationUrlSuffix;
+
+                try
+                {
+                    IConfigurationManager<OpenIdConnectConfiguration> configurationManager =
+                        new ConfigurationManager<OpenIdConnectConfiguration>(openIdMetadataEndpoint, new OpenIdConnectConfigurationRetriever());
+                    openIdConnectConfig = await configurationManager.GetConfigurationAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (!(exception is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                }
+
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: s_openIdConnectConfigurationCacheTimeout);
+            }
+
+            return openIdConnectConfig;
         }
 
         // Returns the innermost exception value
