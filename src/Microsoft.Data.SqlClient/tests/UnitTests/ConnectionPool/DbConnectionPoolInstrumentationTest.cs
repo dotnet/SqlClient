@@ -124,7 +124,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             long pooledConnections = 0,
             long freeConnections = 0,
             long reclaimedConnections = 0,
-            long activeConnections = 0)
+            long activeConnections = 0,
+            long stasisConnections = 0)
         {
             (string Name, long Expected, long Actual)[] counters =
             {
@@ -138,6 +139,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ("freeConnections", freeConnections, metrics.FreeConnections),
                 ("reclaimedConnections", reclaimedConnections, metrics.ReclaimedConnections),
                 ("activeConnections", activeConnections, metrics.ActiveConnections),
+                ("stasisConnections", stasisConnections, metrics.StasisConnections),
 
                 // Not emitted through a pool's metrics instance, so any non-zero value here means a
                 // counter has moved to the pool that the tests have not accounted for.
@@ -146,7 +148,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 ("inactiveConnectionPoolGroups", 0, metrics.InactiveConnectionPoolGroups),
                 ("activeConnectionPools", 0, metrics.ActiveConnectionPools),
                 ("inactiveConnectionPools", 0, metrics.InactiveConnectionPools),
-                ("stasisConnections", 0, metrics.StasisConnections),
             };
 
             // Reported as a single message listing only the counters that differ. Asserting on a
@@ -560,6 +561,178 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 activeConnections: 0);
         }
 
+        /// <summary>
+        /// Verifies the counters emitted when a transaction root that cannot be pooled is returned:
+        /// the pool puts it in stasis rather than destroying it, because closing it would orphan the
+        /// root transaction with no way to commit or roll back. The stasis gauge must come back down
+        /// when the transaction ends, or every delegated transaction leaks a count.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void NonPoolableTransactionRoot_CountsStasisEnterAndExit(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new TransactionRootConnectionFactory(metrics));
+
+            using (TransactionScope scope = new())
+            {
+                SqlConnection owner = new();
+                Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+                Assert.NotNull(connection);
+
+                TransactionRootConnection root = Assert.IsType<TransactionRootConnection>(connection);
+                root.MarkDoNotPool();
+                Assert.False(root.CanBePooled);
+                Assert.False(root.IsConnectionDoomed);
+
+                // Act
+                pool.ReturnInternalConnection(connection!, owner);
+
+                // Assert - in stasis, not pooled and not destroyed.
+                Assert.True(root.IsTxRootWaitingForTxEnd);
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 1,
+                    softDisconnects: 1,
+                    pooledConnections: 1,
+                    stasisConnections: 1);
+
+                scope.Complete();
+            }
+
+            // Assert - the transaction ended, so stasis terminated and the connection, still
+            // unpoolable, was destroyed on the way out.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                hardDisconnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 0,
+                stasisConnections: 0);
+        }
+
+        /// <summary>
+        /// A shut-down pool destroys an ordinary connection on return, but a transaction root must
+        /// still go to stasis instead, or shutting a pool down would abort a live transaction. This
+        /// is the second way into stasis, and it must be counted and uncounted the same way.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void TransactionRootReturnedToShutDownPool_CountsStasisEnterAndExit(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new TransactionRootConnectionFactory(metrics));
+
+            using (TransactionScope scope = new())
+            {
+                SqlConnection owner = new();
+                Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+                Assert.NotNull(connection);
+
+                pool.Shutdown();
+
+                // Act
+                pool.ReturnInternalConnection(connection!, owner);
+
+                // Assert
+                Assert.True(connection!.IsTxRootWaitingForTxEnd);
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 1,
+                    softDisconnects: 1,
+                    pooledConnections: 1,
+                    stasisConnections: 1);
+
+                scope.Complete();
+            }
+
+            // Assert - the pool is not running, so the connection is destroyed on the way out of
+            // stasis rather than pooled, and the gauge returns to zero either way.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                hardDisconnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 0,
+                stasisConnections: 0);
+        }
+
+        /// <summary>
+        /// The third way into stasis, and the only one that leaves by the other exit. When the idle
+        /// sweep ages out a free connection that happens to be a transaction root, it puts it in
+        /// stasis rather than destroying it. The connection is still pooled at that point, so when
+        /// the transaction ends it returns to general circulation instead of being disposed. This is
+        /// specific to <see cref="WaitHandleDbConnectionPool"/>; the channel pool has no generational
+        /// sweep.
+        /// </summary>
+        [Fact]
+        public void IdleSweepOfTransactionRoot_CountsStasisExitOnReturnToPool()
+        {
+            // Arrange - checked out and returned with no ambient transaction, so the connection is
+            // filed in the general free pool rather than the transacted store, while still
+            // reporting itself as a transaction root.
+            FakeSqlClientMetrics metrics = new();
+            WaitHandleDbConnectionPool pool = Assert.IsType<WaitHandleDbConnectionPool>(
+                ConstructPool(
+                    PoolImplementation.WaitHandle,
+                    metrics,
+                    new TransactionRootConnectionFactory(metrics),
+                    idleTimeout: 1));
+
+            SqlConnection owner = new();
+            Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+            Assert.NotNull(connection);
+            pool.ReturnInternalConnection(connection!, owner);
+
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1);
+
+            // Act - the first sweep ages the connection from the new stack to the old stack, the
+            // second pops it off the old stack and finds it is a transaction root.
+            pool.CleanupCallback(null);
+            pool.CleanupCallback(null);
+
+            // Assert - in stasis rather than destroyed, and no longer counted as free.
+            Assert.True(connection!.IsTxRootWaitingForTxEnd);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 0,
+                stasisConnections: 1);
+
+            // Act - the delegated transaction ends. Normally raised by System.Transactions through
+            // the connection's TransactionCompleted handler.
+            connection!.DelegatedTransactionEnded();
+
+            // Assert - the connection was still pooled, so it rejoins general circulation rather
+            // than being disposed, and the stasis gauge comes back down.
+            Assert.False(connection!.IsTxRootWaitingForTxEnd);
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1,
+                stasisConnections: 0);
+        }
+
         #region Test classes
 
         /// <summary>
@@ -608,6 +781,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnection owningConnection,
                 TimeoutTimer timeout)
                 => new ActivationFailingConnection(Metrics);
+        }
+
+        /// <summary>
+        /// Stub connection that reports itself as the root of a delegated transaction, which is what
+        /// makes a pool put it in stasis on return rather than pooling or destroying it.
+        /// </summary>
+        private sealed class TransactionRootConnection : StubDbConnectionInternal
+        {
+            internal TransactionRootConnection(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
+            internal override bool IsTransactionRoot => true;
+
+            /// <summary>
+            /// Marks the connection unfit for pooling without dooming it. A doomed connection
+            /// short-circuits the return path before the stasis decision is ever reached, so a test
+            /// that wants stasis must use this instead.
+            /// </summary>
+            internal void MarkDoNotPool() => DoNotPoolThisConnection();
+        }
+
+        /// <summary>
+        /// Connection factory whose connections are all transaction roots.
+        /// </summary>
+        private sealed class TransactionRootConnectionFactory : SqlConnectionFactory
+        {
+            internal TransactionRootConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
+            /// <inheritdoc />
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+                => new TransactionRootConnection(Metrics);
         }
 
         #endregion
