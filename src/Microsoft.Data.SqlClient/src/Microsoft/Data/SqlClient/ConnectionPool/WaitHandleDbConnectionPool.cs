@@ -549,7 +549,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     if ((oldConnection != null) && (oldConnection.Pool == this))
                     {
-                        _objectList.Remove(oldConnection);
+                        // The replacement takes over the old connection's place in the pool. The
+                        // caller disposes the old connection once the replacement is in place, so
+                        // account for its departure here rather than leaving the gauge inflated.
+                        if (_objectList.Remove(oldConnection))
+                        {
+                            Metrics.ExitPooledConnection();
+                        }
                     }
                     _objectList.Add(newObj);
                     _totalObjects = _objectList.Count;
@@ -1196,7 +1202,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // The old connection was vended to the caller and is now destroyed rather than
                 // returned to the pool, so balance both the soft gauge (it was counted as a
-                // checkout) and the hard gauge (its physical connection is going away).
+                // checkout) and the hard gauge (its physical connection is going away). The pooled
+                // gauge is settled in CreateObject, which removed it from the pool's object list.
                 Metrics.SoftDisconnectRequest();
                 Metrics.HardDisconnectRequest();
             }

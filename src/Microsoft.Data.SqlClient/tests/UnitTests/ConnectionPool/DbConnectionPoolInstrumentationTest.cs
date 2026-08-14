@@ -286,17 +286,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// a hard disconnect.
         /// </summary>
         /// <remarks>
-        /// The pooled-connection gauge differs by implementation. The channel pool reuses the old
-        /// connection's slot, so the gauge is deliberately left untouched. The wait handle pool
-        /// disposes the replaced connection directly rather than through its destroy path, so it
-        /// never emits the matching decrement.
+        /// Neither pool changes the pooled-connection gauge: the channel pool reuses the old
+        /// connection's slot, and the wait handle pool swaps the replacement into the old
+        /// connection's place in its object list.
         /// </remarks>
         [Theory]
-        [InlineData(PoolImplementation.WaitHandle, 2)]
-        [InlineData(PoolImplementation.Channel, 1)]
-        public void ReplaceConnection_CountsDisconnectsForDiscardedConnection(
-            PoolImplementation implementation,
-            int expectedPooledConnections)
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void ReplaceConnection_CountsDisconnectsForDiscardedConnection(PoolImplementation implementation)
         {
             // Arrange
             FakeSqlClientMetrics metrics = new();
@@ -318,7 +315,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hardDisconnects: 1,
                 softConnects: 2,
                 softDisconnects: 1,
-                pooledConnections: expectedPooledConnections,
+                pooledConnections: 1,
                 activeConnections: 1);
         }
 
