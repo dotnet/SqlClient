@@ -8,9 +8,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeRea
 
 public class Plaintext : DataTypeReaderRunnerBase
 {
-    protected override RunnerJob Configuration => s_config.Benchmarks.DataTypeReaderRunnerConfig;
-
     public override IEnumerable<DataType> ExecutedTypes => AvailableTypes;
+
+    protected override RunnerJob Configuration => s_config.Benchmarks.DataTypeReaderRunnerConfig;
 
     protected override SqlConnection OpenConnection()
     {

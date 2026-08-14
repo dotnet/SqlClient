@@ -15,9 +15,9 @@ public class AlwaysEncrypted : DataTypeReaderRunnerBase
     private ColumnMasterKey _masterKey;
     private ColumnEncryptionKey _encryptionKey;
 
-    protected override RunnerJob Configuration => s_config.Benchmarks.AlwaysEncryptedDataTypeReaderRunnerConfig;
-
     public override IEnumerable<DataType> ExecutedTypes => AvailableTypes.Where(t => t.EncryptionSupported);
+
+    protected override RunnerJob Configuration => s_config.Benchmarks.AlwaysEncryptedDataTypeReaderRunnerConfig;
 
     protected override SqlConnection OpenConnection()
     {

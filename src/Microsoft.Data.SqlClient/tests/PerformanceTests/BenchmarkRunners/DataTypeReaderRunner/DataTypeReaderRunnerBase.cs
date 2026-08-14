@@ -15,6 +15,11 @@ public abstract class DataTypeReaderRunnerBase : BaseRunner
     protected SqlConnection _connection;
     protected Table _table;
 
+    public abstract IEnumerable<DataType> ExecutedTypes { get; }
+
+    [ParamsSource(nameof(ExecutedTypes))]
+    public DataType Type { get; set; }
+
     protected IEnumerable<DataType> AvailableTypes =>
         s_datatypes.Others
             .Concat(s_datatypes.Numerics)
@@ -25,11 +30,6 @@ public abstract class DataTypeReaderRunnerBase : BaseRunner
             .Concat(s_datatypes.MaxTypes);
 
     protected abstract RunnerJob Configuration { get; }
-
-    public abstract IEnumerable<DataType> ExecutedTypes { get; }
-
-    [ParamsSource(nameof(ExecutedTypes))]
-    public DataType Type { get; set; }
 
     protected abstract SqlConnection OpenConnection();
 
