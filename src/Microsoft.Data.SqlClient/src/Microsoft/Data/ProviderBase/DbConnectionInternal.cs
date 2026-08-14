@@ -505,7 +505,7 @@ namespace Microsoft.Data.ProviderBase
                             // and transactions may not get cleaned up...
                             Deactivate();
 
-                            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+                            Metrics.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear the owning object
                             // before we call dispose so that we can't get here a second time...
@@ -520,7 +520,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
+                                Metrics.ExitNonPooledConnection();
                                 Dispose();
                             }
                         }
@@ -606,7 +606,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks
                 // in.
-                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
+                Metrics.ExitNonPooledConnection();
 
                 Dispose();
             }
@@ -836,7 +836,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
-            SqlClientDiagnostics.Metrics.EnterStasisConnection();
+            Metrics.EnterStasisConnection();
         }
 
         /// <remarks>
@@ -1022,7 +1022,7 @@ namespace Microsoft.Data.ProviderBase
                 : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
-            SqlClientDiagnostics.Metrics.ExitStasisConnection();
+            Metrics.ExitStasisConnection();
 
             IsTxRootWaitingForTxEnd = false;
         }

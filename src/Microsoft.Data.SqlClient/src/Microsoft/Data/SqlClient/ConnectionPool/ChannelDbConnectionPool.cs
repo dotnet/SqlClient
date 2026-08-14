@@ -232,6 +232,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// resolved instance name on the pool's provider info. Counting an in-flight open here sends
         /// the first caller down the cached branch instead, where it reads an instance name that
         /// nothing has set yet.
+        ///
+        /// Internal sizing decisions (the max-pool-size gate, warmup, and pruning) all use
+        /// <see cref="ConnectionPoolSlots.ReservationCount"/> instead, so that connections another
+        /// thread is currently opening count toward the pool's size.
         /// </remarks>
         public int Count => _connectionSlots.ConnectionCount;
 
@@ -1153,7 +1157,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // If we fail to open a connection, we need to write a null to the idle channel to
                         // wake up any waiters
                         _idleChannel.TryWrite(null);
-                        newConnection?.Dispose();
+
+                        if (newConnection is not null)
+                        {
+                            // The connection opened, so a hard connect was counted for it. It never
+                            // reached the pool, so balance the hard-connection gauge here rather
+                            // than leaving it inflated for the lifetime of the pool.
+                            newConnection.Dispose();
+                            Metrics.HardDisconnectRequest();
+                        }
                     });
 
                 if (connection is not null)
@@ -1672,8 +1684,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // up. Return before scheduling a thread-pool work item. This keeps hot-path callers
             // (e.g. RemoveConnection on every return) cheap. The check is best-effort under
             // concurrency; a below-minimum condition missed here is still observed by the running
-            // loop, which re-reads Count on every iteration.
-            if (Count >= MinPoolSize)
+            // loop, which re-reads the count on every iteration.
+            //
+            // This gates on ReservationCount rather than Count so that connections another thread
+            // is currently opening count toward the minimum. Gating on Count would make warmup
+            // create duplicates for every creation already in flight.
+            if (_connectionSlots.ReservationCount >= MinPoolSize)
             {
                 return;
             }
@@ -1756,7 +1772,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 while (State == Running
                     && !token.IsCancellationRequested
                     && !ErrorOccurred
-                    && Count < MinPoolSize)
+                    && _connectionSlots.ReservationCount < MinPoolSize)
                 {
                     // Fresh per-attempt timeout budget based on the pool's CreationTimeout, since
                     // warmup has no owning Open() call to inherit a budget from. Matches the
@@ -1795,7 +1811,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     if (connection is null)
                     {
-                        // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize),
+                        // A slot is guaranteed available here (ReservationCount < MinPoolSize <= MaxPoolSize),
                         // and creation failures throw rather than return null, so a null return means
                         // the shared rate limiter is currently saturated. Rather than bypassing the
                         // limiter or spinning on it (Story 2), end this warmup pass. Saturation only
