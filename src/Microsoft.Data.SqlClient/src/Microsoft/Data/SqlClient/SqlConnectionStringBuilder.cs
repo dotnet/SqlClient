@@ -411,7 +411,9 @@ namespace Microsoft.Data.SqlClient
                     return ConnectionReset;
 #pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
+#pragma warning disable 618
                     return TransparentNetworkIPResolution;
+#pragma warning restore 618
                 case Keywords.NetworkLibrary:
                     return NetworkLibrary;
 #endif
@@ -1083,7 +1085,9 @@ namespace Microsoft.Data.SqlClient
                             NetworkLibrary = ConvertToString(value);
                             break;
                         case Keywords.TransparentNetworkIPResolution:
+#pragma warning disable 618
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
+#pragma warning restore 618
                             break;
 #endif
                         default:
@@ -1879,6 +1883,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
+        [Obsolete("TransparentNetworkIPResolution has been deprecated and is only supported on .NET Framework. Use MultiSubnetFailover instead.")]
         [DisplayName(DbConnectionStringKeywords.TransparentNetworkIpResolution)]
         [ResCategory(nameof(Strings.DataCategory_Source))]
         [ResDescription(nameof(Strings.DbConnectionString_TransparentNetworkIPResolution))]
