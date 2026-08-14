@@ -192,6 +192,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             using var _ = SqlClientEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
+            ValidateNotNull(signature, nameof(signature));
+            ValidateNotEmpty(signature, nameof(signature));
 
             var key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
             return GetOrCreateSignatureVerificationResult(key, VerifyColumnMasterKeyMetadata);
@@ -224,6 +226,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
+                ValidateNotNull(signature, nameof(signature));
+                ValidateNotEmpty(signature, nameof(signature));
 
                 Tuple<string, bool, string> key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
                 return await _columnMasterKeyMetadataSignatureVerificationCache

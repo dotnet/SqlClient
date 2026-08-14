@@ -59,6 +59,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex1.Message);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task VerifyRejectsNullOrEmptySignature()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                new SqlClientCustomTokenCredential());
+
+            string nullMessage = $@"Value cannot be null.\s+\(?Parameter (name: )?'?signature('\))?";
+            string emptyMessage = $@"Internal error. Empty 'signature' specified.";
+
+            Exception syncNull = Assert.Throws<ArgumentNullException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadata(_fixture.AkvKeyUrl, true, null));
+            Assert.Matches(nullMessage, syncNull.Message);
+
+            Exception syncEmpty = Assert.Throws<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadata(_fixture.AkvKeyUrl, true, new byte[] { }));
+            Assert.Matches(emptyMessage, syncEmpty.Message);
+
+            Exception asyncNull = await Assert.ThrowsAsync<ArgumentNullException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.AkvKeyUrl, true, null));
+            Assert.Matches(nullMessage, asyncNull.Message);
+
+            Exception asyncEmpty = await Assert.ThrowsAsync<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.AkvKeyUrl, true, new byte[] { }));
+            Assert.Matches(emptyMessage, asyncEmpty.Message);
+        }
+
         [InlineData(null)]
         [InlineData("")]
         [InlineData(" ")]
