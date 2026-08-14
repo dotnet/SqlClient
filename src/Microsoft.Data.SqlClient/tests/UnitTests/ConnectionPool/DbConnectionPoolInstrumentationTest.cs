@@ -504,6 +504,62 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.InRange(metrics.PooledConnections, 0, MaxPoolSize);
         }
 
+        /// <summary>
+        /// Verifies the counters emitted when idle connections are pruned out of the pool. Pruning
+        /// destroys the physical connection, so it must decrement both the pooled and free gauges
+        /// and record a hard disconnect, without touching the soft counters: pruning removes an
+        /// idle connection that no caller holds.
+        /// </summary>
+        [Fact]
+        public void PruneConnections_CountsHardDisconnectForEachEvictedConnection()
+        {
+            // Arrange - check out three connections so they are all open at once, then return them
+            // so they sit idle and are eligible for pruning.
+            FakeSqlClientMetrics metrics = new();
+            ChannelDbConnectionPool pool = (ChannelDbConnectionPool)ConstructPool(
+                PoolImplementation.Channel,
+                metrics,
+                new SuccessfulSqlConnectionFactory(metrics));
+
+            List<(SqlConnection Owner, DbConnectionInternal Connection)> checkedOut = new();
+            for (int i = 0; i < 3; i++)
+            {
+                SqlConnection owner = new();
+                Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection));
+                checkedOut.Add((owner, connection!));
+            }
+
+            foreach ((SqlConnection owner, DbConnectionInternal connection) in checkedOut)
+            {
+                pool.ReturnInternalConnection(connection, owner);
+            }
+
+            AssertCounters(
+                metrics,
+                hardConnects: 3,
+                softConnects: 3,
+                softDisconnects: 3,
+                pooledConnections: 3,
+                freeConnections: 3,
+                activeConnections: 0);
+
+            // Act - prune two of the three idle connections.
+            pool.PruneConnections(2);
+
+            // Assert - the two evicted connections were destroyed, and pruning did not disturb the
+            // soft counters because nothing was checked out or returned.
+            Assert.Equal(1, pool.Count);
+            AssertCounters(
+                metrics,
+                hardConnects: 3,
+                hardDisconnects: 2,
+                softConnects: 3,
+                softDisconnects: 3,
+                pooledConnections: 1,
+                freeConnections: 1,
+                activeConnections: 0);
+        }
+
         #region Test classes
 
         /// <summary>
