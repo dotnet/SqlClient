@@ -161,14 +161,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>The signature of the master key metadata</returns>
         public override async Task<byte[]> SignColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, CancellationToken cancellationToken = default)
         {
-            using var _ = AsyncEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
-            ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
-            cancellationToken.ThrowIfCancellationRequested();
+            long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            try
+            {
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: false);
+                cancellationToken.ThrowIfCancellationRequested();
 
-            // Also validates key is of RSA type.
-            await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
-            byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
-            return await KeyCryptographer.SignDataAsync(message, masterKeyPath, cancellationToken).ConfigureAwait(false);
+                // Also validates key is of RSA type.
+                await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
+                byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
+                return await KeyCryptographer.SignDataAsync(message, masterKeyPath, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                LeaveScope(scopeId);
+            }
         }
 
         /// <summary>
@@ -206,14 +213,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Boolean indicating whether the master key metadata can be verified based on the provided signature</returns>
         public override async Task<bool> VerifyColumnMasterKeyMetadataAsync(string masterKeyPath, bool allowEnclaveComputations, byte[] signature, CancellationToken cancellationToken = default)
         {
-            using var _ = AsyncEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
-            ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
-            cancellationToken.ThrowIfCancellationRequested();
+            long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            try
+            {
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
+                cancellationToken.ThrowIfCancellationRequested();
 
-            Tuple<string, bool, string> key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
-            return await _columnMasterKeyMetadataSignatureVerificationCache
-                .GetOrCreateAsync(key, VerifyColumnMasterKeyMetadataAsync)
-                .ConfigureAwait(false);
+                Tuple<string, bool, string> key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
+                return await _columnMasterKeyMetadataSignatureVerificationCache
+                    .GetOrCreateAsync(key, VerifyColumnMasterKeyMetadataAsync)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                LeaveScope(scopeId);
+            }
 
             async Task<bool> VerifyColumnMasterKeyMetadataAsync()
             {
@@ -279,18 +293,25 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Plain text column encryption key</returns>
         public override async Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken = default)
         {
-            using var _ = AsyncEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
-            // Validate the input parameters
-            ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
-            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
-            ValidateNotNull(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
-            ValidateNotEmpty(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
-            ValidateVersionByte(encryptedColumnEncryptionKey[0], s_firstVersion[0]);
-            cancellationToken.ThrowIfCancellationRequested();
+            long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            try
+            {
+                // Validate the input parameters
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
+                ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
+                ValidateNotNull(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
+                ValidateNotEmpty(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
+                ValidateVersionByte(encryptedColumnEncryptionKey[0], s_firstVersion[0]);
+                cancellationToken.ThrowIfCancellationRequested();
 
-            return await _columnEncryptionKeyCache
-                .GetOrCreateAsync(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKeyAsync)
-                .ConfigureAwait(false);
+                return await _columnEncryptionKeyCache
+                    .GetOrCreateAsync(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKeyAsync)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                LeaveScope(scopeId);
+            }
 
             async Task<byte[]> DecryptEncryptionKeyAsync()
             {
@@ -448,54 +469,77 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns>Encrypted column encryption key</returns>
         public override async Task<byte[]> EncryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey, CancellationToken cancellationToken = default)
         {
-            using var _ = AsyncEventScope.Create(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
-            // Validate the input parameters
-            ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
-            ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
-            ValidateNotNull(columnEncryptionKey, nameof(columnEncryptionKey));
-            ValidateNotEmpty(columnEncryptionKey, nameof(columnEncryptionKey));
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Also validates whether the key is RSA one or not and then get the key size
-            await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
-            int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
-
-            // Encrypt the plain text
-            byte[] cipherText = await KeyCryptographer
-                .WrapKeyAsync(s_keyWrapAlgorithm, columnEncryptionKey, masterKeyPath, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (cipherText.Length != keySizeInBytes)
+            long scopeId = SqlClientEventSource.Log.TryScopeEnterEvent(nameof(SqlColumnEncryptionAzureKeyVaultProvider));
+            try
             {
-                SqlClientEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherText.Length);
-                SqlClientEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
-                throw ADP.CipherTextLengthMismatch();
+                // Validate the input parameters
+                ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
+                ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
+                ValidateNotNull(columnEncryptionKey, nameof(columnEncryptionKey));
+                ValidateNotEmpty(columnEncryptionKey, nameof(columnEncryptionKey));
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Also validates whether the key is RSA one or not and then get the key size
+                await KeyCryptographer.AddKeyAsync(masterKeyPath, cancellationToken).ConfigureAwait(false);
+                int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
+
+                // Encrypt the plain text
+                byte[] cipherText = await KeyCryptographer
+                    .WrapKeyAsync(s_keyWrapAlgorithm, columnEncryptionKey, masterKeyPath, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (cipherText.Length != keySizeInBytes)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("Cipher Text length: {0}", cipherText.Length);
+                    SqlClientEventSource.Log.TryTraceEvent("keySizeInBytes: {0}", keySizeInBytes);
+                    throw ADP.CipherTextLengthMismatch();
+                }
+
+                byte[] message = BuildEncryptedColumnEncryptionKeyMessage(masterKeyPath, cipherText);
+
+                // Sign the message
+                byte[] signature = await KeyCryptographer
+                    .SignDataAsync(message, masterKeyPath, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (signature.Length != keySizeInBytes)
+                {
+                    throw ADP.HashLengthMismatch();
+                }
+
+                bool isSignatureValid = await KeyCryptographer
+                    .VerifyDataAsync(message, signature, masterKeyPath, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!isSignatureValid)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
+                    throw ADP.InvalidSignature();
+                }
+                SqlClientEventSource.Log.TryTraceEvent("Signature verified successfully.");
+
+                return ConcatenateMessageAndSignature(message, signature);
             }
-
-            byte[] message = BuildEncryptedColumnEncryptionKeyMessage(masterKeyPath, cipherText);
-
-            // Sign the message
-            byte[] signature = await KeyCryptographer
-                .SignDataAsync(message, masterKeyPath, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (signature.Length != keySizeInBytes)
+            finally
             {
-                throw ADP.HashLengthMismatch();
+                LeaveScope(scopeId);
             }
+        }
 
-            bool isSignatureValid = await KeyCryptographer
-                .VerifyDataAsync(message, signature, masterKeyPath, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (!isSignatureValid)
+        /// <summary>
+        /// Leaves the event source scope entered by an async method.
+        /// </summary>
+        /// <param name="scopeId">The scope identifier returned when the scope was entered.</param>
+        /// <remarks>
+        /// <see cref="SqlClientEventScope"/> is a <c>ref struct</c> and cannot be held across an <c>await</c>
+        /// boundary, so async methods track the scope identifier directly.
+        /// </remarks>
+        private static void LeaveScope(long scopeId)
+        {
+            if (scopeId != 0)
             {
-                SqlClientEventSource.Log.TryTraceEvent("Signature could not be verified.");
-                throw ADP.InvalidSignature();
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeId);
             }
-            SqlClientEventSource.Log.TryTraceEvent("Signature verified successfully.");
-
-            return ConcatenateMessageAndSignature(message, signature);
         }
 
         /// <summary>
