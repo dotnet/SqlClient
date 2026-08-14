@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     /// Tests for <see cref="SniCommon.ValidateSslServerCertificate"/> to ensure
     /// that when a caller supplies a <c>ServerCertificate</c> pin the driver enforces the
     /// pin as an *additive* check on top of normal TLS validation, and never accepts a
-    /// server certificate on the basis of platform trust alone.
+    /// server certificate on the basis of chain / name validation alone.
     ///
     /// The tests exercise the shared helper directly.
     /// </summary>
@@ -36,23 +36,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
             using X509Certificate2 pinCert = CreateSelfSignedCertificate("other.contoso.com");
+            using TempCertFile pinFile = new(pinCert);
 
-            string pinPath = WriteCertToTempFile(pinCert);
-            try
-            {
-                Assert.Throws<AuthenticationException>(() =>
-                    SniCommon.ValidateSslServerCertificate(
-                        connectionId: Guid.NewGuid(),
-                        targetServerName: "server.contoso.com",
-                        hostNameInCertificate: null,
-                        serverCert: serverCert,
-                        validationCertFileName: pinPath,
-                        policyErrors: SslPolicyErrors.None));
-            }
-            finally
-            {
-                File.Delete(pinPath);
-            }
+            Assert.Throws<AuthenticationException>(() =>
+                SniCommon.ValidateSslServerCertificate(
+                    connectionId: Guid.NewGuid(),
+                    targetServerName: "server.contoso.com",
+                    hostNameInCertificate: null,
+                    serverCert: serverCert,
+                    validationCertFileName: pinFile.Path,
+                    policyErrors: SslPolicyErrors.None));
         }
 
         /// <summary>
@@ -63,24 +56,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         public void ValidateSslServerCertificate_MatchingPin_PolicyNone_ReturnsTrue()
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
+            using TempCertFile pinFile = new(serverCert);
 
-            string pinPath = WriteCertToTempFile(serverCert);
-            try
-            {
-                bool result = SniCommon.ValidateSslServerCertificate(
-                    connectionId: Guid.NewGuid(),
-                    targetServerName: "server.contoso.com",
-                    hostNameInCertificate: null,
-                    serverCert: serverCert,
-                    validationCertFileName: pinPath,
-                    policyErrors: SslPolicyErrors.None);
+            bool result = SniCommon.ValidateSslServerCertificate(
+                connectionId: Guid.NewGuid(),
+                targetServerName: "server.contoso.com",
+                hostNameInCertificate: null,
+                serverCert: serverCert,
+                validationCertFileName: pinFile.Path,
+                policyErrors: SslPolicyErrors.None);
 
-                Assert.True(result);
-            }
-            finally
-            {
-                File.Delete(pinPath);
-            }
+            Assert.True(result);
         }
 
         /// <summary>
@@ -94,23 +80,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         public void ValidateSslServerCertificate_MatchingPin_ChainErrors_Throws()
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
+            using TempCertFile pinFile = new(serverCert);
 
-            string pinPath = WriteCertToTempFile(serverCert);
-            try
-            {
-                Assert.Throws<AuthenticationException>(() =>
-                    SniCommon.ValidateSslServerCertificate(
-                        connectionId: Guid.NewGuid(),
-                        targetServerName: "server.contoso.com",
-                        hostNameInCertificate: null,
-                        serverCert: serverCert,
-                        validationCertFileName: pinPath,
-                        policyErrors: SslPolicyErrors.RemoteCertificateChainErrors));
-            }
-            finally
-            {
-                File.Delete(pinPath);
-            }
+            Assert.Throws<AuthenticationException>(() =>
+                SniCommon.ValidateSslServerCertificate(
+                    connectionId: Guid.NewGuid(),
+                    targetServerName: "server.contoso.com",
+                    hostNameInCertificate: null,
+                    serverCert: serverCert,
+                    validationCertFileName: pinFile.Path,
+                    policyErrors: SslPolicyErrors.RemoteCertificateChainErrors));
         }
 
         /// <summary>
@@ -118,30 +97,44 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// certificate at all (<see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>,
         /// <c>serverCert == null</c>), the helper must fail with an
         /// <see cref="AuthenticationException"/> — not a <see cref="NullReferenceException"/>
-        /// from attempting to dereference the missing server certificate during pin
-        /// comparison.
+        /// from attempting to dereference the missing server certificate.
         /// </summary>
         [Fact]
         public void ValidateSslServerCertificate_Pin_NullServerCert_NotAvailable_Throws()
         {
             using X509Certificate2 pinCert = CreateSelfSignedCertificate("server.contoso.com");
+            using TempCertFile pinFile = new(pinCert);
 
-            string pinPath = WriteCertToTempFile(pinCert);
-            try
-            {
-                Assert.Throws<AuthenticationException>(() =>
-                    SniCommon.ValidateSslServerCertificate(
-                        connectionId: Guid.NewGuid(),
-                        targetServerName: "server.contoso.com",
-                        hostNameInCertificate: null,
-                        serverCert: null,
-                        validationCertFileName: pinPath,
-                        policyErrors: SslPolicyErrors.RemoteCertificateNotAvailable));
-            }
-            finally
-            {
-                File.Delete(pinPath);
-            }
+            Assert.Throws<AuthenticationException>(() =>
+                SniCommon.ValidateSslServerCertificate(
+                    connectionId: Guid.NewGuid(),
+                    targetServerName: "server.contoso.com",
+                    hostNameInCertificate: null,
+                    serverCert: null,
+                    validationCertFileName: pinFile.Path,
+                    policyErrors: SslPolicyErrors.RemoteCertificateNotAvailable));
+        }
+
+        /// <summary>
+        /// Defense in depth: a null server certificate is normally reported through
+        /// <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>, but should the two ever
+        /// disagree, the pin check must still fail with an <see cref="AuthenticationException"/>
+        /// rather than a <see cref="NullReferenceException"/>.
+        /// </summary>
+        [Fact]
+        public void ValidateSslServerCertificate_Pin_NullServerCert_PolicyNone_Throws()
+        {
+            using X509Certificate2 pinCert = CreateSelfSignedCertificate("server.contoso.com");
+            using TempCertFile pinFile = new(pinCert);
+
+            Assert.Throws<AuthenticationException>(() =>
+                SniCommon.ValidateSslServerCertificate(
+                    connectionId: Guid.NewGuid(),
+                    targetServerName: "server.contoso.com",
+                    hostNameInCertificate: null,
+                    serverCert: null,
+                    validationCertFileName: pinFile.Path,
+                    policyErrors: SslPolicyErrors.None));
         }
 
         /// <summary>
@@ -169,7 +162,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// <summary>
         /// When a ServerCertificate pin is supplied but the file cannot be loaded
         /// (missing file, corrupt bytes, wrong format, etc.), validation must fail
-        /// closed rather than silently falling back to platform trust.  The caller
+        /// closed rather than silently falling back to chain / name validation.  The caller
         /// explicitly asked us to pin against a specific certificate, so we cannot
         /// accept the connection on any weaker basis.
         /// </summary>
@@ -208,13 +201,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             return request.CreateSelfSigned(notBefore, notAfter);
         }
 
-        private static string WriteCertToTempFile(X509Certificate2 cert)
+        /// <summary>
+        /// Writes a certificate to a temporary file for use as a <c>ServerCertificate</c> pin and
+        /// deletes it on disposal.
+        /// </summary>
+        private sealed class TempCertFile : IDisposable
         {
-            string path = Path.Combine(
-                Path.GetTempPath(),
-                "SqlClient_Pin_" + Guid.NewGuid().ToString("N") + ".cer");
-            File.WriteAllBytes(path, cert.Export(X509ContentType.Cert));
-            return path;
+            public string Path { get; }
+
+            public TempCertFile(X509Certificate2 cert)
+            {
+                Path = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    "SqlClient_Pin_" + Guid.NewGuid().ToString("N") + ".cer");
+                File.WriteAllBytes(Path, cert.Export(X509ContentType.Cert));
+            }
+
+            public void Dispose() => File.Delete(Path);
         }
     }
 }
