@@ -390,9 +390,13 @@ namespace Microsoft.Data.ProviderBase
             // the Activate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {0}, Activating", ObjectID);
 
-            Activate(transaction);
-
+            // Counted before Activate, mirroring DeactivateConnection, which counts before
+            // Deactivate. If Activate throws, the pool returns the connection and deactivates it,
+            // so counting afterwards would leave that exit unpaired and drive the
+            // active-connections gauge negative.
             Metrics.EnterActiveConnection();
+
+            Activate(transaction);
         }
 
         internal void AddWeakReference(object value, int tag)

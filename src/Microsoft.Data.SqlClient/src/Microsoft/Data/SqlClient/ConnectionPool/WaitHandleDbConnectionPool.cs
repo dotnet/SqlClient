@@ -1152,12 +1152,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (obj != null)
             {
+                // Counted before activation: if PrepareConnection fails it returns the connection
+                // to the pool, which emits the matching soft disconnect. Counting after would leave
+                // that disconnect unpaired and drive the active-soft-connects gauge negative.
+                // Counted inside this branch so that no connection vended means no soft connect.
+                Metrics.SoftConnectRequest();
                 PrepareConnection(owningObject, obj, transaction);
             }
 
             connection = obj;
-
-            Metrics.SoftConnectRequest();
 
             return true;
         }

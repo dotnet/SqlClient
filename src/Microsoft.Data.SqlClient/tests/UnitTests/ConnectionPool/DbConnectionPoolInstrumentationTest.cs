@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
@@ -418,25 +419,130 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 activeConnections: 0);
         }
 
+        /// <summary>
+        /// Verifies that a connection which opens successfully but fails to activate leaves the
+        /// counters balanced. The pool counts the checkout before activating, so the soft
+        /// disconnect emitted when the failed connection is returned has a matching soft connect
+        /// and the active-soft-connects gauge does not go negative.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void FailedActivation_LeavesCountersBalanced(PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(implementation, metrics, new ActivationFailingConnectionFactory(metrics));
+            SqlConnection owner = new();
+
+            // Act
+            Assert.Throws<TestConnectionCreateException>(() =>
+                pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+
+            // Assert - the physical connection was opened and stays in the pool, and the checkout
+            // that failed is balanced by the return.
+            AssertCounters(
+                metrics,
+                hardConnects: 1,
+                softConnects: 1,
+                softDisconnects: 1,
+                pooledConnections: 1,
+                freeConnections: 1,
+                activeConnections: 0);
+        }
+
+        /// <summary>
+        /// Drives concurrent checkouts and returns through the pool and verifies that every gauge
+        /// settles back to a consistent resting state. This is the broad safety net for the
+        /// counters: it does not assert a specific interleaving, only that nothing is leaked or
+        /// double-counted once all activity has stopped.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void ConcurrentCheckoutAndReturn_SettlesAllGaugesToZero(PoolImplementation implementation)
+        {
+            // Arrange
+            const int Threads = 8;
+            const int IterationsPerThread = 50;
+            const int MaxPoolSize = 4;
+
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructPool(
+                implementation,
+                metrics,
+                new SuccessfulSqlConnectionFactory(metrics),
+                maxPoolSize: MaxPoolSize);
+
+            // Act
+            Task[] workers = Enumerable.Range(0, Threads).Select(_ => Task.Run(() =>
+            {
+                for (int i = 0; i < IterationsPerThread; i++)
+                {
+                    SqlConnection owner = new();
+                    Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)), out DbConnectionInternal? connection));
+                    Assert.NotNull(connection);
+                    pool.ReturnInternalConnection(connection!, owner);
+                }
+            })).ToArray();
+
+            Assert.True(Task.WaitAll(workers, TimeSpan.FromSeconds(60)), "Concurrent checkout workers did not finish in time.");
+
+            // Assert - every connection handed out came back, so no checkout is still outstanding.
+            long expectedCheckouts = Threads * IterationsPerThread;
+            Assert.Equal(expectedCheckouts, metrics.SoftConnects);
+            Assert.Equal(expectedCheckouts, metrics.SoftDisconnects);
+            Assert.Equal(0, metrics.ActiveConnections);
+
+            // Every physical connection that was opened is either still pooled or was destroyed.
+            Assert.Equal(metrics.PooledConnections, metrics.HardConnects - metrics.HardDisconnects);
+
+            // Nothing is checked out, so every pooled connection is sitting idle.
+            Assert.Equal(metrics.PooledConnections, metrics.FreeConnections);
+
+            // The pool never grew past its configured ceiling.
+            Assert.InRange(metrics.PooledConnections, 0, MaxPoolSize);
+        }
+
         #region Test classes
 
         /// <summary>
         /// Distinctive exception type used to prove that the exact failure recorded by the pool is
-        /// the one attached to the pooled-open timeout.
+        /// the one raised by the connection under test.
         /// </summary>
         internal sealed class TestConnectionCreateException : Exception
         {
             internal TestConnectionCreateException()
-                : base("Simulated physical connection failure.")
+                : base("Simulated connection activation failure.")
             {
             }
         }
 
         /// <summary>
-        /// Connection factory that always fails with <see cref="TestConnectionCreateException"/>.
+        /// Stub connection whose activation always fails, so a test can exercise the pool's
+        /// behavior when a connection is successfully opened but cannot be handed to the caller.
         /// </summary>
-        internal sealed class FailingSqlConnectionFactory : SqlConnectionFactory
+        private sealed class ActivationFailingConnection : StubDbConnectionInternal
         {
+            internal ActivationFailingConnection(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
+            protected override void Activate(Transaction transaction)
+                => throw new TestConnectionCreateException();
+        }
+
+        /// <summary>
+        /// Connection factory whose connections open successfully but always fail to activate.
+        /// </summary>
+        private sealed class ActivationFailingConnectionFactory : SqlConnectionFactory
+        {
+            internal ActivationFailingConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
             /// <inheritdoc />
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
@@ -445,7 +551,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 IDbConnectionPool pool,
                 DbConnection owningConnection,
                 TimeoutTimer timeout)
-                => throw new TestConnectionCreateException();
+                => new ActivationFailingConnection(Metrics);
         }
 
         #endregion

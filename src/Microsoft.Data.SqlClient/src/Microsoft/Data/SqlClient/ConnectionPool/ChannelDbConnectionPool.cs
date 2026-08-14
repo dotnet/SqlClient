@@ -1514,8 +1514,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
             }
 
-            PrepareConnection(owningConnection, connection, transaction);
+            // Counted before activation: if PrepareConnection fails it returns the connection to
+            // the pool, which emits the matching soft disconnect. Counting after would leave that
+            // disconnect unpaired and drive the active-soft-connects gauge negative.
             Metrics.SoftConnectRequest();
+            PrepareConnection(owningConnection, connection, transaction);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
