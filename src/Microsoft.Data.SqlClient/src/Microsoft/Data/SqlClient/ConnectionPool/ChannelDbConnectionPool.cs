@@ -921,43 +921,31 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // processes pending opens on a dedicated non-thread-pool thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
-            // Fast path: if the pool can satisfy this request right now, complete it on the
-            // caller's thread instead of dispatching to the thread pool.
+            // Fast path: if the pool can satisfy this request right now, hand the connection back
+            // synchronously and report the request as completed.
             //
-            // The Task.Run below costs a full thread pool dispatch plus a TaskCompletionSource
-            // handoff. That is unavoidable when we actually have to open a physical connection or
-            // wait for one to come back, but it dwarfs the work when an idle connection is already
-            // sitting in the channel - the common case for any pooled workload at steady state.
+            // Returning true here (rather than completing the TaskCompletionSource and returning
+            // false) is what makes this cheap, and it is what
+            // WaitHandleDbConnectionPool.TryGetConnection does on its own inline hit. Reporting the
+            // open as incomplete sends SqlConnection.InternalOpenAsync down its asynchronous
+            // completion path, which allocates an OpenAsyncRetry, a CancellationTokenRegistration
+            // and a Tuple, and then schedules the continuation with
+            // ContinueWith(..., TaskScheduler.Default). That continuation costs a thread pool
+            // dispatch even when the TaskCompletionSource is already completed, so completing it
+            // inline would move the dispatch rather than remove it. Returning true instead lets
+            // InternalOpenAsync take its synchronous branch and skip all of it.
             //
-            // This mirrors WaitHandleDbConnectionPool.TryGetConnection, whose async path also
-            // attempts an inline, non-blocking acquisition first (allowCreate: false) and only
-            // enqueues a PendingGetConnection when that misses. Like that path, we never open a
-            // physical connection inline, so the caller's thread is never blocked on network I/O.
+            // The TaskCompletionSource is deliberately left untouched. The caller abandons it when
+            // the open completes synchronously, exactly as it does for the WaitHandle pool.
             //
-            // Exceptions are routed to the TaskCompletionSource rather than thrown synchronously,
-            // so the failure reaches the caller exactly as it would from the Task.Run path.
-            try
+            // Like v1's inline attempt (allowCreate: false), this never opens a physical
+            // connection, so the caller's thread is never blocked on network I/O. Exceptions
+            // propagate synchronously, which is also what the WaitHandle pool does from here.
+            DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
+            if (pooled is not null)
             {
-                DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
-                if (pooled is not null)
-                {
-                    if (!taskCompletionSource.TrySetResult(pooled))
-                    {
-                        // The request was cancelled out from under us; don't leak the connection.
-                        ReturnInternalConnection(pooled, owningObject);
-                    }
-
-                    connection = null;
-                    return false;
-                }
-            }
-            catch (Exception e)
-            {
-                // TryGetPooledConnectionInline returns a connection to the pool itself if it fails
-                // after taking one, so there is nothing to release here.
-                taskCompletionSource.TrySetException(e);
-                connection = null;
-                return false;
+                connection = pooled;
+                return true;
             }
 
             Task.Run(async () =>
