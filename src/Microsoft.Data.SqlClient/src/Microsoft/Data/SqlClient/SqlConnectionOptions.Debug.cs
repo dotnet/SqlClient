@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                var parsedValues = SplitConnectionString(connectionString, synonyms, false);
+                var parsedValues = SplitConnectionString(connectionString, synonyms);
                 foreach (var parsedValue in parsedValues)
                 {
                     string key = parsedValue.Key;
@@ -139,11 +139,10 @@ namespace Microsoft.Data.SqlClient
         #if DEBUG
         private static Dictionary<string, string> SplitConnectionString(
             string connectionString,
-            IReadOnlyDictionary<string, string> synonyms,
-            bool firstKey)
+            IReadOnlyDictionary<string, string> synonyms)
         {
             var parseTable = new Dictionary<string, string>();
-            Regex parser = firstKey ? ConnectionStringRegexOdbc : ConnectionStringRegex;
+            Regex parser = ConnectionStringRegex;
 
             const int KeyIndex = 1, ValueIndex = 2;
             Debug.Assert(KeyIndex == parser.GroupNumberFromName("key"), "wrong key index");
@@ -161,23 +160,20 @@ namespace Microsoft.Data.SqlClient
                 CaptureCollection keyValues = match.Groups[ValueIndex].Captures;
                 foreach (Capture keypair in match.Groups[KeyIndex].Captures)
                 {
-                    string keyName = (firstKey ? keypair.Value : keypair.Value.Replace("==", "=")).ToLower(CultureInfo.InvariantCulture);
+                    string keyName = keypair.Value.Replace("==", "=").ToLower(CultureInfo.InvariantCulture);
                     string keyValue = keyValues[indexValue++].Value;
                     if (0 < keyValue.Length)
                     {
-                        if (!firstKey)
+                        switch (keyValue[0])
                         {
-                            switch (keyValue[0])
-                            {
-                                case '\"':
-                                    keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\"\"", "\"");
-                                    break;
-                                case '\'':
-                                    keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\'\'", "\'");
-                                    break;
-                                default:
-                                    break;
-                            }
+                            case '\"':
+                                keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\"\"", "\"");
+                                break;
+                            case '\'':
+                                keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\'\'", "\'");
+                                break;
+                            default:
+                                break;
                         }
                     }
                     else
@@ -195,10 +191,8 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.KeywordNotSupported(keyName);
                     }
 
-                    if (!firstKey || !parseTable.ContainsKey(realKeyName))
-                    {
-                        parseTable[realKeyName] = keyValue; // last key-value pair wins (or first)
-                    }
+                    // Last key-value pair wins
+                    parseTable[realKeyName] = keyValue;
                 }
             }
 
