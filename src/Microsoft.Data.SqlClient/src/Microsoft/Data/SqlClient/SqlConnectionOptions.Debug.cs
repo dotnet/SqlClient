@@ -16,6 +16,8 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class SqlConnectionOptions
     {
         #if DEBUG
+        private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
+        private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
         private const string ConnectionStringPattern =                     // may not contain embedded null except trailing last value
             "([\\s;]*"                                                 // leading whitespace and extra semicolons
             + "(?![\\s;])"                                             // key does not start with space or semicolon
@@ -32,6 +34,9 @@ namespace Microsoft.Data.SqlClient
             + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
             + ")*"                                                     // repeat the key-value pair
             + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
+
+        private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
+        private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
         private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         #endif
 
