@@ -1451,7 +1451,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
-                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsKeyNameValid mismatch with regex");
 #endif
                 return ((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000')));
             }
@@ -1715,7 +1715,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
 
-            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            if (keyName == null || !IsKeyNameValid(keyName))
             {
                 throw ADP.InvalidKeyname(keyName);
             }
