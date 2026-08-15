@@ -1238,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
         };
 
         // @TODO: This should probably be extracted into its own parser class
-        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
 
@@ -1287,7 +1287,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case ParserState.KeyEqual: // \\s*=(?!=)\\s*
-                        if (!useOdbcRules && '=' == currentChar)
+                        if ('=' == currentChar)
                         { parserState = ParserState.Key; break; }
                         keyname = GetKeyName(buffer);
                         if (string.IsNullOrEmpty(keyname))
@@ -1299,18 +1299,10 @@ namespace Microsoft.Data.SqlClient
                     case ParserState.KeyEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
-                        if (useOdbcRules)
-                        {
-                            if ('{' == currentChar)
-                            { parserState = ParserState.BraceQuoteValue; break; }
-                        }
-                        else
-                        {
-                            if ('\'' == currentChar)
-                            { parserState = ParserState.SingleQuoteValue; continue; }
-                            if ('"' == currentChar)
-                            { parserState = ParserState.DoubleQuoteValue; continue; }
-                        }
+                        if ('\'' == currentChar)
+                        { parserState = ParserState.SingleQuoteValue; continue; }
+                        if ('"' == currentChar)
+                        { parserState = ParserState.DoubleQuoteValue; continue; }
                         if (';' == currentChar)
                         { goto ParserExit; }
                         if ('\0' == currentChar)
@@ -1412,7 +1404,7 @@ namespace Microsoft.Data.SqlClient
                     keyvalue = GetKeyValue(buffer, true);
 
                     char tmpChar = keyvalue[keyvalue.Length - 1];
-                    if (!useOdbcRules && (('\'' == tmpChar) || ('"' == tmpChar)))
+                    if (('\'' == tmpChar) || ('"' == tmpChar))
                     {
                         throw ADP.ConnectionStringSyntax(startposition);    // unquoted value must not end in quote, except for odbc
                     }
@@ -1488,7 +1480,7 @@ namespace Microsoft.Data.SqlClient
                     int startPosition = nextStartPosition;
 
                     string keyname, keyvalue;
-                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, false, out keyname, out keyvalue);
+                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, out keyname, out keyvalue);
                     if (string.IsNullOrEmpty(keyname))
                     {
                         // if (nextStartPosition != endPosition) { throw; }
