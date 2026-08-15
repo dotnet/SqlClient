@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient
             _usersConnectionString = connectionString ?? "";
             if (_usersConnectionString.Length > 0)
             {
-                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap);
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, s_keywordMap);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) ||
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
@@ -1471,7 +1471,6 @@ namespace Microsoft.Data.SqlClient
         private static NameValuePair ParseInternal(
             Dictionary<string, string> parsetable,
             string connectionString,
-            bool buildChain,
             IReadOnlyDictionary<string, string> synonyms)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
@@ -1515,8 +1514,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
-                    else if (buildChain)
-                    { // first time only - don't contain modified chain from UDL file
+                    else
+                    {
+                        // first time only - don't contain modified chain from UDL file
                         keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
                 }
