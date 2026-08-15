@@ -1227,8 +1227,6 @@ namespace Microsoft.Data.SqlClient
             DoubleQuoteValueQuote,
             SingleQuoteValue,
             SingleQuoteValueQuote,
-            BraceQuoteValue,
-            BraceQuoteValueQuote,
             QuotedValueEnd,
             NullTermination,
         };
@@ -1343,20 +1341,6 @@ namespace Microsoft.Data.SqlClient
                         parserState = ParserState.QuotedValueEnd;
                         goto case ParserState.QuotedValueEnd;
 
-                    case ParserState.BraceQuoteValue: // "(\\{([^\\}\\u0000]|\\}\\})*\\})"
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValueQuote; break; }
-                        if ('\0' == currentChar)
-                        { throw ADP.ConnectionStringSyntax(startposition); }
-                        break;
-
-                    case ParserState.BraceQuoteValueQuote:
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValue; break; }
-                        keyvalue = GetKeyValue(buffer, false);
-                        parserState = ParserState.QuotedValueEnd;
-                        goto case ParserState.QuotedValueEnd;
-
                     case ParserState.QuotedValueEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
@@ -1384,7 +1368,6 @@ namespace Microsoft.Data.SqlClient
                 case ParserState.Key:
                 case ParserState.DoubleQuoteValue:
                 case ParserState.SingleQuoteValue:
-                case ParserState.BraceQuoteValue:
                     // keyword not found/unbalanced double/single quote
                     throw ADP.ConnectionStringSyntax(startposition);
 
@@ -1408,7 +1391,6 @@ namespace Microsoft.Data.SqlClient
 
                 case ParserState.DoubleQuoteValueQuote:
                 case ParserState.SingleQuoteValueQuote:
-                case ParserState.BraceQuoteValueQuote:
                 case ParserState.QuotedValueEnd:
                     // quoted value at end of line
                     keyvalue = GetKeyValue(buffer, false);
