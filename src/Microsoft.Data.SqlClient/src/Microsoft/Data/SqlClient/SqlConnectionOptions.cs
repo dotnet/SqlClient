@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlClient
                     string protocol = _networkLibrary;
                     TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
 #endif
-                    VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
+                    VerifyLocalHostAndFixup(ref host, fixup: false);
                 }
             }
             else if (0 <= _attachDBFileName.IndexOf('|'))
@@ -765,7 +765,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void VerifyLocalHostAndFixup(ref string host, bool enforceLocalHost, bool fixup)
+        internal static void VerifyLocalHostAndFixup(ref string host, bool fixup)
         {
             if (string.IsNullOrEmpty(host))
             {
@@ -784,10 +784,7 @@ namespace Microsoft.Data.SqlClient
                     int separatorPos = name.IndexOf('.'); // to compare just 'machine' part
                     if ((separatorPos <= 0) || !CompareHostName(ref host, name.Substring(0, separatorPos), fixup))
                     {
-                        if (enforceLocalHost)
-                        {
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
-                        }
+                        throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
                     }
                 }
             }
