@@ -33,22 +33,6 @@ namespace Microsoft.Data.SqlClient
             + ")*"                                                     // repeat the key-value pair
             + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
         private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-
-        private const string ConnectionStringPatternOdbc =             // may not contain embedded null except trailing last value
-            "([\\s;]*"                                                 // leading whitespace and extra semicolons
-            + "(?![\\s;])"                                             // key does not start with space or semicolon
-            + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}])+)"           // allow any visible character for keyname except '='
-            + "\\s*=\\s*"                                              // the equal sign divides the key and value parts
-            + "(?<value>"
-            + "(\\{([^\\}\u0000]|\\}\\})*\\})"                         // quoted string, starts with { and ends with }
-            + "|"
-            + "((?![\\{\\s])"                                          // unquoted value must not start with { or space, would also like = but too late to change
-            + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                   // control characters must be quoted
-            + ")"                                                      // although the spec does not allow {} embedded within a value, the retail code does.
-            + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
-            + ")*"                                                     // repeat the key-value pair
-            + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-        private static readonly Regex ConnectionStringRegexOdbc = new Regex(ConnectionStringPatternOdbc, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         #endif
 
         [Conditional("DEBUG")]
