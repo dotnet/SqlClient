@@ -1516,10 +1516,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException e)
             {
-                ParseComparison(parsetable, connectionString, synonyms, false, e);
+                ParseComparison(parsetable, connectionString, synonyms, e);
                 throw;
             }
-            ParseComparison(parsetable, connectionString, synonyms, false, null);
+            ParseComparison(parsetable, connectionString, synonyms, null);
             #endif
 
             return keychain;

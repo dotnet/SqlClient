@@ -80,12 +80,11 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, string> parseTable,
             string connectionString,
             IReadOnlyDictionary<string, string> synonyms,
-            bool firstKey,
             Exception e)
         {
             try
             {
-                var parsedValues = SplitConnectionString(connectionString, synonyms, firstKey);
+                var parsedValues = SplitConnectionString(connectionString, synonyms, false);
                 foreach (var parsedValue in parsedValues)
                 {
                     string key = parsedValue.Key;
