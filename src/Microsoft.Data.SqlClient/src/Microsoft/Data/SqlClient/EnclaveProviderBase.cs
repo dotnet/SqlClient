@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -88,6 +88,9 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region protected methods
+        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session and creates an enclave session.
+        protected abstract SqlEnclaveSession CreateEnclaveSessionCore(byte[] enclaveAttestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength);
+
         // Helper method to get the enclave session from the cache if present
         protected void GetEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, bool shouldGenerateNonce, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
@@ -173,8 +176,39 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Calls CreateEnclaveSessionCore to create an enclave session and stores the session information in the cache.
+        internal override void CreateEnclaveSession(byte[] attestationInfo, SqlEnclaveAttestationParameters attestationParameters, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        {
+            sqlEnclaveSession = null;
+            counter = 0;
+            try
+            {
+                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
+                sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
+                if (sqlEnclaveSession == null)
+                {
+                    // Add session to cache
+                    sqlEnclaveSession = CreateEnclaveSessionCore(attestationInfo, attestationParameters, enclaveSessionParameters, customData, customDataLength);
+                    SessionCache.CreateSession(enclaveSessionParameters, sqlEnclaveSession, out counter);
+                }
+            }
+            finally
+            {
+                // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
+                // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happen.
+                // Case 1: When the first request successfully creates the session, then all outstanding GetEnclaveSession will use the current session.
+                // Case 2: When the first request unable to create the enclave session (may be due to some error or the first request doesn't require enclave computation) then in those case we set the event timeout to 0.
+                UpdateEnclaveSessionLockStatus(sqlEnclaveSession);
+            }
+        }
+
+        internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
+        {
+            SessionCache.InvalidateSession(enclaveSessionParameters, enclaveSessionToInvalidate);
+        }
+
         // Reset the session lock status
-        protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
+        private void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)
         {
             // As per current design, we want to minimize the number of create session calls. To achieve this we block all the GetEnclaveSession calls until the first call to
             // GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession completes or the event timeout happens.
@@ -192,24 +226,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        // Helper method to remove the enclave session from the cache
-        protected void InvalidateEnclaveSessionHelper(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
-        {
-            SessionCache.InvalidateSession(enclaveSessionParameters, enclaveSessionToInvalidate);
-        }
-
-        // Helper method for getting the enclave session from the session cache
-        protected SqlEnclaveSession GetEnclaveSessionFromCache(EnclaveSessionParameters enclaveSessionParameters, out long counter)
-        {
-            return SessionCache.GetEnclaveSession(enclaveSessionParameters, out counter);
-        }
-
-        // Helper method for adding the enclave session to the session cache
-        protected SqlEnclaveSession AddEnclaveSessionToCache(EnclaveSessionParameters enclaveSessionParameters, byte[] sharedSecret, long sessionId, out long counter)
-        {
-            return SessionCache.CreateSession(enclaveSessionParameters, sharedSecret, sessionId, out counter);
         }
     }
     #endregion
