@@ -27,11 +27,13 @@ namespace Microsoft.Data.SqlClient
         // when not worried about the class being modified during execution
 
         #region DbConnectionOptions fields
-
-        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
         internal const string DataDirectory = "|datadirectory|";
 
+        #if NETFRAMEWORK
+        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
+
         private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
+        #endif
 
         internal readonly bool _hasPasswordKeyword;
         internal readonly bool _hasUserIdKeyword;
