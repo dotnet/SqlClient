@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient
             _usersConnectionString = connectionString ?? "";
             if (_usersConnectionString.Length > 0)
             {
-                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap, false);
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) ||
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
@@ -1472,8 +1472,7 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, string> parsetable,
             string connectionString,
             bool buildChain,
-            IReadOnlyDictionary<string, string> synonyms,
-            bool firstKey)
+            IReadOnlyDictionary<string, string> synonyms)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -1490,7 +1489,7 @@ namespace Microsoft.Data.SqlClient
                     int startPosition = nextStartPosition;
 
                     string keyname, keyvalue;
-                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
+                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, false, out keyname, out keyvalue);
                     if (string.IsNullOrEmpty(keyname))
                     {
                         // if (nextStartPosition != endPosition) { throw; }
@@ -1509,10 +1508,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.KeywordNotSupported(keyname);
                     }
-                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
-                    {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                    }
+                    // Last key-value pair wins
+                    parsetable[realkeyname] = keyvalue;
 
                     if (localKeychain != null)
                     {
@@ -1527,10 +1524,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException e)
             {
-                ParseComparison(parsetable, connectionString, synonyms, firstKey, e);
+                ParseComparison(parsetable, connectionString, synonyms, false, e);
                 throw;
             }
-            ParseComparison(parsetable, connectionString, synonyms, firstKey, null);
+            ParseComparison(parsetable, connectionString, synonyms, false, null);
             #endif
 
             return keychain;
