@@ -52,6 +52,7 @@
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Json" version="10.0.3" />
         <dependency id="System.Threading.Channels" version="10.0.3" />
+        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
         <dependency id="System.ValueTuple" version="4.6.2" />
       </group>
       <group targetFramework="net8.0">
@@ -65,18 +66,20 @@
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
+        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
       </group>
       <group targetFramework="net9.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.13" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.18" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$AbstractionsVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$LoggingVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="$SniVersionRange$" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.13" exclude="Compile" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.18" exclude="Compile" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="9.0.13" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.13" />
+        <dependency id="System.Configuration.ConfigurationManager" version="9.0.18" exclude="Compile" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.18" />
+        <dependency id="System.Threading.RateLimiting" version="9.0.18" />
       </group>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
@@ -92,6 +95,7 @@
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Json" version="10.0.3" />
         <dependency id="System.Threading.Channels" version="10.0.3" />
+        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
       </group>
     </dependencies>
 

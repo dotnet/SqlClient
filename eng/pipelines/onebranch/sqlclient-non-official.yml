@@ -185,7 +185,7 @@ extends:
         # Similar to the software name, we have a single version registered as well.  This has
         # nothing to do with the NuGet package version.  It is purely an APIScan registration
         # value that points to our backend configuration.
-        softwareVersion: '6.10'
+        versionNumber: $(ApiScanSoftwareVersion)
 
         # We want the standard level of logging.
         verbosityLevel: standard

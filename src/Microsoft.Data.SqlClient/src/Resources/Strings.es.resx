@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>No se pudo encontrar una ranura vacía en el grupo de conexiones.</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>No se pudo reemplazar la conexión porque ya no está en el grupo de conexiones.</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>El grupo de conexiones se ha cerrado.</value>
   </data>
