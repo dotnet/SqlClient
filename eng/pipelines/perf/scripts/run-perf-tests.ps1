@@ -790,6 +790,18 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
     if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
         $interleaveArgs += @("--baseline-runner-config", $BaselineRunnerConfig, "--current-runner-config", $CurrentRunnerConfig)
+
+        # A switch experiment flips intended behaviour, so benchmarks that measure that behaviour
+        # regress by design. If the switch has an annotation file, hand it to the comparison so those
+        # show up as expected differences instead of being re-litigated every run. Optional: a switch
+        # with no annotated benchmarks simply has no file.
+        $ExpectedDifferencesFile = Join-Path (Split-Path -Parent $ScriptDir) (Join-Path "expected-differences" "$SwitchUnderTest.json")
+        if (Test-Path $ExpectedDifferencesFile) {
+            Write-Host "Using expected-differences annotations: $ExpectedDifferencesFile"
+            $interleaveArgs += @("--expected-differences", $ExpectedDifferencesFile)
+        } else {
+            Write-Host "No expected-differences file for $SwitchUnderTest; all regressions will be reported as such."
+        }
     }
     if ($FailOnRegression) {
         Write-Host "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> $RegressionThreshold%) will fail the run."

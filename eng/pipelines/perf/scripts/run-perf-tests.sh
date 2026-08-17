@@ -805,6 +805,17 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
             --baseline-runner-config "${BASELINE_RUNNER_CONFIG}"
             --current-runner-config "${CURRENT_RUNNER_CONFIG}"
         )
+        # A switch experiment flips intended behaviour, so benchmarks that measure that behaviour
+        # regress by design. If the switch has an annotation file, hand it to the comparison so those
+        # show up as expected differences instead of being re-litigated every run. Optional: a switch
+        # with no annotated benchmarks simply has no file.
+        expectedDifferencesFile="${SCRIPT_DIR}/../expected-differences/${switchUnderTest}.json"
+        if [[ -f "${expectedDifferencesFile}" ]]; then
+            echo "Using expected-differences annotations: ${expectedDifferencesFile}"
+            interleave_args+=(--expected-differences "${expectedDifferencesFile}")
+        else
+            echo "No expected-differences file for ${switchUnderTest}; all regressions will be reported as such."
+        fi
     fi
     if [[ "${failOnRegression}" == "true" ]]; then
         echo "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> ${regressionThreshold}%) will fail the run."
