@@ -10,6 +10,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     public class Column
     {
+        private const string AlwaysEncryptedEncryptionType = "DETERMINISTIC";
+        private const string AlwaysEncryptedAlgorithm = "AEAD_AES_256_CBC_HMAC_SHA_256";
+        private const string AlwaysEncryptedCharacterCollation = "Latin1_General_BIN2";
+
         public string Name;
         public DataType Type;
         public object Value;
@@ -28,12 +32,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 ? $"{Name} {Type}"
                 : $"{Name} {Type} {EncryptedCollation}ENCRYPTED WITH " +
                     $"(COLUMN_ENCRYPTION_KEY = {EncryptionKey.Name}," +
-                    $"ENCRYPTION_TYPE = DETERMINISTIC," +
-                    $"ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256')";
+                    $"ENCRYPTION_TYPE = {AlwaysEncryptedEncryptionType}," +
+                    $"ALGORITHM = '{AlwaysEncryptedAlgorithm}')";
 
         private string EncryptedCollation =>
             Type is MaxLengthValueType maxLengthValueType && maxLengthValueType.CharacterType
-                ? "COLLATE Latin1_General_BIN2 "
+                ? $"COLLATE {AlwaysEncryptedCharacterCollation} "
                 : string.Empty;
 
         public DataColumn AsDataColumn() => new(Name);
