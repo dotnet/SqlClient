@@ -74,26 +74,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         /// </summary>
         [Theory]
         // Non-Azure endpoint, no explicit TNIR keyword, no token: TNIR stays enabled.
-        [InlineData("my.test.server", false, false, false)]
+        [InlineData("my.test.server", false, null, false)]
         // Non-Azure endpoint, no explicit TNIR keyword, token supplied: TNIR is disabled.
-        [InlineData("my.test.server", true, false, true)]
+        [InlineData("my.test.server", true, null, true)]
         // Azure endpoint always disables TNIR when the keyword is absent.
-        [InlineData("test.database.windows.net", false, false, true)]
-        [InlineData("test.database.windows.net", true, false, true)]
-        // An explicit TNIR keyword always wins, regardless of access token or endpoint.
+        [InlineData("test.database.windows.net", false, null, true)]
+        [InlineData("test.database.windows.net", true, null, true)]
+        // An explicit TNIR keyword always wins, regardless of access token or endpoint. Note that
+        // this method only decides whether the default is overridden; an explicit false is honoured
+        // by the caller through SqlConnectionOptions.TransparentNetworkIPResolution itself.
         [InlineData("my.test.server", true, true, false)]
         [InlineData("test.database.windows.net", true, true, false)]
         [InlineData("test.database.windows.net", false, true, false)]
+        [InlineData("my.test.server", true, false, false)]
+        [InlineData("my.test.server", false, false, false)]
+        [InlineData("test.database.windows.net", true, false, false)]
+        [InlineData("test.database.windows.net", false, false, false)]
         public void TestShouldDisableTnirWithCallerSuppliedToken(
             string dataSource,
             bool isAccessTokenProvided,
-            bool tnirExplicitlySpecified,
+            bool? tnirInConnString,
             bool expectedValue)
         {
             SqlConnectionStringBuilder builder = new() { DataSource = dataSource };
-            if (tnirExplicitlySpecified)
+            if (tnirInConnString.HasValue)
             {
-                builder.TransparentNetworkIPResolution = true;
+                builder.TransparentNetworkIPResolution = tnirInConnString.Value;
             }
 
             SqlConnectionOptions connectionOptions = new(builder.ConnectionString);

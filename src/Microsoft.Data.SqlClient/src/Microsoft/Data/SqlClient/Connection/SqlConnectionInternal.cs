@@ -168,6 +168,19 @@ namespace Microsoft.Data.SqlClient.Connection
         internal bool IsAccessTokenProvided =>
             _accessTokenInBytes != null || _accessTokenCallback != null;
 
+        #if NETFRAMEWORK
+        /// <summary>
+        /// The Transparent Network IP Resolution decision applied by the most recent
+        /// <see cref="LoginNoFailover"/> call, or <see langword="null"/> if login has not run.
+        /// </summary>
+        /// <remarks>
+        /// Exposed for tests. <see cref="ShouldDisableTnir"/> is pure and can be tested directly,
+        /// but that leaves the wiring, in particular that <see cref="IsAccessTokenProvided"/> is
+        /// the value fed into it, unverified. This records the decision that was actually used.
+        /// </remarks>
+        internal bool? TnirDisabledDuringLogin { get; private set; }
+        #endif
+
         // @TODO: Should be private and accessed via internal property
         // @TODO: Rename to match naming conventions
         internal bool _cleanSQLDNSCaching = false;
@@ -3141,6 +3154,7 @@ namespace Microsoft.Data.SqlClient.Connection
             bool disableTnir = ShouldDisableTnir(
                 connectionOptions,
                 isAccessTokenProvided: IsAccessTokenProvided);
+            TnirDisabledDuringLogin = disableTnir;
             bool isParallel = connectionOptions.MultiSubnetFailover ||
                               (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
             #endif

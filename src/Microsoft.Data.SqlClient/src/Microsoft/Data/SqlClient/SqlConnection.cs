@@ -262,6 +262,13 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+
+            // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
+            // The provider must be copied along with it, otherwise the clone would authenticate
+            // with a provider that its public property does not report, and would let the caller
+            // set AccessToken/AccessTokenCallback without tripping the mutual-exclusivity checks.
+            _sspiContextProvider = connection._sspiContextProvider;
+
             CacheConnectionStringProperties();
         }
 
@@ -1128,7 +1135,12 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: _sspiContextProvider));
             }
         }
 

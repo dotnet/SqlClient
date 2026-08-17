@@ -765,6 +765,71 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> CreateStubCallback() =>
+            (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+        private static async Task OpenConnection(SqlConnection connection, bool openAsync)
+        {
+            if (openAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+        }
+
+        /// <summary>
+        /// When the server signals FEDAUTHREQUIRED in its pre-login response, a caller-supplied
+        /// token must cause the client to honour that response and echo it back in the Login7
+        /// federated authentication feature extension. The simulated server rejects a mismatched
+        /// echo, so this fails if <c>SqlConnectionInternal.IsAccessTokenProvided</c> stops
+        /// accounting for <see cref="SqlConnection.AccessTokenCallback"/>.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task AccessTokenCallbackHonorsPreLoginFedAuthRequired(bool openAsync)
+        {
+            using TdsServer server = new(new TdsServerArguments()
+            {
+                FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthRequired,
+            });
+            server.Start();
+
+            string connectionString = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connectionString)
+            {
+                AccessTokenCallback = CreateStubCallback(),
+            };
+
+            await OpenConnection(connection, openAsync);
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+#if NETFRAMEWORK
+            // Transparent Network IP Resolution is disabled by default whenever the caller supplies
+            // a token. Asserting on the decision LoginNoFailover actually applied covers the wiring
+            // that a direct test of ShouldDisableTnir cannot.
+            Assert.True(GetTnirDisabledDuringLogin(connection));
+
+            using SqlConnection baseline = new(connectionString);
+            await OpenConnection(baseline, openAsync);
+            Assert.False(GetTnirDisabledDuringLogin(baseline));
+
+            static bool? GetTnirDisabledDuringLogin(SqlConnection connection) =>
+                ((global::Microsoft.Data.SqlClient.Connection.SqlConnectionInternal)connection.InnerConnection)
+                    .TnirDisabledDuringLogin;
+#endif
+        }
+
         /// <summary>
         /// Minimal concrete <see cref="SspiContextProvider"/> so tests can assign a non-null value.
         /// Never used to authenticate, so <see cref="GenerateContext"/> is not exercised.
@@ -776,6 +841,47 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 IBufferWriter<byte> outgoingBlobWriter,
                 SspiAuthenticationParameters authParams)
                 => throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// <see cref="ICloneable.Clone"/> retains the source connection's pool group, and therefore
+        /// its pool key. It must copy <see cref="SqlConnection.SspiContextProvider"/> too, otherwise
+        /// the clone reports no provider while its pool key still carries one, and accepts an access
+        /// token that the mutual-exclusivity validation would have rejected.
+        /// </summary>
+        [Fact]
+        public void CloneCopiesSspiContextProvider()
+        {
+            using SqlConnection source = new("Data Source=localhost");
+            SspiContextProvider provider = new TestSspiContextProvider();
+            source.SspiContextProvider = provider;
+
+            using SqlConnection clone = (SqlConnection)((ICloneable)source).Clone();
+
+            Assert.Same(provider, clone.SspiContextProvider);
+            Assert.Same(provider, clone.PoolGroup.PoolKey.SspiContextProvider);
+            Assert.Throws<InvalidOperationException>(() => clone.AccessToken = "token");
+        }
+
+        /// <summary>
+        /// The <see cref="SqlConnection.Credential"/> setter also rebuilds the pool key, so it must
+        /// preserve <see cref="SqlConnection.SspiContextProvider"/> rather than dropping it and
+        /// leaving the property and the pool key disagreeing.
+        /// </summary>
+        [Fact]
+        public void CredentialSetterPreservesSspiContextProviderInPoolKey()
+        {
+            SecureString password = new();
+            password.MakeReadOnly();
+
+            using SqlConnection conn = new("Data Source=localhost");
+            SspiContextProvider provider = new TestSspiContextProvider();
+            conn.SspiContextProvider = provider;
+
+            conn.Credential = new SqlCredential("user", password);
+
+            Assert.Same(provider, conn.SspiContextProvider);
+            Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
         }
 
         /// <summary>
