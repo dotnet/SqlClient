@@ -71,6 +71,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolContentionRunnerConfig;
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
+        public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
     }
 
     public class RunnerJob

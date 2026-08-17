@@ -230,6 +230,24 @@ connected, so the pool genuinely needs N physical connections and the only varia
 it can open them. That rewards concurrent creation instead of penalising it, and it is the case
 `RapidFireOpenClose` cannot express.
 
+The same principle applies to how a benchmark schedules its workers. A sync `Open()` that has to
+wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a queued continuation
+stalls when every threadpool thread is already blocked; the wake-up waits on thread injection, which
+costs about a second each time. Threadpool threads are the realistic case, because sync database
+calls in ASP.NET run on them, and they are the only configuration in which that stall is visible.
+Benchmarks therefore keep threadpool threads as the default and add dedicated-thread variants
+alongside rather than instead:
+
+- `ConnectionPoolContentionRunner.SteadyStateOpenQueryCloseDedicatedThreads` runs the existing
+  workload on dedicated threads. A regression in both variants points at the pool; a regression in
+  only the threadpool variant points at the waiter wake path.
+- `ConnectionPoolThreadPoolPressureRunner` pins the threadpool floor via `[Params]`, below the worker
+  count (starved) and above it (control), so the effect is reproducible instead of depending on
+  hill-climbing timing.
+
+This failure mode is tail latency, not a shifted median, so compare distributions. Aggregating with
+a per-configuration minimum hides it completely.
+
 Without somewhere to record that, the same benchmarks get re-investigated every run and
 `--fail-on-regression` is unusable for experiments. Each switch may therefore have an annotation file
 at `expected-differences/<SwitchName>.json`, picked up automatically by
