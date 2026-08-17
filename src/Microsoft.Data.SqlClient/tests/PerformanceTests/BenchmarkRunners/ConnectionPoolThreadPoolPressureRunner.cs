@@ -33,6 +33,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// The effect is tail latency, not a shifted median, so compare distributions rather
     /// than means alone.
     ///
+    /// A regression here is a statement about application configuration, not a pool defect.
+    /// An application that blocks more thread pool threads than the thread pool has workers
+    /// is already misconfigured, and pre-warming the thread pool is the application's
+    /// responsibility rather than the driver's. This runner exists to characterise where
+    /// that boundary is and to catch it moving, not to drive the delta to zero.
+    ///
     /// The pool implementation (legacy vs V2) is a process-level choice - see the remarks on
     /// <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2 false then
     /// true) to compare.

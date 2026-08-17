@@ -248,6 +248,13 @@ alongside rather than instead:
 This failure mode is tail latency, not a shifted median, so compare distributions. Aggregating with
 a per-configuration minimum hides it completely.
 
+Note what those benchmarks are for. Saturating the thread pool with blocked synchronous calls is an
+application configuration problem, not a pool defect: an application should keep its parallelism
+below the thread pool's worker count so newly queued work still runs promptly, and pre-warming the
+thread pool is the application's responsibility rather than the driver's. These benchmarks exist to
+characterise where that boundary sits and to catch it moving, so a delta here is annotated rather
+than fixed.
+
 Without somewhere to record that, the same benchmarks get re-investigated every run and
 `--fail-on-regression` is unusable for experiments. Each switch may therefore have an annotation file
 at `expected-differences/<SwitchName>.json`, picked up automatically by
