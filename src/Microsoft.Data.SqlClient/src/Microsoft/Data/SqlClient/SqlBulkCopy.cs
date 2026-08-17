@@ -193,6 +193,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlBulkCopyColumnMappingCollection _columnMappings;
         private SqlBulkCopyColumnMappingCollection _localColumnMappings;
+        private bool _localColumnMappingsResolveAliases;
 
         private SqlConnection _connection;
         private SqlTransaction _internalTransaction;
@@ -246,6 +247,7 @@ namespace Microsoft.Data.SqlClient
 
         // Metadata caching fields for CacheMetadata option
         internal BulkCopySimpleResultSet CachedMetadata { get; private set; }
+        private bool _cachedMetadataResolveAliases;
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
@@ -375,6 +377,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 CachedMetadata = null;
+                _cachedMetadataResolveAliases = false;
                 _destinationTableName = value;
             }
         }
@@ -486,9 +489,7 @@ namespace Microsoft.Data.SqlClient
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
-            bool resolveColumnAliases = ShouldResolveColumnAliases();
-            string createColumnAliasesTableQuery = resolveColumnAliases
-                ? """
+            string createColumnAliasesTableQuery = """
 
 CREATE TABLE #Column_Aliases
 (
@@ -496,9 +497,8 @@ CREATE TABLE #Column_Aliases
     [Canonical_Column_Id] INT,
     [Aliased_Column_Name] SYSNAME
 )
-"""
-                : string.Empty;
-            string populateColumnAliasesQuery = resolveColumnAliases
+""";
+            string populateColumnAliasesQuery = _localColumnMappingsResolveAliases
                 ? $"""
 
         EXEC sp_executesql N'
@@ -513,23 +513,21 @@ CREATE TABLE #Column_Aliases
         N'@Object_ID INT', @Object_ID = @Object_ID
 """
                 : string.Empty;
-            string removeShadowedColumnAliasesQuery = resolveColumnAliases
+            string removeShadowedColumnAliasesQuery = _localColumnMappingsResolveAliases
                 ? $"""
 
     DELETE FROM #Column_Aliases
     WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
 """
                 : string.Empty;
-            string selectColumnAliasesQuery = resolveColumnAliases
-                ? """
+            string selectColumnAliasesQuery = """
 
 SELECT [Canonical_Column_Name], [Aliased_Column_Name]
 FROM #Column_Aliases
 ORDER BY [Canonical_Column_Id] ASC
 
 DROP TABLE #Column_Aliases
-"""
-                : string.Empty;
+""";
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -637,8 +635,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             // Check if we have valid cached metadata for the current destination table
-            if (CachedMetadata != null
-                && (!ShouldResolveColumnAliases() || CachedMetadata.Count > ColumnAliasesResultId))
+            if (IsCachedMetadataValid())
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
                 result = CachedMetadata;
@@ -679,11 +676,18 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
+        internal bool IsCachedMetadataValid()
+        {
+            return CachedMetadata != null
+                && (!_localColumnMappingsResolveAliases || _cachedMetadataResolveAliases);
+        }
+
         private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
         {
             if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
             {
                 CachedMetadata = result;
+                _cachedMetadataResolveAliases = _localColumnMappingsResolveAliases;
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
             }
         }
@@ -1095,6 +1099,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public void ClearCachedMetadata()
         {
             CachedMetadata = null;
+            _cachedMetadataResolveAliases = false;
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache cleared");
         }
 
@@ -1119,6 +1124,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _columnMappings = null;
                 _parser = null;
                 CachedMetadata = null;
+                _cachedMetadataResolveAliases = false;
                 _operationMetaData = null;
                 try
                 {
@@ -1657,6 +1663,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             SqlServerEscapeHelper.EscapeIdentifier(query, columnName);
             query.Append(" ");
             query.Append(typeName);
+        }
+
+        private void ResetLocalColumnMappings()
+        {
+            _localColumnMappings = null;
+            _localColumnMappingsResolveAliases = false;
         }
 
         private bool ShouldResolveColumnAliases()
@@ -2385,7 +2397,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 foreach (SqlBulkCopyColumnMapping bulkCopyColumn in _localColumnMappings)
                 {
                     bulkCopyColumn.MappedDestinationColumn = null;
+                }
 
+                foreach (SqlBulkCopyColumnMapping bulkCopyColumn in _localColumnMappings)
+                {
                     if (bulkCopyColumn._internalSourceColumnOrdinal == -1)
                     {
                         unspecifiedColumnOrdinals = true;
@@ -2398,6 +2413,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _localColumnMappings = new SqlBulkCopyColumnMappingCollection();
                 _localColumnMappings.CreateDefaultMapping(columnCount);
             }
+
+            _localColumnMappingsResolveAliases = ShouldResolveColumnAliases();
 
             // perf: If the user specified all column ordinals we do not need to get a schematable
             if (unspecifiedColumnOrdinals)
@@ -3113,7 +3130,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             // Bulk copy task is completed at this moment.
                             if (task.IsCanceled)
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 try
                                 {
                                     sqlBulkCopy.CleanUpStateObject();
@@ -3125,11 +3142,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                             else if (task.Exception != null)
                             {
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 source.SetException(task.Exception.InnerException);
                             }
                             else
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 try
                                 {
                                     sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
@@ -3154,7 +3172,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 else
                 {
-                    _localColumnMappings = null;
+                    ResetLocalColumnMappings();
 
                     try
                     {
@@ -3173,7 +3191,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                _localColumnMappings = null;
+                ResetLocalColumnMappings();
 
                 try
                 {
