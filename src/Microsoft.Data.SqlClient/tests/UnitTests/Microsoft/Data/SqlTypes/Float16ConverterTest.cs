@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -36,16 +37,12 @@ public class Float16ConverterTest
             float expected = (float)BitConverter.UInt16BitsToHalf(bits);
             float actual = Float16Converter.ManualToSingle(bits);
 
-            if (float.IsNaN(expected))
-            {
-                Assert.True(float.IsNaN(actual), $"0x{bits:X4} should convert to NaN.");
-                continue;
-            }
-
-            // Compared bitwise so that positive and negative zero are distinguished.
+            // Compared bitwise so that positive and negative zero are distinguished, and so
+            // that a NaN's sign and payload are compared rather than only its NaN-ness.
             Assert.True(
                 BitConverter.SingleToInt32Bits(expected) == BitConverter.SingleToInt32Bits(actual),
-                $"0x{bits:X4} converted to {actual} but Half converts it to {expected}.");
+                $"0x{bits:X4} converted to 0x{BitConverter.SingleToInt32Bits(actual):X8} " +
+                $"but Half converts it to 0x{BitConverter.SingleToInt32Bits(expected):X8}.");
         }
     }
 
@@ -57,13 +54,10 @@ public class Float16ConverterTest
             ushort bits = (ushort)i;
             Half value = BitConverter.UInt16BitsToHalf(bits);
 
-            if (Half.IsNaN(value))
-            {
-                continue;
-            }
-
+            // Compared against a round trip through Half rather than against the original
+            // bits, because widening quietens a signalling NaN and so cannot be reversed.
             Assert.True(
-                bits == Float16Converter.ManualFromSingle((float)value),
+                BitConverter.HalfToUInt16Bits((Half)(float)value) == Float16Converter.ManualFromSingle((float)value),
                 $"0x{bits:X4} did not survive a round trip through single precision.");
         }
     }
@@ -79,14 +73,31 @@ public class Float16ConverterTest
         {
             float value = BitConverter.Int32BitsToSingle((int)(uint)b);
 
-            if (float.IsNaN(value))
-            {
-                continue;
-            }
-
             Assert.True(
                 BitConverter.HalfToUInt16Bits((Half)value) == Float16Converter.ManualFromSingle(value),
-                $"{value:R} (0x{(uint)b:X8}) was not narrowed the same way as Half.");
+                $"0x{(uint)b:X8} was not narrowed the same way as Half.");
+        }
+    }
+
+    [Fact]
+    public void ConvertsNaN_PreservingSignAndPayload()
+    {
+        // A NaN's sign and payload are carried through rather than canonicalised, so that
+        // the manual implementation and System.Half cannot diverge.
+        foreach (ushort bits in new ushort[] { 0x7E00, 0xFE00, 0x7C01, 0x7DFF, 0xFFFF })
+        {
+            Assert.Equal(
+                BitConverter.SingleToInt32Bits((float)BitConverter.UInt16BitsToHalf(bits)),
+                BitConverter.SingleToInt32Bits(Float16Converter.ManualToSingle(bits)));
+        }
+
+        foreach (uint bits in new uint[] { 0x7FC00000, 0xFFC00000, 0x7FFFFFFF, 0x7F800001 })
+        {
+            float value = BitConverter.Int32BitsToSingle((int)bits);
+
+            Assert.Equal(
+                BitConverter.HalfToUInt16Bits((Half)value),
+                Float16Converter.ManualFromSingle(value));
         }
     }
 

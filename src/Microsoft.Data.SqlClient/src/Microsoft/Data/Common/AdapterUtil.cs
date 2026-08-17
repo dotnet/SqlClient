@@ -1257,6 +1257,10 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidVectorHeader()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidVectorHeader));
 
+        internal static OverflowException VectorValueOutOfRangeForBaseType(float value, string baseType)
+            => new OverflowException(
+                StringsHelper.GetString(Strings.ADP_VectorValueOutOfRangeForBaseType, value, baseType));
+
         internal static Exception InvalidJsonStringForVector(string value, Exception inner)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidJsonStringForVector, value), inner);
 

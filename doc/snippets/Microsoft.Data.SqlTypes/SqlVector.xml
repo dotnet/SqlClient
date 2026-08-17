@@ -22,7 +22,9 @@
           Conversion between base types is performed by SQL Server, which reports an error if a
           value is outside the range the destination can represent. Converting from
           <c>float32</c> to <c>float16</c> loses precision for values which the narrower type
-          cannot represent exactly, in the same way as inserting a JSON literal does.
+          cannot represent exactly, in the same way as inserting a JSON literal does. During a
+          bulk copy the driver performs the conversion instead, and throws an
+          <see cref="T:System.OverflowException" /> for a value outside the destination's range.
         </para>
       </remarks>
     </SqlVector>
@@ -63,12 +65,5 @@
         within a single TDS packet: 1998 for <c>float32</c>, or 3996 for <c>float16</c>.
       </exception>
     </CreateNull>
-    <ToString>
-      <summary>
-        Returns the vector values as a JSON array, which is the textual form SQL Server
-        uses for vector values. Returns "Null" when the vector is null.
-      </summary>
-      <returns>A JSON array containing the vector values.</returns>
-    </ToString>
   </members>
 </docs>

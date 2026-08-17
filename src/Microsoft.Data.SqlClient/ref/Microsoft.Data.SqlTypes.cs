@@ -90,6 +90,4 @@ public readonly struct SqlVector<T> : System.Data.SqlTypes.INullable
     public System.ReadOnlyMemory<T> Memory { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
     public static SqlVector<T> CreateNull(int length) { throw null; }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToString/*' />
-    public override string ToString() { throw null; }
 }

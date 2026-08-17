@@ -175,22 +175,6 @@ internal sealed class ConnectionCapabilities
     public byte VectorVersion { get; set; }
 
     /// <summary>
-    /// Indicates support for the <c>vector</c> data type, with a backing type
-    /// of <c>float32</c>. This was introduced in SQL Server 2022, and is only
-    /// available if a FEATUREEXTACK token of value <c>0x0E</c> is received, and
-    /// if the version in this token's data is greater than or equal to <c>1</c>.
-    /// </summary>
-    public bool Float32VectorType => VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT32;
-
-    /// <summary>
-    /// Indicates support for the <c>vector</c> data type, with a backing type
-    /// of <c>float16</c>. This is only available if a FEATUREEXTACK token of value
-    /// <c>0x0E</c> is received, and if the version in this token's data is greater
-    /// than or equal to <c>2</c>.
-    /// </summary>
-    public bool Float16VectorType => VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16;
-
-    /// <summary>
     /// Indicates support for the <c>json</c> data type. This was introduced in
     /// SQL Server 2022, and is only available if a FEATUREEXTACK token of value
     /// <c>0x0D</c> is received, and if the version in this token's data is

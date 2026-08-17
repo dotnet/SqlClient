@@ -978,13 +978,18 @@ namespace Microsoft.Data.SqlClient
         {
             if (_type is StorageType.Vector)
             {
+                // The payload's base type may differ from T: a float16 column can be read as
+                // a vector of single precision values, which is the only strongly typed form
+                // available on .NET Framework. Validate the pairing before considering
+                // nullness, so that the outcome depends on the column's base type rather than
+                // on whether a particular row happens to be null.
+                SqlVector<T>.ThrowIfNotConvertibleFrom(_value._vectorInfo._elementType);
+
                 if (IsNull)
                 {
                     return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
                 }
-                // The payload's base type may differ from T: a float16 column can be
-                // read as a vector of single precision values, which is the only
-                // strongly typed form available on .NET Framework.
+
                 return SqlVector<T>.FromTdsPayload(SqlBinary.Value);
             }
             return (SqlVector<T>)SqlValue;
@@ -1046,6 +1051,25 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// The provider specific counterpart of <see cref="GetVectorValue"/>. It differs
+        /// only where a float16 vector is surfaced as its JSON rendering, which is returned
+        /// as a <see cref="SqlString"/> so that every provider specific value remains a
+        /// type from <c>System.Data.SqlTypes</c>.
+        /// </summary>
+        internal object GetVectorSqlValue()
+        {
+            #if NET
+            return GetVectorValue();
+            #else
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+
+            return elementType == MetaType.SqlVectorElementType.Float16
+                ? SqlString
+                : GetVectorValue();
+            #endif
+        }
+
         internal object SqlValue
         {
             get
@@ -1081,7 +1105,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Json:
                         return SqlJson;
                     case StorageType.Vector:
-                        return GetVectorValue();
+                        return GetVectorSqlValue();
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);

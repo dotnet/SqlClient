@@ -836,8 +836,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Theory]
         // A server which supports the same version as the client negotiates that version.
         [InlineData(true, 0x2, 0x2)]
-        // A server which supports a later version than the client falls back to the
-        // client's, since the client cannot interpret anything newer.
+        // A server which supports a later version than the client is capped by the test
+        // harness, so the client still sees its own version on the wire. The client's own
+        // ceiling is exercised by TestConnRejectsVectorFeatExtVersionAboveClientCeiling.
         [InlineData(true, 0x3, 0x2)]
         // A server which supports only the earlier version negotiates that instead.
         [InlineData(true, 0x1, 0x1)]
@@ -932,6 +933,56 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
+        }
+
+        // Test that the driver refuses a vector feature extension ack whose version it
+        // cannot interpret. The server here acknowledges its own version rather than
+        // capping it to the client's, which is what a future server supporting a later
+        // layout would do.
+        [Theory]
+        // One past the client's ceiling.
+        [InlineData(0x3)]
+        // Well past it.
+        [InlineData(0xF)]
+        public void TestConnRejectsVectorFeatExtVersionAboveClientCeiling(byte serverVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
+            server.AcknowledgeRawVectorFeatureExtVersion = true;
+
+            byte acknowledgedVersion = 0;
+
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                TDSFeatureExtAckGenericOption option = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault()?
+                    .Options
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    acknowledgedVersion = option.FeatureAckData[0];
+                }
+            };
+
+            string connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connStr);
+
+            Assert.Throws<InvalidOperationException>(() => connection.Open());
+
+            // Confirms the harness really did send the unsupported version, so the failure
+            // above is the client's ceiling rather than an unrelated connection problem.
+            Assert.Equal(serverVersion, acknowledgedVersion);
         }
 
         // Test that the driver sends the UserAgent feature extension when

@@ -143,7 +143,9 @@ Notes:
   it is in preview.
 - Conversion between base types is performed by SQL Server for parameters, and by the driver
   for `SqlBulkCopy`, where the destination's base type is stated in the `INSERT BULK`
-  statement. Narrowing to `float16` loses precision, and fails for values outside its range.
+  statement. Narrowing to `float16` loses precision, and fails for values outside its range:
+  the server reports the failure for a parameter, and the driver throws an
+  `OverflowException` for a bulk copy.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
   for columns which are not vectors.

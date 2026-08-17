@@ -21,12 +21,12 @@ where T : unmanaged
 {
     #region Constants
 
-    private const byte VecHeaderMagicNo = 0xA9;
-    private const byte VecVersionNo = 0x01;
+    private const byte VecHeaderMagicNo = SqlVectorPayload.HeaderMagicNumber;
+    private const byte VecVersionNo = SqlVectorPayload.HeaderVersion;
 
     // Offsets of the fields within the vector header. Refer to TDS section 2.2.5.5.7.
-    private const int VecHeaderLengthOffset = 2;
-    private const int VecHeaderElementTypeOffset = 4;
+    private const int VecHeaderLengthOffset = SqlVectorPayload.LengthOffset;
+    private const int VecHeaderElementTypeOffset = SqlVectorPayload.ElementTypeOffset;
 
     #endregion
 
@@ -126,9 +126,6 @@ where T : unmanaged
         return JsonSerializer.Serialize(Memory);
     }
 
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToString/*' />
-    public override string ToString() => GetString();
-
     /// <summary>
     /// Creates a vector from a TDS payload, converting the elements when the payload's
     /// base type differs from <typeparamref name="T"/>.
@@ -148,28 +145,59 @@ where T : unmanaged
     /// </remarks>
     internal static SqlVector<T> FromTdsPayload(byte[] tdsBytes)
     {
-        if (tdsBytes.Length < TdsEnums.VECTOR_HEADER_SIZE)
-        {
-            throw ADP.InvalidVectorHeader();
-        }
+        ThrowIfHeaderInvalid(tdsBytes);
+        ThrowIfNotConvertibleFrom(tdsBytes[VecHeaderElementTypeOffset]);
 
-        byte payloadElementType = tdsBytes[VecHeaderElementTypeOffset];
-        (byte targetElementType, _, _) = GetTypeFieldsOrThrow();
-
-        if (payloadElementType == targetElementType)
+        if (tdsBytes[VecHeaderElementTypeOffset] == ElementTypeOf())
         {
             return new SqlVector<T>(tdsBytes);
         }
 
+        return new SqlVector<T>(WidenFloat16Payload(tdsBytes));
+    }
+
+    /// <summary>
+    /// Throws if a payload with the given base type cannot be surfaced as a vector of
+    /// <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// Whether a payload can be read as a given element type is a property of the column's
+    /// base type, so this is checked before a value is examined. A null value would
+    /// otherwise appear to succeed where a populated one in the same column fails.
+    /// </remarks>
+    internal static void ThrowIfNotConvertibleFrom(byte payloadElementType)
+    {
+        byte targetElementType = ElementTypeOf();
+
+        if (payloadElementType == targetElementType)
+        {
+            return;
+        }
+
+        // Widening is exact, so it is performed implicitly. Narrowing is lossy and never is.
         if (payloadElementType == (byte)MetaType.SqlVectorElementType.Float16 &&
             targetElementType == (byte)MetaType.SqlVectorElementType.Float32)
         {
-            return new SqlVector<T>(WidenFloat16Payload(tdsBytes));
+            return;
         }
 
-        // Any other combination would be a narrowing conversion, which is lossy and so
-        // is never performed implicitly.
         throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+    }
+
+    /// <summary>
+    /// Validates the fields of a vector header which do not depend on the base type.
+    /// </summary>
+    private static void ThrowIfHeaderInvalid(byte[] tdsBytes) =>
+        SqlVectorPayload.ThrowIfHeaderInvalid(tdsBytes);
+
+    /// <summary>
+    /// Returns the vector base type which corresponds to <typeparamref name="T"/>.
+    /// </summary>
+    private static byte ElementTypeOf()
+    {
+        (byte elementType, _, _) = GetTypeFieldsOrThrow();
+
+        return elementType;
     }
 
     /// <summary>
@@ -400,104 +428,6 @@ where T : unmanaged
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// Rewrites a TDS vector payload so that its elements use the requested base type.
-    /// </summary>
-    /// <remarks>
-    /// This works on every target framework, including those without <c>System.Half</c>,
-    /// because it produces a raw payload rather than a strongly typed vector. It is used by
-    /// bulk copy, where the base type written to the wire must match the destination
-    /// column's: the server reports a mismatch as a column length error rather than
-    /// converting the value, because binary16 and binary32 elements differ in size.
-    /// </remarks>
-    internal static byte[] ConvertPayloadElementType(byte[] tdsBytes, byte targetElementType)
-    {
-        if (tdsBytes.Length < TdsEnums.VECTOR_HEADER_SIZE)
-        {
-            throw ADP.InvalidVectorHeader();
-        }
-
-        byte sourceElementType = tdsBytes[VecHeaderElementTypeOffset];
-
-        if (sourceElementType == targetElementType)
-        {
-            return tdsBytes;
-        }
-
-        int length = BinaryPrimitives.ReadUInt16LittleEndian(tdsBytes.AsSpan(VecHeaderLengthOffset));
-        int sourceElementSize = MetaType.GetVectorElementSize(sourceElementType);
-        int targetElementSize = MetaType.GetVectorElementSize(targetElementType);
-
-        if (tdsBytes.Length != TdsEnums.VECTOR_HEADER_SIZE + (sourceElementSize * length))
-        {
-            throw ADP.InvalidVectorHeader();
-        }
-
-        byte[] result = new byte[TdsEnums.VECTOR_HEADER_SIZE + (targetElementSize * length)];
-
-        result[0] = VecHeaderMagicNo;
-        result[1] = VecVersionNo;
-        BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(VecHeaderLengthOffset), (ushort)length);
-        result[VecHeaderElementTypeOffset] = targetElementType;
-
-        for (int i = 0,
-                 sourcePosition = TdsEnums.VECTOR_HEADER_SIZE,
-                 targetPosition = TdsEnums.VECTOR_HEADER_SIZE;
-             i < length;
-             i++, sourcePosition += sourceElementSize, targetPosition += targetElementSize)
-        {
-            // Every supported base type widens to single precision without loss, so it
-            // serves as the common representation for the conversion.
-            WriteElement(
-                result,
-                targetPosition,
-                targetElementType,
-                ReadElement(tdsBytes, sourcePosition, sourceElementType));
-        }
-
-        return result;
-    }
-
-    private static float ReadElement(byte[] payload, int position, byte elementType)
-    {
-        switch ((MetaType.SqlVectorElementType)elementType)
-        {
-            case MetaType.SqlVectorElementType.Float32:
-                #if NET
-                return BinaryPrimitives.ReadSingleLittleEndian(payload.AsSpan(position));
-                #else
-                return BitConverterCompatible.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(payload.AsSpan(position)));
-                #endif
-
-            case MetaType.SqlVectorElementType.Float16:
-                return Float16Converter.ToSingle(BinaryPrimitives.ReadUInt16LittleEndian(payload.AsSpan(position)));
-
-            default:
-                throw SQL.VectorTypeNotSupported(elementType.ToString());
-        }
-    }
-
-    private static void WriteElement(byte[] payload, int position, byte elementType, float value)
-    {
-        switch ((MetaType.SqlVectorElementType)elementType)
-        {
-            case MetaType.SqlVectorElementType.Float32:
-                #if NET
-                BinaryPrimitives.WriteSingleLittleEndian(payload.AsSpan(position), value);
-                #else
-                BinaryPrimitives.WriteInt32LittleEndian(payload.AsSpan(position), BitConverterCompatible.SingleToInt32Bits(value));
-                #endif
-                break;
-
-            case MetaType.SqlVectorElementType.Float16:
-                BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(position), Float16Converter.FromSingle(value));
-                break;
-
-            default:
-                throw SQL.VectorTypeNotSupported(elementType.ToString());
-        }
     }
 
     #endregion

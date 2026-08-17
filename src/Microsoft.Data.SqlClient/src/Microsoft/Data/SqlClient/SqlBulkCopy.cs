@@ -1549,7 +1549,8 @@ DROP TABLE #Column_Aliases
                 // That representation is a JSON string on frameworks without System.Half,
                 // which is both larger than the payload and unable to carry a negative zero.
                 if (metadata.type == SqlDbTypeExtensions.Vector &&
-                    _sqlDataReaderRowSource?.MetaData[sourceOrdinal].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    _sqlDataReaderRowSource?.MetaData is { } sourceMetaData &&
+                    sourceMetaData[sourceOrdinal].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
                 {
                     method = ValueMethod.VectorPayload;
                 }
@@ -1752,7 +1753,7 @@ DROP TABLE #Column_Aliases
             // The payload is converted directly rather than through a strongly typed vector,
             // so that .NET Framework, which has no System.Half, can also write to float16
             // destinations.
-            return SqlTypes.SqlVector<float>.ConvertPayloadElementType(payload, destinationElementType);
+            return SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
         }
 
         private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
@@ -1853,7 +1854,7 @@ DROP TABLE #Column_Aliases
                         // uses the source value's own base type: a JSON string always yields
                         // float32, which is how a float16 column reads back on frameworks
                         // without System.Half.
-                        value = ConvertVectorToBaseType(value, metadata.scale);
+                        value = ConvertVectorToBaseType(value, scale);
                         break;
 
                     case TdsEnums.SQLINTN:

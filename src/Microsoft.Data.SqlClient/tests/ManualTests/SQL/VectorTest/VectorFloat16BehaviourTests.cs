@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlTypes;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlTypes;
 using Xunit;
@@ -24,6 +26,11 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 {
     private const string ColumnName = "VectorData";
     private const string ParameterName = "@VectorData";
+
+    /// <summary>
+    /// The server's error for a float32 value which cannot be narrowed to float16.
+    /// </summary>
+    private const int Float32ToFloat16OutOfRangeError = 42284;
 
     private readonly string _connectionString = DataTestUtility.TCPConnectionString;
     private readonly SqlConnection _managementConnection;
@@ -98,7 +105,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
         Assert.True(reader.Read());
         Assert.Equal("[65504,1,2]", reader.GetString(0));
-        Assert.Equal("[65504,1,2]", reader.GetValue(0).ToString());
+        Assert.Equal("[65504,1,2]", reader.GetFieldValue<string>(0));
     }
 
     [ConditionalFact(nameof(IsSupported))]
@@ -111,6 +118,102 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
         Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<double>(0));
         Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<int>(0));
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
+    public void ReportsProviderSpecificValueAsASqlType()
+    {
+        // Every provider specific value is a type from System.Data.SqlTypes, including the
+        // JSON rendering a float16 column falls back to where System.Half is unavailable.
+        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+
+        using SqlDataReader reader = Select(_float16Table);
+        Assert.True(reader.Read());
+
+        #if NET
+        Assert.IsType<SqlVector<Half>>(reader.GetProviderSpecificValue(0));
+        Assert.Equal(typeof(SqlVector<Half>), reader.GetProviderSpecificFieldType(0));
+        #else
+        SqlString value = Assert.IsType<SqlString>(reader.GetProviderSpecificValue(0));
+        Assert.Equal("[1.5,2.5,3.5]", value.Value);
+        Assert.Equal(typeof(SqlString), reader.GetProviderSpecificFieldType(0));
+
+        // GetValue is the CLR path, so it keeps returning a plain string.
+        Assert.IsType<string>(reader.GetValue(0));
+        Assert.Equal(typeof(string), reader.GetFieldType(0));
+        #endif
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
+    public void ReportsNarrowingReadsConsistentlyForNullAndNonNullRows()
+    {
+        // The base type pairing is a property of the column, so a null row has to be
+        // rejected the same way a populated one is. Reading a float32 column as a vector of
+        // a narrower element type is not supported in either case.
+        Insert(_float32Table, DBNull.Value);
+        Insert(_float32Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command =
+            new($"SELECT {ColumnName} FROM {_float32Table.Name} ORDER BY Id DESC", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // The populated row is read first, then the null one, so that a failure identifies
+        // which of the two diverged.
+        Assert.True(reader.Read());
+        Assert.False(reader.IsDBNull(0));
+        AssertNarrowingReadIsRejected(reader);
+
+        Assert.True(reader.Read());
+        Assert.True(reader.IsDBNull(0));
+        AssertNarrowingReadIsRejected(reader);
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
+    public async Task ReportsNarrowingReadsConsistentlyForNullAndNonNullRowsAsync()
+    {
+        Insert(_float32Table, DBNull.Value);
+        Insert(_float32Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+
+        using SqlConnection connection = new(_connectionString);
+        await connection.OpenAsync();
+
+        using SqlCommand command =
+            new($"SELECT {ColumnName} FROM {_float32Table.Name} ORDER BY Id DESC", connection);
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        Assert.True(await reader.ReadAsync());
+        Assert.False(await reader.IsDBNullAsync(0));
+        await AssertNarrowingReadIsRejectedAsync(reader);
+
+        Assert.True(await reader.ReadAsync());
+        Assert.True(await reader.IsDBNullAsync(0));
+        await AssertNarrowingReadIsRejectedAsync(reader);
+    }
+
+    private static void AssertNarrowingReadIsRejected(SqlDataReader reader)
+    {
+        #if NET
+        Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<Half>(0));
+        Assert.Throws<NotSupportedException>(() => reader.GetFieldValue<SqlVector<Half>>(0));
+        #endif
+
+        // double is never a vector base type, so it stands in for the narrowing case on
+        // frameworks without System.Half.
+        Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<double>(0));
+    }
+
+    private static async Task AssertNarrowingReadIsRejectedAsync(SqlDataReader reader)
+    {
+        #if NET
+        await Assert.ThrowsAsync<NotSupportedException>(
+            async () => await reader.GetFieldValueAsync<SqlVector<Half>>(0));
+        #else
+        await Task.CompletedTask;
+        Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<double>(0));
+        #endif
     }
 
     #endregion
@@ -145,11 +248,12 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     [ConditionalFact(nameof(IsSupported))]
     public void RejectsValuesOutsideTheFloat16Range()
     {
-        // The server reports the failure rather than silently saturating the value.
+        // The value is sent as float32 and narrowed by the server, which reports the
+        // overflow rather than silently saturating.
         SqlException exception = Assert.Throws<SqlException>(() =>
             Insert(_float16Table, new SqlVector<float>(new float[] { 70000f, 1f, 2f })));
 
-        Assert.NotEmpty(exception.Message);
+        Assert.Equal(Float32ToFloat16OutOfRangeError, exception.Number);
     }
 
     #endregion
@@ -280,7 +384,15 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name };
         bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
 
-        Assert.Throws<SqlException>(() => bulkCopy.WriteToServer(table));
+        // The client narrows the payload here, so it reports the overflow itself rather
+        // than letting the saturated infinity reach the server, which would reject it as a
+        // malformed vector instead. Bulk copy wraps the failure to name the column and row.
+        InvalidOperationException exception =
+            Assert.Throws<InvalidOperationException>(() => bulkCopy.WriteToServer(table));
+
+        OverflowException overflow = Assert.IsType<OverflowException>(exception.InnerException);
+        Assert.Contains("float16", overflow.Message);
+        Assert.Contains("70000", overflow.Message);
     }
 
     #endregion

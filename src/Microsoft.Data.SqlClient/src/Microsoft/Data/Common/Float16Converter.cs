@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+#if NETFRAMEWORK
+using Microsoft.Data.SqlClient;
+#endif
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.Common
 {
     /// <summary>
     /// Converts between IEEE 754 binary16 (half precision) and binary32 (single
@@ -42,6 +45,12 @@ namespace Microsoft.Data.SqlClient
 
         // The number of mantissa bits discarded when narrowing binary32 to binary16.
         private const int MantissaShift = Binary32MantissaBits - Binary16MantissaBits;
+
+        /// <summary>
+        /// The most significant mantissa bit of a binary32 value, which distinguishes a
+        /// quiet NaN from a signalling one.
+        /// </summary>
+        private const int Binary32QuietBit = 1 << (Binary32MantissaBits - 1);
 
         /// <summary>
         /// Converts the raw bits of an IEEE 754 binary16 value to the equivalent
@@ -82,11 +91,16 @@ namespace Microsoft.Data.SqlClient
 
             if (exponent == Binary16MaxExponent)
             {
-                // Infinity or NaN. A zero mantissa denotes an infinity; any other
-                // value denotes a NaN, which is canonicalised to float.NaN.
+                // Infinity or NaN. A NaN keeps its sign and payload, with the quiet bit
+                // forced, which is what a System.Half conversion produces. A signalling
+                // NaN is therefore quietened, as IEEE 754 requires of a conversion.
                 return mantissa == 0
                     ? Int32BitsToSingle((sign << 31) | (Binary32MaxExponent << Binary32MantissaBits))
-                    : float.NaN;
+                    : Int32BitsToSingle(
+                        (sign << 31) |
+                        (Binary32MaxExponent << Binary32MantissaBits) |
+                        Binary32QuietBit |
+                        (mantissa << MantissaShift));
             }
 
             if (exponent == 0)
@@ -134,9 +148,12 @@ namespace Microsoft.Data.SqlClient
 
             if (exponent == Binary32MaxExponent)
             {
-                // Infinity or NaN. NaN is canonicalised to a quiet NaN, matching the
-                // representation produced by System.Half.
-                int payload = mantissa == 0 ? 0x7C00 : 0x7E00;
+                // Infinity or NaN. A NaN keeps its sign and the high bits of its payload,
+                // with the quiet bit forced, which is what a System.Half conversion produces.
+                int payload = mantissa == 0
+                    ? 0x7C00
+                    : 0x7C00 | 0x0200 | ((mantissa >> MantissaShift) & 0x1FF);
+
                 return (ushort)((sign << 15) | payload);
             }
 
@@ -156,9 +173,9 @@ namespace Microsoft.Data.SqlClient
 
             if (targetExponent <= 0)
             {
-                // Too small to represent as a normal value. Values more than eleven
-                // binade below the smallest subnormal cannot round up to one, so they
-                // are flushed to zero rather than shifted by more than the mantissa width.
+                // Too small to represent as a normal value. Values below half of the
+                // smallest subnormal cannot round up to it, so they are flushed to zero
+                // rather than shifted by more than the mantissa width.
                 if (targetExponent < -Binary16MantissaBits)
                 {
                     return (ushort)(sign << 15);

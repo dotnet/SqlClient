@@ -144,6 +144,43 @@ CREATE TABLE {TableName}
         // are null for columns which are not vectors.
         Console.WriteLine($"\nColumn base type:  {column["VectorBaseType"]}");
         Console.WriteLine($"Column dimensions: {column["VectorDimensions"]}");
+
+        // The base type is what a caller which does not know the schema in advance needs in
+        // order to choose a read path. GetFieldType is not enough on its own: it reports
+        // string for a float16 column on .NET Framework, which is also what a plain
+        // varchar column reports, and it cannot distinguish the two base types at all when
+        // the caller wants to read both as SqlVector<float>.
+        string baseType = (string)column["VectorBaseType"];
+        int dimensions = (int)column["VectorDimensions"];
+
+        // Allocate once, knowing the length before reading any row.
+        float[] buffer = new float[dimensions];
+
+        while (await reader.ReadAsync())
+        {
+            if (reader.IsDBNull(0))
+            {
+                continue;
+            }
+
+            switch (baseType)
+            {
+                case "float32":
+                    reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
+                    break;
+
+                case "float16":
+                    // Widening from float16 is exact, so single precision is a lossless
+                    // representation for a caller which wants one array type throughout.
+                    reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
+                    break;
+
+                default:
+                    throw new NotSupportedException($"Unknown vector base type {baseType}.");
+            }
+
+            Console.WriteLine($"Read {dimensions} {baseType} elements: [{string.Join(",", buffer)}]");
+        }
     }
     #endregion
 

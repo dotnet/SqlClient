@@ -22,6 +22,8 @@ public sealed class VectorColumnMetadataTests
 
     public static bool IsSupported => DataTestUtility.IsSqlVectorSupported;
 
+    public static bool IsFloat16Supported => DataTestUtility.IsSqlVectorFloat16Supported;
+
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData(1)]
     [InlineData(3)]
@@ -101,5 +103,43 @@ public sealed class VectorColumnMetadataTests
         Assert.NotNull(vectorRow);
         Assert.Equal((int)SqlDbTypeExtensions.Vector, vectorRow!["ProviderDbType"]);
         Assert.Equal("vector({0})", vectorRow["CreateFormat"]);
+    }
+
+    [ConditionalFact(nameof(IsFloat16Supported))]
+    public void DrivesReadPathForACallerWhichDoesNotKnowTheSchema()
+    {
+        // This is the use case the properties exist for. GetFieldType is not enough on its
+        // own: it reports string for a float16 column on .NET Framework, which is what a
+        // varchar column reports too, and it cannot distinguish the two base types at all
+        // for a caller which wants to read both through one representation.
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command = new(
+            @"SELECT CAST('[1.5,2.5,3.5]' AS vector(3, float16)) AS v
+              UNION ALL
+              SELECT CAST('[1.5,2.5,3.5]' AS vector(3, float16))", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        DbColumn column = reader.GetColumnSchema()[0];
+        string baseType = Assert.IsType<string>(column["VectorBaseType"]);
+        int dimensions = Assert.IsType<int>(column["VectorDimensions"]);
+
+        Assert.Equal("float16", baseType);
+        Assert.Equal(3, dimensions);
+
+        // The dimension count is known before any row is read, so a buffer can be sized once.
+        float[] buffer = new float[dimensions];
+
+        while (reader.Read())
+        {
+            Assert.Contains(baseType, new[] { "float16", "float32" });
+
+            // Widening from float16 is exact, so single precision reads both base types
+            // without loss, and is the only option where System.Half is unavailable.
+            reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
+
+            Assert.Equal(new float[] { 1.5f, 2.5f, 3.5f }, buffer);
+        }
     }
 }

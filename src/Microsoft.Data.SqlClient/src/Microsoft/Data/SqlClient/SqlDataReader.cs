@@ -1323,6 +1323,27 @@ namespace Microsoft.Data.SqlClient
             };
         }
 
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetVectorProviderSpecificFieldType(byte vectorElementType)
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
+            return elementType switch
+            {
+                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                // As above, but the provider specific accessors return types from
+                // System.Data.SqlTypes, so the JSON rendering is reported as a SqlString
+                // rather than as a CLR string.
+                #if NET
+                MetaType.SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
+                #else
+                MetaType.SqlVectorElementType.Float16 => typeof(SqlString),
+                #endif
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
+        }
+
         internal virtual int GetLocaleId(int i)
         {
             _SqlMetaData sqlMetaData = MetaData[i];
@@ -1410,7 +1431,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (metaData.type == SqlDbTypeExtensions.Vector)
                 {
-                    providerSpecificFieldType = GetVectorFieldType(metaData.scale);
+                    providerSpecificFieldType = GetVectorProviderSpecificFieldType(metaData.scale);
                 }
                 else
                 {

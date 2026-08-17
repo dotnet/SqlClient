@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -290,31 +291,30 @@ public class SqlVectorTest
         var vec = new SqlVector<Half>(new[] { (Half)65504f, (Half)1.5f });
 
         Assert.Equal("[65504,1.5]", vec.GetString());
-        Assert.Equal("[65504,1.5]", vec.ToString());
     }
 
     [Fact]
-    public void Float16_ToString_MatchesFloat32Rendering()
+    public void Float16_GetString_MatchesFloat32Rendering()
     {
         // A value which both base types represent exactly renders identically, so callers
         // cannot tell the two apart from the rendering alone.
         Assert.Equal(
-            new SqlVector<float>(new[] { 1.5f, 2.5f }).ToString(),
-            new SqlVector<Half>(new[] { (Half)1.5f, (Half)2.5f }).ToString());
+            new SqlVector<float>(new[] { 1.5f, 2.5f }).GetString(),
+            new SqlVector<Half>(new[] { (Half)1.5f, (Half)2.5f }).GetString());
     }
 
     #endif
 
     [Fact]
-    public void Float32_ToString_RendersJson()
+    public void Float32_GetString_RendersJson()
     {
-        Assert.Equal("[1.5,2.5]", new SqlVector<float>(new[] { 1.5f, 2.5f }).ToString());
+        Assert.Equal("[1.5,2.5]", new SqlVector<float>(new[] { 1.5f, 2.5f }).GetString());
     }
 
     [Fact]
-    public void ToString_Null_RendersNullString()
+    public void GetString_Null_RendersNullString()
     {
-        Assert.Equal(SQLMessage.NullString(), SqlVector<float>.CreateNull(3).ToString());
+        Assert.Equal(SQLMessage.NullString(), SqlVector<float>.CreateNull(3).GetString());
     }
 
     #endregion
@@ -326,7 +326,7 @@ public class SqlVectorTest
     {
         byte[] source = ((ISqlVector)new SqlVector<float>(new[] { 1.5f, 2.5f, 3.5f })).VectorPayload;
 
-        byte[] converted = SqlVector<float>.ConvertPayloadElementType(
+        byte[] converted = SqlVectorPayload.ConvertElementType(
             source,
             (byte)MetaType.SqlVectorElementType.Float16);
 
@@ -335,7 +335,7 @@ public class SqlVectorTest
 
         // Reading the converted payload back yields the original values, because all three
         // are exactly representable in binary16.
-        byte[] roundTripped = SqlVector<float>.ConvertPayloadElementType(
+        byte[] roundTripped = SqlVectorPayload.ConvertElementType(
             converted,
             (byte)MetaType.SqlVectorElementType.Float32);
 
@@ -349,7 +349,7 @@ public class SqlVectorTest
         // frameworks without System.Half.
         byte[] source = MakeFloat16Payload(new[] { 1.5f, 2.5f, 3.5f });
 
-        byte[] converted = SqlVector<float>.ConvertPayloadElementType(
+        byte[] converted = SqlVectorPayload.ConvertElementType(
             source,
             (byte)MetaType.SqlVectorElementType.Float32);
 
@@ -364,7 +364,7 @@ public class SqlVectorTest
 
         Assert.Same(
             source,
-            SqlVector<float>.ConvertPayloadElementType(source, (byte)MetaType.SqlVectorElementType.Float32));
+            SqlVectorPayload.ConvertElementType(source, (byte)MetaType.SqlVectorElementType.Float32));
     }
 
     [Fact]
@@ -372,11 +372,11 @@ public class SqlVectorTest
     {
         byte[] source = ((ISqlVector)new SqlVector<float>(new[] { 1.1f })).VectorPayload;
 
-        byte[] narrowed = SqlVector<float>.ConvertPayloadElementType(
+        byte[] narrowed = SqlVectorPayload.ConvertElementType(
             source,
             (byte)MetaType.SqlVectorElementType.Float16);
 
-        byte[] widened = SqlVector<float>.ConvertPayloadElementType(
+        byte[] widened = SqlVectorPayload.ConvertElementType(
             narrowed,
             (byte)MetaType.SqlVectorElementType.Float32);
 
@@ -387,7 +387,7 @@ public class SqlVectorTest
     public void ConvertPayload_ShortHeader_Throws()
     {
         Assert.Throws<ArgumentException>(() =>
-            SqlVector<float>.ConvertPayloadElementType(
+            SqlVectorPayload.ConvertElementType(
                 new byte[] { 0xA9, 0x01 },
                 (byte)MetaType.SqlVectorElementType.Float16));
     }
@@ -401,7 +401,7 @@ public class SqlVectorTest
             new[] { 1.5f });
 
         Assert.Throws<ArgumentException>(() =>
-            SqlVector<float>.ConvertPayloadElementType(
+            SqlVectorPayload.ConvertElementType(
                 source,
                 (byte)MetaType.SqlVectorElementType.Float16));
     }
@@ -412,7 +412,7 @@ public class SqlVectorTest
         byte[] source = ((ISqlVector)new SqlVector<float>(new[] { 1.5f })).VectorPayload;
 
         Assert.Throws<NotSupportedException>(() =>
-            SqlVector<float>.ConvertPayloadElementType(source, 0x7F));
+            SqlVectorPayload.ConvertElementType(source, 0x7F));
     }
 
     #endregion
