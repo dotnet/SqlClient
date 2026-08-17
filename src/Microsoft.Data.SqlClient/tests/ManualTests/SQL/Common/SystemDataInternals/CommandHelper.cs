@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         public static FieldInfo s_rowsAffectedBySpDescribeParameterEncryption = s_sqlCommand.GetField(@"_rowsAffectedBySpDescribeParameterEncryption", BindingFlags.Instance | BindingFlags.NonPublic);
         public static FieldInfo s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption = s_sqlCommand.GetField(@"_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption", BindingFlags.Static | BindingFlags.NonPublic);
         public static FieldInfo s_sleepAfterReadDescribeEncryptionParameterResults = s_sqlCommand.GetField(@"_sleepAfterReadDescribeEncryptionParameterResults", BindingFlags.Static | BindingFlags.NonPublic);
+        public static FieldInfo s_forceInternalEndQuery = s_sqlCommand.GetField(@"_forceInternalEndQuery", BindingFlags.Static | BindingFlags.NonPublic);
 
         internal static void CompletePendingReadWithSuccess(SqlCommand command, bool resetForcePendingReadsToWait)
         {
