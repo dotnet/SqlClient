@@ -34,8 +34,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// threads, unlike wait handles which can block managed threads and potentially cause thread pool starvation.
     /// </description></item>
     /// <item><description>
-    /// <strong>FIFO fairness:</strong> Channels guarantee first-come, first-served ordering for connection requests,
-    /// ensuring fair access to connections under high contention scenarios.
+    /// <strong>FIFO fairness:</strong> connection requests are served in roughly first-come, first-served
+    /// order. This is best-effort, not a guarantee: waiters queue on a <see cref="SemaphoreSlim"/> and then
+    /// take an item from the channel, and neither step promises strict ordering across sync and async
+    /// callers.
     /// </description></item>
     /// <item><description>
     /// <strong>Reduced lock contention:</strong> The channel-based approach minimizes lock usage compared to
@@ -1441,8 +1443,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         timeout);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
-                    // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
-                    // (first-come, first-served), which is crucial to us.
+                    // timeout. Ordering is best-effort: waiters queue on the channel's semaphore
+                    // and then take an item, so a strict first-come, first-served guarantee no
+                    // longer holds.
                     if (async)
                     {
                         connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
