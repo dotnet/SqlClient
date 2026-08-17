@@ -212,22 +212,23 @@ experiment would corrupt the perf database three ways:
 The comparison report and the raw BenchmarkDotNet artifacts are published as usual, and the build is
 tagged `Switch <name>` so experiments are identifiable in the ADO build list.
 
-### Intended differences
+### Designing benchmarks for switch experiments
 
-A switch experiment flips intended behaviour, so any benchmark that measures that behaviour regresses
-by design. The `UseConnectionPoolV2` case is the motivating example: `ChannelDbConnectionPool` opens
-physical connections concurrently, where `WaitHandleDbConnectionPool` serialises growth behind a
-`Semaphore(1, 1)`. `ConnectionPoolStressRunner.RapidFireOpenClose` calls `ClearAllPools()` in
-`[IterationCleanup]` and holds connections for zero time, so it measures a cold-start burst in which
-the extra parallel opens have nothing to amortise against. That regression is the trade-off working
-as intended, not a defect.
+A switch experiment flips behaviour on purpose, so a benchmark that measures that behaviour will
+report a regression even when the change is working. `UseConnectionPoolV2` is the motivating example:
+`ChannelDbConnectionPool` opens physical connections concurrently, where `WaitHandleDbConnectionPool`
+serialises growth behind a `Semaphore(1, 1)`. `ConnectionPoolStressRunner.RapidFireOpenClose` calls
+`ClearAllPools()` in `[IterationCleanup]` and holds connections for zero time, so it measures a
+cold-start burst in which the extra parallel opens have nothing to amortise against. It reports the
+trade-off as a loss because that is the only thing it can measure.
 
-Where a benchmark can be written so it measures the intended behaviour directly, prefer that over
-explaining the result away in a review. `ConnectionPoolRampRunner` was added for exactly this
-reason: it keeps the cold pool but makes every caller *hold* its connection until all of them have
-connected, so the pool genuinely needs N physical connections and the only variable left is how fast
-it can open them. That rewards concurrent creation instead of penalising it, and it is the case
-`RapidFireOpenClose` cannot express.
+The pipeline has no way to mark a result as acceptable, and deliberately so: a mute is only as good
+as the reasoning behind it, and that reasoning belongs in the pull request where a reviewer can
+challenge it. Prefer instead to add a benchmark that measures the intended behaviour directly.
+`ConnectionPoolRampRunner` was added for exactly this reason: it keeps the cold pool but makes every
+caller *hold* its connection until all of them have connected, so the pool genuinely needs N physical
+connections and the only variable left is how fast it can open them. That rewards concurrent creation
+instead of penalising it, and it is the case `RapidFireOpenClose` cannot express.
 
 The same principle applies to how a benchmark schedules its workers. A sync `Open()` that has to
 wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a queued continuation
@@ -251,8 +252,8 @@ Note what those benchmarks are for. Saturating the thread pool with blocked sync
 application configuration problem, not a pool defect: an application should keep its parallelism
 below the thread pool's worker count so newly queued work still runs promptly, and pre-warming the
 thread pool is the application's responsibility rather than the driver's. These benchmarks exist to
-characterise where that boundary sits and to catch it moving, so a delta here is explained in review
-rather than fixed.
+characterise where that boundary sits and to catch it moving, so a delta here is a prompt to check
+the boundary has not shifted rather than a bug to fix.
 
 ## Two-pass build model
 
