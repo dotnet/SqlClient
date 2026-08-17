@@ -109,6 +109,11 @@ SELECT 1 AS Result;";
                 {
                     command.CommandTimeout = 90;
 
+                    // Subscribe BEFORE dispatching the command so the RAISERROR ... WITH NOWAIT
+                    // informational token cannot arrive before we are listening.
+                    var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
                     Stopwatch stopwatch = Stopwatch.StartNew();
 
                     // Start ExecuteReaderAsync without awaiting so we can trigger
@@ -119,12 +124,9 @@ SELECT 1 AS Result;";
 
                     // Cancel only after the server has flushed the RAISERROR NOWAIT packet so we know we're in the
                     // "partial results received" state that regressed in #4424.
-                    var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                    connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
-
                     Task cancelTask = Task.Run(async () =>
                     {
-                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(5)));
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
                         cts.Cancel();
                     });
 
@@ -154,6 +156,12 @@ SELECT 1 AS Result;";
                     stopwatch.Stop();
 
                     Assert.NotNull(caughtException);
+                    // Fail loudly if the InfoMessage never arrived: without it we silently
+                    // degrade to a fixed-timer cancellation and no longer prove that
+                    // cancellation happened in the "partial results received" state.
+                    Assert.True(infoMessageReceived.Task.IsCompleted,
+                        "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                        "the test did not exercise the partial-results cancellation path.");
                     // Ensure the CTS actually fired — guards against false positives
                     // from unrelated SqlExceptions.
                     Assert.True(cts.IsCancellationRequested,
