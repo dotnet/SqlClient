@@ -332,7 +332,8 @@ export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-134217728}"   # 128 MiB
 export MALLOC_TRIM_THRESHOLD_="${MALLOC_TRIM_THRESHOLD_:--1}"          # never trim
 
 # --- §2.9 Network tuning (best-effort; needs privilege, so it must never fail the run) ------------
-# Connection-churn benches (ConnectionPoolStress, ParallelAsyncConnection) exhaust ephemeral ports;
+# Connection-churn benches (ConnectionPoolStress, ConnectionPoolRamp, ParallelAsyncConnection)
+# exhaust ephemeral ports;
 # widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.  'sudo -n' keeps
 # this non-interactive: on a VM without passwordless sudo it fails immediately instead of blocking
 # on a password prompt, then we fall back to a non-sudo sysctl (and finally give up quietly).
