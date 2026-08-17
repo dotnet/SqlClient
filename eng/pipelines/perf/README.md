@@ -223,6 +223,13 @@ physical connections concurrently, where `WaitHandleDbConnectionPool` serialises
 the extra parallel opens have nothing to amortise against. That regression is the trade-off working
 as intended, not a defect.
 
+An annotation is the fallback, not the first answer. Where a benchmark can be written so it measures
+the intended behaviour directly, prefer that. `ConnectionPoolRampRunner` was added for exactly this
+reason: it keeps the cold pool but makes every caller *hold* its connection until all of them have
+connected, so the pool genuinely needs N physical connections and the only variable left is how fast
+it can open them. That rewards concurrent creation instead of penalising it, and it is the case
+`RapidFireOpenClose` cannot express.
+
 Without somewhere to record that, the same benchmarks get re-investigated every run and
 `--fail-on-regression` is unusable for experiments. Each switch may therefore have an annotation file
 at `expected-differences/<SwitchName>.json`, picked up automatically by

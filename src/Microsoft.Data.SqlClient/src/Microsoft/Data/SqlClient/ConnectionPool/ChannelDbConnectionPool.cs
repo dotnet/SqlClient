@@ -60,12 +60,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool, IDisposable
     {
         #region Fields
-        // Limits synchronous operations which depend on async operations on managed
-        // threads from blocking on all available threads, which would stop async tasks
-        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
-        // between sync and async tasks.
-        private static SemaphoreSlim _syncOverAsyncSemaphore = new(Math.Max(1, Environment.ProcessorCount / 2));
-
         /// <summary>
         /// Tracks the number of instances of this class. Used to generate unique IDs for each instance.
         /// </summary>
@@ -1455,7 +1449,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                     else
                     {
-                        connection ??= ReadChannelSyncOverAsync(cancellationToken);
+                        connection ??= _idleChannel.Read(cancellationToken);
                     }
                 }
                 catch (OperationCanceledException)
@@ -1477,39 +1471,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             PrepareConnection(owningConnection, connection, transaction);
             return connection;
-        }
-
-        /// <summary>
-        /// Performs a blocking synchronous read from the idle connection channel.
-        /// </summary>
-        /// <param name="cancellationToken">Cancels the read operation.</param>
-        /// <returns>The connection read from the channel.</returns>
-        private DbConnectionInternal? ReadChannelSyncOverAsync(CancellationToken cancellationToken)
-        {
-            // If there are no connections in the channel, then ReadAsync will block until one is available.
-            // Channels doesn't offer a sync API, so running ReadAsync synchronously on this thread may spawn
-            // additional new async work items in the managed thread pool if there are no items available in the
-            // channel. We need to ensure that we don't block all available managed threads with these child
-            // tasks or we could deadlock. Prefer to block the current user-owned thread, and limit throughput
-            // to the managed threadpool.
-
-            _syncOverAsyncSemaphore.Wait(cancellationToken);
-            try
-            {
-                ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
-                    _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
-                using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
-
-                // Cancellation happens through the ReadAsync call, which will complete the task.
-                // Even a failed task will complete and set the ManualResetEventSlim.
-                awaiter.UnsafeOnCompleted(() => mres.Set());
-                mres.Wait(CancellationToken.None);
-                return awaiter.GetResult();
-            }
-            finally
-            {
-                _syncOverAsyncSemaphore.Release();
-            }
         }
 
         /// <summary>

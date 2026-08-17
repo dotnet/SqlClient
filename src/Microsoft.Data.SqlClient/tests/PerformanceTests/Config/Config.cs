@@ -70,6 +70,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolStressRunnerConfig;
         public RunnerJob ConnectionPoolContentionRunnerConfig;
         public RunnerJob ConnectionPoolChurnRunnerConfig;
+        public RunnerJob ConnectionPoolRampRunnerConfig;
     }
 
     public class RunnerJob

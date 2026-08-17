@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Channels;
@@ -21,6 +22,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly ChannelReader<DbConnectionInternal?> _reader;
         private readonly ChannelWriter<DbConnectionInternal?> _writer;
         private volatile int _count;
+        private readonly SemaphoreSlim _items = new(0);
+        private readonly CancellationTokenSource _completedCts = new();
 
         internal IdleConnectionChannel()
         {
@@ -37,7 +40,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <returns><see langword="true"/> if this call completed the channel; otherwise <see langword="false"/>
         /// (channel was already completed).</returns>
-        internal bool Complete() => _writer.TryComplete();
+        internal bool Complete()
+        {
+            bool completed = _writer.TryComplete();
+            _completedCts.Cancel();
+            return completed;
+        }
 
         /// <summary>
         /// The number of non-null connections currently in the channel.
@@ -57,6 +65,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     Interlocked.Increment(ref _count);
                 }
+                _items.Release();
                 return true;
             }
 
@@ -69,7 +78,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal bool TryRead(out DbConnectionInternal? connection)
         {
-            if (_reader.TryRead(out connection))
+            connection = null;
+            if (_items.Wait(0) && _reader.TryRead(out connection))
             {
                 if (connection is not null)
                 {
@@ -88,7 +98,58 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal async ValueTask<DbConnectionInternal?> ReadAsync(CancellationToken cancellationToken)
         {
-            var connection = await _reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            if (!_items.Wait(0))
+            {
+                using var linkedAsync = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken, _completedCts.Token);
+                try
+                {
+                    await _items.WaitAsync(linkedAsync.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    throw new ChannelClosedException();
+                }
+            }
+
+            if (!_reader.TryRead(out var connection))
+            {
+                throw new ChannelClosedException();
+            }
+
+            if (connection is not null)
+            {
+                Interlocked.Decrement(ref _count);
+            }
+
+            return connection;
+        }
+
+        /// <summary>
+        /// Synchronously blocks the calling thread until an item is available. The wait is
+        /// released directly by the writing thread, so it never depends on a thread pool
+        /// continuation the way sync-over-async on <see cref="ReadAsync"/> does.
+        /// </summary>
+        internal DbConnectionInternal? Read(CancellationToken cancellationToken)
+        {
+            if (!_items.Wait(0))
+            {
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken, _completedCts.Token);
+                try
+                {
+                    _items.Wait(linked.Token);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    throw new ChannelClosedException();
+                }
+            }
+
+            if (!_reader.TryRead(out var connection))
+            {
+                throw new ChannelClosedException();
+            }
 
             if (connection is not null)
             {
