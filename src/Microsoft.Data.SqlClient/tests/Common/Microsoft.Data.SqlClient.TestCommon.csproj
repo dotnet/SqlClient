@@ -52,18 +52,6 @@
                       VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
 
-  <!-- Microsoft.Data.SqlClient 7.1.0-preview1.26124.5 declares transitive dependencies on the      -->
-  <!-- prerelease Microsoft.Data.SqlClient.Extensions.Abstractions and                              -->
-  <!-- Microsoft.Data.SqlClient.Internal.Logging 1.0.0-preview1.26124.5 packages, which were never  -->
-  <!-- published to NuGet.org.  Restoring that exact baseline therefore fails with NU1603 (the      -->
-  <!-- prerelease dependency is not found and the released 1.0.0 is substituted).  Pin explicit     -->
-  <!-- direct references to the released 1.0.0 packages - which satisfy the (>= prerelease)         -->
-  <!-- constraint - but only for that specific baseline version so other builds are unaffected.     -->
-  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == '7.1.0-preview1.26124.5'">
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" VersionOverride="1.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" VersionOverride="1.0.0" />
-  </ItemGroup>
-
   <!-- References for netfx -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="Azure.Identity" />
