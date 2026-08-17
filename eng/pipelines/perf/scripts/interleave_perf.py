@@ -27,7 +27,6 @@ Only the Python standard library is used so it runs on the perf VM unchanged.
 """
 
 import argparse
-import fnmatch
 import glob
 import json
 import os
@@ -39,94 +38,6 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import compare_perf  # noqa: E402  (local module, sits next to this script)
-
-
-# --------------------------------------------------------------------------------------------------
-# Expected differences (switch experiments).
-# --------------------------------------------------------------------------------------------------
-# A switch experiment compares the same build with one AppContext switch flipped, so any *intended*
-# behavioural difference shows up as a regression.  Example: UseConnectionPoolV2 deliberately allows
-# concurrent physical connection opens, where the v1 pool serialises them behind a Semaphore(1, 1).
-# Benchmarks that open connections in a burst against a cold pool therefore measure v2 creating more
-# connections, which is the intended trade-off rather than a defect.
-#
-# Without a way to record that, every run re-litigates the same benchmarks and the --fail-on-regression
-# gate is unusable for experiments.  An expected-differences file names those benchmarks and, crucially,
-# requires a reason, so the annotation is reviewable rather than a silent mute.
-
-def load_expected_differences(path):
-    """Loads an expected-differences file.
-
-    The file is a JSON list of rules::
-
-        [
-          {
-            "benchmark": "ConnectionPoolStressRunner",
-            "method": "RapidFireOpenClose",
-            "params": "*",
-            "reason": "v2 opens connections concurrently by design; ..."
-          }
-        ]
-
-    ``benchmark``, ``method`` and ``params`` are shell-style globs and each defaults to ``*``.
-    ``reason`` is required: an unexplained entry is indistinguishable from hiding a real regression.
-    """
-    with open(path, "r", encoding="utf-8") as handle:
-        raw = json.load(handle)
-
-    if not isinstance(raw, list):
-        raise ValueError(f"{path}: expected a JSON list of rules, got {type(raw).__name__}.")
-
-    rules = []
-    for index, item in enumerate(raw):
-        if not isinstance(item, dict):
-            raise ValueError(f"{path}: rule {index} is not an object.")
-        reason = (item.get("reason") or "").strip()
-        if not reason:
-            raise ValueError(
-                f"{path}: rule {index} is missing a non-empty 'reason'. Every expected difference "
-                "must say why it is expected."
-            )
-        rules.append({
-            "benchmark": item.get("benchmark", "*"),
-            "method": item.get("method", "*"),
-            "params": item.get("params", "*"),
-            "reason": reason,
-        })
-    return rules
-
-
-def _rule_matches(rule, entry):
-    return (
-        fnmatch.fnmatch(entry.get("benchmarkName") or "", rule["benchmark"])
-        and fnmatch.fnmatch(entry.get("methodName") or "", rule["method"])
-        and fnmatch.fnmatch(entry.get("parameterSignature") or "", rule["params"])
-    )
-
-
-def apply_expected_differences(entries, rules):
-    """Reclassifies regressions that a rule marks as intended.
-
-    Runs *after* the best-of-N verdict so the confirmation count is still recorded: an expected
-    difference that stops reproducing is itself worth noticing.  Only regressions are reclassified;
-    an annotated benchmark that comes back unchanged or improved keeps its real status, so the
-    annotation cannot mask a result getting better.
-    """
-    if not rules:
-        return []
-
-    annotated = []
-    for entry in entries:
-        if entry["status"] not in ("regression", "regression-unconfirmed"):
-            continue
-        for rule in rules:
-            if _rule_matches(rule, entry):
-                entry["status"] = "expected-difference"
-                entry["confirmedRegression"] = False
-                entry["expectedReason"] = rule["reason"]
-                annotated.append(entry)
-                break
-    return annotated
 
 
 # --------------------------------------------------------------------------------------------------
@@ -323,7 +234,7 @@ def _regression_keys(baseline_dir, current_dir, threshold):
     return entries, {e["key"] for e in entries if e["status"] == "regression"}
 
 
-def orchestrate(runner, units, results_dir, threshold, reps, expected_rules=None):
+def orchestrate(runner, units, results_dir, threshold, reps):
     baseline_agg = os.path.join(results_dir, "baseline")
     current_agg = os.path.join(results_dir, "current")
     comparison_dir = os.path.join(results_dir, "comparison")
@@ -379,12 +290,9 @@ def orchestrate(runner, units, results_dir, threshold, reps, expected_rules=None
             e["totalReps"] = total_reps
             e["confirmedRegression"] = False
 
-    # Applied after the verdict so an intended difference still carries its confirmation count.
-    expected = apply_expected_differences(entries, expected_rules)
-
     confirmed = [e for e in entries if e.get("confirmedRegression")]
     unconfirmed = [e for e in entries if e["status"] == "regression-unconfirmed"]
-    return entries, confirmed, unconfirmed, expected
+    return entries, confirmed, unconfirmed
 
 # --------------------------------------------------------------------------------------------------
 # Rendering.
@@ -392,7 +300,6 @@ def orchestrate(runner, units, results_dir, threshold, reps, expected_rules=None
 _ICON = {
     "regression": "🔴 regression",
     "regression-unconfirmed": "🟠 regression (unconfirmed)",
-    "expected-difference": "🔵 expected difference",
     "improvement": "🟢 improvement",
     "unchanged": "⚪ unchanged",
     "current-only": "🆕 new",
@@ -401,7 +308,7 @@ _ICON = {
 }
 
 
-def render_markdown(entries, confirmed, unconfirmed, expected, baseline_version, threshold, reps):
+def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold, reps):
     improvements = [e for e in entries if e["status"] == "improvement"]
     lines = []
     lines.append("# SqlClient Performance Comparison (interleaved, best-of-N)")
@@ -414,9 +321,6 @@ def render_markdown(entries, confirmed, unconfirmed, expected, baseline_version,
     lines.append(f"- **Confirmed** regressions (majority of {reps}): **{len(confirmed)}**")
     lines.append(f"- Unconfirmed (flagged once, not reproduced): **{len(unconfirmed)}**")
     lines.append(f"- Improvements (faster > {threshold:.0f}%): **{len(improvements)}**")
-    if expected:
-        lines.append(f"- Expected differences (annotated, not counted as regressions): "
-                     f"**{len(expected)}**")
     lines.append("")
     lines.append("| Status | Benchmark | Method | Params | Baseline (ms) | "
                  "Current (ms) | Mean Δ | Alloc Δ | Confirm |")
@@ -442,36 +346,6 @@ def render_markdown(entries, confirmed, unconfirmed, expected, baseline_version,
             )
         )
     lines.append("")
-
-    if expected:
-        lines.append("## Expected differences")
-        lines.append("")
-        lines.append("These benchmarks regressed, but the annotation file records the regression as an "
-                     "intended consequence of the switch under test. They are excluded from the "
-                     "confirmed-regression count and from the regression gate.")
-        lines.append("")
-        # Grouped by reason: one rule usually covers a whole family of parameterisations, and
-        # repeating a paragraph of rationale per row buries it.
-        by_reason = {}
-        for e in expected:
-            by_reason.setdefault(e.get("expectedReason", ""), []).append(e)
-
-        for reason, group in by_reason.items():
-            lines.append(reason)
-            lines.append("")
-            lines.append("| Benchmark | Method | Params | Mean Δ | Alloc Δ |")
-            lines.append("| --------- | ------ | ------ | ------ | ------- |")
-            for e in group:
-                lines.append(
-                    "| {name} | {method} | {params} | {delta} | {alloc} |".format(
-                        name=e["benchmarkName"],
-                        method=e["methodName"],
-                        params=e["parameterSignature"] or "-",
-                        delta=compare_perf._fmt_pct(e["meanDeltaPct"]),
-                        alloc=compare_perf._fmt_pct(e["allocDeltaPct"]),
-                    )
-                )
-            lines.append("")
 
     return "\n".join(lines)
 
@@ -504,11 +378,6 @@ def main(argv=None):
                         help="Override RUNNER_CONFIG for current-variant subprocesses only.")
     parser.add_argument("--client-cpus", default=os.environ.get("PERF_CLIENT_CPUS", ""),
                         help="CPU set to pin the benchmark client to, e.g. '16-31'.")
-    parser.add_argument("--expected-differences", default=None,
-                        help="Path to a JSON file naming benchmarks whose regression is an intended "
-                             "consequence of the switch under test. Matching entries are reported "
-                             "separately and do not trip --fail-on-regression. Each rule must carry "
-                             "a reason.")
     parser.add_argument("--fail-on-regression", action="store_true",
                         help="Exit non-zero if any CONFIRMED regression is detected.")
     args = parser.parse_args(argv)
@@ -534,28 +403,18 @@ def main(argv=None):
                     baseline_runner_config=args.baseline_runner_config,
                     current_runner_config=args.current_runner_config)
 
-    expected_rules = []
-    if args.expected_differences:
-        try:
-            expected_rules = load_expected_differences(args.expected_differences)
-        except (OSError, ValueError, json.JSONDecodeError) as exc:
-            print(f"ERROR: could not load --expected-differences: {exc}", file=sys.stderr)
-            return 1
-        print(f"Loaded {len(expected_rules)} expected-difference rule(s) from "
-              f"{args.expected_differences}.")
-
     units = runner.list_units()
     if not units:
         print("ERROR: no enabled benchmark units were reported by the current build.", file=sys.stderr)
         return 1
     print(f"Enabled units ({len(units)}): {', '.join(units)}")
 
-    entries, confirmed, unconfirmed, expected = orchestrate(
-        runner, units, results_dir, args.threshold, args.reps, expected_rules)
+    entries, confirmed, unconfirmed = orchestrate(
+        runner, units, results_dir, args.threshold, args.reps)
 
     # Outputs.
     comparison_dir = os.path.join(results_dir, "comparison")
-    md = render_markdown(entries, confirmed, unconfirmed, expected,
+    md = render_markdown(entries, confirmed, unconfirmed,
                          args.baseline_version, args.threshold, args.reps)
     with open(os.path.join(comparison_dir, "comparison.md"), "w", encoding="utf-8") as fh:
         fh.write(md + "\n")
@@ -566,7 +425,6 @@ def main(argv=None):
             "confirmationRuns": args.reps,
             "confirmedRegressions": len(confirmed),
             "unconfirmedRegressions": len(unconfirmed),
-            "expectedDifferences": len(expected),
             "entries": entries,
         }, fh, indent=2)
     # Surface the comparison as the top-level run summary (collect-results attaches results/*.md).
@@ -574,7 +432,7 @@ def main(argv=None):
                     os.path.join(results_dir, "summary.md"))
 
     print(f"Interleaved comparison complete: {len(confirmed)} confirmed regression(s), "
-          f"{len(unconfirmed)} unconfirmed, {len(expected)} expected difference(s).")
+          f"{len(unconfirmed)} unconfirmed.")
 
     if args.fail_on_regression and confirmed:
         print("Confirmed regressions detected; failing as requested.", file=sys.stderr)

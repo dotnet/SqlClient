@@ -15,8 +15,7 @@ database.
 | `sqlclient-perf-experiment.yml` | Experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is a released package (`--baseline-version`), another git ref's source (`--baseline-source-ref`), or the same source with one runner-config switch flipped off (`--switch-under-test`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
-| `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. Also applies the expected-difference annotations. |
-| `expected-differences/<SwitchName>.json` | Per-switch annotations naming benchmarks whose regression is an intended consequence of that switch, each with a required reason. Picked up automatically by `--switch-under-test`. |
+| `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
@@ -213,7 +212,7 @@ experiment would corrupt the perf database three ways:
 The comparison report and the raw BenchmarkDotNet artifacts are published as usual, and the build is
 tagged `Switch <name>` so experiments are identifiable in the ADO build list.
 
-### Expected differences
+### Intended differences
 
 A switch experiment flips intended behaviour, so any benchmark that measures that behaviour regresses
 by design. The `UseConnectionPoolV2` case is the motivating example: `ChannelDbConnectionPool` opens
@@ -223,8 +222,8 @@ physical connections concurrently, where `WaitHandleDbConnectionPool` serialises
 the extra parallel opens have nothing to amortise against. That regression is the trade-off working
 as intended, not a defect.
 
-An annotation is the fallback, not the first answer. Where a benchmark can be written so it measures
-the intended behaviour directly, prefer that. `ConnectionPoolRampRunner` was added for exactly this
+Where a benchmark can be written so it measures the intended behaviour directly, prefer that over
+explaining the result away in a review. `ConnectionPoolRampRunner` was added for exactly this
 reason: it keeps the cold pool but makes every caller *hold* its connection until all of them have
 connected, so the pool genuinely needs N physical connections and the only variable left is how fast
 it can open them. That rewards concurrent creation instead of penalising it, and it is the case
@@ -252,39 +251,8 @@ Note what those benchmarks are for. Saturating the thread pool with blocked sync
 application configuration problem, not a pool defect: an application should keep its parallelism
 below the thread pool's worker count so newly queued work still runs promptly, and pre-warming the
 thread pool is the application's responsibility rather than the driver's. These benchmarks exist to
-characterise where that boundary sits and to catch it moving, so a delta here is annotated rather
-than fixed.
-
-Without somewhere to record that, the same benchmarks get re-investigated every run and
-`--fail-on-regression` is unusable for experiments. Each switch may therefore have an annotation file
-at `expected-differences/<SwitchName>.json`, picked up automatically by
-`--switch-under-test` / `-SwitchUnderTest` when present:
-
-```json
-[
-  {
-    "benchmark": "ConnectionPoolStressRunner",
-    "method": "RapidFireOpenClose",
-    "params": "*",
-    "reason": "Why this difference is intended, with the evidence behind that conclusion."
-  }
-]
-```
-
-`benchmark`, `method` and `params` are shell-style globs, each defaulting to `*`. `reason` is
-required and the file is rejected without it, so an annotation is always reviewable rather than a
-silent mute.
-
-Matching entries are reported as `🔵 expected difference`, listed in their own section of
-`comparison.md` under the reason, excluded from the confirmed-regression count and ignored by the
-regression gate. Two deliberate limits keep this honest:
-
-* Only regressions are reclassified. An annotated benchmark that comes back **unchanged or improved**
-  keeps its real status, so an annotation can never hide a result getting better.
-* The best-of-N confirmation count is still computed first, so an expected difference that stops
-  reproducing is still visible in the JSON.
-
-A switch with no annotation file simply reports every regression as a regression.
+characterise where that boundary sits and to catch it moving, so a delta here is explained in review
+rather than fixed.
 
 ## Two-pass build model
 
