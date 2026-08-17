@@ -4,50 +4,43 @@
             "Name": "bit",
             "MinValue": false,
             "MaxValue": true,
-            "DefaultValue": true,
-            "EncryptionSupported": true
+            "DefaultValue": true
         },
         {
             "Name": "int",
             "MinValue": -2147483648,
             "MaxValue": 2147483647,
-            "DefaultValue": 123456,
-            "EncryptionSupported": true
+            "DefaultValue": 123456
         },
         {
             "Name": "tinyint",
             "MinValue": 0,
             "MaxValue": 255,
-            "DefaultValue": 123,
-            "EncryptionSupported": true
+            "DefaultValue": 123
         },
         {
             "Name": "smallint",
             "MinValue": -32768,
             "MaxValue": 32767,
-            "DefaultValue": 1234,
-            "EncryptionSupported": true
+            "DefaultValue": 1234
         },
         {
             "Name": "bigint",
             "MinValue": -9223372036854775808,
             "MaxValue": 9223372036854775807,
-            "DefaultValue": 1234567890,
-            "EncryptionSupported": true
+            "DefaultValue": 1234567890
         },
         {
             "Name": "money",
             "MinValue": -922337203685477.58,
             "MaxValue": 922337203685477.58,
-            "DefaultValue": 12334567.89,
-            "EncryptionSupported": true
+            "DefaultValue": 12334567.89
         },
         {
             "Name": "smallmoney",
             "MinValue": -214748.3648,
             "MaxValue": 214748.3647,
-            "DefaultValue": 123345.67,
-            "EncryptionSupported": true
+            "DefaultValue": 123345.67
         }
     ],
     "Decimals": [
@@ -57,8 +50,7 @@
             "MaxScale": 38,
             "Precision": 10,
             "Scale": 4,
-            "DefaultValue": 12345.6789,
-            "EncryptionSupported": true
+            "DefaultValue": 12345.6789
         },
         {
             "Name": "numeric",
@@ -66,8 +58,7 @@
             "MaxScale": 38,
             "Precision": 10,
             "Scale": 4,
-            "DefaultValue": 12345.6789,
-            "EncryptionSupported": true
+            "DefaultValue": 12345.6789
         },
         {
             "Name": "float",
@@ -75,8 +66,7 @@
             "MaxScale": -1,
             "Precision": 10,
             "Scale": -1,
-            "DefaultValue": 12345.6789,
-            "EncryptionSupported": true
+            "DefaultValue": 12345.6789
         },
         {
             "Name": "real",
@@ -84,106 +74,85 @@
             "MaxScale": -1,
             "Precision": 10,
             "Scale": -1,
-            "DefaultValue": 12345.6789,
-            "EncryptionSupported": true
+            "DefaultValue": 12345.6789
         }
     ],
     "DateTimes": [
         {
             "Name": "date",
             "DefaultValue": "1970-01-01",
-            "Format": "yyyy-mm-dd",
-            "EncryptionSupported": true
+            "Format": "yyyy-mm-dd"
         },
         {
             "Name": "datetime",
             "DefaultValue": "1970-01-01 00:00:00",
-            "Format": "yyyy-mm-dd hh:mm:ss[.nnn]",
-            "EncryptionSupported": true
+            "Format": "yyyy-mm-dd hh:mm:ss[.nnn]"
         },
         {
             "Name": "datetime2",
             "DefaultValue": "9999-12-31 23:59:59.9999999",
-            "Format": "yyyy-mm-dd hh:mm:ss[.nnnnnnn]",
-            "EncryptionSupported": true
+            "Format": "yyyy-mm-dd hh:mm:ss[.nnnnnnn]"
         },
         {
             "Name": "time",
             "DefaultValue": "23:59:59.9999999",
-            "Format": "hh:mm:ss[.nnnnnnn]",
-            "EncryptionSupported": true
+            "Format": "hh:mm:ss[.nnnnnnn]"
         },
         {
             "Name": "smalldatetime",
             "DefaultValue": "1970-01-01 00:00:00",
-            "Format": "yyyy-mm-dd hh:mm:ss",
-            "EncryptionSupported": true
+            "Format": "yyyy-mm-dd hh:mm:ss"
         },
         {
             "Name": "datetimeoffset",
             "DefaultValue": "1970-01-01 00:00:00 +00:00",
-            "Format": "YYYY-MM-DD hh:mm:ss[.nnnnnnn] [{+|-}hh:mm]",
-            "EncryptionSupported": true
+            "Format": "YYYY-MM-DD hh:mm:ss[.nnnnnnn] [{+|-}hh:mm]"
         }
     ],
     "Characters": [
         {
             "Name": "char",
             "MaxLength": 1,
-            "DefaultValue": "a",
-            "EncryptionSupported": true,
-            "CharacterType": true
+            "DefaultValue": "a"
         },
         {
             "Name": "nchar",
             "MaxLength": 1,
-            "DefaultValue": "Ş",
-            "EncryptionSupported": true,
-            "CharacterType": true
+            "DefaultValue": "Ş"
         }
     ],
     "Binary": [
         {
             "Name": "binary",
             "MaxLength": 8000,
-            "DefaultValue": "0x0001e240",
-            "EncryptionSupported": true,
-            "CharacterType": false
+            "DefaultValue": "0x0001e240"
         }
     ],
     "MaxTypes": [
         {
             "Name": "varchar",
             "MaxLength": 8000,
-            "DefaultValue": "abcde12345 .,!@#",
-            "EncryptionSupported": true,
-            "CharacterType": true
+            "DefaultValue": "abcde12345 .,!@#"
         },
         {
             "Name": "nvarchar",
             "MaxLength": 8000,
-            "DefaultValue": "abcde12345 .,!@ŞԛȽClient",
-            "EncryptionSupported": true,
-            "CharacterType": true
+            "DefaultValue": "abcde12345 .,!@ŞԛȽClient"
         },
         {
             "Name": "varbinary",
             "MaxLength": 8000,
-            "DefaultValue": "0x0001e240",
-            "EncryptionSupported": true,
-            "CharacterType": false
+            "DefaultValue": "0x0001e240"
         }
     ],
     "Others": [
         {
             "Name": "uniqueidentifier",
-            "DefaultValue": "6F9619FF-8B86-D011-B42D-00C04FC964FF",
-            "EncryptionSupported": true
+            "DefaultValue": "6F9619FF-8B86-D011-B42D-00C04FC964FF"
         },
         {
             "Name": "xml",
-            "DefaultValue": "<div><h1>Hello World</h1></div>",
-            "EncryptionSupported": false
+            "DefaultValue": "<div><h1>Hello World</h1></div>"
         }
     ]
 }
