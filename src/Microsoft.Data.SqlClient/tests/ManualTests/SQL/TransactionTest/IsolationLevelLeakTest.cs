@@ -98,10 +98,19 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             }
         }
 
-        // Regression guard for the interaction with #146: closing a connection inside a live
-        // TransactionScope must not scrub the isolation level, because the transacted pool will
-        // hand the same physical connection back to the next Open in that same scope.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Regression guard for the interaction with #146: this fix must not scrub the isolation
+        // level while the connection is still enlisted, because the transacted pool will hand the
+        // same physical connection back to the next Open in that same scope.
+        //
+        // Only meaningful on on-prem SQL Server. On Azure SQL DB the second Open observes
+        // ReadCommitted regardless of this fix, because Azure resets the session isolation level
+        // inside sp_reset_connection_keep_transaction -- that is issue #146 itself, which is out of
+        // scope here and is addressed separately by PR #4335. Running this assertion on Azure would
+        // therefore report a pre-existing, unrelated bug rather than a regression in this change.
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer))]
         public static void TransactionScope_SecondConnectionInSameScopeKeepsIsolationLevel()
         {
             string cs = BuildPooledConnString("IsoLeakTest-TxScopeReuse");
