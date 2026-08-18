@@ -2748,7 +2748,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 // A successful Begin with a non-default isolation level mutates
                 // SQL Server's session transaction_isolation_level. sp_reset_connection
-                // will not undo this, so remember it and reset on deactivate.
+                // will not undo this, so remember it and scrub it on the next checkout
+                // (see Activate / ResetSessionIsolationLevel).
                 if (requestType == TdsEnums.TransactionManagerRequestType.Begin &&
                     isoLevel != TdsEnums.TransactionManagerIsolationLevel.Unspecified &&
                     isoLevel != TdsEnums.TransactionManagerIsolationLevel.ReadCommitted)
@@ -4003,10 +4004,19 @@ namespace Microsoft.Data.SqlClient.Connection
         // additional exchange the legacy path did not make.
         private void ResetSessionIsolationLevel()
         {
-            // Consumed unconditionally: whether the statement succeeds or is rejected by the
-            // server, there is no point re-issuing it on every subsequent checkout of this
+            // Consumed unconditionally: whether the statement succeeds, is skipped, or is rejected
+            // by the server, there is no point re-issuing it on every subsequent checkout of this
             // connection.
             _isolationLevelDirty = false;
+
+            // Azure Synapse Analytics dedicated SQL pools reject every isolation level except
+            // READ UNCOMMITTED with error 104409, and READ COMMITTED SNAPSHOT is the only isolation
+            // level those pools ever run under, so there is nothing to scrub. Skipping up front
+            // avoids spending a round trip on a statement that can only fail there.
+            if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+            {
+                return;
+            }
 
             try
             {
@@ -4021,23 +4031,28 @@ namespace Microsoft.Data.SqlClient.Connection
                     sync: true);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
             }
-            catch (SqlException) when (!IsConnectionDoomed)
+            catch (SqlException e) when (!IsConnectionDoomed)
             {
                 // The server rejected the statement but the session itself is healthy (the parser
                 // dooms the connection for transport-level failures, so reaching here means a plain
-                // T-SQL error). Not every SQL Server-compatible endpoint accepts this statement:
-                // Azure Synapse Analytics dedicated SQL pools, for example, only support
-                // SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED.
+                // T-SQL error). Not every SQL Server-compatible endpoint accepts this statement.
+                // The known case is an Azure Synapse dedicated SQL pool, which raises error 104409;
+                // that endpoint is normally filtered out by the guard above, so reaching here means
+                // either a data source shape the guard does not recognise or some other endpoint
+                // that restricts the statement, such as the Microsoft Dataverse TDS endpoint.
                 //
-                // sp_reset_connection still ran, because it is carried as a flag on the header of
-                // the batch above and is processed by the server before the batch body. The
-                // connection is therefore no less clean than it was under the legacy behavior, so
-                // degrade gracefully and let it be pooled rather than destroying it.
+                // Degrade rather than doom in all of those cases. sp_reset_connection still ran,
+                // because it is carried as a flag on the header of the batch above and is processed
+                // by the server before the batch body, so the connection is no less clean than it
+                // was under the legacy behavior. Leaving the session isolation level unchanged is
+                // exactly the pre-fix behavior, whereas dooming would destroy a usable connection on
+                // every checkout for any endpoint we have not enumerated.
                 SqlClientEventSource.Log.TryTraceEvent(
                     "<sc.SqlInternalConnectionTds.ResetSessionIsolationLevel|ADV> {0}, " +
-                    "server rejected the session isolation level reset; leaving the session " +
-                    "isolation level unchanged.",
-                    ObjectID);
+                    "server rejected the session isolation level reset with error {1}; leaving the " +
+                    "session isolation level unchanged.",
+                    ObjectID,
+                    e.Number);
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {

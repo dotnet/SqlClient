@@ -846,6 +846,7 @@ namespace Microsoft.Data.Common
 
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string AZURE_SYNAPSE_DEDICATED = ".sql.azuresynapse.";
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -894,6 +895,22 @@ namespace Microsoft.Data.Common
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
                 || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Determines whether the data source addresses an Azure Synapse Analytics <em>dedicated</em>
+        /// SQL pool.
+        /// </summary>
+        /// <remarks>Dedicated pools are addressed as "&lt;workspace&gt;.sql.azuresynapse.net", while
+        /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name. The two
+        /// behave differently: dedicated pools reject SET TRANSACTION ISOLATION LEVEL for every level
+        /// except READ UNCOMMITTED, whereas serverless pools accept it like any other Azure SQL
+        /// endpoint. Serverless pools are therefore excluded here.</remarks>
+        internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
+        {
+            return dataSource is not null
+                && dataSource.IndexOf(AZURE_SYNAPSE_DEDICATED, StringComparison.OrdinalIgnoreCase) >= 0
+                && dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) < 0;
         }
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
