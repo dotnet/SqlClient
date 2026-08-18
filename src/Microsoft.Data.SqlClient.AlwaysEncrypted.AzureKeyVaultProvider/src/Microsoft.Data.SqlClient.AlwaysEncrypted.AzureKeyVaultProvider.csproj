@@ -11,8 +11,14 @@
     <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
   </PropertyGroup>
 
-  <!-- Internals exposed to the unit test assembly ===================== -->
-  <ItemGroup>
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+  <!--
+    Internals are exposed to the unit test assembly only in unsigned builds. A strong-named
+    assembly cannot grant friend access without the friend's public key, so an unconditional
+    grant would break signed builds. This matches the sibling packages.
+  -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <InternalsVisibleTo Include="$(AssemblyName).Test" />
   </ItemGroup>
 
