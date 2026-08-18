@@ -344,18 +344,14 @@ END";
         /// In production this path is taken when column encryption is enabled and the parameter
         /// metadata came from the cache. Here it is forced with the DEBUG-only
         /// _forceInternalEndQuery hook so the regression is covered without an Always Encrypted
-        /// setup. The test no-ops against a Release build of the driver, where the hook is absent.
+        /// setup. Against a Release build of the driver the hook is absent and the test reports as
+        /// skipped, so the lost coverage is visible in the run summary. In that configuration the
+        /// Always Encrypted variant in ApiShould is the only coverage for this path.
         /// Synapse: Incompatible query.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsForceInternalEndQuerySupported))]
         public static async Task CancellationOnInternalEndExecutePath_SendsAttention()
         {
-            if (CommandHelper.s_forceInternalEndQuery is null)
-            {
-                // Release build of Microsoft.Data.SqlClient; the hook is compiled out.
-                return;
-            }
-
             // Partial results must arrive before the blocking statement. That is what completes
             // localCompletion early and gets the internal-end continuation into the monitor while
             // the server is still busy.
