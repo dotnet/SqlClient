@@ -372,14 +372,17 @@ SELECT 1 AS Result;";
                     {
                         command.CommandTimeout = 120;
 
+                        // Subscribe BEFORE dispatching so the RAISERROR ... WITH NOWAIT
+                        // informational token cannot arrive before we are listening.
+                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                        connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
                         Stopwatch stopwatch = Stopwatch.StartNew();
                         Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
 
                         // Let the RAISERROR NOWAIT packet land so the internal-end continuation is
                         // inside endFunc, and therefore inside lock (_stateObj), before we cancel.
-                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                        connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
-                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(5)));
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
 
                         long cancelledAtMs = stopwatch.ElapsedMilliseconds;
                         cts.Cancel();
@@ -410,6 +413,12 @@ SELECT 1 AS Result;";
                             "The internal-end path held lock (_stateObj) across a blocking read, so " +
                             "TdsParserStateObject.Cancel() could not send the attention signal.");
                         Assert.NotNull(caughtException);
+                        // Fail loudly if the InfoMessage never arrived: without it we silently
+                        // degrade to a fixed-timer cancellation and no longer prove that
+                        // cancellation happened in the "partial results received" state.
+                        Assert.True(infoMessageReceived.Task.IsCompleted,
+                            "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                            "the test did not exercise the partial-results cancellation path.");
                         Assert.True(latency < 30000,
                             $"Cancellation took {latency}ms, expected < 30000ms. " +
                             "Attention signal was not delivered on the internal-end path.");

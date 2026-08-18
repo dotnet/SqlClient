@@ -2452,14 +2452,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     using (CancellationTokenSource cts = new CancellationTokenSource())
                     {
+                        // Subscribe BEFORE dispatching so the RAISERROR ... WITH NOWAIT
+                        // informational token cannot arrive before we are listening.
+                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                        sqlConnection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
                         System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
                         Task<SqlDataReader> execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
 
                         // Wait for the RAISERROR NOWAIT packet so we know the continuation is
                         // inside endFunc before cancelling.
-                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                        sqlConnection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
-                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(TimeSpan.FromSeconds(10)));
 
                         long cancelledAtMs = stopwatch.ElapsedMilliseconds;
                         cts.Cancel();
@@ -2490,6 +2493,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             "The retained lock (_stateObj) in CreateLocalCompletionTask blocked " +
                             "TdsParserStateObject.Cancel() from sending the attention signal.");
                         Assert.NotNull(caughtException);
+                        // Fail loudly if the InfoMessage never arrived: without it we silently
+                        // degrade to a fixed-timer cancellation and no longer prove that
+                        // cancellation happened in the "partial results received" state.
+                        Assert.True(infoMessageReceived.Task.IsCompleted,
+                            "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                            "the test did not exercise the partial-results cancellation path.");
                         Assert.True(latency < 30000,
                             $"Cancellation took {latency}ms, expected < 30000ms. " +
                             "Attention signal was not delivered on the Always Encrypted internal-end path.");
