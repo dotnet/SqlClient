@@ -11,10 +11,18 @@ using System.Threading.Tasks;
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     /// <summary>
-    /// Provides mutual exclusion scoped to an individual key, so that concurrent callers asking for the
-    /// same key are serialized while callers asking for different keys proceed in parallel.
+    /// Provides best-effort deduplication scoped to an individual key, so that concurrent callers asking
+    /// for the same key are normally serialized while callers asking for different keys proceed in parallel.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// Exclusion is deliberately best-effort rather than guaranteed. Gates are reclaimed once nobody holds
+    /// or waits on them, so a caller sitting between fetching a gate and waiting on it can acquire a gate
+    /// that has just been reclaimed while a later caller creates a fresh one for the same key. Two callers
+    /// can therefore run the guarded work concurrently for one key. This is acceptable only where the
+    /// guarded work is idempotent and duplicating it is merely wasteful, which is the case for the key
+    /// store fetches this type guards. Do not reuse it where exclusion must be absolute.
+    /// </para>
     /// <para>
     /// The lock is only ever awaited, never blocked on, so no thread is held while the work it guards is
     /// in flight. It must not be combined with a synchronous wait on the same gate: doing so would block a
@@ -83,13 +91,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        /// Releases a lock acquired from <see cref="KeyedAsyncLock{TKey}"/>.
+        /// Releases a lock acquired from <see cref="KeyedAsyncLock{TKey}"/>. Disposal is idempotent, so a
+        /// second disposal cannot inflate the gate's count and hand the key to two callers at once.
         /// </summary>
-        internal readonly struct Releaser : IDisposable
+        internal sealed class Releaser : IDisposable
         {
             private readonly KeyedAsyncLock<TKey> _owner;
             private readonly TKey _key;
-            private readonly SemaphoreSlim _gate;
+            private SemaphoreSlim _gate;
 
             internal Releaser(KeyedAsyncLock<TKey> owner, TKey key, SemaphoreSlim gate)
             {
@@ -103,8 +112,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             /// </summary>
             public void Dispose()
             {
-                _gate.Release();
-                _owner.RemoveIfUnused(_key, _gate);
+                SemaphoreSlim gate = Interlocked.Exchange(ref _gate, null);
+                if (gate is null)
+                {
+                    return;
+                }
+
+                gate.Release();
+                _owner.RemoveIfUnused(_key, gate);
             }
         }
     }
