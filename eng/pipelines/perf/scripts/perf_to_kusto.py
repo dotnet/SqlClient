@@ -144,6 +144,11 @@ def _branch_category(branch_name):
             break
     if name.startswith("pull/") or branch_name.startswith("refs/pull/"):
         return "pull_request"
+    # The internal ADO mirror prefixes its branches with 'internal/', so 'internal/main' and
+    # 'internal/release/*' are the same branches as their public counterparts and must land in the
+    # same buckets - otherwise mirrored runs would all be categorised as 'other'.
+    if name.startswith("internal/"):
+        name = name[len("internal/"):]
     if name == "main" or name == "master":
         return "main"
     if name.startswith("release/"):
