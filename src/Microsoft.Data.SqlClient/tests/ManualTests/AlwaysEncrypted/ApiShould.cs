@@ -2394,6 +2394,127 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        /// <summary>
+        /// Companion to TestAsyncCancellationSendsAttention_WithAlwaysEncryptedCommand.
+        ///
+        /// That test puts WAITFOR first, so nothing comes back from the server until the delay
+        /// expires. The CreateLocalCompletionTask continuation therefore never runs while the
+        /// server is busy, and cancellation is handled out in ExecuteReaderAsync's await, which
+        /// passes whether or not the internal-end path holds lock (_stateObj).
+        ///
+        /// Flushing a partial result before the delay is what exposes the retained lock:
+        /// localCompletion completes on that first packet, the continuation enters endFunc while
+        /// holding the monitor, and blocks reading the rest. TdsParserStateObject.Cancel() needs
+        /// that same monitor to send the attention signal, so cancellation is silently dropped
+        /// and ExecuteReaderAsync returns a reader once WAITFOR expires.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task TestAsyncCancellationSendsAttention_WithAlwaysEncryptedCommand_AfterPartialResults(string connection)
+        {
+            CleanUpTable(connection, _tableName);
+
+            IList<object> values = GetValues(dataHint: 61);
+            int numberOfRows = 10;
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
+
+            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            {
+                await sqlConnection.OpenAsync();
+
+                // Same CommandText for warm-up and cancellation so the second execution reads the
+                // parameter metadata from the cache, which is what routes completion through
+                // CreateLocalCompletionTask.
+                string commandText = $"RAISERROR('partial result', 10, 1) WITH NOWAIT; WAITFOR DELAY @Delay; SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId;";
+
+                using (SqlCommand warmupCmd = new SqlCommand(
+                    commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    warmupCmd.Parameters.AddWithValue("@CustomerId", values[0]);
+                    warmupCmd.Parameters.AddWithValue("@FirstName", values[1]);
+                    warmupCmd.Parameters.AddWithValue("@Delay", "00:00:00");
+
+                    using (var reader = await warmupCmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync()) { }
+                        while (await reader.NextResultAsync()) { }
+                    }
+                }
+
+                using (SqlCommand sqlCommand = new SqlCommand(
+                    commandText, sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    sqlCommand.Parameters.AddWithValue("@CustomerId", values[0]);
+                    sqlCommand.Parameters.AddWithValue("@FirstName", values[1]);
+                    sqlCommand.Parameters.AddWithValue("@Delay", "00:01:00");
+                    sqlCommand.CommandTimeout = 120;
+
+                    using (CancellationTokenSource cts = new CancellationTokenSource())
+                    {
+                        // Subscribe BEFORE dispatching so the RAISERROR ... WITH NOWAIT
+                        // informational token cannot arrive before we are listening.
+                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                        sqlConnection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
+                        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                        Task<SqlDataReader> execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
+
+                        // Wait for the RAISERROR NOWAIT packet so we know the continuation is
+                        // inside endFunc before cancelling.
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(TimeSpan.FromSeconds(10)));
+
+                        long cancelledAtMs = stopwatch.ElapsedMilliseconds;
+                        cts.Cancel();
+
+                        Exception caughtException = null;
+                        bool readerReturned = false;
+                        try
+                        {
+                            using (SqlDataReader reader = await execTask)
+                            {
+                                readerReturned = true;
+                            }
+                        }
+                        catch (OperationCanceledException ex)
+                        {
+                            caughtException = ex;
+                        }
+                        catch (SqlException ex)
+                        {
+                            caughtException = ex;
+                        }
+
+                        stopwatch.Stop();
+                        long latency = stopwatch.ElapsedMilliseconds - cancelledAtMs;
+
+                        Assert.False(readerReturned,
+                            $"ExecuteReaderAsync returned a reader {latency}ms after cancellation was requested. " +
+                            "The retained lock (_stateObj) in CreateLocalCompletionTask blocked " +
+                            "TdsParserStateObject.Cancel() from sending the attention signal.");
+                        Assert.NotNull(caughtException);
+                        // Fail loudly if the InfoMessage never arrived: without it we silently
+                        // degrade to a fixed-timer cancellation and no longer prove that
+                        // cancellation happened in the "partial results received" state.
+                        Assert.True(infoMessageReceived.Task.IsCompleted,
+                            "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                            "the test did not exercise the partial-results cancellation path.");
+                        Assert.True(latency < 30000,
+                            $"Cancellation took {latency}ms, expected < 30000ms. " +
+                            "Attention signal was not delivered on the Always Encrypted internal-end path.");
+                    }
+                }
+
+                // Verify the connection is still usable after cancellation.
+                using (SqlCommand verifyCmd = new SqlCommand(
+                    $"SELECT COUNT(*) FROM [{_tableName}]", sqlConnection))
+                {
+                    object result = await verifyCmd.ExecuteScalarAsync();
+                    Assert.Equal(numberOfRows, (int)result);
+                }
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSGXEnclaveConnStringSetup))]
         public void TestNoneAttestationProtocolWithSGXEnclave()
         {

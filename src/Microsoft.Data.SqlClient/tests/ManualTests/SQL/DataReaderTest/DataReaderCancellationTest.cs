@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -336,6 +337,105 @@ END";
                     object result = await verifyCmd.ExecuteScalarAsync();
                     Assert.Equal(1, (int)result);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Regression test for the CreateLocalCompletionTask "internal end" path, which still
+        /// takes lock (_stateObj) while calling endFunc. That continuation fires as soon as the
+        /// first packet arrives, not once the whole result is buffered, so when a query flushes
+        /// partial results (RAISERROR WITH NOWAIT) and then blocks (WAITFOR), endFunc performs a
+        /// blocking read while holding the monitor. TdsParserStateObject.Cancel() needs the same
+        /// monitor to send the TDS attention signal, so cancellation is dropped and the command
+        /// runs to completion.
+        ///
+        /// In production this path is taken when column encryption is enabled and the parameter
+        /// metadata came from the cache. Here it is forced with the DEBUG-only
+        /// _forceInternalEndQuery hook so the regression is covered without an Always Encrypted
+        /// setup. Against a Release build of the driver the hook is absent and the test reports as
+        /// skipped, so the lost coverage is visible in the run summary. In that configuration the
+        /// Always Encrypted variant in ApiShould is the only coverage for this path.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsForceInternalEndQuerySupported))]
+        public static async Task CancellationOnInternalEndExecutePath_SendsAttention()
+        {
+            // Partial results must arrive before the blocking statement. That is what completes
+            // localCompletion early and gets the internal-end continuation into the monitor while
+            // the server is still busy.
+            const string query = @"
+RAISERROR('partial result', 10, 1) WITH NOWAIT;
+WAITFOR DELAY '00:01:00';
+SELECT 1 AS Result;";
+
+            CommandHelper.s_forceInternalEndQuery.SetValue(null, true);
+            try
+            {
+                using (var cts = new CancellationTokenSource())
+                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.CommandTimeout = 120;
+
+                        // Subscribe BEFORE dispatching so the RAISERROR ... WITH NOWAIT
+                        // informational token cannot arrive before we are listening.
+                        var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                        connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
+                        Stopwatch stopwatch = Stopwatch.StartNew();
+                        Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+
+                        // Let the RAISERROR NOWAIT packet land so the internal-end continuation is
+                        // inside endFunc, and therefore inside lock (_stateObj), before we cancel.
+                        await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
+
+                        long cancelledAtMs = stopwatch.ElapsedMilliseconds;
+                        cts.Cancel();
+
+                        System.Exception caughtException = null;
+                        bool readerReturned = false;
+                        try
+                        {
+                            using (var reader = await execTask)
+                            {
+                                readerReturned = true;
+                            }
+                        }
+                        catch (System.OperationCanceledException ex)
+                        {
+                            caughtException = ex;
+                        }
+                        catch (SqlException ex)
+                        {
+                            caughtException = ex;
+                        }
+
+                        stopwatch.Stop();
+                        long latency = stopwatch.ElapsedMilliseconds - cancelledAtMs;
+
+                        Assert.False(readerReturned,
+                            $"ExecuteReaderAsync returned a reader {latency}ms after cancellation was requested. " +
+                            "The internal-end path held lock (_stateObj) across a blocking read, so " +
+                            "TdsParserStateObject.Cancel() could not send the attention signal.");
+                        Assert.NotNull(caughtException);
+                        // Fail loudly if the InfoMessage never arrived: without it we silently
+                        // degrade to a fixed-timer cancellation and no longer prove that
+                        // cancellation happened in the "partial results received" state.
+                        Assert.True(infoMessageReceived.Task.IsCompleted,
+                            "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                            "the test did not exercise the partial-results cancellation path.");
+                        Assert.True(latency < 30000,
+                            $"Cancellation took {latency}ms, expected < 30000ms. " +
+                            "Attention signal was not delivered on the internal-end path.");
+                    }
+                }
+            }
+            finally
+            {
+                CommandHelper.s_forceInternalEndQuery.SetValue(null, false);
             }
         }
     }
