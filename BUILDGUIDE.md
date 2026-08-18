@@ -155,6 +155,7 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
+| `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
 | `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |

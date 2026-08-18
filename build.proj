@@ -401,7 +401,7 @@
     environments. Please consider running project specific test targets or specific test sets within
     the project.
   -->
-  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestAkvProvider;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
@@ -751,6 +751,7 @@
   <PropertyGroup>
     <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
+    <AkvProviderTestProjectPath>$(AkvProviderSrcRoot)test/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test.csproj</AkvProviderTestProjectPath>
     <AkvProviderArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/$(Configuration)/</AkvProviderArtifactRoot>
   </PropertyGroup>
 
@@ -827,9 +828,37 @@
       SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- TestAkvProvider: Runs Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider unit tests -->
+  <Target Name="TestAkvProvider">
+    <PropertyGroup>
+      <!--
+        Note: These tests exclusively use project references, so neither ReferenceType nor any
+        package version arguments are specified in this command.
+      -->
+      <LogFilePrefix>AkvProviderTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Importance="High" Text=">>> Running tests for AKV Provider"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
-
   <PropertyGroup>
     <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
     <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
@@ -1179,7 +1208,21 @@
   </PropertyGroup>
 
   <!-- BuildTests: Builds all test projects for all supported OS combinations. -->
-  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+
+  <!-- BuildAkvProviderTests: Builds the AKV Provider test project (OS-agnostic). -->
+  <Target Name="BuildAkvProviderTests">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building AKV Provider Tests"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
   <!-- BuildAbstractionsTests: Builds the Abstractions test project (OS-agnostic). -->
   <Target Name="BuildAbstractionsTests">

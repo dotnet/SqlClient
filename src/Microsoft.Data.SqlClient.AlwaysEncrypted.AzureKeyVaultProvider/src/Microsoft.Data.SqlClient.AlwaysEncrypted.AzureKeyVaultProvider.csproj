@@ -11,6 +11,11 @@
     <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
   </PropertyGroup>
 
+  <!-- Internals exposed to the unit test assembly ===================== -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
   <!-- Versioning ====================================================== -->
   <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
        in Package mode).  The guard property inside Versions.props makes this a no-op on the

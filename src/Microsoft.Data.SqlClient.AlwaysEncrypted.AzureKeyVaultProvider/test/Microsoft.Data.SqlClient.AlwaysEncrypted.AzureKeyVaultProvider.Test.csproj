@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- General Properties ============================================== -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test</AssemblyName>
+    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Compiler Options ================================================ -->
+  <PropertyGroup>
+    <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Global Usings =================================================== -->
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Embedded resources and content files ============================ -->
+  <ItemGroup>
+    <Content Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>xunit.runner.json</TargetPath>
+    </Content>
+  </ItemGroup>
+
+  <!-- References ====================================================== -->
+  <!-- Test Target Reference -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+  </ItemGroup>
+
+  <!-- Other References -->
+  <ItemGroup>
+    <!--
+      The provider targets netstandard2.0 and resolves Microsoft.Extensions.Caching.Memory 8.x,
+      while the driver reference assembly resolves 9.x. Referencing it directly here selects a
+      single version for the test assembly and avoids an NU1605 downgrade error.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.console" />
+  </ItemGroup>
+
+</Project>
