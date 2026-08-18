@@ -28,6 +28,9 @@
 #
 set -euo pipefail
 
+# Keep the checkout clean: never let the helper scripts drop __pycache__/*.pyc into eng/.
+export PYTHONDONTWRITEBYTECODE=1
+
 ####################################################################################################
 # Argument parsing
 ####################################################################################################
