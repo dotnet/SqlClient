@@ -419,8 +419,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
-
-            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -2426,4 +2424,3 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
     }
 }
-
