@@ -228,14 +228,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Sweep outside the lock: reclamation deactivates connections, which can make server
             // round trips, and must not block EnterParkedWait/ExitParkedWait on the hot path.
-            //
-            // This can run for longer than the sweep itself. Routing a reclaimed connection into
-            // the idle channel completes a parked caller's ReadAsync, and channel completions are
-            // synchronous, so that caller's continuation can be inlined onto this timer thread.
-            // Because the re-arm below happens only after this returns, a slow continuation delays
-            // the next sweep. Acceptable: the delay is bounded by the work a woken caller does
-            // before its next await, and delaying a sweep only postpones reclaiming a connection
-            // that is already reclaimable. It does not drop one.
             try
             {
                 if (_pool.IsRunning)

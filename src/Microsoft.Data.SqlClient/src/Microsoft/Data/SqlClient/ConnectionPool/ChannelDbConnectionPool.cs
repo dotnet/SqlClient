@@ -202,10 +202,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
-            // Reclamation, unlike pruning, applies to every pool configuration: a caller can leak a
-            // connection whatever the pool's sizing or idle timeout, and a fixed-size pool is the
-            // case where a leaked slot hurts most. The timer inside is created disarmed and only
-            // runs while callers are parked, so an unblocked pool pays nothing for it.
+            // Reclamation applies to every pool configuration. The timer inside is created disarmed and only
+            // runs while pool consumers are parked waiting for a connection..
             Reclaimer = new PoolReclaimer(this, _timeProvider);
 
             State = Running;
@@ -1386,7 +1384,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-            // connection. Statement order is important since we have synchronous completions on the channel.
+            // connection.
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
@@ -1647,9 +1645,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // One summary trace rather than the entry trace plus a line per connection that
             // WaitHandleDbConnectionPool emits.
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
-                Id,
+                    Id,
                 reclaimed.Count);
 
             foreach (DbConnectionInternal connection in reclaimed)
