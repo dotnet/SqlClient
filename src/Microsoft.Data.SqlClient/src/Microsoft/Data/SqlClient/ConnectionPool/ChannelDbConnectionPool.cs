@@ -1654,16 +1654,36 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
-                Id,
-                reclaimed.Count);
-
+            int returned = 0;
             foreach (DbConnectionInternal connection in reclaimed)
             {
+                try
+                {
+                    connection.DetachCurrentTransactionIfEnded();
+                    ReturnInternalConnection(connection, owningObject: null);
+                }
+                catch (Exception ex)
+                {
+                    // One connection failing to return must not strand the rest of the sweep.
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.ReclaimEmancipatedConnections | ERR | {0}, Connection {1}, Return threw: {2}.",
+                        Id,
+                        connection.ObjectID,
+                        ex);
+
+                    continue;
+                }
+
                 Metrics.ReclaimedConnectionRequest();
-                connection.DetachCurrentTransactionIfEnded();
-                ReturnInternalConnection(connection, owningObject: null);
+                returned++;
+            }
+
+            if (returned > 0)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
+                    Id,
+                    returned);
             }
         }
 

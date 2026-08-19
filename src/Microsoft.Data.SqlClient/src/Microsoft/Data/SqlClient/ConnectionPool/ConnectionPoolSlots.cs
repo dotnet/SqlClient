@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
@@ -205,48 +206,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Enumerates the connections currently tracked by this collection without allocating.
-        /// The enumeration is best-effort: connections may be added or removed while it is in
-        /// progress, so callers must tolerate entries that have since left the pool, and an entry
-        /// added during the walk may or may not be seen. This is safe because the backing array has
-        /// a fixed capacity and is never reallocated; each slot is read individually. Intended for
-        /// infrequent bookkeeping passes (e.g. reclaiming emancipated connections), not for hot
-        /// paths.
+        /// Enumerates the connections currently tracked by this collection. The enumeration is
+        /// best-effort: connections may be added or removed while it is in progress, so callers must
+        /// tolerate entries that have since left the pool, and an entry added during the walk may or
+        /// may not be seen. This is safe because the backing array has a fixed capacity and is never
+        /// reallocated; each slot is read individually. Intended for infrequent bookkeeping passes
+        /// (e.g. reclaiming emancipated connections), not for hot paths.
         /// </summary>
-        public Enumerator GetEnumerator() => new(_connections);
-
-        /// <summary>
-        /// A non-allocating enumerator over the occupied slots of a <see cref="ConnectionPoolSlots"/>.
-        /// Declared as a mutable struct and returned by value from <see cref="GetEnumerator"/> so a
-        /// foreach over the collection allocates nothing; do not copy it into a local.
-        /// </summary>
-        public struct Enumerator
+        public IEnumerator<DbConnectionInternal> GetEnumerator()
         {
-            private readonly DbConnectionInternal?[] _connections;
-            private int _index;
-
-            internal Enumerator(DbConnectionInternal?[] connections)
+            for (int i = 0; i < _connections.Length; i++)
             {
-                _connections = connections;
-                _index = -1;
-                Current = null!;
-            }
-
-            public DbConnectionInternal Current { get; private set; }
-
-            public bool MoveNext()
-            {
-                while (++_index < _connections.Length)
+                DbConnectionInternal? connection = Volatile.Read(ref _connections[i]);
+                if (connection is not null)
                 {
-                    DbConnectionInternal? connection = Volatile.Read(ref _connections[_index]);
-                    if (connection is not null)
-                    {
-                        Current = connection;
-                        return true;
-                    }
+                    yield return connection;
                 }
-
-                return false;
             }
         }
 
