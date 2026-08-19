@@ -78,9 +78,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             string connectionString = "Data Source=localhost;",
             int maxPoolSize = 50,
             int minPoolSize = 0,
-            int idleTimeout = 0)
+            int idleTimeout = 0,
+            FakeTimeProvider? timeProvider = null)
         {
             DbConnectionPoolGroup poolGroup = ConstructPoolGroup(connectionString, maxPoolSize, minPoolSize, idleTimeout);
+            timeProvider ??= new FakeTimeProvider();
 
             return implementation switch
             {
@@ -89,7 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     poolGroup,
                     DbConnectionPoolIdentity.NoIdentity,
                     new DbConnectionPoolProviderInfo(),
-                    timeProvider: new FakeTimeProvider(),
+                    timeProvider: timeProvider,
                     metrics: metrics),
 
                 PoolImplementation.Channel => new ChannelDbConnectionPool(
@@ -98,7 +100,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     DbConnectionPoolIdentity.NoIdentity,
                     new DbConnectionPoolProviderInfo(),
                     connectionCreationRateLimiter: null,
-                    timeProvider: new FakeTimeProvider(),
+                    timeProvider: timeProvider,
                     metrics: metrics),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(implementation)),
@@ -743,7 +745,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// reclaim methods: the pool is capped at a single connection, that connection is leaked,
         /// and a second caller then requests one. Each implementation reaches its own reclaim path
         /// from that saturated request, so the test asserts observable behavior rather than a
-        /// specific internal entry point.
+        /// specific internal entry point. WaitHandle sweeps inline before waiting; the channel pool
+        /// sweeps from its reclaim timer, so the request runs on a background thread and the fake
+        /// clock is advanced once it parks.
         ///
         /// The two pools agree on every counter except activeSoftConnections; see the assertion
         /// below.
@@ -755,11 +759,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             FakeSqlClientMetrics metrics = new();
+            FakeTimeProvider fakeTime = new();
             IDbConnectionPool pool = ConstructPool(
                 implementation,
                 metrics,
                 new SuccessfulSqlConnectionFactory(metrics),
-                maxPoolSize: 1);
+                maxPoolSize: 1,
+                timeProvider: fakeTime);
 
             DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
             AssertCounters(
@@ -777,11 +783,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act - the pool's only slot is occupied by a connection nobody can return, so this
             // request can only be served by reclaiming it.
-            Assert.True(pool.TryGetConnection(
-                new SqlConnection(),
-                null,
-                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                out DbConnectionInternal? reclaimed));
+            DbConnectionInternal? reclaimed = null;
+            Exception? failure = null;
+            SqlConnection waitingOwner = new();
+            Thread caller = new(() =>
+            {
+                try
+                {
+                    Assert.True(pool.TryGetConnection(
+                        waitingOwner,
+                        null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                        out reclaimed));
+                }
+                catch (Exception ex)
+                {
+                    failure = ex;
+                }
+            })
+            {
+                IsBackground = true,
+                Name = nameof(EmancipatedConnection_IsReclaimedAndCounted)
+            };
+            caller.Start();
+
+            if (pool is ChannelDbConnectionPool channelPool)
+            {
+                // FakeTimeProvider invokes timer callbacks synchronously on Advance, so the sweep
+                // runs on this thread. Whether it lands before or after the caller reaches the
+                // channel read does not matter: the connection is queued either way.
+                SpinWait.SpinUntil(() => channelPool.Reclaimer.ParkedWaiters == 1, TimeSpan.FromSeconds(30));
+                fakeTime.Advance(PoolReclaimer.SweepInterval);
+            }
+
+            Assert.True(caller.Join(TimeSpan.FromSeconds(30)), "the caller should be served by the reclaimed connection");
+            Assert.Null(failure);
 
             // Assert - the same physical connection was handed out again, with no second connect.
             // The two pools disagree on softDisconnects: the channel pool routes reclamation
@@ -798,6 +834,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pooledConnections: 1,
                 reclaimedConnections: 1,
                 activeConnections: 1);
+
+            GC.KeepAlive(waitingOwner);
         }
 
         /// <summary>

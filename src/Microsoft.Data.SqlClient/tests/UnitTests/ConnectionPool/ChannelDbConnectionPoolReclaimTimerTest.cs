@@ -281,8 +281,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// End-to-end coverage of the gap this feature closes. A caller parks on an exhausted pool,
-        /// and only afterwards does the owner of the sole connection become collectable. The inline
-        /// sweep the caller performed before parking could not have seen that, so without a
+        /// and only afterwards does the owner of the sole connection become collectable. Without a
         /// background sweep the caller would wait out its entire timeout even though a slot was
         /// recoverable. Advancing the injected <see cref="FakeTimeProvider"/> fires the sweep, which
         /// reclaims the connection and wakes the caller.
@@ -294,14 +293,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = ConstructPool(maxPoolSize: 1, timeProvider: fakeTime);
 
             // Occupy the pool's only slot. The owner is deliberately kept rooted until after the
-            // second caller has parked: a collection triggered by a test running in parallel would
-            // otherwise emancipate it early, letting the second caller's inline sweep succeed so it
-            // never parks and the case under test never arises.
+            // second caller has parked, so the connection is provably still owned at that point and
+            // the sweep below is the only thing that can free it.
             DbConnectionInternal leaked = CheckOutAndRootOwner(pool, out GCHandle leakedOwnerRoot);
             Assert.Equal(1, pool.Count);
 
-            // A second caller finds the pool exhausted and parks. Its inline sweep runs before the
-            // collection below, so it finds nothing. The async path is used deliberately: the sync
+            // A second caller finds the pool exhausted and parks. The async path is used
+            // deliberately: the sync
             // path first takes a process-wide sync-over-async semaphore, so a sync caller could sit
             // behind unrelated tests rather than on the idle channel this test is exercising.
             SqlConnection waitingOwner = new();
@@ -317,8 +315,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(pool.Reclaimer.IsTimerEnabled);
             Assert.False(parked.Task.IsCompleted);
 
-            // Only now does the abandoned owner become collectable, which is precisely the case the
-            // caller's own inline sweep cannot cover.
+            // Only now does the abandoned owner become collectable, which is precisely the case a
+            // one-shot sweep at request time cannot cover.
             leakedOwnerRoot.Free();
             CollectAbandonedOwners();
             Assert.True(leaked.IsEmancipated);
@@ -394,8 +392,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 () => (caller.ThreadState & System.Threading.ThreadState.WaitSleepJoin) != 0,
                 "the sync caller should block inside the channel read");
 
-            // Only now does the abandoned owner become collectable, which is precisely the case the
-            // caller's own inline sweep cannot cover.
+            // Only now does the abandoned owner become collectable, which is precisely the case a
+            // one-shot sweep at request time cannot cover.
             leakedOwnerRoot.Free();
             CollectAbandonedOwners();
             Assert.True(leaked.IsEmancipated);

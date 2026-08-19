@@ -1511,27 +1511,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         cancellationToken,
                         timeout);
 
-                    // Before parking on the idle channel (potentially for the full timeout), sweep
-                    // for connections whose owning SqlConnection was garbage collected without ever
-                    // being closed or disposed. Those "emancipated" connections still occupy pool
-                    // slots, so at MaxPoolSize every subsequent request would otherwise time out
-                    // forever. WaitHandleDbConnectionPool performs the same sweep before waiting.
-                    // This is deliberately confined to the slow path: it is O(MaxPoolSize), so it
-                    // must not run on the hot acquire path.
-                    if (connection is null && ReclaimEmancipatedConnections())
-                    {
-                        connection = GetIdleConnection();
-                    }
-
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
                     //
-                    // That FIFO guarantee is also why the reclaim sweep above cannot simply be retried
-                    // on this thread while we wait: cancelling the read to re-sweep would send us to
-                    // the back of the queue behind callers that arrived later. Instead we register
-                    // with the reclaimer, which sweeps on a timer for as long as anyone is parked and
-                    // routes anything it reclaims back through this channel, waking us here.
+                    // Connections whose owning SqlConnection was garbage collected without being
+                    // closed still occupy pool slots, so at MaxPoolSize every subsequent request
+                    // would otherwise wait forever. Rather than sweeping for them here, we register
+                    // with the reclaimer, which sweeps on a timer for as long as anyone is parked
+                    // and routes anything it reclaims back through this channel, waking us here.
+                    // Sweeping inline would cost an O(MaxPoolSize) walk on every saturated acquire
+                    // in applications that never leak.
                     if (connection is null)
                     {
                         Reclaimer.EnterParkedWait();
@@ -1586,29 +1576,27 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// without being closed or disposed. Such connections are still tracked by the pool but can
         /// never be returned by their owner, so without this sweep they would leak pool slots.
         /// </summary>
-        /// <returns>True if at least one connection was reclaimed; otherwise, false.</returns>
-        internal bool ReclaimEmancipatedConnections()
+        internal void ReclaimEmancipatedConnections()
         {
-            // Only one sweep at a time. Both the timer and any caller that finds the pool saturated
-            // sweep, so without this a saturated pool runs one O(MaxPoolSize) walk per waiting
-            // caller over the same slots. Holding it for the whole sweep is also what lets the
-            // routing below go through ReturnInternalConnection, which re-takes the connection lock
-            // to call PrePush: the gate keeps anything else from claiming the connection in between.
+            // Only one sweep at a time. Sweeps are driven by the reclaim timer, which can overlap
+            // itself: ExitParkedWait can disarm and EnterParkedWait re-arm while a sweep is still
+            // running. Holding the gate for the whole sweep is also what lets the routing below go
+            // through ReturnInternalConnection, which re-takes the connection lock to call PrePush:
+            // the gate keeps anything else from claiming the connection in between.
             //
-            // TryEnter, so no thread ever waits here. A caller that arrives mid-sweep parks instead,
-            // and whatever the in-flight sweep reclaims lands in the idle channel, so it is still
-            // served. That matters because the gate is held across deactivation, which can make
-            // server round trips.
+            // TryEnter, so no thread ever waits here. Whatever the in-flight sweep reclaims lands in
+            // the idle channel, so parked callers are still served. That matters because the gate is
+            // held across deactivation, which can make server round trips.
             bool sweeping = false;
             try
             {
                 Monitor.TryEnter(_reclaimSweepGate, ref sweeping);
                 if (!sweeping)
                 {
-                    return false;
+                    return;
                 }
 
-                return SweepEmancipatedConnections();
+                SweepEmancipatedConnections();
             }
             finally
             {
@@ -1623,7 +1611,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Body of <see cref="ReclaimEmancipatedConnections"/>. Must be called with
         /// <see cref="_reclaimSweepGate"/> held.
         /// </summary>
-        private bool SweepEmancipatedConnections()
+        private void SweepEmancipatedConnections()
         {
             List<DbConnectionInternal>? reclaimed = null;
 
@@ -1663,14 +1651,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (reclaimed is null)
             {
-                // Deliberately silent. This runs once per second for as long as any caller is
-                // parked, so tracing an empty sweep would flood the trace stream of a pool that is
-                // merely busy. A sweep that finds nothing is reported by its absence.
-                return false;
+                return;
             }
 
-            // One summary trace rather than the entry trace plus a line per connection that
-            // WaitHandleDbConnectionPool emits.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
                 Id,
@@ -1678,23 +1661,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             foreach (DbConnectionInternal connection in reclaimed)
             {
-                // Matches WaitHandleDbConnectionPool so the number-of-reclaimed-connections counter
-                // is meaningful under pool V2 as well; it previously always read zero here.
                 Metrics.ReclaimedConnectionRequest();
-
-                // Detached before the return rather than after the claim, which is the order
-                // WaitHandleDbConnectionPool uses. The only step that reads the pooled count is
-                // DelegatedTransactionEnded, unreachable here since IsEmancipated already excludes
-                // IsTxRootWaitingForTxEnd, so the two orders agree.
                 connection.DetachCurrentTransactionIfEnded();
-
-                // Routed through the normal return path so reclamation cannot drift away from the
-                // accounting a return performs. The owner was collected, so there is none to
-                // validate against: PrePush(null) asserts exactly that.
                 ReturnInternalConnection(connection, owningObject: null);
             }
-
-            return true;
         }
 
         /// <summary>
