@@ -290,6 +290,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, extraConnection);
 
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -418,6 +419,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -487,6 +490,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
 
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
