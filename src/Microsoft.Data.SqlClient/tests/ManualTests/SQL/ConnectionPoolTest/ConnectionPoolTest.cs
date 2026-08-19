@@ -57,6 +57,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     }
 
     // TODO Synapse: Fix these tests for Azure Synapse.
+    // TODO PoolV2: All manual connection-pool tests should eventually run against both pool
+    // implementations (legacy WaitHandleDbConnectionPool and ChannelDbConnectionPool), not just
+    // whichever UseConnectionPoolV2 defaults to.
     [Trait("Set", "3")]
     public static class ConnectionPoolTest
     {
