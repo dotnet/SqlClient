@@ -304,7 +304,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Drives background sweeps for emancipated connections. Unlike <see cref="Pruner"/> this is
-        /// always present, since reclamation applies to every pool configuration.
+        /// always present, since reclamation applies to every pool configuration. Internal rather
+        /// than private so tests can drive the timer bookkeeping directly.
         /// </summary>
         internal PoolReclaimer Reclaimer { get; }
 
