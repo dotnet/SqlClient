@@ -335,5 +335,82 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             GC.KeepAlive(waitingOwner);
         }
+
+        /// <summary>
+        /// The synchronous counterpart of the test above. The sync path does not await the idle
+        /// channel; it blocks the calling thread inside <c>ReadChannelSyncOverAsync</c>, behind a
+        /// process-wide sync-over-async semaphore. That makes it a genuinely different code path
+        /// from <c>ReadAsync</c>, so the sweep's ability to wake a parked caller is proven for both.
+        /// </summary>
+        /// <remarks>
+        /// The caller runs on a dedicated thread rather than a pooled one: it blocks for the whole
+        /// parked wait, and parking it on a thread pool thread would consume a worker for the
+        /// duration. It also holds a slot in the shared sync-over-async semaphore while parked,
+        /// which is why the wait is kept as short as possible.
+        /// </remarks>
+        [Fact]
+        public void ParkedSyncCaller_IsWokenBySweep_WhenConnectionIsEmancipatedAfterParking()
+        {
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(maxPoolSize: 1, timeProvider: fakeTime);
+
+            // Occupy the pool's only slot, keeping the owner rooted so a collection triggered by a
+            // test running in parallel cannot emancipate it before the second caller has parked.
+            DbConnectionInternal leaked = CheckOutAndRootOwner(pool, out GCHandle leakedOwnerRoot);
+            Assert.Equal(1, pool.Count);
+
+            // A second caller finds the pool exhausted and blocks inside the sync read.
+            DbConnectionInternal? syncResult = null;
+            Exception? syncFailure = null;
+            SqlConnection waitingOwner = new();
+            Thread caller = new(() =>
+            {
+                try
+                {
+                    pool.TryGetConnection(
+                        waitingOwner,
+                        taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)),
+                        out syncResult);
+                }
+                catch (Exception ex)
+                {
+                    syncFailure = ex;
+                }
+            })
+            {
+                IsBackground = true,
+                Name = nameof(ParkedSyncCaller_IsWokenBySweep_WhenConnectionIsEmancipatedAfterParking)
+            };
+            caller.Start();
+
+            WaitFor(() => pool.Reclaimer.ParkedWaiters == 1, "the sync caller should register as parked");
+            Assert.True(pool.Reclaimer.IsTimerEnabled);
+
+            // ParkedWaiters is incremented before the semaphore is taken, so the caller may not be
+            // on the channel yet. Wait for the blocking read itself, otherwise the sweep below could
+            // reclaim and route the connection before anyone is there to be woken by it.
+            WaitFor(
+                () => (caller.ThreadState & System.Threading.ThreadState.WaitSleepJoin) != 0,
+                "the sync caller should block inside the channel read");
+
+            // Only now does the abandoned owner become collectable, which is precisely the case the
+            // caller's own inline sweep cannot cover.
+            leakedOwnerRoot.Free();
+            CollectAbandonedOwners();
+            Assert.True(leaked.IsEmancipated);
+
+            // FakeTimeProvider invokes timer callbacks synchronously on Advance.
+            fakeTime.Advance(PoolReclaimer.SweepInterval);
+
+            Assert.True(caller.Join(TimeSpan.FromSeconds(30)), "the sync caller should be woken by the sweep");
+            Assert.Null(syncFailure);
+            Assert.NotNull(syncResult);
+            Assert.Equal(leaked, syncResult);
+            Assert.Equal(0, pool.Reclaimer.ParkedWaiters);
+            Assert.False(pool.Reclaimer.IsTimerEnabled);
+
+            GC.KeepAlive(waitingOwner);
+        }
     }
 }

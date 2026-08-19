@@ -785,9 +785,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
-            // Stop the background reclaim sweep before draining, for the same reason as the pruning
-            // timer: an in-flight sweep must not route a reclaimed connection back into the channel
-            // after the drain below has already passed it.
+            // Stop the background reclaim sweep before draining. This only narrows the window:
+            // ITimer.Dispose does not wait for a callback that is already running, so a sweep can
+            // still be in flight below. What actually guarantees a late-reclaimed connection is
+            // disposed rather than stranded is the ordering further down: _idleChannel.Complete()
+            // runs before the drain, after which TryWrite fails and PutConnectionInIdleChannel
+            // destroys the connection instead of pooling it. Any write that did succeed necessarily
+            // happened before Complete(), so the final unbounded drain mops it up. The State check
+            // in DeactivateAndRouteConnection catches most late sweeps earlier, but State is not
+            // synchronized against this write, so it cannot be relied on alone.
             try
             {
                 Reclaimer.Dispose();
@@ -1518,8 +1524,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // being closed or disposed. Those "emancipated" connections still occupy pool
                     // slots, so at MaxPoolSize every subsequent request would otherwise time out
                     // forever. WaitHandleDbConnectionPool performs the same sweep before waiting.
-                    // This is deliberately confined to the slow path: it is O(MaxPoolSize) and
-                    // allocates a snapshot, so it must not run on the hot acquire path.
+                    // This is deliberately confined to the slow path: it is O(MaxPoolSize), so it
+                    // must not run on the hot acquire path.
                     if (connection is null && ReclaimEmancipatedConnections())
                     {
                         connection = GetIdleConnection();
@@ -1591,11 +1597,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>True if at least one connection was reclaimed; otherwise, false.</returns>
         internal bool ReclaimEmancipatedConnections()
         {
-            SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Sweeping for emancipated connections.", Id);
-
             List<DbConnectionInternal>? reclaimed = null;
 
+            // Unlike WaitHandleDbConnectionPool, which scans under lock (_objectList), this walk
+            // takes no collection-level lock: the enumerator reads each slot individually, so it can
+            // observe a slot that was concurrently emptied or refilled. That is safe because of what
+            // this sweep is looking for. A connection is only emancipated while it is checked out,
+            // and a checked-out connection is not in the idle channel, so neither the pruner nor
+            // Clear can remove it underneath us. The only code that can claim it is another sweep,
+            // which is excluded by the per-connection lock below. A concurrently replaced slot can
+            // therefore cost this sweep a miss, never a connection resurrected after removal, and a
+            // miss is picked up by the next sweep.
             foreach (DbConnectionInternal connection in _connectionSlots)
             {
                 // TryEnter rather than Enter: IsEmancipated must be read under the connection lock to
@@ -1627,16 +1639,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (reclaimed is null)
             {
+                // Deliberately silent. This runs once per second for as long as any caller is
+                // parked, so tracing an empty sweep would flood the trace stream of a pool that is
+                // merely busy. A sweep that finds nothing is reported by its absence.
                 return false;
             }
 
+            // One summary trace rather than the entry trace plus a line per connection that
+            // WaitHandleDbConnectionPool emits.
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
+                Id,
+                reclaimed.Count);
+
             foreach (DbConnectionInternal connection in reclaimed)
             {
-                SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Connection {1}, Reclaiming.",
-                    Id,
-                    connection.ObjectID);
-
                 // Matches WaitHandleDbConnectionPool so the number-of-reclaimed-connections counter
                 // is meaningful under pool V2 as well; it previously always read zero here.
                 Metrics.ReclaimedConnectionRequest();

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 using System;
+using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
@@ -129,7 +130,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        /// <summary>Number of callers currently parked. Exposed for unit tests.</summary>
+        /// <summary>
+        /// Number of callers currently registered as parked. Exposed for unit tests.
+        /// <para>
+        /// Not an exact count of callers sitting on the idle channel. On the synchronous path
+        /// registration happens before <c>ReadChannelSyncOverAsync</c> takes the process-wide
+        /// sync-over-async semaphore, so a caller counts as parked while it is still queued for that
+        /// semaphore. The effect is only that the timer arms slightly early, which is harmless: the
+        /// caller is blocked either way, and a sweep that runs before it reaches the channel simply
+        /// finds nothing.
+        /// </para>
+        /// </summary>
         internal int ParkedWaiters
         {
             get
@@ -175,6 +186,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             lock (_lock)
             {
+                // An unbalanced call means some park site is missing its EnterParkedWait, which
+                // would leave the timer armed forever (or, if it under-counted the other way, stop
+                // sweeping while a caller is still parked). Clamped rather than thrown in release
+                // builds: a mis-paired registration is not worth failing a connection attempt over.
+                Debug.Assert(_parkedWaiters > 0, "ExitParkedWait called without a matching EnterParkedWait.");
+
                 if (_parkedWaiters > 0)
                 {
                     _parkedWaiters--;
@@ -211,6 +228,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Sweep outside the lock: reclamation deactivates connections, which can make server
             // round trips, and must not block EnterParkedWait/ExitParkedWait on the hot path.
+            //
+            // This can run for longer than the sweep itself. Routing a reclaimed connection into
+            // the idle channel completes a parked caller's ReadAsync, and channel completions are
+            // synchronous, so that caller's continuation can be inlined onto this timer thread.
+            // Because the re-arm below happens only after this returns, a slow continuation delays
+            // the next sweep. Acceptable: the delay is bounded by the work a woken caller does
+            // before its next await, and delaying a sweep only postpones reclaiming a connection
+            // that is already reclaimable. It does not drop one.
             try
             {
                 if (_pool.IsRunning)
