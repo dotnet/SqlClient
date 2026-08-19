@@ -362,11 +362,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public uint EnableSsl(uint options)
+        public uint EnableSsl(uint options, string clientCertificate, string clientKey, string clientKeyPassword)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                return _lowerHandle.EnableSsl(options);
+                return _lowerHandle.EnableSsl(options, clientCertificate, clientKey, clientKeyPassword);
             }
         }
 

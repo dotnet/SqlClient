@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Collections.Generic;
+using System.Security;
 using Xunit;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -70,6 +71,44 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
             Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+        /// <summary>
+        /// Verifies that client certificate authentication cannot be combined with a <see cref="SqlCredential"/>.
+        /// </summary>
+        [Fact]
+        public void ClientCertificate_WithCredential_Throws()
+        {
+            using SecureString password = new();
+            password.AppendChar('x');
+            password.MakeReadOnly();
+            SqlCredential credential = new("user", password);
+
+            Assert.Throws<ArgumentException>(
+                () => new SqlConnection("ClientCertificate=client.pfx", credential));
+        }
+
+        /// <summary>
+        /// Verifies that client certificate authentication cannot be combined with an access token.
+        /// </summary>
+        [Fact]
+        public void ClientCertificate_WithAccessToken_Throws()
+        {
+            using SqlConnection connection = new("ClientCertificate=client.pfx");
+
+            Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "token");
+        }
+
+        /// <summary>
+        /// Verifies that client certificate authentication cannot be combined with an access-token callback.
+        /// </summary>
+        [Fact]
+        public void ClientCertificate_WithAccessTokenCallback_Throws()
+        {
+            using SqlConnection connection = new("ClientCertificate=client.pfx");
+
+            Assert.Throws<InvalidOperationException>(
+                () => connection.AccessTokenCallback = (_, _) => throw new NotImplementedException());
         }
 
         [Fact]
@@ -944,6 +983,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("HostNameInCertificate=tds.test.com")]
         [InlineData("Server Certificate=c:\\test.cer")]
         [InlineData("ServerCertificate=c:\\test.cer")]
+        [InlineData("Client Certificate=c:\\client.pfx")]
+        [InlineData("ClientCertificate=c:\\client.pfx")]
         [InlineData("Enlist=false")]
         [InlineData("Enlist=true")]
         [InlineData("Integrated Security=true")]

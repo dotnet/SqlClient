@@ -212,6 +212,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
+                else if (UsesClientCertificate(ConnectionOptions))
+                {
+                    throw ADP.InvalidMixedArgumentOfClientCertificateAuthentication();
+                }
                 else if (UsesActiveDirectoryIntegrated(ConnectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
@@ -602,6 +606,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
         }
 
+        private bool UsesClientCertificate(SqlConnectionOptions opt)
+        {
+            return opt?.UsesClientCertificate == true;
+        }
+
         // Does this connection use Integrated Security?
         private bool UsesIntegratedSecurity(SqlConnectionOptions opt)
         {
@@ -656,7 +665,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_credential != null || _accessToken != null || _accessTokenCallback != null)
+                if (_credential != null || _accessToken != null || _accessTokenCallback != null || _sspiContextProvider != null)
                 {
                     SqlConnectionOptions connectionOptions = new SqlConnectionOptions(value);
                     if (_credential != null)
@@ -705,6 +714,11 @@ namespace Microsoft.Data.SqlClient
                     if (_accessTokenCallback != null)
                     {
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
+                    }
+
+                    if (_sspiContextProvider != null && UsesClientCertificate(connectionOptions))
+                    {
+                        throw ADP.InvalidMixedUsageOfClientCertificateAuthentication();
                     }
                 }
                 ConnectionString_Set(new ConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
@@ -802,6 +816,11 @@ namespace Microsoft.Data.SqlClient
                 if (!InnerConnection.AllowSetConnectionString)
                 {
                     throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
+                }
+
+                if (value != null && UsesClientCertificate(ConnectionOptions))
+                {
+                    throw ADP.InvalidMixedUsageOfClientCertificateAuthentication();
                 }
 
                 ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
@@ -1120,6 +1139,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity();
             }
+
+            if (UsesClientCertificate(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfClientCertificateAuthentication();
+            }
         }
 
         // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken: check if the usage of AccessToken has any conflict
@@ -1141,6 +1165,11 @@ namespace Microsoft.Data.SqlClient
             if (UsesAuthentication(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndAuthentication();
+            }
+
+            if (UsesClientCertificate(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfClientCertificateAuthentication();
             }
 
             // Check if the usage of AccessToken has the conflict with credential
@@ -1173,6 +1202,11 @@ namespace Microsoft.Data.SqlClient
             if (UsesAuthentication(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
+            }
+
+            if (UsesClientCertificate(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfClientCertificateAuthentication();
             }
 
             if (_accessToken != null)

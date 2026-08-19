@@ -40,6 +40,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Regex s_connectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         internal readonly bool _hasPasswordKeyword;
+        internal readonly bool _hasClientKeyPasswordKeyword;
         internal readonly bool _hasUserIdKeyword;
         internal readonly NameValuePair _keyChain;
 
@@ -130,6 +131,9 @@ namespace Microsoft.Data.SqlClient
         private readonly string _userID;
         private readonly string _hostNameInCertificate;
         private readonly string _serverCertificate;
+        private readonly string _clientCertificate;
+        private readonly string _clientKey;
+        private readonly string _clientKeyPassword;
         private readonly string _serverSPN;
         private readonly string _failoverPartnerSPN;
 
@@ -165,6 +169,12 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.InitialFileName);
             AddKeywordToMap(DbConnectionStringKeywords.AttestationProtocol);
             AddKeywordToMap(DbConnectionStringKeywords.Authentication);
+            AddKeywordToMap(DbConnectionStringKeywords.ClientCertificate,
+                            DbConnectionStringSynonyms.ClientCertificate);
+            AddKeywordToMap(DbConnectionStringKeywords.ClientKey,
+                            DbConnectionStringSynonyms.ClientKey);
+            AddKeywordToMap(DbConnectionStringKeywords.ClientKeyPassword,
+                            DbConnectionStringSynonyms.ClientKeyPassword);
             AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting,
                             DbConnectionStringSynonyms.ColumnEncryption);
             AddKeywordToMap(DbConnectionStringKeywords.CommandTimeout);
@@ -254,6 +264,7 @@ namespace Microsoft.Data.SqlClient
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap, false);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) ||
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
+                _hasClientKeyPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.ClientKeyPassword);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
                                     _parsetable.ContainsKey(DbConnectionStringSynonyms.Uid);
             }
@@ -306,6 +317,9 @@ namespace Microsoft.Data.SqlClient
             _ipAddressPreference = ConvertValueToIPAddressPreference();
             _hostNameInCertificate = ConvertValueToString(DbConnectionStringKeywords.HostNameInCertificate, DbConnectionStringDefaults.HostNameInCertificate);
             _serverCertificate = ConvertValueToString(DbConnectionStringKeywords.ServerCertificate, DbConnectionStringDefaults.ServerCertificate);
+            _clientCertificate = ConvertValueToString(DbConnectionStringKeywords.ClientCertificate, DbConnectionStringDefaults.ClientCertificate);
+            _clientKey = ConvertValueToString(DbConnectionStringKeywords.ClientKey, DbConnectionStringDefaults.ClientKey);
+            _clientKeyPassword = ConvertValueToString(DbConnectionStringKeywords.ClientKeyPassword, DbConnectionStringDefaults.ClientKeyPassword);
             _serverSPN = ConvertValueToString(DbConnectionStringKeywords.ServerSpn, DbConnectionStringDefaults.ServerSpn);
             _failoverPartnerSPN = ConvertValueToString(DbConnectionStringKeywords.FailoverPartnerSpn, DbConnectionStringDefaults.FailoverPartnerSpn);
 
@@ -561,6 +575,30 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
             }
+
+            if (string.IsNullOrEmpty(_clientCertificate))
+            {
+                if (ContainsKey(DbConnectionStringKeywords.ClientKey))
+                {
+                    throw ADP.MissingConnectionOptionValue(DbConnectionStringKeywords.ClientKey, DbConnectionStringKeywords.ClientCertificate);
+                }
+
+                if (_hasClientKeyPasswordKeyword)
+                {
+                    throw ADP.MissingConnectionOptionValue(DbConnectionStringKeywords.ClientKeyPassword, DbConnectionStringKeywords.ClientCertificate);
+                }
+            }
+            else if (string.IsNullOrEmpty(_clientKey) && !IsPkcs12Certificate(_clientCertificate))
+            {
+                throw ADP.MissingConnectionOptionValue(DbConnectionStringKeywords.ClientCertificate, DbConnectionStringKeywords.ClientKey);
+            }
+            else if (_hasUserIdKeyword ||
+                     _hasPasswordKeyword ||
+                     _integratedSecurity ||
+                     ContainsKey(DbConnectionStringKeywords.Authentication))
+            {
+                throw SQL.ClientCertificateAuthenticationConflict();
+            }
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -572,6 +610,7 @@ namespace Microsoft.Data.SqlClient
             _parsetable = connectionOptions._parsetable;
             _keyChain = connectionOptions._keyChain;
             _hasPasswordKeyword = connectionOptions._hasPasswordKeyword;
+            _hasClientKeyPasswordKeyword = connectionOptions._hasClientKeyPasswordKeyword;
             _hasUserIdKeyword = connectionOptions._hasUserIdKeyword;
             _integratedSecurity = connectionOptions._integratedSecurity;
             _encrypt = connectionOptions._encrypt;
@@ -623,6 +662,10 @@ namespace Microsoft.Data.SqlClient
             _serverSPN = connectionOptions._serverSPN;
             _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
             _hostNameInCertificate = connectionOptions._hostNameInCertificate;
+            _serverCertificate = connectionOptions._serverCertificate;
+            _clientCertificate = connectionOptions._clientCertificate;
+            _clientKey = connectionOptions._clientKey;
+            _clientKeyPassword = connectionOptions._clientKeyPassword;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
@@ -649,6 +692,10 @@ namespace Microsoft.Data.SqlClient
         internal string HostNameInCertificate => _hostNameInCertificate;
         internal bool TrustServerCertificate => _trustServerCertificate;
         public string ServerCertificate => _serverCertificate;
+        internal string ClientCertificate => _clientCertificate;
+        internal string ClientKey => _clientKey;
+        internal string ClientKeyPassword => _clientKeyPassword;
+        internal bool UsesClientCertificate => !string.IsNullOrEmpty(_clientCertificate);
         internal bool Enlist => _enlist;
         internal bool MARS => _mars;
         internal bool MultiSubnetFailover => _multiSubnetFailover;
@@ -1141,14 +1188,16 @@ namespace Microsoft.Data.SqlClient
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
-            if (_hasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            if (HasSensitiveInfoKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
             {
-                ReplacePasswordPwd(out connectionString, false);
+                ReplaceSensitiveValues(out connectionString, false);
             }
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => _hasPasswordKeyword
+        internal bool HasSensitiveInfoKeyword => _hasPasswordKeyword || _hasClientKeyPasswordKeyword;
+
+        internal bool HasPersistablePassword => HasSensitiveInfoKeyword
             ? ConvertValueToBoolean(DbConnectionStringKeywords.PersistSecurityInfo, DbConnectionStringDefaults.PersistSecurityInfo)
             : true; // no password means persistable password so we don't have to munge
 
@@ -1536,7 +1585,7 @@ namespace Microsoft.Data.SqlClient
             return keychain;
         }
 
-        internal NameValuePair ReplacePasswordPwd(out string constr, bool fakePassword)
+        internal NameValuePair ReplaceSensitiveValues(out string constr, bool fakePassword)
         {
             bool expanded = false;
             int copyPosition = 0;
@@ -1544,8 +1593,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
-                if (!CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, current.Name) &&
-                    !CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, current.Name))
+                if (!IsSensitiveKeyword(current.Name))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
                     if (fakePassword)
@@ -1555,7 +1603,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (fakePassword)
                 {
-                    // replace user password/pwd value with *
+                    // replace the sensitive value with *
                     const string equalstar = "=*;";
                     builder.Append(current.Name).Append(equalstar);
                     next = new NameValuePair(current.Name, "*", current.Name.Length + equalstar.Length);
@@ -1580,9 +1628,21 @@ namespace Microsoft.Data.SqlClient
                 }
                 copyPosition += current.Length;
             }
-            Debug.Assert(expanded, "password/pwd was not removed");
+            Debug.Assert(expanded, "sensitive connection string value was not removed");
             constr = builder.ToString();
             return head;
+        }
+
+        private static bool IsSensitiveKeyword(string keyword) =>
+            CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, keyword) ||
+            CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, keyword) ||
+            CompareInsensitiveInvariant(DbConnectionStringKeywords.ClientKeyPassword, keyword);
+
+        private static bool IsPkcs12Certificate(string certificatePath)
+        {
+            string extension = Path.GetExtension(certificatePath);
+            return extension.Equals(".pfx", StringComparison.OrdinalIgnoreCase) ||
+                   extension.Equals(".p12", StringComparison.OrdinalIgnoreCase);
         }
 
         // SxS notes:

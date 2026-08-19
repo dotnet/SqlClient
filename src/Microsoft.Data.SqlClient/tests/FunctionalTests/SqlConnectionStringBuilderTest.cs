@@ -103,6 +103,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("HostNameInCertificate = tds.test.com")]
         [InlineData("Server Certificate = c:\\test.cer")]
         [InlineData("ServerCertificate = c:\\test.cer")]
+        [InlineData("Client Certificate = c:\\client.pfx")]
+        [InlineData("ClientCertificate = c:\\client.pfx")]
+        [InlineData("Client Certificate = c:\\client.pem;Client Key = c:\\client.key")]
+        [InlineData("ClientCertificate = c:\\client.pem;ClientKey = c:\\client.key")]
+        [InlineData("Client Certificate = c:\\client.pfx;Client Key Password = <pwd>")]
+        [InlineData("ClientCertificate = c:\\client.pfx;ClientKeyPassword = <pwd>")]
         [InlineData("Server SPN = server1")]
         [InlineData("ServerSPN = server2")]
         [InlineData("Failover Partner SPN = server3")]
@@ -438,6 +444,27 @@ namespace Microsoft.Data.SqlClient.Tests
                 HostNameInCertificate = testhostname
             };
             Assert.Equal(testhostname, builder.HostNameInCertificate);
+        }
+
+        /// <summary>
+        /// Verifies that client certificate authentication options round-trip through strongly typed builder properties.
+        /// </summary>
+        [Fact]
+        public void ClientCertificateOptions_RoundTrip()
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                ClientCertificate = "client.pem",
+                ClientKey = "client.key",
+                ClientKeyPassword = "<pwd>"
+            };
+
+            Assert.Equal("client.pem", builder.ClientCertificate);
+            Assert.Equal("client.key", builder.ClientKey);
+            Assert.Equal("<pwd>", builder.ClientKeyPassword);
+            Assert.Equal(
+                "Client Certificate=client.pem;Client Key=client.key;Client Key Password=<pwd>",
+                builder.ConnectionString);
         }
 
         [Fact]

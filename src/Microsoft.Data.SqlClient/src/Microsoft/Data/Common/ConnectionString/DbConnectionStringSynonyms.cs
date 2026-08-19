@@ -10,6 +10,9 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string Address = "address";
         internal const string App = "app";
         internal const string ApplicationIntent = "applicationintent";
+        internal const string ClientCertificate = "clientcertificate";
+        internal const string ClientKey = "clientkey";
+        internal const string ClientKeyPassword = "clientkeypassword";
         internal const string ColumnEncryption = "columnEncryption";
         internal const string ConnectionLifetime = "connection lifetime";
         internal const string ConnectionTimeout = "connection timeout";

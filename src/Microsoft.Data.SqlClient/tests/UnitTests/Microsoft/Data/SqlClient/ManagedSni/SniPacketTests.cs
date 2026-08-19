@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             {
             }
 
-            public override uint EnableSsl(uint options) => TdsEnums.SNI_SUCCESS;
+            public override uint EnableSsl(uint options, string clientCertificate, string clientKey, string clientKeyPassword) => TdsEnums.SNI_SUCCESS;
 
             public override SniPacket RentPacket(int headerSize, int dataSize)
             {

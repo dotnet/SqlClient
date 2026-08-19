@@ -213,6 +213,9 @@
   <data name="ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use Credential with Integrated Security connection string keyword.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfClientCertificateAuthentication" xml:space="preserve">
+    <value>Client certificate authentication cannot be combined with User ID, Password, Integrated Security, Authentication, Credential, AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword" xml:space="preserve">
     <value>Cannot set the AccessToken property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.</value>
   </data>
@@ -521,6 +524,21 @@
   </data>
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use 'Authentication' with 'Integrated Security'.</value>
+  </data>
+  <data name="SQL_ClientCertificateRequiresManagedSni" xml:space="preserve">
+    <value>Client certificate authentication requires managed networking and is not supported by native SNI or .NET Framework.</value>
+  </data>
+  <data name="SQL_ClientCertificateLoadFailed" xml:space="preserve">
+    <value>The client certificate or private key could not be loaded.</value>
+  </data>
+  <data name="SQL_ClientCertificateMissingPrivateKey" xml:space="preserve">
+    <value>The client certificate does not have an associated private key.</value>
+  </data>
+  <data name="SQL_ClientCertificateNotValid" xml:space="preserve">
+    <value>The client certificate is not currently valid.</value>
+  </data>
+  <data name="SQL_ClientCertificateUnsupportedKeyAlgorithm" xml:space="preserve">
+    <value>Client Key supports only RSA PKCS#1 or PKCS#8 private keys. Use a PFX or P12 certificate for other key algorithms.</value>
   </data>
   <data name="SQL_IntegratedWithPassword" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>
@@ -1028,6 +1046,15 @@
   </data>
   <data name="DbConnectionString_Authentication" xml:space="preserve">
     <value>Specifies the method of authenticating with SQL Server.</value>
+  </data>
+  <data name="DbConnectionString_ClientCertificate" xml:space="preserve">
+    <value>The path to the client certificate used for SQL Server on Linux loopback authentication.</value>
+  </data>
+  <data name="DbConnectionString_ClientKey" xml:space="preserve">
+    <value>The path to the private key for the client certificate.</value>
+  </data>
+  <data name="DbConnectionString_ClientKeyPassword" xml:space="preserve">
+    <value>The password used to access the client certificate or private key.</value>
   </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
     <value>Access token to use for authentication.</value>

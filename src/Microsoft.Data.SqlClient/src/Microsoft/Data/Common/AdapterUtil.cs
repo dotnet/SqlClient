@@ -1467,6 +1467,12 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity));
 
+        internal static InvalidOperationException InvalidMixedUsageOfClientCertificateAuthentication()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfClientCertificateAuthentication));
+
+        internal static ArgumentException InvalidMixedArgumentOfClientCertificateAuthentication()
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfClientCertificateAuthentication));
+
         internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));
 

@@ -178,6 +178,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     _pipeStream = null;
                 }
 
+                DisposeClientCertificate();
+
                 //Release any references held by _stream.
                 _stream = null;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, All streams disposed and references cleared.", args0: _connectionId);
@@ -326,22 +328,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _sendCallback = sendCallback;
         }
 
-        public override uint EnableSsl(uint options)
+        public override uint EnableSsl(uint options, string clientCertificate, string clientKey, string clientKeyPassword)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-                    if (_tlsFirst)
-                    {
-                        AuthenticateAsClient(_sslStream, _targetServer, null);
-                    }
-                    else
-                    {
-                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
-                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                    }
+                    SslStreamCertificateContext clientCertificateContext = GetClientCertificateContext(
+                        clientCertificate,
+                        clientKey,
+                        clientKeyPassword);
+                    AuthenticateAsClient(
+                        _sslStream,
+                        _targetServer,
+                        clientCertificateContext,
+                        useTds8Alpn: _tlsFirst);
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();

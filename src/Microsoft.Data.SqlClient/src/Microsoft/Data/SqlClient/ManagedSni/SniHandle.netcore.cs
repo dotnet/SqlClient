@@ -19,24 +19,68 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// </summary>
     internal abstract class SniHandle
     {
+        private SqlClientCertificateContext _clientCertificateContext;
+
         protected static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
         protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
-        protected static async Task AuthenticateAsClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate, CancellationToken token)
+        protected static async Task AuthenticateAsClientAsync(
+            SslStream sslStream,
+            string serverNameIndication,
+            SslStreamCertificateContext certificateContext,
+            bool useTds8Alpn,
+            CancellationToken token)
         {
             SslClientAuthenticationOptions sslClientOptions = new()
             {
                 TargetHost = serverNameIndication,
-                ApplicationProtocols = s_tdsProtocols,
-                ClientCertificates = certificate
+                EnabledSslProtocols = s_supportedProtocols,
+                ClientCertificateContext = certificateContext,
             };
+            if (useTds8Alpn)
+            {
+                sslClientOptions.ApplicationProtocols = s_tdsProtocols;
+            }
+
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
         }
 
-        protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
+        protected static void AuthenticateAsClient(
+            SslStream sslStream,
+            string serverNameIndication,
+            SslStreamCertificateContext certificateContext,
+            bool useTds8Alpn)
         {
-            AuthenticateAsClientAsync(sslStream, serverNameIndication, certificate, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            AuthenticateAsClientAsync(
+                sslStream,
+                serverNameIndication,
+                certificateContext,
+                useTds8Alpn,
+                CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        protected SslStreamCertificateContext GetClientCertificateContext(
+            string certificatePath,
+            string keyPath,
+            string keyPassword)
+        {
+            if (string.IsNullOrEmpty(certificatePath))
+            {
+                return null;
+            }
+
+            _clientCertificateContext ??= SqlClientCertificateLoader.Load(
+                certificatePath,
+                keyPath,
+                keyPassword);
+            return _clientCertificateContext.SslContext;
+        }
+
+        protected void DisposeClientCertificate()
+        {
+            _clientCertificateContext?.Dispose();
+            _clientCertificateContext = null;
         }
 
         /// <summary>
@@ -89,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public abstract uint EnableSsl(uint options);
+        public abstract uint EnableSsl(uint options, string clientCertificate, string clientKey, string clientKeyPassword);
 
         /// <summary>
         /// Disable SSL

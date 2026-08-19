@@ -373,13 +373,19 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override uint PostReadAsyncForMars(TdsParserStateObject physicalStateObject) => TdsEnums.SNI_SUCCESS_IO_PENDING;
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        internal override uint EnableSsl(
+            ref uint info,
+            bool tlsFirst,
+            string serverCertificateFilename,
+            string clientCertificate,
+            string clientKey,
+            string clientKeyPassword)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             try
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", sessionHandle.ConnectionId);
-                return sessionHandle.EnableSsl(info);
+                return sessionHandle.EnableSsl(info, clientCertificate, clientKey, clientKeyPassword);
             }
             catch (Exception e)
             {

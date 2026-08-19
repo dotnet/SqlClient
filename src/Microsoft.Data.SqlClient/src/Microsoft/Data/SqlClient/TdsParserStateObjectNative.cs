@@ -434,8 +434,19 @@ namespace Microsoft.Data.SqlClient
             return error;
         }
 
-        internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
+        internal override uint EnableSsl(
+            ref uint info,
+            bool tlsFirst,
+            string serverCertificateFilename,
+            string clientCertificate,
+            string clientKey,
+            string clientKeyPassword)
         {
+            if (!string.IsNullOrEmpty(clientCertificate))
+            {
+                throw new PlatformNotSupportedException(StringsHelper.GetString(Strings.SQL_ClientCertificateRequiresManagedSni));
+            }
+
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;

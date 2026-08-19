@@ -8,6 +8,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// Tests immutable connection option parsing and validation.
+    /// </summary>
     public class SqlConnectionOptionsTest : IDisposable
     {
         // Ensure we restore the original app context switch values after each
@@ -104,6 +107,86 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             };
 
             Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
+        }
+
+        /// <summary>
+        /// Verifies that the client certificate options and no-space aliases map to their canonical values.
+        /// </summary>
+        [Fact]
+        public void ClientCertificateOptions_ParseAliases()
+        {
+            SqlConnectionOptions options = new(
+                "ClientCertificate=client.pem;ClientKey=client.key;ClientKeyPassword=<pwd>");
+
+            Assert.Equal("client.pem", options.ClientCertificate);
+            Assert.Equal("client.key", options.ClientKey);
+            Assert.Equal("<pwd>", options.ClientKeyPassword);
+            Assert.True(options.UsesClientCertificate);
+        }
+
+        /// <summary>
+        /// Verifies that certificate authentication rejects connection-string credential mechanisms.
+        /// </summary>
+        [Theory]
+        [InlineData("ClientCertificate=client.pfx;User ID=user")]
+        [InlineData("ClientCertificate=client.pfx;Password=<pwd>")]
+        [InlineData("ClientCertificate=client.pfx;Integrated Security=true")]
+        [InlineData("ClientCertificate=client.pfx;Authentication=SqlPassword")]
+        [InlineData("ClientCertificate=client.pfx;Authentication=NotSpecified")]
+        public void ClientCertificateOptions_WithOtherAuthentication_Throws(string connectionString)
+        {
+            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(connectionString));
+        }
+
+        /// <summary>
+        /// Verifies that key material cannot be configured without a client certificate.
+        /// </summary>
+        [Theory]
+        [InlineData("ClientKey=client.key")]
+        [InlineData("ClientKey=")]
+        [InlineData("ClientKeyPassword=<pwd>")]
+        public void ClientCertificateOptions_KeyWithoutCertificate_Throws(string connectionString)
+        {
+            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(connectionString));
+        }
+
+        /// <summary>
+        /// Verifies that PEM, DER, and CER certificates require a separate private-key file.
+        /// </summary>
+        [Theory]
+        [InlineData("client.pem")]
+        [InlineData("client.der")]
+        [InlineData("client.cer")]
+        public void ClientCertificateOptions_NonPkcs12WithoutKey_Throws(string certificatePath)
+        {
+            Assert.Throws<ArgumentException>(
+                () => new SqlConnectionOptions($"ClientCertificate={certificatePath}"));
+        }
+
+        /// <summary>
+        /// Verifies that client key passwords are removed from returned and trace connection strings by default.
+        /// </summary>
+        [Fact]
+        public void ClientKeyPassword_IsRedacted()
+        {
+            SqlConnectionOptions options = new(
+                "Data Source=server;ClientCertificate=client.pfx;ClientKeyPassword=<pwd>");
+
+            Assert.DoesNotContain("ClientKeyPassword", options.UsersConnectionString(hidePassword: true), StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("<pwd>", options.UsersConnectionStringForTrace(), StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that Persist Security Info affects the public string but never the trace string.
+        /// </summary>
+        [Fact]
+        public void ClientKeyPassword_PersistSecurityInfo_DoesNotExposeTrace()
+        {
+            SqlConnectionOptions options = new(
+                "ClientCertificate=client.pfx;ClientKeyPassword=<pwd>;Persist Security Info=true");
+
+            Assert.Contains("<pwd>", options.UsersConnectionString(hidePassword: true), StringComparison.Ordinal);
+            Assert.DoesNotContain("<pwd>", options.UsersConnectionStringForTrace(), StringComparison.Ordinal);
         }
     }
 }

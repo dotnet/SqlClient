@@ -102,6 +102,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
         }
+        internal static Exception ClientCertificateAuthenticationConflict()
+        {
+            return ADP.InvalidMixedArgumentOfClientCertificateAuthentication();
+        }
         internal static Exception IntegratedWithPassword()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
@@ -2150,4 +2154,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

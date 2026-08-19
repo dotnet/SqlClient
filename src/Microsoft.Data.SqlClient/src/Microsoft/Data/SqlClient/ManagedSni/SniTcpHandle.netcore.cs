@@ -71,6 +71,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     _tcpStream = null;
                 }
 
+                DisposeClientCertificate();
+
                 //Release any references held by _stream.
                 _stream = null;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, All streams disposed.", args0: _connectionId);
@@ -722,7 +724,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public override uint EnableSsl(uint options)
+        public override uint EnableSsl(uint options, string clientCertificate, string clientKey, string clientKeyPassword)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniHandle)))
             {
@@ -730,14 +732,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 try
                 {
-                    if (_tlsFirst)
-                    {
-                        AuthenticateAsClient(_sslStream, _targetServer, null);
-                    }
-                    else
-                    {
-                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                    }
+                    SslStreamCertificateContext clientCertificateContext = GetClientCertificateContext(
+                        clientCertificate,
+                        clientKey,
+                        clientKeyPassword);
+                    AuthenticateAsClient(
+                        _sslStream,
+                        _targetServer,
+                        clientCertificateContext,
+                        useTds8Alpn: _tlsFirst);
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();

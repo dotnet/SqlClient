@@ -570,7 +570,13 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate,
             string serverCertificateFilename);
 
-        internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
+        internal abstract uint EnableSsl(
+            ref uint info,
+            bool tlsFirst,
+            string serverCertificateFilename,
+            string clientCertificate,
+            string clientKey,
+            string clientKeyPassword);
 
         internal abstract uint CheckConnection();
 
