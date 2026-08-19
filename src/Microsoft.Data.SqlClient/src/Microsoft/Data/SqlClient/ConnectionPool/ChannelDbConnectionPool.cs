@@ -1621,10 +1621,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // up by the next sweep.
             foreach (DbConnectionInternal connection in _connectionSlots)
             {
-                // TryEnter rather than Enter: IsEmancipated must be read under the connection lock to
-                // avoid racing PrePush/PostPop, but a connection that is currently locked is being
-                // actively handed out or returned and therefore is not emancipated anyway. Skipping
-                // it keeps this sweep from blocking the caller.
+                // IsEmancipated is only stable under the connection lock, which guards the
+                // PrePush/PostPop that move it in and out of the pool. TryEnter rather than Enter: a
+                // connection someone else holds is mid-handout or mid-return, so it is not
+                // emancipated anyway and blocking on it would only stall that caller.
                 bool locked = false;
                 try
                 {
