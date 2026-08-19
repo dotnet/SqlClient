@@ -125,7 +125,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Code path | `SqlConnectionInternal.Enlist()` — the **re-enlistment / checkout** path (the `else if` on the equality short-circuit) |
 | Mechanism | When a reset is pending, re-issue `SET TRANSACTION ISOLATION LEVEL <ambient>` mapped from `Transaction.IsolationLevel` |
 | Direction | **Re-assert** session state on the way back out of the pool |
-| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyTransactionScopeIsolationBehavior` |
+| App context switch | None — the previous behavior is a correctness bug, not a compatibility contract |
 | Special case | `Snapshot` is intentionally **not** re-asserted — switching to `SNAPSHOT` while a transaction is open causes SQL Server to fail and roll back the transaction, and the delegated transaction was already begun under snapshot isolation by the TM request |
 | Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends |
 
@@ -145,7 +145,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
-| App context switch | `UseLegacyIsolationLevelBehavior` | `UseLegacyTransactionScopeIsolationBehavior` |
+| App context switch | `UseLegacyIsolationLevelBehavior` | None |
 | `Snapshot` handling | Reset to `READ COMMITTED` like any other level | Deliberately **skipped** |
 
 ---

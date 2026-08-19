@@ -2397,8 +2397,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Only enlist if it's different...
                 EnlistNonNull(transaction);
             }
-            else if (!LocalAppContextSwitches.UseLegacyTransactionScopeIsolationBehavior
-                     && _parser._fResetConnection)
+            else if (_parser._fResetConnection)
             {
                 // Same System.Transactions transaction being re-attached to the same
                 // pooled physical connection (transacted-pool re-checkout inside an
