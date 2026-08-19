@@ -20,6 +20,7 @@ using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 using static Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest;
+using static Microsoft.Data.SqlClient.UnitTests.ConnectionPool.PoolTestHarness;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
@@ -32,44 +33,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     public class DbConnectionPoolInstrumentationTest
     {
         /// <summary>
-        /// Identifies which pool implementation a parameterized metric test exercises.
-        /// </summary>
-        public enum PoolImplementation
-        {
-            /// <summary>The legacy <see cref="WaitHandleDbConnectionPool"/>.</summary>
-            WaitHandle,
-
-            /// <summary>The <see cref="ChannelDbConnectionPool"/>.</summary>
-            Channel,
-        }
-
-        /// <summary>
-        /// Builds the pool group shared by both pool implementations.
-        /// </summary>
-        private static DbConnectionPoolGroup ConstructPoolGroup(
-            string connectionString,
-            int maxPoolSize,
-            int minPoolSize,
-            int idleTimeout)
-        {
-            DbConnectionPoolGroupOptions poolGroupOptions = new(
-                poolByIdentity: false,
-                minPoolSize: minPoolSize,
-                maxPoolSize: maxPoolSize,
-                creationTimeout: 15,
-                loadBalanceTimeout: 0,
-                hasTransactionAffinity: true,
-                idleTimeout: idleTimeout);
-
-            return new DbConnectionPoolGroup(
-                new SqlConnectionOptions(connectionString),
-                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
-                poolGroupOptions);
-        }
-
-        /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface, reporting to
-        /// the supplied metrics instance.
+        /// the supplied metrics instance. Keeps this class's argument order over
+        /// <see cref="PoolTestHarness.ConstructPool"/>, which every test here shares.
         /// </summary>
         private static IDbConnectionPool ConstructPool(
             PoolImplementation implementation,
@@ -80,32 +46,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int minPoolSize = 0,
             int idleTimeout = 0,
             FakeTimeProvider? timeProvider = null)
-        {
-            DbConnectionPoolGroup poolGroup = ConstructPoolGroup(connectionString, maxPoolSize, minPoolSize, idleTimeout);
-            timeProvider ??= new FakeTimeProvider();
-
-            return implementation switch
-            {
-                PoolImplementation.WaitHandle => new WaitHandleDbConnectionPool(
-                    connectionFactory,
-                    poolGroup,
-                    DbConnectionPoolIdentity.NoIdentity,
-                    new DbConnectionPoolProviderInfo(),
-                    timeProvider: timeProvider,
-                    metrics: metrics),
-
-                PoolImplementation.Channel => new ChannelDbConnectionPool(
-                    connectionFactory,
-                    poolGroup,
-                    DbConnectionPoolIdentity.NoIdentity,
-                    new DbConnectionPoolProviderInfo(),
-                    connectionCreationRateLimiter: null,
-                    timeProvider: timeProvider,
-                    metrics: metrics),
-
-                _ => throw new ArgumentOutOfRangeException(nameof(implementation)),
-            };
-        }
+            => PoolTestHarness.ConstructPool(
+                implementation,
+                connectionFactory,
+                metrics,
+                timeProvider,
+                connectionString,
+                maxPoolSize,
+                minPoolSize,
+                idleTimeout);
 
         /// <summary>
         /// Asserts the exact value of every counter a pool is responsible for. Any counter not named
@@ -741,13 +690,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// and counted, in both pool implementations.
         /// </summary>
         /// <remarks>
-        /// The sweep is triggered the same way for both pools rather than by calling their internal
-        /// reclaim methods: the pool is capped at a single connection, that connection is leaked,
-        /// and a second caller then requests one. Each implementation reaches its own reclaim path
-        /// from that saturated request, so the test asserts observable behavior rather than a
-        /// specific internal entry point. WaitHandle sweeps inline before waiting; the channel pool
-        /// sweeps from its reclaim timer, so the request runs on a background thread and the fake
-        /// clock is advanced once it parks.
+        /// This covers the counters only. The reclamation behavior itself is asserted by
+        /// <see cref="DbConnectionPoolReclamationTest"/>.
         ///
         /// The two pools agree on every counter except activeSoftConnections; see the assertion
         /// below.
@@ -776,9 +720,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 activeConnections: 1);
 
             // The owner is only collectable now that the helper's frame has been popped.
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
+            CollectAbandonedOwners();
             Assert.True(leaked.IsEmancipated);
 
             // Act - the pool's only slot is occupied by a connection nobody can return, so this
@@ -807,16 +749,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             };
             caller.Start();
 
-            if (pool is ChannelDbConnectionPool channelPool)
-            {
-                // FakeTimeProvider invokes timer callbacks synchronously on Advance, so the sweep
-                // runs on this thread. Whether it lands before or after the caller reaches the
-                // channel read does not matter: the connection is queued either way.
-                SpinWait.SpinUntil(() => channelPool.Reclaimer.ParkedWaiters == 1, TimeSpan.FromSeconds(30));
-                fakeTime.Advance(PoolReclaimer.SweepInterval);
-            }
-
-            Assert.True(caller.Join(TimeSpan.FromSeconds(30)), "the caller should be served by the reclaimed connection");
+            AdvanceUntil(fakeTime, () => caller.Join(TimeSpan.Zero), "the caller should be served by the reclaimed connection");
             Assert.Null(failure);
 
             // Assert - the same physical connection was handed out again, with no second connect.
@@ -836,24 +769,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 activeConnections: 1);
 
             GC.KeepAlive(waitingOwner);
-        }
-
-        /// <summary>
-        /// Checks out a connection and drops the only reference to its owner. Kept in its own
-        /// non-inlined method so the owner becomes collectable as soon as this frame is popped; a
-        /// local in the calling test would stay rooted until the end of that method in a debug build.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static DbConnectionInternal CheckOutAndAbandonOwner(IDbConnectionPool pool)
-        {
-            SqlConnection owner = new();
-            Assert.True(pool.TryGetConnection(
-                owner,
-                null,
-                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                out DbConnectionInternal? connection));
-            Assert.NotNull(connection);
-            return connection!;
         }
 
         #region Test classes
