@@ -16,12 +16,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// while callers are parked waiting for a connection.
     /// <para>
     /// A connection becomes emancipated when its owning <see cref="System.Data.Common.DbConnection"/>
-    /// is garbage collected without ever being closed or disposed. The pool sweeps for these inline
-    /// just before a caller parks on the idle channel, but that single sweep is not enough:
-    /// emancipation only becomes observable once the garbage collector has collected the owner, which
-    /// routinely happens after the caller has already parked. Without a background sweep nothing would
-    /// then reclaim the connection, and every parked caller would wait out its full timeout even
-    /// though a pool slot was recoverable the whole time.
+    /// is garbage collected without ever being closed or disposed. Emancipation only becomes
+    /// observable once the collector has run, which routinely happens after a caller has already
+    /// parked, so a single sweep at request time cannot cover it. Without a background sweep every
+    /// parked caller would wait out its full timeout even though a pool slot was recoverable the
+    /// whole time.
     /// </para>
     /// <para>
     /// The sweep cannot run on the parked caller's own thread. <see cref="ChannelDbConnectionPool"/>
@@ -56,9 +55,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal static readonly TimeSpan SweepInterval = TimeSpan.FromSeconds(1);
 
-        /// <summary>
-        /// The owning connection pool that is swept for emancipated connections.
-        /// </summary>
         private readonly ChannelDbConnectionPool _pool;
 
         /// <summary>

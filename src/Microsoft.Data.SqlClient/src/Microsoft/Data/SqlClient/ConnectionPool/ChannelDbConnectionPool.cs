@@ -209,8 +209,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
-            // Reclamation applies to every pool configuration. The timer inside is created disarmed and only
-            // runs while pool consumers are parked waiting for a connection..
             Reclaimer = new PoolReclaimer(this, _timeProvider);
 
             State = Running;
@@ -1516,13 +1514,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
                     //
-                    // Connections whose owning SqlConnection was garbage collected without being
-                    // closed still occupy pool slots, so at MaxPoolSize every subsequent request
-                    // would otherwise wait forever. Rather than sweeping for them here, we register
-                    // with the reclaimer, which sweeps on a timer for as long as anyone is parked
-                    // and routes anything it reclaims back through this channel, waking us here.
-                    // Sweeping inline would cost an O(MaxPoolSize) walk on every saturated acquire
-                    // in applications that never leak.
+                    // Registering with the reclaimer is what keeps a leaked connection from stranding
+                    // us here forever; it sweeps on a timer while anyone is parked and routes what it
+                    // reclaims back through this channel. Sweeping inline instead would cost an
+                    // O(MaxPoolSize) walk on every saturated acquire in applications that never leak.
                     if (connection is null)
                     {
                         Reclaimer.EnterParkedWait();
@@ -1610,15 +1605,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             List<DbConnectionInternal>? reclaimed = null;
 
-            // Unlike WaitHandleDbConnectionPool, which scans under lock (_objectList), this walk
-            // takes no collection-level lock: the enumerator reads each slot individually, so it can
-            // observe a slot that was concurrently emptied or refilled. That is safe because of what
-            // this sweep is looking for. A connection is only emancipated while it is checked out,
-            // and a checked-out connection is not in the idle channel, so neither the pruner nor
-            // Clear can remove it underneath us. The only code that can claim it is another sweep,
-            // which is excluded by the sweep gate. A concurrently replaced slot can therefore cost
-            // this sweep a miss, never a connection resurrected after removal, and a miss is picked
-            // up by the next sweep.
+            // No collection-level lock, unlike WaitHandleDbConnectionPool's scan under lock
+            // (_objectList): each slot is read individually, so the walk can see a slot that was
+            // concurrently emptied or refilled. Safe here because a connection is only emancipated
+            // while checked out, and a checked-out connection is not in the idle channel, so neither
+            // the pruner nor Clear can remove it underneath us. A concurrently replaced slot costs
+            // this sweep a miss, never a connection resurrected after removal.
             foreach (DbConnectionInternal connection in _connectionSlots)
             {
                 // IsEmancipated is only stable under the connection lock, which guards the

@@ -84,9 +84,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 1,
                 creationTimeout: PoolWaitMs);
 
-            // Rooted in a handle rather than a local so the test controls exactly when the
-            // connection becomes emancipated, and a collection triggered by a test running in
-            // parallel cannot do it early.
             DbConnectionInternal leaked = CheckOutAndRootOwner(pool, out GCHandle leakedOwnerRoot);
 
             DbConnectionInternal? served = null;

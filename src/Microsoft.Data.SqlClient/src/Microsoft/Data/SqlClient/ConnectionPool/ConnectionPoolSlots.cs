@@ -206,12 +206,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Enumerates the connections currently tracked by this collection. The enumeration is
-        /// best-effort: connections may be added or removed while it is in progress, so callers must
-        /// tolerate entries that have since left the pool, and an entry added during the walk may or
-        /// may not be seen. This is safe because the backing array has a fixed capacity and is never
-        /// reallocated; each slot is read individually. Intended for infrequent bookkeeping passes
-        /// (e.g. reclaiming emancipated connections), not for hot paths.
+        /// Enumerates the connections currently tracked by this collection. Best-effort: slots are
+        /// read individually, so a caller must tolerate entries that have since left the pool, and an
+        /// entry added during the walk may or may not be seen. Intended for infrequent bookkeeping
+        /// passes, not for hot paths.
         /// </summary>
         public IEnumerator<DbConnectionInternal> GetEnumerator()
         {

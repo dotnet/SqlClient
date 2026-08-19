@@ -719,7 +719,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 pooledConnections: 1,
                 activeConnections: 1);
 
-            // The owner is only collectable now that the helper's frame has been popped.
             CollectAbandonedOwners();
             Assert.True(leaked.IsEmancipated);
 

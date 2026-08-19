@@ -36,6 +36,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     internal static class PoolTestHarness
     {
         /// <summary>
+        /// How long a test waits for a cross-thread transition before failing. Generous, because it
+        /// is only ever reached when something is actually broken.
+        /// </summary>
+        private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
+
+        /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface.
         /// </summary>
         /// <param name="implementation">Which pool to construct.</param>
@@ -138,12 +144,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Checks out a connection and roots its owner in a <see cref="GCHandle"/> rather than a
-        /// local. The owner stays alive until the caller frees the returned handle, which gives the
-        /// test exact control over when the connection becomes emancipated. A local cannot do this:
-        /// in a Debug build its stack slot roots the object for the rest of the enclosing method
-        /// even after it is assigned null, so the collection would never happen. The checkout runs
-        /// in its own non-inlined frame so no slot in the caller's frame ever holds the owner.
+        /// Checks out a connection and roots its owner in a <see cref="GCHandle"/>, so the caller
+        /// decides exactly when the connection becomes emancipated by freeing the handle. Same
+        /// non-inlining requirement as <see cref="CheckOutAndAbandonOwner"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static DbConnectionInternal CheckOutAndRootOwner(IDbConnectionPool pool, out GCHandle ownerRoot)
@@ -173,22 +176,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Spins until <paramref name="condition"/> holds, failing the test if it does not happen
-        /// within a generous timeout. Used to observe a background caller reaching a blocking wait,
-        /// which is inherently a cross-thread transition and cannot be awaited directly.
+        /// within <see cref="WaitTimeout"/>. Used to observe a background caller reaching a blocking
+        /// wait, which is inherently a cross-thread transition and cannot be awaited directly.
         /// </summary>
         internal static void WaitFor(Func<bool> condition, string because)
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            while (!condition())
-            {
-                Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30), because);
-                Thread.Sleep(10);
-            }
-        }
+            => Assert.True(SpinWait.SpinUntil(condition, WaitTimeout), because);
 
         /// <summary>
         /// Advances <paramref name="time"/> until <paramref name="condition"/> holds, failing the
-        /// test if it does not happen within a generous timeout.
+        /// test if it does not happen within <see cref="WaitTimeout"/>.
         /// </summary>
         /// <remarks>
         /// Lets a test assert that a pool eventually does something without knowing what drives it.
@@ -200,11 +196,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         internal static void AdvanceUntil(FakeTimeProvider time, Func<bool> condition, string because)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            while (!condition())
+
+            // Spun in short slices rather than passing the whole timeout, so the clock only moves
+            // when the condition has not been met yet.
+            while (!SpinWait.SpinUntil(condition, TimeSpan.FromMilliseconds(50)))
             {
-                Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30), because);
+                Assert.True(stopwatch.Elapsed < WaitTimeout, because);
                 time.Advance(TimeSpan.FromSeconds(1));
-                Thread.Sleep(10);
             }
         }
     }
