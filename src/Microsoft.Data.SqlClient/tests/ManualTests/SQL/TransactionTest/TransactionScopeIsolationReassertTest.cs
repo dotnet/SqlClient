@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     // SET TRANSACTION ISOLATION LEVEL on the re-attach because
     // sp_reset_connection does not preserve the session isolation level on
     // every server (notably Azure SQL DB).
+    [Trait("Set", "3")]
     public static class TransactionScopeIsolationReassertTest
     {
         private const string GetIsoSql = @"
