@@ -13657,6 +13657,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyEnclaveKeyBindingFailed {
+            get {
+                return ResourceManager.GetString("VerifyEnclaveKeyBindingFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The enclave report received from SQL Server is not in the correct format. Contact Customer Support Services..
         /// </summary>
         internal static string VerifyEnclaveReportFormatFailed {
