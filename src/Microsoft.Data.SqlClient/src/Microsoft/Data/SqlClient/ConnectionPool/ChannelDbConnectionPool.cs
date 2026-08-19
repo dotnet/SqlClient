@@ -1579,15 +1579,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void ReclaimEmancipatedConnections()
         {
-            // Only one sweep at a time. Sweeps are driven by the reclaim timer, which can overlap
-            // itself: ExitParkedWait can disarm and EnterParkedWait re-arm while a sweep is still
-            // running. Holding the gate for the whole sweep is also what lets the routing below go
-            // through ReturnInternalConnection, which re-takes the connection lock to call PrePush:
-            // the gate keeps anything else from claiming the connection in between.
-            //
-            // TryEnter, so no thread ever waits here. Whatever the in-flight sweep reclaims lands in
-            // the idle channel, so parked callers are still served. That matters because the gate is
-            // held across deactivation, which can make server round trips.
+            // One sweep at a time, so nothing else can claim a connection between the point it is
+            // found emancipated and the PrePush that claims it. TryEnter rather than Enter: whatever
+            // the in-flight sweep reclaims lands in the idle channel either way.
             bool sweeping = false;
             try
             {
