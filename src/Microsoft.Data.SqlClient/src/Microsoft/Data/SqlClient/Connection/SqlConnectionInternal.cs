@@ -4006,7 +4006,8 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             // Consumed unconditionally: whether the statement succeeds, is skipped, or is rejected
             // by the server, there is no point re-issuing it on every subsequent checkout of this
-            // connection.
+            // connection. On the failure paths below the connection is doomed and destroyed, so the
+            // flag's value stops mattering.
             _isolationLevelDirty = false;
 
             // Azure Synapse Analytics dedicated SQL pools reject every isolation level except
@@ -4031,7 +4032,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     sync: true);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
             }
-            catch (SqlException e) when (!IsConnectionDoomed)
+            catch (SqlException e) when (!IsConnectionDoomed && e.Number != TdsEnums.TIMEOUT_EXPIRED)
             {
                 // The server rejected the statement but the session itself is healthy (the parser
                 // dooms the connection for transport-level failures, so reaching here means a plain
@@ -4041,12 +4042,17 @@ namespace Microsoft.Data.SqlClient.Connection
                 // either a data source shape the guard does not recognise or some other endpoint
                 // that restricts the statement, such as the Microsoft Dataverse TDS endpoint.
                 //
-                // Degrade rather than doom in all of those cases. sp_reset_connection still ran,
-                // because it is carried as a flag on the header of the batch above and is processed
-                // by the server before the batch body, so the connection is no less clean than it
-                // was under the legacy behavior. Leaving the session isolation level unchanged is
-                // exactly the pre-fix behavior, whereas dooming would destroy a usable connection on
-                // every checkout for any endpoint we have not enumerated.
+                // Degrade rather than doom in all of those cases. The server parsed and refused the
+                // batch, so we know the session isolation level was not changed by it, and
+                // sp_reset_connection still ran because it is carried as a flag on the header of the
+                // batch above and is processed by the server before the batch body. The connection
+                // is therefore no less clean than it was under the legacy behavior. Leaving the
+                // session isolation level unchanged is exactly the pre-fix behavior, whereas dooming
+                // would destroy a usable connection on every checkout for any endpoint we have not
+                // enumerated.
+                //
+                // A timeout is deliberately excluded: it means the batch did not complete, so we do
+                // not know whether the level was reset, and the connection must not be handed out.
                 SqlClientEventSource.Log.TryTraceEvent(
                     "<sc.SqlInternalConnectionTds.ResetSessionIsolationLevel|ADV> {0}, " +
                     "server rejected the session isolation level reset with error {1}; leaving the " +
@@ -4056,9 +4062,18 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                // If we cannot scrub the session state, the connection is not safe to pool.
-                // Dooming forces Deactivate's outer logic to destroy it instead of pooling it.
+                // We could not confirm that the session isolation level was scrubbed. This covers a
+                // timeout, where an attention was sent and the batch may or may not have taken
+                // effect, as well as any other catchable failure. Because the state is unknown, the
+                // connection may still be carrying an elevated isolation level and is not safe to
+                // hand to the caller or to return to the pool.
+                //
+                // Doom it and rethrow. Both pool implementations wrap ActivateConnection in a
+                // try/catch that calls ReturnInternalConnection and rethrows, so the doomed
+                // connection is destroyed rather than pooled and the caller's Open observes the
+                // original error instead of receiving an unusable connection.
                 DoomThisConnection();
+                throw;
             }
         }
 
