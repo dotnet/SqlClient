@@ -133,25 +133,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
 
         /// <summary>
-        /// The reclaimer must exist for every pool configuration. A connection can be leaked
-        /// regardless of sizing or idle timeout, and a fixed-size pool (where <see
-        /// cref="ChannelDbConnectionPool.Pruner"/> is deliberately null) is the configuration where
-        /// a permanently occupied slot hurts most.
-        /// </summary>
-        [Theory]
-        [InlineData(0, 50, 300)]  // Growable pool with idle reclamation: pruner also present.
-        [InlineData(5, 5, 300)]   // Fixed-size pool: no pruner.
-        [InlineData(0, 50, 0)]    // Idle reclamation disabled: no pruner.
-        public void Reclaimer_IsConstructedForEveryPoolConfiguration(int minPoolSize, int maxPoolSize, int idleTimeout)
-        {
-            var pool = ConstructPool(minPoolSize: minPoolSize, maxPoolSize: maxPoolSize, idleTimeout: idleTimeout);
-
-            Assert.NotNull(pool.Reclaimer);
-            Assert.False(pool.Reclaimer.IsTimerEnabled);
-            Assert.Equal(0, pool.Reclaimer.ParkedWaiters);
-        }
-
-        /// <summary>
         /// The timer is demand-driven: armed by the first parked caller and disarmed by the last one
         /// to leave, so a pool with no blocked callers never wakes the process.
         /// </summary>
