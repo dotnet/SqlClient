@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
@@ -30,17 +28,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     }
 
     /// <summary>
-    /// Construction and lifecycle helpers shared by the connection pool test classes, written
-    /// against <see cref="IDbConnectionPool"/> so a test can run against either implementation.
+    /// Pool construction shared by the connection pool test classes, written against
+    /// <see cref="IDbConnectionPool"/> so a test can run against either implementation. Helpers that
+    /// only a few tests need live with those tests instead.
     /// </summary>
     internal static class PoolTestHarness
     {
-        /// <summary>
-        /// How long a test waits for a cross-thread transition before failing. Generous, because it
-        /// is only ever reached when something is actually broken.
-        /// </summary>
-        private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
-
         /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface.
         /// </summary>
@@ -144,27 +137,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Checks out a connection and roots its owner in a <see cref="GCHandle"/>, so the caller
-        /// decides exactly when the connection becomes emancipated by freeing the handle. Same
-        /// non-inlining requirement as <see cref="CheckOutAndAbandonOwner"/>.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static DbConnectionInternal CheckOutAndRootOwner(IDbConnectionPool pool, out GCHandle ownerRoot)
-        {
-            SqlConnection owner = new();
-            ownerRoot = GCHandle.Alloc(owner);
-
-            Assert.True(pool.TryGetConnection(
-                owner,
-                taskCompletionSource: null,
-                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                out DbConnectionInternal? connection));
-
-            Assert.NotNull(connection);
-            return connection!;
-        }
-
-        /// <summary>
         /// Forces collection of an abandoned owner so its connection becomes emancipated.
         /// </summary>
         internal static void CollectAbandonedOwners()
@@ -172,38 +144,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
-        }
-
-        /// <summary>
-        /// Spins until <paramref name="condition"/> holds, failing the test if it does not happen
-        /// within <see cref="WaitTimeout"/>. Used to observe a background caller reaching a blocking
-        /// wait, which is inherently a cross-thread transition and cannot be awaited directly.
-        /// </summary>
-        internal static void WaitFor(Func<bool> condition, string because)
-            => Assert.True(SpinWait.SpinUntil(condition, WaitTimeout), because);
-
-        /// <summary>
-        /// Advances <paramref name="time"/> until <paramref name="condition"/> holds, failing the
-        /// test if it does not happen within <see cref="WaitTimeout"/>.
-        /// </summary>
-        /// <remarks>
-        /// Lets a test assert that a pool eventually does something without knowing what drives it.
-        /// The pools differ here: <see cref="WaitHandleDbConnectionPool"/> reclaims inline when a
-        /// request finds it saturated, so the condition is typically already true on the first
-        /// check, while <see cref="ChannelDbConnectionPool"/> reclaims from a sweep timer and needs
-        /// the clock to move. Advancing a pool that did not need it is harmless.
-        /// </remarks>
-        internal static void AdvanceUntil(FakeTimeProvider time, Func<bool> condition, string because)
-        {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-
-            // Spun in short slices rather than passing the whole timeout, so the clock only moves
-            // when the condition has not been met yet.
-            while (!SpinWait.SpinUntil(condition, TimeSpan.FromMilliseconds(50)))
-            {
-                Assert.True(stopwatch.Elapsed < WaitTimeout, because);
-                time.Advance(TimeSpan.FromSeconds(1));
-            }
         }
     }
 }

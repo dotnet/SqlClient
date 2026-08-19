@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,6 +37,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// is 15ms, which is too short for a caller to observably block.
         /// </summary>
         private const int PoolWaitMs = 30_000;
+
+        /// <summary>
+        /// How long a test waits for a cross-thread transition before failing. Generous, because it
+        /// is only ever reached when something is actually broken.
+        /// </summary>
+        private static readonly TimeSpan WaitTimeout = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// The pool's only slot is held by a leaked connection, so the request can only be served by
@@ -190,6 +198,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Checks out a connection and roots its owner in a <see cref="GCHandle"/>, so the test
+        /// decides exactly when the connection becomes emancipated by freeing the handle. Same
+        /// non-inlining requirement as <see cref="CheckOutAndAbandonOwner"/>.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static DbConnectionInternal CheckOutAndRootOwner(IDbConnectionPool pool, out GCHandle ownerRoot)
+        {
+            SqlConnection owner = new();
+            ownerRoot = GCHandle.Alloc(owner);
+
+            Assert.True(pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection));
+
+            Assert.NotNull(connection);
+            return connection!;
+        }
+
+        /// <summary>
+        /// Spins until <paramref name="condition"/> holds, failing the test if it does not. Used to
+        /// observe a background caller reaching a blocking wait, which is a cross-thread transition
+        /// and cannot be awaited directly.
+        /// </summary>
+        private static void WaitFor(Func<bool> condition, string because)
+            => Assert.True(SpinWait.SpinUntil(condition, WaitTimeout), because);
+
+        /// <summary>
         /// Requests a connection over the sync or async path and blocks until it is served, so both
         /// paths present the same shape to a test.
         /// </summary>
@@ -212,6 +249,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // The async path hands the request off to the completion source rather than blocking.
             Assert.True(async);
             return completion!.Task.GetAwaiter().GetResult();
+        }
+
+        /// <summary>
+        /// Advances <paramref name="time"/> until <paramref name="condition"/> holds, failing the
+        /// test if it does not.
+        /// </summary>
+        /// <remarks>
+        /// Lets a test assert that a pool eventually reclaims without knowing what drives it.
+        /// WaitHandle reclaims inline when a request finds the pool saturated, so the condition is
+        /// typically already true on the first check; the channel pool needs its sweep timer to
+        /// fire. Spun in short slices rather than passing the whole timeout, so the clock only moves
+        /// while the condition is unmet.
+        /// </remarks>
+        private static void AdvanceUntil(FakeTimeProvider time, Func<bool> condition, string because)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (!SpinWait.SpinUntil(condition, TimeSpan.FromMilliseconds(50)))
+            {
+                Assert.True(stopwatch.Elapsed < WaitTimeout, because);
+                time.Advance(TimeSpan.FromSeconds(1));
+            }
         }
     }
 }

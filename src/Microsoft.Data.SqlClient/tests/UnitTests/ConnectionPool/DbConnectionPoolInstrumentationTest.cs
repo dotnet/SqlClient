@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -768,6 +769,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 activeConnections: 1);
 
             GC.KeepAlive(waitingOwner);
+        }
+
+        /// <summary>
+        /// Advances <paramref name="time"/> until <paramref name="condition"/> holds, failing the
+        /// test if it does not. Lets a counter assertion wait on a pool that only reclaims from a
+        /// timer without naming which pool that is.
+        /// </summary>
+        private static void AdvanceUntil(FakeTimeProvider time, Func<bool> condition, string because)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (!SpinWait.SpinUntil(condition, TimeSpan.FromMilliseconds(50)))
+            {
+                Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30), because);
+                time.Advance(TimeSpan.FromSeconds(1));
+            }
         }
 
         #region Test classes
