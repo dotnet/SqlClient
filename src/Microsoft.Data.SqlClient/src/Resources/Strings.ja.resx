@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>エンクレーブ レポートの署名の検証に失敗しました。レポートの署名が、HGS ルート証明書を使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server から受信したエンクレーブ レポートの形式が適切ではありません。カスタマー サポート サービスにお問い合わせください。</value>
   </data>
