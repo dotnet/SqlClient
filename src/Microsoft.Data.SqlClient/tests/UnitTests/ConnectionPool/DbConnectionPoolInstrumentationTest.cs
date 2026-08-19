@@ -744,6 +744,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// and a second caller then requests one. Each implementation reaches its own reclaim path
         /// from that saturated request, so the test asserts observable behavior rather than a
         /// specific internal entry point.
+        ///
+        /// The two pools agree on every counter except activeSoftConnections; see the assertion
+        /// below.
         /// </remarks>
         [Theory]
         [InlineData(PoolImplementation.WaitHandle)]
@@ -781,15 +784,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? reclaimed));
 
             // Assert - the same physical connection was handed out again, with no second connect.
-            // softDisconnects stays at zero: reclamation never balances the leaked checkout, so
-            // activeSoftConnections drifts up by one per leaked connection. That is long-standing
-            // WaitHandle behavior, asserted here to pin the two implementations to the same numbers.
+            // The two pools disagree on softDisconnects: the channel pool routes reclamation
+            // through ReturnInternalConnection, so the leaked checkout is balanced and
+            // activeSoftConnections settles back to one. WaitHandle reclaims without that
+            // accounting, so its gauge drifts up by one per leaked connection. Tracked by #4555;
+            // asserted here so the drift is pinned rather than assumed.
             Assert.Same(leaked, reclaimed);
             AssertCounters(
                 metrics,
                 hardConnects: 1,
                 softConnects: 2,
-                softDisconnects: 0,
+                softDisconnects: implementation == PoolImplementation.Channel ? 1 : 0,
                 pooledConnections: 1,
                 reclaimedConnections: 1,
                 activeConnections: 1);

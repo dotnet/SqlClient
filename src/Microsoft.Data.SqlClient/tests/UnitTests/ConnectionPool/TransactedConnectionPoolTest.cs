@@ -699,7 +699,7 @@ public class TransactedConnectionPoolTest
             throw new NotImplementedException();
         }
 
-        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection? owningObject)
         {
             throw new NotImplementedException();
         }

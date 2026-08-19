@@ -156,8 +156,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Returns an internal connection to the pool.
         /// </summary>
         /// <param name="obj">The internal connection to return to the pool.</param>
-        /// <param name="owningObject">The connection that currently owns this internal connection. Used to verify ownership.</param>
-        void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject);
+        /// <param name="owningObject">
+        /// The connection that currently owns this internal connection. Used to verify ownership.
+        /// Null when the pool is reclaiming an emancipated connection, whose owner was garbage
+        /// collected without closing it; the ownership check then asserts that no owner is alive.
+        /// </param>
+        void ReturnInternalConnection(DbConnectionInternal obj, DbConnection? owningObject);
 
         /// <summary>
         /// Puts an internal connection from a transacted pool back into the general pool.
