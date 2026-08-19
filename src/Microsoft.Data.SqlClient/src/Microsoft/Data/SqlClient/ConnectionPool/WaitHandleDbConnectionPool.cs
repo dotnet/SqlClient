@@ -1148,7 +1148,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return true;
         }
 
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction)
+        private void PrepareConnection(
+            DbConnection owningObject,
+            DbConnectionInternal obj,
+            Transaction transaction,
+            bool returnConnectionOnFailure = true)
         {
             lock (obj)
             {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
@@ -1160,9 +1164,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             catch
             {
-                // if Activate throws an exception
-                // put it back in the pool or have it properly disposed of
-                this.ReturnInternalConnection(obj, owningObject);
+                if (returnConnectionOnFailure)
+                {
+                    // If Activate throws during an ordinary checkout, put the connection back in
+                    // the pool or have it properly disposed of.
+                    ReturnInternalConnection(obj, owningObject);
+                }
                 throw;
             }
         }
@@ -1182,7 +1189,51 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (newConnection != null)
             {
                 SqlClientDiagnostics.Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                try
+                {
+                    // CreateObject has already swapped the replacement into _objectList. Unlike an
+                    // ordinary checkout failure, an activation failure here must not return the
+                    // replacement to the idle pool because the caller still owns oldConnection.
+                    PrepareConnection(
+                        owningObject,
+                        newConnection,
+                        oldConnection.EnlistedTransaction,
+                        returnConnectionOnFailure: false);
+                }
+                catch
+                {
+                    try
+                    {
+                        newConnection.DeactivateConnection();
+                    }
+                    catch
+                    {
+                        // Preserve the activation failure; cleanup is best effort.
+                    }
+
+                    DestroyObject(newConnection);
+
+                    bool restored = false;
+                    lock (_objectList)
+                    {
+                        if (oldConnection.Pool == this && !_objectList.Contains(oldConnection))
+                        {
+                            _objectList.Add(oldConnection);
+                            _totalObjects = _objectList.Count;
+                            restored = true;
+                        }
+                    }
+
+                    if (restored)
+                    {
+                        SqlClientDiagnostics.Metrics.EnterPooledConnection();
+                    }
+
+                    // The replacement checkout failed before reaching the caller.
+                    SqlClientDiagnostics.Metrics.SoftDisconnectRequest();
+                    throw;
+                }
+
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
             }
