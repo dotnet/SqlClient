@@ -45,13 +45,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// It is not worth going lower, because emancipation only becomes observable after a garbage
         /// collection and sweeping faster than the collector produces new information just burns CPU.
         /// </para>
-        /// <para>
-        /// For reference, <see cref="WaitHandleDbConnectionPool"/> reclaims on its cleanup timer,
-        /// which runs on a 2-4 minute randomized schedule by default. That is far too slow to rescue
-        /// a caller inside its connect timeout, so the legacy pool depends on its own inline sweeps
-        /// instead. Sweeping only while callers are parked lets this pool afford a much tighter
-        /// interval than the legacy background cadence while doing strictly less work when idle.
-        /// </para>
         /// </summary>
         internal static readonly TimeSpan SweepInterval = TimeSpan.FromSeconds(1);
 
