@@ -175,10 +175,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             lock (_lock)
             {
-                // An unbalanced call means some park site is missing its EnterParkedWait, which
-                // would leave the timer armed forever (or, if it under-counted the other way, stop
-                // sweeping while a caller is still parked). Clamped rather than thrown in release
-                // builds: a mis-paired registration is not worth failing a connection attempt over.
                 Debug.Assert(_parkedWaiters > 0, "ExitParkedWait called without a matching EnterParkedWait.");
 
                 if (_parkedWaiters > 0)
