@@ -364,7 +364,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             #pragma warning restore CS0618 // Type or member is obsolete
             {
-                string pwCacheKey = GetAccountPwCacheKey(parameters);
+                string pwCacheKey = GetAccountPwCacheKey(msalAuthority, parameters.UserId);
                 object? previousPw = s_accountPwCache.Get(pwCacheKey);
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 byte[] currPwHash = GetHash(password);
@@ -837,9 +837,18 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
     }
 
-    private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
+    /// <summary>
+    /// Builds the cache key used to remember which password was last validated for an account.
+    /// </summary>
+    /// <param name="msalAuthority">
+    /// The normalized authority (host + tenant) from <see cref="TryParseAuthority"/>. The
+    /// normalized form is used so that two spellings of the same tenant (for example a bare
+    /// tenant endpoint and an OAuth v1 <c>/oauth2/authorize</c> endpoint) share a single entry.
+    /// </param>
+    /// <param name="userId">The user id being authenticated, which may be null.</param>
+    private static string GetAccountPwCacheKey(string msalAuthority, string? userId)
     {
-        return parameters.Authority + "+" + parameters.UserId;
+        return msalAuthority + "+" + userId;
     }
 
     private static byte[] GetHash(string input)

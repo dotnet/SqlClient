@@ -113,9 +113,12 @@ public class AuthorityParsingTests
     [InlineData("https://login.microsoftonline.com/")]
     // An empty leading path segment leaves no tenant to authenticate against.
     [InlineData("https://login.microsoftonline.com//oauth2/authorize")]
+    // Entra ID authorities are always HTTPS; other schemes are rejected.
+    [InlineData("http://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47")]
+    [InlineData("http://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47/oauth2/authorize")]
     // The server may omit the STSURL entirely.
     [InlineData("")]
-    public void TryParseAuthority_RejectsAuthorityWithoutTenant(string authorityUrl)
+    public void TryParseAuthority_RejectsInvalidAuthority(string authorityUrl)
     {
         Assert.False(ActiveDirectoryAuthenticationProvider.TryParseAuthority(
             authorityUrl,
@@ -126,5 +129,44 @@ public class AuthorityParsingTests
         Assert.Equal(string.Empty, host);
         Assert.Equal(string.Empty, tenant);
         Assert.Equal(string.Empty, msalAuthority);
+    }
+
+    /// <summary>
+    /// A malformed authority must surface as an <see cref="AuthenticationException"/> describing
+    /// the bad authority, rather than being re-wrapped as "Unexpected error" by the catch-all in
+    /// <c>AcquireTokenAsync</c>. This pins the ordering of the catch blocks.
+    /// </summary>
+    [Theory]
+    [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
+    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
+    [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
+    [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
+    [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
+    public async Task AcquireTokenAsync_MalformedAuthority_ThrowsUnwrappedAuthenticationException(
+        SqlAuthenticationMethod method)
+    {
+        // No tenant, so the authority can't be parsed. The provider must fail before it attempts
+        // any network call, so this test needs no live endpoint.
+        const string BadAuthority = "https://login.microsoftonline.com/";
+
+        SqlAuthenticationParameters parameters = new(
+            authenticationMethod: method,
+            serverName: "test-server",
+            databaseName: "test-database",
+            resource: "https://database.windows.net/",
+            authority: BadAuthority,
+            userId: "test-user",
+            password: "test-password",
+            connectionId: Guid.NewGuid(),
+            connectionTimeout: 30);
+
+        ActiveDirectoryAuthenticationProvider provider = new();
+
+        AuthenticationException ex = await Assert.ThrowsAsync<AuthenticationException>(
+            () => provider.AcquireTokenAsync(parameters));
+
+        // The message identifies the offending authority, and is not the generic catch-all text.
+        Assert.Contains(BadAuthority, ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Unexpected error", ex.Message, StringComparison.Ordinal);
     }
 }
