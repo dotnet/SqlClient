@@ -202,15 +202,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void OnSweepCallback()
         {
-            lock (_lock)
-            {
-                // Disarmed (or disposed) after this callback was already scheduled.
-                if (!_armed || _disposed)
-                {
-                    return;
-                }
-            }
-
             // Sweep outside the lock: reclamation deactivates connections, which can make server
             // round trips, and must not block EnterParkedWait/ExitParkedWait on the hot path.
             try
