@@ -3405,7 +3405,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     if (ex is SqlException or InvalidOperationException)
                     {
-                        Assert.Equal("Operation cancelled by user.", ex.Message);
+                        // A cancellation that reaches the server as a TDS attention signal is
+                        // acknowledged by the server, and TdsParser.TryRun surfaces that ack as an
+                        // additional "A severe error occurred on the current command." error ahead
+                        // of "Operation cancelled by user.". Both shapes are correct cancellations,
+                        // so assert the cancellation error is present rather than matching the
+                        // whole message exactly.
+                        Assert.Contains("Operation cancelled by user.", ex.Message);
                     }
                     else
                     {

@@ -318,6 +318,22 @@ END";
                     {
                         caughtException = ex;
                     }
+                    finally
+                    {
+                        // If the watchdog fired we abandoned execTask above. Observe it so a
+                        // later fault cannot surface as an unobserved task exception in an
+                        // unrelated test.
+                        if (!execTask.IsCompleted)
+                        {
+                            _ = execTask.ContinueWith(
+                                static t => _ = t.Exception,
+                                TaskScheduler.Default);
+                        }
+                        else
+                        {
+                            _ = execTask.Exception;
+                        }
+                    }
 
                     await cancelTask;
                     stopwatch.Stop();
@@ -436,6 +452,84 @@ SELECT 1 AS Result;";
             finally
             {
                 CommandHelper.s_forceInternalEndQuery.SetValue(null, false);
+            }
+        }
+
+        /// <summary>
+        /// ExecuteXmlReaderAsync gets the same lock (_stateObj) removal in SqlCommand.Xml.cs as the
+        /// reader and non-query paths, and reaches it the same way: BeginExecuteXmlReaderInternalReadStage
+        /// completes the task from _stateObj.ReadSni, so a batch that flushes partial results and then
+        /// blocks puts EndExecuteXmlReaderAsync into a blocking read. Without the fix the monitor is held
+        /// across that read and TdsParserStateObject.Cancel() cannot send the attention signal.
+        /// Synapse: Incompatible query.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task CancellationDuringExecuteXmlReaderAsync_SendsAttention()
+        {
+            // RAISERROR ... WITH NOWAIT flushes a packet before WAITFOR blocks, which is the
+            // partial-results state that regressed in #4424. FOR XML RAW makes the batch valid
+            // for ExecuteXmlReaderAsync (FOR XML AUTO would require a table in the FROM clause).
+            const string query = @"
+RAISERROR('partial result', 10, 1) WITH NOWAIT;
+WAITFOR DELAY '00:01:00';
+SELECT 1 AS Result FOR XML RAW;";
+
+            using (var cts = new CancellationTokenSource())
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                using (var command = new SqlCommand(query, connection))
+                {
+                    command.CommandTimeout = 120;
+
+                    // Subscribe BEFORE dispatching so the RAISERROR ... WITH NOWAIT
+                    // informational token cannot arrive before we are listening.
+                    var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
+
+                    Stopwatch stopwatch = Stopwatch.StartNew();
+                    Task<System.Xml.XmlReader> execTask = command.ExecuteXmlReaderAsync(cts.Token);
+
+                    await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
+
+                    long cancelledAtMs = stopwatch.ElapsedMilliseconds;
+                    cts.Cancel();
+
+                    System.Exception caughtException = null;
+                    bool readerReturned = false;
+                    try
+                    {
+                        using (System.Xml.XmlReader reader = await execTask)
+                        {
+                            readerReturned = true;
+                        }
+                    }
+                    catch (System.OperationCanceledException ex)
+                    {
+                        caughtException = ex;
+                    }
+                    catch (SqlException ex)
+                    {
+                        caughtException = ex;
+                    }
+
+                    stopwatch.Stop();
+                    long latency = stopwatch.ElapsedMilliseconds - cancelledAtMs;
+
+                    Assert.False(readerReturned,
+                        $"ExecuteXmlReaderAsync returned a reader {latency}ms after cancellation was requested. " +
+                        "The attention signal was not delivered on the XML path.");
+                    Assert.NotNull(caughtException);
+                    Assert.True(infoMessageReceived.Task.IsCompleted,
+                        "InfoMessage from RAISERROR ... WITH NOWAIT was never received; " +
+                        "the test did not exercise the partial-results cancellation path.");
+                    Assert.True(cts.IsCancellationRequested,
+                        "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
+                    Assert.True(latency < 30000,
+                        $"Cancellation took {latency}ms, expected < 30000ms. " +
+                        "Attention signal may not have been sent during ExecuteXmlReaderAsync.");
+                }
             }
         }
     }
