@@ -564,17 +564,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
-            DeactivateAndRouteConnection(connection);
-        }
-
-        /// <summary>
-        /// Deactivates a connection that is already marked as owned by the pool (via
-        /// <see cref="DbConnectionInternal.PrePush"/>) and routes it to the idle channel, the
-        /// transacted pool, stasis, or destruction as appropriate.
-        /// </summary>
-        /// <param name="connection">The connection to deactivate and route.</param>
-        private void DeactivateAndRouteConnection(DbConnectionInternal connection)
-        {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReturnInternalConnection | INFO | {0}, Connection {1}, Deactivating.",
                 Id,
@@ -794,15 +783,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
-            // Stop the background reclaim sweep before draining. This only narrows the window:
-            // ITimer.Dispose does not wait for a callback that is already running, so a sweep can
-            // still be in flight below. What actually guarantees a late-reclaimed connection is
-            // disposed rather than stranded is the ordering further down: _idleChannel.Complete()
-            // runs before the drain, after which TryWrite fails and PutConnectionInIdleChannel
-            // destroys the connection instead of pooling it. Any write that did succeed necessarily
-            // happened before Complete(), so the final unbounded drain mops it up. The State check
-            // in DeactivateAndRouteConnection catches most late sweeps earlier, but State is not
-            // synchronized against this write, so it cannot be relied on alone.
+            // Best effort: ITimer.Dispose does not wait for a sweep already in flight. Late
+            // reclaims are handled by _idleChannel.Complete() below, after which connections are
+            // destroyed rather than pooled.
             try
             {
                 Reclaimer.Dispose();
