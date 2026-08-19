@@ -56,8 +56,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(PoolImplementation.Channel, true)]
         public void SaturatedRequest_IsServedByReclaimingLeakedConnection(PoolImplementation implementation, bool async)
         {
+            FakeSqlClientMetrics metrics = new();
             FakeTimeProvider fakeTime = new();
-            IDbConnectionPool pool = ConstructPool(implementation, timeProvider: fakeTime, maxPoolSize: 1, creationTimeout: PoolWaitMs);
+            IDbConnectionPool pool = ConstructPool(
+                implementation,
+                new ChannelDbConnectionPoolTest.SuccessfulSqlConnectionFactory(metrics),
+                metrics,
+                fakeTime,
+                maxPoolSize: 1,
+                creationTimeout: PoolWaitMs);
 
             DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
             CollectAbandonedOwners();
@@ -66,6 +73,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             DbConnectionInternal? served = RequestConnection(pool, async, fakeTime, out SqlConnection waitingOwner);
 
             Assert.Same(leaked, served);
+            Assert.Equal(1, metrics.ReclaimedConnections);
+            Assert.Equal(1, metrics.HardConnects);
             GC.KeepAlive(waitingOwner);
         }
 
@@ -127,36 +136,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             Assert.Null(failure);
             Assert.Same(leaked, served);
-            GC.KeepAlive(waitingOwner);
-        }
-
-        /// <summary>
-        /// A reclaimed connection is reused rather than reopened, and is counted as reclaimed.
-        /// </summary>
-        [Theory]
-        [InlineData(PoolImplementation.WaitHandle)]
-        [InlineData(PoolImplementation.Channel)]
-        public void ReclaimedConnection_IsReusedRatherThanReopened(PoolImplementation implementation)
-        {
-            FakeSqlClientMetrics metrics = new();
-            FakeTimeProvider fakeTime = new();
-            IDbConnectionPool pool = ConstructPool(
-                implementation,
-                new ChannelDbConnectionPoolTest.SuccessfulSqlConnectionFactory(metrics),
-                metrics,
-                fakeTime,
-                maxPoolSize: 1,
-                creationTimeout: PoolWaitMs);
-
-            DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
-            CollectAbandonedOwners();
-            Assert.True(leaked.IsEmancipated);
-
-            DbConnectionInternal? served = RequestConnection(pool, async: false, fakeTime, out SqlConnection waitingOwner);
-
-            Assert.Same(leaked, served);
-            Assert.Equal(1, metrics.ReclaimedConnections);
-            Assert.Equal(1, metrics.HardConnects);
             GC.KeepAlive(waitingOwner);
         }
 
