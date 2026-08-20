@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 
 #nullable enable
 
@@ -30,6 +31,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Gets the factory used to create database connections.
         /// </summary>
         SqlConnectionFactory ConnectionFactory { get; }
+
+        /// <summary>
+        /// Gets the metrics sink that the pool and the objects it owns report to.
+        /// </summary>
+        /// <remarks>
+        /// In production this is the process-wide <see cref="SqlClientDiagnostics.Metrics"/>
+        /// instance. Making it a pool property lets a test give a pool its own counters so
+        /// assertions are not perturbed by unrelated connection activity elsewhere in the process.
+        ///
+        /// The pool takes its sink independently of <see cref="SqlConnectionFactory.Metrics"/>
+        /// rather than reading it from the factory, so that a pool can be constructed and asserted
+        /// on without standing up a factory. Both default to the same process-wide instance, so
+        /// they agree in production; a test that asserts across both must pass the same instance to
+        /// the pool and to the factory it is given.
+        /// </remarks>
+        ISqlClientMetrics Metrics { get; }
 
         /// <summary>
         /// The number of connections currently managed by the pool.

@@ -1,0 +1,185 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This job builds and runs the SqlClient Manual test suite against an Azure SQL Managed Instance.
+# The SqlClient NuGet packages produced by the sqlclient-ci-package pipeline are downloaded into the
+# local NuGet feed (packages/) and the test project is built in "Package" mode
+# (ReferenceType=Package) against the exact package versions produced by that pipeline.
+#
+# The Managed Instance TCP connection string is provided by the "ADO Test Configuration Properties"
+# variable group (SQL_MI_TCP_CONN_STRING).  This job runs on the Managed-Instance-pool, whose agents
+# have network line-of-sight to the Managed Instance.
+#
+# This template defines a job named 'managed_instance_tests_job_<suffix>' that can be depended on by
+# downstream jobs.
+
+parameters:
+
+  # The type of build to produce (Debug or Release).
+  - name: buildConfiguration
+    type: string
+    values:
+      - Debug
+      - Release
+
+  # True to enable debugging steps.
+  - name: debug
+    type: boolean
+
+  # The job's display name.
+  - name: displayName
+    type: string
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: dotnetVerbosity
+    type: string
+    values:
+      - quiet
+      - minimal
+      - normal
+      - detailed
+      - diagnostic
+
+  # The suffix to append to the job name.
+  - name: jobNameSuffix
+    type: string
+
+  # The OS to build and run the tests for.
+  - name: operatingSystem
+    type: string
+    values:
+      - Linux
+      - Windows
+
+  # The .NET runtime (TFM) to build and run the tests for.
+  - name: runtime
+    type: string
+
+  # The timeout, in minutes, for this job.
+  - name: timeout
+    type: number
+    default: 90
+
+  # True to use managed SNI on Windows.  Ignored on non-Windows, where managed SNI is always used.
+  - name: useManagedSNI
+    type: boolean
+    default: false
+
+  # The pool VM image to use.  The Managed-Instance-pool must provide an image with this name.
+  #
+  # NOTE: This value is evaluated at template-expansion (compile) time to select the pool image, so
+  # it must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
+  # $[...] runtime expressions).
+  - name: vmImage
+    type: string
+
+jobs:
+  - job: managed_instance_tests_job_${{ parameters.jobNameSuffix }}
+    displayName: ${{ parameters.displayName }}
+    timeoutInMinutes: ${{ parameters.timeout }}
+
+    workspace:
+      clean: all
+
+    variables:
+
+      # Import the variable group that provides the Managed Instance TCP connection string
+      # (SQL_MI_TCP_CONN_STRING) and other test configuration.
+      - group: ADO Test Configuration Properties
+
+    # The Managed-Instance-pool agents have network line-of-sight to the Managed Instance.
+    pool:
+      name: Managed-Instance-pool
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
+
+    steps:
+
+      # Check out the repo and align the working-tree source with the commit that built the upstream
+      # sqlclient-ci-package artifacts, so the test projects compile against the matching API surface.
+      - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
+
+      # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
+      # pipeline, stage them into the local NuGet feed, and resolve their exact versions into the
+      # sqlClient/sqlServer/abstractions/logging/azure PackageVersion variables.
+      #
+      # sqlServerVersionOverride pins Microsoft.SqlServer.Server to the released stable 1.0.0 to
+      # avoid an NU1605 downgrade against the >= 1.0.0 dependency from Microsoft.SqlServer.Types.
+      - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
+        parameters:
+          sqlServerVersionOverride: 1.0.0
+
+      # Install the .NET SDK and the runtimes needed to execute the test frameworks.
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          runtimes: [8.x, 9.x, 10.x]
+
+      # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+      # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
+      # fetched through the ADO Artifacts feed.
+      - task: NuGetAuthenticate@1
+        displayName: Authenticate NuGet feeds
+
+      # Write the config.jsonc file pointing the tests at the Managed Instance.  Integrated security
+      # and managed identity are not supported against the Managed Instance, and IsManagedInstance
+      # opts the test suite into Managed-Instance-specific behavior.
+      - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          # The Managed Instance connection strings carry their own credentials, so no local SA
+          # password is used here; pass an empty string for the required saPassword parameter.
+          saPassword: ''
+          TCPConnectionString: $(SQL_MI_TCP_CONN_STRING)
+          # Azure SQL Managed Instance exposes TDS over TCP and does not support Named Pipes.
+          NPConnectionString: ''
+          SupportsIntegratedSecurity: false
+          ManagedIdentitySupported: false
+          IsManagedInstance: true
+          UseManagedSNIOnWindows: ${{ parameters.useManagedSNI }}
+
+      # Ensure the TestResults directory exists so publish steps don't fail when tests are skipped
+      # due to a setup failure.
+      - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+        displayName: Create TestResults Directory
+
+      # Gate: record that all setup steps completed successfully.  Test steps condition on this
+      # variable so they are skipped when setup fails, yet remain independent of each other's
+      # results.
+      - pwsh: Write-Host '##vso[task.setvariable variable=setupSucceeded]true'
+        displayName: 'Gate: Mark Setup Succeeded'
+
+      # Run ManualTests sets 1, 2, and 3 against the Managed Instance using the exact upstream
+      # package versions.  UnitTests and FunctionalTests do not exercise the configured instance.
+      # Set AE is omitted because this pipeline does not provision its separate AE, enclave, and AKV
+      # resources.  build.proj's default filter also excludes failing, flaky, and interactive tests.
+      - task: DotNetCoreCLI@2
+        displayName: Run Managed Instance Tests
+        condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+        inputs:
+          command: build
+          projects: build.proj
+          arguments: >-
+            --verbosity ${{ parameters.dotnetVerbosity }}
+            -t:TestSqlClientManual
+            -p:TestFramework=${{ parameters.runtime }}
+            -p:TestSet=123
+            -p:ReferenceType=Package
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
+            -p:PackageVersionLogging=$(loggingPackageVersion)
+            -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
+            -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestResultsFolderPath=TestResults
+        retryCountOnTaskFailure: 2
+
+      - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          targetFramework: ${{ parameters.runtime }}
+          operatingSystem: ${{ parameters.operatingSystem }}
+          buildConfiguration: ${{ parameters.buildConfiguration }}

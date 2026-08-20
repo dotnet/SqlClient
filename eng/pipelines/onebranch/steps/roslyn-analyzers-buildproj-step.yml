@@ -104,8 +104,8 @@
 #   the real build output, using the IsolatedBuildPath build.proj property.
 
 parameters:
-  # Optional arguments to pass to dotnet build to indicate what version of dependencies should be
-  # used.
+  # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
+  # They should be of the form "-p:PackageVersionFooBar=1.2.3 ...".
   - name: dependencyArguments
     type: string
     default: ''

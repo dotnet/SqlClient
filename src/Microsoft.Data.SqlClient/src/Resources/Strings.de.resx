@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Im Verbindungspool wurde kein freier Slot gefunden.</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Die Verbindung konnte nicht ersetzt werden, da sie nicht mehr im Verbindungspool vorhanden ist.</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Der Verbindungspool wurde heruntergefahren.</value>
   </data>

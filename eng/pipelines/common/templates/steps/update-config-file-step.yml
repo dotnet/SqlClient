@@ -121,6 +121,10 @@ parameters:
     type: boolean
     default: true
 
+  - name: IsManagedInstance
+    type: boolean
+    default: false
+
   - name: WorkloadIdentityFederationServiceConnectionId
     type: string
     default: ''
@@ -191,6 +195,7 @@ steps:
           $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
           $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
           $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
+          $p.IsManagedInstance=[System.Convert]::ToBoolean("${{parameters.IsManagedInstance }}")
           $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
           $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
           $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")

@@ -53,78 +53,78 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
-        public static async void BitAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_bit]);
+        public static Task BitAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_bit]);
 
         [Benchmark]
-        public static async void IntAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_int]);
+        public static Task IntAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_int]);
 
         [Benchmark]
-        public static async void TinyIntAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_tinyint]);
+        public static Task TinyIntAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_tinyint]);
 
         [Benchmark]
-        public static async void SmallIntAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_smallint]);
+        public static Task SmallIntAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_smallint]);
 
         [Benchmark]
-        public static async void BigIntAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_bigint]);
+        public static Task BigIntAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_bigint]);
 
         [Benchmark]
-        public static async void MoneyAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_money]);
+        public static Task MoneyAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_money]);
 
         [Benchmark]
-        public static async void SmallMoneyAsync() => await RunBenchmarkAsync(s_datatypes.Numerics[n_smallmoney]);
+        public static Task SmallMoneyAsync() => RunBenchmarkAsync(s_datatypes.Numerics[n_smallmoney]);
 
         [Benchmark]
-        public static async void DecimalAsync() => await RunBenchmarkAsync(s_datatypes.Decimals[d_decimal]);
+        public static Task DecimalAsync() => RunBenchmarkAsync(s_datatypes.Decimals[d_decimal]);
 
         [Benchmark]
-        public static async void NumericAsync() => await RunBenchmarkAsync(s_datatypes.Decimals[d_numeric]);
+        public static Task NumericAsync() => RunBenchmarkAsync(s_datatypes.Decimals[d_numeric]);
 
         [Benchmark]
-        public static async void FloatAsync() => await RunBenchmarkAsync(s_datatypes.Decimals[d_float]);
+        public static Task FloatAsync() => RunBenchmarkAsync(s_datatypes.Decimals[d_float]);
 
         [Benchmark]
-        public static async void RealAsync() => await RunBenchmarkAsync(s_datatypes.Decimals[d_real]);
+        public static Task RealAsync() => RunBenchmarkAsync(s_datatypes.Decimals[d_real]);
 
         [Benchmark]
-        public static async void DateAsync() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_date]);
+        public static Task DateAsync() => RunBenchmarkAsync(s_datatypes.DateTimes[t_date]);
 
         [Benchmark]
-        public static async void DatetimeAsync() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_datetime]);
+        public static Task DatetimeAsync() => RunBenchmarkAsync(s_datatypes.DateTimes[t_datetime]);
 
         [Benchmark]
-        public static async void Datetime2Async() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_datetime2]);
+        public static Task Datetime2Async() => RunBenchmarkAsync(s_datatypes.DateTimes[t_datetime2]);
 
         [Benchmark]
-        public static async void TimeAsync() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_time]);
+        public static Task TimeAsync() => RunBenchmarkAsync(s_datatypes.DateTimes[t_time]);
 
         [Benchmark]
-        public static async void SmallDateTimeAsync() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_smalldatetime]);
+        public static Task SmallDateTimeAsync() => RunBenchmarkAsync(s_datatypes.DateTimes[t_smalldatetime]);
 
         [Benchmark]
-        public static async void DateTimeOffsetAsync() => await RunBenchmarkAsync(s_datatypes.DateTimes[t_datetimeoffset]);
+        public static Task DateTimeOffsetAsync() => RunBenchmarkAsync(s_datatypes.DateTimes[t_datetimeoffset]);
 
         [Benchmark]
-        public static async void CharAsync() => await RunBenchmarkAsync(s_datatypes.Characters[c_char]);
+        public static Task CharAsync() => RunBenchmarkAsync(s_datatypes.Characters[c_char]);
 
         [Benchmark]
-        public static async void NCharAsync() => await RunBenchmarkAsync(s_datatypes.Characters[c_nchar]);
+        public static Task NCharAsync() => RunBenchmarkAsync(s_datatypes.Characters[c_nchar]);
 
         [Benchmark]
-        public static async void BinaryAsync() => await RunBenchmarkAsync(s_datatypes.Binary[b_binary]);
+        public static Task BinaryAsync() => RunBenchmarkAsync(s_datatypes.Binary[b_binary]);
 
         [Benchmark]
-        public static async void VarCharAsync() => await RunBenchmarkAsync(s_datatypes.MaxTypes[m_varchar]);
+        public static Task VarCharAsync() => RunBenchmarkAsync(s_datatypes.MaxTypes[m_varchar]);
 
         [Benchmark]
-        public static async void NVarCharAsync() => await RunBenchmarkAsync(s_datatypes.MaxTypes[m_nvarchar]);
+        public static Task NVarCharAsync() => RunBenchmarkAsync(s_datatypes.MaxTypes[m_nvarchar]);
 
         [Benchmark]
-        public static async void VarBinaryAsync() => await RunBenchmarkAsync(s_datatypes.MaxTypes[m_varbinary]);
+        public static Task VarBinaryAsync() => RunBenchmarkAsync(s_datatypes.MaxTypes[m_varbinary]);
 
         [Benchmark]
-        public static async void UniqueIdentifierAsync() => await RunBenchmarkAsync(s_datatypes.Others[o_uniqueidentifier]);
+        public static Task UniqueIdentifierAsync() => RunBenchmarkAsync(s_datatypes.Others[o_uniqueidentifier]);
 
         [Benchmark]
-        public static async void XmlAsync() => await RunBenchmarkAsync(s_datatypes.Others[o_xml]);
+        public static Task XmlAsync() => RunBenchmarkAsync(s_datatypes.Others[o_xml]);
     }
 }

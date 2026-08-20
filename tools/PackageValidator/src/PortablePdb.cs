@@ -191,6 +191,10 @@ internal static class PortablePdb
     /// <summary>
     /// Creates a <see cref="HashAlgorithm"/> for a PDB checksum algorithm name.
     /// </summary>
+    /// <remarks>
+    /// Only SHA-2 family algorithms are supported; weak hashes such as SHA-1 are deliberately not
+    /// recognized, so a PDB recording one is reported as inconclusive rather than verified.
+    /// </remarks>
     /// <param name="algorithm">The algorithm name as recorded in the debug directory (for example <c>"SHA256"</c>).</param>
     /// <returns>A new hash algorithm instance, or <see langword="null"/> if the name is not recognized.</returns>
     private static HashAlgorithm? CreateHashAlgorithm(string algorithm) =>
@@ -199,7 +203,6 @@ internal static class PortablePdb
             "SHA256" => SHA256.Create(),
             "SHA384" => SHA384.Create(),
             "SHA512" => SHA512.Create(),
-            "SHA1" => SHA1.Create(),
             _ => null,
         };
 }
