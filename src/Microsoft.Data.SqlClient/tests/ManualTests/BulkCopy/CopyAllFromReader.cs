@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         using (DbDataReader reader = srcCmd.ExecuteReader())
                         {
                             IDictionary stats;
-                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 5 : 13;
+                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 13;
                             long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                             {

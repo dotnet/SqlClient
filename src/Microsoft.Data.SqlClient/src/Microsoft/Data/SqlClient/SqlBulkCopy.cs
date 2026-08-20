@@ -153,7 +153,8 @@ namespace Microsoft.Data.SqlClient
             public readonly bool IsDataFeed;
         }
 
-        // The initial query will return three tables, and may return a fourth for column aliases.
+        // The initial query will return four result sets, but the column aliases result set will
+        // be empty when not required.
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
@@ -742,47 +743,44 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             // Apply any necessary column aliases. If an aliased name exists in the
             // local column mappings but the canonical name does not, update them.
-            if (internalResults.Count > ColumnAliasesResultId)
+            Result columnAliasResults = internalResults[ColumnAliasesResultId];
+            for (int i = 0; i < columnAliasResults.Count; i++)
             {
-                Result columnAliasResults = internalResults[ColumnAliasesResultId];
-                for (int i = 0; i < columnAliasResults.Count; i++)
+                Row aliasRow = columnAliasResults[i];
+                SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
+                SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
+
+                if (canonicalName.IsNull || aliasedName.IsNull)
                 {
-                    Row aliasRow = columnAliasResults[i];
-                    SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
-                    SqlString aliasedName = (SqlString)aliasRow[ColumnAliasColumnId];
+                    continue;
+                }
 
-                    if (canonicalName.IsNull || aliasedName.IsNull)
+                string canonical = canonicalName.Value;
+                bool canonicalNameExists = unmatchedColumns.Contains(canonical)
+                    // The destination columns might be escaped. If so, search for those instead
+                    || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
+
+                if (canonicalNameExists)
+                {
+                    continue;
+                }
+
+                // The canonical name does not exist. Look for a local column mapping which matches
+                // the alias (or its escaped variant) and replace its name with its canonical name.
+                string alias = aliasedName.Value;
+                string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
+
+                for (int j = 0; j < _localColumnMappings.Count; j++)
+                {
+                    if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
+                        || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
                     {
-                        continue;
-                    }
+                        unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
 
-                    string canonical = canonicalName.Value;
-                    bool canonicalNameExists = unmatchedColumns.Contains(canonical)
-                        // The destination columns might be escaped. If so, search for those instead
-                        || unmatchedColumns.Contains(SqlServerEscapeHelper.EscapeIdentifier(canonical));
+                        unmatchedColumns.Add(canonical);
+                        _localColumnMappings[j].MappedDestinationColumn = canonical;
 
-                    if (canonicalNameExists)
-                    {
-                        continue;
-                    }
-
-                    // The canonical name does not exist. Look for a local column mapping which matches
-                    // the alias (or its escaped variant) and replace its name with its canonical name.
-                    string alias = aliasedName.Value;
-                    string escapedAlias = SqlServerEscapeHelper.EscapeIdentifier(alias);
-
-                    for (int j = 0; j < _localColumnMappings.Count; j++)
-                    {
-                        if (unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, alias)
-                            || unmatchedColumns.Comparer.Equals(_localColumnMappings[j].DestinationColumn, escapedAlias))
-                        {
-                            unmatchedColumns.Remove(_localColumnMappings[j].DestinationColumn);
-
-                            unmatchedColumns.Add(canonical);
-                            _localColumnMappings[j].MappedDestinationColumn = canonical;
-
-                            break;
-                        }
+                        break;
                     }
                 }
             }
