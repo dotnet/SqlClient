@@ -676,6 +676,107 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> CreateStubCallback() =>
+            (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task AccessTokenCallbackHonorsPreLoginFedAuthRequired(bool openAsync)
+        {
+            using TdsServer server = new(new TdsServerArguments()
+            {
+                FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthRequired,
+            });
+            server.Start();
+
+            string connectionString = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connectionString)
+            {
+                AccessTokenCallback = CreateStubCallback(),
+            };
+
+            if (openAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+#if NETFRAMEWORK
+            Assert.True(GetTnirDisabledDuringLogin(connection));
+
+            using SqlConnection baseline = new(connectionString);
+            if (openAsync)
+            {
+                await baseline.OpenAsync();
+            }
+            else
+            {
+                baseline.Open();
+            }
+            Assert.False(GetTnirDisabledDuringLogin(baseline));
+
+            static bool? GetTnirDisabledDuringLogin(SqlConnection connection) =>
+                ((global::Microsoft.Data.SqlClient.SqlInternalConnectionTds)connection.InnerConnection)
+                    .TnirDisabledDuringLogin;
+#endif
+        }
+
+        [Fact]
+        public void ClearingOneAccessTokenPropertyPreservesTheOtherInPoolKey()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                CreateStubCallback();
+
+            using (SqlConnection connection = new("Data Source=localhost"))
+            {
+                connection.AccessTokenCallback = callback;
+                connection.AccessToken = null;
+
+                Assert.Same(callback, connection.AccessTokenCallback);
+                Assert.Same(callback, ((global::Microsoft.Data.SqlClient.ConnectionPool.SqlConnectionPoolKey)connection.PoolGroup.PoolKey).AccessTokenCallback);
+            }
+
+            using (SqlConnection connection = new("Data Source=localhost"))
+            {
+                connection.AccessToken = "token";
+                connection.AccessTokenCallback = null;
+
+                Assert.Equal("token", connection.AccessToken);
+                Assert.Equal("token", ((global::Microsoft.Data.SqlClient.ConnectionPool.SqlConnectionPoolKey)connection.PoolGroup.PoolKey).AccessToken);
+            }
+        }
+
+        [Fact]
+        public void AccessTokenAndAccessTokenCallbackAreMutuallyExclusive()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                CreateStubCallback();
+
+            using (SqlConnection connection = new("Data Source=localhost"))
+            {
+                connection.AccessTokenCallback = callback;
+                Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "token");
+            }
+
+            using (SqlConnection connection = new("Data Source=localhost"))
+            {
+                connection.AccessToken = "token";
+                Assert.Throws<InvalidOperationException>(() => connection.AccessTokenCallback = callback);
+            }
+        }
+
         [Theory]
         [InlineData(9, 0, 2047)] // SQL Server 2005
         [InlineData(10, 0, 2531)] // SQL Server 2008

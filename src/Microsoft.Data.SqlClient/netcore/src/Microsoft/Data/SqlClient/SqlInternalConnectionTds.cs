@@ -136,6 +136,9 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _accessTokenInBytes;
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        internal bool IsAccessTokenProvided =>
+            _accessTokenInBytes != null || _accessTokenCallback != null;
+
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
         internal bool _cleanSQLDNSCaching = false;
