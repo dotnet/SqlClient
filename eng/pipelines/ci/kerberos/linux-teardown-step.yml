@@ -32,14 +32,15 @@ steps:
 
       DOMAIN="${{ parameters.kerberosDomain }}"
       DOMAIN_USER="${{ parameters.kerberosDomainUser }}"
-      DOMAIN_PASSWORD="${{ parameters.kerberosDomainPassword }}"
       DOMAIN_UPPER=$(echo "$DOMAIN" | tr '[:lower:]' '[:upper:]')
 
       # Leave the domain
-      echo "$DOMAIN_PASSWORD" | sudo realm leave "$DOMAIN_UPPER" --verbose \
+      echo "${DOMAIN_PASSWORD:-}" | sudo realm leave "$DOMAIN_UPPER" --verbose \
         -U "$DOMAIN_USER@$DOMAIN_UPPER" || true
 
       # Destroy the TGT and credential cache
       kdestroy || true
     displayName: Clean up Kerberos (domain leave + kdestroy)
     condition: always()
+    env:
+      DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}

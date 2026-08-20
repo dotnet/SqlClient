@@ -53,7 +53,7 @@ steps:
       echo "User:     $DOMAIN_USER"
       echo "OU:       $DOMAIN_OU"
 
-      if [ -z "$DOMAIN_PASSWORD" ]; then
+      if [ -z "${DOMAIN_PASSWORD:-}" ]; then
         echo "##vso[task.logissue type=error]KerberosDomainPassword is empty"
         exit 1
       fi
