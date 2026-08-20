@@ -2887,11 +2887,47 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Client Key supports only RSA PKCS#1 or PKCS#8 private keys. Use a PFX or P12 certificate for other key algorithms..
+        ///   Looks up a localized string similar to Client Key supports only RSA private keys. Use a PFX or P12 certificate for other key algorithms..
         /// </summary>
         internal static string SQL_ClientCertificateUnsupportedKeyAlgorithm {
             get {
                 return ResourceManager.GetString("SQL_ClientCertificateUnsupportedKeyAlgorithm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password-protected PKCS#1 private keys are not supported. Convert the key to encrypted PKCS#8, or use a PFX or P12 certificate..
+        /// </summary>
+        internal static string SQL_ClientCertificateEncryptedPkcs1NotSupported {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateEncryptedPkcs1NotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The ODBC 'file:' path syntax is not supported. Specify the certificate and key file paths directly..
+        /// </summary>
+        internal static string SQL_ClientCertificateOdbcPathSyntax {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateOdbcPathSyntax", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client certificate authentication requires an encrypted connection, but the server did not negotiate encryption..
+        /// </summary>
+        internal static string SQL_ClientCertificateRequiresEncryption {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateRequiresEncryption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ChangePassword cannot be used with client certificate authentication..
+        /// </summary>
+        internal static string SQL_ChangePasswordConflictsWithClientCertificate {
+            get {
+                return ResourceManager.GetString("SQL_ChangePasswordConflictsWithClientCertificate", resourceCulture);
             }
         }
         

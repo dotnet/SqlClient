@@ -420,7 +420,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     useClientCertificate
-                        ? nameof(SqlConnectionStringBuilder.ClientCertificate)
+                        ? DbConnectionStringKeywords.ClientCertificate
                         : authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
@@ -1006,11 +1006,6 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
-            if (!string.IsNullOrEmpty(clientCertificate))
-            {
-                info &= ~TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
-            }
-
             error = _physicalStateObj.EnableSsl(
                 ref info,
                 encrypt == SqlConnectionEncryptOption.Strict,
@@ -1281,6 +1276,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             EncryptionOptions negotiatedEncryptionOption = _encryptionOption & EncryptionOptions.OPTIONS_MASK;
+
+            // Client certificate authentication completes during the TLS handshake. With TLS-first
+            // (Strict) encryption the handshake already ran before PRELOGIN. Otherwise the negotiated
+            // encryption level must still include a handshake; without one the certificate would never
+            // be presented and the login would silently degrade to an empty, anonymous LOGIN7 record.
+            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0 &&
+                !tlsFirst &&
+                negotiatedEncryptionOption != EncryptionOptions.ON &&
+                negotiatedEncryptionOption != EncryptionOptions.LOGIN)
+            {
+                _physicalStateObj.AddError(new SqlError(
+                    TdsEnums.ENCRYPTION_NOT_SUPPORTED,
+                    (byte)0x00,
+                    TdsEnums.FATAL_ERROR_CLASS,
+                    _server,
+                    StringsHelper.GetString(Strings.SQL_ClientCertificateRequiresEncryption),
+                    "",
+                    0));
+                _physicalStateObj.Dispose();
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
             if (negotiatedEncryptionOption == EncryptionOptions.ON ||
                 negotiatedEncryptionOption == EncryptionOptions.LOGIN)
             {

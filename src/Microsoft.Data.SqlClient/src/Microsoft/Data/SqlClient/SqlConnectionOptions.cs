@@ -169,12 +169,16 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.InitialFileName);
             AddKeywordToMap(DbConnectionStringKeywords.AttestationProtocol);
             AddKeywordToMap(DbConnectionStringKeywords.Authentication);
+#if NET
+            // Client certificate authentication is implemented by managed SNI only, so the keywords
+            // are not recognized on .NET Framework where managed networking is unavailable.
             AddKeywordToMap(DbConnectionStringKeywords.ClientCertificate,
                             DbConnectionStringSynonyms.ClientCertificate);
             AddKeywordToMap(DbConnectionStringKeywords.ClientKey,
                             DbConnectionStringSynonyms.ClientKey);
             AddKeywordToMap(DbConnectionStringKeywords.ClientKeyPassword,
                             DbConnectionStringSynonyms.ClientKeyPassword);
+#endif
             AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting,
                             DbConnectionStringSynonyms.ColumnEncryption);
             AddKeywordToMap(DbConnectionStringKeywords.CommandTimeout);
@@ -588,14 +592,10 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.MissingConnectionOptionValue(DbConnectionStringKeywords.ClientKeyPassword, DbConnectionStringKeywords.ClientCertificate);
                 }
             }
-            else if (string.IsNullOrEmpty(_clientKey) && !IsPkcs12Certificate(_clientCertificate))
-            {
-                throw ADP.MissingConnectionOptionValue(DbConnectionStringKeywords.ClientCertificate, DbConnectionStringKeywords.ClientKey);
-            }
-            else if (_hasUserIdKeyword ||
-                     _hasPasswordKeyword ||
+            else if (!string.IsNullOrEmpty(_userID) ||
+                     !string.IsNullOrEmpty(_password) ||
                      _integratedSecurity ||
-                     ContainsKey(DbConnectionStringKeywords.Authentication))
+                     Authentication != SqlAuthenticationMethod.NotSpecified)
             {
                 throw SQL.ClientCertificateAuthenticationConflict();
             }
@@ -662,7 +662,6 @@ namespace Microsoft.Data.SqlClient
             _serverSPN = connectionOptions._serverSPN;
             _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
             _hostNameInCertificate = connectionOptions._hostNameInCertificate;
-            _serverCertificate = connectionOptions._serverCertificate;
             _clientCertificate = connectionOptions._clientCertificate;
             _clientKey = connectionOptions._clientKey;
             _clientKeyPassword = connectionOptions._clientKeyPassword;
@@ -1637,13 +1636,6 @@ namespace Microsoft.Data.SqlClient
             CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, keyword) ||
             CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, keyword) ||
             CompareInsensitiveInvariant(DbConnectionStringKeywords.ClientKeyPassword, keyword);
-
-        private static bool IsPkcs12Certificate(string certificatePath)
-        {
-            string extension = Path.GetExtension(certificatePath);
-            return extension.Equals(".pfx", StringComparison.OrdinalIgnoreCase) ||
-                   extension.Equals(".p12", StringComparison.OrdinalIgnoreCase);
-        }
 
         // SxS notes:
         // * this method queries "DataDirectory" value from the current AppDomain.

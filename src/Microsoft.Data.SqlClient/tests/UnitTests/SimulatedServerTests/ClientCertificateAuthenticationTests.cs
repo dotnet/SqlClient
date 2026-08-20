@@ -52,6 +52,16 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         0x00,
     };
 
+    private static readonly byte[] s_preLoginEncryptNotSupportedResponse =
+    {
+        0x12, 0x01, 0x00, 0x1A, 0x00, 0x00, 0x01, 0x00,
+        0x00, 0x00, 0x0B, 0x00, 0x06,
+        0x01, 0x00, 0x11, 0x00, 0x01,
+        0xFF,
+        0x11, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x02,
+    };
+
     private readonly string _temporaryDirectory = Path.Combine(
         Path.GetTempPath(),
         $"SqlClientClientCertificateTests-{Guid.NewGuid():N}");
@@ -183,7 +193,7 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         TcpListener listener = new(IPAddress.Loopback, 0);
         listener.Start();
         int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        Task serverTask = Task.Run(() => CompletePreLoginOnly(listener));
+        Task<byte[]> serverTask = Task.Run(() => CompletePreLoginOnly(listener, s_preLoginEncryptOnResponse));
 
         using LocalAppContextSwitchesHelper switches = new();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -212,6 +222,66 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
                 "client certificate or private key could not be loaded",
                 authenticationException.Message,
                 StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            listener.Stop();
+            serverTask.GetAwaiter().GetResult();
+        }
+    }
+
+    /// <summary>
+    /// Verifies that a server which declines encryption fails the connection instead of silently
+    /// sending an empty, anonymous LOGIN7 record that no certificate could ever authenticate.
+    /// </summary>
+    [Fact]
+    public void Open_WhenServerDeclinesEncryption_FailsInsteadOfAnonymousLogin()
+    {
+        Directory.CreateDirectory(_temporaryDirectory);
+        string clientCertificatePath = Path.Combine(_temporaryDirectory, "client.pfx");
+
+        using X509Certificate2 clientCertificate = CreateCertificate(
+            "CN=SqlClient Loopback",
+            "1.3.6.1.5.5.7.3.2");
+        File.WriteAllBytes(
+            clientCertificatePath,
+            clientCertificate.Export(X509ContentType.Pkcs12, CertificatePassword));
+
+        TcpListener listener = new(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        Task<byte[]> serverTask = Task.Run(
+            () => CompletePreLoginOnly(listener, s_preLoginEncryptNotSupportedResponse));
+
+        using LocalAppContextSwitchesHelper switches = new();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            switches.UseManagedNetworking = true;
+        }
+
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"127.0.0.1,{port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            TrustServerCertificate = true,
+            ClientCertificate = clientCertificatePath,
+            ClientKeyPassword = CertificatePassword,
+            ConnectTimeout = 5,
+            ConnectRetryCount = 0,
+            Pooling = false,
+        };
+
+        try
+        {
+            using SqlConnection connection = new(builder.ConnectionString);
+            SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Contains(
+                "requires an encrypted connection",
+                exception.Message,
+                StringComparison.OrdinalIgnoreCase);
+
+            // The client must close without sending an unauthenticated LOGIN7 record.
+            Assert.Empty(serverTask.GetAwaiter().GetResult());
         }
         finally
         {
@@ -287,29 +357,36 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
     }
 
     /// <summary>
-    /// Completes PRELOGIN, then waits for the client to close before starting TLS.
+    /// Completes PRELOGIN, then records anything the client sends before closing.
     /// </summary>
     /// <param name="listener">The listener accepting the test connection.</param>
-    private static void CompletePreLoginOnly(TcpListener listener)
+    /// <param name="preLoginResponse">The PRELOGIN response written to the client.</param>
+    /// <returns>The bytes the client sent after the PRELOGIN response.</returns>
+    private static byte[] CompletePreLoginOnly(TcpListener listener, byte[] preLoginResponse)
     {
         using TcpClient client = listener.AcceptTcpClient();
         client.ReceiveTimeout = 10_000;
         client.SendTimeout = 10_000;
         using NetworkStream networkStream = client.GetStream();
         ReadTdsPacket(networkStream);
-        networkStream.Write(s_preLoginEncryptOnResponse, 0, s_preLoginEncryptOnResponse.Length);
+        networkStream.Write(preLoginResponse, 0, preLoginResponse.Length);
         networkStream.Flush();
 
+        using MemoryStream trailingBytes = new();
         try
         {
-            while (networkStream.ReadByte() >= 0)
+            int value;
+            while ((value = networkStream.ReadByte()) >= 0)
             {
+                trailingBytes.WriteByte((byte)value);
             }
         }
         catch (IOException)
         {
-            // The expected certificate-loading failure closes the client socket.
+            // The expected failure closes the client socket.
         }
+
+        return trailingBytes.ToArray();
     }
 
     /// <summary>

@@ -8,9 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Net.Security;
 using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -25,12 +22,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
-        protected static async Task AuthenticateAsClientAsync(
-            SslStream sslStream,
+        /// <summary>
+        /// Builds the TLS client options used for both the synchronous and asynchronous handshakes.
+        /// </summary>
+        /// <param name="serverNameIndication">The server name to present as SNI.</param>
+        /// <param name="certificateContext">The client certificate chain, or <see langword="null" /> when no client certificate is configured.</param>
+        /// <param name="useTds8Alpn">Whether to advertise the TDS 8.0 ALPN protocol.</param>
+        /// <returns>The configured client authentication options.</returns>
+        private static SslClientAuthenticationOptions CreateClientAuthenticationOptions(
             string serverNameIndication,
             SslStreamCertificateContext certificateContext,
-            bool useTds8Alpn,
-            CancellationToken token)
+            bool useTds8Alpn)
         {
             SslClientAuthenticationOptions sslClientOptions = new()
             {
@@ -43,21 +45,31 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 sslClientOptions.ApplicationProtocols = s_tdsProtocols;
             }
 
-            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
+            return sslClientOptions;
         }
 
+        /// <summary>
+        /// Performs the TLS handshake synchronously.
+        /// </summary>
+        /// <remarks>
+        /// This intentionally uses the synchronous <c>AuthenticateAsClient</c> overload. Blocking on
+        /// the asynchronous overload would require a second thread to run the continuation, which
+        /// deadlocks under thread-pool starvation and on single-threaded synchronization contexts.
+        /// </remarks>
+        /// <param name="sslStream">The stream to authenticate.</param>
+        /// <param name="serverNameIndication">The server name to present as SNI.</param>
+        /// <param name="certificateContext">The client certificate chain, or <see langword="null" /> when no client certificate is configured.</param>
+        /// <param name="useTds8Alpn">Whether to advertise the TDS 8.0 ALPN protocol.</param>
         protected static void AuthenticateAsClient(
             SslStream sslStream,
             string serverNameIndication,
             SslStreamCertificateContext certificateContext,
             bool useTds8Alpn)
         {
-            AuthenticateAsClientAsync(
-                sslStream,
-                serverNameIndication,
-                certificateContext,
-                useTds8Alpn,
-                CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+            SslClientAuthenticationOptions sslClientOptions =
+                CreateClientAuthenticationOptions(serverNameIndication, certificateContext, useTds8Alpn);
+
+            sslStream.AuthenticateAsClient(sslClientOptions);
         }
 
         protected SslStreamCertificateContext GetClientCertificateContext(

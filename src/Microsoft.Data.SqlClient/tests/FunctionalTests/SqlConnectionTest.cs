@@ -73,6 +73,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
+#if NET
         /// <summary>
         /// Verifies that client certificate authentication cannot be combined with a <see cref="SqlCredential"/>.
         /// </summary>
@@ -110,6 +111,35 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<InvalidOperationException>(
                 () => connection.AccessTokenCallback = (_, _) => throw new NotImplementedException());
         }
+
+        /// <summary>
+        /// Verifies that a password change cannot be requested for a certificate-authenticated connection.
+        /// </summary>
+        [Fact]
+        public void ClientCertificate_ChangePassword_Throws()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => SqlConnection.ChangePassword("ClientCertificate=client.pfx", "newPassword"));
+        }
+
+        /// <summary>
+        /// Verifies that a secure password change cannot be requested for a certificate-authenticated connection.
+        /// </summary>
+        [Fact]
+        public void ClientCertificate_ChangePasswordWithCredential_Throws()
+        {
+            using SecureString password = new();
+            password.AppendChar('x');
+            password.MakeReadOnly();
+            using SecureString newPassword = new();
+            newPassword.AppendChar('y');
+            newPassword.MakeReadOnly();
+            SqlCredential credential = new("user", password);
+
+            Assert.Throws<InvalidOperationException>(
+                () => SqlConnection.ChangePassword("ClientCertificate=client.pfx", credential, newPassword));
+        }
+#endif
 
         [Fact]
         public void Constructor2_ConnectionString_Invalid()
@@ -983,8 +1013,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("HostNameInCertificate=tds.test.com")]
         [InlineData("Server Certificate=c:\\test.cer")]
         [InlineData("ServerCertificate=c:\\test.cer")]
+#if NET
         [InlineData("Client Certificate=c:\\client.pfx")]
         [InlineData("ClientCertificate=c:\\client.pfx")]
+#endif
         [InlineData("Enlist=false")]
         [InlineData("Enlist=true")]
         [InlineData("Integrated Security=true")]

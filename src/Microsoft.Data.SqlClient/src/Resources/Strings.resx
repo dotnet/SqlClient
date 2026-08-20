@@ -538,7 +538,19 @@
     <value>The client certificate is not currently valid.</value>
   </data>
   <data name="SQL_ClientCertificateUnsupportedKeyAlgorithm" xml:space="preserve">
-    <value>Client Key supports only RSA PKCS#1 or PKCS#8 private keys. Use a PFX or P12 certificate for other key algorithms.</value>
+    <value>Client Key supports only RSA private keys. Use a PFX or P12 certificate for other key algorithms.</value>
+  </data>
+  <data name="SQL_ClientCertificateEncryptedPkcs1NotSupported" xml:space="preserve">
+    <value>Password-protected PKCS#1 private keys are not supported. Convert the key to encrypted PKCS#8, or use a PFX or P12 certificate.</value>
+  </data>
+  <data name="SQL_ClientCertificateOdbcPathSyntax" xml:space="preserve">
+    <value>The ODBC 'file:' path syntax is not supported. Specify the certificate and key file paths directly.</value>
+  </data>
+  <data name="SQL_ClientCertificateRequiresEncryption" xml:space="preserve">
+    <value>Client certificate authentication requires an encrypted connection, but the server did not negotiate encryption.</value>
+  </data>
+  <data name="SQL_ChangePasswordConflictsWithClientCertificate" xml:space="preserve">
+    <value>ChangePassword cannot be used with client certificate authentication.</value>
   </data>
   <data name="SQL_IntegratedWithPassword" xml:space="preserve">
     <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>

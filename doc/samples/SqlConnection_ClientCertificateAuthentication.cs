@@ -23,6 +23,10 @@ internal static class SqlConnectionClientCertificateAuthentication
             DataSource = dataSource,
             InitialCatalog = "master",
             Encrypt = SqlConnectionEncryptOption.Mandatory,
+            // A loopback connection presents a certificate for "localhost" that is normally not
+            // chain-trusted. Supply ServerCertificate or HostNameInCertificate instead of trusting
+            // every certificate when connecting to anything other than the local machine.
+            TrustServerCertificate = true,
             ClientCertificate = clientCertificate,
             ClientKey = clientKey,
             ClientKeyPassword = clientKeyPassword,

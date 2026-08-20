@@ -1357,6 +1357,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.DisplayNameAttribute("Server Certificate")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public string ServerCertificate { get { throw null; } set { } }
+#if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ClientCertificate/*'/>
     [System.ComponentModel.DisplayNameAttribute("Client Certificate")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
@@ -1370,6 +1371,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.PasswordPropertyTextAttribute(true)]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public string ClientKeyPassword { get { throw null; } set { } }
+#endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*'/>
     [System.ComponentModel.DisplayNameAttribute("Enlist")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

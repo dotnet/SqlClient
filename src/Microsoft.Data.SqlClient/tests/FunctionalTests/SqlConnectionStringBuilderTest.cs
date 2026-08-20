@@ -103,12 +103,14 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("HostNameInCertificate = tds.test.com")]
         [InlineData("Server Certificate = c:\\test.cer")]
         [InlineData("ServerCertificate = c:\\test.cer")]
+#if NET
         [InlineData("Client Certificate = c:\\client.pfx")]
         [InlineData("ClientCertificate = c:\\client.pfx")]
         [InlineData("Client Certificate = c:\\client.pem;Client Key = c:\\client.key")]
         [InlineData("ClientCertificate = c:\\client.pem;ClientKey = c:\\client.key")]
         [InlineData("Client Certificate = c:\\client.pfx;Client Key Password = <pwd>")]
         [InlineData("ClientCertificate = c:\\client.pfx;ClientKeyPassword = <pwd>")]
+#endif
         [InlineData("Server SPN = server1")]
         [InlineData("ServerSPN = server2")]
         [InlineData("Failover Partner SPN = server3")]
@@ -446,6 +448,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(testhostname, builder.HostNameInCertificate);
         }
 
+#if NET
         /// <summary>
         /// Verifies that client certificate authentication options round-trip through strongly typed builder properties.
         /// </summary>
@@ -466,6 +469,46 @@ namespace Microsoft.Data.SqlClient.Tests
                 "Client Certificate=client.pem;Client Key=client.key;Client Key Password=<pwd>",
                 builder.ConnectionString);
         }
+
+        /// <summary>
+        /// Verifies that clearing the builder removes the client certificate options.
+        /// </summary>
+        [Fact]
+        public void ClientCertificateOptions_Clear()
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                ClientCertificate = "client.pem",
+                ClientKey = "client.key",
+                ClientKeyPassword = "<pwd>"
+            };
+
+            builder.Clear();
+
+            Assert.Equal(string.Empty, builder.ClientCertificate);
+            Assert.Equal(string.Empty, builder.ClientKey);
+            Assert.Equal(string.Empty, builder.ClientKeyPassword);
+            Assert.Equal(string.Empty, builder.ConnectionString);
+        }
+#else
+        /// <summary>
+        /// Verifies that the client certificate keywords are not recognized on .NET Framework,
+        /// where managed networking (and therefore certificate authentication) is unavailable.
+        /// </summary>
+        [Theory]
+        [InlineData("Client Certificate")]
+        [InlineData("ClientCertificate")]
+        [InlineData("Client Key")]
+        [InlineData("ClientKey")]
+        [InlineData("Client Key Password")]
+        [InlineData("ClientKeyPassword")]
+        public void ClientCertificateOptions_NotSupportedOnNetFx(string keyword)
+        {
+            SqlConnectionStringBuilder builder = new();
+
+            Assert.Throws<ArgumentException>(() => builder[keyword] = "value");
+        }
+#endif
 
         [Fact]
         public void ConnectionBuilderEncryptBackwardsCompatibility()

@@ -2774,6 +2774,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
                 }
+                if (connectionOptions.UsesClientCertificate)
+                {
+                    throw SQL.ChangePasswordConflictsWithClientCertificate();
+                }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
                     throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
@@ -2834,6 +2838,11 @@ namespace Microsoft.Data.SqlClient
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
+                }
+
+                if (connectionOptions.UsesClientCertificate)
+                {
+                    throw SQL.ChangePasswordConflictsWithClientCertificate();
                 }
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))

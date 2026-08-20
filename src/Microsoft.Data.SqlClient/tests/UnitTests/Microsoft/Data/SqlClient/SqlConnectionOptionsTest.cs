@@ -109,6 +109,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
         }
 
+#if NET
         /// <summary>
         /// Verifies that the client certificate options and no-space aliases map to their canonical values.
         /// </summary>
@@ -132,10 +133,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData("ClientCertificate=client.pfx;Password=<pwd>")]
         [InlineData("ClientCertificate=client.pfx;Integrated Security=true")]
         [InlineData("ClientCertificate=client.pfx;Authentication=SqlPassword")]
-        [InlineData("ClientCertificate=client.pfx;Authentication=NotSpecified")]
         public void ClientCertificateOptions_WithOtherAuthentication_Throws(string connectionString)
         {
             Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(connectionString));
+        }
+
+        /// <summary>
+        /// Verifies that credential keywords present but empty (or explicitly disabled) do not
+        /// conflict with certificate authentication.
+        /// </summary>
+        [Theory]
+        [InlineData("ClientCertificate=client.pfx;User ID=")]
+        [InlineData("ClientCertificate=client.pfx;Password=")]
+        [InlineData("ClientCertificate=client.pfx;Integrated Security=false")]
+        public void ClientCertificateOptions_EmptyCredentialKeywords_DoNotConflict(string connectionString)
+        {
+            SqlConnectionOptions options = new(connectionString);
+
+            Assert.True(options.UsesClientCertificate);
         }
 
         /// <summary>
@@ -151,16 +166,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Verifies that PEM, DER, and CER certificates require a separate private-key file.
+        /// Verifies that the certificate container format is never inferred from the file extension,
+        /// so a certificate may be supplied without a separate key file regardless of its name.
         /// </summary>
         [Theory]
         [InlineData("client.pem")]
         [InlineData("client.der")]
         [InlineData("client.cer")]
-        public void ClientCertificateOptions_NonPkcs12WithoutKey_Throws(string certificatePath)
+        [InlineData("client.pfx")]
+        [InlineData("client")]
+        public void ClientCertificateOptions_FormatNotInferredFromExtension(string certificatePath)
         {
-            Assert.Throws<ArgumentException>(
-                () => new SqlConnectionOptions($"ClientCertificate={certificatePath}"));
+            SqlConnectionOptions options = new($"ClientCertificate={certificatePath}");
+
+            Assert.Equal(certificatePath, options.ClientCertificate);
+            Assert.True(options.UsesClientCertificate);
         }
 
         /// <summary>
@@ -188,5 +208,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Contains("<pwd>", options.UsersConnectionString(hidePassword: true), StringComparison.Ordinal);
             Assert.DoesNotContain("<pwd>", options.UsersConnectionStringForTrace(), StringComparison.Ordinal);
         }
+#else
+        /// <summary>
+        /// Verifies that the client certificate keywords are not recognized on .NET Framework,
+        /// where managed networking (and therefore certificate authentication) is unavailable.
+        /// </summary>
+        [Theory]
+        [InlineData("ClientCertificate=client.pfx")]
+        [InlineData("Client Certificate=client.pfx")]
+        [InlineData("ClientKey=client.key")]
+        [InlineData("Client Key=client.key")]
+        [InlineData("ClientKeyPassword=<pwd>")]
+        [InlineData("Client Key Password=<pwd>")]
+        public void ClientCertificateOptions_NotSupportedOnNetFx(string connectionString)
+        {
+            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(connectionString));
+        }
+#endif
     }
 }

@@ -106,6 +106,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidMixedArgumentOfClientCertificateAuthentication();
         }
+        internal static Exception ChangePasswordConflictsWithClientCertificate()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithClientCertificate));
+        }
         internal static Exception IntegratedWithPassword()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));

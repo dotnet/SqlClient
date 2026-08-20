@@ -77,6 +77,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return null;
             }
 
+            ThrowIfOdbcStylePath(certificatePath);
+            ThrowIfOdbcStylePath(keyPath);
+
             X509Certificate2 certificate = null;
             X509Certificate2Collection additionalCertificates = null;
             try
@@ -154,16 +157,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             additionalCertificates = null;
             try
             {
-                int leafCertificateIndex = -1;
-                for (int index = 0; index < certificates.Count; index++)
-                {
-                    if (certificates[index].HasPrivateKey)
-                    {
-                        leafCertificateIndex = index;
-                        break;
-                    }
-                }
-
+                int leafCertificateIndex = FindLeafCertificateIndex(certificates);
                 if (leafCertificateIndex < 0)
                 {
                     throw new CryptographicException(StringsHelper.GetString(Strings.SQL_ClientCertificateMissingPrivateKey));
@@ -373,6 +367,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return;
             }
 
+            // Traditional (PKCS#1) PEM encryption is identified by Proc-Type/DEK-Info headers and is
+            // not supported by RSA.ImportFromEncryptedPem, which reads PKCS#8 EncryptedPrivateKeyInfo.
+            if (keyBytes.AsSpan().IndexOf("Proc-Type:"u8) >= 0)
+            {
+                throw new AuthenticationException(
+                    StringsHelper.GetString(Strings.SQL_ClientCertificateEncryptedPkcs1NotSupported));
+            }
+
             char[] keyCharacters = Encoding.ASCII.GetChars(keyBytes);
             try
             {
@@ -452,6 +454,100 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             ReadOnlySpan<byte> marker = "-----BEGIN"u8;
             return bytes.AsSpan().IndexOf(marker) >= 0;
+        }
+
+        /// <summary>
+        /// Rejects the ODBC driver's <c>file:</c> path syntax, which this driver does not accept.
+        /// </summary>
+        /// <param name="path">The configured certificate or key path.</param>
+        private static void ThrowIfOdbcStylePath(string path)
+        {
+            if (!string.IsNullOrEmpty(path) &&
+                path.StartsWith("file:", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AuthenticationException(
+                    StringsHelper.GetString(Strings.SQL_ClientCertificateOdbcPathSyntax));
+            }
+        }
+
+        /// <summary>
+        /// Selects the end-entity certificate from a PKCS#12 bundle.
+        /// </summary>
+        /// <remarks>
+        /// A bundle can contain issuer certificates that also carry private keys, and collection
+        /// ordering is provider-specific. The end-entity certificate is therefore identified by
+        /// content rather than by position.
+        /// </remarks>
+        /// <param name="certificates">The certificates loaded from the bundle.</param>
+        /// <returns>The index of the end-entity certificate, or -1 when no private key is present.</returns>
+        private static int FindLeafCertificateIndex(X509Certificate2Collection certificates)
+        {
+            int fallbackIndex = -1;
+            for (int index = 0; index < certificates.Count; index++)
+            {
+                X509Certificate2 candidate = certificates[index];
+                if (!candidate.HasPrivateKey)
+                {
+                    continue;
+                }
+
+                if (fallbackIndex < 0)
+                {
+                    fallbackIndex = index;
+                }
+
+                if (IsCertificateAuthority(candidate) || IssuesAnotherCertificate(certificates, index))
+                {
+                    continue;
+                }
+
+                return index;
+            }
+
+            return fallbackIndex;
+        }
+
+        /// <summary>
+        /// Reports whether the certificate is marked as a certificate authority.
+        /// </summary>
+        /// <param name="certificate">The certificate to inspect.</param>
+        /// <returns><see langword="true" /> when basic constraints mark the certificate as a CA.</returns>
+        private static bool IsCertificateAuthority(X509Certificate2 certificate)
+        {
+            foreach (X509Extension extension in certificate.Extensions)
+            {
+                if (extension is X509BasicConstraintsExtension basicConstraints)
+                {
+                    return basicConstraints.CertificateAuthority;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reports whether the certificate issued another certificate in the same bundle.
+        /// </summary>
+        /// <param name="certificates">The certificates loaded from the bundle.</param>
+        /// <param name="candidateIndex">The index of the certificate to test.</param>
+        /// <returns><see langword="true" /> when the certificate is an issuer within the bundle.</returns>
+        private static bool IssuesAnotherCertificate(X509Certificate2Collection certificates, int candidateIndex)
+        {
+            byte[] subject = certificates[candidateIndex].SubjectName.RawData;
+            for (int index = 0; index < certificates.Count; index++)
+            {
+                if (index == candidateIndex)
+                {
+                    continue;
+                }
+
+                if (subject.AsSpan().SequenceEqual(certificates[index].IssuerName.RawData))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void DisposeCertificates(X509Certificate2Collection certificates)

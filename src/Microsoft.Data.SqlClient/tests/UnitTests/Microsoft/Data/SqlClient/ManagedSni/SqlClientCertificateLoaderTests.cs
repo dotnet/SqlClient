@@ -301,6 +301,145 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// Verifies that the container format is detected from the file contents rather than the
+        /// file extension, so a PKCS#12 bundle loads regardless of how it is named.
+        /// </summary>
+        /// <param name="fileName">The certificate file name under test.</param>
+        [Theory]
+        [InlineData("client.pem")]
+        [InlineData("client.cer")]
+        [InlineData("client")]
+        public void Load_Pkcs12WithNonPkcs12Extension_ReturnsCertificateWithPrivateKey(string fileName)
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, fileName);
+
+            using X509Certificate2 source = CreateCertificate(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddMinutes(5));
+            File.WriteAllBytes(certificatePath, source.Export(X509ContentType.Pkcs12, Password));
+
+            using SqlClientCertificateContext loaded =
+                SqlClientCertificateLoader.Load(certificatePath, null, Password);
+
+            Assert.True(loaded.Certificate.HasPrivateKey);
+            Assert.Equal(source.Thumbprint, loaded.Certificate.Thumbprint);
+        }
+
+        /// <summary>
+        /// Verifies that a PEM certificate named with a PKCS#12 extension is still combined with a
+        /// detached private key rather than being rejected on the basis of its name.
+        /// </summary>
+        [Fact]
+        public void Load_PemWithPkcs12Extension_ReturnsCertificateWithPrivateKey()
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, "client.pfx");
+            string keyPath = Path.Combine(_temporaryDirectory, "client.key");
+
+            using RSA key = RSA.Create(2048);
+            CertificateRequest request = new(
+                "CN=SqlClient Test",
+                key,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+            using X509Certificate2 source = request.CreateSelfSigned(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddMinutes(5));
+            File.WriteAllText(certificatePath, source.ExportCertificatePem());
+            File.WriteAllText(keyPath, key.ExportPkcs8PrivateKeyPem());
+
+            using SqlClientCertificateContext loaded =
+                SqlClientCertificateLoader.Load(certificatePath, keyPath, keyPassword: null);
+
+            Assert.True(loaded.Certificate.HasPrivateKey);
+            Assert.Equal(source.Thumbprint, loaded.Certificate.Thumbprint);
+        }
+
+        /// <summary>
+        /// Verifies that the ODBC driver's <c>file:</c> path syntax is rejected with a specific error.
+        /// </summary>
+        [Fact]
+        public void Load_OdbcStylePath_ThrowsAuthenticationException()
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, "client.pfx");
+
+            using X509Certificate2 source = CreateCertificate(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddMinutes(5));
+            File.WriteAllBytes(certificatePath, source.Export(X509ContentType.Pkcs12, Password));
+
+            AuthenticationException exception = Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load($"file:{certificatePath}", null, Password));
+            Assert.Contains("file:", exception.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that traditional (PKCS#1) encrypted private keys report an actionable error
+        /// rather than a generic load failure.
+        /// </summary>
+        [Fact]
+        public void Load_EncryptedPkcs1Key_ThrowsAuthenticationException()
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, "client.pem");
+            string keyPath = Path.Combine(_temporaryDirectory, "client.key");
+
+            using X509Certificate2 source = CreateCertificate(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddMinutes(5));
+            File.WriteAllText(certificatePath, source.ExportCertificatePem());
+            File.WriteAllText(
+                keyPath,
+                "-----BEGIN RSA PRIVATE KEY-----\n" +
+                "Proc-Type: 4,ENCRYPTED\n" +
+                "DEK-Info: AES-256-CBC,0123456789ABCDEF0123456789ABCDEF\n" +
+                "\n" +
+                "AA==\n" +
+                "-----END RSA PRIVATE KEY-----");
+
+            AuthenticationException exception = Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load(certificatePath, keyPath, Password));
+            Assert.Contains("PKCS#8", exception.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that the end-entity certificate is selected from a PKCS#12 bundle even when an
+        /// issuer certificate in the same bundle also carries a private key.
+        /// </summary>
+        [Fact]
+        public void Load_Pkcs12WithMultiplePrivateKeys_SelectsLeafCertificate()
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, "chain.pfx");
+
+            CreateCertificateChain(
+                out X509Certificate2 leafCertificate,
+                out X509Certificate2 intermediateCertificate);
+            using (leafCertificate)
+            using (intermediateCertificate)
+            {
+                // Order the intermediate first so that a positional heuristic would select the wrong
+                // certificate. Both entries carry private keys.
+                X509Certificate2Collection bundle = new()
+                {
+                    intermediateCertificate,
+                    leafCertificate
+                };
+                byte[] bundleBytes = bundle.Export(X509ContentType.Pkcs12, Password)
+                    ?? throw new InvalidOperationException("The PKCS#12 bundle could not be exported.");
+                File.WriteAllBytes(certificatePath, bundleBytes);
+
+                using SqlClientCertificateContext loaded =
+                    SqlClientCertificateLoader.Load(certificatePath, null, Password);
+
+                Assert.Equal(leafCertificate.Thumbprint, loaded.Certificate.Thumbprint);
+                Assert.True(loaded.Certificate.HasPrivateKey);
+            }
+        }
+
+        /// <summary>
         /// Creates a self-signed certificate with the requested validity period.
         /// </summary>
         /// <param name="notBefore">The beginning of the validity period.</param>
