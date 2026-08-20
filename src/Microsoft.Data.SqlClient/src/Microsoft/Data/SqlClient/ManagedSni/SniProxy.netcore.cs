@@ -275,6 +275,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
+
+            // Final safeguard: never hand a pipe path whose host component contains a colon
+            // to the OS. See DataSource.IsValidPipeHostName for details.
+            if (!DataSource.IsValidPipeHostName(details.PipeHostName))
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", details.PipeHostName);
+                SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+                return null;
+            }
+
             return new SniNpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
@@ -647,6 +657,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         PipeName = SniNpHandle.DefaultPipePath;
                     }
 
+                    // An IPv6 literal cannot be expressed in a UNC pipe path. Fail here rather than
+                    // composing a malformed path. See IsValidPipeHostName for details.
+                    if (!IsValidPipeHostName(PipeHostName))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", PipeHostName);
+                        ReportSNIError(SniProviders.NP_PROV);
+                        return false;
+                    }
+
                     InferLocalServerName();
                     return true;
                 }
@@ -668,6 +687,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                     if (string.IsNullOrEmpty(host))
                     {
+                        ReportSNIError(SniProviders.NP_PROV);
+                        return false;
+                    }
+
+                    // An IPv6 literal cannot be expressed in a UNC pipe path.
+                    // See IsValidPipeHostName for details.
+                    if (!IsValidPipeHostName(host))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", host);
                         ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
@@ -729,6 +757,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private static bool IsLocalHost(string serverName) =>
             ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
+
+        /// <summary>
+        /// Determines whether the given host name can legally appear as the host component of a
+        /// UNC pipe path (<c>\\host\pipe\sql\query</c>).
+        /// </summary>
+        /// <remarks>
+        /// A UNC host component may never contain a colon, so an IPv6 literal such as <c>::1</c>
+        /// or <c>[::1]</c> produces a malformed path like <c>\\::1\pipe\sql\query</c>. Handing that
+        /// to the OS sends the SMB redirector into an SMB session setup whose SPNEGO/NegoEx target
+        /// name embeds the IPv6 literal, which can fault LSASS on Windows and force a reboot.
+        /// Named Pipes over an IPv6 literal is not a supported configuration, so such data sources
+        /// are rejected before a pipe path is ever composed. IPv4 literals remain valid.
+        /// See https://github.com/dotnet/SqlClient/issues/4523.
+        /// </remarks>
+        internal static bool IsValidPipeHostName(string hostName) =>
+            !string.IsNullOrEmpty(hostName) && hostName.IndexOf(SemiColon) == -1;
     }
 }
 
