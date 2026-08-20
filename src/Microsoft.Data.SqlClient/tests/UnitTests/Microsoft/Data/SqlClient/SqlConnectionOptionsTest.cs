@@ -110,7 +110,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
         }
 
-#if NET
         /// <summary>
         /// Verifies that the client certificate options and no-space aliases map to their canonical values.
         /// </summary>
@@ -209,22 +208,5 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Contains("<pwd>", options.UsersConnectionString(hidePassword: true), StringComparison.Ordinal);
             Assert.DoesNotContain("<pwd>", options.UsersConnectionStringForTrace(), StringComparison.Ordinal);
         }
-#else
-        /// <summary>
-        /// Verifies that the client certificate keywords are not recognized on .NET Framework,
-        /// where managed networking (and therefore certificate authentication) is unavailable.
-        /// </summary>
-        [Theory]
-        [InlineData("ClientCertificate=client.pfx")]
-        [InlineData("Client Certificate=client.pfx")]
-        [InlineData("ClientKey=client.key")]
-        [InlineData("Client Key=client.key")]
-        [InlineData("ClientKeyPassword=<pwd>")]
-        [InlineData("Client Key Password=<pwd>")]
-        public void ClientCertificateOptions_NotSupportedOnNetFx(string connectionString)
-        {
-            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(connectionString));
-        }
-#endif
     }
 }

@@ -325,9 +325,9 @@ The following example supplies a simple SQL Server connection string in the <xre
           <![CDATA[
 This property corresponds to the "Client Certificate" and "ClientCertificate" keys within the connection string.
 
-Client certificate authentication is supported for SQL Server on Linux loopback connections when managed networking is used. It is available on .NET only; the keyword is not recognized on .NET Framework, and it requires managed SNI (native SNI on Windows throws <xref:System.PlatformNotSupportedException>).
+Client certificate authentication is supported for SQL Server on Linux loopback connections. It works with both managed and native SNI.
 
-The container format is detected from the file contents, not the file extension. A PKCS#12 (PFX or P12) file can contain its own private key. A PEM, DER, or CER certificate requires <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientKey>, which supports RSA private keys only.
+The container format is detected from the file contents, not the file extension. A PKCS#12 (PFX or P12) file can contain its own private key. A PEM, DER, or CER certificate requires <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientKey>, which supports RSA private keys only and is available on .NET only. On .NET Framework the certificate must therefore be a PKCS#12 file.
 
 The ODBC driver's `file:` path prefix is not accepted. Specify the certificate and key file paths directly.
 
@@ -352,7 +352,7 @@ The following example opens a loopback connection to SQL Server on Linux using a
         The private key path, or <see langword="String.Empty" /> if none has been supplied.
       </value>
       <remarks>
-        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property cannot be combined with a PKCS#12 certificate, which already contains its private key. This property is available on .NET only.
+        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property cannot be combined with a PKCS#12 certificate, which already contains its private key. Detached private keys are supported on .NET only; on .NET Framework, supply a PKCS#12 certificate instead.
       </remarks>
     </ClientKey>
     <ClientKeyPassword>
@@ -365,7 +365,7 @@ The following example opens a loopback connection to SQL Server on Linux using a
       <remarks>
         <format type="text/markdown">
           <![CDATA[
-This property corresponds to the "Client Key Password" and "ClientKeyPassword" keys within the connection string. It is available on .NET only.
+This property corresponds to the "Client Key Password" and "ClientKeyPassword" keys within the connection string.
 
 The value is removed from <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString> after the connection is opened unless `Persist Security Info=true`. Store this value in a secure secret provider rather than source code or configuration committed to source control.
 ]]>

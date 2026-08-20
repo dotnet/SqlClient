@@ -169,16 +169,12 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.InitialFileName);
             AddKeywordToMap(DbConnectionStringKeywords.AttestationProtocol);
             AddKeywordToMap(DbConnectionStringKeywords.Authentication);
-#if NET
-            // Client certificate authentication is implemented by managed SNI only, so the keywords
-            // are not recognized on .NET Framework where managed networking is unavailable.
             AddKeywordToMap(DbConnectionStringKeywords.ClientCertificate,
                             DbConnectionStringSynonyms.ClientCertificate);
             AddKeywordToMap(DbConnectionStringKeywords.ClientKey,
                             DbConnectionStringSynonyms.ClientKey);
             AddKeywordToMap(DbConnectionStringKeywords.ClientKeyPassword,
                             DbConnectionStringSynonyms.ClientKeyPassword);
-#endif
             AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting,
                             DbConnectionStringSynonyms.ColumnEncryption);
             AddKeywordToMap(DbConnectionStringKeywords.CommandTimeout);

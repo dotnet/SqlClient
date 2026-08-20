@@ -28,6 +28,8 @@ namespace Microsoft.Data.SqlClient
 
         private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
+        private SqlClientCertificateContext _clientCertificateContext = null; // client certificate presented during the TLS handshake, released on dispose
+
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
             : base(parser, physicalConnection, async)
         {
@@ -272,6 +274,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             DisposePacketCache();
+
+            _clientCertificateContext?.Dispose();
+            _clientCertificateContext = null;
         }
 
         protected override void FreeGcHandle(int remaining, bool release)
@@ -442,15 +447,22 @@ namespace Microsoft.Data.SqlClient
             string clientKey,
             string clientKeyPassword)
         {
-            if (!string.IsNullOrEmpty(clientCertificate))
-            {
-                throw new PlatformNotSupportedException(StringsHelper.GetString(Strings.SQL_ClientCertificateRequiresManagedSni));
-            }
-
             AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
+
+            if (!string.IsNullOrEmpty(clientCertificate))
+            {
+                // SNI reads the certificate through AuthProviderInfo.certContext and duplicates it
+                // with CertDuplicateCertificateContext, so this object must stay alive for the
+                // duration of the call and is released when the state object is disposed.
+                _clientCertificateContext = SqlClientCertificateLoader.Load(
+                    clientCertificate,
+                    clientKey,
+                    clientKeyPassword);
+                authInfo.certContext = _clientCertificateContext.Certificate.Handle;
+            }
 
             // Add SSL (Encryption) SNI provider.
             return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);

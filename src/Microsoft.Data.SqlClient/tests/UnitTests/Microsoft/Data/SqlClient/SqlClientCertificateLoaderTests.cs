@@ -9,10 +9,9 @@ using System.IO;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Data.SqlClient.ManagedSni;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
+namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
     /// Tests loading client certificates and their private keys without persisting key material.
@@ -574,6 +573,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             byte[] serialNumber = RandomNumberGenerator.GetBytes(16);
             serialNumber[0] &= 0x7F;
             return serialNumber;
+        }
+    }
+}
+
+#else
+
+using System;
+using System.IO;
+using System.Security.Authentication;
+using Xunit;
+
+namespace Microsoft.Data.SqlClient.UnitTests
+{
+    /// <summary>
+    /// Tests the .NET Framework client certificate loader, which supports PKCS#12 containers only.
+    /// </summary>
+    public sealed class SqlClientCertificateLoaderTests
+    {
+        /// <summary>
+        /// Verifies that a detached private key reports the documented .NET Framework limitation
+        /// rather than an unspecified certificate load failure.
+        /// </summary>
+        [Fact]
+        public void Load_DetachedKey_ThrowsNotSupportedOnNetFx()
+        {
+            AuthenticationException exception = Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load("client.pem", "client.key", keyPassword: null));
+
+            Assert.Contains(".NET Framework", exception.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that the ODBC driver's <c>file:</c> path syntax is rejected on .NET Framework too.
+        /// </summary>
+        [Fact]
+        public void Load_OdbcStylePath_ThrowsAuthenticationException()
+        {
+            AuthenticationException exception = Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load("file:client.pfx", null, keyPassword: null));
+
+            Assert.Contains("file:", exception.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Verifies that an unreadable PKCS#12 path is reported as an authentication failure.
+        /// </summary>
+        [Fact]
+        public void Load_MissingCertificate_ThrowsAuthenticationException()
+        {
+            string missingPath = Path.Combine(
+                Path.GetTempPath(),
+                $"SqlClientCertificateLoaderTests-{Guid.NewGuid():N}.pfx");
+
+            Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load(missingPath, null, keyPassword: null));
         }
     }
 }

@@ -65,7 +65,11 @@ namespace Microsoft.Data.SqlClient
             Provider providerEnum,
             AuthProviderInfo authInfo)
         {
-            Debug.Assert(authInfo.clientCertificateCallback == null, "CTAIP support has been removed");
+            // The native client-certificate fallback callback is declared by SNI but is not
+            // implemented by the shipping provider, so a certificate must be supplied through
+            // AuthProviderInfo.certContext or AuthProviderInfo.certId instead.
+            Debug.Assert(authInfo.clientCertificateCallback == null,
+                "SNI does not invoke the client certificate callback; use certContext or certId.");
 
             uint ret = SniAddProvider(pConn, providerEnum, ref authInfo);
             if (ret == SystemErrors.ERROR_SUCCESS)

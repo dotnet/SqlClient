@@ -2,22 +2,27 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 using System.IO;
-using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using Microsoft.Data.Common;
+#if NET
+using System.Net.Security;
+using System.Text;
+#endif
 
-namespace Microsoft.Data.SqlClient.ManagedSni
+namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Owns a client certificate, its issuer chain, and the TLS certificate context built from them.
+    /// Owns a client certificate and its issuer chain.
     /// </summary>
+    /// <remarks>
+    /// On .NET this also builds the <c>SslStreamCertificateContext</c> that managed SNI hands to
+    /// <c>SslStream</c>. Native SNI instead consumes the <c>PCCERT_CONTEXT</c> exposed by
+    /// <see cref="Certificate" />.
+    /// </remarks>
     internal sealed class SqlClientCertificateContext : IDisposable
     {
         private readonly X509Certificate2Collection _additionalCertificates;
@@ -29,15 +34,19 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             Certificate = certificate;
             _additionalCertificates = additionalCertificates;
+#if NET
             SslContext = SslStreamCertificateContext.Create(
                 certificate,
                 additionalCertificates,
                 offline: true);
+#endif
         }
 
         internal X509Certificate2 Certificate { get; }
 
+#if NET
         internal SslStreamCertificateContext SslContext { get; }
+#endif
 
         internal int AdditionalCertificateCount => _additionalCertificates?.Count ?? 0;
 
@@ -80,9 +89,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal static class SqlClientCertificateLoader
     {
         private static X509KeyStorageFlags PrivateKeyStorageFlags =>
+#if NET
             OsConstants.IsWindows
                 ? X509KeyStorageFlags.UserKeySet
                 : X509KeyStorageFlags.EphemeralKeySet;
+#else
+            // .NET Framework runs on Windows only, and Schannel cannot use ephemeral keys.
+            X509KeyStorageFlags.UserKeySet;
+#endif
 
         /// <summary>
         /// Loads the configured client certificate and private key.
@@ -116,7 +130,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         keyPath,
                         keyPassword,
                         out additionalCertificates);
-
                 if (!certificate.HasPrivateKey)
                 {
                     throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateMissingPrivateKey));
@@ -211,6 +224,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+#if NET
         /// <summary>
         /// Combines a certificate with a detached private key file.
         /// </summary>
@@ -295,6 +309,32 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+#else
+        /// <summary>
+        /// Rejects a detached private key on .NET Framework.
+        /// </summary>
+        /// <remarks>
+        /// Importing a PEM or DER private key needs <c>RSA.ImportFromPem</c> and
+        /// <c>RSA.ImportPkcs8PrivateKey</c>, which .NET Framework does not provide. A PKCS#12
+        /// certificate, which carries its own key, is supported on every target.
+        /// </remarks>
+        /// <param name="certificatePath">The certificate file path.</param>
+        /// <param name="keyPath">The private key file path.</param>
+        /// <param name="password">The private key password.</param>
+        /// <param name="additionalCertificates">Always <see langword="null" />.</param>
+        /// <returns>This method always throws.</returns>
+        private static X509Certificate2 LoadWithPrivateKey(
+            string certificatePath,
+            string keyPath,
+            string password,
+            out X509Certificate2Collection additionalCertificates)
+        {
+            additionalCertificates = null;
+            throw ADP.SSLCertificateAuthenticationException(
+                StringsHelper.GetString(Strings.SQL_ClientKeyRequiresNetCore));
+        }
+#endif
+
         /// <summary>
         /// Returns a certificate whose private key Schannel can use for a TLS handshake.
         /// </summary>
@@ -331,11 +371,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 finally
                 {
+#if NET
                     CryptographicOperations.ZeroMemory(pkcs12);
+#else
+                    // CryptographicOperations is unavailable on .NET Framework.
+                    Array.Clear(pkcs12, 0, pkcs12.Length);
+#endif
                 }
             }
         }
 
+#if NET
         /// <summary>
         /// Reads the public certificates from a PEM or DER certificate file.
         /// </summary>
@@ -535,6 +581,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             ReadOnlySpan<byte> marker = "-----BEGIN"u8;
             return bytes.AsSpan().IndexOf(marker) >= 0;
         }
+#endif
 
         /// <summary>
         /// Rejects the ODBC driver's <c>file:</c> path syntax, which this driver does not accept.
@@ -648,5 +695,3 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
     }
 }
-
-#endif

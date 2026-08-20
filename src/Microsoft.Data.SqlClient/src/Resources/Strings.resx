@@ -525,9 +525,6 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Cannot use 'Authentication' with 'Integrated Security'.</value>
   </data>
-  <data name="SQL_ClientCertificateRequiresManagedSni" xml:space="preserve">
-    <value>Client certificate authentication requires managed networking and is not supported by native SNI or .NET Framework.</value>
-  </data>
   <data name="SQL_ClientCertificateLoadFailed" xml:space="preserve">
     <value>The client certificate or private key could not be loaded.</value>
   </data>
@@ -548,6 +545,9 @@
   </data>
   <data name="SQL_ClientKeyWithPkcs12Certificate" xml:space="preserve">
     <value>Client Key cannot be used with a PKCS#12 (PFX or P12) certificate because the certificate already contains its private key. Remove Client Key, or supply the certificate in PEM or DER format.</value>
+  </data>
+  <data name="SQL_ClientKeyRequiresNetCore" xml:space="preserve">
+    <value>Client Key is not supported on .NET Framework. Supply the client certificate as a PKCS#12 (PFX or P12) file, which contains its own private key, or target .NET.</value>
   </data>
   <data name="SQL_ClientCertificateRequiresEncryption" xml:space="preserve">
     <value>Client certificate authentication requires an encrypted connection, but the server did not negotiate encryption.</value>

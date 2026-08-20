@@ -383,18 +383,6 @@ namespace Microsoft.Data.SqlClient
             string clientKeyPassword = connectionOptions.ClientKeyPassword;
             bool useClientCertificate = connectionOptions.UsesClientCertificate;
 
-            if (useClientCertificate)
-            {
-#if NET
-                if (!LocalAppContextSwitches.UseManagedNetworking)
-                {
-                    throw new PlatformNotSupportedException(StringsHelper.GetString(Strings.SQL_ClientCertificateRequiresManagedSni));
-                }
-#else
-                throw new PlatformNotSupportedException(StringsHelper.GetString(Strings.SQL_ClientCertificateRequiresManagedSni));
-#endif
-            }
-
             if (_state != TdsParserState.Closed)
             {
                 Debug.Fail("TdsParser.Connect called on non-closed connection!");

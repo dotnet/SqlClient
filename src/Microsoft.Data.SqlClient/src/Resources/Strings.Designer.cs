@@ -2851,15 +2851,6 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Client certificate authentication requires managed networking and is not supported by native SNI or .NET Framework..
-        /// </summary>
-        internal static string SQL_ClientCertificateRequiresManagedSni {
-            get {
-                return ResourceManager.GetString("SQL_ClientCertificateRequiresManagedSni", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to The client certificate or private key could not be loaded..
         /// </summary>
         internal static string SQL_ClientCertificateLoadFailed {
@@ -2919,6 +2910,15 @@ namespace System {
         internal static string SQL_ClientKeyWithPkcs12Certificate {
             get {
                 return ResourceManager.GetString("SQL_ClientKeyWithPkcs12Certificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client Key is not supported on .NET Framework. Supply the client certificate as a PKCS#12 (PFX or P12) file, which contains its own private key, or target .NET..
+        /// </summary>
+        internal static string SQL_ClientKeyRequiresNetCore {
+            get {
+                return ResourceManager.GetString("SQL_ClientKeyRequiresNetCore", resourceCulture);
             }
         }
 

@@ -73,7 +73,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
-#if NET
         /// <summary>
         /// Verifies that client certificate authentication cannot be combined with a <see cref="SqlCredential"/>.
         /// </summary>
@@ -139,7 +138,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<InvalidOperationException>(
                 () => SqlConnection.ChangePassword("ClientCertificate=client.pfx", credential, newPassword));
         }
-#endif
 
         [Fact]
         public void Constructor2_ConnectionString_Invalid()
@@ -1013,10 +1011,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("HostNameInCertificate=tds.test.com")]
         [InlineData("Server Certificate=c:\\test.cer")]
         [InlineData("ServerCertificate=c:\\test.cer")]
-#if NET
         [InlineData("Client Certificate=c:\\client.pfx")]
         [InlineData("ClientCertificate=c:\\client.pfx")]
-#endif
         [InlineData("Enlist=false")]
         [InlineData("Enlist=true")]
         [InlineData("Integrated Security=true")]
