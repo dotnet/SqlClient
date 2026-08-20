@@ -21,6 +21,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     /// </summary>
     public class DataSourceNamedPipesTests
     {
+        /// <summary>
+        /// Verifies that a Named Pipes data source whose host component is an IPv6 literal is
+        /// rejected during parsing, covering both the <c>np:host</c> form and the
+        /// <c>\\host\pipe\...</c> UNC form. Such a host cannot be expressed in a UNC path, and
+        /// composing one crashes LSASS on Windows.
+        /// </summary>
         [Theory]
         [InlineData(@"np:::1")]
         [InlineData(@"np:[::1]")]
@@ -34,6 +40,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.Null(DataSource.ParseServerName(dataSource));
         }
 
+        /// <summary>
+        /// Verifies that the new IPv6 literal rejection does not regress legitimate Named Pipes
+        /// data sources: IPv4 literals, <c>localhost</c>, <c>.</c>, named instances, and explicit
+        /// UNC pipe paths must still parse and yield the expected pipe host name.
+        /// </summary>
         [Theory]
         [InlineData(@"np:127.0.0.1", "127.0.0.1")]
         [InlineData(@"np:localhost", "localhost")]
@@ -53,6 +64,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.False(string.IsNullOrEmpty(details.PipeName));
         }
 
+        /// <summary>
+        /// Verifies that a Named Pipes data source given without a UNC path still composes the
+        /// default pipe name, including the <c>MSSQL$&lt;instance&gt;</c> prefix for named instances.
+        /// These forms are asserted separately from the UNC forms because the UNC path builds its
+        /// pipe name with <see cref="System.IO.Path.DirectorySeparatorChar"/>, which is platform dependent.
+        /// </summary>
         [Theory]
         [InlineData(@"np:127.0.0.1", @"sql\query")]
         [InlineData(@"np:localhost", @"sql\query")]
@@ -82,6 +99,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.NotEqual(DataSource.Protocol.NP, details.ResolvedProtocol);
         }
 
+        /// <summary>
+        /// Verifies <see cref="DataSource.IsValidPipeHostName"/> directly: a pipe host name must be
+        /// non-empty and free of colons.
+        /// </summary>
         [Theory]
         [InlineData("::1", false)]
         [InlineData("[::1]", false)]
@@ -95,6 +116,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.Equal(expected, DataSource.IsValidPipeHostName(hostName));
         }
 
+        /// <summary>
+        /// Verifies <see cref="DataSource.IsValidPipeHostName"/> rejects a null host name.
+        /// Covered separately from the theory above because xUnit disallows null theory data
+        /// for a non-nullable string parameter.
+        /// </summary>
         [Fact]
         public void IsValidPipeHostName_Null_ReturnsFalse()
         {

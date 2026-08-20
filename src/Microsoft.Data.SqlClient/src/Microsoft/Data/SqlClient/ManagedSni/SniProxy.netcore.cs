@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// See https://github.com/dotnet/SqlClient/issues/4523.
         /// </remarks>
         internal static bool IsValidPipeHostName(string hostName) =>
-            !string.IsNullOrEmpty(hostName) && hostName.IndexOf(SemiColon) == -1;
+            !string.IsNullOrEmpty(hostName) && hostName.IndexOf(':') == -1;
     }
 }
 
