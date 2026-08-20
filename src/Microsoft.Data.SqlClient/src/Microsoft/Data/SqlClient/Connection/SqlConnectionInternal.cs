@@ -3023,8 +3023,8 @@ namespace Microsoft.Data.SqlClient.Connection
             login.timeout = timeoutInSeconds;
             login.userInstance = ConnectionOptions.UserInstance;
             login.hostName = ConnectionOptions.ObtainWorkstationId();
-            login.userName = ConnectionOptions.UserID;
-            login.password = ConnectionOptions.Password;
+            login.userName = ConnectionOptions.UsesClientCertificate ? string.Empty : ConnectionOptions.UserID;
+            login.password = ConnectionOptions.UsesClientCertificate ? string.Empty : ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
             login.language = _currentLanguage;
 
@@ -3048,7 +3048,7 @@ namespace Microsoft.Data.SqlClient.Connection
             login.packetSize = PacketSize;
             login.newPassword = newPassword;
             login.readOnlyIntent = ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly;
-            login.credential = _credential;
+            login.credential = ConnectionOptions.UsesClientCertificate ? null : _credential;
 
             if (newSecurePassword != null)
             {

@@ -88,7 +88,7 @@ namespace Microsoft.Data.Common
 
             // grab all the parsed details from DbConnectionOptions
             _encryptedUsersConnectionString = connectionOptions.UsersConnectionString(false);
-            _hasPassword = connectionOptions._hasPasswordKeyword;
+            _hasPassword = connectionOptions.HasSensitiveInfoKeyword;
             _parsetable = connectionOptions.Parsetable;
             _keychain = connectionOptions._keyChain;
 
@@ -117,9 +117,13 @@ namespace Microsoft.Data.Common
                 {
                     _parsetable[DbConnectionStringSynonyms.Pwd] = star;
                 }
+                if (_parsetable.ContainsKey(DbConnectionStringKeywords.ClientKeyPassword))
+                {
+                    _parsetable[DbConnectionStringKeywords.ClientKeyPassword] = star;
+                }
 
-                // replace user's password/pwd value with "*" in the linked list and build a new string
-                _keychain = connectionOptions.ReplacePasswordPwd(out _encryptedUsersConnectionString, true);
+                // replace sensitive values with "*" in the linked list and build a new string
+                _keychain = connectionOptions.ReplaceSensitiveValues(out _encryptedUsersConnectionString, true);
             }
 
             if (!string.IsNullOrEmpty(restrictions))

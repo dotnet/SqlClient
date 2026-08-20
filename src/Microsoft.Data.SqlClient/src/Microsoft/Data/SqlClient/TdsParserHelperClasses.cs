@@ -33,8 +33,8 @@ namespace Microsoft.Data.SqlClient
         OPTIONS_MASK = 0x3f,
 #if NETFRAMEWORK
         CTAIP = 0x40,
-        CLIENT_CERT = 0x80,
 #endif
+        CLIENT_CERT = 0x80,
     }
 
     internal enum PreLoginHandshakeStatus

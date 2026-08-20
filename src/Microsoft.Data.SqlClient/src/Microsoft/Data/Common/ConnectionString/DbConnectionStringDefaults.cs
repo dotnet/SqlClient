@@ -20,6 +20,9 @@ namespace Microsoft.Data.Common.ConnectionString
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const int CommandTimeout = 30;
+        internal const string ClientCertificate = "";
+        internal const string ClientKey = "";
+        internal const string ClientKeyPassword = "";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
         internal const int ConnectTimeout = 15;

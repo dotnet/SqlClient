@@ -395,6 +395,13 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
+
+        internal static AuthenticationException SSLCertificateAuthenticationException(string message, Exception innerException)
+        {
+            AuthenticationException e = new(message, innerException);
+            TraceExceptionAsReturnValue(e);
+            return e;
+        }
         #endregion
 
         #region Helper Functions
@@ -1466,6 +1473,12 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity));
+
+        internal static InvalidOperationException InvalidMixedUsageOfClientCertificateAuthentication()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfClientCertificateAuthentication));
+
+        internal static ArgumentException InvalidMixedArgumentOfClientCertificateAuthentication()
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfClientCertificateAuthentication));
 
         internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));

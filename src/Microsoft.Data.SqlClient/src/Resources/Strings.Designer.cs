@@ -518,6 +518,15 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client certificate authentication cannot be combined with User ID, Password, Integrated Security, Authentication, Credential, AccessToken, AccessTokenCallback, or SspiContextProvider..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfClientCertificateAuthentication {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfClientCertificateAuthentication", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to {0} &quot;{1}&quot;..
@@ -1299,6 +1308,33 @@ namespace System {
         internal static string DbConnectionString_Authentication {
             get {
                 return ResourceManager.GetString("DbConnectionString_Authentication", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The path to the client certificate used for SQL Server on Linux loopback authentication..
+        /// </summary>
+        internal static string DbConnectionString_ClientCertificate {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ClientCertificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The path to the private key for the client certificate..
+        /// </summary>
+        internal static string DbConnectionString_ClientKey {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ClientKey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The password used to access the client certificate or private key..
+        /// </summary>
+        internal static string DbConnectionString_ClientKeyPassword {
+            get {
+                return ResourceManager.GetString("DbConnectionString_ClientKeyPassword", resourceCulture);
             }
         }
         
@@ -2811,6 +2847,96 @@ namespace System {
         internal static string SQL_AuthenticationAndIntegratedSecurity {
             get {
                 return ResourceManager.GetString("SQL_AuthenticationAndIntegratedSecurity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client certificate authentication requires managed networking and is not supported by native SNI or .NET Framework..
+        /// </summary>
+        internal static string SQL_ClientCertificateRequiresManagedSni {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateRequiresManagedSni", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The client certificate or private key could not be loaded..
+        /// </summary>
+        internal static string SQL_ClientCertificateLoadFailed {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateLoadFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The client certificate does not have an associated private key..
+        /// </summary>
+        internal static string SQL_ClientCertificateMissingPrivateKey {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateMissingPrivateKey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The client certificate is not currently valid..
+        /// </summary>
+        internal static string SQL_ClientCertificateNotValid {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateNotValid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client Key supports only RSA private keys. Use a PFX or P12 certificate for other key algorithms..
+        /// </summary>
+        internal static string SQL_ClientCertificateUnsupportedKeyAlgorithm {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateUnsupportedKeyAlgorithm", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password-protected PKCS#1 private keys are not supported. Convert the key to encrypted PKCS#8, or use a PFX or P12 certificate..
+        /// </summary>
+        internal static string SQL_ClientCertificateEncryptedPkcs1NotSupported {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateEncryptedPkcs1NotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The ODBC 'file:' path syntax is not supported. Specify the certificate and key file paths directly..
+        /// </summary>
+        internal static string SQL_ClientCertificateOdbcPathSyntax {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateOdbcPathSyntax", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client Key cannot be used with a PKCS#12 (PFX or P12) certificate because the certificate already contains its private key. Remove Client Key, or supply the certificate in PEM or DER format..
+        /// </summary>
+        internal static string SQL_ClientKeyWithPkcs12Certificate {
+            get {
+                return ResourceManager.GetString("SQL_ClientKeyWithPkcs12Certificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client certificate authentication requires an encrypted connection, but the server did not negotiate encryption..
+        /// </summary>
+        internal static string SQL_ClientCertificateRequiresEncryption {
+            get {
+                return ResourceManager.GetString("SQL_ClientCertificateRequiresEncryption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ChangePassword cannot be used with client certificate authentication..
+        /// </summary>
+        internal static string SQL_ChangePasswordConflictsWithClientCertificate {
+            get {
+                return ResourceManager.GetString("SQL_ChangePasswordConflictsWithClientCertificate", resourceCulture);
             }
         }
         

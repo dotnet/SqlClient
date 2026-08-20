@@ -48,6 +48,11 @@ namespace Microsoft.Data.SqlClient
             Encrypt,
             HostNameInCertificate,
             ServerCertificate,
+#if NET
+            ClientCertificate,
+            ClientKey,
+            ClientKeyPassword,
+#endif
             TrustServerCertificate,
             LoadBalanceTimeout,
             IdleTimeout,
@@ -111,6 +116,11 @@ namespace Microsoft.Data.SqlClient
         private SqlConnectionEncryptOption _encrypt = DbConnectionStringDefaults.Encrypt;
         private string _hostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
         private string _serverCertificate = DbConnectionStringDefaults.ServerCertificate;
+#if NET
+        private string _clientCertificate = DbConnectionStringDefaults.ClientCertificate;
+        private string _clientKey = DbConnectionStringDefaults.ClientKey;
+        private string _clientKeyPassword = DbConnectionStringDefaults.ClientKeyPassword;
+#endif
         private bool _trustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
         private bool _enlist = DbConnectionStringDefaults.Enlist;
         private bool _integratedSecurity = DbConnectionStringDefaults.IntegratedSecurity;
@@ -152,6 +162,11 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.Encrypt] = DbConnectionStringKeywords.Encrypt;
             validKeywords[(int)Keywords.HostNameInCertificate] = DbConnectionStringKeywords.HostNameInCertificate;
             validKeywords[(int)Keywords.ServerCertificate] = DbConnectionStringKeywords.ServerCertificate;
+#if NET
+            validKeywords[(int)Keywords.ClientCertificate] = DbConnectionStringKeywords.ClientCertificate;
+            validKeywords[(int)Keywords.ClientKey] = DbConnectionStringKeywords.ClientKey;
+            validKeywords[(int)Keywords.ClientKeyPassword] = DbConnectionStringKeywords.ClientKeyPassword;
+#endif
             validKeywords[(int)Keywords.Enlist] = DbConnectionStringKeywords.Enlist;
             validKeywords[(int)Keywords.FailoverPartner] = DbConnectionStringKeywords.FailoverPartner;
             validKeywords[(int)Keywords.InitialCatalog] = DbConnectionStringKeywords.InitialCatalog;
@@ -212,6 +227,11 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.FailoverPartner, Keywords.FailoverPartner },
                 { DbConnectionStringKeywords.HostNameInCertificate, Keywords.HostNameInCertificate },
                 { DbConnectionStringKeywords.ServerCertificate, Keywords.ServerCertificate },
+#if NET
+                { DbConnectionStringKeywords.ClientCertificate, Keywords.ClientCertificate },
+                { DbConnectionStringKeywords.ClientKey, Keywords.ClientKey },
+                { DbConnectionStringKeywords.ClientKeyPassword, Keywords.ClientKeyPassword },
+#endif
                 { DbConnectionStringKeywords.InitialCatalog, Keywords.InitialCatalog },
                 { DbConnectionStringKeywords.IntegratedSecurity, Keywords.IntegratedSecurity },
                 { DbConnectionStringKeywords.LoadBalanceTimeout, Keywords.LoadBalanceTimeout },
@@ -255,6 +275,11 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.ExtendedProperties, Keywords.AttachDBFilename },
                 { DbConnectionStringSynonyms.HostNameInCertificate, Keywords.HostNameInCertificate },
                 { DbConnectionStringSynonyms.ServerCertificate, Keywords.ServerCertificate },
+#if NET
+                { DbConnectionStringSynonyms.ClientCertificate, Keywords.ClientCertificate },
+                { DbConnectionStringSynonyms.ClientKey, Keywords.ClientKey },
+                { DbConnectionStringSynonyms.ClientKeyPassword, Keywords.ClientKeyPassword },
+#endif
                 { DbConnectionStringSynonyms.InitialFileName, Keywords.AttachDBFilename },
                 { DbConnectionStringSynonyms.ConnectionTimeout, Keywords.ConnectTimeout },
                 { DbConnectionStringSynonyms.ConnectRetryCount, Keywords.ConnectRetryCount },
@@ -343,6 +368,14 @@ namespace Microsoft.Data.SqlClient
                     return HostNameInCertificate;
                 case Keywords.ServerCertificate:
                     return ServerCertificate;
+#if NET
+                case Keywords.ClientCertificate:
+                    return ClientCertificate;
+                case Keywords.ClientKey:
+                    return ClientKey;
+                case Keywords.ClientKeyPassword:
+                    return ClientKeyPassword;
+#endif
                 case Keywords.Enlist:
                     return Enlist;
                 case Keywords.FailoverPartner:
@@ -472,6 +505,17 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.ServerCertificate:
                     _serverCertificate = DbConnectionStringDefaults.ServerCertificate;
                     break;
+#if NET
+                case Keywords.ClientCertificate:
+                    _clientCertificate = DbConnectionStringDefaults.ClientCertificate;
+                    break;
+                case Keywords.ClientKey:
+                    _clientKey = DbConnectionStringDefaults.ClientKey;
+                    break;
+                case Keywords.ClientKeyPassword:
+                    _clientKeyPassword = DbConnectionStringDefaults.ClientKeyPassword;
+                    break;
+#endif
                 case Keywords.Enlist:
                     _enlist = DbConnectionStringDefaults.Enlist;
                     break;
@@ -1031,6 +1075,17 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.ServerCertificate:
                             ServerCertificate = ConvertToString(value);
                             break;
+#if NET
+                        case Keywords.ClientCertificate:
+                            ClientCertificate = ConvertToString(value);
+                            break;
+                        case Keywords.ClientKey:
+                            ClientKey = ConvertToString(value);
+                            break;
+                        case Keywords.ClientKeyPassword:
+                            ClientKeyPassword = ConvertToString(value);
+                            break;
+#endif
                         case Keywords.TrustServerCertificate:
                             TrustServerCertificate = ConvertToBoolean(value);
                             break;
@@ -1278,6 +1333,54 @@ namespace Microsoft.Data.SqlClient
                 _serverCertificate = value;
             }
         }
+
+#if NET
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ClientCertificate/*' />
+        [DisplayName(DbConnectionStringKeywords.ClientCertificate)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_ClientCertificate))]
+        [RefreshProperties(RefreshProperties.All)]
+        public string ClientCertificate
+        {
+            get => _clientCertificate;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ClientCertificate, value);
+                _clientCertificate = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ClientKey/*' />
+        [DisplayName(DbConnectionStringKeywords.ClientKey)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_ClientKey))]
+        [RefreshProperties(RefreshProperties.All)]
+        public string ClientKey
+        {
+            get => _clientKey;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ClientKey, value);
+                _clientKey = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ClientKeyPassword/*' />
+        [DisplayName(DbConnectionStringKeywords.ClientKeyPassword)]
+        [ResCategory(nameof(Strings.DataCategory_Security))]
+        [ResDescription(nameof(Strings.DbConnectionString_ClientKeyPassword))]
+        [PasswordPropertyText(true)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string ClientKeyPassword
+        {
+            get => _clientKeyPassword;
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ClientKeyPassword, value);
+                _clientKeyPassword = value;
+            }
+        }
+#endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*' />
         [DisplayName(DbConnectionStringKeywords.ColumnEncryptionSetting)]

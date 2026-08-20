@@ -12,6 +12,9 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string AttachDbFilename = "AttachDbFilename";
         internal const string AttestationProtocol = "Attestation Protocol";
         internal const string Authentication = "Authentication";
+        internal const string ClientCertificate = "Client Certificate";
+        internal const string ClientKey = "Client Key";
+        internal const string ClientKeyPassword = "Client Key Password";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string CommandTimeout = "Command Timeout";
         internal const string ConnectionReset = "Connection Reset";
