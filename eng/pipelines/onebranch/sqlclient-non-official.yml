@@ -140,6 +140,34 @@ extends:
     #
     globalSdl:
 
+      # BREAK SEVERITY
+      #
+      # The SDL analyzer tasks never fail on findings; they only fail if the tool itself crashes or
+      # is misconfigured.  The build break comes from the Post Analysis (Guardian Break) task, which
+      # reads the tool logs and fails when a finding meets or exceeds a minimum severity threshold.
+      # See https://aka.ms/gdn-azdo-break.
+      #
+      # Guardian normalises every finding to Error, Warning or Note.  The threshold is cumulative,
+      # so a lower name is STRICTER, not looser:
+      #
+      #   Error    break on Error                     <-- Guardian's default
+      #   Warning  break on Error + Warning
+      #   Note     break on Error + Warning + Note
+      #
+      # Two knobs control it, in increasing order of precedence:
+      #
+      #   globalSdl.severity           threshold for every tool (maps to GdnBreakPolicyMinSev)
+      #   globalSdl.<tool>.severity    per-tool override of the global threshold
+      #   ob_sdl_<tool>_severity       per-job variable; overrides both of the above
+      #
+      # We omit `severity` everywhere and keep the Error-only default.  OneBranch accepts ONLY
+      # Error, Warning or Note at this layer -- there is no explicit "Default" value to write, so
+      # inheriting the default requires omitting the key.  Consequently, spelling out
+      # `severity: Error` on a tool is NOT equivalent to omitting it: it pins that tool to Error
+      # even if globalSdl.severity is later tightened.
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds
+
       # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
       # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
       # non-official run and kept under .config/ alongside the other SDL tool configs
@@ -219,11 +247,13 @@ extends:
         break: ${{ parameters.breakOnSdlError }}
 
       roslyn:
-        # Note, requires RoslynAnalyzers task to be added as a separate step
-        # The Roslyn-specific Guardian collector/sanitizer requires SARIF v1, so our analysis build
-        # deliberately emits v1. Other, generic Guardian tooling expects SARIF v2 and may log
-        # processing errors (for example, Post Analysis's SDL artifact report) even though Roslyn
-        # collection and Guardian policy ingestion succeed.
+        # Enabling Roslyn SDL analysis here requires that our .NET builds _produce_ Roslyn findings.
+        # You will see this in the separate Roslyn build task.
+        #
+        # Note that the Roslyn-specific Guardian collector/sanitizer requires SARIF v1, so our
+        # analysis build deliberately emits v1. Other, generic Guardian tooling expects SARIF v2 and
+        # may log processing errors (for example, Post Analysis's SDL artifact report) even though
+        # Roslyn collection and Guardian policy ingestion succeed.
         enabled: true
         break: ${{ parameters.breakOnSdlError }}
 
