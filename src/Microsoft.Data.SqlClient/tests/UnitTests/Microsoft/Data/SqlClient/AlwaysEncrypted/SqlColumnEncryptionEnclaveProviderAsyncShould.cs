@@ -149,11 +149,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies that the async session helper propagates cancellation while waiting for an
-        /// in-flight attestation instead of blocking.
+        /// Verifies that a cancelled CreateEnclaveSessionAsync surfaces cancellation and leaves no
+        /// enclave session behind in the session cache.
         /// </summary>
         [Fact]
-        public async Task GetEnclaveSessionAsync_WhenTokenIsCancelled_PropagatesCancellation()
+        public async Task CreateEnclaveSessionAsync_WhenTokenIsCancelled_CachesNoSession()
         {
             FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
             EnclaveSessionParameters parameters = NewSessionParameters();
@@ -204,6 +204,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
         #endregion
 
+        #region Failure handling
+
+        /// <summary>
+        /// Verifies that a failed attestation releases the async gate. A caller that leaks the gate on
+        /// the failure path would stall every subsequent async caller for the 15 second lock timeout.
+        /// </summary>
+        [Fact]
+        public async Task CreateEnclaveSessionAsync_WhenAttestationFails_ReleasesTheAsyncGate()
+        {
+            FakeAttestationEnclaveProvider failing =
+                new FakeAttestationEnclaveProvider(TimeSpan.Zero, failAttestation: true);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => AttestAsync(failing, NewSessionParameters()));
+
+            // A subsequent, unrelated attestation must not wait on the abandoned gate.
+            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            SqlEnclaveSession next = await AttestAsync(provider, NewSessionParameters());
+            stopwatch.Stop();
+
+            Assert.NotNull(next);
+            Assert.True(
+                stopwatch.Elapsed < TimeSpan.FromSeconds(5),
+                $"Attestation took {stopwatch.Elapsed}, which suggests the async gate was not released on failure.");
+        }
+
+        #endregion
+
         #region Concurrency — async path
         /// <summary>
         /// Verifies that once an enclave session is cached, concurrent async callers all observe the
@@ -234,8 +263,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies that many concurrent cold-start async attestations complete without deadlock or a
-        /// semaphore release imbalance, and that the async gate remains usable afterwards.
+        /// Verifies that many concurrent cold-start async attestations collapse into a single
+        /// attestation, complete without deadlock or a semaphore release imbalance, and leave the
+        /// async gate usable afterwards.
         /// </summary>
         [Fact]
         public async Task CreateEnclaveSessionAsync_ConcurrentColdStart_CompletesWithoutDeadlock()
@@ -247,7 +277,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 Enumerable.Range(0, 8).Select(index => Task.Run(() => AttestAsync(provider, parameters))));
 
             Assert.All(sessions, session => Assert.NotNull(session));
-            Assert.InRange(provider.AttestationCount, 1, sessions.Length);
+
+            // The gate serializes the cold start and the post-gate cache re-check makes every queued
+            // caller reuse the session created by the winner, so exactly one attestation is performed.
+            Assert.Equal(1, provider.AttestationCount);
+            Assert.All(sessions, session => Assert.Equal(sessions[0].SessionId, session.SessionId));
 
             // The gate must still be usable for a subsequent, unrelated attestation.
             SqlEnclaveSession next = await AttestAsync(provider, NewSessionParameters());
@@ -515,11 +549,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             private readonly TimeSpan _attestationDelay;
 
+            private readonly bool _failAttestation;
+
             private int _attestationCount;
 
-            internal FakeAttestationEnclaveProvider(TimeSpan attestationDelay)
+            internal FakeAttestationEnclaveProvider(TimeSpan attestationDelay, bool failAttestation = false)
             {
                 _attestationDelay = attestationDelay;
+                _failAttestation = failAttestation;
             }
 
             internal int AttestationCount => Volatile.Read(ref _attestationCount);
@@ -610,29 +647,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 int customDataLength,
                 CancellationToken cancellationToken = default)
             {
-                SqlEnclaveSession sqlEnclaveSession = null;
-                long counter = 0;
-                try
+                using (await AcquireAsyncAttestationGateAsync(cancellationToken).ConfigureAwait(false))
                 {
-                    ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                    sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
+                    SqlEnclaveSession sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out long counter);
                     if (sqlEnclaveSession == null)
                     {
                         Interlocked.Increment(ref _attestationCount);
                         await Task.Delay(_attestationDelay, cancellationToken).ConfigureAwait(false);
+
+                        if (_failAttestation)
+                        {
+                            throw new InvalidOperationException("Simulated attestation failure.");
+                        }
+
                         sqlEnclaveSession = AddEnclaveSessionToCache(
                             enclaveSessionParameters,
                             SharedSecret,
                             Interlocked.Increment(ref s_nextSessionId),
                             out counter);
                     }
-                }
-                finally
-                {
-                    UpdateAsyncEnclaveSessionLockStatus(sqlEnclaveSession, cancellationToken);
-                }
 
-                return (sqlEnclaveSession, counter);
+                    return (sqlEnclaveSession, counter);
+                }
             }
         }
 

@@ -184,6 +184,10 @@ namespace Microsoft.Data.SqlClient
 
         // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
         // trip (signing certificate download) asynchronously.
+        //
+        // The async attestation gate is taken for the duration of this method only, so it is released
+        // on every exit path — success, failure and cancellation alike — without depending on which
+        // thread a continuation resumes on.
         internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
             byte[] attestationInfo,
             ECDiffieHellman clientDHKey,
@@ -192,47 +196,41 @@ namespace Microsoft.Data.SqlClient
             int customDataLength,
             CancellationToken cancellationToken = default)
         {
-            SqlEnclaveSession sqlEnclaveSession = null;
-            long counter = 0;
-            try
+            using (await AcquireAsyncAttestationGateAsync(cancellationToken).ConfigureAwait(false))
             {
-                ThreadRetryCache.Remove(Thread.CurrentThread.ManagedThreadId.ToString());
-                sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out counter);
-                if (sqlEnclaveSession == null)
+                // Another caller may have completed the attestation while we waited for the gate.
+                SqlEnclaveSession sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out long counter);
+                if (sqlEnclaveSession != null)
                 {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
-                    {
-                        // Deserialize the payload
-                        AttestationInfo info = new AttestationInfo(attestationInfo);
-
-                        // Verify enclave policy matches expected policy
-                        VerifyEnclavePolicy(info.EnclaveReportPackage);
-
-                        // Perform Attestation per VSM protocol
-                        await VerifyAttestationInfoAsync(
-                            enclaveSessionParameters.AttestationUrl,
-                            info.HealthReport,
-                            info.EnclaveReportPackage,
-                            cancellationToken).ConfigureAwait(false);
-
-                        // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
-
-                        // add session to cache
-                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
-                    }
-                    else
-                    {
-                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                    }
+                    return (sqlEnclaveSession, counter);
                 }
-            }
-            finally
-            {
-                UpdateAsyncEnclaveSessionLockStatus(sqlEnclaveSession, cancellationToken);
-            }
 
-            return (sqlEnclaveSession, counter);
+                if (string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
+                {
+                    throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+                }
+
+                // Deserialize the payload
+                AttestationInfo info = new AttestationInfo(attestationInfo);
+
+                // Verify enclave policy matches expected policy
+                VerifyEnclavePolicy(info.EnclaveReportPackage);
+
+                // Perform Attestation per VSM protocol
+                await VerifyAttestationInfoAsync(
+                    enclaveSessionParameters.AttestationUrl,
+                    info.HealthReport,
+                    info.EnclaveReportPackage,
+                    cancellationToken).ConfigureAwait(false);
+
+                // Set up shared secret and validate signature
+                byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+
+                // add session to cache
+                sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
+
+                return (sqlEnclaveSession, counter);
+            }
         }
 
         // Asynchronous counterpart of InvalidateEnclaveSession. Session eviction is an in-memory
@@ -367,6 +365,8 @@ namespace Microsoft.Data.SqlClient
         // Makes a web request to the provided url and returns the response as a byte[].
         // Asynchronous counterpart of MakeRequest. This member is abstract rather than virtual so
         // that derived providers cannot silently inherit a blocking implementation.
+        // Implementations should honour the cancellation token as closely as their target framework
+        // allows, and document any framework specific limits.
         protected abstract Task<byte[]> MakeRequestAsync(string url, CancellationToken cancellationToken);
 
         // Gets the root signing certificate for the provided attestation service.

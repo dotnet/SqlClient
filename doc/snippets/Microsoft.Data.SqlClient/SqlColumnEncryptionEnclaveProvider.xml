@@ -9,10 +9,13 @@
           An enclave is a protected region of memory inside SQL Server, used for computations on encrypted columns. An enclave provider encapsulates the client-side implementation details of the enclave attestation protocol as well as the logic for creating and caching enclave sessions.
         </para>
         <para>
-          Attestation is a three-call sequence: <c>GetEnclaveSession</c>, <c>GetAttestationParameters</c>, then <c>CreateEnclaveSession</c>. The first call may take an attestation gate that is only released by the matching <c>CreateEnclaveSession</c> call.
+          Attestation is a three-call sequence: <c>GetEnclaveSession</c>, <c>GetAttestationParameters</c>, then <c>CreateEnclaveSession</c>. On the synchronous path, the first call may take an attestation gate that is only released by the matching <c>CreateEnclaveSession</c> call, so the synchronous members of a single attestation sequence must all be invoked on the same thread.
         </para>
         <para>
-          Callers must not mix the synchronous and asynchronous members within a single attestation sequence. The base implementation maintains separate gates for the two paths, so pairing <c>GetEnclaveSessionAsync</c> with the synchronous <c>CreateEnclaveSession</c> (or vice versa) leaves a gate held until its timeout expires and stalls other callers.
+          The asynchronous members carry no such requirement. Their attestation gate is taken and released entirely within <c>CreateEnclaveSessionAsync</c>, so no state is held between calls and continuations may resume on any thread. Concurrent cold starts are still collapsed into a single attestation because <c>CreateEnclaveSessionAsync</c> re-checks the session cache after taking the gate.
+        </para>
+        <para>
+          Callers must not mix the synchronous and asynchronous members within a single attestation sequence, because the two paths use independent gates.
         </para>
       </remarks>
     </SqlColumnEncryptionEnclaveProvider>
@@ -182,7 +185,7 @@
           The default implementation first checks the <paramref name="cancellationToken" /> and returns a canceled task if cancellation has been requested. Otherwise, it calls the synchronous <c>GetEnclaveSession</c> method and wraps the result in a completed task. If the synchronous method throws, the exception is caught and a faulted task is returned rather than throwing synchronously.
         </para>
         <para>
-          Providers that perform network I/O during attestation must override this method with a genuinely asynchronous implementation so that the calling thread is not blocked while waiting for an in-flight attestation to complete.
+          This method performs no network I/O and never waits on another caller's in-flight attestation, so it always completes promptly. The <paramref name="isRetry" /> parameter exists for parity with <c>GetEnclaveSession</c> and does not affect the asynchronous path.
         </para>
       </remarks>
     </GetEnclaveSessionAsync>

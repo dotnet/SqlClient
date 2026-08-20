@@ -88,6 +88,12 @@ namespace Microsoft.Data.SqlClient
         // Makes a web request to the provided url and returns the response as a byte[].
         // Asynchronous counterpart of MakeRequest: the HTTP round trip, the retry backoff and the
         // JSON deserialization are all awaited rather than blocked on.
+        //
+        // Cancellation granularity differs by target framework. On .NET the token is passed to
+        // HttpClient, so an in-flight request is cancelled promptly. On .NET Framework there is no
+        // token-accepting GetStreamAsync overload, so an in-flight request runs to completion and
+        // cancellation is only observed between attempts. Callers must not assume uniform
+        // cancellation latency across target frameworks.
         protected override async Task<byte[]> MakeRequestAsync(string url, CancellationToken cancellationToken)
         {
             Exception exception = null;
