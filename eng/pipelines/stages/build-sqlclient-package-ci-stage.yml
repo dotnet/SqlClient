@@ -18,10 +18,6 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
-  # The Abstractions package version.
-  - name: abstractionsPackageVersion
-    type: string
-
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -39,32 +35,15 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version.
-  - name: loggingPackageVersion
-    type: string
-
   # The name of the MDS pipeline artifacts to publish.
   - name: mdsArtifactsName
     type: string
     default: MDS.Artifacts
 
-  # The MDS package version.
-  - name: mdsPackageVersion
-    type: string
-
-  # The AKV Provider package version.
-  - name: akvPackageVersion
-    type: string
-
   # The name of the SqlServer pipeline artifacts to download.
   - name: sqlServerArtifactsName
     type: string
     default: SqlServer.Artifacts
-
-  # The SqlServer package version.
-  - name: sqlServerPackageVersion
-    type: string
-    default: $(sqlServerPackageVersion)
 
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
@@ -92,23 +71,28 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: packageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
         abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
         loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
         mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-        akvPackageVersion: ${{ parameters.akvPackageVersion }}
+        # The family version is computed by this stage (see the packageVersion variable above).
+        packageVersion: $(packageVersion)
         sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-        sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        sqlServerPackageVersion: $(sqlServerPackageVersion)
         ${{ if ne(parameters.SNIVersion, '') }}:
           prebuildSteps:
             - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self
