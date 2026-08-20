@@ -11,9 +11,13 @@ using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
+    /// <summary>
+    /// Owns a client certificate, its issuer chain, and the TLS certificate context built from them.
+    /// </summary>
     internal sealed class SqlClientCertificateContext : IDisposable
     {
         private readonly X509Certificate2Collection _additionalCertificates;
@@ -37,6 +41,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal int AdditionalCertificateCount => _additionalCertificates?.Count ?? 0;
 
+        /// <summary>
+        /// Disposes the certificate and its issuer chain.
+        /// </summary>
         public void Dispose()
         {
             if (_disposed)
@@ -49,6 +56,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             DisposeCertificates(_additionalCertificates);
         }
 
+        /// <summary>
+        /// Disposes every certificate in the collection.
+        /// </summary>
+        /// <param name="certificates">The certificates to dispose, or <see langword="null" />.</param>
         private static void DisposeCertificates(X509Certificate2Collection certificates)
         {
             if (certificates == null)
@@ -63,6 +74,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
     }
 
+    /// <summary>
+    /// Loads the client certificate and private key configured for certificate authentication.
+    /// </summary>
     internal static class SqlClientCertificateLoader
     {
         private static X509KeyStorageFlags PrivateKeyStorageFlags =>
@@ -70,6 +84,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 ? X509KeyStorageFlags.UserKeySet
                 : X509KeyStorageFlags.EphemeralKeySet;
 
+        /// <summary>
+        /// Loads the configured client certificate and private key.
+        /// </summary>
+        /// <param name="certificatePath">The certificate file path.</param>
+        /// <param name="keyPath">The detached private key file path, or <see langword="null" /> when the certificate carries its own key.</param>
+        /// <param name="keyPassword">The certificate or private key password, or <see langword="null" /> when none is configured.</param>
+        /// <returns>The loaded certificate context, or <see langword="null" /> when no certificate is configured.</returns>
+        /// <exception cref="AuthenticationException">The certificate or private key could not be loaded, or is not currently valid.</exception>
         internal static SqlClientCertificateContext Load(string certificatePath, string keyPath, string keyPassword)
         {
             if (string.IsNullOrEmpty(certificatePath))
@@ -97,13 +119,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (!certificate.HasPrivateKey)
                 {
-                    throw new AuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateMissingPrivateKey));
+                    throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateMissingPrivateKey));
                 }
 
                 DateTime now = DateTime.Now;
                 if (now < certificate.NotBefore || now > certificate.NotAfter)
                 {
-                    throw new AuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateNotValid));
+                    throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateNotValid));
                 }
 
                 SqlClientCertificateContext context = new(certificate, additionalCertificates);
@@ -117,7 +139,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 UnauthorizedAccessException or
                 ArgumentException)
             {
-                throw new AuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateLoadFailed), e);
+                throw ADP.SSLCertificateAuthenticationException(StringsHelper.GetString(Strings.SQL_ClientCertificateLoadFailed), e);
             }
             finally
             {
@@ -126,6 +148,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Loads a PKCS#12 bundle that carries its own private key.
+        /// </summary>
+        /// <param name="certificatePath">The bundle file path.</param>
+        /// <param name="password">The bundle password, or <see langword="null" /> when none is configured.</param>
+        /// <param name="additionalCertificates">Receives the issuer certificates found in the bundle.</param>
+        /// <returns>The end-entity certificate with its private key.</returns>
         private static X509Certificate2 LoadPkcs12(
             string certificatePath,
             string password,
@@ -182,6 +211,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Combines a certificate with a detached private key file.
+        /// </summary>
+        /// <param name="certificatePath">The certificate file path.</param>
+        /// <param name="keyPath">The private key file path.</param>
+        /// <param name="password">The private key password, or <see langword="null" /> when the key is not encrypted.</param>
+        /// <param name="additionalCertificates">Receives the issuer certificates supplied alongside the leaf.</param>
+        /// <returns>The end-entity certificate with its private key.</returns>
         private static X509Certificate2 LoadWithPrivateKey(
             string certificatePath,
             string keyPath,
@@ -204,7 +241,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     (e is CryptographicException || e is ArgumentException) &&
                     CanImportEcdsaPrivateKey(keyBytes, password))
                 {
-                    throw new AuthenticationException(
+                    throw ADP.SSLCertificateAuthenticationException(
                         StringsHelper.GetString(Strings.SQL_ClientCertificateUnsupportedKeyAlgorithm));
                 }
 
@@ -258,6 +295,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Returns a certificate whose private key Schannel can use for a TLS handshake.
+        /// </summary>
+        /// <param name="certificate">The loaded certificate. It is disposed and replaced on Windows.</param>
+        /// <returns>The certificate to present during the handshake.</returns>
         private static X509Certificate2 MaterializeForTls(X509Certificate2 certificate)
         {
             if (!OsConstants.IsWindows)
@@ -294,6 +336,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Reads the public certificates from a PEM or DER certificate file.
+        /// </summary>
+        /// <param name="certificatePath">The certificate file path.</param>
+        /// <returns>The certificates found in the file, leaf first for PEM bundles.</returns>
         private static X509Certificate2Collection LoadPublicCertificates(string certificatePath)
         {
             byte[] certificateBytes = File.ReadAllBytes(certificatePath);
@@ -324,7 +371,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // as an unspecified certificate-load failure.
                 if (X509Certificate2.GetCertContentType(certificateBytes) == X509ContentType.Pkcs12)
                 {
-                    throw new AuthenticationException(
+                    throw ADP.SSLCertificateAuthenticationException(
                         StringsHelper.GetString(Strings.SQL_ClientKeyWithPkcs12Certificate));
                 }
 
@@ -343,6 +390,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Imports a DER-encoded RSA private key.
+        /// </summary>
+        /// <param name="privateKey">The key to populate.</param>
+        /// <param name="keyBytes">The DER-encoded key material.</param>
+        /// <param name="password">The key password, or <see langword="null" /> when the key is not encrypted.</param>
         private static void ImportDerPrivateKey(RSA privateKey, byte[] keyBytes, string password)
         {
             int bytesRead;
@@ -368,6 +421,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Imports an RSA private key in PEM or DER form.
+        /// </summary>
+        /// <param name="privateKey">The key to populate.</param>
+        /// <param name="keyBytes">The encoded key material.</param>
+        /// <param name="password">The key password, or <see langword="null" /> when the key is not encrypted.</param>
         private static void ImportRsaPrivateKey(RSA privateKey, byte[] keyBytes, string password)
         {
             if (!IsPem(keyBytes))
@@ -380,7 +439,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             // not supported by RSA.ImportFromEncryptedPem, which reads PKCS#8 EncryptedPrivateKeyInfo.
             if (keyBytes.AsSpan().IndexOf("Proc-Type:"u8) >= 0)
             {
-                throw new AuthenticationException(
+                throw ADP.SSLCertificateAuthenticationException(
                     StringsHelper.GetString(Strings.SQL_ClientCertificateEncryptedPkcs1NotSupported));
             }
 
@@ -402,6 +461,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Reports whether the key material is an ECDSA private key, so an RSA import failure can be
+        /// reported as an unsupported key algorithm rather than a malformed key.
+        /// </summary>
+        /// <param name="keyBytes">The encoded key material.</param>
+        /// <param name="password">The key password, or <see langword="null" /> when the key is not encrypted.</param>
+        /// <returns><see langword="true" /> when the material parses as an ECDSA private key.</returns>
         private static bool CanImportEcdsaPrivateKey(byte[] keyBytes, string password)
         {
             if (keyBytes.AsSpan().IndexOf("-----BEGIN EC PRIVATE KEY-----"u8) >= 0)
@@ -459,6 +525,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <summary>
+        /// Reports whether the bytes contain a PEM armour header.
+        /// </summary>
+        /// <param name="bytes">The file contents to inspect.</param>
+        /// <returns><see langword="true" /> when the contents are PEM encoded.</returns>
         private static bool IsPem(byte[] bytes)
         {
             ReadOnlySpan<byte> marker = "-----BEGIN"u8;
@@ -474,7 +545,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (!string.IsNullOrEmpty(path) &&
                 path.StartsWith("file:", StringComparison.OrdinalIgnoreCase))
             {
-                throw new AuthenticationException(
+                throw ADP.SSLCertificateAuthenticationException(
                     StringsHelper.GetString(Strings.SQL_ClientCertificateOdbcPathSyntax));
             }
         }
@@ -559,6 +630,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return false;
         }
 
+        /// <summary>
+        /// Disposes every certificate in the collection.
+        /// </summary>
+        /// <param name="certificates">The certificates to dispose, or <see langword="null" />.</param>
         private static void DisposeCertificates(X509Certificate2Collection certificates)
         {
             if (certificates == null)

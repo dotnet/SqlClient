@@ -395,6 +395,13 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
+
+        internal static AuthenticationException SSLCertificateAuthenticationException(string message, Exception innerException)
+        {
+            AuthenticationException e = new(message, innerException);
+            TraceExceptionAsReturnValue(e);
+            return e;
+        }
         #endregion
 
         #region Helper Functions

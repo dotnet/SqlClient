@@ -1367,9 +1367,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ClientKeyPassword/*' />
         [DisplayName(DbConnectionStringKeywords.ClientKeyPassword)]
-        [PasswordPropertyText(true)]
         [ResCategory(nameof(Strings.DataCategory_Security))]
         [ResDescription(nameof(Strings.DbConnectionString_ClientKeyPassword))]
+        [PasswordPropertyText(true)]
         [RefreshProperties(RefreshProperties.All)]
         public string ClientKeyPassword
         {

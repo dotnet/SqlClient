@@ -313,6 +313,65 @@ The following example supplies a simple SQL Server connection string in the <xre
         </code>
       </example>
     </Clear>
+    <ClientCertificate>
+      <summary>
+        Gets or sets the path to a client certificate used to authenticate a loopback connection to SQL Server on Linux.
+      </summary>
+      <value>
+        The client certificate path, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+This property corresponds to the "Client Certificate" and "ClientCertificate" keys within the connection string.
+
+Client certificate authentication is supported for SQL Server on Linux loopback connections when managed networking is used. It is available on .NET only; the keyword is not recognized on .NET Framework, and it requires managed SNI (native SNI on Windows throws <xref:System.PlatformNotSupportedException>).
+
+The container format is detected from the file contents, not the file extension. A PKCS#12 (PFX or P12) file can contain its own private key. A PEM, DER, or CER certificate requires <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientKey>, which supports RSA private keys only.
+
+The ODBC driver's `file:` path prefix is not accepted. Specify the certificate and key file paths directly.
+
+Client certificate authentication cannot be combined with SQL credentials, integrated security, Microsoft Entra authentication, access tokens, a custom SSPI context provider, or <xref:Microsoft.Data.SqlClient.SqlConnection.ChangePassword%2A>.
+
+The certificate is read when a pooled physical connection is created and is cached for the lifetime of that connection. To pick up a rotated certificate, call <xref:Microsoft.Data.SqlClient.SqlConnection.ClearPool%2A> or disable pooling.
+
+## Examples
+
+The following example opens a loopback connection to SQL Server on Linux using a client certificate.
+
+[!code-csharp[SqlConnection_ClientCertificateAuthentication Example#1](~/../sqlclient/doc/samples/SqlConnection_ClientCertificateAuthentication.cs#1)]
+]]>
+        </format>
+      </remarks>
+    </ClientCertificate>
+    <ClientKey>
+      <summary>
+        Gets or sets the path to the private key associated with <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />.
+      </summary>
+      <value>
+        The private key path, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property cannot be combined with a PKCS#12 certificate, which already contains its private key. This property is available on .NET only.
+      </remarks>
+    </ClientKey>
+    <ClientKeyPassword>
+      <summary>
+        Gets or sets the password used to access the client certificate or private key.
+      </summary>
+      <value>
+        The password, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+This property corresponds to the "Client Key Password" and "ClientKeyPassword" keys within the connection string. It is available on .NET only.
+
+The value is removed from <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString> after the connection is opened unless `Persist Security Info=true`. Store this value in a secure secret provider rather than source code or configuration committed to source control.
+]]>
+        </format>
+      </remarks>
+    </ClientKeyPassword>
     <ColumnEncryptionSetting>
       <summary>
         Gets or sets the column encryption settings for the connection string builder.
@@ -736,59 +795,6 @@ This property corresponds to the "HostNameInCertificate" and "Host Name in Certi
         </format>
       </remarks>
     </HostNameInCertificate>
-    <ClientCertificate>
-      <summary>
-        Gets or sets the path to a client certificate used to authenticate a loopback connection to SQL Server on Linux.
-      </summary>
-      <value>
-        The client certificate path, or <see langword="String.Empty" /> if none has been supplied.
-      </value>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[
-This property corresponds to the "Client Certificate" and "ClientCertificate" keys within the connection string.
-
-Client certificate authentication is supported for SQL Server on Linux loopback connections when managed networking is used. It is available on .NET only; the keyword is not recognized on .NET Framework, and it requires managed SNI (native SNI on Windows throws <xref:System.PlatformNotSupportedException>).
-
-The container format is detected from the file contents, not the file extension. A PKCS#12 (PFX or P12) file can contain its own private key. A PEM, DER, or CER certificate requires <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientKey>, which supports RSA private keys only.
-
-The ODBC driver's `file:` path prefix is not accepted. Specify the certificate and key file paths directly.
-
-Client certificate authentication cannot be combined with SQL credentials, integrated security, Microsoft Entra authentication, access tokens, a custom SSPI context provider, or <xref:Microsoft.Data.SqlClient.SqlConnection.ChangePassword%2A>.
-
-The certificate is read when a pooled physical connection is created and is cached for the lifetime of that connection. To pick up a rotated certificate, call <xref:Microsoft.Data.SqlClient.SqlConnection.ClearPool%2A> or disable pooling.
-]]>
-        </format>
-      </remarks>
-    </ClientCertificate>
-    <ClientKey>
-      <summary>
-        Gets or sets the path to the private key associated with <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />.
-      </summary>
-      <value>
-        The private key path, or <see langword="String.Empty" /> if none has been supplied.
-      </value>
-      <remarks>
-        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property cannot be combined with a PKCS#12 certificate, which already contains its private key. This property is available on .NET only.
-      </remarks>
-    </ClientKey>
-    <ClientKeyPassword>
-      <summary>
-        Gets or sets the password used to access the client certificate or private key.
-      </summary>
-      <value>
-        The password, or <see langword="String.Empty" /> if none has been supplied.
-      </value>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[
-This property corresponds to the "Client Key Password" and "ClientKeyPassword" keys within the connection string. It is available on .NET only.
-
-The value is removed from <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString> after the connection is opened unless `Persist Security Info=true`. Store this value in a secure secret provider rather than source code or configuration committed to source control.
-]]>
-        </format>
-      </remarks>
-    </ClientKeyPassword>
     <InitialCatalog>
       <summary>
         Gets or sets the name of the database associated with the connection.

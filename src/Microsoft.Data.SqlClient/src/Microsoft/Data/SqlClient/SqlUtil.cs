@@ -106,10 +106,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidMixedArgumentOfClientCertificateAuthentication();
         }
-        internal static Exception ChangePasswordConflictsWithClientCertificate()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithClientCertificate));
-        }
         internal static Exception IntegratedWithPassword()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
@@ -203,6 +199,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ChangePasswordConflictsWithSSPI()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
+        }
+        internal static Exception ChangePasswordConflictsWithClientCertificate()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithClientCertificate));
         }
         internal static Exception UnknownSysTxIsolationLevel(System.Transactions.IsolationLevel isolationLevel)
         {
@@ -2158,3 +2158,4 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+

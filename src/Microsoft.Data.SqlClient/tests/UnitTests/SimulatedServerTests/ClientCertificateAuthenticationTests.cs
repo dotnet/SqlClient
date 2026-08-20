@@ -172,7 +172,7 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
             listener.Stop();
             try
             {
-                serverTask.Wait(TimeSpan.FromSeconds(10));
+                await serverTask.WaitAsync(TimeSpan.FromSeconds(10));
             }
             catch
             {
@@ -182,10 +182,14 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
     }
 
     /// <summary>
-    /// Verifies that certificate-file failures flow through the TLS authentication error path.
+    /// Verifies that certificate-file failures flow through the TLS authentication error path on
+    /// both the synchronous and asynchronous open paths.
     /// </summary>
-    [Fact]
-    public void Open_WithMissingClientCertificate_ReportsAuthenticationFailure()
+    /// <param name="async">Whether to open the connection asynchronously.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Open_WithMissingClientCertificate_ReportsAuthenticationFailure(bool async)
     {
         Directory.CreateDirectory(_temporaryDirectory);
         string missingCertificatePath = Path.Combine(_temporaryDirectory, "missing.pfx");
@@ -215,7 +219,9 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         try
         {
             using SqlConnection connection = new(builder.ConnectionString);
-            SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
+            SqlException exception = async
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
             AuthenticationException authenticationException =
                 Assert.IsType<AuthenticationException>(exception.InnerException);
             Assert.Contains(
@@ -226,7 +232,7 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         finally
         {
             listener.Stop();
-            serverTask.GetAwaiter().GetResult();
+            await serverTask;
         }
     }
 
@@ -234,8 +240,11 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
     /// Verifies that a server which declines encryption fails the connection instead of silently
     /// sending an empty, anonymous LOGIN7 record that no certificate could ever authenticate.
     /// </summary>
-    [Fact]
-    public void Open_WhenServerDeclinesEncryption_FailsInsteadOfAnonymousLogin()
+    /// <param name="async">Whether to open the connection asynchronously.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Open_WhenServerDeclinesEncryption_FailsInsteadOfAnonymousLogin(bool async)
     {
         Directory.CreateDirectory(_temporaryDirectory);
         string clientCertificatePath = Path.Combine(_temporaryDirectory, "client.pfx");
@@ -274,19 +283,21 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         try
         {
             using SqlConnection connection = new(builder.ConnectionString);
-            SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
+            SqlException exception = async
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
             Assert.Contains(
                 "requires an encrypted connection",
                 exception.Message,
                 StringComparison.OrdinalIgnoreCase);
 
             // The client must close without sending an unauthenticated LOGIN7 record.
-            Assert.Empty(serverTask.GetAwaiter().GetResult());
+            Assert.Empty(await serverTask);
         }
         finally
         {
             listener.Stop();
-            serverTask.GetAwaiter().GetResult();
+            await serverTask;
         }
     }
 
