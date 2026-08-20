@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Не удалось найти пустой слот в пуле подключений.</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Не удалось заменить соединение, поскольку оно больше не находится в пуле соединений.</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Пул подключений отключен.</value>
   </data>

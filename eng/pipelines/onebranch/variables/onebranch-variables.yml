@@ -51,12 +51,13 @@ variables:
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head
 
-  # https://aka.ms/obpipelines/sdl
-  - name: ob_sdl_binskim_break
-    value: true
-
   - name: Packaging.EnableSBOMSigning
     value: true
+
+  # Keep this as a runtime variable reference in globalSdl.apiscan.versionNumber. Passing the
+  # quoted value directly through an Azure template expression perturbs '6.10' to the number 6.1.
+  - name: ApiScanSoftwareVersion
+    value: '6.10'
 
   # OneBranch supplies a variety of container images we must use for our jobs.
 

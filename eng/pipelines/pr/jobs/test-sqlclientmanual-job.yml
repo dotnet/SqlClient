@@ -98,6 +98,10 @@ parameters:
   - name: isLocalServer
     type: boolean
 
+  # Whether to enable LocalDB when configuring a local Windows SQL Server.
+  - name: enableLocalDB
+    type: boolean
+
   # Name of the local DB application name for localdb tests, this value will be stored in the
   # config.jsonc
   - name: localDbAppName
@@ -111,6 +115,10 @@ parameters:
   # Manual test set to execute.
   - name: testSet
     type: string
+
+  # Whether integrated security is supported by this test configuration.
+  - name: supportsIntegratedSecurity
+    type: boolean
 
   # Name of the user managed identity client ID. This value will be stored in config.jsonc for use
   # in AKV tests and substituted in for Azure connection string user IDs.
@@ -153,7 +161,10 @@ jobs:
       - ${{ if eq(parameters.isLocalServer, true) }}:
         - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self
           parameters:
+            enableLocalDB: ${{ parameters.enableLocalDB }}
             fileStreamDirectory: ${{ parameters.fileStreamDirectory }}
+            localDbAppName: ${{ parameters.localDbAppName }}
+            localDbSharedInstanceName: ${{ parameters.localDbSharedInstanceName }}
             operatingSystem: ${{ parameters.platformOperatingSystem }}
             saPassword: $(saPassword)
 
@@ -180,7 +191,7 @@ jobs:
           $config.LocalDbAppName = "${{ parameters.localDbAppName }}"
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = $true
-          $config.SupportsIntegratedSecurity = $false
+          $config.SupportsIntegratedSecurity = [System.Convert]::ToBoolean("${{ parameters.supportsIntegratedSecurity }}")
           $config.UserManagedIdentityClientId = "${{ parameters.userManagedIdentityClientId }}"
 
           if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {

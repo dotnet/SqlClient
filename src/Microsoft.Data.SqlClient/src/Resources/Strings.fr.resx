@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Impossible de trouver un emplacement libre dans le pool de connexions.</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Impossible de remplacer la connexion, car elle n’est plus dans le pool de connexions.</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Le pool de connexions a été arrêté.</value>
   </data>

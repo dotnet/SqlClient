@@ -16,8 +16,8 @@
 #
 #   - Commits to GitHub main and release/* branches
 #   - Commits to ADO internal/main and internal/release/* branches
-#   - Weekdays at 03:00 UTC on GitHub main
-#   - Thursdays at 07:00 UTC on ADO internal/main
+#   - Daily at 03:00 UTC on GitHub main
+#   - Daily at 07:00 UTC on ADO internal/main
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
 # able to define different triggers and schedules using branch filters:
@@ -41,6 +41,9 @@
 #   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=1933
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
+# This becomes BuildNumber, used as the revision component of FileVersion
+# (Major.Minor.Patch.Revision). Revision must fit in a 16-bit unsigned int (max 65535).
+# Format $(DayOfYear)$(Rev:rr) yields e.g. 15401 (day 154, run 01) — always < 65535.
 name: $(DayOfYear)$(Rev:rr)
 
 # Do not trigger this pipeline for PRs.
@@ -66,17 +69,17 @@ trigger:
 # Trigger this pipeline on a schedule.
 schedules:
 
-  # GitHub main on weekdays
-  - cron: '0 3 * * Mon-Fri'
-    displayName: Weekday Run (Release Config)
+  # GitHub main daily.
+  - cron: '0 3 * * *'
+    displayName: Daily Run (Release Config)
     branches:
       include:
       - main
     always: true
 
-  # ADO internal/main on Thursdays.
-  - cron: '0 7 * * Thu'
-    displayName: Thursday Run (Release Config)
+  # ADO internal/main daily.
+  - cron: '0 7 * * *'
+    displayName: Daily Run (Release Config)
     branches:
       include:
       - internal/main
@@ -166,6 +169,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
+    buildSuffix: 'ci'
     referenceType: Package
     debug: ${{ parameters.debug }}
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

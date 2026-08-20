@@ -14,10 +14,9 @@
   -->
 
   <!--
-    Import guard: set on first import so that subsequent imports of this file are skipped.
-    Directory.Packages.props imports all Versions.props early in Package mode; the guard
-    prevents each csproj's own conditional import from re-importing and re-evaluating
-    version properties.
+    Import guard: set on first import so that subsequent conditional imports of this file are
+    skipped. Directory.Packages.props imports this file early in Package mode; without the guard,
+    MSBuild ignores the duplicate csproj import but emits warning MSB4011.
   -->
   <PropertyGroup>
     <SqlServerVersionsImported>true</SqlServerVersionsImported>
@@ -25,12 +24,11 @@
 
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
-    <!--
-      This is the *next* version to release of SqlServer. Update this when the next version is
-      decided.
-      @TODO: Determine how versions should be updated in release branches vs main
-    -->
-    <SqlServerVersionDefault>1.0.0</SqlServerVersionDefault>
+    <!-- Last version shipped to NuGet. Update after each release. -->
+    <SqlServerPublishedVersion>1.0.0</SqlServerPublishedVersion>
+
+    <!-- This is the *next* version to release of SqlServer. Update this after each release. -->
+    <SqlServerNextVersion>1.1.0-preview1</SqlServerNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -38,12 +36,22 @@
     <When Condition="'$(SqlServerPackageVersion)' != ''">
       <!--
         When a package version is provided, it supercedes all other choices. It will be used as the
-        package version and the file version will be based on it. This situation is used for
-        local developer scenarios and (@TODO:) old build pipelines that stored their version
-        information in the pipeline yaml.
+        package version and the file version will be based on it.
       -->
       <PropertyGroup>
-        <SqlServerFileVersion>$(SqlServerPackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
+        <SqlServerPackageVersionBase>$(SqlServerPackageVersion.Split('-')[0])</SqlServerPackageVersionBase>
+        <!--
+          Package versions cannot be used directly as file versions because a prerelease suffix is
+          not valid in a file version. Start with the suffix-free package base and append the
+          configured file-version build number, which converts a three-part package version such as
+          1.2.3-preview1 to 1.2.3.42.
+
+          A revision-enabled pipeline supplies a four-part package base such as 1.2.3.42. That base
+          is already a complete file version, so the following conditional assignment overrides the
+          fallback instead of producing an invalid five-part version.
+        -->
+        <SqlServerFileVersion>$(SqlServerPackageVersionBase).$(FileVersionBuildNumber)</SqlServerFileVersion>
+        <SqlServerFileVersion Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlServerPackageVersionBase)', '^\d+\.\d+\.\d+\.\d+$'))">$(SqlServerPackageVersionBase)</SqlServerFileVersion>
       </PropertyGroup>
     </When>
 
@@ -62,10 +70,10 @@
         build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlServerPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlServerVersionDefault)-$(BuildSuffix)$(BuildNumber)</SqlServerPackageVersion>
-        <SqlServerPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlServerVersionDefault)</SqlServerPackageVersion>
+        <SqlServerPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlServerNextVersion)-$(BuildSuffix)$(BuildNumber)</SqlServerPackageVersion>
+        <SqlServerPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlServerNextVersion)</SqlServerPackageVersion>
 
-        <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
+        <SqlServerFileVersion>$(SqlServerNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
       </PropertyGroup>
     </When>
 
@@ -77,8 +85,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <SqlServerPackageVersion>$(SqlServerVersionDefault)-dev</SqlServerPackageVersion>
-        <SqlServerFileVersion>$(SqlServerVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
+        <SqlServerPackageVersion>$(SqlServerNextVersion)-dev</SqlServerPackageVersion>
+        <SqlServerFileVersion>$(SqlServerNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>

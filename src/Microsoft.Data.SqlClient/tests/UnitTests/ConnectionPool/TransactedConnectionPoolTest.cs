@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Xunit;
 using System.Data;
 using System.Data.Common;
@@ -22,6 +23,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
 
 public class TransactedConnectionPoolTest
 {
+    /// <summary>
+    /// Constructs a <see cref="TransactedConnectionPool"/> reporting to <paramref name="pool"/>'s
+    /// own metrics instance, matching how <see cref="WaitHandleDbConnectionPool"/> constructs one
+    /// in production.
+    /// </summary>
+    private static TransactedConnectionPool NewTransactedPool(MockDbConnectionPool pool) =>
+        new(pool, pool.Metrics);
+
     #region Constructor Tests
 
     [Fact]
@@ -31,7 +40,7 @@ public class TransactedConnectionPoolTest
         var mockPool = new MockDbConnectionPool();
 
         // Act
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
 
         // Assert
         Assert.Same(mockPool, transactedPool.Pool);
@@ -42,8 +51,8 @@ public class TransactedConnectionPoolTest
     public void Constructor_UniqueIds()
     {
         // Arrange
-        var pool1 = new TransactedConnectionPool(new MockDbConnectionPool());
-        var pool2 = new TransactedConnectionPool(new MockDbConnectionPool());
+        var pool1 = NewTransactedPool(new MockDbConnectionPool());
+        var pool2 = NewTransactedPool(new MockDbConnectionPool());
 
         // Act & Assert
         Assert.NotEqual(pool1.Id, pool2.Id);
@@ -59,7 +68,7 @@ public class TransactedConnectionPoolTest
     public void GetTransactedObject_WithNonExistentTransaction_ReturnsNull()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         using var transactionScope = new TransactionScope();
         var transaction = Transaction.Current!;
 
@@ -74,7 +83,7 @@ public class TransactedConnectionPoolTest
     public void GetTransactedObject_WithExistingTransaction_ReturnsAndRemovesConnection()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -98,7 +107,7 @@ public class TransactedConnectionPoolTest
     public void GetTransactedObject_WithMultipleConnections_ReturnsLastAdded()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection1 = new MockDbConnectionInternal();
         var connection2 = new MockDbConnectionInternal();
         
@@ -120,7 +129,7 @@ public class TransactedConnectionPoolTest
     public void GetTransactedObject_ConcurrentAccess_ThreadSafe()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connections = new DbConnectionInternal[10];
         for (int i = 0; i < connections.Length; i++)
         {
@@ -165,7 +174,7 @@ public class TransactedConnectionPoolTest
     public void PutTransactedObject_WithNullConnection_ThrowsArgumentNullException()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         
         using var transactionScope = new TransactionScope();
         var transaction = Transaction.Current!;
@@ -179,7 +188,7 @@ public class TransactedConnectionPoolTest
     public void PutTransactedObject_WithNewTransaction_CreatesNewConnectionList()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -197,7 +206,7 @@ public class TransactedConnectionPoolTest
     public void PutTransactedObject_WithExistingTransaction_AddsToExistingConnectionList()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection1 = new MockDbConnectionInternal();
         var connection2 = new MockDbConnectionInternal();
         
@@ -220,7 +229,7 @@ public class TransactedConnectionPoolTest
     public void PutTransactedObject_ConcurrentAccess_ThreadSafe()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connections = new DbConnectionInternal[10];
         for (int i = 0; i < connections.Length; i++)
         {
@@ -259,7 +268,7 @@ public class TransactedConnectionPoolTest
         // TODO: this behavior is suspicious should we prevent this?
 
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
 
         using var transactionScope = new TransactionScope();
@@ -285,7 +294,7 @@ public class TransactedConnectionPoolTest
     public void TransactionEnded_WithNullConnection_ThrowsNullReferenceException()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         
         using var transactionScope = new TransactionScope();
         var transaction = Transaction.Current!;
@@ -299,7 +308,7 @@ public class TransactedConnectionPoolTest
     public void TransactionEnded_WithNonExistentTransaction_DoesNotThrow()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -315,7 +324,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -340,7 +349,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection1 = new MockDbConnectionInternal();
         var connection2 = new MockDbConnectionInternal();
         
@@ -370,7 +379,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -390,7 +399,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connections = new DbConnectionInternal[10];
         for (int i = 0; i < connections.Length; i++)
         {
@@ -427,7 +436,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection = new MockDbConnectionInternal();
 
         using var transactionScope = new TransactionScope();
@@ -454,7 +463,7 @@ public class TransactedConnectionPoolTest
 
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection = new MockDbConnectionInternal();
 
         using var transactionScope = new TransactionScope();
@@ -478,7 +487,7 @@ public class TransactedConnectionPoolTest
     {
         // Arrange
         var mockPool = new MockDbConnectionPool();
-        var transactedPool = new TransactedConnectionPool(mockPool);
+        var transactedPool = NewTransactedPool(mockPool);
         var connection = new MockDbConnectionInternal();
         
         using var transactionScope = new TransactionScope();
@@ -510,7 +519,7 @@ public class TransactedConnectionPoolTest
     public void MultipleTransactions_IsolatedCorrectly()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection1 = new MockDbConnectionInternal();
         var connection2 = new MockDbConnectionInternal();
 
@@ -541,7 +550,7 @@ public class TransactedConnectionPoolTest
     public void ConcurrentPutAndGet_DifferentTransactions_Isolated()
     {
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var numberOfTransactions = 5;
         var connectionsPerTransaction = 3;
         var results = new ConcurrentDictionary<int, List<DbConnectionInternal>>();
@@ -604,7 +613,7 @@ public class TransactedConnectionPoolTest
         // the pool state will match the transaction state.
 
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
         Transaction? capturedTransaction = null;
 
@@ -627,7 +636,7 @@ public class TransactedConnectionPoolTest
         //TODO: this test should not pass! why would we store connections from a disposed transaction?
 
         // Arrange
-        var transactedPool = new TransactedConnectionPool(new MockDbConnectionPool());
+        var transactedPool = NewTransactedPool(new MockDbConnectionPool());
         var connection = new MockDbConnectionInternal();
         Transaction? disposedTransaction = null;
 
@@ -658,6 +667,10 @@ public class TransactedConnectionPoolTest
     {
         public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; } = new();
         public SqlConnectionFactory ConnectionFactory => throw new NotImplementedException();
+        // TransactedConnectionPool reports free-connection counts through its owning pool, so this
+        // has to be a real sink rather than a throwing stub. A fake rather than the global
+        // instance, so these tests do not perturb process-wide counters.
+        public ISqlClientMetrics Metrics { get; } = new FakeSqlClientMetrics();
         public int Count => throw new NotImplementedException();
         public bool ErrorOccurred => throw new NotImplementedException();
         public int Id { get; } = 1;
@@ -712,6 +725,8 @@ public class TransactedConnectionPoolTest
         public int MockId { get; } = Interlocked.Increment(ref s_nextId);
 
         public override string ServerVersion => "Mock";
+
+        public override ConnectionCapabilities Capabilities => new();
 
         public override DbTransaction BeginTransaction(System.Data.IsolationLevel il)
         {

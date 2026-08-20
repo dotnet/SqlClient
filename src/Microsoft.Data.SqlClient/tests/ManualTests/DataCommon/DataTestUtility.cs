@@ -622,9 +622,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsForceInternalEndQuerySupported() =>
             SystemDataInternals.CommandHelper.IsForceInternalEndQuerySupported();
 
+        /// <summary>
+        /// Returns whether the primary connection strings required by the ManualTests configuration
+        /// are available. Most environments provide both TCP and Named Pipes connection strings.
+        /// Managed Instance requires only TCP because it does not support Named Pipes.
+        /// </summary>
         public static bool AreConnStringsSetup()
         {
-            return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
+            return !string.IsNullOrEmpty(TCPConnectionString) &&
+                (IsManagedInstance || !string.IsNullOrEmpty(NPConnectionString));
         }
 
         public static bool IsSQL2022() => string.Equals("16", SQLServerVersion.Trim());

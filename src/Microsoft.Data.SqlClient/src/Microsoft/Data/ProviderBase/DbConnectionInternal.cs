@@ -12,6 +12,7 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 
 #if NETFRAMEWORK
@@ -75,8 +76,20 @@ namespace Microsoft.Data.ProviderBase
         {
         }
 
+        // Constructor for internal connections that report to a specific metrics sink, reusing
+        // the same defaults as the parameterless constructor above.
+        protected DbConnectionInternal(ISqlClientMetrics metrics) : this(ConnectionState.Open, true, false, metrics)
+        {
+        }
+
         // Constructor for internal connections
         internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString)
+            : this(state, hidePassword, allowSetConnectionString, metrics: null)
+        {
+        }
+
+        // Constructor for internal connections
+        internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString, ISqlClientMetrics metrics)
         {
             AllowSetConnectionString = allowSetConnectionString;
             ShouldHidePassword = hidePassword;
@@ -87,6 +100,7 @@ namespace Microsoft.Data.ProviderBase
             // Without this initialization, ReturnedTime would default to DateTime.MinValue, which would cause
             // IsLiveConnection to immediately evict every new connection whenever IdleTimeout is configured.
             ReturnedTime = CreateTime;
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
         }
 
         #region Properties
@@ -98,7 +112,7 @@ namespace Microsoft.Data.ProviderBase
 
         /// <summary>
         /// UTC timestamp of when this connection was last returned to the pool.
-        /// Stamped by <see cref="SetReturnedTime"/>. Initialized to <see cref="CreateTime"/> in the constructor
+        /// Stamped by <see cref="SetReturnedTime()"/>. Initialized to <see cref="CreateTime"/> in the constructor
         /// so a freshly built connection is treated as "just used" until its first return.
         /// Internal setter exists to support deterministic unit tests without reflection.
         /// The pool reads this value to decide whether the connection has sat idle longer than the configured idle timeout.
@@ -179,7 +193,19 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         internal IDbConnectionPool Pool { get; private set; }
 
+        /// <summary>
+        /// The metrics sink this connection reports its activation state to. Supplied by the
+        /// <see cref="SqlConnectionFactory"/> that created this connection, from its own injected
+        /// instance, rather than derived from <see cref="Pool"/>: the metrics sink is not
+        /// inherently tied to a pool, and a connection is not necessarily pooled at all. Defaults
+        /// to the process-wide instance when no metrics sink is supplied to the constructor (e.g.
+        /// a test double constructed directly), so it still reports somewhere.
+        /// </summary>
+        internal ISqlClientMetrics Metrics { get; }
+
         public abstract string ServerVersion { get; }
+
+        public virtual ConnectionCapabilities Capabilities => null;
 
         // this should be abstract but until it is added to all the providers virtual will have to do RickFe
         public virtual string ServerVersionNormalized
@@ -364,9 +390,13 @@ namespace Microsoft.Data.ProviderBase
             // the Activate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {0}, Activating", ObjectID);
 
-            Activate(transaction);
+            // Counted before Activate, mirroring DeactivateConnection, which counts before
+            // Deactivate. If Activate throws, the pool returns the connection and deactivates it,
+            // so counting afterwards would leave that exit unpaired and drive the
+            // active-connections gauge negative.
+            Metrics.EnterActiveConnection();
 
-            SqlClientDiagnostics.Metrics.EnterActiveConnection();
+            Activate(transaction);
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -479,7 +509,7 @@ namespace Microsoft.Data.ProviderBase
                             // and transactions may not get cleaned up...
                             Deactivate();
 
-                            SqlClientDiagnostics.Metrics.HardDisconnectRequest();
+                            Metrics.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear the owning object
                             // before we call dispose so that we can't get here a second time...
@@ -494,7 +524,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
+                                Metrics.ExitNonPooledConnection();
                                 Dispose();
                             }
                         }
@@ -520,7 +550,7 @@ namespace Microsoft.Data.ProviderBase
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 
-            SqlClientDiagnostics.Metrics.ExitActiveConnection();
+            Metrics.ExitActiveConnection();
 
             if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {
@@ -580,7 +610,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks
                 // in.
-                SqlClientDiagnostics.Metrics.ExitNonPooledConnection();
+                Metrics.ExitNonPooledConnection();
 
                 Dispose();
             }
@@ -743,7 +773,18 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         internal void SetReturnedTime()
         {
-            ReturnedTime = DateTime.UtcNow;
+            SetReturnedTime(DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Stamps <see cref="ReturnedTime"/> with the supplied UTC time. Lets the pool source the
+        /// timestamp from its configured <see cref="System.TimeProvider"/> so the return stamp and the
+        /// idle-timeout expiry check read the same clock, which tests use to drive idle expiry
+        /// deterministically. Callers must pass a UTC value.
+        /// </summary>
+        internal void SetReturnedTime(DateTime utcNow)
+        {
+            ReturnedTime = utcNow;
         }
 
         internal void PrePush(DbConnection expectedOwner)
@@ -799,7 +840,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
-            SqlClientDiagnostics.Metrics.EnterStasisConnection();
+            Metrics.EnterStasisConnection();
         }
 
         /// <remarks>
@@ -985,7 +1026,7 @@ namespace Microsoft.Data.ProviderBase
                 : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
-            SqlClientDiagnostics.Metrics.ExitStasisConnection();
+            Metrics.ExitStasisConnection();
 
             IsTxRootWaitingForTxEnd = false;
         }

@@ -1,0 +1,259 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# SqlClient PR Performance Test pipeline.
+#
+# Sibling of sqlclient-perf-pipeline.yml: it runs the SAME benchmarks, on the SAME Perf Test Lab
+# extends template (v1/Perf.Test.Job.yml@PerfTemplates), with the SAME configuration options.  The
+# only differences are what it compares against and what it does with the results:
+#
+#   * Baseline    - the branch the run is queued on ("current") is compared against the SOURCE of
+#                   another ref of this repository (by default 'main'), NOT a released NuGet package.
+#                   Both sides are therefore built from source, which is what a PR author wants to
+#                   know: "does my change regress the branch I am merging into?"
+#   * No Kusto    - results are never ingested into the perf database (a PR run measures an unmerged
+#                   branch, so its numbers must not pollute the historical trend).  The comparison
+#                   and the raw BenchmarkDotNet artifacts are still published as pipeline artifacts.
+#
+# Everything else - platform/VM provisioning, benchmark run model, noise controls, regression gate -
+# is identical to the nightly/manual perf pipeline; see eng/pipelines/perf/README.md.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# Manual/queue-time only.  A full perf run occupies a dedicated host for hours, so it is opted into
+# per PR rather than triggered automatically on every push or pull request.
+pr: none
+trigger: none
+
+parameters:
+
+  # Target OS for the perf VM and the benchmark client.
+  - name: platform
+    displayName: Platform
+    type: string
+    default: linux
+    values:
+      - linux
+      - windows
+
+  # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
+  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  - name: dotnetFramework
+    displayName: .NET Framework (TFM)
+    type: string
+    default: net9.0
+    values:
+      - net8.0
+      - net9.0
+      - net10.0
+
+  # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
+  # Slightly higher than the nightly pipeline's default because the baseline side is BUILT FROM
+  # SOURCE here (two full driver builds) instead of restored as a package.
+  - name: testTimeoutMinutes
+    displayName: Test Timeout (minutes)
+    type: number
+    default: 210
+
+  # The git ref of THIS repository whose source is used as the baseline.  Defaults to the branch a
+  # PR normally targets; override at queue time to compare against a release branch instead.  Set to
+  # an empty string to skip the baseline pass and run current-only.
+  - name: baselineSourceRef
+    displayName: Baseline Source Ref (branch)
+    type: string
+    default: main
+
+  # Remote used to obtain the baseline ref when it cannot be fetched from the VM copy of the
+  # checkout's own 'origin' (e.g. the source tree reached the VM without its .git directory, or
+  # origin requires credentials the VM does not have).
+  - name: baselineRepoUrl
+    displayName: Baseline Repository URL (fallback)
+    type: string
+    default: https://github.com/dotnet/SqlClient.git
+
+  # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
+  - name: regressionThreshold
+    displayName: Regression Threshold (%)
+    type: number
+    default: 10
+
+  # When true, a candidate-slower-than-baseline regression FAILS the run (wiki 339 §3 gate).
+  # Default false: the run still reports deltas but does not block, until the gate is trusted
+  # (best paired with the best-of-N confirmation described in eng/pipelines/perf/README.md).
+  - name: failOnRegression
+    displayName: Fail run on regression
+    type: boolean
+    default: false
+
+  # Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+  #   interleaved -> run one benchmark unit at a time, baseline and candidate back-to-back, and
+  #                  confirm any flagged regression across N passes (best-of-N).  Noise-resistant
+  #                  default; required before trusting the failOnRegression gate.
+  #   sequential  -> legacy: run the whole baseline suite, then the whole candidate suite, compare.
+  - name: benchmarkRunMode
+    displayName: Benchmark run mode
+    type: string
+    default: interleaved
+    values:
+      - interleaved
+      - sequential
+
+  # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed
+  # (1 disables confirmation).  Only used when benchmarkRunMode = interleaved.
+  - name: confirmationRuns
+    displayName: Confirmation runs (best-of-N)
+    type: number
+    default: 3
+
+  # Optional SqlClient behaviour flags. These are applied to the benchmark runner config used by
+  # BOTH the baseline and candidate passes on the VM.  Defaults match the checked-in
+  # runnerconfig.jsonc, so leaving them untouched preserves the default behaviour.
+  - name: useManagedSniOnWindows
+    displayName: UseManagedSniOnWindows
+    type: boolean
+    default: false
+
+  - name: useOptimizedAsyncBehaviour
+    displayName: UseOptimizedAsyncBehaviour
+    type: boolean
+    default: true
+
+  - name: useConnectionPoolV2
+    displayName: UseConnectionPoolV2
+    type: boolean
+    default: false
+
+# Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
+# library variables: they are invariant for the SqlClient perf pipelines.
+#   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
+#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
+#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
+#                                               must match the ADO repository name.
+#
+# NOTE: unlike sqlclient-perf-pipeline.yml, this pipeline does NOT reference the 'ADX Cluster
+# Variables' group and has no translate/ingest steps: PR results are never written to Kusto.
+variables:
+
+  # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
+  # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
+  # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
+  # keeps the single testScriptArgs below readable instead of duplicating a full arg string across
+  # the whole platform x baseline x fail-gate matrix.  Config flags are always passed (their
+  # defaults match runnerconfig.jsonc), so they live in the common chunk.
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsCommon
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
+  - ${{ else }}:
+    - name: PerfArgsCommon
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
+
+  # Source-baseline flags, omitted entirely when no baseline is requested: on bash an empty value
+  # would let arg parsing consume the following flag as the baseline ref and corrupt every
+  # subsequent argument, so both platforms omit them symmetrically.
+  - ${{ if and(eq(parameters.platform, 'windows'), ne(parameters.baselineSourceRef, '')) }}:
+    - name: PerfArgsBaseline
+      value: '-BaselineSourceRef ${{ parameters.baselineSourceRef }} -BaselineRepoUrl ${{ parameters.baselineRepoUrl }}'
+  - ${{ elseif ne(parameters.baselineSourceRef, '') }}:
+    - name: PerfArgsBaseline
+      value: '--baseline-source-ref ${{ parameters.baselineSourceRef }} --baseline-repo-url ${{ parameters.baselineRepoUrl }}'
+  - ${{ else }}:
+    - name: PerfArgsBaseline
+      value: ''
+
+  # Regression gate, only when failOnRegression is requested.
+  - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failOnRegression, true)) }}:
+    - name: PerfArgsFail
+      value: '-FailOnRegression'
+  - ${{ elseif eq(parameters.failOnRegression, true) }}:
+    - name: PerfArgsFail
+      value: '--fail-on-regression'
+  - ${{ else }}:
+    - name: PerfArgsFail
+      value: ''
+
+# Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
+# have been onboarded with the Agent Pools and Service Connections required to consume it.
+resources:
+  repositories:
+    - repository: PerfTemplates
+      type: git
+      name: InternalDriverTools/PerfTest
+      ref: refs/heads/main
+
+# Consume the Perf Test Lab template.  The template defines the whole job/stage structure; we only
+# pass parameters into it.
+extends:
+  template: v1/Perf.Test.Job.yml@PerfTemplates
+  parameters:
+    platform: ${{ parameters.platform }}
+
+    # The entire driver source tree is copied to the VM so the benchmarks (which reference
+    # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
+    # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
+    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+
+    # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
+    # uses PowerShell, per the template's .sh/.ps1 convention.  Same scripts as the nightly perf
+    # pipeline: the source baseline is just a different baseline selector.
+    ${{ if eq(parameters.platform, 'windows') }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.ps1
+    ${{ else }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.sh
+
+    # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
+    # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).  The
+    # per-platform / baseline / fail-gate argument chunks are pre-computed in the 'variables' block
+    # above (PerfArgsCommon / PerfArgsBaseline / PerfArgsFail); assemble them here.  Empty chunks
+    # collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail)'
+
+    # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
+    # copies this VM folder back to the agent, but always lands it at a fixed location:
+    # $(Build.ArtifactStagingDirectory)/results (and publishes it as the 'perf-results' artifact).
+    testResultsSubDir: perf-results
+
+    testTimeoutMinutes: ${{ parameters.testTimeoutMinutes }}
+    jobName: SqlClientPerfPR
+
+    # Post-test steps run on the agent after results have been copied back.  The template already
+    # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
+    # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.  There is no
+    # Kusto translation/ingestion here by design.
+    steps:
+      # Tag the build with the baseline that was actually measured.  The label is produced on the VM
+      # by the run script (as '<ref>@<sha>') and copied back with the results, because the resolved
+      # commit is not knowable at compile time - the pipeline only has the ref name, which would tag
+      # every run identically.
+      # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL path and a
+      # colon trips ADO's "potentially dangerous Request.Path" filter.
+      - ${{ if ne(parameters.baselineSourceRef, '') }}:
+        - bash: |
+            set -euo pipefail
+            labelFile="$RESULTS_DIR/baseline-label.txt"
+            if [ -f "$labelFile" ]; then
+                label="$(tr -d '\r\n' < "$labelFile")"
+            else
+                # The run script never got as far as resolving the baseline (e.g. the build failed
+                # before the baseline pass); fall back to the requested ref so the run is still
+                # identifiable.
+                echo "##vso[task.logissue type=warning]No baseline-label.txt in results; tagging with the requested ref only."
+                label="${BASELINE_REF}"
+            fi
+            echo "##vso[build.addbuildtag]Baseline ${label}"
+          displayName: 'Tag build with baseline commit'
+          condition: succeededOrFailed()
+          env:
+            RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
+            BASELINE_REF: ${{ parameters.baselineSourceRef }}
+
+      - task: Bash@3
+        displayName: 'Show performance results'
+        condition: succeededOrFailed()
+        inputs:
+          targetType: filePath
+          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+        env:
+          RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results

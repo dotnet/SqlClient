@@ -47,10 +47,14 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteXmlReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             return BeginExecuteXmlReaderInternal(
                 CommandBehavior.SequentialAccess,
@@ -72,10 +76,14 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent(
                     "SqlCommand.EndExecuteXmlReader | API | Correlation | " +
-                    $"Object Id {ObjectID}, " +
-                    $"Activity Id {ActivityCorrelator.Current}, " +
-                    $"Client Connection Id {_activeConnection.ClientConnectionId}, " +
-                    $"Command Text '{CommandText}'");
+                    "Object Id {0}, " +
+                    "Activity Id {1}, " +
+                    "Client Connection Id {2}, " +
+                    "Command Text '{3}'",
+                    ObjectID,
+                    ActivityCorrelator.Current,
+                    _activeConnection.ClientConnectionId,
+                    CommandText);
             }
         }
 
@@ -95,10 +103,14 @@ namespace Microsoft.Data.SqlClient
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteXmlReader | API | Object Id {ObjectID}");
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.ExecuteXmlReader | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             SqlStatistics statistics = null;
             bool success = false;
@@ -186,10 +198,14 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             return BeginExecuteXmlReaderInternal(
                 CommandBehavior.SequentialAccess,
@@ -334,7 +350,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.ReadSni(completion);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
-            catch (Exception e)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
@@ -378,10 +394,14 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException is not null)
@@ -444,10 +464,14 @@ namespace Microsoft.Data.SqlClient
 
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | " +
-                $"Object Id {ObjectID}, " +
-                $"Activity Id {ActivityCorrelator.Current}, " +
-                $"Client Connection Id {_activeConnection?.ClientConnectionId}, " +
-                $"Command Text '{CommandText}'");
+                "Object Id {0}, " +
+                "Activity Id {1}, " +
+                "Client Connection Id {2}, " +
+                "Command Text '{3}'",
+                ObjectID,
+                ActivityCorrelator.Current,
+                _activeConnection?.ClientConnectionId,
+                CommandText);
 
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
