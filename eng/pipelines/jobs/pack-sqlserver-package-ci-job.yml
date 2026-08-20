@@ -49,7 +49,7 @@ parameters:
     - detailed
     - diagnostic
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable should be defined in AzureDevOps Library variable groups,
@@ -59,7 +59,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-UB24-SQL25
+    default: ADO-UB24
 
 jobs:
 
@@ -71,13 +71,8 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
 
-      # Images provided by Azure Pipelines must be selected using 'vmImage'.
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
-      # Images provided by 1ES must be selected using a demand.
-      ${{ else }}:
-        demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 
@@ -122,7 +117,10 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }}
+          # BuildNumber supplies the revision component of FileVersion
+          # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+          # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
+          buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};BuildNumber=$(Build.BuildNumber)
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Pipeline Artifact

@@ -19,7 +19,7 @@ parameters:
   - name: upload
     type: boolean
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable should be defined in AzureDevOps Library variable groups,
@@ -29,7 +29,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-UB24-SQL25
+    default: ADO-UB24
 
 jobs:
   - job: publish_code_coverage
@@ -38,13 +38,8 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
 
-      # Images provided by Azure Pipelines must be selected using 'vmImage'.
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
-      # Images provided by 1ES must be selected using a demand.
-      ${{ else }}:
-        demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
       # Use a temp directory that is cleaned up after each job runs.  This helps

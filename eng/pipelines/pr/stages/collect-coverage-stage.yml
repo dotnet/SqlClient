@@ -16,7 +16,7 @@ parameters:
   - name: coverageArtifactBaseName
     type: string
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable is provided by the 'sqlclient-testconfig-v1' variable group.
@@ -25,7 +25,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-UB24-SQL25
+    default: ADO-UB24
 
 stages:
   - stage: collect_code_coverage
@@ -39,13 +39,8 @@ stages:
         pool:
           name: ${{ parameters.poolName }}
 
-          # Images provided by Azure Pipelines must be selected using 'vmImage'.
-          ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-            vmImage: ${{ parameters.vmImage }}
-          # Images provided by 1ES must be selected using a demand.
-          ${{ else }}:
-            demands:
-              - imageOverride -equals ${{ parameters.vmImage }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         variables:
 

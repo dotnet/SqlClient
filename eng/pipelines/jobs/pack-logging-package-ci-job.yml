@@ -17,12 +17,9 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The assembly file version to stamp into the Logging DLLs.
-  - name: loggingAssemblyFileVersion
-    type: string
-
-  # The version to apply to the Logging NuGet package and its assemblies.
-  - name: loggingPackageVersion
+  # The version to apply to the Logging NuGet package and its assemblies.  Every package in the
+  # SqlClient family shares this version.
+  - name: packageVersion
     type: string
 
   # The type of build to test (Release or Debug)
@@ -53,7 +50,7 @@ parameters:
     - detailed
     - diagnostic
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable should be defined in AzureDevOps Library variable groups,
@@ -63,7 +60,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-UB24-SQL25
+    default: ADO-UB24
 
 jobs:
 
@@ -75,13 +72,8 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
 
-      # Images provided by Azure Pipelines must be selected using 'vmImage'.
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
-      # Images provided by 1ES must be selected using a demand.
-      ${{ else }}:
-        demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 
@@ -126,7 +118,11 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+          # BuildNumber supplies the revision component of FileVersion
+          # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+          # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
+          # inconsistent with the MDS/AKV packages that pass it.
+          buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

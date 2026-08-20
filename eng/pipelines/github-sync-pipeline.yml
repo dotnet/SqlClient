@@ -69,7 +69,7 @@ jobs:
       ${{ else }}:
         name: ADO-CI-1ES-Pool
       demands:
-        - imageOverride -equals ADO-UB24-SQL25
+        - imageOverride -equals ADO-UB24
 
     steps:
       # Check out the ADO repo with full history so we can compare branches.

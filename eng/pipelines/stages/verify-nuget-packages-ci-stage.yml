@@ -38,7 +38,7 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable should be defined in AzureDevOps Library variable groups,
@@ -48,7 +48,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-MMS25-SQL25
+    default: ADO-Win25
 
 stages:
 
@@ -69,13 +69,8 @@ stages:
         pool:
           name: ${{ parameters.poolName }}
 
-          # Images provided by Azure Pipelines must be selected using 'vmImage'.
-          ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-            vmImage: ${{ parameters.vmImage }}
-          # Images provided by 1ES must be selected using a demand.
-          ${{ else }}:
-            demands:
-              - imageOverride -equals ${{ parameters.vmImage }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         variables:
           # The directory where all package artifacts will be downloaded.

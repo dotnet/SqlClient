@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
-#   Version:  <abstractionsPackageVersion> (from parameter)
+#   Version:  <packageVersion> (from parameter)
 #
 # The following NuGet packages are published:
 #
@@ -30,14 +30,6 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
-  # The assembly file version to stamp into the DLLs.
-  - name: abstractionsAssemblyFileVersion
-    type: string
-
-  # The version to apply to the NuGet package and DLLs.
-  - name: abstractionsPackageVersion
-    type: string
-
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -51,8 +43,8 @@ parameters:
     #
     # Any pool specified here must contain images with the following names:
     #
-    #   - ADO-MMS25-SQL25
-    #   - ADO-UB24-SQL25
+    #   - ADO-Win25
+    #   - ADO-UB24
     #
     default: $(ci_var_defaultPoolName)
 
@@ -96,13 +88,6 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -120,8 +105,13 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: packageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
 
     jobs:
 
@@ -138,7 +128,7 @@ stages:
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
-          vmImage: ADO-UB24-SQL25
+          vmImage: ADO-UB24
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -153,7 +143,7 @@ stages:
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.adoPoolName }}
-          vmImage: ADO-MMS25-SQL25
+          vmImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -176,8 +166,8 @@ stages:
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsAssemblyFileVersion: ${{ parameters.abstractionsAssemblyFileVersion }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          # The version is computed by this stage (see the packageVersion variable above).
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dependsOn:
@@ -188,5 +178,4 @@ stages:
             - test_abstractions_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

@@ -15,6 +15,7 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -306,7 +307,9 @@ namespace Microsoft.Data.SqlClient.Connection
             string accessToken = null,
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            SspiContextProvider sspiContextProvider = null)
+            SspiContextProvider sspiContextProvider = null,
+            ISqlClientMetrics metrics = null)
+            : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 

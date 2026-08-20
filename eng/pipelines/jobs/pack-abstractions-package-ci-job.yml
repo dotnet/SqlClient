@@ -17,12 +17,9 @@ parameters:
     type: string
     default: Abstractions.Artifact
 
-  # The assembly file version to stamp into the Abstractions DLLs.
-  - name: abstractionsAssemblyFileVersion
-    type: string
-
-  # The version to apply to the Abstractions NuGet package and its assemblies.
-  - name: abstractionsPackageVersion
+  # The version to apply to the Abstractions NuGet package and its assemblies.  Every package in the
+  # SqlClient family shares this version.
+  - name: packageVersion
     type: string
 
   # The type of build to test (Release or Debug)
@@ -60,13 +57,6 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
@@ -77,7 +67,7 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
-  # The name of the pool to run in.
+  # The name of the 1ES pool to run in.
   - name: poolName
     type: string
     # This variable should be defined in AzureDevOps Library variable groups,
@@ -87,7 +77,7 @@ parameters:
   # The name of the VM image to run on, within the pool.
   - name: vmImage
     type: string
-    default: ADO-UB24-SQL25
+    default: ADO-UB24
 
 jobs:
 
@@ -99,13 +89,8 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
 
-      # Images provided by Azure Pipelines must be selected using 'vmImage'.
-      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
-      # Images provided by 1ES must be selected using a demand.
-      ${{ else }}:
-        demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 
@@ -173,7 +158,9 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }};ReferenceType=Package;LoggingPackageVersion=${{ parameters.loggingPackageVersion }}
+            # BuildNumber supplies the revision component of FileVersion; without
+            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber)
 
       - ${{ else }}:
         - task: DotNetCoreCLI@2
@@ -184,7 +171,11 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }};AbstractionsAssemblyFileVersion=${{ parameters.abstractionsAssemblyFileVersion }}
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
+            # inconsistent with the MDS/AKV packages that pass it.
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

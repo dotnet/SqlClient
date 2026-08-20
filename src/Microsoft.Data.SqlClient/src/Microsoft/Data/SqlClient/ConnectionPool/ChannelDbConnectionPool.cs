@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -163,16 +164,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
-            TimeProvider? timeProvider = null)
+            TimeProvider? timeProvider = null,
+            ISqlClientMetrics? metrics = null)
         {
             ConnectionFactory = connectionFactory;
+            // metrics is injected only by tests, so a pool's counters can be asserted without
+            // interference from unrelated connection activity elsewhere in the process.
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
             PoolGroup = connectionPoolGroup;
             PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             ProviderInfo = connectionPoolProviderInfo;
             Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
-            TransactedConnectionPool = new(this);
+            TransactedConnectionPool = new(this, Metrics);
             _connectionCreationRateLimiter = connectionCreationRateLimiter;
             // timeProvider is injected only by tests so idle-timeout expiry and the blocking-period
             // exit timer can be driven deterministically; in production it is null and falls back to
@@ -180,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _timeProvider = timeProvider ?? TimeProvider.System;
 
             _connectionSlots = new(MaxPoolSize);
-            _idleChannel = new();
+            _idleChannel = new(Metrics);
             if (PoolGroup.IsBlockingPeriodEnabled())
             {
                 _errorState = new BlockingPeriodErrorState(_instanceId, timeProvider: _timeProvider);
@@ -197,6 +202,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             State = Running;
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.ChannelDbConnectionPool | INFO | {0}, Constructed. MinPoolSize={1}, MaxPoolSize={2}",
+                Id,
+                MinPoolSize,
+                MaxPoolSize);
         }
 
         #region Properties
@@ -209,7 +220,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public SqlConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
-        public int Count => _connectionSlots.ReservationCount;
+        public ISqlClientMetrics Metrics { get; }
+
+        /// <inheritdoc />
+        /// <remarks>
+        /// Reports connections that actually belong to the pool, not
+        /// <see cref="ConnectionPoolSlots.ReservationCount"/>, which also counts reservations held
+        /// for connections that are still being opened. The distinction matters to the SQL Express
+        /// user instance path in <see cref="SqlConnectionFactory.CreateConnection"/>: it treats
+        /// <c>Count &lt;= 0</c> as "nothing in the pool yet", opens a probe connection, and caches the
+        /// resolved instance name on the pool's provider info. Counting an in-flight open here sends
+        /// the first caller down the cached branch instead, where it reads an instance name that
+        /// nothing has set yet.
+        ///
+        /// Internal sizing decisions (the max-pool-size gate, warmup, and pruning) all use
+        /// <see cref="ConnectionPoolSlots.ReservationCount"/> instead, so that connections another
+        /// thread is currently opening count toward the pool's size.
+        /// </remarks>
+        public int Count => _connectionSlots.ConnectionCount;
 
         /// <inheritdoc />
         public int IdleCount => _idleChannel.Count;
@@ -278,7 +306,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Clear()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Clearing.", Id);
+                "ChannelDbConnectionPool.Clear | INFO | {0}, Clearing.", Id);
 
             // Clearing the pool implies the caller wants a clean slate, so abandon any cached
             // error state. FR-011.
@@ -292,7 +320,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (Interlocked.CompareExchange(ref _isClearing, 1, 0) == 1)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Skip drain, already clearing.", Id);
+                    "ChannelDbConnectionPool.Clear | INFO | {0}, Skip drain, already clearing.", Id);
                 return;
             }
 
@@ -319,7 +347,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.Clear|RES|CPOOL> {0}, Cleared.", Id);
+                "ChannelDbConnectionPool.Clear | INFO | {0}, Cleared.", Id);
         }
 
         /// <inheritdoc />
@@ -339,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (State is Running && connection.CanBePooled)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended; returning connection to pool.",
+                    "ChannelDbConnectionPool.PutObjectFromTransactedPool | INFO | {0}, Connection {1}, Transaction has ended; returning connection to pool.",
                     Id,
                     connection.ObjectID);
 
@@ -360,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             else
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended; destroying unpoolable connection.",
+                    "ChannelDbConnectionPool.PutObjectFromTransactedPool | INFO | {0}, Connection {1}, Transaction has ended; destroying unpoolable connection.",
                     Id,
                     connection.ObjectID);
 
@@ -377,7 +405,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
+                "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, replacing connection.", Id);
 
             // First, prefer to get an idle connection from the pool. 
             // If one is available, we can avoid the cost of creating a new connection.
@@ -474,6 +502,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
 
                     newConnection.Dispose();
+
+                    // The physical connection was opened (and counted by HardConnectRequest in the
+                    // factory) before activation failed, so balance the counter here. The
+                    // connection never occupied a slot, so the pooled gauge is untouched.
+                    Metrics.HardDisconnectRequest();
                     throw;
                 }
 
@@ -483,12 +516,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Only retire the old connection after the replacement is fully activated and we know we won't fail.
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
+
+                // The replacement took over the old connection's slot, so the pooled gauge is
+                // already correct. The old connection was vended to the caller and is now destroyed
+                // rather than returned, so balance both the soft gauge (it was counted as a
+                // checkout) and the hard gauge (its physical connection is going away). Traced as a
+                // destroy so the connection's exit is visible in the pooler trace stream.
+                Metrics.SoftDisconnectRequest();
+                Metrics.HardDisconnectRequest();
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, Connection {1}, Disposed.",
+                    Id,
+                    oldConnection.ObjectID);
             }
 
-            SqlClientDiagnostics.Metrics.SoftConnectRequest();
+            Metrics.SoftConnectRequest();
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, connection replaced successfully.", Id);
+                "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, connection replaced successfully.", Id);
 
             return newConnection;
         }
@@ -496,10 +542,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
+            Metrics.SoftDisconnectRequest();
+
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.",
+                "ChannelDbConnectionPool.ReturnInternalConnection | INFO | {0}, Connection {1}, Deactivating.",
                 Id,
                 connection.ObjectID);
 
@@ -579,7 +627,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 case ReturnDisposition.HeldByTransaction:
                     // Nothing further to do. The connection is parked in the transacted store or
                     // in stasis, and comes back through PutObjectFromTransactedPool once its
-                    // transaction ends.
+                    // transaction ends. Neither path returns it to the idle channel, so without
+                    // this trace the connection simply disappears from the pool's trace stream
+                    // after deactivation.
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.ReturnInternalConnection | INFO | {0}, Connection {1}, Held by a transaction; not returned to the general pool.",
+                        Id,
+                        connection.ObjectID);
                     break;
             }
         }
@@ -645,6 +699,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.PutConnectionInIdleChannel | INFO | {0}, Connection {1}, Writing to idle channel.",
+                Id,
+                connection.ObjectID);
+
             if (!_idleChannel.TryWrite(connection))
             {
                 // The channel has been completed (pool is shutting down). Race window
@@ -663,7 +722,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
+                "ChannelDbConnectionPool.Shutdown | INFO | {0}", Id);
 
             // Transition to ShuttingDown. After this point, ReturnInternalConnection
             // routes returning connections to RemoveConnection.
@@ -686,7 +745,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, _warmupCts.Cancel threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, _warmupCts.Cancel threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Each cleanup step is independent and best-effort. A failure in one step must not
@@ -703,7 +762,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
@@ -716,7 +775,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, _errorState.Dispose threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, _errorState.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Complete the channel writer so:
@@ -737,7 +796,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, Clear threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, Clear threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Clear() may short-circuit if another caller is already draining. Because the
@@ -759,7 +818,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 catch (Exception ex)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
-                        "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, RemoveConnection threw during drain, continuing: {1}", Id, ex);
+                        "ChannelDbConnectionPool.Shutdown | INFO | {0}, RemoveConnection threw during drain, continuing: {1}", Id, ex);
                 }
             }
 
@@ -777,7 +836,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             catch (Exception ex)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.Shutdown|RES|CPOOL> {0}, _warmupCts.Dispose threw, continuing shutdown: {1}", Id, ex);
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, _warmupCts.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
         }
 
@@ -794,7 +853,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // via UpdateTimer() calls from OpenNewInternalConnection and RemoveConnection as the
             // pool grows/shrinks.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.Startup|RES|INFO|CPOOL> {0}", Id);
+                "ChannelDbConnectionPool.Startup | INFO | {0}", Id);
 
             // Kick off background warmup so the pool pre-creates connections up to MinPoolSize
             // without blocking the caller (Story 1). No-op when MinPoolSize == 0.
@@ -807,7 +866,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Note: the connection may still be associated with the transaction due to the explicit
             // unbinding requirement.
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed",
+                "ChannelDbConnectionPool.TransactionEnded | INFO | {0}, Transaction {1}, Connection {2}, Transaction Completed",
                 Id,
                 transaction.GetHashCode(),
                 transactedObject.ObjectID);
@@ -841,7 +900,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (State is not Running)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.TryGetConnection|RES|CPOOL> {0}, State != Running.", Id);
+                    "ChannelDbConnectionPool.TryGetConnection | INFO | {0}, State != Running.", Id);
                 connection = null;
                 return true;
             }
@@ -979,7 +1038,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // pool, whose replenishment enters/clears the same error state as user requests. In
             // practice the warmup loop already stands down before reaching here (its loop condition
             // checks ErrorOccurred); this covers the narrow race where the state flips in between.
+            if (ErrorOccurred)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, Errors are set.", Id);
+            }
+
             _errorState?.ThrowIfActive();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, Creating new connection.", Id);
 
             try
             {
@@ -1017,6 +1085,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
                                 // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
                                 // path so the user can identify why the lease was denied.
+                                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                                    "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, Rate limiter saturated; deferring creation to the idle wait.",
+                                    Id);
                                 faulted = false;
                                 return null;
                             }
@@ -1086,11 +1157,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // If we fail to open a connection, we need to write a null to the idle channel to
                         // wake up any waiters
                         _idleChannel.TryWrite(null);
-                        newConnection?.Dispose();
+
+                        if (newConnection is not null)
+                        {
+                            // The connection opened, so a hard connect was counted for it. It never
+                            // reached the pool, so balance the hard-connection gauge here rather
+                            // than leaving it inflated for the lifetime of the pool.
+                            newConnection.Dispose();
+                            Metrics.HardDisconnectRequest();
+                        }
                     });
 
                 if (connection is not null)
                 {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, Connection {1}, Added to pool.",
+                        Id,
+                        connection.ObjectID);
+
+                    Metrics.EnterPooledConnection();
+
                     // A new connection was added to the pool. If we've grown past MinPoolSize,
                     // start the pruning timer so idle connections can be reclaimed.
                     Pruner?.UpdateTimer();
@@ -1100,11 +1186,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // WaitHandle pool: a connection that opens proves the server is reachable.
                     _errorState?.Clear();
                 }
+                else
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, No connection created; pool is full or creation is rate limited.",
+                        Id);
+                }
 
                 return connection;
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex) && ex is not OperationCanceledException)
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, PoolCreateRequest called CreateConnection which threw an exception: {1}",
+                    Id,
+                    ex);
+
                 // Enter the blocking period error state on creation failure if configured. Warmup
                 // goes through this same path (the warmup loop absorbs the rethrow in its own catch),
                 // mirroring the legacy WaitHandle pool, whose replenishment failures also enter the
@@ -1157,6 +1254,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 idleTimeout != TimeSpan.Zero &&
                 _timeProvider.GetUtcNow().UtcDateTime - connection.ReturnedTime > idleTimeout)
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, exceeded the connection idle timeout and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
@@ -1164,18 +1265,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // polls the socket, so it must not run on a thread we do not own.
             if (probeLiveness && !connection.IsConnectionAlive())
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, found dead and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
             // Connection has been alive longer than the load balance timeout
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, exceeded the load balance timeout and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
             // Connection was created before the last Clear, so it's stale.
             if (connection.ClearGeneration != _clearGeneration)
             {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, was created before the last Clear and removed.",
+                    Id,
+                    connection.ObjectID);
                 return false;
             }
 
@@ -1204,6 +1317,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="connection">The connection to be closed.</param>
         private void RemoveConnection(DbConnectionInternal connection)
         {
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.RemoveConnection | INFO | {0}, Connection {1}, Removing from pool.",
+                Id,
+                connection.ObjectID);
+
             // A connection with a delegated transaction cannot be disposed of until the delegated
             // transaction has actually completed; disposing it would abort the (possibly
             // distributed) transaction. Leave it alone: when the transaction completes it comes
@@ -1211,13 +1329,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connection.IsTxRootWaitingForTxEnd)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.DestroyObject|RES|CPOOL> {0}, Connection {1}, Has Delegated Transaction, waiting to Dispose.",
+                    "ChannelDbConnectionPool.RemoveConnection | INFO | {0}, Connection {1}, Has Delegated Transaction, waiting to Dispose.",
                     Id,
                     connection.ObjectID);
                 return;
             }
 
-            _connectionSlots.TryRemove(connection);
+            if (_connectionSlots.TryRemove(connection))
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.RemoveConnection | INFO | {0}, Connection {1}, Removed from pool.",
+                    Id,
+                    connection.ObjectID);
+
+                Metrics.ExitPooledConnection();
+            }
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
@@ -1225,6 +1351,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
+            Metrics.HardDisconnectRequest();
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.RemoveConnection | INFO | {0}, Connection {1}, Disposed.",
+                Id,
+                connection.ObjectID);
 
             // If this removal brought us back to MinPoolSize, disable the pruning timer.
             Pruner?.UpdateTimer();
@@ -1257,6 +1389,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     RemoveConnection(connection);
                     continue;
                 }
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.GetIdleConnection | INFO | {0}, Connection {1}, Read from idle channel.",
+                    Id,
+                    connection.ObjectID);
 
                 return connection;
             }
@@ -1291,6 +1428,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Transaction? ambientTransaction)
         {
             DbConnectionInternal? connection = null;
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Getting connection.", Id);
 
             // When automatic enlistment is disabled, the connection must never be bound to the
             // ambient transaction, so we neither consult the transacted store nor hand the
@@ -1354,10 +1494,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch (OperationCanceledException)
                 {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Wait timed out.", Id);
+
                     throw ADP.PooledOpenTimeout();
                 }
                 catch (ChannelClosedException)
                 {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Pool is shutting down; abandoning wait.", Id);
                     throw new InvalidOperationException(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
                 }
 
@@ -1369,7 +1514,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
             }
 
+            // Counted before activation: if PrepareConnection fails it returns the connection to
+            // the pool, which emits the matching soft disconnect. Counting after would leave that
+            // disconnect unpaired and drive the active-soft-connects gauge negative.
+            Metrics.SoftConnectRequest();
             PrepareConnection(owningConnection, connection, transaction);
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
+
             return connection;
         }
 
@@ -1452,12 +1605,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped from transacted pool.",
+                "ChannelDbConnectionPool.GetFromTransactedPool | INFO | {0}, Transaction {1}, Connection {2}, Popped from transacted pool.",
                 Id,
                 transaction.GetHashCode(),
                 connection.ObjectID);
 
-            SqlClientDiagnostics.Metrics.ExitFreeConnection();
+            Metrics.ExitFreeConnection();
 
             // Transacting connections are exempt from idle-timeout and clear-generation eviction
             // (closing them would abort the transaction, which may be distributed), so only
@@ -1476,7 +1629,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (!isAlive)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
-                        "<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.",
+                        "ChannelDbConnectionPool.GetFromTransactedPool | INFO | {0}, Connection {1}, found dead and removed.",
                         Id,
                         connection.ObjectID);
                     RemoveConnection(connection);
@@ -1534,8 +1687,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // up. Return before scheduling a thread-pool work item. This keeps hot-path callers
             // (e.g. RemoveConnection on every return) cheap. The check is best-effort under
             // concurrency; a below-minimum condition missed here is still observed by the running
-            // loop, which re-reads Count on every iteration.
-            if (Count >= MinPoolSize)
+            // loop, which re-reads the count on every iteration.
+            //
+            // This gates on ReservationCount rather than Count so that connections another thread
+            // is currently opening count toward the minimum. Gating on Count would make warmup
+            // create duplicates for every creation already in flight.
+            if (_connectionSlots.ReservationCount >= MinPoolSize)
             {
                 return;
             }
@@ -1552,6 +1709,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
                 WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.RequestWarmup | INFO | {0}, Scheduled warmup loop. Count={1}, MinPoolSize={2}", Id, Count, MinPoolSize);
             }
             catch (Exception ex)
             {
@@ -1567,7 +1727,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.RequestWarmup|RES|CPOOL> {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
+                    "ChannelDbConnectionPool.RequestWarmup | INFO | {0}, Failed to schedule warmup loop, absorbing: {1}", Id, ex);
             }
         }
 
@@ -1583,6 +1743,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private async Task RunWarmupLoopAsync()
         {
+            int warmedUp = 0;
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop starting. Count={1}, MinPoolSize={2}", Id, Count, MinPoolSize);
+
             try
             {
                 CancellationToken token;
@@ -1610,7 +1775,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 while (State == Running
                     && !token.IsCancellationRequested
                     && !ErrorOccurred
-                    && Count < MinPoolSize)
+                    && _connectionSlots.ReservationCount < MinPoolSize)
                 {
                     // Fresh per-attempt timeout budget based on the pool's CreationTimeout, since
                     // warmup has no owning Open() call to inherit a budget from. Matches the
@@ -1643,13 +1808,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // during the blocking window and resume creating on demand once it expires,
                         // and the next below-minimum trigger re-requests warmup (Story 3).
                         SqlClientEventSource.Log.TryPoolerTraceEvent(
-                            "<prov.DbConnectionPool.RunWarmupLoopAsync|RES|CPOOL> {0}, Warmup connection creation failed, stopping pass: {1}", Id, ex);
+                            "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup connection creation failed, stopping pass: {1}", Id, ex);
                         break;
                     }
 
                     if (connection is null)
                     {
-                        // A slot is guaranteed available here (Count < MinPoolSize <= MaxPoolSize),
+                        // A slot is guaranteed available here (ReservationCount < MinPoolSize <= MaxPoolSize),
                         // and creation failures throw rather than return null, so a null return means
                         // the shared rate limiter is currently saturated. Rather than bypassing the
                         // limiter or spinning on it (Story 2), end this warmup pass. Saturation only
@@ -1672,6 +1837,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         break;
                     }
 
+                    warmedUp++;
+
                     // OpenNewInternalConnection is synchronous and blocks the loop's thread for
                     // the duration of the physical open. Yield between creations so a multi-
                     // connection warmup returns its thread-pool worker to the scheduler between
@@ -1679,6 +1846,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // responsive to cancellation. There is no sync-over-async anywhere in this path.
                     await Task.Yield();
                 }
+
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop finished. Warmed up {1} connections. Count={2}", Id, warmedUp, Count);
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
@@ -1687,7 +1857,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // rather than absorbed into a pool that keeps running in a potentially corrupted
                 // state; the finally below still releases the single-loop guard on that path.
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.RunWarmupLoopAsync|RES|CPOOL> {0}, Warmup loop failed, absorbing: {1}", Id, ex);
+                    "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Warmup loop failed, absorbing. Warmed up {1} connections: {2}", Id, warmedUp, ex);
             }
             finally
             {
@@ -1713,6 +1883,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void PruneConnections(int count)
         {
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.PruneConnections | INFO | {0}, Pruning up to {1} idle connections. IdleCount={2}, Count={3}",
+                Id,
+                count,
+                IdleCount,
+                Count);
+
+            int pruned = 0;
+
             while (count > 0
                 && IsRunning
                 && _connectionSlots.ReservationCount > MinPoolSize
@@ -1725,7 +1904,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 RemoveConnection(connection);
                 count--;
+                pruned++;
             }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.PruneConnections | INFO | {0}, Pruned {1} idle connections.",
+                Id,
+                pruned);
         }
         #endregion
     }

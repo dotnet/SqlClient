@@ -96,7 +96,7 @@ stages:
         poolName: ADO-1ES-Pool
       ${{ else }}:
         poolName: ADO-CI-1ES-Pool
-      vmImage: ADO-UB24-SQL25
+      vmImage: ADO-UB24
 
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self

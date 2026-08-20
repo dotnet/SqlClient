@@ -114,6 +114,11 @@ parameters:
     type: boolean
     default: true
 
+  # Build suffix appended to the prerelease tag. PR pipelines pass 'pr',
+  # CI pipelines pass 'ci'. Official builds leave this empty.
+  - name: buildSuffix
+    type: string
+
   - name: dotnetVerbosity
     type: string
     default: normal
@@ -143,6 +148,12 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
+  # Compute all package versions up front. Build and test stages consume the
+  # compute_versions_ci outputs directly, so no version parameters are passed here.
+  - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
+    parameters:
+      buildSuffix: ${{ parameters.buildSuffix }}
+
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
@@ -154,7 +165,6 @@ stages:
   - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
     parameters:
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -165,8 +175,6 @@ stages:
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingAssemblyFileVersion: $(loggingAssemblyFileVersion)
-      loggingPackageVersion: $(loggingPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
@@ -179,13 +187,10 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsAssemblyFileVersion: $(abstractionsAssemblyFileVersion)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
@@ -200,16 +205,11 @@ stages:
   - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
-      akvPackageVersion: $(akvPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
       # When building SqlClient via packages, we must depend on the Abstractions, Logging,
@@ -225,10 +225,7 @@ stages:
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       azureArtifactsName: $(azureArtifactsName)
-      azureAssemblyFileVersion: $(azureAssemblyFileVersion)
-      azurePackageVersion: $(azurePackageVersion)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       # When building via packages, we must depend on the Abstractions, Logging,
@@ -241,12 +238,9 @@ stages:
           - build_sqlclient_package_stage
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       referenceType: ${{ parameters.referenceType }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
 
   # Verify that all NuGet packages comply with Microsoft metadata requirements.
   # This runs on a Windows agent after all packages have been built and
@@ -266,13 +260,9 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
-      abstractionsPackageVersion: $(abstractionsPackageVersion)
       loggingArtifactsName: $(loggingArtifactsName)
-      loggingPackageVersion: $(loggingPackageVersion)
       mdsArtifactsName: $(mdsArtifactsName)
-      mdsPackageVersion: $(mdsPackageVersion)
       sqlServerArtifactsName: $(sqlServerArtifactsName)
-      sqlServerPackageVersion: $(sqlServerPackageVersion)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
       # When testing MDS via packages, we must depend on the Abstractions,
@@ -508,11 +498,11 @@ stages:
             SQLRootPath: $(SQL25RootPath)
             instanceName: $(NamedInstance)
 
-        # Windows Server 2022 and Windows 11, x64 build platform, with Azure SQL Server.
+        # Windows Server 2025 and Windows 11, x64 build platform, with Azure SQL Server.
         windows_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Azure_Sql: ADO-MMS22-SQL19
+            Win22_Azure_Sql: ADO-Win25
             Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.primaryTargetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
@@ -593,7 +583,7 @@ stages:
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu24_Azure_Sql: ADO-UB24-SQL25
+            Ubuntu24_Azure_Sql: ADO-UB24
           TargetFrameworks: ${{parameters.primaryTargetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -646,7 +636,7 @@ stages:
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
-              Win22_Enclave_Sql19: ADO-MMS22-SQL19
+              Win22_Enclave_Sql19: ADO-Win25
             TargetFrameworks: ${{parameters.targetFrameworks }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: ${{parameters.buildPlatforms }}
@@ -679,7 +669,7 @@ stages:
               # deliberately left unchanged.  The 'Sql19' suffix remains
               # accurate: these tests target a remote Enclave-enabled SQL Server
               # 2019.  Only the agent image has moved to Ubuntu 24.
-              Ubuntu20_Enclave_Sql19: ADO-UB24-SQL25
+              Ubuntu20_Enclave_Sql19: ADO-UB24
             TargetFrameworks: ${{parameters.targetFrameworksUnix }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: [AnyCPU]
