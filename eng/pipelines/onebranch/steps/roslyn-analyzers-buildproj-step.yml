@@ -71,8 +71,8 @@
 #   | /p:GdnRoslynAnalyzersRunId=<guid>      | Gates the injected props/targets so | Not needed. We enable analyzers directly on the   |
 #   |                                        | they apply only to this build.      | leaf projects, so there is no global injection to |
 #   |                                        |                                     | gate (see the note below).                        |
-#   | ImportBefore *.props / ImportAfter     | Adds the analyzer assemblies and    | Analyzers: EnableNETAnalyzers + latest-all +      |
-#   |   *.targets under %LOCALAPPDATA%\...\  | sets ErrorLog=<per-project>.sarif.  | EnforceCodeStyleInBuild. ErrorLog: we set         |
+#   | ImportBefore *.props / ImportAfter     | Adds the analyzer assemblies and    | Analyzers: EnableNETAnalyzers + latest-all        |
+#   |   *.targets under %LOCALAPPDATA%\...\  | sets ErrorLog=<per-project>.sarif.  | (no EnforceCodeStyleInBuild). ErrorLog: we set    |
 #   |   MSBuild\Current                      |                                     | <ErrorLog>$(MSBuildProjectFullPath)....sarif</>   |
 #   |                                        |                                     | (SARIF v1 -- NO version=2; see the sanitizer      |
 #   |                                        |                                     | note in Directory.Build.props).                   |

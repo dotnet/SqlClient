@@ -47,10 +47,11 @@
     -->
     <AnalysisLevel>latest-all</AnalysisLevel>
     <!--
-      IDE code-style (IDExxxx) rules ship in the SDK; their configuration (which rules fire, at what
-      severity, and the style preferences they check) lives in our .editorconfig files.
+      IDE code-style (IDExxxx) rules ship in the SDK and are configured by our .editorconfig files.
+      They carry no SDL value and add substantial volume to the SARIF logs, so we leave them off.
+      Set this to true locally when you specifically want a code-style pass.
     -->
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <!--
       Emit one uniquely-named SARIF log per project for the RoslynAnalyzers "Copy Logs Only"
       collector.   It globs *.csproj.*.sarif, and $(MSBuildProjectFullPath) ends in .csproj, so
@@ -62,9 +63,14 @@
     -->
     <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString()).sarif</ErrorLog>
     <!--
-      The analysis pass must record every diagnostic instead of stopping at the first one, so it
-      overrides the repo-wide TreatWarningsAsErrors=true set above. Genuine compiler errors still
-      fail the build.
+      ANALYSIS PASS ONLY. This overrides the repo-wide TreatWarningsAsErrors=true set above, which
+      still governs every normal build because EnableAnalyzers defaults to false.
+
+      This must stay false. Promoting analyzer warnings to errors would stop the compile at the
+      first finding and truncate the SARIF log Guardian collects, and it would record every finding
+      at SARIF level "error", which Guardian's Error-only break threshold would then fail the build
+      on. The Guardian RoslynAnalyzers task passes /p:TreatWarningsAsErrors=false for the same
+      reason. Genuine compiler errors still fail the build.
     -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
