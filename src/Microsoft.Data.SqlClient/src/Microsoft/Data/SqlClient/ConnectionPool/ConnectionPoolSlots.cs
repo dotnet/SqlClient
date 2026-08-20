@@ -211,15 +211,40 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// entry added during the walk may or may not be seen. Intended for infrequent bookkeeping
         /// passes, not for hot paths.
         /// </summary>
-        public IEnumerator<DbConnectionInternal> GetEnumerator()
+        public Enumerator GetEnumerator() => new(_connections);
+
+        /// <summary>
+        /// Enumerates the non-null slots without allocating an iterator state machine.
+        /// </summary>
+        internal struct Enumerator
         {
-            for (int i = 0; i < _connections.Length; i++)
+            private readonly DbConnectionInternal?[] _connections;
+            private int _index;
+            private DbConnectionInternal? _current;
+
+            internal Enumerator(DbConnectionInternal?[] connections)
             {
-                DbConnectionInternal? connection = Volatile.Read(ref _connections[i]);
-                if (connection is not null)
+                _connections = connections;
+                _index = -1;
+                _current = null;
+            }
+
+            public DbConnectionInternal Current => _current!;
+
+            public bool MoveNext()
+            {
+                while (++_index < _connections.Length)
                 {
-                    yield return connection;
+                    DbConnectionInternal? connection = Volatile.Read(ref _connections[_index]);
+                    if (connection is not null)
+                    {
+                        _current = connection;
+                        return true;
+                    }
                 }
+
+                _current = null;
+                return false;
             }
         }
 
