@@ -1487,6 +1487,12 @@ namespace Microsoft.Data.Common
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
+
+        internal static Exception InvalidMixedUsageOfAccessTokenAndSspiContextProvider()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider));
+
+        internal static Exception InvalidMixedUsageOfSspiContextProviderAndAccessToken()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken));
         #endregion
 
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
