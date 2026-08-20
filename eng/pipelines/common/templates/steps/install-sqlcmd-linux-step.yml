@@ -49,7 +49,8 @@ steps:
         # The Microsoft package repository is usually already configured on these images (that is
         # where the engine came from), so try a plain install first and only register the repository
         # if that fails.
-        if ! sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev; then
+        sudo apt-get update
+        if ! sudo env ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev; then
           # shellcheck disable=SC1091
           . /etc/os-release
           echo "Registering the Microsoft package repository for Ubuntu $VERSION_ID..."
@@ -57,7 +58,7 @@ steps:
             "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb"
           sudo dpkg -i /tmp/packages-microsoft-prod.deb
           sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+          sudo env ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
         fi
 
         if ! SQLCMD_BIN="$(find_sqlcmd)"; then

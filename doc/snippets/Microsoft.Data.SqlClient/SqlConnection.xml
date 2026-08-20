@@ -263,7 +263,13 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         <para>
           This property is mutually exclusive with the
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
-          property, among others.
+          and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          properties, among others. Setting this property when
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          is already set throws
+          <see cref="T:System.InvalidOperationException" />, because SSPI is an
+          alternative to token-based authentication.
         </para>
       </remarks>
     </AccessToken>
@@ -361,7 +367,13 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         <para>
           This property is mutually exclusive with the
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" />
-          property, among others.
+          and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          properties, among others. Setting this property when
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          is already set throws
+          <see cref="T:System.InvalidOperationException" />, because SSPI is an
+          alternative to token-based authentication.
         </para>
       </remarks>
     </AccessTokenCallback>
@@ -2221,9 +2233,26 @@ The following sample tries to open a connection to an invalid database to simula
       <value>
         An <see cref="T:Microsoft.Data.SqlClient.SspiContextProvider" /> instance.
       </value>
+      <exception cref="T:System.InvalidOperationException">
+        The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+        is set while the
+        <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" /> or
+        <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+        property is already set, or the connection is open.
+      </exception>
       <remarks>
         <para>
           The SspiContextProvider is a part of the connection pool key. Care should be taken when using this property to ensure the implementation returns a stable identity per resource.
+        </para>
+        <para>
+          SSPI is an alternative to token-based authentication, so this property
+          is mutually exclusive with the
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" /> and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+          properties. Setting this property when either of those is already set
+          throws <see cref="T:System.InvalidOperationException" />, and setting
+          either of those while this property is set throws as well. Assigning
+          <see langword="null" /> clears the property and never throws.
         </para>
       </remarks>
     </SspiContextProvider>
