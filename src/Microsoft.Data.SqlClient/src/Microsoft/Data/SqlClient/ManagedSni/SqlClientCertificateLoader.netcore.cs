@@ -319,6 +319,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                 }
 
+                // A PKCS#12 bundle already carries its private key. Combining it with a detached key
+                // is a misconfiguration, and the certificate loader below would otherwise report it
+                // as an unspecified certificate-load failure.
+                if (X509Certificate2.GetCertContentType(certificateBytes) == X509ContentType.Pkcs12)
+                {
+                    throw new AuthenticationException(
+                        StringsHelper.GetString(Strings.SQL_ClientKeyWithPkcs12Certificate));
+                }
+
 #if NET9_0_OR_GREATER
                 X509Certificate2 certificate = X509CertificateLoader.LoadCertificate(certificateBytes);
 #else

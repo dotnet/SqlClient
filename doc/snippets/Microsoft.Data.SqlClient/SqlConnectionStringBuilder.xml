@@ -769,7 +769,7 @@ The certificate is read when a pooled physical connection is created and is cach
         The private key path, or <see langword="String.Empty" /> if none has been supplied.
       </value>
       <remarks>
-        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property is available on .NET only.
+        This property corresponds to the "Client Key" and "ClientKey" keys within the connection string. The key must be an unencrypted RSA PKCS#1 or an RSA PKCS#8 private key; password-protected keys must use encrypted PKCS#8. To use another key algorithm, provide a PKCS#12 (PFX or P12) file through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientCertificate" />. This property cannot be combined with a PKCS#12 certificate, which already contains its private key. This property is available on .NET only.
       </remarks>
     </ClientKey>
     <ClientKeyPassword>

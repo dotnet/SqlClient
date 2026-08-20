@@ -2914,6 +2914,15 @@ namespace System {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Client Key cannot be used with a PKCS#12 (PFX or P12) certificate because the certificate already contains its private key. Remove Client Key, or supply the certificate in PEM or DER format..
+        /// </summary>
+        internal static string SQL_ClientKeyWithPkcs12Certificate {
+            get {
+                return ResourceManager.GetString("SQL_ClientKeyWithPkcs12Certificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Client certificate authentication requires an encrypted connection, but the server did not negotiate encryption..
         /// </summary>
         internal static string SQL_ClientCertificateRequiresEncryption {

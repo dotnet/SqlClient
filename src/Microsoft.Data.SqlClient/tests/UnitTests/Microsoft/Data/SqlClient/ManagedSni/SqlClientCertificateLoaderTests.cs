@@ -357,6 +357,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// Verifies that combining a PKCS#12 certificate with a detached private key reports the
+        /// misconfiguration explicitly rather than as an unspecified certificate-load failure.
+        /// </summary>
+        [Fact]
+        public void Load_Pkcs12WithDetachedKey_ThrowsAuthenticationException()
+        {
+            Directory.CreateDirectory(_temporaryDirectory);
+            string certificatePath = Path.Combine(_temporaryDirectory, "client.pfx");
+            string keyPath = Path.Combine(_temporaryDirectory, "client.key");
+
+            using RSA key = RSA.Create(2048);
+            CertificateRequest request = new(
+                "CN=SqlClient Test",
+                key,
+                HashAlgorithmName.SHA256,
+                RSASignaturePadding.Pkcs1);
+            using X509Certificate2 source = request.CreateSelfSigned(
+                DateTimeOffset.UtcNow.AddMinutes(-5),
+                DateTimeOffset.UtcNow.AddMinutes(5));
+            File.WriteAllBytes(certificatePath, source.Export(X509ContentType.Pkcs12, Password));
+            File.WriteAllText(keyPath, key.ExportPkcs8PrivateKeyPem());
+
+            AuthenticationException exception = Assert.Throws<AuthenticationException>(
+                () => SqlClientCertificateLoader.Load(certificatePath, keyPath, Password));
+            Assert.Contains("PKCS#12", exception.Message, StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// Verifies that the ODBC driver's <c>file:</c> path syntax is rejected with a specific error.
         /// </summary>
         [Fact]
