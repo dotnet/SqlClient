@@ -137,6 +137,11 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _accessTokenInBytes;
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        internal bool IsAccessTokenProvided =>
+            _accessTokenInBytes != null || _accessTokenCallback != null;
+
+        internal bool? TnirDisabledDuringLogin { get; private set; }
+
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
         internal bool _cleanSQLDNSCaching = false;
@@ -1574,7 +1579,8 @@ namespace Microsoft.Data.SqlClient
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
 
-            bool disableTnir = ShouldDisableTnir(connectionOptions);
+            bool disableTnir = ShouldDisableTnir(connectionOptions, IsAccessTokenProvided);
+            TnirDisabledDuringLogin = disableTnir;
 
             long timeoutUnitInterval = 0;
 
@@ -1783,11 +1789,11 @@ namespace Microsoft.Data.SqlClient
             CurrentDataSource = originalServerInfo.UserServerName;
         }
 
-        private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
+        internal static bool ShouldDisableTnir(SqlConnectionString connectionOptions, bool isAccessTokenProvided)
         {
             Boolean isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
-            Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
+            Boolean isFedAuthEnabled = isAccessTokenProvided ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
