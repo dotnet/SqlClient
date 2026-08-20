@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>連線集區中找不到空白插槽。</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>無法取代此連線，因為它不再位於連線集區。</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>連線集區已關閉。</value>
   </data>

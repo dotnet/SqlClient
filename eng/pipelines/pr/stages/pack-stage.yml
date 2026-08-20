@@ -37,6 +37,11 @@ parameters:
   - name: stageName
     type: string
 
+  # Base name of the artifact to publish the build output to. The job attempt number is appended
+  # to this to prevent collision across re-runs of the job.
+  - name: packArtifactBaseName
+    type: string
+
 stages:
   - stage: ${{ parameters.stageName }}
     displayName: Build and Pack Projects
@@ -121,9 +126,15 @@ stages:
             displayName: Output Build Output Tree
             condition: succeededOrFailed()
 
-          # Upload the build output as the artifact of the job
+          # Upload the build output as the artifact of the job.
+          #
+          # The artifact name includes the job attempt number because pipeline artifact names must
+          # be unique within a build. Re-running a failed job would otherwise attempt to publish
+          # an artifact that already exists and fail with:
+          #   "Artifact build_and_pack_projects already exists for build <id>."
           - publish: $(BUILD_OUTPUT)
-            artifact: build_and_pack_projects
+            artifact: ${{ parameters.packArtifactBaseName }}_attempt$(System.JobAttempt)
+            displayName: Publish Build Output
             condition: succeededOrFailed()
 
 

@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
     /// <summary>
     /// Tests immutable connection option parsing and validation.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class SqlConnectionOptionsTest : IDisposable
     {
         // Ensure we restore the original app context switch values after each

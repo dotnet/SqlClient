@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
     // need since each test uses its own TDS Server with ephemeral listen port.
-    [Collection("SimulatedServerTests")]
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionFailoverTests
     {
         //TODO parameterize for transient errors
@@ -443,6 +443,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
             };
             using SqlConnection connection = new(builder.ConnectionString);

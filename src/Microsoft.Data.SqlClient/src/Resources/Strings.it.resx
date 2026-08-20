@@ -2157,6 +2157,9 @@
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Non è possibile trovare uno slot vuoto nel pool di connessioni.</value>
   </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Non è possibile sostituire la connessione perché non è più presente nel pool di connessioni.</value>
+  </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Il pool di connessioni è stato chiuso.</value>
   </data>

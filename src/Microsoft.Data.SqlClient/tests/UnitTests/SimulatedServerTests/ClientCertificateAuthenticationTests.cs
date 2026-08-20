@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// <summary>
 /// Verifies the TDS and TLS behavior used for SQL Server on Linux loopback client-certificate authentication.
 /// </summary>
-[Collection("SimulatedServerTests")]
+[Collection(SimulatedServerTestCollection.Name)]
 public sealed class ClientCertificateAuthenticationTests : IDisposable
 {
     private const string CertificatePassword = "<pwd>";

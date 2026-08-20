@@ -16,6 +16,7 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 
 #if NET
@@ -64,8 +65,8 @@ namespace Microsoft.Data.SqlClient
         
         #region Constructors
         
-        protected SqlConnectionFactory()
-            : this(PruningDueTime, PruningPeriod)
+        protected SqlConnectionFactory(ISqlClientMetrics metrics = null)
+            : this(PruningDueTime, PruningPeriod, metrics)
         {
         }
 
@@ -74,10 +75,21 @@ namespace Microsoft.Data.SqlClient
         /// otherwise have to wait minutes for the default schedule to produce an observable
         /// result.
         /// </summary>
-        protected SqlConnectionFactory(TimeSpan pruningDueTime, TimeSpan pruningPeriod)
+        /// <param name="pruningDueTime">Delay before the first pruning pass.</param>
+        /// <param name="pruningPeriod">Interval between subsequent pruning passes.</param>
+        /// <param name="metrics">
+        /// Metrics sink for counters recorded by the factory itself (e.g. hard connect requests).
+        /// Tests construct their own <see cref="SqlConnectionFactory"/> subclass, so they can pass
+        /// the same metrics instance used by the pool under test instead of relying on the
+        /// process-wide default. Defaults to <see cref="SqlClientDiagnostics.Metrics"/> in
+        /// production, where a single factory instance (<see cref="Instance"/>) is shared by every
+        /// pool.
+        /// </param>
+        protected SqlConnectionFactory(TimeSpan pruningDueTime, TimeSpan pruningPeriod, ISqlClientMetrics metrics = null)
         {
             _pruningDueTime = pruningDueTime;
             _pruningPeriod = pruningPeriod;
+            Metrics = metrics ?? SqlClientDiagnostics.Metrics;
             _connectionPoolGroups = new Dictionary<ConnectionPoolKey, DbConnectionPoolGroup>();
             _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
@@ -105,6 +117,11 @@ namespace Microsoft.Data.SqlClient
         internal static SqlConnectionFactory Instance { get; } = new SqlConnectionFactory(); 
         
         internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
+
+        /// <summary>
+        /// The metrics sink this factory reports its own counters (e.g. hard connect requests) to.
+        /// </summary>
+        protected ISqlClientMetrics Metrics { get; }
 
         /// <summary>
         /// Whether the pruning timer is currently armed. Test hook.
@@ -175,7 +192,7 @@ namespace Microsoft.Data.SqlClient
                 timeout);
             if (newConnection is not null)
             {
-                SqlClientDiagnostics.Metrics.HardConnectRequest();
+                Metrics.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
             }
             
@@ -208,7 +225,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
             }
 
-            SqlClientDiagnostics.Metrics.HardConnectRequest();
+            Metrics.HardConnectRequest();
             newConnection.MakePooledConnection(pool);
 
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
@@ -694,7 +711,8 @@ namespace Microsoft.Data.SqlClient
                         newSecurePassword: null,
                         redirectedUserInstance: false,
                         applyTransientFaultHandling: applyTransientFaultHandling,
-                        sspiContextProvider: key.SspiContextProvider);
+                        sspiContextProvider: key.SspiContextProvider,
+                        metrics: Metrics);
                     using (sseConnection)
                     {
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
@@ -755,7 +773,8 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback,
-                key.SspiContextProvider);
+                key.SspiContextProvider,
+                metrics: Metrics);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)

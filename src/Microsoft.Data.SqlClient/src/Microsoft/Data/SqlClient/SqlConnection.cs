@@ -1650,7 +1650,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, false, overrides) : TryOpen(null, false, overrides)))
+                    if (!(IsProviderRetriable ?
+                            TryOpenWithRetry(retry: null, forceNewConnection: false, overrides: overrides) :
+                            TryOpen(retry: null, forceNewConnection: false, overrides: overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -2286,16 +2288,22 @@ namespace Microsoft.Data.SqlClient
         /// Completes the inner open/replace operation and initializes parser state for the active inner connection.
         /// </summary>
         /// <param name="retry">Retry continuation used by async open paths.</param>
-        /// <param name="forceNewConnection">Provide true to forcibly overwrite the existing connection. Provide false if connecting for the first time.</param>
+        /// <param name="forceNewConnection">Provide <see langword="true"/> to replace the existing inner connection with a freshly established one (for example, during reconnect after a transient fault); provide <see langword="false"/> when opening for the first time.</param>
         /// <returns><see langword="true"/> when open initialization completed synchronously; otherwise <see langword="false"/>.</returns>
         /// <remarks>
         /// The inner connection is snapshotted after the open call so downstream parser access uses a single observed
         /// instance and does not rely on a second racy read of <see cref="InnerConnection"/>.
-        /// 
-        /// forceNewConnection may only be true when the connection is already open (or was open) and needs to be replaced. If the connection has never
-        /// been opened, passing true will result in an exception. It may only be false when the connection has never been opened or is
-        /// currently disconnected. If the connection is currently open, passing false will result in an exception. See SqlConnection state
-        /// transitions and subclasses for more details.
+        /// <para>
+        /// <paramref name="forceNewConnection"/> may be <see langword="true"/> when the connection is currently open, or when
+        /// it was previously opened and is now disconnected (the reconnect case handled by
+        /// <c>DbConnectionClosedPreviouslyOpened</c> and <c>DbConnectionClosedConnecting</c>). Passing <see langword="true"/>
+        /// on a connection that has never been opened will result in an exception.
+        /// </para>
+        /// <para>
+        /// <paramref name="forceNewConnection"/> may be <see langword="false"/> when the connection has never been opened or is
+        /// currently disconnected. Passing <see langword="false"/> on a connection that is already open will result in an
+        /// exception.
+        /// </para>
         /// </remarks>
         internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection)
         {

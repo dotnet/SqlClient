@@ -151,7 +151,9 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters : IDisposabl
         Debug.Assert(bytesWritten == HashSize, @"Hash size does not match the expected size.");
 
         bytesWritten = _keyType == SqlColumnEncryptionCertificateStoreProvider.MasterKeyType
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             ? _rsa.SignHash(hash, encryptedColumnEncryptionKey.AsSpan(signatureOffset), s_hashAlgorithm, RSASignaturePadding.Pkcs1)
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             : _rsa.SignData(hash, encryptedColumnEncryptionKey.AsSpan(signatureOffset), s_hashAlgorithm, RSASignaturePadding.Pkcs1);
         Debug.Assert(bytesWritten == _rsaKeySize, @"Signature length does not match the RSA key size.");
 
@@ -166,7 +168,9 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters : IDisposabl
         Debug.Assert(bytesWritten == HashSize, @"Hash size does not match the expected size.");
 
         byte[] signedHash = _keyType == SqlColumnEncryptionCertificateStoreProvider.MasterKeyType
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             ? _rsa.SignHash(hash, s_hashAlgorithm, RSASignaturePadding.Pkcs1)
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             : _rsa.SignData(hash, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
         bytesWritten = signedHash.Length;
         Debug.Assert(bytesWritten == _rsaKeySize, @"Signature length does not match the RSA key size.");
@@ -246,7 +250,9 @@ internal readonly ref struct EncryptedColumnEncryptionKeyParameters : IDisposabl
 #endif
 
         bool dataVerified = _keyType == SqlColumnEncryptionCertificateStoreProvider.MasterKeyType
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             ? _rsa.VerifyHash(hash, signature, s_hashAlgorithm, RSASignaturePadding.Pkcs1)
+            // CodeQL [SM03799] Required for an external standard: Always Encrypted signs encrypted column encryption keys with RSA PKCS#1 v1.5 (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             : _rsa.VerifyData(hash, signature, s_hashAlgorithm, RSASignaturePadding.Pkcs1);
 
         // Validate the signature
