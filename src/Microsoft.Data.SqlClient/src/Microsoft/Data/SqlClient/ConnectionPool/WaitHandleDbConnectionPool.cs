@@ -1434,7 +1434,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                    DateTime.UtcNow - obj.ReturnedTime > idleTimeout;
         }
 
-        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection? owningObject)
         {
             Debug.Assert(obj != null, "null obj?");
 
