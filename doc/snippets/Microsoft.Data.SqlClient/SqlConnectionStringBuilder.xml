@@ -1403,7 +1403,7 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
     </TransactionBinding>
     <TransparentNetworkIPResolution>
       <summary>
-        When the value of this key is set to <see langword="true" />, the application is required to retrieve all IP addresses for a particular DNS entry and attempt to connect with the first one in the list. If the connection is not established within 0.5 seconds, the application will try to connect to all others in parallel. When the first answers, the application will establish the connection with the respondent IP address.
+        On .NET Framework, when the value of this key is set to <see langword="true" />, the driver runs multiple connect rounds across the DNS-resolved IP addresses, with progressively larger per-attempt timeouts and a 500 ms minimum on the sequential-mode attempt, until a connection succeeds or the overall <c>Connect Timeout</c> is reached.
       </summary>
       <value>
         A boolean value.
@@ -1416,32 +1416,17 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
           If the <c>Failover Partner</c> key is set, <c>Transparent Network IP Resolution</c> is ignored.
         </para>
         <para>
-          The value of this key must be <c>true</c>, <c>false</c>, <c>yes</c>, or <c>no</c>.
+          On .NET Framework, if <c>TransparentNetworkIPResolution</c> isn't specified in the connection string, the driver automatically disables TNIR when the data source is an Azure SQL endpoint (<c>.database.windows.net</c>, <c>.database.cloudapi.de</c>, <c>.database.usgovcloudapi.net</c>, <c>.database.chinacloudapi.cn</c>, or <c>.database.fabric.microsoft.com</c>), when the <c>Authentication</c> key is set to any Microsoft Entra ID method (<c>Active Directory Password</c>, <c>Active Directory Integrated</c>, <c>Active Directory Interactive</c>, <c>Active Directory Service Principal</c>, <c>Active Directory Device Code Flow</c>, <c>Active Directory Managed Identity</c>, <c>Active Directory MSI</c>, <c>Active Directory Default</c>, or <c>Active Directory Workload Identity</c>), or when the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" /> or <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" /> property is set on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For these automatic conditions, an explicit <c>TransparentNetworkIPResolution</c> value bypasses the automatic behavior: <c>True</c> enables TNIR, and <c>False</c> disables TNIR unconditionally. To restore the automatic behavior, remove the keyword from the connection string.
+        </para>
+        <para>
+          On .NET (Core, .NET 5+), <c>TransparentNetworkIPResolution</c> isn't a recognized connection-string keyword. Setting it (with any value) throws <c>ArgumentException</c> when the driver parses the connection string.
+        </para>
+        <para>
+          On .NET Framework, the value of this key must be <c>true</c>, <c>false</c>, <c>yes</c>, or <c>no</c>.
         </para>
         <para>
           A value of <c>yes</c> is treated the same as a value of <c>true</c>. A value of <c>no</c> is treated the same as a value of <c>false</c>.
         </para>
-        <para>
-          This key defaults to <c>false</c> when:
-        </para>
-        <list type="bullet">
-          <item>
-            <description>
-              Connecting to Azure SQL Database where the data source ends with:
-              <list type="bullet">
-                <item><description>.database.chinacloudapi.cn</description></item>
-                <item><description>.database.usgovcloudapi.net</description></item>
-                <item><description>.database.cloudapi.de</description></item>
-                <item><description>.database.windows.net</description></item>
-                <item><description>.database.fabric.microsoft.com</description></item>
-              </list>
-            </description>
-          </item>
-          <item><description>
-            <c>Authentication</c> is 'Active Directory Password' or 'Active Directory Integrated'
-          </description></item>
-          <item><description>Otherwise it defaults to <c>true</c>.</description></item>
-        </list>
       </remarks>
     </TransparentNetworkIPResolution>
     <TrustServerCertificate>
