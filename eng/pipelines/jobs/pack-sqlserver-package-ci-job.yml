@@ -114,10 +114,6 @@ jobs:
         - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
       # Create the NuGet packages.
-      #
-      # BuildNumber supplies the revision component of FileVersion
-      # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
-      # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
       - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
@@ -127,7 +123,10 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};BuildNumber=$(Build.BuildNumber);SigningKeyPath=$(driverKeyFile.secureFilePath)
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
+            buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};BuildNumber=$(Build.BuildNumber);SigningKeyPath="$(driverKeyFile.secureFilePath)"
 
       - ${{ else }}:
         - task: DotNetCoreCLI@2
@@ -138,6 +137,9 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
             buildProperties: SqlServerPackageVersion=${{ parameters.sqlServerPackageVersion }};BuildNumber=$(Build.BuildNumber)
 
       - task: PublishPipelineArtifact@1
