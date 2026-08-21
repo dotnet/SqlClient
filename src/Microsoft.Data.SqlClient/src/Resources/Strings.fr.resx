@@ -4443,6 +4443,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>La vérification de signature du rapport d'enclave a échoué. La signature de rapport ne correspond pas à la signature calculée à l'aide du certificat racine SGH - consultez https://go.microsoft.com/fwlink/?linkid=2160553 pour plus d’informations. Vérifiez le mappage DNS pour le point de terminaison. S'il est correct, contactez le service client.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Le rapport d'enclave envoyé par SQL Server n'a pas un format correct. Contactez le service client.</value>
   </data>
