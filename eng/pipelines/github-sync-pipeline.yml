@@ -57,17 +57,14 @@ parameters:
     type: string
     default: internal/main
 
+variables:
+  - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+
 jobs:
   - job: SyncGitHub
     displayName: Sync GitHub to ADO
-    # This pipeline only ever runs in the ADO.Net project, but the pool is
-    # selected conditionally to match the convention used by the other
-    # pipelines in this repo.
     pool:
-      ${{ if eq(variables['System.TeamProject'], 'ADO.Net') }}:
-        name: ADO-1ES-Pool
-      ${{ else }}:
-        name: ADO-CI-1ES-Pool
+      name: $(ci_var_defaultPoolName)
       demands:
         - imageOverride -equals ADO-UB24
 

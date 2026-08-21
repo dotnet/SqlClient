@@ -110,11 +110,15 @@ stages:
       buildSuffix: pr
       stageName: ${{ variables.stageNamePack }}
       packArtifactBaseName: ${{ variables.packArtifactBaseName }}
+      poolName: $(PoolNameDefault)
+      vmImage: ADO-UB24
 
   # Stage 1b: Generate secrets
   - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml@self
     parameters:
       stageName: ${{ variables.stageNameSecrets }}
+      poolName: $(PoolNameDefault)
+      vmImage: ADO-UB24
 
   # Stage 2: Execute tests and collect code coverage
   - template: /eng/pipelines/pr/stages/test-stages.yml@self
@@ -144,6 +148,8 @@ stages:
   - template: /eng/pipelines/pr/stages/collect-coverage-stage.yml@self
     parameters:
       coverageArtifactBaseName: ${{ variables.coverageArtifactBaseName }}
+      poolName: $(PoolNameDefault)
+      vmImage: ADO-UB24
       dependsOn:
         - ${{ each platform in parameters.platforms }}:
             - "test_${{ platform.displayName }}"
