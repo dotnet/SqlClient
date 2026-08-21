@@ -81,7 +81,7 @@ variables:
     value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
   # Signing key argument passed to build.proj. On internal builds this references the secure file
-  # downloaded by DownloadSecureFile@1; on public builds it expands to empty.
+  # downloaded by download-assembly-signing-key.yml; on public builds it expands to empty.
   - name: signingKeyArg
     ${{ if eq(variables.isInternalBuild, true) }}:
       value: -p:SigningKeyPath="$(driverKeyFile.secureFilePath)"
@@ -125,13 +125,9 @@ jobs:
           Write-Host 'Done.'
         displayName: Clean Packages Directory
 
-      # On internal builds, download the strong-name signing key.
+      # On internal builds, download the assembly signing key.
       - ${{ if eq(variables.isInternalBuild, true) }}:
-        - task: DownloadSecureFile@1
-          displayName: Download Driver Signing Key
-          inputs:
-            secureFile: netfxKeypair.snk
-          name: driverKeyFile
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
 
       # Run the Pack target via build.proj.
       - task: DotNetCoreCLI@2
