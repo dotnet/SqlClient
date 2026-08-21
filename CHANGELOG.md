@@ -6,6 +6,90 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Preview Release 7.1.0-preview3] - 2026-08-26
+
+This update brings the following changes since the [7.1.0-preview2](release-notes/7.1/7.1.0-preview2.md) release.
+See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed descriptions.
+
+> **Important — package version alignment:** Starting with the [7.0.2](release-notes/7.0/7.0.2.md) release, the `Microsoft.Data.SqlClient` driver and its companion packages share a single aligned version. Preview 3 of the `7.1` line continues this alignment; the following packages now ship together as `7.1.0-preview3`:
+>
+> - `Microsoft.Data.SqlClient`
+> - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
+> - `Microsoft.Data.SqlClient.Extensions.Azure`
+> - `Microsoft.Data.SqlClient.Extensions.Abstractions`
+> - `Microsoft.Data.SqlClient.Internal.Logging`
+>
+> (`Microsoft.SqlServer.Server` continues to version independently and remains at `1.0.0`.)
+>
+> Applications that reference `Microsoft.Data.SqlClient.Extensions.Azure` must upgrade it to `7.1.0-preview3` when upgrading `Microsoft.Data.SqlClient` to `7.1.0-preview3`.
+>
+> **Compatibility guarantee:** All aligned assemblies ship with `FileVersion 7.1.0.x` and `AssemblyVersion 7.0.0.0`. The `AssemblyVersion` is unchanged from [7.0.2](release-notes/7.0/7.0.2.md), so upgrading from `7.0.2` to `7.1.0-preview3` does **not** require any new .NET Framework strong-name binding redirects.
+
+### Added
+
+- Added four `virtual` asynchronous counterparts to the synchronous methods on `SqlColumnEncryptionKeyStoreProvider` — `DecryptColumnEncryptionKeyAsync`, `EncryptColumnEncryptionKeyAsync`, `SignColumnMasterKeyMetadataAsync`, and `VerifyColumnMasterKeyMetadataAsync` — each accepting an optional `CancellationToken`. The default implementations delegate to the existing synchronous methods, so existing custom providers are unaffected.
+  ([#3673](https://github.com/dotnet/SqlClient/pull/3673))
+
+- Substantially expanded `ChannelDbConnectionPool` (the opt-in pool behind `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`) toward parity with the default pool: transaction support, broken-connection replacement, background warmup and replenishment to `Min Pool Size`, idle pruning driven by `Connection Idle Timeout`, optional connection-creation rate limiting, and metrics/tracing parity. Default pooling behavior is unchanged.
+  ([#4395](https://github.com/dotnet/SqlClient/pull/4395),
+   [#4396](https://github.com/dotnet/SqlClient/pull/4396),
+   [#4429](https://github.com/dotnet/SqlClient/pull/4429),
+   [#4452](https://github.com/dotnet/SqlClient/pull/4452),
+   [#4463](https://github.com/dotnet/SqlClient/pull/4463),
+   [#4487](https://github.com/dotnet/SqlClient/pull/4487),
+   [#4504](https://github.com/dotnet/SqlClient/pull/4504))
+
+### Changed
+
+- Completed the removal of OS-specific compilation from `Microsoft.Data.SqlClient`; the driver now builds a single cross-platform assembly and the `_WINDOWS`/`_UNIX` symbols have been removed. Package structure and contents are unchanged, and Windows-only native SNI types now trim cleanly on Linux and macOS.
+  ([#4207](https://github.com/dotnet/SqlClient/pull/4207),
+   [#4465](https://github.com/dotnet/SqlClient/pull/4465))
+
+- Reduced managed allocations in the async read path by restoring reuse of `PacketData` nodes via a bounded free list on `StateSnapshot`.
+  ([#4536](https://github.com/dotnet/SqlClient/pull/4536))
+
+- Converted 119 `SqlClientEventSource` trace call sites back to parameterized format strings so no formatted string is allocated when tracing is disabled. Trace output is unchanged.
+  ([#4528](https://github.com/dotnet/SqlClient/pull/4528))
+
+- Consolidated server capability detection into a new internal `ConnectionCapabilities` type shared by the internal connection, `SqlMetaDataFactory`, and `TdsParser`.
+  ([#3862](https://github.com/dotnet/SqlClient/pull/3862))
+
+- Added scaffolding for a managed SSRP client in the managed SNI layer. No SSRP parsing behavior changes yet.
+  ([#3741](https://github.com/dotnet/SqlClient/pull/3741))
+
+- Updated centrally managed dependency versions for the `net9.0` target framework to `9.0.18`, and added `System.Threading.RateLimiting` to the packaged dependency metadata. Non-`net9.0` targets keep their existing `8.0.x` pins.
+  ([#4507](https://github.com/dotnet/SqlClient/pull/4507))
+
+- Updated the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` dependencies to `7.1.0-preview3.26226.3`.
+  ([#4564](https://github.com/dotnet/SqlClient/pull/4564))
+
+- Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview3`, removing obsolete `Azure.Identity` API usage with no public API or behavior change. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview3.md).
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview3` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview3.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview3.md).
+
+### Fixed
+
+- Fixed Always Encrypted VSM/HGS enclave attestation not verifying that the enclave public key used to establish the session matches the key committed to by the signed attestation report.
+  ([#4532](https://github.com/dotnet/SqlClient/pull/4532))
+
+- Fixed a `SqlConnectionFactory` timer that woke the process every 30 seconds for the lifetime of the application even when no connection pools existed, including with `Pooling=False` and after `ClearAllPools()`.
+  ([#4479](https://github.com/dotnet/SqlClient/pull/4479))
+
+- Fixed `OverflowException` when sending large `decimal` values as a parameter with explicit `Precision` and `Scale`, which primarily affected Always Encrypted scenarios.
+  ([#4443](https://github.com/dotnet/SqlClient/pull/4443))
+
+- Fixed a TDS stream error when passing a `DateOnly` value as a parameter with `SqlDbType.Variant`.
+  ([#4294](https://github.com/dotnet/SqlClient/pull/4294))
+
+- Fixed `SqlConnection.AccessTokenCallback` not disabling Transparent Network IP Resolution by default, unlike `SqlConnection.AccessToken`, along with a related connection pool key defect.
+  ([#4520](https://github.com/dotnet/SqlClient/pull/4520))
+
+- Fixed several async entry points in `SqlBulkCopy`, `SqlDataReader`, and `SqlCommand` that captured fatal exceptions such as `OutOfMemoryException` into faulted `Task`s instead of letting them propagate.
+  ([#4437](https://github.com/dotnet/SqlClient/pull/4437))
+
+- Addressed CodeQL findings by removing SHA-1 from the portable PDB checksum algorithm map and annotating the Always Encrypted RSA PKCS#1 v1.5 signature paths.
+  ([#4517](https://github.com/dotnet/SqlClient/pull/4517))
+
 ## [Preview Release 7.1.0-preview2] - 2026-07-09
 
 This update brings the following changes since the [7.1.0-preview1](release-notes/7.1/7.1.0-preview1.md) release.
