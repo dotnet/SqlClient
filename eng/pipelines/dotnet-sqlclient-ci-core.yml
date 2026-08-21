@@ -183,6 +183,7 @@ stages:
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       loggingArtifactsName: $(loggingArtifactsName)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       # When building Abstractions via packages, we must depend on the Logging
       # package.
       ${{ if eq(parameters.referenceType, 'Package') }}:
