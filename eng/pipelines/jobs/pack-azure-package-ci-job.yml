@@ -73,6 +73,11 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 jobs:
 
   - job: pack_azure_package_job
@@ -141,12 +146,29 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
+      # Download the assembly signing key for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+
       # Create the NuGet packages.
       #
       # When referenceType is Package, we must pass ReferenceType and the
       # dependency versions so that Directory.Packages.props applies version
       # ranges to sibling package dependencies.
-      - ${{ if eq(parameters.referenceType, 'Package') }}:
+      - ${{ if and(eq(parameters.referenceType, 'Package'), eq(parameters.isInternalBuild, true)) }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            # BuildNumber supplies the revision component of FileVersion; without
+            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber);SigningKeyPath=$(driverKeyFile.secureFilePath)
+
+      - ${{ elseif eq(parameters.referenceType, 'Package') }}:
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
           inputs:

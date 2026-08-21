@@ -1015,7 +1015,13 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AzureTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -1023,7 +1029,7 @@
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
-        <!-- Reference type arguments -->
+        <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
