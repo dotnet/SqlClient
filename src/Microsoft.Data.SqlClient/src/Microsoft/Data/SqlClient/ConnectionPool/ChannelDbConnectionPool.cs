@@ -1046,9 +1046,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Opens a new internal connection to the database, throttled by the pool's rate limiter.
         /// </summary>
         /// <param name="owningConnection">The owning connection.</param>
-        /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <param name="timeout">The overall timeout budget. Passed through to the physical connection
         /// so it uses the remaining budget rather than starting a fresh timeout.</param>
+        /// <param name="cancellationToken">An optional cancellation token used by background warmup.
+        /// Caller timeout cancellation is reserved for pool waits so physical connection failures
+        /// retain the same exception behavior as the legacy pool.</param>
         /// <returns>The new internal connection, or null if the pool has no available slot or the
         /// rate limiter is currently saturated. In the latter case the caller should fall back to
         /// the idle-channel wait; the rate limiter will write a null to the idle channel when a
@@ -1058,8 +1060,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection,
-            CancellationToken cancellationToken,
-            TimeoutTimer timeout)
+            TimeoutTimer timeout,
+            CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -1507,7 +1509,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // in either case the caller falls through to the idle-channel wait below.
                     connection ??= OpenNewInternalConnection(
                         owningConnection,
-                        cancellationToken,
                         timeout);
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
@@ -1939,8 +1940,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // saturated; a thrown exception means the physical open genuinely failed.
                         connection = OpenNewInternalConnection(
                             owningConnection: null,
-                            cancellationToken: token,
-                            timeout: timeout);
+                            timeout: timeout,
+                            cancellationToken: token);
                     }
                     catch (OperationCanceledException)
                     {
