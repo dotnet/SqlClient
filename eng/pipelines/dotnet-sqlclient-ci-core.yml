@@ -221,6 +221,7 @@ stages:
       azureArtifactsName: $(azureArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       # When building via packages, we must depend on the Abstractions, Logging,
       # SqlServer, and MDS packages.
       ${{ if eq(parameters.referenceType, 'Package') }}:

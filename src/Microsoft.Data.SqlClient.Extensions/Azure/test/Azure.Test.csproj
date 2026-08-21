@@ -19,12 +19,18 @@
     <TargetFrameworks Condition="'$(TargetOs)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- When a test signing key is provided, sign the test assembly so IVT from signed source works. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <!-- Global Usings =================================================== -->
   <ItemGroup>
     <Using Include="Xunit" />
