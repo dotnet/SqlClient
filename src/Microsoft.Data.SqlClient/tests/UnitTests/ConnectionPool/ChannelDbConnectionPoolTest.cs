@@ -590,7 +590,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Verifies that an empty pool still delegates physical connection creation when the caller's
-        /// timeout budget has just expired, preserving the legacy pool's connection-error behavior.
+        /// timeout budget has just expired and propagates the physical connection error unchanged.
         /// </summary>
         [Fact]
         public void GetConnectionExpiredTimeout_EmptyPoolStillAttemptsPhysicalConnection()
