@@ -201,6 +201,7 @@ stages:
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
       referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       SNIVersion: ${{ parameters.SNIVersion }}
       SNIValidationFeed: ${{ parameters.SNIValidationFeed }}
@@ -254,6 +255,7 @@ stages:
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
+      isInternalBuild: ${{ parameters.isInternalBuild }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       testJobTimeout: ${{ parameters.testJobTimeout }}
 
