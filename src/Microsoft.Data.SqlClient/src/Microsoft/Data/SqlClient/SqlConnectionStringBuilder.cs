@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient
                     return ConnectionReset;
 #pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
-#pragma warning disable 618
+#pragma warning disable 618 // Obsolete properties
                     return TransparentNetworkIPResolution;
 #pragma warning restore 618
                 case Keywords.NetworkLibrary:
@@ -1085,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                             NetworkLibrary = ConvertToString(value);
                             break;
                         case Keywords.TransparentNetworkIPResolution:
-#pragma warning disable 618
+#pragma warning disable 618 // Obsolete properties
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
 #pragma warning restore 618
                             break;
