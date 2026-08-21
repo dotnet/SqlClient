@@ -158,6 +158,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 
             Assert.NotNull(details);
             Assert.NotEqual(DataSource.Protocol.NP, details.ResolvedProtocol);
+            Assert.Equal(dataSource, details.ServerName);
         }
 
         /// <summary>
@@ -174,6 +175,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [InlineData("::1", "--1.ipv6-literal.net")]
         [InlineData("[::1]", "--1.ipv6-literal.net")]
         [InlineData("2001:db8::1", "2001-db8--1.ipv6-literal.net")]
+        [InlineData("::ffff:1.2.3.4", "--ffff-1.2.3.4.ipv6-literal.net")]
         [InlineData("fe80::1%3", "fe80--1s3.ipv6-literal.net")]
         public void GetUncCompatibleHostName_ReturnsExpected(string hostName, string expected)
         {

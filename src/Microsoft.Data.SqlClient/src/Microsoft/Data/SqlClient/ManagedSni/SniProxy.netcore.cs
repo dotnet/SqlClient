@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         {
                             // NamedPipeClientStream object will create the network path using PipeHostName and PipeName
                             // and can be seen in its _normalizedPipePath variable in the format \\servername\pipe\MSSQL$<instancename>\sql\query
-                            PipeHostName = ServerName = tokensByBackSlash[0];
+                            ServerName = tokensByBackSlash[0];
                             PipeName = $"{InstancePrefix}{tokensByBackSlash[1]}{PathSeparator}{DefaultPipeName}";
                         }
                         else
@@ -655,7 +655,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                     else
                     {
-                        PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
+                        ServerName = _dataSourceAfterTrimmingProtocol;
                         PipeName = SniNpHandle.DefaultPipePath;
                     }
 
@@ -697,16 +697,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         return false;
                     }
 
-                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path.
-                    // See GetUncCompatibleHostName for details.
-                    string uncHost = GetUncCompatibleHostName(host);
-                    if (uncHost is null)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", host);
-                        ReportSNIError(SniProviders.NP_PROV);
-                        return false;
-                    }
-
                     //Check if the "pipe" keyword is the first part of path
                     if (!PipeToken.Equals(tokensByBackSlash[3]))
                     {
@@ -733,6 +723,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     if (string.IsNullOrWhiteSpace(InstanceName) && !DefaultPipeName.Equals(PipeName))
                     {
                         InstanceName = PipeToken + PipeName;
+                    }
+
+                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path.
+                    // See GetUncCompatibleHostName for details.
+                    string uncHost = GetUncCompatibleHostName(host);
+                    if (uncHost is null)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", host);
+                        ReportSNIError(SniProviders.NP_PROV);
+                        return false;
                     }
 
                     // ServerName drops any brackets because it feeds DNS resolution and SPN
@@ -782,10 +782,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return false;
             }
 
-            string literal = hostName;
+            ReadOnlySpan<char> literal = hostName.AsSpan();
             if (literal.Length > 2 && literal[0] == '[' && literal[literal.Length - 1] == ']')
             {
-                literal = literal.Substring(1, literal.Length - 2);
+                literal = literal.Slice(1, literal.Length - 2);
             }
 
             return IPAddress.TryParse(literal, out address) &&
@@ -837,9 +837,27 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return hostName;
             }
 
-            return TryParseIPv6Literal(hostName, out IPAddress address)
-                ? address.ToString().Replace(':', '-').Replace('%', 's') + IPv6LiteralHostSuffix
-                : null;
+            if (!TryParseIPv6Literal(hostName, out IPAddress address))
+            {
+                return null;
+            }
+
+            string literal = address.ToString();
+            return string.Create(literal.Length + IPv6LiteralHostSuffix.Length, literal,
+                static (destination, value) =>
+                {
+                    for (int i = 0; i < value.Length; i++)
+                    {
+                        destination[i] = value[i] switch
+                        {
+                            ':' => '-',
+                            '%' => 's',
+                            _ => value[i]
+                        };
+                    }
+
+                    IPv6LiteralHostSuffix.AsSpan().CopyTo(destination.Slice(value.Length));
+                });
         }
     }
 }
