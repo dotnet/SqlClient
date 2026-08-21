@@ -659,16 +659,18 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         PipeName = SniNpHandle.DefaultPipePath;
                     }
 
-                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path.
-                    // ServerName keeps the original form because it is only used for SPN creation.
-                    // See GetUncCompatibleHostName for details.
-                    PipeHostName = GetUncCompatibleHostName(PipeHostName);
+                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path,
+                    // and ServerName must drop any brackets because it feeds DNS resolution and SPN
+                    // construction. See GetUncCompatibleHostName and NormalizeHostName for details.
+                    PipeHostName = GetUncCompatibleHostName(ServerName);
                     if (PipeHostName is null)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", ServerName);
                         ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
+
+                    ServerName = NormalizeHostName(ServerName);
 
                     InferLocalServerName();
                     return true;
@@ -733,7 +735,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         InstanceName = PipeToken + PipeName;
                     }
 
-                    ServerName = IsLocalHost(host) ? Environment.MachineName : host;
+                    // ServerName drops any brackets because it feeds DNS resolution and SPN
+                    // construction, neither of which accepts the bracketed spelling.
+                    ServerName = IsLocalHost(host) ? Environment.MachineName : NormalizeHostName(host);
                     // Pipe hostname is the hostname after leading \\ which should be passed down as is to open Named Pipe.
                     // For Named Pipes the ServerName makes sense for SPN creation only.
                     PipeHostName = uncHost;
@@ -764,6 +768,42 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
 
         /// <summary>
+        /// Attempts to interpret a host name as an IPv6 literal, accepting the bracketed form
+        /// (<c>[::1]</c>) that users may carry over from URL syntax.
+        /// </summary>
+        private static bool TryParseIPv6Literal(string hostName, out IPAddress address)
+        {
+            address = null;
+
+            // A colon is the only character that can make a host name an IPv6 literal, so anything
+            // without one (host names, IPv4 literals, already-transcribed names) is not a candidate.
+            if (string.IsNullOrEmpty(hostName) || hostName.IndexOf(':') == -1)
+            {
+                return false;
+            }
+
+            string literal = hostName;
+            if (literal.Length > 2 && literal[0] == '[' && literal[literal.Length - 1] == ']')
+            {
+                literal = literal.Substring(1, literal.Length - 2);
+            }
+
+            return IPAddress.TryParse(literal, out address) &&
+                   address.AddressFamily == AddressFamily.InterNetworkV6;
+        }
+
+        /// <summary>
+        /// Returns the canonical form of a host name: a bracketed IPv6 literal is unwrapped to its
+        /// unbracketed form, and every other host name is returned unchanged.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ServerName"/> feeds DNS resolution and SPN construction, neither of which
+        /// accepts the bracketed spelling, so the brackets must be dropped before it is used there.
+        /// </remarks>
+        internal static string NormalizeHostName(string hostName) =>
+            TryParseIPv6Literal(hostName, out IPAddress address) ? address.ToString() : hostName;
+
+        /// <summary>
         /// Converts a host name into a form that can legally appear as the host component of a UNC
         /// pipe path (<c>\\host\pipe\sql\query</c>), returning <see langword="null"/> if no such
         /// form exists.
@@ -792,27 +832,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return null;
             }
 
-            // A colon is the only character that forces a transcription, so anything without one
-            // (host names, IPv4 literals, already-transcribed names) passes through untouched.
             if (hostName.IndexOf(':') == -1)
             {
                 return hostName;
             }
 
-            // Accept the bracketed form (\\[::1]\...) that users may carry over from URL syntax.
-            string literal = hostName;
-            if (literal.Length > 2 && literal[0] == '[' && literal[literal.Length - 1] == ']')
-            {
-                literal = literal.Substring(1, literal.Length - 2);
-            }
-
-            if (!IPAddress.TryParse(literal, out IPAddress address) ||
-                address.AddressFamily != AddressFamily.InterNetworkV6)
-            {
-                return null;
-            }
-
-            return address.ToString().Replace(':', '-').Replace('%', 's') + IPv6LiteralHostSuffix;
+            return TryParseIPv6Literal(hostName, out IPAddress address)
+                ? address.ToString().Replace(':', '-').Replace('%', 's') + IPv6LiteralHostSuffix
+                : null;
         }
     }
 }

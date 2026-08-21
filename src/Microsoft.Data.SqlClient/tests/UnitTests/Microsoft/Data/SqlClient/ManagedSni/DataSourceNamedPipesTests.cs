@@ -107,17 +107,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
-        /// Verifies that an IPv6 literal keeps its original form in <see cref="DataSource.ServerName"/>,
-        /// which feeds SPN creation, even though the pipe host name is transcribed.
+        /// Verifies that an IPv6 literal is preserved (unbracketed) in <see cref="DataSource.ServerName"/>,
+        /// which feeds DNS resolution and SPN construction, while the pipe host name is transcribed.
+        /// The bracketed spelling must not survive into <see cref="DataSource.ServerName"/> because
+        /// neither DNS nor SPN construction accepts it.
         /// </summary>
-        [Fact]
-        public void ParseServerName_NamedPipesWithIPv6Literal_PreservesServerNameForSpn()
+        [Theory]
+        [InlineData(@"np:2001:db8::1")]
+        [InlineData(@"np:[2001:db8::1]")]
+        [InlineData(@"np:\\2001:db8::1\pipe\sql\query")]
+        [InlineData(@"np:\\[2001:db8::1]\pipe\sql\query")]
+        public void ParseServerName_NamedPipesWithIPv6Literal_PreservesUnbracketedServerNameForSpn(string dataSource)
         {
-            DataSource details = DataSource.ParseServerName(@"np:2001:db8::1");
+            DataSource details = DataSource.ParseServerName(dataSource);
 
             Assert.NotNull(details);
             Assert.Equal("2001:db8::1", details.ServerName);
             Assert.Equal("2001-db8--1.ipv6-literal.net", details.PipeHostName);
+        }
+
+        /// <summary>
+        /// Verifies <see cref="DataSource.NormalizeHostName"/> unwraps bracketed IPv6 literals and
+        /// leaves every other host name untouched.
+        /// </summary>
+        [Theory]
+        [InlineData("[::1]", "::1")]
+        [InlineData("::1", "::1")]
+        [InlineData("[2001:db8::1]", "2001:db8::1")]
+        [InlineData("[fe80::1%3]", "fe80::1%3")]
+        [InlineData("localhost", "localhost")]
+        [InlineData("127.0.0.1", "127.0.0.1")]
+        [InlineData("not:a:host", "not:a:host")]
+        [InlineData("", "")]
+        public void NormalizeHostName_ReturnsExpected(string hostName, string expected)
+        {
+            Assert.Equal(expected, DataSource.NormalizeHostName(hostName));
         }
 
         /// <summary>
