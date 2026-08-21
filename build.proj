@@ -913,22 +913,28 @@
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
   <Target Name="TestAbstractions">
     <PropertyGroup>
-      <!--
-        Note: This test exclusively uses project references, so neither ReferenceType nor any
-        package version arguments are specified in this command.
-      -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
