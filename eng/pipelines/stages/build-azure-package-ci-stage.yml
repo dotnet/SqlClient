@@ -112,6 +112,11 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_azure_package_stage
@@ -148,6 +153,7 @@ stages:
           displayNamePrefix: Linux Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux_integration
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
@@ -177,6 +183,7 @@ stages:
           displayNamePrefix: Win Integration
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows_integration
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
@@ -212,6 +219,7 @@ stages:
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
@@ -245,3 +253,4 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           referenceType: ${{ parameters.referenceType }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
