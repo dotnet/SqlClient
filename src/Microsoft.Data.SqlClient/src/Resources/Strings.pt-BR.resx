@@ -4443,6 +4443,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>A verificação da assinatura do relatório do enclave falhou. A assinatura do relatório não corresponde à assinatura calculada usando o certificado raiz HGS. Verifique o mapeamento DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>O relatório de enclave recebido do SQL Server não está no formato correto. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
   </data>
