@@ -64,6 +64,11 @@ parameters:
     type: string
     default: ''
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_sqlclient_package_stage
@@ -93,6 +98,7 @@ stages:
         packageVersion: $(packageVersion)
         sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
         sqlServerPackageVersion: $(sqlServerPackageVersion)
+        isInternalBuild: ${{ parameters.isInternalBuild }}
         ${{ if ne(parameters.SNIVersion, '') }}:
           prebuildSteps:
             - template: /eng/pipelines/common/templates/steps/override-sni-version.yml@self

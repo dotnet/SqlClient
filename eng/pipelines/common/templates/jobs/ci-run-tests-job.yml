@@ -148,6 +148,11 @@ parameters:
   - name: saPassword
     type: string
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
 
@@ -204,6 +209,13 @@ jobs:
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+  # Download the assembly signing keys for internal Package-mode builds.
+  - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+    - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+    - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+      parameters:
+        isTest: true
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -358,6 +370,9 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+          signingKeyPath: $(driverKeyFile.secureFilePath)
+          testSigningKeyPath: $(testKeyFile.secureFilePath)
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
@@ -372,6 +387,9 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+          signingKeyPath: $(driverKeyFile.secureFilePath)
+          testSigningKeyPath: $(testKeyFile.secureFilePath)
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

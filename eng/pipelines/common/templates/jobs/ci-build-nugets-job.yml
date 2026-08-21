@@ -76,6 +76,11 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 jobs:
 - job: build_mds_akv_packages_job
   displayName: Build MDS & AKV Packages
@@ -126,6 +131,10 @@ jobs:
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
+  # Download the assembly signing key for internal Package-mode builds.
+  - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+    - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+
   # When we're performing a Debug build, we still want to try _compiling_ the
   # code in Release mode to ensure downstream pipelines don't encounter
   # compilation errors.  We won't use the Release artifacts for anything else
@@ -147,6 +156,8 @@ jobs:
       build: MDS
       packageVersion: ${{ parameters.packageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+      ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - task: DotNetCoreCLI@2
     displayName: 'Create MDS NuGet Package'
@@ -189,6 +200,8 @@ jobs:
       build: AkvProvider
       packageVersion: ${{ parameters.packageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+      ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        signingKeyPath: $(driverKeyFile.secureFilePath)
 
   - task: DotNetCoreCLI@2
     displayName: 'Create AKV Provider NuGet Package'

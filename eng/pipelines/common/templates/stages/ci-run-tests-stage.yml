@@ -71,6 +71,11 @@ parameters:
   - name: testJobTimeout
     type: number
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 - ${{ each config in parameters.testConfigurations }}:
   - ${{ each image in config.value.images }}:
@@ -114,6 +119,7 @@ stages:
                   packageVersion: $(packageVersion)
                   loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+                  isInternalBuild: ${{ parameters.isInternalBuild }}
                   sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
                   sqlServerPackageVersion: $(sqlServerPackageVersion)
                   prebuildSteps: ${{ parameters.prebuildSteps }}
@@ -149,6 +155,7 @@ stages:
                     packageVersion: $(packageVersion)
                     loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+                    isInternalBuild: ${{ parameters.isInternalBuild }}
                     sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
                     sqlServerPackageVersion: $(sqlServerPackageVersion)
                     prebuildSteps: ${{ parameters.prebuildSteps }}
