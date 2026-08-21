@@ -299,7 +299,7 @@ stages:
       testConfigurations:
         # SQL Server 2016 and 2017 on Windows Server 2022 (x64 only).
         # x86 testing is intentionally skipped for these legacy SQL versions
-        # because x86 support is already validated via SQL 2019 and 2022 images.
+        # because x86 support is already validated via SQL 2019 and 2025 images.
         ${{ if eq(parameters.runLegacySqlTests, true) }}:
           # Windows Server 22 with local SQL Server 2016, x64 build platform.
           windows_sql_16_x64:
@@ -407,11 +407,11 @@ stages:
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
 
-        # Windows Server 22 with local SQL Server 2022, x64 build platform.
-        windows_sql_22_x64:
+        # Windows Server 25 with local SQL Server 2025, x64 build platform.
+        windows_sql_25_x64:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22: ADO-MMS22-SQL22
+            Win25_Sql25: ADO-MMS25-SQL25
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -430,14 +430,14 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            SQLRootPath: $(SQL22RootPath)
+            SQLRootPath: $(SQL25RootPath)
             enableLocalDB: true
 
-        # Windows Server 22 with local SQL Server 2022, x86 build platform.
-        windows_sql_22_x86:
+        # Windows Server 25 with local SQL Server 2025, x86 build platform.
+        windows_sql_25_x86:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_x86: ADO-MMS22-SQL22
+            Win25_Sql25_x86: ADO-MMS25-SQL25
           TargetFrameworks: [net462, net8.0, net9.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -457,14 +457,14 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             x86TestTargetFrameworks: [net462, net8.0, net9.0]
-            SQLRootPath: $(SQL22RootPath)
+            SQLRootPath: $(SQL25RootPath)
             enableLocalDB: true
 
-        # Windows Server 22 with local SQL Server 2022 Named Instance, x64 build platform.
-        windows_sql_22_named_instance:
+        # Windows Server 25 with local SQL Server 2025 Named Instance, x64 build platform.
+        windows_sql_25_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Sql22_Named_Instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
+            Win25_Sql25_Named_Instance: ADO-MMS25-SQL25-WITH-NAMED-INSTANCE
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
@@ -476,7 +476,7 @@ stages:
             TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
             NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
             SupportsIntegratedSecurity: true
-            SQLRootPath: $(SQL22RootPath)
+            SQLRootPath: $(SQL25RootPath)
             instanceName: $(NamedInstance)
 
         # Windows Server 2022 and Windows 11, x64 build platform, with Azure SQL Server.
@@ -537,12 +537,11 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        # Linux Ubuntu 20 and 22 with local SQL Server 2022, x64 build platform.
-        linux_ub20_22_sql_22:
+        # Linux Ubuntu 24 with local SQL Server 2025, x64 build platform.
+        linux_ub24_sql_25:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Sql22: ADO-UB20-SQL22
-            Ubuntu22_Sql22: ADO-UB22-SQL22
+            Ubuntu24_Sql25: ADO-UB24-SQL25
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -561,11 +560,11 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
 
-        # Linux Ubuntu 22 with Azure SQL Server, x64 build platform.
+        # Linux Ubuntu 24 with Azure SQL Server, x64 build platform.
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu22_Azure_Sql: ADO-UB22-SQL22
+            Ubuntu24_Azure_Sql: ADO-UB24-SQL25
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -588,12 +587,12 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        # macOS with local SQL Server 2022, x64 build platform.
-        mac_sql_22:
+        # macOS with local SQL Server 2025 (docker), x64 build platform.
+        mac_sql_25:
           pool: Azure Pipelines
           hostedPool: true
           images:
-            MacOSLatest_Sql22: macos-latest
+            MacOSLatest_Sql25: macos-latest
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -642,11 +641,16 @@ stages:
               LocalDbAppName: $(LocalDbAppName)
               LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-          # Linux Ubuntu 22 with remote Enclave-enabled SQL Server 2019, x64 build platform.
+          # Linux Ubuntu 24 with remote Enclave-enabled SQL Server 2019, x64 build platform.
           linux_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
-              Ubuntu20_Enclave_Sql19: ADO-UB22-Sql22
+              # NOTE: This key is also the generated stage name, and is
+              # referenced by branch policies / required status checks, so it is
+              # deliberately left unchanged.  The 'Sql19' suffix remains
+              # accurate: these tests target a remote Enclave-enabled SQL Server
+              # 2019.  Only the agent image has moved to Ubuntu 24.
+              Ubuntu20_Enclave_Sql19: ADO-UB24-SQL25
             TargetFrameworks: ${{parameters.targetFrameworksUnix }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: [AnyCPU]
