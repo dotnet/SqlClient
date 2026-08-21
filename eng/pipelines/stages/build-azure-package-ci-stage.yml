@@ -59,6 +59,9 @@ parameters:
 
   # The name of the general Azure pool to use for jobs that don't require
   # customized VM images.
+  #
+  # This is only used for macOS jobs, since our 1ES pools do not offer macOS
+  # images.  All other jobs run on 'adoPoolName'.
   - name: azurePoolName
     type: string
     default: Azure Pipelines
@@ -144,25 +147,6 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          packageVersion: $(packageVersion)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux
-          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
-          referenceType: ${{ parameters.referenceType }}
-          vmImage: ubuntu-latest
-
       # Use our 1ES ADO pool for comprehensive testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
@@ -191,26 +175,6 @@ stages:
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
-
-      # Use the Azure Pipelines pool for basic testing.
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          packageVersion: $(packageVersion)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: Win
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows
-          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
-          referenceType: ${{ parameters.referenceType }}
-          vmImage: windows-latest
 
       # Use our 1ES ADO pool for comprehensive testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
@@ -285,9 +249,7 @@ stages:
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux
             - test_azure_package_job_linux_integration
-            - test_azure_package_job_windows
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

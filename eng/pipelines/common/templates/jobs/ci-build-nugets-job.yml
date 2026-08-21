@@ -27,7 +27,7 @@ parameters:
   # The name of the Azure Pipelines image to use within the pool.
   - name: imageOverride
     type: string
-    default: ADO-MMS22-SQL19
+    default: ADO-Win25
 
   # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName

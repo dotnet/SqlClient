@@ -50,6 +50,18 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the 1ES pool to run in.
+  - name: poolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-UB24
+
 jobs:
 
   - job: pack_logging_package_job
@@ -58,8 +70,10 @@ jobs:
     dependsOn: ${{ parameters.dependsOn }}
 
     pool:
-      name: Azure Pipelines
-      vmImage: ubuntu-latest
+      name: ${{ parameters.poolName }}
+
+      demands:
+        - imageOverride -equals ${{ parameters.vmImage }}
 
     variables:
 

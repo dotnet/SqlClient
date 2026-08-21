@@ -35,6 +35,28 @@ parameters:
     type: object
     default: []
 
+  # The name of the pool to use for jobs that require customized VM images.
+  - name: adoPoolName
+    type: string
+    # This variable should be defined in AzureDevOps Library variable groups,
+    # for both the Public and ADO.Net projects.
+    #
+    # Any pool specified here must contain images with the following names:
+    #
+    #   - ADO-Win25
+    #   - ADO-UB24
+    #
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the general Azure pool to use for jobs that don't require
+  # customized VM images.
+  #
+  # This is only used for macOS jobs, since our 1ES pools do not offer macOS
+  # images.  All other jobs run on 'adoPoolName'.
+  - name: azurePoolName
+    type: string
+    default: Azure Pipelines
+
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     type: string
@@ -105,8 +127,8 @@ stages:
           jobNameSuffix: linux
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: ubuntu-latest
+          poolName: ${{ parameters.adoPoolName }}
+          vmImage: ADO-UB24
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -120,8 +142,8 @@ stages:
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: windows-latest
+          poolName: ${{ parameters.adoPoolName }}
+          vmImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -135,7 +157,7 @@ stages:
           jobNameSuffix: macos
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
+          poolName: ${{ parameters.azurePoolName }}
           vmImage: macos-latest
 
       # ------------------------------------------------------------------------

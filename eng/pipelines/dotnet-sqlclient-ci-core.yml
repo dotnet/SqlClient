@@ -148,9 +148,8 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
-  # Compute all package versions up-front. Downstream stages consume these via
-  # Each build/test stage computes the versions it needs directly from the
-  # compute_versions_ci stage outputs, so no version parameters are passed here.
+  # Compute all package versions up front. Build and test stages consume the
+  # compute_versions_ci outputs directly, so no version parameters are passed here.
   - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
     parameters:
       buildSuffix: ${{ parameters.buildSuffix }}
@@ -499,11 +498,11 @@ stages:
             SQLRootPath: $(SQL25RootPath)
             instanceName: $(NamedInstance)
 
-        # Windows Server 2022 and Windows 11, x64 build platform, with Azure SQL Server.
+        # Windows Server 2025 and Windows 11, x64 build platform, with Azure SQL Server.
         windows_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Win22_Azure_Sql: ADO-MMS22-SQL19
+            Win22_Azure_Sql: ADO-Win25
             Win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.primaryTargetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
@@ -584,7 +583,7 @@ stages:
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu24_Azure_Sql: ADO-UB24-SQL25
+            Ubuntu24_Azure_Sql: ADO-UB24
           TargetFrameworks: ${{parameters.primaryTargetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
@@ -637,7 +636,7 @@ stages:
           windows_enclave_sql:
             pool: ADO-CI-AE-1ES-Pool
             images:
-              Win22_Enclave_Sql19: ADO-MMS22-SQL19
+              Win22_Enclave_Sql19: ADO-Win25
             TargetFrameworks: ${{parameters.targetFrameworks }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: ${{parameters.buildPlatforms }}
@@ -670,7 +669,7 @@ stages:
               # deliberately left unchanged.  The 'Sql19' suffix remains
               # accurate: these tests target a remote Enclave-enabled SQL Server
               # 2019.  Only the agent image has moved to Ubuntu 24.
-              Ubuntu20_Enclave_Sql19: ADO-UB24-SQL25
+              Ubuntu20_Enclave_Sql19: ADO-UB24
             TargetFrameworks: ${{parameters.targetFrameworksUnix }}
             netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             buildPlatforms: [AnyCPU]

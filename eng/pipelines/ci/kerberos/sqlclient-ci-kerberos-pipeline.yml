@@ -296,3 +296,8 @@ stages:
       - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
         parameters:
           upload: false
+          # This pipeline does not import the CI build variables, so the pool
+          # must be named explicitly. Use a minimal Linux image because merging
+          # coverage does not require SQL Server.
+          poolName: ADO-Trusted-Linux-WestUS2
+          vmImage: ADO-UB24

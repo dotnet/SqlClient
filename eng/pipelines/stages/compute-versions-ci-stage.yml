@@ -19,6 +19,16 @@
 # This stage MUST run before all build stages so they can consume computed versions.
 
 parameters:
+  # The name of the 1ES pool to run in.
+  - name: poolName
+    type: string
+    default: $(ci_var_defaultPoolName)
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-UB24
+
   # Build suffix appended to prerelease tag (e.g. 'ci' or 'pr').
   - name: buildSuffix
     type: string
@@ -32,7 +42,9 @@ stages:
       - job: compute_versions_job
         displayName: "Extract versions from Versions.props"
         pool:
-          vmImage: ubuntu-latest
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         steps:
           # Install the global.json-pinned .NET SDK before running any dotnet build, so this stage
