@@ -138,6 +138,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// A matching ServerCertificate must not satisfy validation when the platform reported
+        /// <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>, even if a non-null
+        /// certificate was somehow also handed to the callback.  The two are expected to agree,
+        /// but the contradictory combination must fail closed rather than let a comparison stand
+        /// in for a certificate the platform said was unavailable.
+        /// </summary>
+        [Fact]
+        public void ValidateSslServerCertificate_MatchingPin_NotAvailable_Throws()
+        {
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
+            using TempCertFile pinFile = new(serverCert);
+
+            Assert.Throws<AuthenticationException>(() =>
+                SniCommon.ValidateSslServerCertificate(
+                    connectionId: Guid.NewGuid(),
+                    targetServerName: "server.contoso.com",
+                    hostNameInCertificate: null,
+                    serverCert: serverCert,
+                    validationCertFileName: pinFile.Path,
+                    policyErrors: SslPolicyErrors.RemoteCertificateNotAvailable));
+        }
+
+        /// <summary>
         /// Defense in depth: a null server certificate is normally reported through
         /// <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/>, but should the two ever
         /// disagree, the comparison must still fail with an <see cref="AuthenticationException"/>
@@ -239,7 +262,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 File.WriteAllBytes(Path, cert.Export(X509ContentType.Cert));
             }
 
-            public void Dispose() => File.Delete(Path);
+            public void Dispose()
+            {
+                try
+                {
+                    File.Delete(Path);
+                }
+                catch (IOException)
+                {
+                    // Best effort: a cleanup failure must not mask the assertion failure that
+                    // caused the test to unwind through this Dispose.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
         }
     }
 }

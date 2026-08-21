@@ -3877,6 +3877,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The &apos;ServerCertificate&apos; option was specified, but the server did not present a certificate that could be compared against it..
+        /// </summary>
+        internal static string SQL_ServerCertificateNotAvailable {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
         /// </summary>
         internal static string SQL_SettingCredentialWithDeviceFlow {

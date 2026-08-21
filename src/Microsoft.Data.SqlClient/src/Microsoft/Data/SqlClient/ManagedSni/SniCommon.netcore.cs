@@ -51,8 +51,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <remarks>
         /// When <paramref name="validationCertFileName"/> is supplied, the presented server
         /// certificate is always compared against it, even when <paramref name="policyErrors"/> is
-        /// <see cref="SslPolicyErrors.None"/>. A configured pin that cannot be loaded or parsed, or
-        /// that does not match, fails the connection; it is never silently ignored.
+        /// <see cref="SslPolicyErrors.None"/>. An exact match satisfies certificate validation. A
+        /// configured certificate that cannot be loaded or parsed, or that does not match, fails
+        /// the connection; it is never silently ignored.
+        /// <para>
+        /// The one condition a match does not satisfy is a missing server certificate. SslStream
+        /// reports that as <see cref="SslPolicyErrors.RemoteCertificateNotAvailable"/> and passes a
+        /// null <paramref name="serverCert"/>; the two are expected to agree, but both are checked
+        /// so that neither an absent certificate nor the contradictory combination can be accepted
+        /// on the basis of a comparison.
+        /// </para>
         /// </remarks>
         /// <param name="connectionId">Connection ID/GUID for tracing</param>
         /// <param name="targetServerName">Server that client is expecting to connect to</param>
@@ -84,13 +92,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (!string.IsNullOrEmpty(validationCertFileName))
                 {
-                    if (serverCert is null)
+                    // There is no trustworthy certificate to compare against when the server
+                    // presented none. SslStream reports that as RemoteCertificateNotAvailable, and
+                    // serverCert is null in that case; both are checked because a matching
+                    // ServerCertificate must never satisfy validation when the presented
+                    // certificate is absent or cannot be relied upon.
+                    if (serverCert is null || policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                     {
-                        // The server presented no certificate (normally reported through
-                        // SslPolicyErrors.RemoteCertificateNotAvailable), so there is nothing to
-                        // compare the pin against.
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, ServerCertificate was specified but the server presented no certificate. Certificate validation failed.", args0: connectionId);
-                        throw ADP.SSLCertificateAuthenticationException(Strings.SQL_RemoteCertificateNotAvailable);
+                        throw ADP.SSLCertificateAuthenticationException(Strings.SQL_ServerCertificateNotAvailable);
                     }
 
                     using X509Certificate validationCertificate = LoadValidationCertificate(connectionId, validationCertFileName);
