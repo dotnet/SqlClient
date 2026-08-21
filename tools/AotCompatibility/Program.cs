@@ -81,51 +81,85 @@ catch (Exception ex)
 
 Console.WriteLine();
 
+// Force the federated-authentication code path to be statically reachable so the
+// trimmer's treatment of reflection-based provider discovery is actually exercised.
+//
+// In a real AOT app this path is reached when an Active Directory connection
+// authenticates:
+//
+//   SqlConnection.Open()
+//     -> SqlInternalConnectionTds.GetFedAuthToken()
+//       -> AuthenticationBootstrapper.Bootstrap()
+//         -> AuthenticationBootstrapper ctor
+//           -> LoadAzureExtensionProvider()   (the reflection-based discovery)
+//
+// We model that here with an Open() attempt using an Active Directory
+// authentication mode. The attempt is EXPECTED to fail at runtime (there is no
+// server listening), but trimming is a static analysis: the mere presence of this
+// call roots the fed-auth call graph, so the trimmer must decide whether to keep
+// or eliminate LoadAzureExtensionProvider() based on the feature switch.
+//
+// Without this call the entire bootstrapper path is unreachable and would be
+// trimmed regardless of the switch, making the trimming verification meaningless.
+Console.WriteLine("Active Directory connection open (roots the fed-auth path):");
+try
+{
+    using var adConnection = new SqlConnection(
+        "Server=localhost;Database=test;Encrypt=false;" +
+        "Authentication=Active Directory Default;Connect Timeout=1;");
+    adConnection.Open();
+    Console.WriteLine("  Opened unexpectedly (no server was expected to be present).");
+}
+catch (Exception ex)
+{
+    // Expected: there is no server to connect to. The point is static
+    // reachability for the trimmer, not a successful connection.
+    Console.WriteLine($"  Open failed as expected: {ex.GetType().Name}");
+}
+
+Console.WriteLine();
+
 // Check the ILC map file for trimming verification.
 // The map file is generated alongside the native binary during publish.
 // At runtime we can look for it relative to the executable.
 Console.WriteLine("Trimming verification (ILC map file):");
+
+// The ILC map file is generated only by a Native AOT publish, at
+//   <proj>/obj/<Config>/<TFM>/<RID>/native/<ExeName>.map.xml
+// while the native binary lives at
+//   <proj>/bin/<Config>/<TFM>/<RID>/publish/<ExeName>
+//
+// We derive the map path deterministically from the running binary's location so
+// we only ever read the map for THIS exact configuration. Under the JIT
+// (dotnet run) the process path is the shared 'dotnet' host rather than our
+// native binary, so no map is found and the verification is skipped - this avoids
+// reading a stale map left over from a previous publish (possibly built with a
+// different feature-switch value).
 var exePath = Environment.ProcessPath;
 if (exePath is not null)
 {
     var exeDir = Path.GetDirectoryName(exePath)!;
     var exeName = Path.GetFileNameWithoutExtension(exePath);
 
-    // Map file is in obj/<Config>/<TFM>/<RID>/native/<ExeName>.map.xml
-    // But at runtime we only have the publish dir. Check if it was copied or
-    // look in the well-known obj path relative to the project directory.
-    // For simplicity, search upward from exe for the map file.
-    var mapFile = Path.Combine(exeDir, $"{exeName}.map.xml");
+    // Candidate 1: alongside the binary, in case it is ever copied there.
+    var beside = Path.Combine(exeDir, $"{exeName}.map.xml");
 
-    // If not next to the binary, try the obj path (when running from the project dir)
-    if (!File.Exists(mapFile))
+    // Candidate 2: the well-known obj/native path derived from the publish layout.
+    // exeDir is expected to be <proj>/bin/<Config>/<TFM>/<RID>/publish.
+    string? derived = null;
+    if (Path.GetDirectoryName(exeDir) is { } ridDir)
     {
-        // Try to find it via the well-known native output path pattern
-        var projectDir = FindProjectDir(exeDir);
-        if (projectDir is not null)
-        {
-            try
-            {
-                var candidates = new DirectoryInfo(projectDir)
-                    .EnumerateFiles($"{exeName}.map.xml", new EnumerationOptions
-                    {
-                        RecurseSubdirectories = true,
-                        IgnoreInaccessible = true
-                    });
-                var first = candidates.FirstOrDefault();
-                if (first is not null)
-                {
-                    mapFile = first.FullName;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  Warning: Could not search for map file: {ex.Message}");
-            }
-        }
+        var sep = Path.DirectorySeparatorChar;
+        derived = Path.Combine(ridDir, "native", $"{exeName}.map.xml")
+            .Replace($"{sep}bin{sep}", $"{sep}obj{sep}");
     }
 
-    if (File.Exists(mapFile))
+    string? mapFile =
+        File.Exists(beside) ? beside :
+        derived is not null && File.Exists(derived) ? derived :
+        null;
+
+    if (mapFile is not null)
     {
         // Stream the file line-by-line to avoid loading a potentially huge ILC map
         // file entirely into memory.
@@ -170,25 +204,10 @@ if (exePath is not null)
     }
     else
     {
-        Console.WriteLine($"  Map file not found (expected after 'dotnet publish').");
-        Console.WriteLine("  Skipping trimming verification.");
+        Console.WriteLine("  Skipped (no map file for this build; it is generated only by a Native AOT 'dotnet publish').");
     }
 }
 
 Console.WriteLine();
 Console.WriteLine("All AOT compatibility checks passed.");
 return 0;
-
-static string? FindProjectDir(string startDir)
-{
-    var dir = startDir;
-    while (dir is not null)
-    {
-        if (Directory.GetFiles(dir, "*.csproj").Length > 0)
-        {
-            return dir;
-        }
-        dir = Path.GetDirectoryName(dir);
-    }
-    return null;
-}

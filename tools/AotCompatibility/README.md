@@ -14,6 +14,32 @@ disabled via the feature switch.
    and `GetProvider()` work correctly at runtime in an AOT context.
 4. **SqlConnection construction** — Basic `SqlConnection` object creation works
    without reflection.
+5. **Fed-auth path is rooted** — The app attempts to open an Active Directory
+   authenticated connection (expected to fail at runtime, since no server is
+   present). This makes the reflection-based discovery path *statically
+   reachable* for the trimmer, so the trimming verification below is meaningful.
+
+> ### Why the Active Directory open attempt matters
+>
+> The reflection-based discovery in `LoadAzureExtensionProvider()` is only
+> reachable through `AuthenticationBootstrapper.Bootstrap()`, which the driver
+> calls lazily the first time a federated/Active Directory connection
+> authenticates:
+>
+> ```text
+> SqlConnection.Open()
+>   -> SqlInternalConnectionTds.GetFedAuthToken()
+>     -> AuthenticationBootstrapper.Bootstrap()
+>       -> AuthenticationBootstrapper ctor
+>         -> LoadAzureExtensionProvider()   // reflection-based discovery
+> ```
+>
+> If the app never roots this call graph (e.g. it only *constructs* a
+> `SqlConnection`), the entire bootstrapper path is unreachable and the trimmer
+> removes `LoadAzureExtensionProvider()` **regardless of the feature switch** —
+> which would make the switch verification a false positive. The app therefore
+> issues an Active Directory `Open()` attempt purely to root the path; trimming
+> is a static analysis, so the runtime connection failure is irrelevant.
 
 ## Usage
 
@@ -46,10 +72,20 @@ dotnet publish -c Release -f net9.0 -r linux-x64 -p:EnableReflectionBasedAuthPro
 
 When `EnableReflectionBasedAuthProviderDiscovery=true`, the trimmer cannot
 eliminate the reflection code in `LoadAzureExtensionProvider()`, so you will see
-additional IL2075/IL2026 warnings from that method. This confirms the feature
-switch is working — setting it to `false` (the test app's default, configured in
-the csproj) removes those warnings. Note that the *library's* default is `true`
-(reflection enabled); the test app overrides this to validate AOT trimming.
+two additional warnings rooted at the `AuthenticationBootstrapper` constructor
+(which calls that method):
+
+- **IL2026** (trim analysis) — `LoadAzureExtensionProvider()` is annotated with
+  `[RequiresUnreferencedCode]` because Azure extension discovery uses
+  `Assembly.Load` and `Activator.CreateInstance`.
+- **IL3050** (AOT analysis) — the same method is annotated with
+  `[RequiresDynamicCode]` because it uses `Activator.CreateInstance`.
+
+This confirms the feature switch is working — setting it to `false` (the test
+app's default, configured in the csproj) substitutes the guard with a constant
+and removes both warnings along with the method itself. Note that the
+*library's* default is `true` (reflection enabled); the test app overrides this
+to validate AOT trimming.
 
 ## Expected output
 
@@ -70,8 +106,28 @@ SqlAuthenticationProvider API checks:
 SqlConnection construction:
   Created successfully (State=Closed)
 
+Active Directory connection open (roots the fed-auth path):
+  Open failed as expected: SqlException
+
+Trimming verification (ILC map file):
+  Map file: <obj>/.../native/AotCompatibility.map.xml
+  Contains LoadAzureExtensionProvider: False
+  PASS: Reflection code was successfully trimmed.
+
 All AOT compatibility checks passed.
 ```
+
+When published with `EnableReflectionBasedAuthProviderDiscovery=true`, the
+trimming verification instead reports:
+
+```text
+  Contains LoadAzureExtensionProvider: True
+  PASS: Reflection code is present (as expected with discovery enabled).
+```
+
+> The map-file verification only produces a meaningful result after a Native AOT
+> `dotnet publish` (which generates `AotCompatibility.map.xml`). In JIT
+> (`dotnet run`) mode the map file is absent and that step is skipped.
 
 ## Trimmer warnings
 
