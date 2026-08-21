@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
   </data>
