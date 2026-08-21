@@ -98,10 +98,17 @@ namespace Microsoft.Data.SqlClient
         // model that is unsound in async code, where ConfigureAwait(false) continuations routinely
         // resume on a different thread pool thread.
         //
-        // Collapsing concurrent attestations is preserved by re-checking the session cache after the
-        // gate is taken: the first caller performs the attestation and caches the session, and every
-        // caller queued behind it observes that session and returns without contacting the
-        // attestation service.
+        // Calls to the attestation service are still collapsed: the gate is re-checked against the
+        // session cache after it is taken, so the first caller performs the attestation and caches the
+        // session, and every caller queued behind it observes that session and returns without
+        // contacting the attestation service.
+        //
+        // Unlike the synchronous path, the work *before* the attestation is no longer collapsed.
+        // Because this gate is not held across GetEnclaveSessionAsync, concurrent cold-start callers
+        // each generate a Diffie-Hellman key in GetAttestationParametersAsync and each receive enclave
+        // attestation info from the server; only the attestation service call itself is shared. This
+        // is a deliberate trade: it buys an ownership model that is sound under ConfigureAwait(false)
+        // at the cost of some redundant per-caller work during a cold start.
         private static readonly SemaphoreSlim s_asyncAttestationGate = new SemaphoreSlim(1, 1);
 
         // It is used to save the attestation url and nonce value across API calls
@@ -243,48 +250,91 @@ namespace Microsoft.Data.SqlClient
             return Task.FromResult((sqlEnclaveSession, counter, customData, customDataLength));
         }
 
-        // Takes the async attestation gate, returning a lease that releases it when disposed.
+        // Indicates whether this provider's attestation protocol uses a client-generated nonce.
+        // Mirrors the value each provider passes to GetEnclaveSessionHelper on the synchronous path.
+        protected abstract bool GeneratesNonceForAttestation { get; }
+
+        // Looks up an existing enclave session in the session cache.
         //
-        // Callers are expected to use the lease with a 'using' statement so that the gate is released
-        // on every exit path, including failures and cancellation:
-        //
-        //     using (await AcquireAsyncAttestationGateAsync(cancellationToken).ConfigureAwait(false))
-        //     {
-        //         // re-check the session cache, then attest
-        //     }
-        //
-        // If the gate cannot be taken within the lock timeout the returned lease is empty and the
-        // caller proceeds with its own attestation. This mirrors the synchronous design's deliberate
-        // choice to favour progress over strict collapsing when the gate holder is unusually slow.
-        protected static async Task<AsyncAttestationGateLease> AcquireAsyncAttestationGateAsync(CancellationToken cancellationToken)
+        // This member is sealed because the inherited default would call the *synchronous*
+        // GetEnclaveSession, which takes the synchronous attestation gate and relies on a later
+        // synchronous CreateEnclaveSession to release it. An async caller never makes that call, so the
+        // sync gate would be held until its timeout expired and would stall unrelated sync callers.
+        // Routing through GetEnclaveSessionHelperAsync keeps async callers off the sync gate entirely.
+        internal sealed override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionAsync(
+            EnclaveSessionParameters enclaveSessionParameters,
+            bool generateCustomData,
+            bool isRetry,
+            CancellationToken cancellationToken = default)
         {
-            bool acquired = await s_asyncAttestationGate
+            return GetEnclaveSessionHelperAsync(
+                enclaveSessionParameters,
+                GeneratesNonceForAttestation && generateCustomData,
+                isRetry,
+                cancellationToken);
+        }
+
+        // Creates a new enclave session, serializing concurrent attestations behind the async gate.
+        //
+        // This member is sealed so that the gate protocol lives in exactly one place and cannot be
+        // bypassed (or leaked) by a derived provider. Providers supply only the protocol-specific
+        // attestation logic by overriding CreateEnclaveSessionCoreAsync; acquiring the gate,
+        // re-checking the session cache once it is held, and releasing the gate on every exit path
+        // are all handled here.
+        internal sealed override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
+            byte[] enclaveAttestationInfo,
+            ECDiffieHellman clientDiffieHellmanKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            // If the gate cannot be taken within the lock timeout we proceed with our own attestation
+            // rather than failing. This mirrors the synchronous design's deliberate choice to favour
+            // progress over strict collapsing when the gate holder is unusually slow.
+            bool gateAcquired = await s_asyncAttestationGate
                 .WaitAsync(LockTimeoutMaxInMilliseconds, cancellationToken)
                 .ConfigureAwait(false);
 
-            return new AsyncAttestationGateLease(acquired);
-        }
-
-        // Represents ownership of the async attestation gate. Disposal releases the gate only when it
-        // was actually taken, so a 'using' statement is safe even when the wait timed out. The lease
-        // must be disposed exactly once, which 'using' guarantees.
-        protected readonly struct AsyncAttestationGateLease : IDisposable
-        {
-            private readonly bool _acquired;
-
-            internal AsyncAttestationGateLease(bool acquired)
+            try
             {
-                _acquired = acquired;
+                // Another caller may have completed the attestation while we waited for the gate.
+                SqlEnclaveSession sqlEnclaveSession = SessionCache.GetEnclaveSession(enclaveSessionParameters, out long counter);
+                if (sqlEnclaveSession != null)
+                {
+                    return (sqlEnclaveSession, counter);
+                }
+
+                return await CreateEnclaveSessionCoreAsync(
+                    enclaveAttestationInfo,
+                    clientDiffieHellmanKey,
+                    enclaveSessionParameters,
+                    customData,
+                    customDataLength,
+                    cancellationToken).ConfigureAwait(false);
             }
-
-            public void Dispose()
+            finally
             {
-                if (_acquired)
+                if (gateAcquired)
                 {
                     s_asyncAttestationGate.Release();
                 }
             }
         }
+
+        // Performs the provider-specific enclave attestation and adds the resulting session to the
+        // session cache. Asynchronous counterpart of the body of CreateEnclaveSession.
+        //
+        // Called by CreateEnclaveSessionAsync with the async attestation gate already held and the
+        // session cache already re-checked, so implementations only need to attest and cache. They
+        // must not take the gate themselves.
+        protected abstract Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionCoreAsync(
+            byte[] enclaveAttestationInfo,
+            ECDiffieHellman clientDiffieHellmanKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken);
 
         // Reset the session lock status
         protected void UpdateEnclaveSessionLockStatus(SqlEnclaveSession sqlEnclaveSession)

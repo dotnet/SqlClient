@@ -12,7 +12,10 @@
           Attestation is a three-call sequence: <c>GetEnclaveSession</c>, <c>GetAttestationParameters</c>, then <c>CreateEnclaveSession</c>. On the synchronous path, the first call may take an attestation gate that is only released by the matching <c>CreateEnclaveSession</c> call, so the synchronous members of a single attestation sequence must all be invoked on the same thread.
         </para>
         <para>
-          The asynchronous members carry no such requirement. Their attestation gate is taken and released entirely within <c>CreateEnclaveSessionAsync</c>, so no state is held between calls and continuations may resume on any thread. Concurrent cold starts are still collapsed into a single attestation because <c>CreateEnclaveSessionAsync</c> re-checks the session cache after taking the gate.
+          The asynchronous members carry no such requirement. Their attestation gate is taken and released entirely within <c>CreateEnclaveSessionAsync</c>, so no state is held between calls and continuations may resume on any thread.
+        </para>
+        <para>
+          Because that gate is not held across <c>GetEnclaveSessionAsync</c>, concurrent cold-start callers are collapsed later than on the synchronous path. Each caller generates its own attestation parameters and receives its own enclave attestation info from the server; they converge at <c>CreateEnclaveSessionAsync</c>, which re-checks the session cache once it holds the gate, so only one call to the attestation service is made. This trades a little redundant per-caller work for an ownership model that is sound when continuations resume on arbitrary threads.
         </para>
         <para>
           Callers must not mix the synchronous and asynchronous members within a single attestation sequence, because the two paths use independent gates.

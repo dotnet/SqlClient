@@ -132,115 +132,51 @@ namespace Microsoft.Data.SqlClient
             InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
         }
 
-        // Asynchronous counterpart of GetEnclaveSession. Uses the async attestation gate so that
-        // callers never block a thread pool thread waiting for an in-flight attestation.
-        internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionAsync(
-            EnclaveSessionParameters enclaveSessionParameters,
-            bool generateCustomData,
-            bool isRetry,
-            CancellationToken cancellationToken = default)
-        {
-            return GetEnclaveSessionHelperAsync(enclaveSessionParameters, generateCustomData, isRetry, cancellationToken);
-        }
-
-        // Asynchronous counterpart of GetAttestationParameters. This operation is CPU bound (key
-        // generation and buffer marshalling), so it completes synchronously.
-        internal override Task<SqlEnclaveAttestationParameters> GetAttestationParametersAsync(
-            string attestationUrl,
-            byte[] customData,
-            int customDataLength,
-            CancellationToken cancellationToken = default)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return Task.FromCanceled<SqlEnclaveAttestationParameters>(cancellationToken);
-            }
-
-            try
-            {
-                return Task.FromResult(GetAttestationParameters(attestationUrl, customData, customDataLength));
-            }
-            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
-            {
-                return Task.FromException<SqlEnclaveAttestationParameters>(e);
-            }
-        }
+        // The Azure Attestation protocol uses a client-generated nonce to prevent token replay.
+        protected override bool GeneratesNonceForAttestation => true;
 
         // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
         // trip (OpenID Connect metadata download) asynchronously.
         //
-        // The async attestation gate is taken for the duration of this method only, so it is released
-        // on every exit path — success, failure and cancellation alike — without depending on which
-        // thread a continuation resumes on.
-        internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
+        // The async attestation gate is taken and released by the sealed CreateEnclaveSessionAsync in
+        // EnclaveProviderBase, which also re-checks the session cache before calling this method.
+        protected override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionCoreAsync(
             byte[] attestationInfo,
             ECDiffieHellman clientDHKey,
             EnclaveSessionParameters enclaveSessionParameters,
             byte[] customData,
             int customDataLength,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken)
         {
-            using (await AcquireAsyncAttestationGateAsync(cancellationToken).ConfigureAwait(false))
+            if (string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) || customData == null || customDataLength <= 0)
             {
-                // Another caller may have completed the attestation while we waited for the gate.
-                SqlEnclaveSession sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out long counter);
-                if (sqlEnclaveSession != null)
-                {
-                    return (sqlEnclaveSession, counter);
-                }
-
-                if (string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) || customData == null || customDataLength <= 0)
-                {
-                    throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
-                }
-
-                byte[] nonce = customData;
-
-                IdentityModelEventSource.ShowPII = true;
-
-                // Deserialize the payload
-                AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
-
-                // Validate the attestation info
-                await VerifyAzureAttestationInfoAsync(
-                    enclaveSessionParameters.AttestationUrl,
-                    attestInfo.EnclaveType,
-                    attestInfo.AttestationToken.AttestationToken,
-                    attestInfo.Identity,
-                    nonce,
-                    cancellationToken).ConfigureAwait(false);
-
-                // Set up shared secret and validate signature
-                byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
-
-                // add session to cache
-                sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out counter);
-
-                return (sqlEnclaveSession, counter);
-            }
-        }
-
-        // Asynchronous counterpart of InvalidateEnclaveSession. Session eviction is an in-memory
-        // cache operation, so it completes synchronously.
-        internal override Task InvalidateEnclaveSessionAsync(
-            EnclaveSessionParameters enclaveSessionParameters,
-            SqlEnclaveSession enclaveSessionToInvalidate,
-            CancellationToken cancellationToken = default)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return Task.FromCanceled(cancellationToken);
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
             }
 
-            try
-            {
-                InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
-                return Task.CompletedTask;
-            }
-            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
-            {
-                return Task.FromException(e);
-            }
+            byte[] nonce = customData;
+
+            IdentityModelEventSource.ShowPII = true;
+
+            // Deserialize the payload
+            AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
+
+            // Validate the attestation info
+            await VerifyAzureAttestationInfoAsync(
+                enclaveSessionParameters.AttestationUrl,
+                attestInfo.EnclaveType,
+                attestInfo.AttestationToken.AttestationToken,
+                attestInfo.Identity,
+                nonce,
+                cancellationToken).ConfigureAwait(false);
+
+            // Set up shared secret and validate signature
+            byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
+
+            // add session to cache
+            SqlEnclaveSession sqlEnclaveSession =
+                AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out long counter);
+
+            return (sqlEnclaveSession, counter);
         }
         #endregion
 

@@ -213,14 +213,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task CreateEnclaveSessionAsync_WhenAttestationFails_ReleasesTheAsyncGate()
         {
-            FakeAttestationEnclaveProvider failing =
-                new FakeAttestationEnclaveProvider(TimeSpan.Zero, failAttestation: true);
+            // The same provider instance is reused for both attestations so that this test keeps its
+            // coverage if the gate ever stops being static.
+            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
 
+            provider.FailNextAttestation = true;
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => AttestAsync(failing, NewSessionParameters()));
+                () => AttestAsync(provider, NewSessionParameters()));
 
             // A subsequent, unrelated attestation must not wait on the abandoned gate.
-            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
             SqlEnclaveSession next = await AttestAsync(provider, NewSessionParameters());
             stopwatch.Stop();
@@ -229,6 +230,45 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(
                 stopwatch.Elapsed < TimeSpan.FromSeconds(5),
                 $"Attestation took {stopwatch.Elapsed}, which suggests the async gate was not released on failure.");
+        }
+
+        /// <summary>
+        /// Verifies that an abandoned async session lookup does not hold the synchronous attestation
+        /// gate.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="EnclaveProviderBase"/> seals <c>GetEnclaveSessionAsync</c> precisely to prevent
+        /// this: the inherited default would call the synchronous <c>GetEnclaveSession</c>, which takes
+        /// the sync gate and expects a later synchronous <c>CreateEnclaveSession</c> to release it. An
+        /// async caller never makes that call, so a provider that failed to override the member would
+        /// strand the sync gate and stall unrelated synchronous callers for the full lock timeout.
+        /// </remarks>
+        [Fact]
+        public async Task GetEnclaveSessionAsync_WhenAbandoned_DoesNotHoldTheSyncGate()
+        {
+            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
+
+            // Probe for a session that does not exist, then abandon the sequence without creating one.
+            (SqlEnclaveSession session, _, _, _) = await Task.Run(
+                () => provider.GetEnclaveSessionAsync(NewSessionParameters(), generateCustomData: true, isRetry: false));
+            Assert.Null(session);
+
+            // The synchronous attestation must run on a different thread than the abandoned probe:
+            // GetEnclaveSessionHelper short-circuits the gate wait for a thread that is already
+            // mid-attestation, which would mask a stranded gate if both ran on the same thread. A
+            // dedicated thread is used rather than the thread pool, which may hand back the same thread.
+            SqlEnclaveSession next = null;
+            Thread syncCaller = new Thread(() => next = Attest(provider, NewSessionParameters()));
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            syncCaller.Start();
+            syncCaller.Join();
+            stopwatch.Stop();
+
+            Assert.NotNull(next);
+            Assert.True(
+                stopwatch.Elapsed < TimeSpan.FromSeconds(5),
+                $"Sync attestation took {stopwatch.Elapsed}, which suggests the async path took the sync gate.");
         }
 
         #endregion
@@ -283,15 +323,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.Equal(1, provider.AttestationCount);
             Assert.All(sessions, session => Assert.Equal(sessions[0].SessionId, session.SessionId));
 
+            // The gate is not held across GetEnclaveSessionAsync, so the work before the attestation is
+            // deliberately not collapsed: each cold-start caller generates its own attestation
+            // parameters. Only the attestation service call itself is shared.
+            Assert.Equal(sessions.Length, provider.AttestationParametersCount);
+
             // The gate must still be usable for a subsequent, unrelated attestation.
             SqlEnclaveSession next = await AttestAsync(provider, NewSessionParameters());
             Assert.NotNull(next);
         }
 
         /// <summary>
-        /// Verifies that sync and async callers can attest concurrently. The two paths use independent
-        /// gates, so neither may block or starve the other.
+        /// Verifies that sync and async callers can attest concurrently and that every caller ends up
+        /// with a usable session.
         /// </summary>
+        /// <remarks>
+        /// The two paths use independent gates, so neither blocks or starves the other, but they do not
+        /// collapse against each other: a sync and an async cold start that race can both attest. That
+        /// is deliberate and safe. It matches the tolerance the sync design already has (when its lock
+        /// timeout expires, n threads perform n attestations), and it is idempotent because
+        /// <c>EnclaveSessionCache.CreateSession</c> writes under a lock and every session created for the
+        /// same parameters is equally valid. The invariant that matters, and the one asserted here, is
+        /// that no caller is starved or returns without a session; the cache converging on a single
+        /// entry afterwards is asserted separately.
+        /// </remarks>
         [Fact]
         public async Task Attestation_MixedSyncAndAsyncCallers_AllObtainSessions()
         {
@@ -308,6 +363,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             SqlEnclaveSession[] sessions = await Task.WhenAll(tasks);
 
             Assert.All(sessions, session => Assert.NotNull(session));
+
+            // Whichever callers raced, the cache converges on exactly one session, and every later
+            // caller — sync or async — observes that same session without re-attesting.
+            int attestationsBefore = provider.AttestationCount;
+
+            SqlEnclaveSession cachedAsync = await AttestAsync(provider, parameters);
+            SqlEnclaveSession cachedSync = Attest(provider, parameters);
+
+            Assert.Equal(cachedAsync.SessionId, cachedSync.SessionId);
+            Assert.Equal(attestationsBefore, provider.AttestationCount);
         }
 
         #endregion
@@ -376,14 +441,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         #region Helpers
 
         /// <summary>
-        /// Drives the async GetEnclaveSession -> CreateEnclaveSession attestation sequence.
+        /// Drives the full async attestation sequence the driver uses:
+        /// GetEnclaveSessionAsync -> GetAttestationParametersAsync -> CreateEnclaveSessionAsync.
         /// </summary>
         private static async Task<SqlEnclaveSession> AttestAsync(
             SqlColumnEncryptionEnclaveProvider provider,
-            EnclaveSessionParameters parameters)
+            EnclaveSessionParameters parameters,
+            CancellationToken cancellationToken = default)
         {
             (SqlEnclaveSession session, _, byte[] customData, int customDataLength) =
-                await provider.GetEnclaveSessionAsync(parameters, generateCustomData: true, isRetry: false)
+                await provider.GetEnclaveSessionAsync(parameters, generateCustomData: true, isRetry: false, cancellationToken)
                     .ConfigureAwait(false);
 
             if (session != null)
@@ -391,15 +458,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 return session;
             }
 
+            // Call 2 generates the client Diffie-Hellman key that call 3 consumes.
+            SqlEnclaveAttestationParameters attestationParameters = await provider
+                .GetAttestationParametersAsync(parameters.AttestationUrl, customData, customDataLength, cancellationToken)
+                .ConfigureAwait(false);
+
             (SqlEnclaveSession created, _) = await provider
-                .CreateEnclaveSessionAsync(Array.Empty<byte>(), null, parameters, customData, customDataLength)
+                .CreateEnclaveSessionAsync(
+                    Array.Empty<byte>(),
+                    attestationParameters.ClientDiffieHellmanKey,
+                    parameters,
+                    customData,
+                    customDataLength,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return created;
         }
 
         /// <summary>
-        /// Drives the sync GetEnclaveSession -> CreateEnclaveSession attestation sequence.
+        /// Drives the full sync attestation sequence the driver uses:
+        /// GetEnclaveSession -> GetAttestationParameters -> CreateEnclaveSession.
         /// </summary>
         private static SqlEnclaveSession Attest(
             SqlColumnEncryptionEnclaveProvider provider,
@@ -419,9 +498,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 return session;
             }
 
+            // Call 2 generates the client Diffie-Hellman key that call 3 consumes.
+            SqlEnclaveAttestationParameters attestationParameters =
+                provider.GetAttestationParameters(parameters.AttestationUrl, customData, customDataLength);
+
             provider.CreateEnclaveSession(
                 Array.Empty<byte>(),
-                null,
+                attestationParameters.ClientDiffieHellmanKey,
                 parameters,
                 customData,
                 customDataLength,
@@ -549,17 +632,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             private readonly TimeSpan _attestationDelay;
 
-            private readonly bool _failAttestation;
-
             private int _attestationCount;
 
-            internal FakeAttestationEnclaveProvider(TimeSpan attestationDelay, bool failAttestation = false)
+            private int _attestationParametersCount;
+
+            internal FakeAttestationEnclaveProvider(TimeSpan attestationDelay)
             {
                 _attestationDelay = attestationDelay;
-                _failAttestation = failAttestation;
             }
 
+            /// <summary>
+            /// When set, the next attestation throws and the flag is cleared, so a single provider
+            /// instance can be used to exercise both a failed and a subsequent successful attestation.
+            /// </summary>
+            internal bool FailNextAttestation { get; set; }
+
+            protected override bool GeneratesNonceForAttestation => true;
+
             internal int AttestationCount => Volatile.Read(ref _attestationCount);
+
+            /// <summary>
+            /// How many times attestation parameters (including the client Diffie-Hellman key) were
+            /// generated. Unlike <see cref="AttestationCount"/>, this step sits outside the async gate,
+            /// so it runs once per cold-start caller.
+            /// </summary>
+            internal int AttestationParametersCount => Volatile.Read(ref _attestationParametersCount);
 
             internal override void GetEnclaveSession(
                 EnclaveSessionParameters enclaveSessionParameters,
@@ -585,6 +682,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 byte[] customData,
                 int customDataLength)
             {
+                Interlocked.Increment(ref _attestationParametersCount);
                 return new SqlEnclaveAttestationParameters(
                     protocol: 1,
                     input: Array.Empty<byte>(),
@@ -630,45 +728,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSession);
             }
 
-            internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)> GetEnclaveSessionAsync(
-                EnclaveSessionParameters enclaveSessionParameters,
-                bool generateCustomData,
-                bool isRetry,
-                CancellationToken cancellationToken = default)
-            {
-                return GetEnclaveSessionHelperAsync(enclaveSessionParameters, generateCustomData, isRetry, cancellationToken);
-            }
-
-            internal override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
+            protected override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionCoreAsync(
                 byte[] enclaveAttestationInfo,
                 ECDiffieHellman clientDiffieHellmanKey,
                 EnclaveSessionParameters enclaveSessionParameters,
                 byte[] customData,
                 int customDataLength,
-                CancellationToken cancellationToken = default)
+                CancellationToken cancellationToken)
             {
-                using (await AcquireAsyncAttestationGateAsync(cancellationToken).ConfigureAwait(false))
+                Interlocked.Increment(ref _attestationCount);
+                await Task.Delay(_attestationDelay, cancellationToken).ConfigureAwait(false);
+
+                if (FailNextAttestation)
                 {
-                    SqlEnclaveSession sqlEnclaveSession = GetEnclaveSessionFromCache(enclaveSessionParameters, out long counter);
-                    if (sqlEnclaveSession == null)
-                    {
-                        Interlocked.Increment(ref _attestationCount);
-                        await Task.Delay(_attestationDelay, cancellationToken).ConfigureAwait(false);
-
-                        if (_failAttestation)
-                        {
-                            throw new InvalidOperationException("Simulated attestation failure.");
-                        }
-
-                        sqlEnclaveSession = AddEnclaveSessionToCache(
-                            enclaveSessionParameters,
-                            SharedSecret,
-                            Interlocked.Increment(ref s_nextSessionId),
-                            out counter);
-                    }
-
-                    return (sqlEnclaveSession, counter);
+                    FailNextAttestation = false;
+                    throw new InvalidOperationException("Simulated attestation failure.");
                 }
+
+                SqlEnclaveSession sqlEnclaveSession = AddEnclaveSessionToCache(
+                    enclaveSessionParameters,
+                    SharedSecret,
+                    Interlocked.Increment(ref s_nextSessionId),
+                    out long counter);
+
+                return (sqlEnclaveSession, counter);
             }
         }
 
