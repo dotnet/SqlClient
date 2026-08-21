@@ -2,10 +2,24 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <!--
+      The Abstractions project is not built for net462 unless it is built for Windows. Thus, we
+      will not be able to fulfill the Abstractions for net462 reference unless we are building on
+      Windows.
+    -->
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- When a test signing key is provided, sign the test assembly so IVT from signed source works. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
