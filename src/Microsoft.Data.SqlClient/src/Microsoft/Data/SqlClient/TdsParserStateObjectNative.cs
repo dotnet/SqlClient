@@ -9,6 +9,8 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Threading.Tasks;
+using Interop.Windows;
+using Interop.Windows.Crypt32;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
@@ -29,6 +31,13 @@ namespace Microsoft.Data.SqlClient
         private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         private SqlClientCertificateContext _clientCertificateContext = null; // client certificate presented during the TLS handshake, released on dispose
+
+        private SqlClientCertificateDelegate _clientCertificateCallback = null; // rooted so native SNI can call back into managed code
+
+        // An all-zero SHA-1 hash, used to drive native SNI's certificate lookup straight to the
+        // fallback callback. Certificate authentication is only enabled when this identifier is set,
+        // and no certificate can hash to this value, so the store searches always miss.
+        private const string UnmatchableCertificateId = "0000000000000000000000000000000000000000";
 
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
             : base(parser, physicalConnection, async)
@@ -277,6 +286,7 @@ namespace Microsoft.Data.SqlClient
 
             _clientCertificateContext?.Dispose();
             _clientCertificateContext = null;
+            _clientCertificateCallback = null;
         }
 
         protected override void FreeGcHandle(int remaining, bool release)
@@ -468,19 +478,90 @@ namespace Microsoft.Data.SqlClient
                 clientKeyPassword);
             _clientCertificateContext = certificateContext;
 
+            // SNI selects a client certificate by identifier rather than by certificate context: it
+            // searches the LocalMachine and CurrentUser personal stores, and only calls the fallback
+            // callback when neither store holds a match. The configured file is the only authoritative
+            // source for this connection, so pass an identifier that cannot match a stored certificate
+            // and let the callback supply the certificate loaded from disk. Passing the real thumbprint
+            // would instead let a same-thumbprint store entry win, which fails when that entry was
+            // imported without its private key.
+            _clientCertificateCallback = ProvideClientCertificate;
+            authInfo.certId = UnmatchableCertificateId;
+            authInfo.certHash = true;
+            authInfo.clientCertificateCallbackContext = IntPtr.Zero;
+            authInfo.clientCertificateCallback = _clientCertificateCallback;
+
             try
             {
-                // SNI copies the certificate with CertDuplicateCertificateContext while adding the
-                // provider. X509Certificate2.Handle does not keep its certificate alive, so the
-                // managed object must be rooted across the call.
-                authInfo.certContext = certificateContext.Certificate.Handle;
-
                 // Add SSL (Encryption) SNI provider.
                 return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
             }
             finally
             {
+                // The callback runs while the provider is being added, and neither the delegate nor
+                // the certificate is reachable from the marshalled struct once the call returns.
                 GC.KeepAlive(certificateContext);
+                GC.KeepAlive(_clientCertificateCallback);
+            }
+        }
+
+        /// <summary>
+        /// Supplies the certificate loaded from disk when SNI cannot find <paramref name="certId" />
+        /// in the LocalMachine or CurrentUser personal store.
+        /// </summary>
+        /// <param name="callbackContext">Unused; the certificate is held by this state object.</param>
+        /// <param name="certHash">Whether <paramref name="certId" /> is a SHA-1 hash.</param>
+        /// <param name="certId">The certificate identifier that the store lookup failed to resolve.</param>
+        /// <param name="certContext">Receives the certificate context that SNI takes ownership of.</param>
+        /// <param name="keyContainerFlags">Receives zero, because no temporary key container is created.</param>
+        /// <param name="keyContainerLength">The capacity of <paramref name="keyContainer" />.</param>
+        /// <param name="keyContainer">Left empty, because no temporary key container is created.</param>
+        /// <returns>A Windows error code, where zero indicates success.</returns>
+        private uint ProvideClientCertificate(
+            IntPtr callbackContext,
+            bool certHash,
+            string certId,
+            out IntPtr certContext,
+            out uint keyContainerFlags,
+            uint keyContainerLength,
+            IntPtr keyContainer)
+        {
+            certContext = IntPtr.Zero;
+            keyContainerFlags = 0;
+
+            // This runs as a callback from native code, where an escaping exception would tear down
+            // the process instead of failing the connection.
+            try
+            {
+                SqlClientCertificateContext certificateContext = _clientCertificateContext;
+                if (certificateContext is null)
+                {
+                    return SystemErrors.ERROR_FILE_NOT_FOUND;
+                }
+
+                // SNI releases the returned context with CertFreeCertificateContext, so hand it a
+                // duplicate and leave the managed certificate's own handle intact.
+                IntPtr duplicate = Crypt32.CertDuplicateCertificateContext(
+                    certificateContext.Certificate.Handle);
+                GC.KeepAlive(certificateContext);
+
+                if (duplicate == IntPtr.Zero)
+                {
+                    uint error = (uint)Marshal.GetLastWin32Error();
+                    return error == SystemErrors.ERROR_SUCCESS
+                        ? (uint)SystemErrors.ERROR_FILE_NOT_FOUND
+                        : error;
+                }
+
+                certContext = duplicate;
+                return SystemErrors.ERROR_SUCCESS;
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "<sc.TdsParserStateObjectNative.ProvideClientCertificate|ERR> {0}",
+                    e.Message);
+                return SystemErrors.ERROR_FILE_NOT_FOUND;
             }
         }
 

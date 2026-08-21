@@ -90,7 +90,34 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
     [InlineData(1, true)]
     [InlineData(2, false)]
     [InlineData(2, true)]
-    public async Task Open_WithClientCertificate_SendsCertificateAuthenticationHandshake(int encryptionMode, bool async)
+    public Task Open_WithClientCertificate_SendsCertificateAuthenticationHandshake(int encryptionMode, bool async) =>
+        RunCertificateHandshakeAsync(encryptionMode, async, useManagedSni: true);
+
+    /// <summary>
+    /// Verifies the same handshake over native SNI, which selects the certificate by thumbprint and
+    /// falls back to the managed callback because the certificate is not installed in a store. Native
+    /// SNI is only available on Windows, so this runs there alone.
+    /// </summary>
+    /// <param name="encryptionMode">Zero for Optional, one for Mandatory, or two for Strict encryption.</param>
+    /// <param name="async">Whether to open the connection asynchronously.</param>
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(0, true)]
+    [InlineData(1, false)]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    [InlineData(2, true)]
+    public Task Open_WithClientCertificateOverNativeSni_SendsCertificateAuthenticationHandshake(int encryptionMode, bool async)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return Task.CompletedTask;
+        }
+
+        return RunCertificateHandshakeAsync(encryptionMode, async, useManagedSni: false);
+    }
+
+    private async Task RunCertificateHandshakeAsync(int encryptionMode, bool async, bool useManagedSni)
     {
         bool strict = encryptionMode == 2;
         Directory.CreateDirectory(_temporaryDirectory);
@@ -120,7 +147,7 @@ public sealed class ClientCertificateAuthenticationTests : IDisposable
         using LocalAppContextSwitchesHelper switches = new();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            switches.UseManagedNetworking = true;
+            switches.UseManagedNetworking = useManagedSni;
         }
 
         SqlConnectionStringBuilder builder = new()

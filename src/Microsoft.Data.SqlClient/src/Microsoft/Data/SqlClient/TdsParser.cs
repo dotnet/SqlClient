@@ -994,6 +994,15 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
+            if (!string.IsNullOrEmpty(clientCertificate))
+            {
+                // A client certificate produces a connection-specific credential, so the shared
+                // Schannel credential cache cannot be used. Native SNI skips acquiring credentials
+                // altogether when SNI_SSL_USE_SCHANNEL_CACHE is set, which would reuse a cached
+                // credential that carries no certificate and never present one to the server.
+                info &= ~TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
+            }
+
             try
             {
                 error = _physicalStateObj.EnableSsl(
