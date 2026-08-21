@@ -70,7 +70,9 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
-        Assert.True(switchesHelper.EnableReflectionBasedAuthenticationProviderDiscovery);
+        // Asserted directly: this switch is internal, and the helper's property
+        // reflection only resolves public switches.
+        Assert.True(LocalAppContextSwitches.EnableReflectionBasedAuthenticationProviderDiscovery);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
