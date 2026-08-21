@@ -10,8 +10,9 @@ database.
 
 | Path | Purpose |
 | ---- | ------- |
-| `sqlclient-perf-pipeline.yml` | The pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. |
-| `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. |
+| `sqlclient-perf-pipeline.yml` | The main (manual/nightly) pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. Baseline = released NuGet package; ingests into Kusto. |
+| `sqlclient-perf-pr-pipeline.yml` | PR pipeline. Same template, same scripts, same options; baseline = **`main` branch source**; **no Kusto ingestion**. |
+| `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is either a released package (`--baseline-version`) or another git ref's source (`--baseline-source-ref`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
@@ -33,6 +34,7 @@ ON THE VM  ── run-perf-tests.{sh,ps1}
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
+         (PR pipeline: MDS built from the <baselineSourceRef> source tree)
       5. Current  pass  → MDS built from source (ProjectReference)              → results/current/
          (both pinned to PERF_CLIENT_CPUS; interleaved per-unit by default, or two full
           sequential passes when benchmarkRunMode=sequential)
@@ -42,6 +44,7 @@ ON THE AGENT  ── pipeline post-test steps
       • Show the BenchmarkDotNet markdown reports in the log.
       • perf_to_kusto.py → NDJSON for both passes (published as 'perf-kusto-payloads').
       • (optional) AzureCLI@2 + ingest_kusto.py → Kusto database.
+      (both Kusto steps are omitted entirely in the PR pipeline)
 ```
 
 The extends template only exposes **post-test** steps to consumers (no pre-build hook), so **both
@@ -93,18 +96,97 @@ cluster/service connection exist.
 bump the `default` in `sqlclient-perf-pipeline.yml` (e.g. `7.0.2` → the next stable). It can also be
 overridden at queue time without editing the pipeline.
 
+## PR pipeline (`sqlclient-perf-pr-pipeline.yml`)
+
+`sqlclient-perf-pr-pipeline.yml` answers the question a PR author actually has — *does my branch
+regress the branch I am merging into?* — by running the **same** benchmarks, on the **same** extends
+template, through the **same** on-VM scripts, with the **same** configuration options as the main
+pipeline. It differs in exactly two ways:
+
+| | `sqlclient-perf-pipeline.yml` | `sqlclient-perf-pr-pipeline.yml` |
+| --- | --- | --- |
+| Candidate | branch the run is queued on | branch the run is queued on (unchanged) |
+| Baseline | released NuGet package (`baselineVersion`, default `7.0.2`) | **source of another git ref** (`baselineSourceRef`, default `main`) |
+| Kusto | translates + (optionally) ingests | **never** — no ADX variable group, no translate/ingest steps |
+
+Both pipelines are **manual / queue-time only** (`pr: none`, `trigger: none`): a run occupies a
+dedicated host for hours, so a PR opts into it explicitly.
+
+PR-only parameters (everything else is identical to the table above):
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| `baselineSourceRef` | `main` | Git ref of this repo whose **source** is the baseline. Empty = current-only (no baseline pass / comparison). |
+| `baselineRepoUrl` | `https://github.com/dotnet/SqlClient.git` | Fallback remote used to obtain the baseline ref when the VM copy of the checkout cannot fetch it from its own `origin`. |
+| `testTimeoutMinutes` | `210` | Higher than the main pipeline's `180` because **both** sides are built from source. |
+
+### Source baseline (`--baseline-source-ref` / `-BaselineSourceRef`)
+
+The run scripts accept the source baseline as an alternative to `--baseline-version` (the two are
+mutually exclusive and the script fails fast if both are supplied). On the VM the script:
+
+1. Materialises the baseline ref next to the checkout, in `../sqlclient-perf-baseline-src` — outside
+   the checkout so it can never be picked up by the candidate build or the results copy. It first
+   tries the copied checkout's own `origin` (`git fetch --depth 1` into a private
+   `refs/remotes/perfbaseline/*` namespace, then `git worktree add --detach`), and falls back to a
+   shallow `git clone` of `baselineRepoUrl` when the tree arrived without `.git` or `origin` needs
+   credentials. On ADO the origin fetch is *expected* to fail — the checkout is copied to the VM
+   without credentials — so the clone fallback is the normal path there. Every network git call runs
+   non-interactively (`GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed) under a
+   `GIT_NET_TIMEOUT_SECS` timeout (default 300s), and its output is kept in
+   `<results>/diagnostics/git-*.log`, so a missing credential fails in under a second instead of
+   blocking the job on a prompt.
+2. Builds **that ref's own `PerformanceTests` project** as the `baseline` variant, so the driver
+   under measurement is the baseline ref's source via `ProjectReference` — mirroring how the
+   `current` variant is built from this branch. No NuGet baseline config is involved.
+3. Labels the comparison `"<ref>@<short-sha>"` (e.g. `main@a1b2c3d`) so a run states exactly which
+   baseline commit it was measured against, and writes that label to
+   `<results>/baseline-label.txt`. The PR pipeline reads that file after the results are copied
+   back and tags the build `Baseline <ref>@<short-sha>`, so the exact baseline commit is visible in
+   the ADO build list. (The pipeline cannot produce this tag on its own — at compile time it only
+   knows the ref name, which would tag every run identically.)
+
+Because each side builds its own harness, a benchmark added by the PR simply shows up as `new` in
+the comparison (and one removed by the PR as `removed`) instead of failing the run. Both passes
+share the single generated runner config (`RUNNER_CONFIG` / `DATATYPES_CONFIG` env vars), so
+connection string and behaviour flags are identical on both sides.
+
 ## Two-pass build model
 
 The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, selected by MSBuild:
 
 - **Current** (default): `ProjectReference` to the in-repo source — the branch under test.
-- **Baseline**: `ReferenceType=Package` turns the reference into a `PackageReference`. Because the
+- **Baseline (package)**: `ReferenceType=Package` turns the reference into a `PackageReference`. Because the
   repo uses **Central Package Management (CPM)**, the version is pinned with `VersionOverride` via
   `-p:MdsPackageVersion=<version>` (a plain `Version` is ignored under CPM).
+- **Baseline (source)**: no reference switching at all — the baseline ref's own copy of the perf
+  project is built from `../sqlclient-perf-baseline-src`, keeping its default `ProjectReference` to
+  that ref's driver source. Used by the PR pipeline.
 
 The VM's `NuGet.config` exposes only the governed feed, and CPM rejects multiple unmapped sources
 (`NU1507`). The baseline pass therefore restores through a **dedicated single-source config**
 (`perf-baseline-nuget.config`, generated at runtime) pointing only at `https://api.nuget.org/v3/index.json`.
+
+### Benchmarks must compile against the oldest baseline
+
+The baseline pass compiles the **same** `PerformanceTests` sources against the *released* MDS
+package, so a benchmark that calls an API introduced after `baselineVersion` fails that pass with
+`CS1061`. The project defines cumulative `MDS_GE_<major>` constants from `MdsPackageVersion` (see
+`Microsoft.Data.SqlClient.PerformanceTests.csproj`); guard such calls and provide an older
+fallback:
+
+```csharp
+#if MDS_GE_6
+    _ = reader.GetSqlJson(0).Value;   // GetSqlJson was added in MDS 6.0
+#else
+    _ = reader.GetString(0);
+#endif
+```
+
+Project mode, Package mode with no pinned version, and unparsable version strings define every
+constant, since those builds reference a current MDS. Note that a fallback makes the baseline
+measure a **different code path** than the current pass — the affected benchmark's delta is not
+meaningful, so the runner should say so loudly at setup (see `JsonVsVarcharReadRunner`).
 
 ## Comparison output
 
@@ -172,6 +254,9 @@ Two tables:
   `DriverName|CommitHash|PipelineRunId`), driver/machine/agent, `OperatingSystem` (`Windows`/`Linux`),
   `Architecture` (`x64`/`x86`), `RunType` (`Sequential`/`Interweaved`), pipeline id + build URL,
   branch + `BranchCategory`, `VersionString`, commit hash/date, `IsComparableBase`, `IngestedAt`.
+  `BranchCategory` buckets the ref as `main`, `release`, `dev`, `feature`, `pull_request` or
+  `other`. The internal ADO mirror's `internal/` prefix is stripped first, so `internal/main` and
+  `internal/release/*` land in the same buckets as their public counterparts.
 - **`PerfBenchmarkResult`** — one row per benchmark: `BenchmarkId` (PK =
   `DerivedRunId|BenchmarkName|MethodName|ParameterSignature`), timings in **milliseconds**
   (BenchmarkDotNet reports nanoseconds; values are divided by 1,000,000), percentiles, throughput,
@@ -228,13 +313,26 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
    `perf-kusto-payloads` artifacts. When a baseline pass ran, the build is tagged
    **`Baseline <version>`** so the baseline used is visible at a glance in the ADO build list.
 
+### Running the PR pipeline
+
+1. Open the **PR** performance test pipeline (`sqlclient-perf-pr-pipeline.yml`) in Azure DevOps and
+   select **Run pipeline**.
+2. Choose the PR's branch to benchmark. Leave `baselineSourceRef` at `main` unless the PR targets a
+   different branch (e.g. a release branch). No Kusto configuration is involved — PR results are
+   never ingested.
+3. After the run, review the **run summary** (comparison, labelled `<ref>@<short-sha>`) and the
+   `perf-results` artifact. The build is tagged **`Baseline <ref>`**.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |
 | ------- | ------------------ |
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
-| No comparison / summary | The baseline pass was skipped (empty `baselineVersion`) or one pass produced no `*-report-full.json`. |
+| Baseline pass fails to compile: `CS1061 ... does not contain a definition for <member>` | A benchmark calls an MDS API newer than `baselineVersion`. Guard it with the `MDS_GE_<major>` constants and add an older fallback — see [Benchmarks must compile against the oldest baseline](#benchmarks-must-compile-against-the-oldest-baseline). |
+| No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
+| Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). The reason git gave is echoed into the build log and saved to `<results>/diagnostics/git-*.log`. |
+| `Fetching baseline ref ... from the checkout's origin` is the last line, then the job stalls | Should no longer happen. The checkout is copied to the VM without credentials (ADO's checkout task defaults to `persistCredentials: false`), so a fetch from an authenticated `origin` used to sit on a `Username for ...` prompt forever. All network git calls now run with `GIT_TERMINAL_PROMPT=0`, no credential helper, stdin closed, and a `GIT_NET_TIMEOUT_SECS` (default 300s) hard timeout, so this fails in under a second and falls back to cloning `baselineRepoUrl`. A fetch failure here is expected and harmless on ADO. |
 | Ingestion step skipped | `enableKustoIngestion` is `false`, or `KustoClusterUri`, `KustoDatabase` or `KustoServiceConnection` (from `ADX Cluster Variables`) is empty (expected until the cluster is provisioned). |
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |

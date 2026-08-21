@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Полученный с SQL Server отчет анклава имеет неправильный формат. Обратитесь в службу поддержки пользователей.</value>
   </data>
@@ -2158,7 +2161,7 @@
     <value>Не удалось найти пустой слот в пуле подключений.</value>
   </data>
   <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
-    <value>Could not replace the connection because it is no longer in the connection pool.</value>
+    <value>Не удалось заменить соединение, поскольку оно больше не находится в пуле соединений.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Пул подключений отключен.</value>

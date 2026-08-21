@@ -13,6 +13,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -888,37 +889,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Not Implemented Method Tests
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.PutObjectFromTransactedPool"/> remains
-        /// unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestPutObjectFromTransactedPool()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.TransactionEnded(System.Transactions.Transaction, Microsoft.Data.ProviderBase.DbConnectionInternal)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestTransactionEnded()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
-        }
-        #endregion
-
         #region Pool Clear Tests
 
         /// <summary>
@@ -1396,6 +1366,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
+            internal SuccessfulSqlConnectionFactory()
+            {
+            }
+
+            /// <summary>
+            /// Constructs a factory reporting to <paramref name="metrics"/> instead of the
+            /// process-wide default, so a test can assert exact counters on the same instance
+            /// used by the pool under test.
+            /// </summary>
+            internal SuccessfulSqlConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
             /// <summary>
             /// Gets the last timeout budget passed through by the pool to the factory.
             /// </summary>
@@ -1414,7 +1398,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
-                return new StubDbConnectionInternal();
+                return new StubDbConnectionInternal(Metrics);
             }
         }
 
@@ -1446,6 +1430,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
+            internal StubDbConnectionInternal(ISqlClientMetrics? metrics = null)
+                : base(metrics)
+            {
+            }
+
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
 
@@ -1458,12 +1447,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             public override void EnlistTransaction(Transaction transaction)
             {
-                return;
+                if (transaction != null)
+                {
+                    EnlistedTransaction = transaction;
+                }
             }
 
             protected override void Activate(Transaction transaction)
             {
-                return;
+                EnlistedTransaction = transaction;
             }
 
             protected override void Deactivate()
