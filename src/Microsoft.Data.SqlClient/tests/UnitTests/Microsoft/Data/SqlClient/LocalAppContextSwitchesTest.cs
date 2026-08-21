@@ -44,6 +44,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseConnectionPoolV2 = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
+        switchesHelper.EnableReflectionBasedAuthenticationProviderDiscovery = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -69,6 +70,9 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        // Asserted directly: this switch is internal, and the helper's property
+        // reflection only resolves public switches.
+        Assert.True(LocalAppContextSwitches.EnableReflectionBasedAuthenticationProviderDiscovery);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
