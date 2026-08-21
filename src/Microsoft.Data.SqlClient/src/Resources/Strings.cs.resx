@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Ověření podpisu sestavy enklávy se nezdařilo. Podpis sestavy neodpovídá podpisu vypočítanému pomocí kořenového certifikátu HGS. Ověřte mapování DNS pro koncový bod. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud je to správně, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Sestava enklávy přijatá z SQL Server nemá správný formát. Obraťte se na služby zákaznické podpory.</value>
   </data>

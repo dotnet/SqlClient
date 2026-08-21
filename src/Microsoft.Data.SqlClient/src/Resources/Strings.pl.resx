@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Weryfikacja podpisu w raporcie enklawy zakończyła się niepowodzeniem. Podpis raportu jest niezgodny z podpisem obliczonym przy użyciu certyfikatu głównego usługi Ochrona hosta. Sprawdź mapowanie DNS dla punktu końcowego — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Raport enklawy odebrany z systemu SQL Server nie ma prawidłowego formatu. Skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
