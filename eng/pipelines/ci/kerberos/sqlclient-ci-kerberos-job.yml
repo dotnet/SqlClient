@@ -84,6 +84,10 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 
+      # Ensure result publication has a stable directory even if environment setup fails.
+      - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
+        displayName: Create TestResults Directory
+
       - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
         - template: /eng/pipelines/ci/kerberos/windows-setup-step.yml@self
           parameters:
@@ -117,15 +121,14 @@ jobs:
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
+            -p:TestResultsFolderPath=TestResults
 
-      - task: PublishTestResults@2
-        displayName: Publish Test Results
-        condition: succeededOrFailed()
-        inputs:
-          testResultsFormat: VSTest
-          testResultsFiles: $(Build.SourcesDirectory)/test_results/**/*.trx
-          mergeTestResults: true
+      - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
+        parameters:
+          debug: ${{ parameters.debug }}
+          targetFramework: ${{ parameters.runtime }}
           testRunTitle: ${{ parameters.displayName }}
+          operatingSystem: ${{ parameters.operatingSystem }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
 
       - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
