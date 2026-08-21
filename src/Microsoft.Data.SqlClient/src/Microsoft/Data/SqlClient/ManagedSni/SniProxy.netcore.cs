@@ -276,9 +276,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return null;
             }
 
-            // Final safeguard: never hand a pipe path whose host component contains a colon
-            // to the OS. See DataSource.IsValidPipeHostName for details.
-            if (!DataSource.IsValidPipeHostName(details.PipeHostName))
+            // Final safeguard: never hand a pipe path whose host component contains a colon to the
+            // OS. DataSource transcribes IPv6 literals during parsing, so anything still holding a
+            // colon here is malformed. See DataSource.GetUncCompatibleHostName for details.
+            if (string.IsNullOrEmpty(details.PipeHostName) || details.PipeHostName.IndexOf(':') != -1)
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", details.PipeHostName);
                 SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
@@ -349,6 +350,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private const string DefaultPipeName = "sql\\query";
         private const string InstancePrefix = "MSSQL$";
         private const string PathSeparator = "\\";
+        private const string IPv6LiteralHostSuffix = ".ipv6-literal.net";
 
         internal enum Protocol { TCP, NP, None, Admin };
 
@@ -657,11 +659,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         PipeName = SniNpHandle.DefaultPipePath;
                     }
 
-                    // An IPv6 literal cannot be expressed in a UNC pipe path. Fail here rather than
-                    // composing a malformed path. See IsValidPipeHostName for details.
-                    if (!IsValidPipeHostName(PipeHostName))
+                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path.
+                    // ServerName keeps the original form because it is only used for SPN creation.
+                    // See GetUncCompatibleHostName for details.
+                    PipeHostName = GetUncCompatibleHostName(PipeHostName);
+                    if (PipeHostName is null)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", PipeHostName);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", ServerName);
                         ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
@@ -691,9 +695,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         return false;
                     }
 
-                    // An IPv6 literal cannot be expressed in a UNC pipe path.
-                    // See IsValidPipeHostName for details.
-                    if (!IsValidPipeHostName(host))
+                    // An IPv6 literal must be transcribed before it can appear in a UNC pipe path.
+                    // See GetUncCompatibleHostName for details.
+                    string uncHost = GetUncCompatibleHostName(host);
+                    if (uncHost is null)
                     {
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Invalid host name '{0}' for Named Pipes.", host);
                         ReportSNIError(SniProviders.NP_PROV);
@@ -731,7 +736,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     ServerName = IsLocalHost(host) ? Environment.MachineName : host;
                     // Pipe hostname is the hostname after leading \\ which should be passed down as is to open Named Pipe.
                     // For Named Pipes the ServerName makes sense for SPN creation only.
-                    PipeHostName = host;
+                    PipeHostName = uncHost;
                 }
                 catch (UriFormatException)
                 {
@@ -759,20 +764,56 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
 
         /// <summary>
-        /// Determines whether the given host name can legally appear as the host component of a
-        /// UNC pipe path (<c>\\host\pipe\sql\query</c>).
+        /// Converts a host name into a form that can legally appear as the host component of a UNC
+        /// pipe path (<c>\\host\pipe\sql\query</c>), returning <see langword="null"/> if no such
+        /// form exists.
         /// </summary>
         /// <remarks>
         /// A UNC host component may never contain a colon, so an IPv6 literal such as <c>::1</c>
-        /// or <c>[::1]</c> produces a malformed path like <c>\\::1\pipe\sql\query</c>. Handing that
-        /// to the OS sends the SMB redirector into an SMB session setup whose SPNEGO/NegoEx target
-        /// name embeds the IPv6 literal, which can fault LSASS on Windows and force a reboot.
-        /// Named Pipes over an IPv6 literal is not a supported configuration, so such data sources
-        /// are rejected before a pipe path is ever composed. IPv4 literals remain valid.
-        /// See https://github.com/dotnet/SqlClient/issues/4523.
+        /// cannot be used directly. Passing one through anyway composes a malformed path like
+        /// <c>\\::1\pipe\sql\query</c>, which sends the SMB redirector into an SMB session setup
+        /// whose SPNEGO/NegoEx target name embeds the IPv6 literal; that can fault LSASS on Windows
+        /// and force a reboot. See https://github.com/dotnet/SqlClient/issues/4523.
+        ///
+        /// Windows defines a transcription for exactly this case: replace each <c>:</c> with
+        /// <c>-</c> and each <c>%</c> (zone index) with <c>s</c>, then append
+        /// <c>.ipv6-literal.net</c>. For example <c>2001:db8::1</c> becomes
+        /// <c>2001-db8--1.ipv6-literal.net</c>. See
+        /// https://learn.microsoft.com/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc.
+        ///
+        /// Host names without a colon (including IPv4 literals and already-transcribed
+        /// <c>.ipv6-literal.net</c> names) are returned unchanged. A colon-bearing host name that is
+        /// not a parseable IPv6 literal has no UNC form and is rejected.
         /// </remarks>
-        internal static bool IsValidPipeHostName(string hostName) =>
-            !string.IsNullOrEmpty(hostName) && hostName.IndexOf(':') == -1;
+        internal static string GetUncCompatibleHostName(string hostName)
+        {
+            if (string.IsNullOrEmpty(hostName))
+            {
+                return null;
+            }
+
+            // A colon is the only character that forces a transcription, so anything without one
+            // (host names, IPv4 literals, already-transcribed names) passes through untouched.
+            if (hostName.IndexOf(':') == -1)
+            {
+                return hostName;
+            }
+
+            // Accept the bracketed form (\\[::1]\...) that users may carry over from URL syntax.
+            string literal = hostName;
+            if (literal.Length > 2 && literal[0] == '[' && literal[literal.Length - 1] == ']')
+            {
+                literal = literal.Substring(1, literal.Length - 2);
+            }
+
+            if (!IPAddress.TryParse(literal, out IPAddress address) ||
+                address.AddressFamily != AddressFamily.InterNetworkV6)
+            {
+                return null;
+            }
+
+            return address.ToString().Replace(':', '-').Replace('%', 's') + IPv6LiteralHostSuffix;
+        }
     }
 }
 
