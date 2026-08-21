@@ -30,6 +30,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// remarks on <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2
     /// false then true) to compare.
     ///
+    /// Each sync workload is measured twice, once on threadpool threads
+    /// (<see cref="SteadyStateOpenQueryClose"/>) and once on dedicated threads
+    /// (<see cref="SteadyStateOpenQueryCloseDedicatedThreads"/>). Threadpool threads are the
+    /// realistic case, since sync database calls in ASP.NET run on them, and they are the
+    /// only configuration that can expose a waiter wake path which depends on the
+    /// threadpool having a free thread. Dedicated threads isolate the pool's own cost. The
+    /// pair separates a pool regression from a scheduling one.
+    ///
     /// Related issues: #601, #979, #3356
     /// </summary>
     public class ConnectionPoolContentionRunner : BaseRunner
@@ -109,6 +117,45 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         // Dispose returns the connection to the pool.
                     }
                 });
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// Same workload as <see cref="SteadyStateOpenQueryClose"/>, but driven by dedicated
+        /// threads instead of threadpool threads.
+        ///
+        /// Read the two together. A sync <c>Open()</c> that has to wait blocks whichever
+        /// thread it is running on. On threadpool threads that competes with the threadpool
+        /// itself, because a pool implementation whose waiter wake-up depends on a queued
+        /// continuation cannot make progress while every thread is blocked in a wait: the
+        /// wake-up is stuck behind thread injection, which adds roughly a second per stall.
+        /// Dedicated threads remove that coupling, so this variant measures the pool's
+        /// intrinsic checkout/return cost with the scheduler taken out of the picture.
+        ///
+        /// A regression in both points at the pool itself. A regression only in the
+        /// threadpool variant points at the waiter wake path and shows up as tail latency
+        /// rather than a shifted median, so compare the distribution and not just the mean.
+        /// </summary>
+        [Benchmark]
+        public Task SteadyStateOpenQueryCloseDedicatedThreads()
+        {
+            var tasks = new Task[Parallelism];
+            for (int i = 0; i < Parallelism; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    for (int op = 0; op < OpsPerWorker; op++)
+                    {
+                        using var conn = new SqlConnection(_connectionString);
+                        conn.Open();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT 1";
+                        _ = cmd.ExecuteScalar();
+                        // Dispose returns the connection to the pool.
+                    }
+                }, TaskCreationOptions.LongRunning);
             }
 
             return Task.WhenAll(tasks);

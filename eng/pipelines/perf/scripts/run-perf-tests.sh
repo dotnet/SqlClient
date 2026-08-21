@@ -65,10 +65,22 @@ confirmationRuns="3"
 useManagedSniOnWindows=""
 useOptimizedAsyncBehaviour=""
 useConnectionPoolV2=""
+# Alternative to --baseline-version/--baseline-source-ref: an A/B experiment on ONE runner-config
+# switch.  Both passes build the SAME source; only the named switch differs (baseline=false,
+# current=true), which is the only way to compare a switch whose value is latched process-wide (e.g.
+# UseConnectionPoolV2 is read and cached the first time a pool is created).  Mutually exclusive with
+# the other two baseline selectors, and overrides the matching --use-* flag (which would otherwise be
+# ambiguous: one value cannot describe two passes).
+switchUnderTest=""
+# Runner-config switches this script is allowed to A/B.  Restricted to a known list so a typo fails
+# fast here instead of silently writing an inert key into the runner config and reporting a
+# meaningless zero-delta comparison.
+SUPPORTED_SWITCHES=("UseConnectionPoolV2" "UseOptimizedAsyncBehaviour" "UseManagedSniOnWindows")
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
-         "[--baseline-version <ver> | --baseline-source-ref <ref> [--baseline-repo-url <url>]]" \
+         "[--baseline-version <ver> | --baseline-source-ref <ref> [--baseline-repo-url <url>] |" \
+         "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
@@ -83,6 +95,7 @@ while [[ $# -gt 0 ]]; do
         --baseline-version) baselineVersion="$2"; shift 2 ;;
         --baseline-source-ref) baselineSourceRef="$2"; shift 2 ;;
         --baseline-repo-url) baselineRepoUrl="$2"; shift 2 ;;
+        --switch-under-test) switchUnderTest="$2"; shift 2 ;;
         --regression-threshold) regressionThreshold="$2"; shift 2 ;;
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
@@ -103,11 +116,25 @@ case "${runMode}" in
     *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
        usage; exit 2 ;;
 esac
-# The two baseline selectors describe different builds of the same "baseline" pass, so requesting
-# both is always a mistake; fail fast rather than silently honouring one of them.
+# The three baseline selectors describe different builds/configs of the same "baseline" pass, so
+# requesting more than one is always a mistake; fail fast rather than silently honouring one of them.
 if [[ -n "${baselineVersion}" && -n "${baselineSourceRef}" ]]; then
     echo "ERROR: --baseline-version and --baseline-source-ref are mutually exclusive." >&2
     usage; exit 2
+fi
+if [[ -n "${switchUnderTest}" && ( -n "${baselineVersion}" || -n "${baselineSourceRef}" ) ]]; then
+    echo "ERROR: --switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable." >&2
+    usage; exit 2
+fi
+if [[ -n "${switchUnderTest}" ]]; then
+    switchSupported="false"
+    for supported in "${SUPPORTED_SWITCHES[@]}"; do
+        [[ "${switchUnderTest}" == "${supported}" ]] && switchSupported="true"
+    done
+    if [[ "${switchSupported}" != "true" ]]; then
+        echo "ERROR: --switch-under-test must be one of: ${SUPPORTED_SWITCHES[*]} (got '${switchUnderTest}')." >&2
+        usage; exit 2
+    fi
 fi
 if ! [[ "${confirmationRuns}" =~ ^[0-9]+$ ]] || [[ "${confirmationRuns}" -lt 1 ]]; then
     echo "ERROR: --confirmation-runs must be a positive integer (got '${confirmationRuns}')." >&2
@@ -123,6 +150,18 @@ validate_bool() {  # $1 = flag name (for the message), $2 = value
 validate_bool use-managed-sni-on-windows "${useManagedSniOnWindows}"
 validate_bool use-optimized-async-behaviour "${useOptimizedAsyncBehaviour}"
 validate_bool use-connection-pool-v2 "${useConnectionPoolV2}"
+# --switch-under-test forces its switch explicitly for each pass (baseline=false, current=true), so a
+# separately-supplied --use-* flag for that SAME switch would be silently overridden; warn rather
+# than let that go unnoticed.  Other --use-* flags still apply normally to both passes.
+case "${switchUnderTest}" in
+    UseConnectionPoolV2)       conflictingValue="${useConnectionPoolV2}";       conflictingFlag="--use-connection-pool-v2" ;;
+    UseOptimizedAsyncBehaviour) conflictingValue="${useOptimizedAsyncBehaviour}"; conflictingFlag="--use-optimized-async-behaviour" ;;
+    UseManagedSniOnWindows)    conflictingValue="${useManagedSniOnWindows}";    conflictingFlag="--use-managed-sni-on-windows" ;;
+    *)                         conflictingValue="";                            conflictingFlag="" ;;
+esac
+if [[ -n "${conflictingValue}" ]]; then
+    echo "WARNING: ${conflictingFlag} is ignored when --switch-under-test is ${switchUnderTest} (baseline forces false, current forces true)." >&2
+fi
 
 ####################################################################################################
 # Resolve paths
@@ -148,6 +187,7 @@ echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
 echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
+echo "  Switch A/B     : ${switchUnderTest:-<none>}${switchUnderTest:+ (baseline=false vs current=true)}"
 echo "  Run mode       : ${runMode} (confirmation runs: ${confirmationRuns})"
 echo "  SQL_SERVER     : ${SQL_SERVER:-<unset, will default to localhost>}"
 echo "  PERF_CLIENT_CPUS: ${PERF_CLIENT_CPUS:-<unset>}"
@@ -295,7 +335,9 @@ export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-134217728}"   # 128 MiB
 export MALLOC_TRIM_THRESHOLD_="${MALLOC_TRIM_THRESHOLD_:--1}"          # never trim
 
 # --- §2.9 Network tuning (best-effort; needs privilege, so it must never fail the run) ------------
-# Connection-churn benches (ConnectionPoolStress, ParallelAsyncConnection) exhaust ephemeral ports;
+# Connection-churn benches (ConnectionPoolStress, ConnectionPoolRamp,
+# ConnectionPoolThreadPoolPressure, ParallelAsyncConnection)
+# exhaust ephemeral ports;
 # widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.  'sudo -n' keeps
 # this non-interactive: on a VM without passwordless sudo it fails immediately instead of blocking
 # on a password prompt, then we fall back to a non-sudo sysctl (and finally give up quietly).
@@ -358,10 +400,20 @@ export PERF_CFG_USE_MANAGED_SNI="${useManagedSniOnWindows}"
 export PERF_CFG_USE_OPTIMIZED_ASYNC="${useOptimizedAsyncBehaviour}"
 export PERF_CFG_USE_CONNECTION_POOL_V2="${useConnectionPoolV2}"
 
-python3 - "$PERF_DIR/runnerconfig.jsonc" "$RUNNER_CONFIG" <<'PY'
+# write_runner_config <dst> [switch_name] [switch_value]
+# Writes one runner config (checked-in runnerconfig.jsonc + injected connection string + behaviour
+# overrides) to <dst>.  When <switch_name> is given, that config key is forced to <switch_value>
+# ("true"/"false") regardless of the corresponding PERF_CFG_* value -- used by --switch-under-test,
+# which needs a different value for the same switch in each pass.  With no switch name the config is
+# built purely from the PERF_CFG_* values, exactly as before.
+write_runner_config() {
+    local dst="$1"
+    local switch_name="${2:-}"
+    local switch_value="${3:-}"
+    python3 - "$PERF_DIR/runnerconfig.jsonc" "$dst" "$switch_name" "$switch_value" <<'PY'
 import json, os, re, sys
 
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, switch_name, switch_value = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 
 with open(src, "r", encoding="utf-8-sig") as fh:
     text = fh.read()
@@ -387,13 +439,16 @@ cfg["ConnectionString"] = (
 
 # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
 # the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
-# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
+# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.  The
+# switch-under-test override (when this config names one) takes precedence over the corresponding
+# PERF_CFG_* value, so a single checked-in template can be stamped out per pass with that one switch
+# flipped and everything else identical.
 for env_name, cfg_key in (
     ("PERF_CFG_USE_MANAGED_SNI", "UseManagedSniOnWindows"),
     ("PERF_CFG_USE_OPTIMIZED_ASYNC", "UseOptimizedAsyncBehaviour"),
     ("PERF_CFG_USE_CONNECTION_POOL_V2", "UseConnectionPoolV2"),
 ):
-    val = os.environ.get(env_name, "")
+    val = switch_value if cfg_key == switch_name else os.environ.get(env_name, "")
     if val != "":
         cfg[cfg_key] = (val.lower() == "true")
 
@@ -402,6 +457,21 @@ with open(dst, "w", encoding="utf-8") as fh:
 
 print(f"Wrote runner config to {dst} (Server=tcp:{server},1433; Initial Catalog={db})")
 PY
+}
+
+write_runner_config "${RUNNER_CONFIG}"
+
+# --switch-under-test needs two DIFFERENT runner configs (baseline runs the switch off, current runs
+# it on), so stamp out two more copies here alongside the shared one above.  Everything else in them
+# is identical, so any measured delta is attributable to the switch alone.
+BASELINE_RUNNER_CONFIG=""
+CURRENT_RUNNER_CONFIG=""
+if [[ -n "${switchUnderTest}" ]]; then
+    BASELINE_RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig-baseline.json"
+    CURRENT_RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig-current.json"
+    write_runner_config "${BASELINE_RUNNER_CONFIG}" "${switchUnderTest}" "false"
+    write_runner_config "${CURRENT_RUNNER_CONFIG}" "${switchUnderTest}" "true"
+fi
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
@@ -686,6 +756,11 @@ elif [[ -n "${baselineSourceRef}" ]]; then
     prepare_baseline_source "${baselineSourceRef}"
     baselineLabel="${BASELINE_SRC_LABEL}"
     baselineProject="${BASELINE_PERF_PROJECT}"
+elif [[ -n "${switchUnderTest}" ]]; then
+    # Switch A/B: SAME source/project for both passes (baselineProject/baselineBuildArgs are already
+    # the candidate's, set above), so only the runner config differs (see BASELINE_RUNNER_CONFIG /
+    # CURRENT_RUNNER_CONFIG written above: the named switch off vs on).
+    baselineLabel="${switchUnderTest}=false"
 fi
 
 # Record the resolved baseline label (for a source baseline this is '<ref>@<sha>') in the results
@@ -702,12 +777,24 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ################################################################################################
-    build_variant "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
-    build_variant "current" "${PERF_PROJECT}"
+    if [[ -n "${switchUnderTest}" ]]; then
+        # Switch A/B measures one build against itself with a switch flipped, so building the same
+        # project twice would just burn several minutes producing identical bits.  Build once and
+        # point both variants at it; the orchestrator runs each variant in its own working directory
+        # (rep<N>/<variant>/<unit>), so a shared exe dir cannot cross-contaminate their artifacts.
+        build_variant "current" "${PERF_PROJECT}"
+        baselineExeDir="${REPO_ROOT}/perf-build-current"
+        currentExeDir="${REPO_ROOT}/perf-build-current"
+    else
+        build_variant "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
+        build_variant "current" "${PERF_PROJECT}"
+        baselineExeDir="${REPO_ROOT}/perf-build-baseline"
+        currentExeDir="${REPO_ROOT}/perf-build-current"
+    fi
 
     interleave_args=(
-        --baseline-exe-dir "${REPO_ROOT}/perf-build-baseline"
-        --current-exe-dir "${REPO_ROOT}/perf-build-current"
+        --baseline-exe-dir "${baselineExeDir}"
+        --current-exe-dir "${currentExeDir}"
         --assembly "PerformanceTests.dll"
         --results-dir "${RESULTS_DIR}"
         --threshold "${regressionThreshold}"
@@ -715,6 +802,15 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
     )
+    # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
+    # switch off vs on), even though both are otherwise the same build/env; every other baseline
+    # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
+    if [[ -n "${switchUnderTest}" ]]; then
+        interleave_args+=(
+            --baseline-runner-config "${BASELINE_RUNNER_CONFIG}"
+            --current-runner-config "${CURRENT_RUNNER_CONFIG}"
+        )
+    fi
     if [[ "${failOnRegression}" == "true" ]]; then
         echo "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> ${regressionThreshold}%) will fail the run."
         interleave_args+=(--fail-on-regression)
@@ -724,7 +820,15 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
 
 elif [[ -n "${baselineLabel}" ]]; then
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    # --switch-under-test needs a different RUNNER_CONFIG per pass; every other baseline flavour
+    # keeps using the single ambient RUNNER_CONFIG exported above (unchanged behaviour).
+    if [[ -n "${switchUnderTest}" ]]; then
+        export RUNNER_CONFIG="${BASELINE_RUNNER_CONFIG}"
+    fi
     run_pass "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
+    if [[ -n "${switchUnderTest}" ]]; then
+        export RUNNER_CONFIG="${CURRENT_RUNNER_CONFIG}"
+    fi
     run_pass "current" "${PERF_PROJECT}"
 
     echo "Comparing current branch against baseline ${baselineLabel} ..."

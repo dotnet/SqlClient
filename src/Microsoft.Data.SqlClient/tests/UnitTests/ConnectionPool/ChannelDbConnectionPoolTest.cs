@@ -235,6 +235,93 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies that an asynchronous request satisfied by an already-idle connection is
+        /// completed inline on the caller's thread, rather than being dispatched to the thread pool.
+        /// </summary>
+        /// <remarks>
+        /// The fast path must report completion by returning true with the connection, exactly as
+        /// WaitHandleDbConnectionPool does on its inline hit. Completing the TaskCompletionSource
+        /// and returning false would look equivalent but is not: it sends
+        /// SqlConnection.InternalOpenAsync down its asynchronous branch, which allocates an
+        /// OpenAsyncRetry and schedules ContinueWith(..., TaskScheduler.Default), costing a thread
+        /// pool dispatch even though the result is already available. Asserting that the
+        /// TaskCompletionSource is left untouched is what pins that down.
+        /// </remarks>
+        [Fact]
+        public void GetConnectionAsync_WithIdleConnection_ShouldCompleteInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            var completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert: the request is reported as completed and the connection is handed back
+            // directly, matching WaitHandleDbConnectionPool's inline hit. This is what lets
+            // SqlConnection.InternalOpenAsync take its synchronous branch and skip the
+            // OpenAsyncRetry allocation and the ContinueWith thread pool dispatch.
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+
+            // The TaskCompletionSource must be left alone; the caller abandons it on a
+            // synchronous completion.
+            Assert.False(taskCompletionSource.Task.IsCompleted);
+
+            // The idle connection was reused rather than a second one being opened.
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that a synchronous request satisfied by an already-idle connection returns that
+        /// connection inline.
+        /// </summary>
+        [Fact]
+        public void GetConnection_WithIdleConnection_ShouldReturnInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            var completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
         /// Verifies that a waiting synchronous caller reuses a connection that is returned to an
         /// exhausted pool instead of creating a new physical connection.
         /// </summary>
@@ -627,10 +714,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                         TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
-                    internalConnection = await taskCompletionSource.Task;
-                    pool.ReturnInternalConnection(internalConnection, owningObject);
+
+                    // A request satisfied from the pool's existing connections completes inline,
+                    // returning the connection directly and leaving the TaskCompletionSource
+                    // untouched. Only fall back to awaiting it when the request was handed off.
+                    // This mirrors how the pool's callers consume TryGetConnection.
+                    if (!completed)
+                    {
+                        internalConnection = await taskCompletionSource.Task;
+                    }
 
                     Assert.NotNull(internalConnection);
+
+                    pool.ReturnInternalConnection(internalConnection, owningObject);
                 });
                 tasks.Add(t);
             }

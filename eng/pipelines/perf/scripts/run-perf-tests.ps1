@@ -54,7 +54,17 @@ param(
     [ValidateSet("", "true", "false")]
     [string]$UseOptimizedAsyncBehaviour = "",
     [ValidateSet("", "true", "false")]
-    [string]$UseConnectionPoolV2 = ""
+    [string]$UseConnectionPoolV2 = "",
+    # Alternative to -BaselineVersion/-BaselineSourceRef: an A/B experiment on ONE runner-config
+    # switch. Both passes build the SAME source; only the named switch differs (baseline=false,
+    # current=true), which is the only way to compare a switch whose value is latched process-wide
+    # (e.g. UseConnectionPoolV2 is read and cached the first time a pool is created). Mutually
+    # exclusive with the other two baseline selectors, and overrides the matching -Use* flag (which
+    # would otherwise be ambiguous: one value cannot describe two passes).  ValidateSet restricts it
+    # to switches this script knows how to stamp, so a typo fails fast at binding time instead of
+    # silently writing an inert key and reporting a meaningless zero-delta comparison.
+    [ValidateSet("", "UseConnectionPoolV2", "UseOptimizedAsyncBehaviour", "UseManagedSniOnWindows")]
+    [string]$SwitchUnderTest = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -128,6 +138,7 @@ Write-Host "  Results dir     : $ResultsDir"
 Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
 Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
 Write-Host "  Baseline ref    : $(if ($BaselineSourceRef) { $BaselineSourceRef } else { '<none>' })"
+Write-Host "  Switch A/B      : $(if ($SwitchUnderTest) { "$SwitchUnderTest (baseline=false vs current=true)" } else { '<none>' })"
 Write-Host "  SQL_SERVER      : $SqlServer"
 Write-Host "  PERF_CLIENT_CPUS: $($env:PERF_CLIENT_CPUS)"
 Write-Host "  PERF_SQL_CPUS   : $($env:PERF_SQL_CPUS)"
@@ -140,6 +151,21 @@ if (-not (Test-Path $PerfProject)) {
 # both is always a mistake; fail fast rather than silently honouring one of them.
 if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and (-not [string]::IsNullOrEmpty($BaselineSourceRef))) {
     throw "-BaselineVersion and -BaselineSourceRef are mutually exclusive."
+}
+if ((-not [string]::IsNullOrEmpty($SwitchUnderTest)) -and ((-not [string]::IsNullOrEmpty($BaselineVersion)) -or (-not [string]::IsNullOrEmpty($BaselineSourceRef)))) {
+    throw "-SwitchUnderTest is mutually exclusive with -BaselineVersion and -BaselineSourceRef: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable."
+}
+# -SwitchUnderTest forces its switch explicitly for each pass (baseline=false, current=true), so a
+# separately-supplied -Use* flag for that SAME switch would be silently overridden; warn rather than
+# let that go unnoticed.  Other -Use* flags still apply normally to both passes.
+$conflictingFlagValue = switch ($SwitchUnderTest) {
+    "UseConnectionPoolV2"        { $UseConnectionPoolV2 }
+    "UseOptimizedAsyncBehaviour" { $UseOptimizedAsyncBehaviour }
+    "UseManagedSniOnWindows"     { $UseManagedSniOnWindows }
+    default                      { "" }
+}
+if (-not [string]::IsNullOrEmpty($conflictingFlagValue)) {
+    Write-Warning "-$SwitchUnderTest is ignored when -SwitchUnderTest is $SwitchUnderTest (baseline forces false, current forces true)."
 }
 if ([string]::IsNullOrEmpty($SqlPassword)) {
     throw "SQL_PASSWORD environment variable is not set (expected from the perf template)."
@@ -302,20 +328,11 @@ $env:RUNNER_CONFIG = $RunnerConfig
 # It needs no per-run modification, so point the env var at the checked-in file directly.
 $env:DATATYPES_CONFIG = Join-Path $PerfDir "datatypes.json"
 
-$srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
-$rawConfig = Get-Content $srcConfig -Raw
-# Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
-$rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
-$cfg = ConvertFrom-Json $rawConfig
-
 # SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
 # quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
 # value instead of corrupting the connection string.
 $escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
-$cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
-# Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
-# the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
-# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
+
 function Set-CfgBool {
     param($Config, [string]$Name, [string]$Value)
     if (-not [string]::IsNullOrEmpty($Value)) {
@@ -324,11 +341,51 @@ function Set-CfgBool {
         else { $Config | Add-Member -NotePropertyName $Name -NotePropertyValue $b }
     }
 }
-Set-CfgBool $cfg "UseManagedSniOnWindows" $UseManagedSniOnWindows
-Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $UseOptimizedAsyncBehaviour
-Set-CfgBool $cfg "UseConnectionPoolV2" $UseConnectionPoolV2
-$cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
-Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
+
+# Write-RunnerConfig <dst> [switchName] [switchValue]
+# Writes one runner config (checked-in runnerconfig.jsonc + injected connection string + behaviour
+# overrides) to <dst>. When <switchName> is given, that config key is forced to <switchValue>
+# ("true"/"false") regardless of the corresponding -Use* parameter -- used by -SwitchUnderTest, which
+# needs a different value for the same switch in each pass. With no switch name the config is built
+# purely from the -Use* parameters, exactly as before.
+function Write-RunnerConfig {
+    param([string]$Dst, [string]$SwitchName = "", [string]$SwitchValue = "")
+    $srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
+    $rawConfig = Get-Content $srcConfig -Raw
+    # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
+    $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
+    $cfg = ConvertFrom-Json $rawConfig
+
+    $cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+    # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value
+    # leaves the checked-in default untouched; otherwise the flag is forced to the requested boolean
+    # so the benchmarks run with (and PerfRun.Config records) exactly the requested behaviour. The
+    # switch-under-test override (when this config names one) takes precedence over the matching
+    # -Use* parameter, so a single checked-in template can be stamped out per pass with that one
+    # switch flipped and everything else identical.
+    $sniValue   = if ($SwitchName -eq "UseManagedSniOnWindows")     { $SwitchValue } else { $UseManagedSniOnWindows }
+    $asyncValue = if ($SwitchName -eq "UseOptimizedAsyncBehaviour") { $SwitchValue } else { $UseOptimizedAsyncBehaviour }
+    $poolValue  = if ($SwitchName -eq "UseConnectionPoolV2")        { $SwitchValue } else { $UseConnectionPoolV2 }
+    Set-CfgBool $cfg "UseManagedSniOnWindows" $sniValue
+    Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $asyncValue
+    Set-CfgBool $cfg "UseConnectionPoolV2" $poolValue
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $Dst -Encoding UTF8
+    Write-Host "Wrote runner config to $Dst (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
+}
+
+Write-RunnerConfig -Dst $RunnerConfig
+
+# -SwitchUnderTest needs two DIFFERENT runner configs (baseline runs the switch off, current runs it
+# on), so stamp out two more copies here alongside the shared one above.  Everything else in them is
+# identical, so any measured delta is attributable to the switch alone.
+$BaselineRunnerConfig = ""
+$CurrentRunnerConfig = ""
+if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+    $BaselineRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-baseline.json"
+    $CurrentRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-current.json"
+    Write-RunnerConfig -Dst $BaselineRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "false"
+    Write-RunnerConfig -Dst $CurrentRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "true"
+}
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
@@ -688,6 +745,11 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     $baselineSource = Initialize-BaselineSource -Ref $BaselineSourceRef
     $BaselineLabel = $baselineSource.Label
     $BaselineProject = $baselineSource.Project
+} elseif (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+    # Switch A/B: SAME source/project for both passes ($BaselineProject/$BaselineBuildArgs are
+    # already the candidate's, set above), so only the runner config differs (see
+    # $BaselineRunnerConfig/$CurrentRunnerConfig written above: the named switch off vs on).
+    $BaselineLabel = "$SwitchUnderTest=false"
 }
 
 # Record the resolved baseline label (for a source baseline this is '<ref>@<sha>') in the results
@@ -704,8 +766,17 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ####################################################################################################
-    $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
-    $currentExeDir = Build-Variant "current" $PerfProject @()
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+        # Switch A/B measures one build against itself with a switch flipped, so building the same
+        # project twice would just burn several minutes producing identical bits.  Build once and
+        # point both variants at it; the orchestrator runs each variant in its own working directory
+        # (rep<N>/<variant>/<unit>), so a shared exe dir cannot cross-contaminate their artifacts.
+        $currentExeDir = Build-Variant "current" $PerfProject @()
+        $baselineExeDir = $currentExeDir
+    } else {
+        $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
+        $currentExeDir = Build-Variant "current" $PerfProject @()
+    }
 
     $interleaveArgs = @(
         "--baseline-exe-dir", $baselineExeDir,
@@ -717,6 +788,12 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         "--baseline-version", $BaselineLabel,
         "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
     )
+    # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
+    # switch off vs on), even though both are otherwise the same build/env; every other baseline
+    # flavour keeps sharing the single ambient RUNNER_CONFIG set above.
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+        $interleaveArgs += @("--baseline-runner-config", $BaselineRunnerConfig, "--current-runner-config", $CurrentRunnerConfig)
+    }
     if ($FailOnRegression) {
         Write-Host "Regression gate ENABLED: a CONFIRMED candidate-slower regression (> $RegressionThreshold%) will fail the run."
         $interleaveArgs += "--fail-on-regression"
@@ -726,7 +803,11 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    # -SwitchUnderTest needs a different RUNNER_CONFIG per pass; every other baseline flavour
+    # keeps using the single ambient RUNNER_CONFIG set above (unchanged behaviour).
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $BaselineRunnerConfig }
     Invoke-PerfPass "baseline" $BaselineProject $BaselineBuildArgs
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $CurrentRunnerConfig }
     Invoke-PerfPass "current" $PerfProject @()
 
     Write-Host "Comparing current branch against baseline $BaselineLabel ..."

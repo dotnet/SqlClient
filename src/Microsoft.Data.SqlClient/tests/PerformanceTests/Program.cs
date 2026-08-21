@@ -54,6 +54,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
             new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
+            new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
+            new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
         };
 
         /// <summary>
