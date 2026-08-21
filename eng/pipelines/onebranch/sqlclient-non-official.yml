@@ -94,8 +94,29 @@ extends:
 
   parameters:
     featureFlags:
+      # WindowsHostVersion selects the Windows *host VM* that our Windows build container runs on.
+      # This is a separate layer from the container image itself (WindowsContainerImage in
+      # onebranch-variables.yml): the host is the outer machine running the Docker engine, and the
+      # container is where our build steps actually execute.
+      #
+      # These two must be kept compatible.  Windows containers can only run on a host whose OS
+      # version is compatible with the container's base image.  A mismatch (e.g. a 2025 container on
+      # a 2022 host) fails to start the container unless Hyper-V isolation is forced.
+      WindowsHostVersion:
+        Version: 2025
+
+      # We do NOT set a LinuxHostVersion.  Unlike Windows, Linux containers share the host kernel,
+      # so there is no host/container OS-version compatibility requirement to satisfy -- our Linux
+      # build image (LinuxContainerImage in onebranch-variables.yml) runs on the default OneBranch
+      # Linux host regardless of its distribution.
+
+      # CDPx is OneBranch's predecessor build system.  When EnableCDPxPAT is true (the OneBranch
+      # default), the governed templates inject a legacy CDPx Personal Access Token and its
+      # associated NuGet / Azure Artifacts authentication variables (CDP_DEFAULT_CLIENT_PAT,
+      # VSS_NUGET_ACCESSTOKEN, VSS_NUGET_URI_PREFIXES, etc.) into the build and Docker jobs so
+      # package restore against Azure DevOps feeds works without explicit auth.  We don't rely on
+      # that legacy CDPx package-authentication path, so we disable it.
       EnableCDPxPAT: false
-      WindowsHostVersion: 1ESWindows2022
 
     release:
       # This indicates the pipeline category to deploy Box products.  See:
@@ -118,6 +139,34 @@ extends:
     #     branches.)
     #
     globalSdl:
+
+      # BREAK SEVERITY
+      #
+      # The SDL analyzer tasks never fail on findings; they only fail if the tool itself crashes or
+      # is misconfigured.  The build break comes from the Post Analysis (Guardian Break) task, which
+      # reads the tool logs and fails when a finding meets or exceeds a minimum severity threshold.
+      # See https://aka.ms/gdn-azdo-break.
+      #
+      # Guardian normalises every finding to Error, Warning or Note.  The threshold is cumulative,
+      # so a lower name is STRICTER, not looser:
+      #
+      #   Error    break on Error                     <-- Guardian's default
+      #   Warning  break on Error + Warning
+      #   Note     break on Error + Warning + Note
+      #
+      # Two knobs control it, in increasing order of precedence:
+      #
+      #   globalSdl.severity           threshold for every tool (maps to GdnBreakPolicyMinSev)
+      #   globalSdl.<tool>.severity    per-tool override of the global threshold
+      #   ob_sdl_<tool>_severity       per-job variable; overrides both of the above
+      #
+      # We omit `severity` everywhere and keep the Error-only default.  OneBranch accepts ONLY
+      # Error, Warning or Note at this layer -- there is no explicit "Default" value to write, so
+      # inheriting the default requires omitting the key.  Consequently, spelling out
+      # `severity: Error` on a tool is NOT equivalent to omitting it: it pins that tool to Error
+      # even if globalSdl.severity is later tightened.
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds
 
       # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
       # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
@@ -198,7 +247,13 @@ extends:
         break: ${{ parameters.breakOnSdlError }}
 
       roslyn:
-        # Note, requires RoslynAnalyzers task to be added as a separate step
+        # Enabling Roslyn SDL analysis here requires that our .NET builds _produce_ Roslyn findings.
+        # You will see this in the separate Roslyn build task.
+        #
+        # Note that the Roslyn-specific Guardian collector/sanitizer requires SARIF v1, so our
+        # analysis build deliberately emits v1. Other, generic Guardian tooling expects SARIF v2 and
+        # may log processing errors (for example, Post Analysis's SDL artifact report) even though
+        # Roslyn collection and Guardian policy ingestion succeed.
         enabled: true
         break: ${{ parameters.breakOnSdlError }}
 
@@ -235,6 +290,7 @@ extends:
         #   TSA here does not by itself force breaking -- breakOnSdlError is what controls whether
         #   findings fail the build.
         enabled: false
+        # Keep this in sync with Official even though TSA is disabled here.
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:

@@ -1,0 +1,21 @@
+<!--
+  Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+  file to you under the MIT license.
+-->
+<Project>
+  <!--
+    Confirm that, when analysis is enabled, the build produced the SARIF file(s) that we expect.
+    Each src/ project that is built should produce a SARIF log whose path is specified by the
+    ErrorLog property defined in src/Directory.Build.props.  We perform this check here, rather
+    than post-build, because the build.proj targets may build multiple projects, and the SARIF paths
+    are difficult to predict.
+  -->
+  <Target Name="VerifyRoslynAnalysisLog"
+          AfterTargets="CoreCompile"
+          Condition="'$(EnableAnalyzers)' == 'true'">
+    <Error Condition="'$(ErrorLog)' == ''"
+           Text="Roslyn analysis did not configure an ErrorLog for $(MSBuildProjectFullPath)." />
+    <Error Condition="'$(ErrorLog)' != '' AND !Exists('$(ErrorLog)')"
+           Text="Roslyn analysis did not produce the expected SARIF log: $(ErrorLog)" />
+  </Target>
+</Project>

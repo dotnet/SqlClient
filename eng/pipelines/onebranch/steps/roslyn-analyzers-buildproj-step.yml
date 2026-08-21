@@ -4,13 +4,104 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template defines a step to run Roslyn Analyzers on the SqlClient build. It uses the
-# RoslynAnalyzers@3 task from the Secure Development Team's SDL extension:
+# This template runs Roslyn Analyzers (SDL) against a build.proj target using the RoslynAnalyzers@3
+# task from the Secure Development Team's SDL extension, in "Copy Logs Only" mode:
 #
 # https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/roslyn-analyzers-build-task
 #
-# GOTCHA: This step will clobber any existing build output. It should be run _before_ any build
-# steps that perform versioning or signing.
+# PROVENANCE: Every statement in this file about how the RoslynAnalyzers task behaves is current as
+#   of task version v3 (RoslynAnalyzers@3, 3.289.0) and was verified against concrete evidence -- the
+#   actual pipeline run logs, the task definition (task.json / inputMap.json), the gdn-task-lib task
+#   source, and the Guardian RoslynAnalyzers CLI binaries (Microsoft.Guardian.RoslynAnalyzers*.dll).
+#   Re-verify these claims if the task's major version changes.
+#
+# HOW IT WORKS (integrated analyzers + Copy Logs Only):
+#   .NET [Roslyn] security analyzers are compiler-integrated: they only run as part of the actual
+#   csc/vbc compilation. build.proj is an orchestrator -- each package's real compile happens in a
+#   separate "dotnet build <project>.csproj" that build.proj launches with an <Exec> task. That is
+#   the crux: anything the RoslynAnalyzers task appends to an *outer* "dotnet build build.proj"
+#   command (its auto/manual "re-run the build" modes) is an MSBuild global property, and global
+#   properties do NOT cross an <Exec> into a child "dotnet build" process. So an injected analyzer
+#   would only ever see build.proj (which compiles nothing) and never the real projects, producing
+#   zero results. That is exactly why earlier auto/manual-mode attempts collected 0 SARIF logs.
+#
+#   Instead we use the task's documented "Copy Logs Only" alternative -- integrate the analyzers into
+#   the build itself, then have the task only collect the results:
+#     1. This step runs its own isolated "dotnet build build.proj -t:Build<Package>" with
+#        EnableAnalyzers=true. build.proj forwards that flag into every leaf "dotnet build" it execs
+#        (via EnableAnalyzersArgument), and src/Directory.Build.props -- which every product project
+#        imports -- reacts by enabling the full analyzer set and setting ErrorLog to a per-project
+#        "*.csproj.<guid>.sarif" log. src/Directory.Build.targets verifies that each leaf compile
+#        produced its configured log. Because the analyzers and verification are enabled on the leaf
+#        projects themselves, they run inside the real compiles regardless of the <Exec> boundary.
+#     2. The RoslynAnalyzers@3 task then runs in Copy Logs Only mode (copyLogsOnly: true) and simply
+#        collects and sanitizes those *.csproj.*.sarif and *.vbproj.*.sarif logs from
+#        logRootDirectory for SDL/Guardian compliance. It performs no build and no compiler re-run,
+#        so none of the msBuildVersion /
+#        msBuildArchitecture / Visual-Studio-setup concerns apply -- the task never needs MSBuild,
+#        so it is inherently agnostic to the container's VS/MSBuild version (e.g. MSBuild 18 on the
+#        ltsc2025/vse2026 image).
+#
+#   EnableAnalyzers and IsolatedBuildPath are independent build.proj properties. We set both here:
+#   EnableAnalyzers turns analysis on; IsolatedBuildPath keeps this analysis build from disturbing
+#   real build output (see ISOLATION).
+#
+# WHAT THE TASK ITSELF INJECTS (v3), AND HOW THIS TEMPLATE COVERS IT:
+#   In its build-driving modes the task appends five MSBuild properties to the compile command and
+#   injects the analyzers via user-profile ImportBefore/ImportAfter files. This template enables the
+#   analyzers on the leaf projects instead, reproducing the effects that matter. Item by item:
+#
+#   | Task injection (v3)                    | Purpose                             | How this template covers it                       |
+#   |----------------------------------------|-------------------------------------|---------------------------------------------------|
+#   | /p:Features=                           | Turns on Roslyn IOperation +        | latest-all: SDK 18 Roslyn has IOperation on by    |
+#   |   "IOperation,flow-analysis"           | dataflow so the taint/crypto        | default, so these rules run. Add                  |
+#   |                                        | security rules (CA3xxx/CA5xxx) run. | <Features>flow-analysis</Features> to             |
+#   |                                        |                                     | Directory.Build.props if any go missing.          |
+#   | /p:CodeAnalysisRuleSet=                | Selects the exact SDL rule IDs +    | AnalysisLevel=latest-all, a superset of the SDL   |
+#   |   ...Sdl.Recommended.Warning.ruleset   | severities; disables non-SDL rules. | CA rules. The internal IA* rules need the         |
+#   |                                        |                                     | Microsoft.Internal.Analyzers package, which is    |
+#   |                                        |                                     | Microsoft-internal-only and MUST NOT be added to  |
+#   |                                        |                                     | the public governed feed, so they are not         |
+#   |                                        |                                     | reproduced here. See NOTE ON THE INTERNAL IA*     |
+#   |                                        |                                     | RULES below.                                      |
+#   | /p:TreatWarningsAsErrors=false         | Record every diagnostic instead of  | <TreatWarningsAsErrors>false</...> in the         |
+#   |                                        | failing at the first one.           | EnableAnalyzers block of Directory.Build.props.   |
+#   | /p:RunCodeAnalysis=false               | Disables legacy *binary* FxCop      | Already false by default in SDK-style projects;   |
+#   |                                        | (not the Roslyn analyzers).         | we never enable it.                               |
+#   | /p:GdnRoslynAnalyzersRunId=<guid>      | Gates the injected props/targets so | Not needed. We enable analyzers directly on the   |
+#   |                                        | they apply only to this build.      | leaf projects, so there is no global injection to |
+#   |                                        |                                     | gate (see the note below).                        |
+#   | ImportBefore *.props / ImportAfter     | Adds the analyzer assemblies and    | Analyzers: EnableNETAnalyzers + latest-all        |
+#   |   *.targets under %LOCALAPPDATA%\...\  | sets ErrorLog=<per-project>.sarif.  | (no EnforceCodeStyleInBuild). ErrorLog: we set    |
+#   |   MSBuild\Current                      |                                     | <ErrorLog>$(MSBuildProjectFullPath)....sarif</>   |
+#   |                                        |                                     | (SARIF v1 -- NO version=2; see the sanitizer      |
+#   |                                        |                                     | note in Directory.Build.props).                   |
+#
+#   WHY THE TASK'S OWN INJECTION YIELDS 0 SARIF THROUGH build.proj: the ImportAfter *.targets live in
+#   the user profile, so they ARE imported by build.proj's inner "dotnet build <csproj>" execs -- but
+#   they self-gate on $(GdnRoslynAnalyzersRunId), and that property (like CodeAnalysisRuleSet and
+#   Features) is passed only on the OUTER "dotnet build build.proj" command and does not cross the
+#   <Exec> into the child compiles. So the injected targets no-op in the real compiles. Enabling the
+#   analyzers on the leaf projects (EnableAnalyzers) removes that gate entirely.
+#
+# NOTE ON THE INTERNAL IA* RULES:
+#   The SDL-recommended ruleset also contains internal IA* ("Internal Analyzers") rules that ship in
+#   the Microsoft.Internal.Analyzers package. That package is Microsoft-internal and confidential: it
+#   is NOT on nuget.org, and it MUST NOT be added to this repo's governed feed
+#   (sqlclientdrivers.pkgs.visualstudio.com/public/...), which is PUBLIC-scoped -- doing so would
+#   leak internal tooling and breach its internal-use license. So the leaf-project analysis above
+#   (AnalysisLevel=latest-all) covers the CA* rules but NOT the IA* rules.
+#
+#   The IA* rules can only be run from the PRIVATE ADO.Net project pipelines, where a Microsoft-
+#   internal NuGet feed is reachable. NuGet.analysis.config adds that feed using an environment-
+#   variable placeholder and maps Microsoft.Internal.* exclusively to it. Only these analysis builds
+#   select that config, allowing Microsoft.Internal.Analyzers to be restored and used without
+#   changing the normal NuGet.config.
+#
+# ISOLATION:
+#   This template is self-contained and safe to run at any point in a job -- before or after a real
+#   build -- because the analysis build writes its binaries to a separate location and never touches
+#   the real build output, using the IsolatedBuildPath build.proj property.
 
 parameters:
   # Optional arguments to pass to msbuild to indicate what version of dependencies should be used.
@@ -31,41 +122,53 @@ parameters:
       - SqlClient
       - SqlServer
 
-  # Version revision translated to build.proj's BuildNumber property at this boundary.
-  - name: revision
-    type: string
-
-  #  Suffix appended to "PackageVersion" to form the build.proj msbuild property that stamps this
-  #  package's version.  build.proj recognizes only two such properties: PackageVersionSqlClient
-  #  (shared by the entire SqlClient family: Logging, Abstractions, SqlClient, Azure, and the AKV
-  #  Provider) and PackageVersionSqlServer (Microsoft.SqlServer.Server).  Provided by the caller.
-  #  Examples:  'SqlClient' -> -p:PackageVersionSqlClient=7.1.0-preview3
-  #             'SqlServer' -> -p:PackageVersionSqlServer=1.0.0
-  - name: versionPropertySuffix
-    type: string
-
-  #  Version to stamp on the package.  Combined with versionPropertySuffix to form the msbuild
-  #  argument, e.g. -p:PackageVersionSqlClient=7.1.0-preview3.
-  #  Always required — compute up-front via the compute-versions stage.
-  - name: packageVersion
-    type: string
-
 steps:
-  # GOTCHA: If there are any blank lines in msbuildCommandLine, it will consider it "multiple
-  #         arguments" and fail. So, don't split msBuildCommandLine into multiple blocks.
-  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
-    displayName: 'Roslyn Analyzers - build.proj Build${{ parameters.packageShortName }}'
+  # Step 1: Authenticate to the internal Azure Artifacts feed so the leaf restores can pull
+  # Microsoft.Internal.Analyzers. NuGetAuthenticate sets up the Azure Artifacts credential provider
+  # for feeds the build identity can access in this organization.
+  - task: NuGetAuthenticate@1
+    displayName: 'Internal analyzers: authenticate internal feed'
+
+  # Step 2: Isolated analysis build. Compiles the package with EnableAnalyzers=true so that every leaf
+  # "dotnet build" that build.proj execs turns on the full Roslyn analyzer set and verifies its SARIF.
+  - task: DotNetCoreCLI@2
+    displayName: 'Build for Roslyn analysis - build.proj Build${{ parameters.packageShortName }}'
     inputs:
-      msBuildArchitecture: x64
-      msBuildCommandLine: >-
-        msbuild
-        $(REPO_ROOT)/build.proj
+      command: build
+      projects: '$(REPO_ROOT)/build.proj'
+      # Note: BuildNumber and PackageVersion are intentionally omitted. This build only produces
+      # analyzer logs; versioning has no effect on the analysis.
+      arguments: >-
         -t:Build${{ parameters.packageShortName }}
         -p:Configuration=Release
         -p:ReferenceType=Package
         -p:SkipDependencyPack=true
-        -p:BuildNumber=${{ parameters.revision }}
-        -p:PackageVersion${{ parameters.versionPropertySuffix }}=${{ parameters.packageVersion }}
+        -p:IsolatedBuildPath="$(Agent.TempDirectory)/roslyn"
+        -p:EnableAnalyzers=true
+        -p:InternalAnalyzers=true
+        -p:InternalAnalyzersNugetConfig="$(REPO_ROOT)/NuGet.analysis.config"
+        -p:InternalAnalyzersVersion=$(InternalAnalyzersVersion)
         ${{ parameters.dependencyArguments }}
-      msBuildVersion: 17.0
-      setupCommandLinePicker: vs2022
+    env:
+      # dotnet restore expands this environment variable into the NuGet feed URL for
+      # Microsoft.Internal.Analyzers.
+      INTERNAL_ANALYZERS_FEED: $(InternalAnalyzersFeed)
+
+  # Step 3: List every SARIF file that the collector will ingest.
+  - pwsh: |
+      $sarifFiles = @(Get-ChildItem -Path '$(REPO_ROOT)' -Recurse -File -Include '*.csproj.*.sarif', '*.vbproj.*.sarif' | Sort-Object FullName)
+      Write-Host "Roslyn collector will ingest $($sarifFiles.Count) SARIF file(s):"
+      $sarifFiles | ForEach-Object { Write-Host "  $($_.FullName)" }
+    displayName: 'List Roslyn SARIF files for collection'
+
+  # Step 4: Collect the analysis results. In Copy Logs Only mode the task does not build or re-run
+  # the compiler -- it just gathers and sanitizes the *.csproj.*.sarif and *.vbproj.*.sarif logs
+  # produced by Step 2 and hands them to Guardian/SDL.
+  - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+    displayName: 'Roslyn Analyzers (collect) - build.proj Build${{ parameters.packageShortName }}'
+    inputs:
+      copyLogsOnly: true
+      # Root to search for the *.csproj.*.sarif and *.vbproj.*.sarif logs. The analysis build wrote
+      # them next to each project under the repo checkout; the collector globs this directory
+      # recursively.
+      logRootDirectory: '$(REPO_ROOT)'
