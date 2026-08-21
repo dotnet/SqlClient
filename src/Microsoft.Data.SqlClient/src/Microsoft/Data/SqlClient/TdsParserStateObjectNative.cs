@@ -452,20 +452,36 @@ namespace Microsoft.Data.SqlClient
             authInfo.tlsFirst = tlsFirst;
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
-            if (!string.IsNullOrEmpty(clientCertificate))
+            if (string.IsNullOrEmpty(clientCertificate))
             {
-                // SNI reads the certificate through AuthProviderInfo.certContext and duplicates it
-                // with CertDuplicateCertificateContext, so this object must stay alive for the
-                // duration of the call and is released when the state object is disposed.
-                _clientCertificateContext = SqlClientCertificateLoader.Load(
-                    clientCertificate,
-                    clientKey,
-                    clientKeyPassword);
-                authInfo.certContext = _clientCertificateContext.Certificate.Handle;
+                // Add SSL (Encryption) SNI provider.
+                return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
             }
 
-            // Add SSL (Encryption) SNI provider.
-            return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
+            // A previous attempt on this state object may have left a certificate behind.
+            _clientCertificateContext?.Dispose();
+            _clientCertificateContext = null;
+
+            SqlClientCertificateContext certificateContext = SqlClientCertificateLoader.Load(
+                clientCertificate,
+                clientKey,
+                clientKeyPassword);
+            _clientCertificateContext = certificateContext;
+
+            try
+            {
+                // SNI copies the certificate with CertDuplicateCertificateContext while adding the
+                // provider. X509Certificate2.Handle does not keep its certificate alive, so the
+                // managed object must be rooted across the call.
+                authInfo.certContext = certificateContext.Certificate.Handle;
+
+                // Add SSL (Encryption) SNI provider.
+                return SniNativeWrapper.SniAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
+            }
+            finally
+            {
+                GC.KeepAlive(certificateContext);
+            }
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)

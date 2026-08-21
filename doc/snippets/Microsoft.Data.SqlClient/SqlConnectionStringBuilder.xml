@@ -329,6 +329,8 @@ Client certificate authentication is supported for SQL Server on Linux loopback 
 
 The container format is detected from the file contents, not the file extension. A PKCS#12 (PFX or P12) file can contain its own private key. A PEM, DER, or CER certificate requires <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ClientKey>, which supports RSA private keys only and is available on .NET only. On .NET Framework the certificate must therefore be a PKCS#12 file.
 
+When managed networking is used, issuer certificates found alongside the client certificate are presented during the handshake. Native SNI presents the end-entity certificate only, so a server that requires the intermediate certificates must already trust them. The SQL Server on Linux loopback scenario issues a single certificate and is unaffected.
+
 The ODBC driver's `file:` path prefix is not accepted. Specify the certificate and key file paths directly.
 
 Client certificate authentication cannot be combined with SQL credentials, integrated security, Microsoft Entra authentication, access tokens, a custom SSPI context provider, or <xref:Microsoft.Data.SqlClient.SqlConnection.ChangePassword%2A>.

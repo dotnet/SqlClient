@@ -20,8 +20,10 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     /// <remarks>
     /// On .NET this also builds the <c>SslStreamCertificateContext</c> that managed SNI hands to
-    /// <c>SslStream</c>. Native SNI instead consumes the <c>PCCERT_CONTEXT</c> exposed by
-    /// <see cref="Certificate" />.
+    /// <c>SslStream</c>, which presents the issuer chain during the handshake. Native SNI instead
+    /// consumes the <c>PCCERT_CONTEXT</c> exposed by <see cref="Certificate" />, and
+    /// <c>SNIAuthProviderInfo</c> has no field for the chain, so only the end-entity certificate is
+    /// presented on that path.
     /// </remarks>
     internal sealed class SqlClientCertificateContext : IDisposable
     {

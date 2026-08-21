@@ -994,13 +994,34 @@ namespace Microsoft.Data.SqlClient
                 info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
             }
 
-            error = _physicalStateObj.EnableSsl(
-                ref info,
-                encrypt == SqlConnectionEncryptOption.Strict,
-                serverCertificateFilename,
-                clientCertificate,
-                clientKey,
-                clientKeyPassword);
+            try
+            {
+                error = _physicalStateObj.EnableSsl(
+                    ref info,
+                    encrypt == SqlConnectionEncryptOption.Strict,
+                    serverCertificateFilename,
+                    clientCertificate,
+                    clientKey,
+                    clientKeyPassword);
+            }
+            catch (AuthenticationException e)
+            {
+                // Native SNI loads the client certificate in managed code, so a certificate failure
+                // arrives as an exception rather than an SNI error code. Managed SNI converts the
+                // same failure into an SNI error, so report it here to keep both paths reporting a
+                // SqlException that wraps the original AuthenticationException.
+                _physicalStateObj.AddError(new SqlError(
+                    infoNumber: 0,
+                    errorState: 0,
+                    errorClass: TdsEnums.FATAL_ERROR_CLASS,
+                    server: _server,
+                    errorMessage: e.Message,
+                    procedure: string.Empty,
+                    lineNumber: 0,
+                    exception: e));
+                _physicalStateObj.Dispose();
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
