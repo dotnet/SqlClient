@@ -76,6 +76,11 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 stages:
 
   - stage: build_abstractions_package_stage
@@ -98,14 +103,18 @@ stages:
 
       - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Linux
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: linux
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: ubuntu-latest
 
       # ------------------------------------------------------------------------
@@ -113,14 +122,18 @@ stages:
 
       - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: windows
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: windows-latest
 
       # ------------------------------------------------------------------------
@@ -128,14 +141,18 @@ stages:
 
       - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
         parameters:
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           displayNamePrefix: macOS
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
           jobNameSuffix: macos
+          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: Azure Pipelines
+          referenceType: ${{ parameters.referenceType }}
           vmImage: macos-latest
 
       # ------------------------------------------------------------------------
@@ -157,3 +174,4 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           referenceType: ${{ parameters.referenceType }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}

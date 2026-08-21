@@ -15,7 +15,7 @@ parameters:
   # The name to apply to the published pipeline artifacts.
   - name: abstractionsArtifactsName
     type: string
-    default: Abstractions.Artifact
+    default: Abstractions.Artifacts
 
   # The version to apply to the Abstractions NuGet package and its assemblies.  Every package in the
   # SqlClient family shares this version.
@@ -66,6 +66,11 @@ parameters:
       - Package
       # Reference sibling packages as C# projects.
       - Project
+
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+    default: false
 
 jobs:
 
@@ -130,12 +135,12 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
+      # Download the assembly signing key for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+
       # Create the NuGet packages.
-      #
-      # When referenceType is Package, we must pass ReferenceType and the
-      # dependency version so that Directory.Packages.props applies version
-      # ranges to sibling package dependencies.
-      - ${{ if eq(parameters.referenceType, 'Package') }}:
+      - ${{ if and(eq(parameters.referenceType, 'Package'), eq(parameters.isInternalBuild, true)) }}:
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
           inputs:
@@ -144,8 +149,17 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            # BuildNumber supplies the revision component of FileVersion; without
-            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber);SigningKeyPath=$(driverKeyFile.secureFilePath)
+
+      - ${{ elseif eq(parameters.referenceType, 'Package') }}:
+        - task: DotNetCoreCLI@2
+          displayName: Create NuGet Package
+          inputs:
+            command: pack
+            packagesToPack: $(project)
+            configurationToPack: ${{ parameters.buildConfiguration }}
+            packDirectory: $(dotnetPackagesDir)
+            verbosityToPack: ${{ parameters.dotnetVerbosity }}
             buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber)
 
       - ${{ else }}:
@@ -157,10 +171,6 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            # BuildNumber supplies the revision component of FileVersion
-            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
-            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
-            # inconsistent with the MDS/AKV packages that pass it.
             buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
