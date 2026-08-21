@@ -109,6 +109,12 @@ parameters:
       - detailed
       - diagnostic
 
+  # True when building on the internal ADO.Net project.  Internal builds may perform additional or
+  # different steps, such as assembly signing.
+  - name: isInternalBuild
+    type: boolean
+    default: false
+
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
 
@@ -149,6 +155,8 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+      referenceType: ${{ parameters.referenceType }}
+      isInternalBuild: ${{ parameters.isInternalBuild }}
 
   # Build the Logging package, and publish it to the pipeline artifacts
   # under the given artifact name.  This runs in parallel with the Secrets
