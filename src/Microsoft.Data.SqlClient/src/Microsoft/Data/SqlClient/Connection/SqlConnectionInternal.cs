@@ -3977,7 +3977,19 @@ namespace Microsoft.Data.SqlClient.Connection
                 // preserved when resetting the connection state. Otherwise, future uses of the connection
                 // from the pool will execute outside the transaction, in auto-commit mode.
                 // https://github.com/dotnet/SqlClient/issues/2970
-                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
+                //
+                // Two distinct cases must be covered:
+                //  - This connection is the root of a delegated transaction. The transaction has been
+                //    delegated to (and lives on) this connection, so it has no EnlistedTransaction.
+                //  - This connection merely enlisted in someone else's transaction, in which case
+                //    EnlistedTransaction is set but the connection is not the root.
+                // Checking only EnlistedTransaction misses the first case and resets the server side
+                // transaction out from under System.Transactions, which later breaks the connection
+                // while it is being recycled through the pool.
+                // https://github.com/dotnet/SqlClient/issues/4001
+                _parser.PrepareResetConnection(
+                    Pool is not null &&
+                    (IsTransactionRoot || EnlistedTransaction is not null));
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
