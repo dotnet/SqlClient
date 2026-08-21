@@ -113,10 +113,36 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path):
     env["PERF_BENCHMARK"] = unit
     env.pop("PERF_LIST_BENCHMARKS", None)
 
+    # Pin between fork() and exec() where the platform allows it.  apply_affinity() can only run
+    # after Popen() returns, by which point the child has already started executing: process
+    # startup, the .NET host, assembly loading and JIT all run unpinned, potentially on the CPUs
+    # reserved for SQL Server.  This is the interleaved (default) run mode, so without this it is
+    # LESS isolated than the legacy sequential path, which wraps the whole process in 'taskset'.
+    preexec = None
+    if cpus and os.name == "posix" and hasattr(os, "sched_setaffinity"):
+        cpu_set = set(cpus)
+
+        def _pin_to_cpus():
+            """Runs in the forked child, after fork() and before exec()."""
+            os.sched_setaffinity(0, cpu_set)
+
+        preexec = _pin_to_cpus
+
     with open(log_path, "w", encoding="utf-8") as log:
-        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
-                                stderr=subprocess.STDOUT)
-        apply_affinity(proc, cpus)
+        try:
+            proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
+                                    stderr=subprocess.STDOUT, preexec_fn=preexec)
+        except Exception as exc:  # noqa: BLE001 - preexec_fn failure must not abort the run
+            if preexec is None:
+                raise
+            print(f"WARNING: could not pin CPUs {cpus} before exec ({exc}); falling back to "
+                  f"post-start pinning.", file=sys.stderr)
+            proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
+                                    stderr=subprocess.STDOUT)
+            apply_affinity(proc, cpus)
+        else:
+            if preexec is None:
+                apply_affinity(proc, cpus)
         return proc.wait()
 
 
@@ -236,11 +262,30 @@ def orchestrate(runner, units, results_dir, threshold, reps):
 
     # Which units contain a rep-1 regression?  Those are the best-of-N candidates.
     candidate_units = []
+    unmappable = []
     for e in entries:
         if e["status"] == "regression":
             unit = type_to_unit.get(e["benchmarkName"])
-            if unit and unit not in candidate_units:
-                candidate_units.append(unit)
+            if unit:
+                if unit not in candidate_units:
+                    candidate_units.append(unit)
+            elif e["benchmarkName"] not in unmappable:
+                unmappable.append(e["benchmarkName"])
+
+    # A regression whose benchmark Type cannot be mapped back to a unit is never re-run, so its
+    # tally is stuck at 1.  With reps > 1 the strict-majority test below can then never pass, and
+    # the regression would be silently downgraded to "unconfirmed" and slip through the gate - a
+    # false negative caused by bookkeeping, not by the measurement.  Surface it loudly and (see the
+    # verdict loop) judge it against the number of reps actually performed for it, so an
+    # unconfirmable regression is reported rather than quietly discarded.
+    unmappable_keys = {e["key"] for e in entries
+                       if e["status"] == "regression" and e["benchmarkName"] in unmappable}
+    if unmappable:
+        print("WARNING: these regressed benchmark type(s) could not be mapped back to a benchmark "
+              "unit, so best-of-N cannot re-run them: " + ", ".join(sorted(unmappable)) +
+              ". They are reported as confirmed regressions (they cannot be disproved). This "
+              "usually means the unit list and the reported Type names have drifted apart.",
+              file=sys.stderr)
 
     # Per-key regression tally across reps (rep 1 counts once).
     reg_counts = {k: 1 for k in reg_keys_1}
@@ -264,10 +309,15 @@ def orchestrate(runner, units, results_dir, threshold, reps):
         key = e["key"]
         if e["status"] == "regression":
             count = reg_counts.get(key, 0)
-            confirmed = (count * 2) > total_reps
+            # An unmappable key was only ever measured once, so score it against the single rep that
+            # actually ran instead of against N reps it was never eligible for.
+            key_reps = 1 if key in unmappable_keys else total_reps
+            confirmed = (count * 2) > key_reps
             e["regressionReps"] = count
-            e["totalReps"] = total_reps
+            e["totalReps"] = key_reps
             e["confirmedRegression"] = confirmed
+            if key in unmappable_keys:
+                e["confirmationSkipped"] = True
             if not confirmed:
                 e["status"] = "regression-unconfirmed"
         else:
