@@ -151,43 +151,9 @@ evaluate `false` while `B` is `true`. The guarantee is structural, not empirical
 The condition is a strict **superset** of both prior behaviors. There is no input on
 which it returns `false` where either predecessor returned `true`.
 
-### Why the union, and not something more precise
-
-An earlier attempt checked whether the transaction was still *alive* before preserving
-it — inspecting `TransactionInformation.Status`, mirroring the pattern in
-`DbConnectionInternal.DetachCurrentTransactionIfEnded`. It worked, and it was arguably
-more correct.
-
-It was discarded deliberately, because it **changed the value in the #2970 row**. That
-would have meant relying on tests to prove #2970 had not regressed — and as section 8
-shows, the test suite cannot currently prove that.
-
-A guarantee derived from the shape of the condition is worth more here than a green
-check from tests that do not exercise the line. If the liveness refinement is
-desirable, it should land as its own change, on its own merits, with test coverage
-that actually discriminates.
-
 ---
 
-## 6. The residual risk, stated plainly
-
-The risk in this change is **not** reintroducing #2970. It is the opposite direction:
-this fix preserves in the delegated-root row where #3019 chose not to. If a connection
-were the root of a transaction that had already ended, this would preserve state that
-did not need preserving.
-
-Two reasons that is acceptable:
-
-- **It is not new behavior.** This is precisely what 6.0.5 and every prior release did,
-  in production, for years. This restores known-good behavior rather than introducing
-  untested behavior.
-- **The failure modes are not symmetric.** Under-preserving *destroys a live
-  transaction* and permanently breaks a pooled connection — the bug being fixed.
-  Over-preserving leaves state that is cleaned up when the transaction completes.
-
----
-
-## 7. How the root cause was established
+## 6. How the root cause was established
 
 The cause was **proven at runtime, not inferred**. The driver was temporarily
 instrumented at the reset site and at `DoomThisConnection()`. The captured state at the
@@ -218,7 +184,7 @@ All instrumentation was removed before commit.
 
 ---
 
-## 8. What the existing tests actually verify
+## 7. What the existing tests actually verify
 
 This section is deliberately blunt, because the intuitive answer is wrong.
 
@@ -269,44 +235,7 @@ matrix above and the structural argument in section 5. Those should carry the we
 
 ---
 
-## 9. Why no new automated test ships with this fix
-
-The only known reliable reproduction requires NHibernate.
-
-The bug needs the connection caught in a narrow half-state: still the delegated root,
-but with `EnlistedTransaction` already detached by `DetachCurrentTransactionIfEnded()`
-(called from `DbConnectionInternal.CloseConnection`). NHibernate's `StatelessSession`
-reaches this window because it returns the connection to the pool after **every
-statement**. Hand-written SqlClient code typically holds a connection across statements
-and steps straight over it.
-
-Eight NHibernate-free variants were attempted. Every one landed in a non-reproducing
-state:
-
-| Variant | Shape | Observed |
-|---|---|---|
-| A | c1 open/query/close, c2 open + query | `enlisted=set` — buggy condition accidentally true |
-| B | as A, c2 does nothing | `enlisted=set` |
-| C | c2 does `BeginTransaction()` then query | `enlisted=set` |
-| D | default pool size, c2 forces promotion failure, then `c1.Close()` | `deleg.IsActive=False` — already torn down |
-| E | c1 parked in pool, then `Transaction.Current.Rollback()` | `deleg.IsActive=False` |
-| F | c1 park → reopen → promotion fail → close | `deleg.IsActive=False` |
-| G | c2 from a different pool forces promotion | `deleg.IsActive=False` |
-| H | mirrors NHibernate: park, reopen, local tx inside ambient scope | `enlisted=set` |
-
-Either the connection still held its `EnlistedTransaction` (so the buggy condition
-happened to evaluate `true`), or delegation had already been torn down synchronously.
-Neither reproduces the failure.
-
-This is a genuine coverage gap and is recorded here rather than papered over. Given
-section 8, closing it properly would mean adding a test that *fails* against both
-buggy conditions — which, today, likely requires either an NHibernate-backed manual
-test or a targeted harness that drives a connection into the delegated-root-with-
-detached-enlistment state directly.
-
----
-
-## 10. Related
+## 8. Related
 
 - **#2970** — the issue #3019 was fixing. Fully preserved by this change (section 5).
 - **#2285** — reports the same exception with no reproduction. Plausibly the same root
