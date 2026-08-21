@@ -14,19 +14,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionPoolConnectionStringProvider : IEnumerable<object[]>
     {
-        private static readonly string _TCPConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = false,
-            Pooling = true}.ConnectionString;
-        private static readonly string _tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = true,
-            Pooling = true }.ConnectionString;
+        private static readonly string s_tcpConnectionString = BuildConnectionString(mars: false);
+        private static readonly string s_tcpMarsConnStr = BuildConnectionString(mars: true);
+
+        private static string BuildConnectionString(bool mars)
+        {
+            if (string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
+            {
+                return string.Empty;
+            }
+
+            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                MultipleActiveResultSets = mars,
+                Pooling = true
+            }.ConnectionString;
+        }
 
         public IEnumerator<object[]> GetEnumerator()
         {
-            yield return new object[] { _TCPConnectionString };
+            yield return new object[] { s_tcpConnectionString };
             if (DataTestUtility.IsNotAzureSynapse())
             {
-                yield return new object[] { _tcpMarsConnStr };
+                yield return new object[] { s_tcpMarsConnStr };
             }
         }
 
@@ -35,21 +45,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class ConnectionPoolConnectionStringAndPoolVersionProvider : IEnumerable<object[]>
     {
-        private static readonly string _TCPConnectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = false,
-            Pooling = true }.ConnectionString;
-        private static readonly string _tcpMarsConnStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {
-            MultipleActiveResultSets = true,
-            Pooling = true }.ConnectionString;
+        private static readonly string s_tcpConnectionString = BuildConnectionString(mars: false);
+        private static readonly string s_tcpMarsConnStr = BuildConnectionString(mars: true);
+
+        private static string BuildConnectionString(bool mars)
+        {
+            if (string.IsNullOrEmpty(DataTestUtility.TCPConnectionString))
+            {
+                return string.Empty;
+            }
+
+            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                MultipleActiveResultSets = mars,
+                Pooling = true
+            }.ConnectionString;
+        }
 
         public IEnumerator<object[]> GetEnumerator()
         {
-            yield return new object[] { _TCPConnectionString, false };
-            yield return new object[] { _TCPConnectionString, true };
+            yield return new object[] { s_tcpConnectionString, false };
+            yield return new object[] { s_tcpConnectionString, true };
             if (DataTestUtility.IsNotAzureSynapse())
             {
-                yield return new object[] { _tcpMarsConnStr, false };
-                yield return new object[] { _tcpMarsConnStr, true };
+                yield return new object[] { s_tcpMarsConnStr, false };
+                yield return new object[] { s_tcpMarsConnStr, true };
             }
         }
 
@@ -61,73 +81,85 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class ConnectionPoolTest
     {
         /// <summary>
+        /// Opens the given connection, setting an access token for Azure SQL targets.
+        /// </summary>
+        private static async Task OpenWithAccessTokenAsync(SqlConnection connection)
+        {
+            if (DataTestUtility.IsAzureConnStringSetup())
+            {
+                connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            }
+            connection.Open();
+        }
+
+        /// <summary>
         /// Tests that using the same connection string results in the same pool\internal connection and a different string results in a different pool\internal connection
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
         [Trait("Category", "flaky")]
-        public static void BasicConnectionPoolingTest(string connectionString)
+        public static async Task BasicConnectionPoolingTest(string connectionString)
         {
             SqlConnection.ClearAllPools();
 
             InternalConnectionWrapper internalConnection;
             ConnectionPoolWrapper connectionPool;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
-                connection.Open();
+                await OpenWithAccessTokenAsync(connection);
                 internalConnection = new InternalConnectionWrapper(connection);
                 connectionPool = new ConnectionPoolWrapper(connection);
             }
 
-            using (SqlConnection connection2 = new SqlConnection(connectionString))
+            using (SqlConnection connection2 = new(connectionString))
             {
-                connection2.Open();
+                await OpenWithAccessTokenAsync(connection2);
                 Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
             }
 
-            using (SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;"))
+            using (SqlConnection connection3 = new(connectionString + ";App=SqlConnectionPoolUnitTest;"))
             {
-                connection3.Open();
+                await OpenWithAccessTokenAsync(connection3);
                 Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
             }
 
             connectionPool.Cleanup();
 
-            using (SqlConnection connection4 = new SqlConnection(connectionString))
+            using (SqlConnection connection4 = new(connectionString))
             {
-                connection4.Open();
+                await OpenWithAccessTokenAsync(connection4);
                 Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
-        public static void AccessTokenConnectionPoolingTest()
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup))]
+        public static async Task AccessTokenConnectionPoolingTest()
         {
             SqlConnection.ClearAllPools();
 
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
-
-            using SqlConnection connection = new SqlConnection(connectionString);
-            connection.AccessToken = DataTestUtility.GetAccessToken();
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection.Open();
-            InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection);
-            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection);
+            InternalConnectionWrapper internalConnection = new(connection);
+            ConnectionPoolWrapper connectionPool = new(connection);
             connection.Close();
 
-            using SqlConnection connection2 = new SqlConnection(connectionString);
-            connection2.AccessToken = DataTestUtility.GetAccessToken();
+            using SqlConnection connection2 = new(DataTestUtility.TCPConnectionString);
+            connection2.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection2.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
             connection2.Close();
 
-            using SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
-            connection3.AccessToken = DataTestUtility.GetAccessToken();
+            string azureConnStrWithApp = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) 
+                { 
+                    ApplicationName = "SqlConnectionPoolUnitTest" 
+                }.ConnectionString;
+            using SqlConnection connection3 = new(azureConnStrWithApp);
+            connection3.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection3.Open();
             Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
             Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
@@ -135,8 +167,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             connectionPool.Cleanup();
 
-            using SqlConnection connection4 = new SqlConnection(connectionString);
-            connection4.AccessToken = DataTestUtility.GetAccessToken();
+            using SqlConnection connection4 = new(DataTestUtility.TCPConnectionString);
+            connection4.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             connection4.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
@@ -148,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
-        public static void ClearAllPoolsTest(string connectionString, bool usePoolV2)
+        public static async Task ClearAllPoolsTest(string connectionString, bool usePoolV2)
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.UseConnectionPoolV2 = usePoolV2;
@@ -156,21 +188,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection.ClearAllPools();
             Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                ConnectionPoolWrapper pool = new ConnectionPoolWrapper(connection);
-                connection.Close();
-                ConnectionPoolWrapper[] allPools = ConnectionPoolWrapper.AllConnectionPools();
+            using SqlConnection connection = new(connectionString);
+            await OpenWithAccessTokenAsync(connection);
+            ConnectionPoolWrapper pool = new(connection);
+            connection.Close();
+            ConnectionPoolWrapper[] allPools = ConnectionPoolWrapper.AllConnectionPools();
 
-                DataTestUtility.AssertEqualsWithDescription(1, allPools.Length, "Incorrect number of pools exist.");
-                Assert.True(allPools[0].Equals(pool), "Saved pool is not in the list of all pools");
-                DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
+            DataTestUtility.AssertEqualsWithDescription(1, allPools.Length, "Incorrect number of pools exist.");
+            Assert.True(allPools[0].Equals(pool), "Saved pool is not in the list of all pools");
+            DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
 
-                SqlConnection.ClearAllPools();
-                Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
-                DataTestUtility.AssertEqualsWithDescription(0, pool.ConnectionCount, "Saved pool has incorrect number of connections.");
-            }
+            SqlConnection.ClearAllPools();
+            Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
+            DataTestUtility.AssertEqualsWithDescription(0, pool.ConnectionCount, "Saved pool has incorrect number of connections.");
         }
 
         /// <summary>
@@ -179,12 +209,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void ReclaimEmancipatedOnOpenTest(string connectionString)
+        public static async Task ReclaimEmancipatedOnOpenTest(string connectionString)
         {
-            string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
+            string newConnectionString = new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }.ConnectionString;
             SqlConnection.ClearAllPools();
 
-            InternalConnectionWrapper internalConnection = CreateEmancipatedConnection(newConnectionString);
+            InternalConnectionWrapper internalConnection = await CreateEmancipatedConnectionAsync(newConnectionString);
             ConnectionPoolWrapper connectionPool = internalConnection.ConnectionPool;
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -193,12 +223,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataTestUtility.AssertEqualsWithDescription(1, connectionPool.ConnectionCount, "Wrong number of connections in the pool.");
             DataTestUtility.AssertEqualsWithDescription(0, connectionPool.FreeConnectionCount, "Wrong number of free connections in the pool.");
 
-            using (SqlConnection connection = new SqlConnection(newConnectionString))
-            {
-                connection.Open();
-                Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");
-                Assert.True(connectionPool.ContainsConnection(connection), "Connection is in wrong connection pool");
-            }
+            using SqlConnection connection = new(newConnectionString);
+            await OpenWithAccessTokenAsync(connection);
+            Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");
+            Assert.True(connectionPool.ContainsConnection(connection), "Connection is in wrong connection pool");
         }
 
         /// <summary>
@@ -206,17 +234,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void MaxPoolWaitForConnectionTest(string connectionString)
+        public static async Task MaxPoolWaitForConnectionTest(string connectionString)
         {
-            string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
+            string newConnectionString = new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }.ConnectionString;
             SqlConnection.ClearAllPools();
 
-            using SqlConnection connection1 = new SqlConnection(newConnectionString);
-            connection1.Open();
+            using SqlConnection connection1 = new(newConnectionString);
+            await OpenWithAccessTokenAsync(connection1);
 
-            InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection1);
-            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection1);
-            ManualResetEventSlim taskAllowedToSpeak = new ManualResetEventSlim(false);
+            InternalConnectionWrapper internalConnection = new(connection1);
+            ConnectionPoolWrapper connectionPool = new(connection1);
+            using ManualResetEventSlim taskAllowedToSpeak = new(false);
 
             Task waitTask = Task.Factory.StartNew(() => MaxPoolWaitForConnectionTask(newConnectionString, internalConnection, connectionPool, taskAllowedToSpeak));
             int count = 5;
@@ -236,11 +264,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             InternalConnectionWrapper internalConnection = null;
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 try
                 {
-                    connection.Open();
+                    OpenWithAccessTokenAsync(connection).GetAwaiter().GetResult();
                     internalConnection = new InternalConnectionWrapper(connection);
                 }
                 catch
@@ -255,17 +283,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return internalConnection;
         }
 
-        private static InternalConnectionWrapper CreateEmancipatedConnection(string connectionString)
+        private static async Task<InternalConnectionWrapper> CreateEmancipatedConnectionAsync(string connectionString)
         {
-            SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
+            SqlConnection connection = new(connectionString);
+            await OpenWithAccessTokenAsync(connection);
             return new InternalConnectionWrapper(connection);
         }
 
         private static void MaxPoolWaitForConnectionTask(string connectionString, InternalConnectionWrapper internalConnection, ConnectionPoolWrapper connectionPool, ManualResetEventSlim waitToSpeak)
         {
-            using SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
+            using SqlConnection connection = new(connectionString);
+            OpenWithAccessTokenAsync(connection).GetAwaiter().GetResult();
             waitToSpeak.Wait();
             Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");
             Assert.True(connectionPool.ContainsConnection(connection), "Connection is in wrong connection pool");
@@ -273,8 +301,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         internal static SqlConnection ReplacementConnectionObeys0TimeoutTask(string connectionString)
         {
-            SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
+            SqlConnection connection = new(connectionString);
+            OpenWithAccessTokenAsync(connection).GetAwaiter().GetResult();
             return connection;
         }
     }

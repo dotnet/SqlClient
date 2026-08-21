@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Security;
 using System.Threading.Tasks;
 using Azure.Core;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -16,132 +17,107 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static void ConnectAndDisconnect(string connectionString, SqlCredential credential = null)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using SqlConnection conn = new(connectionString);
+            if (credential != null)
             {
-                if (credential != null)
-                {
-                    conn.Credential = credential;
-                }
-                conn.Open();
-
-                Assert.True(conn.State == System.Data.ConnectionState.Open);
+                conn.Credential = credential;
             }
+            conn.Open();
+
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsAzure() => !DataTestUtility.IsNotAzureServer();
-        private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
-        private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
-        private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentitySupported;
-        private static bool SupportsSystemAssignedManagedIdentity() => DataTestUtility.SupportsSystemAssignedManagedIdentity;
+        private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenAsyncSetup().GetAwaiter().GetResult();
+        private static bool IsAzureSqlConnStringSetup() => DataTestUtility.IsAzureConnStringSetup();
+        private static bool IsUserManagedIdentitySupported() => DataTestUtility.IsUserManagedIdentitySupported;
+        private static bool IsSystemAssignedManagedIdentitySupported() => DataTestUtility.IsSystemManagedIdentitySupported;
 
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenTest()
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
+        public static async Task AccessTokenTest()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            await connection.OpenAsync();
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                connection.AccessToken = DataTestUtility.GetAccessToken();
-                connection.Open();
-
-                Assert.True(connection.State == System.Data.ConnectionState.Open);
-            }
+            Assert.Equal(System.Data.ConnectionState.Open, connection.State);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
-        public static void InvalidAccessTokenTest()
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
+        public static async Task InvalidAccessTokenTest()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.AccessToken = await DataTestUtility.GetAccessTokenAsync() + "abc";
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                connection.AccessToken = DataTestUtility.GetAccessToken() + "abc";
-                SqlException e = Assert.Throws<SqlException>(() => connection.Open());
-
-                string expectedMessage = "Login failed for user";
-                Assert.Contains(expectedMessage, e.Message);
-            }
+            string expectedMessage = "Login failed for user";
+            Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenWithAuthType()
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
+        public static async Task AccessTokenWithAuthType()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString
+                .AddManagedIdentityAuthenticationToConnString());
+            InvalidOperationException e = await Assert.ThrowsAsync<InvalidOperationException>
+            (async () =>
+                connection.AccessToken = await DataTestUtility.GetAccessTokenAsync()
+            );
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
-                    connection.AccessToken = DataTestUtility.GetAccessToken());
-
-                string expectedMessage = "Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.";
-                Assert.Contains(expectedMessage, e.Message);
-            }
+            string expectedMessage = "Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
-        public static void AccessTokenWithCred()
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
+        public static async Task AccessTokenWithCred()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            string connString = DataTestUtility.TCPConnectionString
+                .AddUserToConnString()
+                .AddPasswordToConnString();
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
-                connection.AccessToken = DataTestUtility.GetAccessToken());
+            using SqlConnection connection = new(connString);
+            InvalidOperationException e = await Assert.ThrowsAsync<InvalidOperationException>
+            (async () =>
+            connection.AccessToken = await DataTestUtility.GetAccessTokenAsync()
+            );
 
-                string expectedMessage = "Cannot set the AccessToken property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.";
-                Assert.Contains(expectedMessage, e.Message);
-            }
+            string expectedMessage = "Cannot set the AccessToken property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.";
+            Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenTestWithEmptyToken()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
+            string connStr = DataTestUtility.TCPConnectionString;
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                connection.AccessToken = "";
-                SqlException e = Assert.Throws<SqlException>(() => connection.Open());
+            using SqlConnection connection = new(connStr);
+            connection.AccessToken = "";
+            SqlException e = Assert.Throws<SqlException>(() => connection.Open());
 
-                string expectedMessage = "A connection was successfully established with the server, but then an error occurred during the login process.";
-                Assert.Contains(expectedMessage, e.Message);
-            }
+            string expectedMessage = "A connection was successfully established with the server, but then an error occurred during the login process.";
+            Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenTestWithIntegratedSecurityTrue()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Integrated Security=True;";
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddIntegratedSecurityToConnString();
 
-            using (SqlConnection connection = new SqlConnection(connStr))
-            {
-                InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "");
+            using SqlConnection connection = new(connStr);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "");
 
-                string expectedMessage = "Cannot set the AccessToken property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.";
-                Assert.Contains(expectedMessage, e.Message);
-            }
+            string expectedMessage = "Cannot set the AccessToken property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.";
+            Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void InvalidAuthTypeTest()
         {
-            // Remove cred info and add invalid token
-            string[] credKeys = { "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Authentication=Active Directory Pass;";
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddInvalidAADAuthenticationToConnString();
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
@@ -149,10 +125,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AADPasswordWithIntegratedSecurityTrue()
         {
-            string connStr = DataTestUtility.AADPasswordConnectionString + "Integrated Security=True;";
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddAADPasswordAuthenticationToConnString()
+                .AddUserToConnString()
+                .AddPasswordToConnString()
+                .AddIntegratedSecurityToConnString();
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
@@ -160,93 +140,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void GetAccessTokenByPasswordTest()
-        {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
-
-            try
-            {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
-
-                using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
-                {
-                    connection.Open();
-                    Assert.True(connection.State == System.Data.ConnectionState.Open);
-                }
-            }
-            finally
-            {
-                if (original is not null)
-                {
-                    // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
-                }
-            }
-        }
-
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void TestCustomProviderAuthentication()
         {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);
 
             try
             {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
-                // Connect to Azure DB with password and retrieve user name using custom authentication provider
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
-                {
-                    conn.Open();
-                    using (SqlCommand sqlCommand = new SqlCommand
-                    (
-                        cmdText: $"SELECT SUSER_SNAME();",
-                        connection: conn,
-                        transaction: null
-                    ))
-                    {
-                        string customerId = (string)sqlCommand.ExecuteScalar();
-                        string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                        Assert.Equal(expected, customerId);
-                    }
-                }
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, new UserAssignedManagedIdentityProvider());
+
+                string connStr = DataTestUtility.GetUserIdentityConnectionString();
+                // Connect to Azure DB with managed identity and retrieve user name using custom authentication provider
+                using SqlConnection conn = new(connStr);
+
+                conn.Open();
+                using SqlCommand sqlCommand = new(
+                    cmdText: "SELECT SUSER_SNAME();",
+                    connection: conn,
+                    transaction: null);
+                string customerId = (string)sqlCommand.ExecuteScalar();
+                // SUSER_SNAME() may return "clientId@tenantId" for managed identity principals.
+                string clientIdPart = customerId.Contains("@") ? customerId.Substring(0, customerId.IndexOf('@')) : customerId;
+                Assert.Equal(DataTestUtility.UserManagedIdentityClientId, clientIdPart);
             }
             finally
             {
                 if (original is not null)
                 {
                     // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, original);
                 }
             }
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void ActiveDirectoryPasswordWithNoAuthType()
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
+        public static void SqlCredentialsWithNoAuthType()
         {
-            // connection fails with expected error message.
-            string[] AuthKey = { "Authentication" };
-            string connStrWithNoAuthType = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey);
+            string connStrWithNoAuthType = DataTestUtility.TCPConnectionString
+                .AddUserToConnString()
+                .AddPasswordToConnString();
             Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void IntegratedAuthWithCred()
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
+        public static void AADIntegratedAuthWithCred()
         {
-            // connection fails with expected error message.
-            string[] AuthKey = { "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Integrated;";
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddAADIntegratedAuthenticationToConnString()
+                .AddUserToConnString()
+                .AddPasswordToConnString();
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
             string[] expectedMessage = { "Cannot use 'Authentication=Active Directory Integrated' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.", //netfx
@@ -254,101 +196,85 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(e.Message, expectedMessage);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void MFAAuthWithPassword()
         {
             // connection fails with expected error message.
-            string[] AuthKey = { "Authentication" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey) + "Authentication=Active Directory Interactive;";
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddAADInteractiveAuthenticationToConnString()
+                .AddUserToConnString()
+                .AddPasswordToConnString();
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryDeviceCodeFlowWithUserIdMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithUID = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Device Code Flow; UID=someuser;";
+            string connStrWithUID = DataTestUtility.TCPConnectionString
+                .AddAADDeviceCodeFlowAuthenticationToConnString()
+                .AddUserToConnString("someuser");
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithUID));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryDeviceCodeFlowWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Device Code Flow;";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADDeviceCodeFlowAuthenticationToConnString();
 
-            SecureString str = new SecureString();
-            foreach (char c in "hello")
-            {
-                str.AppendChar(c);
-            }
-            str.MakeReadOnly();
-            SqlCredential credential = new SqlCredential("someuser", str);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
+            SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
             string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryManagedIdentityWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Managed Identity;";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddManagedIdentityAuthenticationToConnString();
 
-            SecureString str = new SecureString();
-            foreach (char c in "hello")
-            {
-                str.AppendChar(c);
-            }
-            str.MakeReadOnly();
-            SqlCredential credential = new SqlCredential("someuser", str);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
+            SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
             string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Managed Identity' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryWorkloadIdentityWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Workload Identity;";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADWorkloadIdentityAuthenticationToConnString();
 
-            SecureString str = new SecureString();
-            foreach (char c in "hello")
-            {
-                str.AppendChar(c);
-            }
-            str.MakeReadOnly();
-            SqlCredential credential = new SqlCredential("someuser", str);
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
+            SqlCredential credential = new("someuser", str);
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
             string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Workload Identity' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryManagedIdentityWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Managed Identity; Password=anything";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddManagedIdentityAuthenticationToConnString()
+                .AddPasswordToConnString("anything");
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
@@ -356,34 +282,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryMSIWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory MSI;";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADMSIAuthenticationToConnString();
 
-            SecureString str = new SecureString();
-            foreach (char c in "hello")
-            {
-                str.AppendChar(c);
-            }
-            str.MakeReadOnly();
-            SqlCredential credential = new SqlCredential("someuser", str);
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
+            SqlCredential credential = new("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>
+            (() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
             string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory MSI' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static void ActiveDirectoryMSIWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=ActiveDirectoryMSI; Password=anything";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADMSIAuthenticationToConnString()
+                .AddPasswordToConnString();
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
@@ -391,34 +312,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryDefaultWithCredentialsMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=Active Directory Default;";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADDefaultAuthenticationToConnString();
 
-            SecureString str = new SecureString();
-            foreach (char c in "hello")
-            {
-                str.AppendChar(c);
-            }
-            str.MakeReadOnly();
-            SqlCredential credential = new SqlCredential("someuser", str);
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+            using SecureString str = TestRandomUtilities.GenerateRandomSecureString(10);
+
+            SqlCredential credential = new("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>
+            (() => ConnectAndDisconnect(connStrWithNoCred, credential));
 
             string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Default' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryDefaultWithPasswordMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=ActiveDirectoryDefault; Password=anything";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADDefaultAuthenticationToConnString()
+                .AddPasswordToConnString("anything");
 
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
@@ -426,117 +343,109 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ActiveDirectoryDefaultWithAccessTokenCallbackMustFail()
         {
             // connection fails with expected error message.
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                "Authentication=ActiveDirectoryDefault";
+            string connStrWithNoCred = DataTestUtility.TCPConnectionString
+                .AddAADDefaultAuthenticationToConnString();
+
             InvalidOperationException e = Assert.Throws<InvalidOperationException>(() =>
             {
-                using (SqlConnection conn = new SqlConnection(connStrWithNoCred))
-                {
-                    conn.AccessTokenCallback = (ctx, token) =>
-                        Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
-                    conn.Open();
+                using SqlConnection conn = new(connStrWithNoCred);
+                conn.AccessTokenCallback = (ctx, token) =>
+                    Task.FromResult(new SqlAuthenticationToken("my token", DateTimeOffset.MaxValue));
+                conn.Open();
 
-                    Assert.NotEqual(System.Data.ConnectionState.Open, conn.State);
-                }
+                Assert.NotEqual(System.Data.ConnectionState.Open, conn.State);
             });
 
             string expectedMessage = "Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.";
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenCallbackMustOpenPassAndChangePropertyFail()
         {
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
-            var cred = DataTestUtility.GetTokenCredential();
-            const string defaultScopeSuffix = "/.default";
-            using (SqlConnection conn = new SqlConnection(connStr))
-            {
-                conn.AccessTokenCallback = (ctx, cancellationToken) =>
-                {
-                    string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
-                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
-                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
-                };
-                conn.Open();
-                Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+            string connStr = DataTestUtility.TCPConnectionString;
 
-                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = null);
-                string expectedMessage = "Not allowed to change the 'AccessTokenCallback' property. The connection's current state is open.";
-                Assert.Contains(expectedMessage, ex.Message);
-            }
+            TokenCredential cred = DataTestUtility.GetTokenCredential();
+            const string defaultScopeSuffix = "/.default";
+
+            using SqlConnection conn = new(connStr);
+            conn.AccessTokenCallback = (ctx, cancellationToken) =>
+            {
+                string scope = ctx.Resource.EndsWith(defaultScopeSuffix) ? ctx.Resource : ctx.Resource + defaultScopeSuffix;
+                AccessToken token = cred.GetToken(new TokenRequestContext([scope]), cancellationToken);
+                return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+            };
+            conn.Open();
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = null);
+            string expectedMessage = "Not allowed to change the 'AccessTokenCallback' property. The connection's current state is open.";
+            Assert.Contains(expectedMessage, ex.Message);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenCallbackReceivesUsernameAndPassword()
         {
             var userId = "someuser";
             var pwd = "somepassword";
-            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
-                 $"User ID={userId}; Password={pwd}";
-            var cred = DataTestUtility.GetTokenCredential();
+            string connStr = DataTestUtility.TCPConnectionString
+                .AddUserToConnString(userId)
+                .AddPasswordToConnString(pwd);
+
+            TokenCredential cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
-            using (SqlConnection conn = new SqlConnection(connStr))
+            
+            using SqlConnection conn = new(connStr);
+            conn.AccessTokenCallback = (parms, cancellationToken) =>
             {
-                conn.AccessTokenCallback = (parms, cancellationToken) =>
-                {
-                    Assert.Equal(userId, parms.UserId);
-                    Assert.Equal(pwd, parms.Password);
-                    string scope = parms.Resource.EndsWith(defaultScopeSuffix) ? parms.Resource : parms.Resource + defaultScopeSuffix;
-                    AccessToken token = cred.GetToken(new TokenRequestContext(new[] { scope }), cancellationToken);
-                    return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
-                };
-                conn.Open();
-            }
+                Assert.Equal(userId, parms.UserId);
+                Assert.Equal(pwd, parms.Password);
+                string scope = parms.Resource.EndsWith(defaultScopeSuffix) ? parms.Resource : parms.Resource + defaultScopeSuffix;
+                AccessToken token = cred.GetToken(new TokenRequestContext([scope]), cancellationToken);
+                return Task.FromResult(new SqlAuthenticationToken(token.Token, token.ExpiresOn));
+            };
+            conn.Open();
         }
 
-        // Test passes locally everytime, but in pieplines fails randomly with uncertainity.
+        // Test passes locally every time, but in pipelines fails randomly with uncertainty.
         // e.g. Second Entra ID connection too slow (802ms)! (More than 30% of the first (576ms).)
         [ActiveIssue("16058")]
-        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void ConnectionSpeed()
         {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);
 
             try
             {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, new UserAssignedManagedIdentityProvider());
 
-                var connString = DataTestUtility.AADPasswordConnectionString;
+                string connString = DataTestUtility.GetUserIdentityConnectionString();
 
-                //Ensure server endpoints are warm
-                using (var connectionDrill = new SqlConnection(connString))
+                // Ensure server endpoints are warm
+                using (SqlConnection connectionDrill = new(connString))
                 {
                     connectionDrill.Open();
                 }
 
                 SqlConnection.ClearAllPools();
 
-                Stopwatch firstConnectionTime = new Stopwatch();
-                Stopwatch secondConnectionTime = new Stopwatch();
+                Stopwatch firstConnectionTime = new();
+                Stopwatch secondConnectionTime = new();
 
-                using (var connectionDrill = new SqlConnection(connString))
+                using (SqlConnection connectionDrill = new(connString))
                 {
                     firstConnectionTime.Start();
                     connectionDrill.Open();
                     firstConnectionTime.Stop();
-                    using (var connectionDrill2 = new SqlConnection(connString))
-                    {
-                        secondConnectionTime.Start();
-                        connectionDrill2.Open();
-                        secondConnectionTime.Stop();
-                    }
+
+                    using SqlConnection connectionDrill2 = new(connString);
+                    secondConnectionTime.Start();
+                    connectionDrill2.Open();
+                    secondConnectionTime.Stop();
                 }
 
                 // Subsequent Entra ID connections within a short timeframe should use an auth token cached from the connection pool
@@ -548,69 +457,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (original is not null)
                 {
                     // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, original);
                 }
             }
         }
 
         #region Managed Identity Authentication tests
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
-        public static void AccessToken_SystemManagedIdentityTest()
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
+        public static async Task AccessToken_SystemManagedIdentityTest()
         {
-            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.AccessToken = DataTestUtility.GetSystemIdentityAccessToken();
-                conn.Open();
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            conn.AccessToken = await DataTestUtility.GetSystemIdentityAccessTokenAsync();
+            conn.Open();
 
-                Assert.True(conn.State == System.Data.ConnectionState.Open);
-            }
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
-        public static void AccessToken_UserManagedIdentityTest()
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsUserManagedIdentitySupported))]
+        public static async Task AccessToken_UserManagedIdentityTest()
         {
-            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.AccessToken = DataTestUtility.GetUserIdentityAccessToken();
-                conn.Open();
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            conn.AccessToken = await DataTestUtility.GetUserIdentityAccessTokenAsync();
+            conn.Open();
 
-                Assert.True(conn.State == System.Data.ConnectionState.Open);
-            }
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup), nameof(SupportsSystemAssignedManagedIdentity))]
-        public static void Azure_AccessToken_SystemManagedIdentityTest()
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsSystemAssignedManagedIdentitySupported))]
+        public static async Task Azure_AccessToken_SystemManagedIdentityTest()
         {
-            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.AccessToken = DataTestUtility.GetSystemIdentityAccessToken();
-                conn.Open();
+            string connectionString = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties();
 
-                Assert.True(conn.State == System.Data.ConnectionState.Open);
-            }
+            using SqlConnection conn = new(connectionString);
+            conn.AccessToken = await DataTestUtility.GetSystemIdentityAccessTokenAsync();
+            conn.Open();
+
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
 
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsManagedIdentitySetup))]
-        public static void Azure_AccessToken_UserManagedIdentityTest()
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure), nameof(IsAccessTokenSetup), nameof(IsUserManagedIdentitySupported))]
+        public static async Task Azure_AccessToken_UserManagedIdentityTest()
         {
-            string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
-            string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                conn.AccessToken = DataTestUtility.GetUserIdentityAccessToken();
-                conn.Open();
+            string connectionString = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties();
+            
+            using SqlConnection conn = new(connectionString);
+            conn.AccessToken = await DataTestUtility.GetUserIdentityAccessTokenAsync();
+            conn.Open();
 
-                Assert.True(conn.State == System.Data.ConnectionState.Open);
-            }
+            Assert.Equal(System.Data.ConnectionState.Open, conn.State);
         }
         #endregion
     }

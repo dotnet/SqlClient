@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CheckSparseColumnBit()
         {
             const int sparseColumns = 4095;
-            string tempTableName = DataTestUtility.GenerateObjectName();
+            string tempTableName = DataTestUtility.GetShortName("DataReaderTest");
 
             // TSQL for "CREATE TABLE" with sparse columns
             // table name will be provided as an argument
@@ -241,7 +241,7 @@ deallocate c";
             // requested. The additional key information is provided as hidden columns and can be seen using
             // the difference between VisibleFieldCount and FieldCount on the reader
 
-            string tempTableName = DataTestUtility.GenerateObjectName();
+            string tempTableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
             string createQuery = $@"
                 create table [{tempTableName}] (
@@ -554,7 +554,7 @@ deallocate c";
    </book>
 </catalog>";
 
-            string tableName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.PersistSecurityInfo = true;
@@ -696,7 +696,7 @@ deallocate c";
             byte[] data = Enumerable.Range(0, Size)
                 .Select(i => (byte)(i % 256))
                 .ToArray();
-            string tableName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -855,7 +855,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             {
                 await cn.OpenAsync();
 
-                string tableName = DataTestUtility.GenerateObjectName();
+                string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
                 try
                 {
@@ -1063,7 +1063,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             {
                 await cn.OpenAsync();
 
-                string tableName = DataTestUtility.GenerateObjectName();
+                string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
                 try
                 {
