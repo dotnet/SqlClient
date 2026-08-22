@@ -1,19 +1,21 @@
-﻿<docs>
+<docs>
   <members name="SqlMetaData">
     <SqlMetaData>
       <summary>
-        Specifies and retrieves metadata information from parameters and columns of <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> objects. This class cannot be inherited.
+        Specifies the metadata information of a columns used by a <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> objects. This class cannot be inherited.
       </summary>
       <example>
         <para>
-          The following example shows the creation of several <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects, which describe the column metadata of a record, and the creation of a <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />. The column values of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> are set and the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> is sent to the calling program using the <see cref="T:Microsoft.SqlServer.Server.SqlContext" /> class.
+          The following example shows the creation of several <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects, which describe the column metadata of a record, and the generation of a stream of <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> records. These <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> records can be streamed to SQL Server as a table-valued parameter by assigning the return value of the method to the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
         </para>
         <!-- SqlMetaData #1 -->
         <code language="c#">
+          using System;
+          using System.Collections.Generic;
+          using System.Data;
           using Microsoft.Data.SqlClient.Server;
-      
-          [Microsoft.Data.SqlClient.Server.SqlProcedure]
-          public static void CreateNewRecord()
+
+          public static IEnumerable&lt;SqlDataRecord&gt; ReturnNewRecords()
           {
               // Variables.
               SqlMetaData column1Info;
@@ -32,16 +34,21 @@
                 column2Info,
                 column3Info });
       
-              // Set the record fields.
+              // Set the fields of the first record and stream it to SQL Server.
               record.SetString(0, "Hello World!");
               record.SetInt32(1, 42);
               record.SetDateTime(2, DateTime.Now);
+              yield return record;
       
-              // Send the record to the calling program.
-              SqlContext.Pipe.Send(record);
+              // Set the fields of the second record and stream it to SQL Server.
+              record.SetInt32(1, 0);
+              yield return record;
           }
         </code>
       </example>
+      <remarks>
+        <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instances are typically built once and reused to construct many <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> objects which are streamed to SQL Server as a table-valued parameter. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+      </remarks>
     </SqlMetaData>
     <ctor>
       <summary>
@@ -456,7 +463,7 @@
         The SQL Server type name for <paramref name="userDefinedType" />.
       </param>
       <summary>
-        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, user-defined type (UDT), and SQLServer type.
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, user-defined type (UDT), and SQL Server type.
       </summary>
     </ctorNameDbTypeUserDefinedTypeServerTypeName>
     <ctorNameDbTypeMaxLengthLocaleCompareOptions>

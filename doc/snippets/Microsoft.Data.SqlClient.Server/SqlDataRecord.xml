@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlDataRecord">
     <SqlDataRecord>
       <summary>
@@ -6,25 +6,28 @@
       </summary>
       <remarks>
         <para>
-          This class is used together with <see cref="T:Microsoft.SqlServer.Server.SqlPipe" /> to send result sets to the client from managed code stored-procedures.
+          This class describes a single row of a table-valued parameter. Construct one from an array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects which describe the column metadata of the record, populate it with the <b>Set&lt;Type&gt;</b> methods and assign it (or an <see cref="T:System.Collections.Generic.IEnumerable{Microsoft.Data.SqlClient.Server.SqlDataRecord}" /> for multiple rows) to <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
         </para>
         <para>
-          When writing common language runtime (CLR) applications, you should re-use existing <b>SqlDataRecord</b> objects instead of creating new ones every time. Creating many new <b>SqlDataRecord</b> objects could severely deplete memory and adversely affect performance.
+          For best performance when sending multiple rows, re-use a single <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance across an <see cref="T:System.Collections.Generic.IEnumerable{Microsoft.Data.SqlClient.Server.SqlDataRecord}" /> iterator: set new column values and <see langword="yield return" /> the same instance for each row. <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> will read each record before advancing to the next.
         </para>
       </remarks>
       <example>
         <para>
-          The following example shows how to create several <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects, which describe the column metadata of a record, and creating a <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" />. The column values of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> are set and the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> is sent to the calling program by using the <see cref="T:Microsoft.SqlServer.Server.SqlContext" /> class.
+          The following example shows how to create several <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects describing the column metadata of a record, then to create a re-usable <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance. The column values of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> are set and the same <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> can be used to stream multiple rows to SQL Server as a table-valued parameter.
         </para>
         <!-- SqlDataRecord #1 -->
         <code language="c#">
+          using System;
+          using System.Collections.Generic;
+          using System.Data;
           using Microsoft.Data.SqlClient.Server;
-          
-          [Microsoft.Data.SqlClient.Server.SqlProcedure]
-          public static void CreateNewRecord()
+
+          // Stream rows to SQL Server as a table-valued parameter.
+          public static IEnumerable&lt;SqlDataRecord&gt; CreateNewRecord()
           {
-          
-             // Variables.
+             // Re-use a single SqlDataRecord instance rather than allocating a new one for each row.
+             // Each row's values are read before SqlCommand advances to the next one.
              SqlDataRecord record;    
                 
              // Create a new record with the column metadata. The constructor is 
@@ -38,8 +41,12 @@
              record.SetInt32(1, 42);
              record.SetDateTime(2, DateTime.Now);
           
-             // Send the record to the calling program.
-             SqlContext.Pipe.Send(record);
+             // Set the fields of the first record and stream it to SQL Server.
+             yield return record;
+
+             // Set the fields of the second record and stream it to SQL Server.
+             record.SetInt32(1, 0);
+             yield return record;
           }
         </code>
       </example>
@@ -75,9 +82,6 @@
           // Set the record fields.
           record.SetString(0, "Hello World!");
           record.SetInt32(1, 42);
-          
-          // Send the record to the calling program.
-          SqlContext.Pipe.Send(record);
         </code>
       </example>
       <exception cref="T:System.ArgumentNullException">
