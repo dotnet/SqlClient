@@ -32,19 +32,19 @@ internal static class SsrpPacketTestData
     private const int ValidTcpPort5 = 1437;
 
     /// <summary>
-    /// One empty packet buffer, which should be successfully processed and contain zero responses.
+    /// One empty packet buffer, which should be successfully read and contain zero responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Process_EmptyBuffer_ReturnsFalse"/>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_EmptyBuffer_ReturnsFalse"/>
+    /// <see cref="DacResponseReaderTest.Read_EmptyBuffer_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_EmptyBuffer_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> EmptyPacketBuffer =>
         new(GeneratePacketBuffers([]));
 
     /// <summary>
     /// Various combinations of packet buffers containing normal SVR_RESP responses, all of which
-    /// should be successfully processed.
+    /// should be successfully read.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidSqlDataSourceResponse_ReturnsData"/>
-    public static TheoryData<ReadOnlySequence<byte>, string, int, string?> ValidSvrRespPacketBuffer
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_ValidSqlDataSourceResponse_ReturnsData"/>
+    public static TheoryData<ReadOnlySequence<byte>, string, int, string?, string, int, string?> ValidSvrRespPacketBuffer
     {
         get
         {
@@ -57,6 +57,8 @@ internal static class SsrpPacketTestData
                 spxInfo: $"spx;{ValidInstanceName}",
                 adspInfo: "adsp;SQL2000",
                 bvInfo: "bv;item;group;item;group;org");
+            string smuggledProtocolParameters = CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}",
+                bvInfo: $"bv;item;tcp;item;tcp;{ValidTcpPort2}");
 
             byte[] complexValidPacket = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, complexProtocolParameters));
@@ -67,7 +69,9 @@ internal static class SsrpPacketTestData
             byte[] validPacket3 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort3}")));
             byte[] validPacket4 = FormatSvrRespMessage(ValidSvrRespHeader,
-                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: false, ValidServerVersion, CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort4}")));
+            byte[] validPacket5 = FormatSvrRespMessage(ValidSvrRespHeader,
+                respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, ValidServerVersion, smuggledProtocolParameters));
             byte[] invalidPacket1 = FormatSvrRespMessage(ValidSvrRespHeader,
                 respData: CreateRespData(ValidServerName, ValidInstanceName, isClustered: true, "v14", CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort1}")));
 
@@ -76,6 +80,9 @@ internal static class SsrpPacketTestData
                 {
                     // One buffer, one response
                     GeneratePacketBuffers(complexValidPacket),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName,
                     ValidServerVersion,
                     ValidTcpPort1,
                     PipeName
@@ -90,6 +97,9 @@ internal static class SsrpPacketTestData
                         complexValidPacket.AsSpan(107).ToArray()),
                     ValidServerVersion,
                     ValidTcpPort1,
+                    PipeName,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     PipeName
                 },
                 {
@@ -101,6 +111,9 @@ internal static class SsrpPacketTestData
                         validPacket4),
                     ValidServerVersion,
                     ValidTcpPort4,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     null
                 },
                 {
@@ -113,6 +126,19 @@ internal static class SsrpPacketTestData
                         validPacket4),
                     ValidServerVersion,
                     ValidTcpPort4,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    PipeName
+                },
+                {
+                    // One buffer, one response (but with a separate TCP_INFO smuggled inside BV_INFO.)
+                    GeneratePacketBuffers(validPacket5),
+                    ValidServerVersion,
+                    ValidTcpPort1,
+                    null,
+                    ValidServerVersion,
+                    ValidTcpPort1,
                     null
                 }
             };
@@ -121,9 +147,9 @@ internal static class SsrpPacketTestData
 
     /// <summary>
     /// Various combinations of packet buffers containing SVR_RESP (DAC) responses, all of which
-    /// should be successfully processed.
+    /// should be successfully read.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_ValidDacResponse_ReturnsData"/>
+    /// <see cref="DacResponseReaderTest.Read_ValidDacResponse_ReturnsData"/>
     public static TheoryData<ReadOnlySequence<byte>, int> ValidSvrRespDacPacketBuffer
     {
         get
@@ -162,11 +188,13 @@ internal static class SsrpPacketTestData
                     ValidTcpPort2
                 },
                 {
-                    // One response, split into three buffers.
+                    // One response, split into four buffers.
                     // Buffer 1: the header and first byte of RESP_SIZE.
-                    // Buffer 2: the second byte of RESP_SIZE and the first byte of RESP_DATA (protocol version).
-                    // Buffer 3: remainder.
+                    // Buffer 2: empty
+                    // Buffer 3: the second byte of RESP_SIZE and the first byte of RESP_DATA (protocol version).
+                    // Buffer 4: remainder.
                     GeneratePacketBuffers(validPacket1.AsSpan(0, 2).ToArray(),
+                        [],
                         validPacket1.AsSpan(2, 2).ToArray(),
                         validPacket1.AsSpan(4).ToArray()),
                     ValidTcpPort2
@@ -179,7 +207,7 @@ internal static class SsrpPacketTestData
                         validPacket2.AsSpan(0, 2).ToArray(),
                         validPacket2.AsSpan(2).ToArray(),
                         [0x05]),
-                    ValidTcpPort3
+                    ValidTcpPort2
                 },
                 {
                     // Four responses, each with different DAC ports
@@ -187,15 +215,15 @@ internal static class SsrpPacketTestData
                         validPacket2,
                         validPacket3,
                         validPacket4),
-                    ValidTcpPort5
+                    ValidTcpPort2
                 },
                 {
                     // Five responses, with response three invalid
-                    GeneratePacketBuffers(validPacket1,
+                    GeneratePacketBuffers(validPacket4,
                         validPacket2,
                         invalidPacket1,
                         validPacket3,
-                        validPacket4),
+                        validPacket1),
                     ValidTcpPort5
                 },
                 {
@@ -205,8 +233,34 @@ internal static class SsrpPacketTestData
                         [0x05],
                         [0x05, ..validPacket3],
                         validPacket4),
+                    ValidTcpPort2
+                },
+                {
+                    // Two responses, with three extraneous 0x05 bytes before the first
+                    GeneratePacketBuffers([0x05, 0x05],
+                        [0x05, ..validPacket4],
+                        validPacket1),
                     ValidTcpPort5
-                }
+                },
+                {
+                    // Two responses, with three garbage bytes before the first
+                    GeneratePacketBuffers([0x01, 0x01],
+                        [0x01, ..validPacket4],
+                        validPacket1),
+                    ValidTcpPort5
+                },
+                {
+                    // One response, followed by three garbage bytes
+                    GeneratePacketBuffers(validPacket4,
+                        [0x01, 0x01, 0x05]),
+                    ValidTcpPort5
+                },
+                {
+                    // One empty buffer, followed by one buffer containing one response
+                    GeneratePacketBuffers([],
+                        validPacket1),
+                    ValidTcpPort2
+                },
             };
         }
     }
@@ -214,7 +268,7 @@ internal static class SsrpPacketTestData
     /// <summary>
     /// Packet buffers containing nothing but invalid SVR_RESP (DAC) responses.
     /// </summary>
-    /// <see cref="DacResponseProcessorTest.Process_InvalidDacResponse_ReturnsFalse"/>
+    /// <see cref="DacResponseReaderTest.Read_InvalidDacResponse_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespDacPackets =>
         [
             // Invalid header byte
@@ -235,14 +289,20 @@ internal static class SsrpPacketTestData
             // Invalid port
             GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                 ValidRespDataDacResponseSize,
-                CreateRespData(ValidRespDataDacProtocolVersion, 0)))
+                CreateRespData(ValidRespDataDacProtocolVersion, 0))),
+
+            // Invalid port, followed by trailing data
+            GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                ValidRespDataDacResponseSize,
+                CreateRespData(ValidRespDataDacProtocolVersion, 0)),
+                [0x00, 0x00, 0x00, 0x00]),
         ];
 
     /// <summary>
     /// Packets containing an SVR_RESP response which is a valid response to a CLNT_[B|U]CAST_EX message
     /// but not to a CLNT_UCAST_INST message.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponseToClntUcastInst_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidClntUcastInstSvrRespPackets
     {
         get
@@ -263,7 +323,7 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message which is failing due to invalid data
     /// in the top-level SVR_RESP message fields.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidSvrRespPackets =>
         [
             // Invalid SVR_RESP header field value
@@ -311,15 +371,21 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields but invalid components of the child RESP_DATA structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_RespData_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_RespData_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidRespDataPackets
     {
         get
         {
             const string InvalidServerName = "sr\u0008v\u00001";
+            const string InvalidInstanceName = "MSSQL\u0000SQSERVER";
             string validTcpInfo = CreateProtocolParameters($"tcp;{ValidTcpPort1}");
 
             return [
+                // String does not decode into UTF8.
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    // 0xC3, 0xA9 is é. Supply 45 bytes
+                    [.. "éééééééééééééééééééééé"u8, 0xC3])),
+
                 // All keys lowercase
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
@@ -402,6 +468,14 @@ internal static class SsrpPacketTestData
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     CreateRespData(ValidServerName,
                         instanceName: new string('a', 256),
+                        isClustered: true,
+                        ValidServerVersion,
+                        validTcpInfo))),
+
+                // Instance name contains invalid characters
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        instanceName: InvalidInstanceName,
                         isClustered: true,
                         ValidServerVersion,
                         validTcpInfo))),
@@ -497,10 +571,30 @@ internal static class SsrpPacketTestData
                         ValidServerVersion,
                         CreateProtocolParameters(otherParameters: ";value")))),
 
+                // Valid protocol components appear with short values
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        CreateProtocolParameters(tcpInfo: $"tcp;{ValidTcpPort2}", bvInfo: "bv;first;second;third")))),
+
                 // Invalid PROTOCOLVERSION field value
                 GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
                     ValidRespDataDacResponseSize,
-                    CreateRespData(protocolVersion: 0x02, ValidTcpPort2)))
+                    CreateRespData(protocolVersion: 0x02, ValidTcpPort2))),
+
+                // RESP_SIZE is correct, but too small for RESP_DATA to be valid (normal response)
+                GeneratePacketBuffers(FormatSvrRespMessage(ValidSvrRespHeader,
+                    CreateRespData(ValidServerName,
+                        ValidInstanceName,
+                        isClustered: true,
+                        ValidServerVersion,
+                        protocolParameters: new string('a', 5),
+                        omitServerName: true,
+                        omitInstanceName: true,
+                        omitIsClustered: true,
+                        omitVersion: true)))
             ];
         }
     }
@@ -509,7 +603,7 @@ internal static class SsrpPacketTestData
     /// Packet buffers containing an SSRP message with valid top-level SVR_RESP message
     /// fields, a valid RESP_DATA child structure but an invalid TCP_INFO structure.
     /// </summary>
-    /// <see cref="SqlDataSourceResponseProcessorTest.Process_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse"/>
+    /// <see cref="SqlDataSourceResponseReaderTest.Read_InvalidSqlDataSourceResponse_TcpInfo_ReturnsFalse"/>
     public static TheoryData<ReadOnlySequence<byte>> InvalidTcpInfoPackets
     {
         get

@@ -21,16 +21,21 @@ internal static class EncodingExtensions
 
         ReadOnlySpan<char> slicedString = s.AsSpan(offset, count);
 
-        if (slicedString.Length == 0)
+        return GetByteCount(encoding, slicedString);
+    }
+
+    public static int GetByteCount(this Encoding encoding, ReadOnlySpan<char> chars)
+    {
+        if (chars.Length == 0)
         {
             return 0;
         }
 
         unsafe
         {
-            fixed (char* str = slicedString)
+            fixed (char* str = chars)
             {
-                return encoding.GetByteCount(str, slicedString.Length);
+                return encoding.GetByteCount(str, chars.Length);
             }
         }
     }
