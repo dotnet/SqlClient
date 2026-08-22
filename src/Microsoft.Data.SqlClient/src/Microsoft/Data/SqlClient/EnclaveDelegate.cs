@@ -8,6 +8,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -50,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="connection"></param>
         /// <param name="command"></param>
         /// <returns></returns>
-        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection, SqlCommand command)
+        internal List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection, SqlCommand command)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
@@ -58,32 +60,79 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection, command);
 
-                if (sqlClientSymmetricKey == null)
-                {
-                    throw SQL.NullArgumentInternal(nameof(sqlClientSymmetricKey), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
-                }
-                if (cipherInfo.ColumnEncryptionKeyValues == null)
-                {
-                    throw SQL.NullArgumentInternal(nameof(cipherInfo.ColumnEncryptionKeyValues), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
-                }
-                if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0))
-                {
-                    throw SQL.ColumnEncryptionKeysNotFound();
-                }
-
-                //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
-                //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
-                //multiple CMKs
-                decryptedKeysToBeSentToEnclave.Add(
-                    new ColumnEncryptionKeyInfo(
-                        sqlClientSymmetricKey.RootKey,
-                        cipherInfo.ColumnEncryptionKeyValues[0].databaseId,
-                        cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion,
-                        cipherInfo.ColumnEncryptionKeyValues[0].cekId
-                    )
-                );
+                decryptedKeysToBeSentToEnclave.Add(CreateColumnEncryptionKeyInfo(cipherInfo, sqlClientSymmetricKey));
             }
             return decryptedKeysToBeSentToEnclave;
+        }
+
+        /// <summary>
+        /// Asynchronously decrypts the keys that need to be sent to the enclave.
+        /// </summary>
+        /// <remarks>
+        /// Async counterpart of <see cref="GetDecryptedKeysToBeSentToEnclave"/>. Each column encryption key is
+        /// resolved through <see cref="SqlSecurityUtility.DecryptSymmetricKeyAsync(SqlTceCipherInfoEntry, SqlConnection, SqlCommand, CancellationToken)"/>
+        /// so that key store providers performing network I/O (for example Azure Key Vault) do not block a
+        /// thread while the enclave package is being assembled.
+        /// </remarks>
+        /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
+        /// <param name="serverName">Name of the server the keys are being resolved for</param>
+        /// <param name="connection">Connection executing the query</param>
+        /// <param name="command">Command executing the query</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<List<ColumnEncryptionKeyInfo>> GetDecryptedKeysToBeSentToEnclaveAsync(
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave,
+            string serverName,
+            SqlConnection connection,
+            SqlCommand command,
+            CancellationToken cancellationToken)
+        {
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
+
+            foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
+            {
+                (SqlClientSymmetricKey sqlClientSymmetricKey, SqlEncryptionKeyInfo _) =
+                    await SqlSecurityUtility.DecryptSymmetricKeyAsync(cipherInfo, connection, command, cancellationToken)
+                        .ConfigureAwait(false);
+
+                decryptedKeysToBeSentToEnclave.Add(CreateColumnEncryptionKeyInfo(cipherInfo, sqlClientSymmetricKey));
+            }
+
+            return decryptedKeysToBeSentToEnclave;
+        }
+
+        /// <summary>
+        /// Validates a decrypted column encryption key and projects it into the shape the enclave expects.
+        /// </summary>
+        /// <remarks>
+        /// Shared by the synchronous and asynchronous decryption paths so that both apply identical validation
+        /// and produce identical <see cref="ColumnEncryptionKeyInfo"/> instances.
+        /// </remarks>
+        private static ColumnEncryptionKeyInfo CreateColumnEncryptionKeyInfo(
+            SqlTceCipherInfoEntry cipherInfo,
+            SqlClientSymmetricKey sqlClientSymmetricKey)
+        {
+            if (sqlClientSymmetricKey == null)
+            {
+                throw SQL.NullArgumentInternal(nameof(sqlClientSymmetricKey), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+            }
+            if (cipherInfo.ColumnEncryptionKeyValues == null)
+            {
+                throw SQL.NullArgumentInternal(nameof(cipherInfo.ColumnEncryptionKeyValues), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+            }
+            if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0))
+            {
+                throw SQL.ColumnEncryptionKeysNotFound();
+            }
+
+            //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
+            //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
+            //multiple CMKs
+            return new ColumnEncryptionKeyInfo(
+                sqlClientSymmetricKey.RootKey,
+                cipherInfo.ColumnEncryptionKeyValues[0].databaseId,
+                cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion,
+                cipherInfo.ColumnEncryptionKeyValues[0].cekId
+            );
         }
 
         /// <summary>

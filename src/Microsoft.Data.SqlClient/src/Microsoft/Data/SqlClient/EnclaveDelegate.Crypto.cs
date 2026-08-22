@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -156,10 +158,87 @@ namespace Microsoft.Data.SqlClient
             }
 
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysToBeSentToEnclave, enclaveSessionParameters.ServerName, connection, command);
+            return BuildEnclavePackage(decryptedKeysToBeSentToEnclave, queryText, counter, sqlEnclaveSession, enclaveSessionParameters.ServerName);
+        }
+
+        /// <summary>
+        /// Asynchronously encrypts the byte package containing keys with the session key.
+        /// </summary>
+        /// <remarks>
+        /// Async counterpart of <see cref="GenerateEnclavePackage"/>. Only the column encryption key decryption
+        /// step performs I/O, so only that step is awaited; the remaining work is local cryptography and is
+        /// performed inline.
+        /// </remarks>
+        /// <param name="attestationProtocol">attestation protocol</param>
+        /// <param name="keysToBeSentToEnclave">Keys to be sent to enclave</param>
+        /// <param name="queryText">Text of the query being executed</param>
+        /// <param name="enclaveType">enclave type</param>
+        /// <param name="enclaveSessionParameters">The set of parameters required for enclave session.</param>
+        /// <param name="connection">connection executing the query</param>
+        /// <param name="command">command executing the query</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        internal async Task<EnclavePackage> GenerateEnclavePackageAsync(
+            SqlConnectionAttestationProtocol attestationProtocol,
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave,
+            string queryText,
+            string enclaveType,
+            EnclaveSessionParameters enclaveSessionParameters,
+            SqlConnection connection,
+            SqlCommand command,
+            CancellationToken cancellationToken)
+        {
+            SqlEnclaveSession sqlEnclaveSession;
+            long counter;
+
+            try
+            {
+                GetEnclaveSession(
+                    attestationProtocol,
+                    enclaveType,
+                    enclaveSessionParameters,
+                    generateCustomData: false,
+                    isRetry: false,
+                    sqlEnclaveSession: out sqlEnclaveSession,
+                    counter: out counter,
+                    customData: out _,
+                    customDataLength: out _,
+                    throwIfNull: true
+                );
+            }
+            catch (Exception e)
+            {
+                throw new RetryableEnclaveQueryExecutionException(e.Message, e);
+            }
+
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = await GetDecryptedKeysToBeSentToEnclaveAsync(
+                    keysToBeSentToEnclave,
+                    enclaveSessionParameters.ServerName,
+                    connection,
+                    command,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            return BuildEnclavePackage(decryptedKeysToBeSentToEnclave, queryText, counter, sqlEnclaveSession, enclaveSessionParameters.ServerName);
+        }
+
+        /// <summary>
+        /// Assembles the enclave package from already-decrypted column encryption keys.
+        /// </summary>
+        /// <remarks>
+        /// Shared by the synchronous and asynchronous package generation paths. All work here is local
+        /// cryptography, so there is no asynchronous counterpart.
+        /// </remarks>
+        private EnclavePackage BuildEnclavePackage(
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave,
+            string queryText,
+            long counter,
+            SqlEnclaveSession sqlEnclaveSession,
+            string serverName)
+        {
             byte[] queryStringHashBytes = ComputeQueryStringHash(queryText);
             byte[] keyBytePackage = GenerateBytePackageForKeys(counter, queryStringHashBytes, decryptedKeysToBeSentToEnclave);
             byte[] sessionKey = sqlEnclaveSession.GetSessionKey();
-            byte[] encryptedBytePackage = EncryptBytePackage(keyBytePackage, sessionKey, enclaveSessionParameters.ServerName);
+            byte[] encryptedBytePackage = EncryptBytePackage(keyBytePackage, sessionKey, serverName);
             byte[] enclaveSessionHandle = BitConverter.GetBytes(sqlEnclaveSession.SessionId);
             byte[] byteArrayToBeSentToEnclave = CombineByteArrays(enclaveSessionHandle, encryptedBytePackage);
             return new EnclavePackage(byteArrayToBeSentToEnclave, sqlEnclaveSession);

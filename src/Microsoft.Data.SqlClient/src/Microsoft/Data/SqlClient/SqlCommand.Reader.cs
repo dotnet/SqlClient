@@ -893,46 +893,17 @@ namespace Microsoft.Data.SqlClient
 
         private void GenerateEnclavePackage()
         {
-            // Skip processing if there are no keys to send to enclave
-            if (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty)
+            if (!TryPrepareEnclavePackageGeneration(
+                    out string enclaveType,
+                    out SqlConnectionAttestationProtocol attestationProtocol))
             {
                 return;
-            }
-
-            // Validate attestation url is provided when necessary
-            if (string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) &&
-                _activeConnection.AttestationProtocol is not SqlConnectionAttestationProtocol.None)
-            {
-                throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(
-                    _activeConnection.Parser.EnclaveType);
-            }
-
-            // Validate enclave type
-            string enclaveType = _activeConnection.Parser.EnclaveType;
-            if (string.IsNullOrWhiteSpace(enclaveType))
-            {
-                throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
-            }
-
-            // Validate protocol type
-            SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
-            if (attestationProtocol is SqlConnectionAttestationProtocol.NotSpecified)
-            {
-                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
             }
 
             // Generate the enclave package
             try
             {
-                #if DEBUG
-                // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
-                // Test-only code for forcing a retryable exception to occur
-                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
-                {
-                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
-                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
-                }
-                #endif
+                ThrowIfForcedRetryableEnclaveQueryExecutionException();
 
                 enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(
                     attestationProtocol,
@@ -951,6 +922,124 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
             }
+        }
+
+        /// <summary>
+        /// Asynchronously generates the enclave package for the current command.
+        /// </summary>
+        /// <remarks>
+        /// Async counterpart of <see cref="GenerateEnclavePackage"/>. Column encryption keys destined for the
+        /// enclave are decrypted through the asynchronous key store provider APIs, so a key store that performs
+        /// network I/O does not block a thread while the package is generated.
+        /// </remarks>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async Task GenerateEnclavePackageAsync(CancellationToken cancellationToken)
+        {
+            if (!TryPrepareEnclavePackageGeneration(
+                    out string enclaveType,
+                    out SqlConnectionAttestationProtocol attestationProtocol))
+            {
+                return;
+            }
+
+            // Generate the enclave package
+            try
+            {
+                ThrowIfForcedRetryableEnclaveQueryExecutionException();
+
+                enclavePackage = await EnclaveDelegate.Instance.GenerateEnclavePackageAsync(
+                        attestationProtocol,
+                        keysToBeSentToEnclave,
+                        CommandText,
+                        enclaveType,
+                        GetEnclaveSessionParameters(),
+                        _activeConnection,
+                        command: this,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+            {
+                throw;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Propagate cancellation unwrapped so the returned Task is cancelled rather than faulted
+                // with an enclave-specific exception that would suggest an attestation problem.
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
+            }
+        }
+
+        /// <summary>
+        /// Validates the connection state required to generate an enclave package.
+        /// </summary>
+        /// <remarks>
+        /// Shared by the synchronous and asynchronous enclave package generation paths so that both perform
+        /// identical validation and throw identical exceptions.
+        /// </remarks>
+        /// <param name="enclaveType">The validated enclave type reported by the server</param>
+        /// <param name="attestationProtocol">The validated attestation protocol configured on the connection</param>
+        /// <returns>
+        /// <c>false</c> when there are no keys to send to the enclave and package generation must be skipped;
+        /// otherwise <c>true</c>.
+        /// </returns>
+        private bool TryPrepareEnclavePackageGeneration(
+            out string enclaveType,
+            out SqlConnectionAttestationProtocol attestationProtocol)
+        {
+            enclaveType = null;
+            attestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+
+            // Skip processing if there are no keys to send to enclave
+            if (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty)
+            {
+                return false;
+            }
+
+            // Validate attestation url is provided when necessary
+            if (string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) &&
+                _activeConnection.AttestationProtocol is not SqlConnectionAttestationProtocol.None)
+            {
+                throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(
+                    _activeConnection.Parser.EnclaveType);
+            }
+
+            // Validate enclave type
+            enclaveType = _activeConnection.Parser.EnclaveType;
+            if (string.IsNullOrWhiteSpace(enclaveType))
+            {
+                throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
+            }
+
+            // Validate protocol type
+            attestationProtocol = _activeConnection.AttestationProtocol;
+            if (attestationProtocol is SqlConnectionAttestationProtocol.NotSpecified)
+            {
+                throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Test-only failpoint that forces a retryable enclave failure during package generation.
+        /// </summary>
+        [Conditional("DEBUG")]
+        private void ThrowIfForcedRetryableEnclaveQueryExecutionException()
+        {
+            #if DEBUG
+            // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
+            // Test-only code for forcing a retryable exception to occur
+            if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+            {
+                _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+                throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+            }
+            #endif
         }
 
         private Task<SqlDataReader> InternalExecuteReaderAsync(
@@ -1759,55 +1848,21 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: I guess this means async execution? Using tasks as the primary means of determining async vs sync is clunky. It would be better to have separate async vs sync pathways.
                 long parameterEncryptionStart = ADP.TimerCurrent();
 
-                // @TODO: This can totally be a non-generic TCS
-                // @TODO: This is a prime candidate for proper async-await execution
-                TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                AsyncHelper.ContinueTaskWithState(
-                    taskToContinue: describeParameterEncryptionTask,
-                    taskCompletionSource: completion,
-                    state: this,
-                    onSuccess: sqlCommand =>
-                    {
-                        sqlCommand.GenerateEnclavePackage();
-                        sqlCommand.RunExecuteReaderTds(
-                            cmdBehavior,
-                            runBehavior,
-                            returnStream,
-                            isAsync,
-                            TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
-                            out Task subTask,
-                            asyncWrite,
-                            isRetry,
-                            ds);
+                // The remainder of the execution issues blocking TDS writes, so it must never run inline on
+                // the caller's thread (nor on a network callback thread). Task.Run reproduces the thread pool
+                // hand-off that the previous ContinueWith-based continuation provided.
+                task = Task.Run(() => ContinueRunExecuteReaderTdsAsync(
+                    describeParameterEncryptionTask,
+                    cmdBehavior,
+                    runBehavior,
+                    returnStream,
+                    isAsync,
+                    timeout,
+                    parameterEncryptionStart,
+                    asyncWrite,
+                    isRetry,
+                    ds));
 
-                        if (subTask is null)
-                        {
-                            // @TODO: Why would this ever be the case? We should structure this so that it doesn't need to be checked.
-                            completion.SetResult(null);
-                        }
-                        else
-                        {
-                            AsyncHelper.ContinueTaskWithState(
-                                taskToContinue: subTask,
-                                taskCompletionSource: completion,
-                                state: completion,
-                                onSuccess: static state => state.SetResult(null));
-                        }
-                    },
-                    onFailure: static (sqlCommand, exception) =>
-                    {
-                        sqlCommand.CachedAsyncState?.ResetAsyncState();
-                        if (exception is not null)
-                        {
-                            throw exception;
-                        }
-                    },
-                    onCancellation: static sqlCommand =>
-                    {
-                        sqlCommand.CachedAsyncState?.ResetAsyncState();
-                    });
-
-                task = completion.Task;
                 return ds;
             }
             else
@@ -1824,6 +1879,63 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite,
                     isRetry,
                     ds);
+            }
+        }
+
+        /// <summary>
+        /// Completes transparent parameter encryption processing and then executes the command.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Awaits the describe-parameter-encryption round trip, generates the enclave package using the
+        /// asynchronous key store provider APIs, and then issues the actual command execution. This replaces a
+        /// callback-based continuation chain so that key store network I/O yields the thread instead of
+        /// blocking it.
+        /// </para>
+        /// <para>
+        /// Error semantics match the previous continuation chain: a failure or cancellation of the
+        /// describe-parameter-encryption round trip resets the cached async state, while a failure that occurs
+        /// after that point is surfaced without resetting it.
+        /// </para>
+        /// </remarks>
+        private async Task ContinueRunExecuteReaderTdsAsync(
+            Task describeParameterEncryptionTask,
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            bool isAsync,
+            int timeout,
+            long parameterEncryptionStart,
+            bool asyncWrite,
+            bool isRetry,
+            SqlDataReader ds)
+        {
+            try
+            {
+                await describeParameterEncryptionTask.ConfigureAwait(false);
+            }
+            catch
+            {
+                CachedAsyncState?.ResetAsyncState();
+                throw;
+            }
+
+            await GenerateEnclavePackageAsync(CancellationToken.None).ConfigureAwait(false);
+
+            RunExecuteReaderTds(
+                cmdBehavior,
+                runBehavior,
+                returnStream,
+                isAsync,
+                TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
+                out Task subTask,
+                asyncWrite,
+                isRetry,
+                ds);
+
+            if (subTask is not null)
+            {
+                await subTask.ConfigureAwait(false);
             }
         }
 
