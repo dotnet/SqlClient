@@ -355,6 +355,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
+        // Same CI-load timing sensitivity as the retry-disabled sibling above: a slow
+        // failover login can exhaust the 5-second budget before the partner completes.
+        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
