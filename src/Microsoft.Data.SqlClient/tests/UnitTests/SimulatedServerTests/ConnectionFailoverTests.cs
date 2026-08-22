@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", secondConnection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
 
-            Assert.Equal(1, failoverServer.PreLoginCount);
+            Assert.Equal(1, failoverServer.Login7Count);
 
             // Act
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
-            Assert.Equal(2, failoverServer.PreLoginCount);
+            Assert.Equal(2, failoverServer.Login7Count);
         }
 
         [Fact]
