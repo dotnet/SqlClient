@@ -2157,6 +2157,9 @@
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
     <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
   </data>
+  <data name="ADP_VectorValueOutOfRangeForBaseType" xml:space="preserve">
+    <value>The value {0} cannot be represented by a vector with a base type of {1}.</value>
+  </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Invalid vector header received.</value>
   </data>

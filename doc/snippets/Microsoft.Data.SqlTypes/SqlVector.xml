@@ -3,6 +3,30 @@
   <members name="SqlVector">
     <SqlVector>
       <summary>Represents a vector value in SQL Server.</summary>
+      <remarks>
+        <para>
+          The type parameter determines the vector's base type: <see cref="T:System.Single" />
+          corresponds to <c>float32</c>, and <see cref="T:System.Half" /> corresponds to
+          <c>float16</c>. No other type is supported.
+        </para>
+        <para>
+          <see cref="T:System.Half" /> is not available on .NET Framework, so
+          <c>SqlVector&lt;Half&gt;</c> cannot be used there. A <c>float16</c> column can still be
+          read on .NET Framework, either as a JSON array through the string read paths, or as a
+          <c>SqlVector&lt;float&gt;</c>, which widens the elements to single precision. Widening
+          is exact, so no information is lost. Values can be written to a <c>float16</c> column
+          from .NET Framework as a JSON string, or as a <c>SqlVector&lt;float&gt;</c>, which the
+          server converts.
+        </para>
+        <para>
+          Conversion between base types is performed by SQL Server, which reports an error if a
+          value is outside the range the destination can represent. Converting from
+          <c>float32</c> to <c>float16</c> loses precision for values which the narrower type
+          cannot represent exactly, in the same way as inserting a JSON literal does. During a
+          bulk copy the driver performs the conversion instead, and throws an
+          <see cref="T:System.OverflowException" /> for a value outside the destination's range.
+        </para>
+      </remarks>
     </SqlVector>
     <ctor1>
       <param name="memory"></param>
@@ -37,7 +61,8 @@
         Constructs a null vector of the given length. SQL Server requires vector arguments to specify their length even when null.
       </summary>
       <exception cref="T:System.ArgumentOutOfRangeException">
-        Vector length must be non-negative.
+        Vector length must be non-negative, and must not exceed the number of elements which fit
+        within a single TDS packet: 1998 for <c>float32</c>, or 3996 for <c>float16</c>.
       </exception>
     </CreateNull>
   </members>

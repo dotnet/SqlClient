@@ -1743,7 +1743,9 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError();
                     }
 
-                    Capabilities.Float32VectorType = true;
+                    // Record the negotiated version rather than a simple flag: it determines
+                    // which vector base types the server will send and accept natively.
+                    Capabilities.VectorVersion = vectorSupportVersion;
 
                     break;
                 }

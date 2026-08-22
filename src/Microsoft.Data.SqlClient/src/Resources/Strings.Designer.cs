@@ -619,6 +619,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value {0} cannot be represented by a vector with a base type of {1}..
+        /// </summary>
+        internal static string ADP_VectorValueOutOfRangeForBaseType {
+            get {
+                return ResourceManager.GetString("ADP_VectorValueOutOfRangeForBaseType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid vector header received..
         /// </summary>
         internal static string ADP_InvalidVectorHeader {

@@ -123,6 +123,47 @@ This is a comprehensive reference of supported connection string keywords.
 | `Json` | `String` | SQL Server 2025+ |
 | `Vector` | `ISqlVector` | SQL Server 2025+ |
 
+### Vector Base Types
+
+A `vector` column has a base type, which determines how its elements are stored and
+transported. The base type is selected by the type parameter of `SqlVector<T>`.
+
+| SQL Server base type | `SqlVector<T>` | Element size | Max dimensions | Availability |
+|----------------------|----------------|--------------|----------------|--------------|
+| `float32` (default)  | `SqlVector<float>` | 4 bytes | 1998 | SQL Server 2025+ |
+| `float16`            | `SqlVector<Half>`  | 2 bytes | 3996 | SQL Server 2025+ (preview), .NET only |
+
+Notes:
+
+- `System.Half` does not exist on .NET Framework, so `SqlVector<Half>` cannot be used there.
+  A `float16` column is instead reported as a string, and can be read either as a JSON array
+  through `GetString`/`GetSqlString`/`GetFieldValue<string>`, or as a `SqlVector<float>` via
+  `GetSqlVector<float>`, which widens the elements. Widening from `float16` is exact.
+- `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` while
+  it is in preview.
+- Conversion between base types is performed by SQL Server for parameters, and by the driver
+  for `SqlBulkCopy`, where the destination's base type is stated in the `INSERT BULK`
+  statement. Narrowing to `float16` loses precision, and fails for values outside its range:
+  the server reports the failure for a parameter, and the driver throws an
+  `OverflowException` for a bulk copy.
+- A column's base type and number of dimensions are available from the column schema:
+  `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
+  for columns which are not vectors.
+
+#### Vector Feature Extension Versions
+
+The vector base types available on a connection are negotiated through the `VECTORSUPPORT`
+feature extension (`0x0E`):
+
+| Version | Meaning |
+|---------|---------|
+| `0` | The server does not support vectors. Vector columns are returned as `varchar(max)`. |
+| `1` | `float32` is supported. Columns with any other base type are returned as `varchar(max)`. |
+| `2` | `float16` is supported in addition to `float32`. |
+
+The driver always requests the highest version it supports, and the server acknowledges the
+highest version they have in common.
+
 ## SqlCommand Execution Modes
 
 ### ExecuteNonQuery
