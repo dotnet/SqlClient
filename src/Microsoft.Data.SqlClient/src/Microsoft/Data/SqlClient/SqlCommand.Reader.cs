@@ -597,6 +597,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<SqlDataReader> source,
             Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception.InnerException;
@@ -1086,6 +1088,8 @@ namespace Microsoft.Data.SqlClient
 
                 registration = cancellationToken.Register(s_cancelIgnoreFailure, state: this);
             }
+
+            _asyncExecutionCancellationToken = cancellationToken;
 
             Task<SqlDataReader> returnedTask = source.Task;
             ExecuteReaderAsyncCallContext context = null;
@@ -1920,7 +1924,7 @@ namespace Microsoft.Data.SqlClient
                 throw;
             }
 
-            await GenerateEnclavePackageAsync(CancellationToken.None).ConfigureAwait(false);
+            await GenerateEnclavePackageAsync(_asyncExecutionCancellationToken).ConfigureAwait(false);
 
             RunExecuteReaderTds(
                 cmdBehavior,

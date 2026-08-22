@@ -331,6 +331,8 @@ namespace Microsoft.Data.SqlClient
 
         private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -696,6 +698,8 @@ namespace Microsoft.Data.SqlClient
 
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
+
+            _asyncExecutionCancellationToken = cancellationToken;
 
             Task<int> returnedTask = source.Task;
             returnedTask = RegisterForConnectionCloseNotification(returnedTask);

@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient
                         describeParameterEncryptionDataReader,
                         describeParameterEncryptionRpcOriginalRpcMap,
                         isRetry,
-                        CancellationToken.None)
+                        _asyncExecutionCancellationToken)
                     .ConfigureAwait(false);
 
                 #if DEBUG

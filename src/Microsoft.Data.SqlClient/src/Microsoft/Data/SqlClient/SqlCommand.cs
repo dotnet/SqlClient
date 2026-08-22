@@ -153,6 +153,20 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private AsyncState _cachedAsyncState = null;
 
+        /// <summary>
+        /// Cancellation token supplied by the caller of the asynchronous execution that is currently in
+        /// flight, or <see cref="CancellationToken.None"/> when the command is executing synchronously.
+        /// </summary>
+        /// <remarks>
+        /// The asynchronous execution entry points reach the Always Encrypted machinery through several
+        /// layers of synchronous, callback-driven code that carry no cancellation token. Rather than
+        /// threading a token through every one of those signatures — including the synchronous paths that
+        /// would only ever pass <see cref="CancellationToken.None"/> — the token is recorded here for the
+        /// duration of the operation. It is currently consumed only by the asynchronous Always Encrypted
+        /// key store calls, which are the sole cancellable I/O in that machinery.
+        /// </remarks>
+        private CancellationToken _asyncExecutionCancellationToken;
+
         private int _currentlyExecutingBatch;
 
         /// <summary>
