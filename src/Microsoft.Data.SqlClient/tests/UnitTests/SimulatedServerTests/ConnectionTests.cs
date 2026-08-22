@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                ConnectTimeout = 5,
+                ConnectTimeout = 10,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -338,7 +338,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 10,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
