@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -23,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         private SqlCommand _batchCommand;
         private List<SqlBatchCommand> _commands;
         private SqlBatchCommandCollection _providerCommands;
+        private ReadOnlyCollection<SqlBatchCommand> _readOnlyCommands;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/ctor1/*'/>
         public SqlBatch()
@@ -213,6 +215,7 @@ namespace Microsoft.Data.SqlClient
             _batchCommand = null;
             _commands?.Clear();
             _commands = null;
+            _readOnlyCommands = null;
             #if NET
             base.Dispose();
             #endif
@@ -355,6 +358,9 @@ namespace Microsoft.Data.SqlClient
             }
             _batchCommand.Connection = Connection;
             _batchCommand.Transaction = Transaction;
+            // Surfaced on the command diagnostic payloads. The wrapper is a view over _commands,
+            // which is never reassigned while the batch is usable, so it is allocated once.
+            _batchCommand.BatchCommands = _readOnlyCommands != null ? _readOnlyCommands : _readOnlyCommands = new ReadOnlyCollection<SqlBatchCommand>(_commands);
             _batchCommand.SetBatchRPCMode(true, _commands.Count);
             _batchCommand.Parameters.Clear();
             for (int index = 0; index < _commands.Count; index++)
