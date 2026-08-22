@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -178,9 +177,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Func<DbConnection, bool> doomAction,
             bool async = false)
         {
-            var threads = new Thread[ConcurrentConnections];
+            var workers = new Task[ConcurrentConnections];
             using Barrier barrier = new(ConcurrentConnections);
-            using CountdownEvent countdown = new(ConcurrentConnections);
 
             var command = string.IsNullOrWhiteSpace(WaitForDelay)
                 ? "SELECT GETDATE()"
@@ -189,79 +187,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Create regular threads (don't doom connections)
             for (int i = 0; i < ConcurrentConnections - 1; i++)
             {
-                threads[i] = CreateWorkerThread(
-                    connectionString, command, barrier, countdown, doomConnections: false, async);
+                workers[i] = CreateWorkerTask(
+                    connectionString, command, barrier, doomConnections: false, async);
             }
 
             // Create special thread that dooms connections (if we have multiple threads)
             if (ConcurrentConnections > 1)
             {
-                threads[ConcurrentConnections - 1] = CreateWorkerThread(
-                    connectionString, command, barrier, countdown, doomConnections: true, async, doomAction);
+                workers[ConcurrentConnections - 1] = CreateWorkerTask(
+                    connectionString, command, barrier, doomConnections: true, async, doomAction);
             }
 
-            // Start all threads
-            foreach (Thread thread in threads.Where(t => t != null))
-            {
-                thread.Start();
-            }
-
-            // Wait for completion
-            countdown.Wait();
+            Task.WhenAll(workers).GetAwaiter().GetResult();
         }
 
         /// <summary>
-        /// Creates a worker thread that performs database operations using DbConnection/DbCommand
+        /// Creates a worker task that performs database operations using DbConnection/DbCommand.
         /// </summary>
-        private Thread CreateWorkerThread(
+        private Task CreateWorkerTask(
             string connectionString,
             string command,
             Barrier barrier,
-            CountdownEvent countdown,
             bool doomConnections,
             bool async,
             Func<DbConnection, bool>? doomAction = null)
         {
-            return new Thread(async () =>
-            {
-                try
+            return Task.Factory.StartNew(
+                async () =>
                 {
-                    barrier.SignalAndWait(); // Initial synchronization - all threads start together
-
-                    for (int j = 0; j < OperationsPerThread; j++)
+                    try
                     {
-                        if (doomConnections && doomAction != null)
+                        barrier.SignalAndWait(); // Initial synchronization - all threads start together
+
+                        for (int j = 0; j < OperationsPerThread; j++)
                         {
-                            // Dooming thread - barriers inside using block to doom before disposal
-                            using var conn = new SqlConnection(connectionString);
-                            if (async)
+                            if (doomConnections && doomAction != null)
                             {
-                                await conn.OpenAsync();
-                            }
-                            else
-                            {
-                                conn.Open();
-                            }
-
-                            await ExecuteCommand(command, async, conn);
-
-                            // Synchronize after command execution, before dooming
-                            barrier.SignalAndWait();
-
-                            // Doom connection before it gets disposed/returned to pool
-                            if (!doomAction(conn))
-                            {
-                                throw new Exception("Unable to doom connection");
-                            }
-
-                            // Synchronize after dooming - ensures all threads see the effect
-                            barrier.SignalAndWait();
-                        }
-                        else
-                        {
-                            // Non-dooming threads - barriers after connection is closed
-                            using (var conn = new SqlConnection(connectionString))
-                            {
+                                // Dooming thread - barriers inside using block to doom before disposal
+                                using var conn = new SqlConnection(connectionString);
                                 if (async)
                                 {
                                     await conn.OpenAsync();
@@ -273,24 +236,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                                 await ExecuteCommand(command, async, conn);
 
-                            } // Connection is closed/returned to pool here
+                                // Synchronize after command execution, before dooming
+                                barrier.SignalAndWait();
 
-                            // Synchronize after connection is closed
-                            barrier.SignalAndWait();
+                                // Doom connection before it gets disposed/returned to pool
+                                if (!doomAction(conn))
+                                {
+                                    throw new Exception("Unable to doom connection");
+                                }
 
-                            // Sync for coordination with dooming thread
-                            barrier.SignalAndWait();
+                                // Synchronize after dooming - ensures all threads see the effect
+                                barrier.SignalAndWait();
+                            }
+                            else
+                            {
+                                // Non-dooming threads - barriers after connection is closed
+                                using (var conn = new SqlConnection(connectionString))
+                                {
+                                    if (async)
+                                    {
+                                        await conn.OpenAsync();
+                                    }
+                                    else
+                                    {
+                                        conn.Open();
+                                    }
+
+                                    await ExecuteCommand(command, async, conn);
+
+                                } // Connection is closed/returned to pool here
+
+                                // Synchronize after connection is closed
+                                barrier.SignalAndWait();
+
+                                // Sync for coordination with dooming thread
+                                barrier.SignalAndWait();
+                            }
                         }
                     }
-                }
-                finally
-                {
-                    countdown.Signal();
-                }
-            })
-            {
-                IsBackground = true // Make threads background threads for cleaner shutdown
-            };
+                    catch
+                    {
+                        barrier.RemoveParticipant();
+                        throw;
+                    }
+                },
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default).Unwrap();
         }
 
         /// <summary>
@@ -330,10 +322,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception ex)
             {
-                if (ex.InnerException != null)
-                {
-                    return false;
-                }
+                Console.WriteLine($"Stress test failed: {ex}");
+                return false;
             }
 
             return true;

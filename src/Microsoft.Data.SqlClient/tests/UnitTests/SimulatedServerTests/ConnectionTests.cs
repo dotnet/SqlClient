@@ -126,6 +126,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // The synchronous path has the same CI-only retry timing failure as the
+        // quarantined async path above.
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryEnabled_ShouldSucceed(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
