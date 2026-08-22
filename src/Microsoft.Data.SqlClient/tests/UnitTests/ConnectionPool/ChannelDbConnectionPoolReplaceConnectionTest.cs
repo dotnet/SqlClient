@@ -543,6 +543,47 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(1, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies connection resiliency can replace a broken connection after its return path has
+        /// already removed it from the pool and released its slot.
+        /// </summary>
+        [Fact]
+        public void ReplaceConnection_OldConnectionAlreadyRemoved_AcquiresNewSlot()
+        {
+            // Arrange
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 1,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0
+            );
+            var pool = ConstructPool(_factory, poolGroupOptions);
+            SqlConnection owner = new();
+
+            pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? connection);
+            StubDbConnectionInternal oldConnection = Assert.IsType<StubDbConnectionInternal>(connection);
+            oldConnection.Doom();
+            pool.ReturnInternalConnection(oldConnection, owner);
+
+            Assert.Equal(0, pool.Count);
+            Assert.Null(oldConnection.Pool);
+
+            // Act
+            DbConnectionInternal newConnection = pool.ReplaceConnection(
+                owner,
+                oldConnection,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+
+            // Assert
+            Assert.NotSame(oldConnection, newConnection);
+            Assert.Equal(1, pool.Count);
+            Assert.Same(pool, newConnection.Pool);
+            Assert.Same(owner, newConnection.Owner);
+        }
+
         #endregion
 
         #region Blocking Period
@@ -729,6 +770,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 return;
             }
+
+            internal void Doom() => DoomThisConnection();
         }
 
         #endregion

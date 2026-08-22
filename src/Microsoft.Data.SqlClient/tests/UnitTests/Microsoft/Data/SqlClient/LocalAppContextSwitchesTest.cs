@@ -63,7 +63,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
-        Assert.False(switchesHelper.UseConnectionPoolV2);
+        Assert.True(switchesHelper.UseConnectionPoolV2);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);

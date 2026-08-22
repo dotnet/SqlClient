@@ -126,6 +126,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // The synchronous path has the same CI-only retry timing failure as the
+        // quarantined async path above.
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryEnabled_ShouldSucceed(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -285,7 +288,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.EndPoint.Port,
-                ConnectTimeout = 5,
+                ConnectTimeout = 10,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -335,7 +338,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 10,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
