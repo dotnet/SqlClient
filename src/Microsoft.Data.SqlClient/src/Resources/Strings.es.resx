@@ -1969,7 +1969,7 @@
     <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Error de atestación de enclave porque el informe de enclave firmado no se enlazaba a la clave pública del enclave usada para establecer la sesión. La clave pública del enclave debe coincidir con el valor confirmado por el informe firmado. Consulte https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles. Si es correcto, póngase en contacto con los servicios de soporte al cliente.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>El informe de enclave recibido desde SQL Server no tiene el formato correcto. Póngase en contacto con el servicio de atención al cliente.</value>
@@ -2081,6 +2081,12 @@
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>No se puede establecer la propiedad AccessTokenCallback si la palabra clave de cadena de conexión "Integrated Security" se ha establecido en "true" o "SSPI".</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>No se puede establecer la propiedad AccessTokenCallback si se ha especificado 'Authentication=Active Directory Default' en la cadena de conexión.</value>
