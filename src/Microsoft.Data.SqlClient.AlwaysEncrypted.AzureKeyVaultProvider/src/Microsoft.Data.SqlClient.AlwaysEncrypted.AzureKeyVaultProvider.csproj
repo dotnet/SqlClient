@@ -11,6 +11,17 @@
     <RootNamespace>Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider</RootNamespace>
   </PropertyGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- This is done in Directory.Build.props -->
+  <!--
+    Internals are exposed to the unit test assembly only in unsigned builds. A strong-named
+    assembly cannot grant friend access without the friend's public key, so an unconditional
+    grant would break signed builds. This matches the sibling packages.
+  -->
+  <ItemGroup Condition="'$(SigningKeyPath)' == ''">
+    <InternalsVisibleTo Include="$(AssemblyName).Test" />
+  </ItemGroup>
+
   <!-- Versioning ====================================================== -->
   <!-- This package is part of the SqlClient family and shares the SqlClient version.  The
        SqlClient* version properties are provided by src/Directory.Build.props, which imports the

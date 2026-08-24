@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>El informe de enclave recibido desde SQL Server no tiene el formato correcto. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>

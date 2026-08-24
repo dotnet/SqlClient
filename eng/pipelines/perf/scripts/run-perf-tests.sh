@@ -288,7 +288,7 @@ DIAG_DIR="${RESULTS_DIR}/diagnostics"
 mkdir -p "${DIAG_DIR}"
 
 # --- §2.8 Allocator tuning (exported so the 'dotnet run' children inherit it) ---------------------
-# Large-buffer benches (AsyncLargeDataRead, SqlBulkCopy) re-mmap a big buffer every iteration under
+# Large-buffer benches (LargeDataRead, SqlBulkCopy) re-mmap a big buffer every iteration under
 # glibc malloc; keep those allocations on the heap and stop trimming freed pages so they are reused,
 # which removes a major source of per-iteration variance.
 export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-134217728}"   # 128 MiB

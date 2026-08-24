@@ -157,6 +157,7 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
+| `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
 | `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |
@@ -493,7 +494,7 @@ The top-level flags control global runner behavior:
 | `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. |
 | `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
 
-Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also
+Some benchmarks (e.g. `DataTypeReaderRunner`) also
 read per-type test values from `datatypes.json` in the `PerformanceTests`
 directory. Like `runnerconfig.jsonc`, this file's location can be overridden
 with the `DATATYPES_CONFIG` environment variable.
