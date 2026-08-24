@@ -22,6 +22,8 @@ public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
 
     public X509Certificate2? ColumnMasterKeyCertificate { get; }
 
+    public string? ColumnMasterKeyCertificatePath { get; }
+
     protected ColumnMasterKeyCertificateFixture(bool createCertificate)
     {
         if (createCertificate)
@@ -29,6 +31,8 @@ public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
             ColumnMasterKeyCertificate = CreateCertificate(nameof(ColumnMasterKeyCertificate), Array.Empty<string>(), Array.Empty<string>());
 
             AddToStore(ColumnMasterKeyCertificate, StoreLocation.CurrentUser, StoreName.My);
+
+            ColumnMasterKeyCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{ColumnMasterKeyCertificate.Thumbprint}";
         }
     }
 }

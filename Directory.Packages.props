@@ -52,7 +52,7 @@
   -->
   <PropertyGroup>
     <!-- SNI version (external package, version declared once here) -->
-    <SniVersion>6.0.2</SniVersion>
+    <SniVersion>7.1.0-preview3.26226.3</SniVersion>
     <SniVersionRange>[$(SniVersion), $([MSBuild]::Add($(SniVersion.Split('.')[0]), 1)).0.0)</SniVersionRange>
   </PropertyGroup>
 

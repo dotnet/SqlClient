@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
@@ -202,6 +203,49 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Enumerates the connections currently tracked by this collection. Best-effort: slots are
+        /// read individually, so a caller must tolerate entries that have since left the pool, and an
+        /// entry added during the walk may or may not be seen. Intended for infrequent bookkeeping
+        /// passes, not for hot paths.
+        /// </summary>
+        public Enumerator GetEnumerator() => new(_connections);
+
+        /// <summary>
+        /// Enumerates the non-null slots without allocating an iterator state machine.
+        /// </summary>
+        internal struct Enumerator
+        {
+            private readonly DbConnectionInternal?[] _connections;
+            private int _index;
+            private DbConnectionInternal? _current;
+
+            internal Enumerator(DbConnectionInternal?[] connections)
+            {
+                _connections = connections;
+                _index = -1;
+                _current = null;
+            }
+
+            public DbConnectionInternal Current => _current!;
+
+            public bool MoveNext()
+            {
+                while (++_index < _connections.Length)
+                {
+                    DbConnectionInternal? connection = Volatile.Read(ref _connections[_index]);
+                    if (connection is not null)
+                    {
+                        _current = connection;
+                        return true;
+                    }
+                }
+
+                _current = null;
+                return false;
+            }
         }
 
         /// <summary>

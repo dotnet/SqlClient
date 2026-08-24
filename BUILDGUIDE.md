@@ -494,7 +494,7 @@ The top-level flags control global runner behavior:
 | `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. |
 | `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
 
-Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also
+Some benchmarks (e.g. `DataTypeReaderRunner`) also
 read per-type test values from `datatypes.json` in the `PerformanceTests`
 directory. Like `runnerconfig.jsonc`, this file's location can be overridden
 with the `DATATYPES_CONFIG` environment variable.

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Diagnostics;
@@ -73,6 +74,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private static int _instanceCount;
 
         private readonly int _instanceId = Interlocked.Increment(ref _instanceCount);
+
+        /// <summary>
+        /// Serializes emancipated-connection sweeps. Held for the duration of a sweep, including the
+        /// routing of every reclaimed connection, so that a connection this sweep has selected
+        /// cannot be claimed by another sweep before it is returned.
+        /// </summary>
+        private readonly object _reclaimSweepGate = new();
 
         /// <summary>
         /// Tracks all connections currently managed by this pool, whether idle or busy.
@@ -201,6 +209,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
+            Reclaimer = new PoolReclaimer(this, _timeProvider);
+
             State = Running;
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -289,6 +299,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// on return regardless of this flag, since it is bound to a transaction either way.
         /// </summary>
         private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
+
+        /// <summary>
+        /// Drives background sweeps for emancipated connections. Unlike <see cref="Pruner"/> this is
+        /// always present, since reclamation applies to every pool configuration. Internal rather
+        /// than private so tests can drive the timer bookkeeping directly.
+        /// </summary>
+        internal PoolReclaimer Reclaimer { get; }
 
         /// <summary>
         /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
@@ -540,7 +557,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection? owningObject)
         {
             Metrics.SoftDisconnectRequest();
 
@@ -763,6 +780,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
+            }
+
+            // Best effort: ITimer.Dispose does not wait for a sweep already in flight. Late
+            // reclaims are handled by _idleChannel.Complete() below, after which connections are
+            // destroyed rather than pooled.
+            try
+            {
+                Reclaimer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, Reclaimer.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
@@ -1347,7 +1377,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-            // connection. Statement order is important since we have synchronous completions on the channel.
+            // connection.
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
@@ -1483,13 +1513,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
-                    if (async)
+                    //
+                    // Registering with the reclaimer is what keeps a leaked connection from stranding
+                    // us here forever; it sweeps on a timer while anyone is parked and routes what it
+                    // reclaims back through this channel. Sweeping inline instead would cost an
+                    // O(MaxPoolSize) walk on every saturated acquire in applications that never leak.
+                    if (connection is null)
                     {
-                        connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        connection ??= ReadChannelSyncOverAsync(cancellationToken);
+                        Reclaimer.EnterParkedWait();
+                        try
+                        {
+                            connection = async
+                                ? await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false)
+                                : ReadChannelSyncOverAsync(cancellationToken);
+                        }
+                        finally
+                        {
+                            Reclaimer.ExitParkedWait();
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -1524,6 +1565,113 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
 
             return connection;
+        }
+
+        /// <summary>
+        /// Reclaims connections whose owning <see cref="DbConnection"/> has been garbage collected
+        /// without being closed or disposed. Such connections are still tracked by the pool but can
+        /// never be returned by their owner, so without this sweep they would leak pool slots.
+        /// </summary>
+        internal void ReclaimEmancipatedConnections()
+        {
+            // One sweep at a time, so nothing else can claim a connection between the point it is
+            // found emancipated and the PrePush that claims it. TryEnter rather than Enter: whatever
+            // the in-flight sweep reclaims lands in the idle channel either way.
+            bool sweeping = false;
+            try
+            {
+                Monitor.TryEnter(_reclaimSweepGate, ref sweeping);
+                if (!sweeping)
+                {
+                    return;
+                }
+
+                SweepEmancipatedConnections();
+            }
+            finally
+            {
+                if (sweeping)
+                {
+                    Monitor.Exit(_reclaimSweepGate);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Body of <see cref="ReclaimEmancipatedConnections"/>. Must be called with
+        /// <see cref="_reclaimSweepGate"/> held.
+        /// </summary>
+        private void SweepEmancipatedConnections()
+        {
+            List<DbConnectionInternal>? reclaimed = null;
+
+            // No collection-level lock, unlike WaitHandleDbConnectionPool's scan under lock
+            // (_objectList): each slot is read individually, so the walk can see a slot that was
+            // concurrently emptied or refilled. Safe here because a connection is only emancipated
+            // while checked out, and a checked-out connection is not in the idle channel, so neither
+            // the pruner nor Clear can remove it underneath us. A concurrently replaced slot costs
+            // this sweep a miss, never a connection resurrected after removal.
+            foreach (DbConnectionInternal connection in _connectionSlots)
+            {
+                // IsEmancipated is only stable under the connection lock, which guards the
+                // PrePush/PostPop that move it in and out of the pool. TryEnter rather than Enter: a
+                // connection someone else holds is mid-handout or mid-return, so it is not
+                // emancipated anyway and blocking on it would only stall that caller.
+                bool locked = false;
+                try
+                {
+                    Monitor.TryEnter(connection, ref locked);
+
+                    if (locked && connection.IsEmancipated)
+                    {
+                        (reclaimed ??= new List<DbConnectionInternal>()).Add(connection);
+                    }
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        Monitor.Exit(connection);
+                    }
+                }
+            }
+
+            if (reclaimed is null)
+            {
+                return;
+            }
+
+            int returned = 0;
+            foreach (DbConnectionInternal connection in reclaimed)
+            {
+                try
+                {
+                    connection.DetachCurrentTransactionIfEnded();
+                    ReturnInternalConnection(connection, owningObject: null);
+                }
+                catch (Exception ex)
+                {
+                    // One connection failing to return must not strand the rest of the sweep.
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.ReclaimEmancipatedConnections | ERR | {0}, Connection {1}, Return threw: {2}.",
+                        Id,
+                        connection.ObjectID,
+                        ex);
+
+                    continue;
+                }
+
+                Metrics.ReclaimedConnectionRequest();
+                returned++;
+            }
+
+            if (returned > 0)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
+                    Id,
+                    returned);
+            }
         }
 
         /// <summary>
