@@ -130,6 +130,40 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Special case | `Snapshot` **is** re-asserted. Moving *into* `SNAPSHOT` part-way through a transaction begun at another level aborts that transaction, but the preserved transaction on this path was itself begun under snapshot isolation by the TM request — so returning to `SNAPSHOT` is legal, and necessary, because the reset may have cleared it |
 | Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends, except when the ambient level is `ReadCommitted` |
 
+#### Measured cost
+
+`TransactionScopeIsolationRunner` (perf pipeline build `169256`, baseline MDS 7.0.2 vs this
+branch, medians of three interleaved reps, `OpensPerScope = 5` — one enlist plus four pooled
+re-checkouts):
+
+| Benchmark | Baseline 7.0.2 | With fix |
+|---|---|---|
+| `OpensOutsideScope` | 1.680 ms | 1.635 ms |
+| `OpensInsideScope_ReadCommitted` | 2.016 ms | 1.958 ms |
+| `OpensInsideScope_Serializable` | 2.058 ms | 2.579 ms |
+| `OpensInsideScope_SerializableAsync` | 2.679 ms | 3.060 ms |
+
+The binary-independent signal is the within-build gap between `_Serializable` and
+`_ReadCommitted`, which varies only by whether the re-assert fires: **+0.04 ms** on the baseline
+(noise, neither re-asserts) versus **+0.62 ms** with the fix. That is roughly **0.15 ms and 8 KB
+per re-assert**, with Gen0 rising from 7 to 11 per iteration. The runner targets `localhost`, so
+these are loopback numbers and represent a floor; over a real network each re-assert costs
+approximately one additional round trip.
+
+The `_ReadCommitted` row is flat against baseline, confirming the skip is genuinely free rather
+than merely cheap.
+
+#### Alternatives considered
+
+- **Gate on Azure SQL DB.** Rejected: the behavior is a server-version detail, not a contract,
+  and an on-prem configuration that begins honoring the reset would silently regress.
+- **Defer the `SET` so it prefixes the user's next batch.** This would fold the extra exchange
+  into work already being sent. Rejected for now: it needs a command-execution hook that does not
+  exist today, and it would reorder the level change relative to anything not issued through
+  `SqlCommand`. Worth revisiting as an optimization once the pooling rewrite settles.
+- **Re-assert only when the level differs from `READ COMMITTED`.** This is what ships — see the
+  `ReadCommitted` special case above.
+
 ---
 
 ## 4. Side-by-side comparison
