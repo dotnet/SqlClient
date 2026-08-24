@@ -384,6 +384,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// A decryption that has already succeeded must not be thrown away just because the caller
+        /// cancelled while the result was being published. The remote work is done at that point, so
+        /// discarding it would only force the next caller to repeat it.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_WhenCancelledAfterDecryptSucceeds_StillPublishesTheKey()
+        {
+            SqlSymmetricKeyCache cache = SqlSymmetricKeyCache.GetInstance();
+
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            TestKeyStoreProvider provider = new TestKeyStoreProvider
+            {
+                DecryptAsyncCallback = _ =>
+                {
+                    // Cancel between a successful provider call and the cache insertion.
+                    cts.Cancel();
+                    return Task.FromResult(NewPlaintextKey(seed: 57));
+                }
+            };
+
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            SqlClientSymmetricKey key = await cache.GetKeyAsync(keyInfo, connection, command: null, cts.Token);
+
+            Assert.NotNull(key);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+
+            // The key was published despite the cancellation, so no second decryption is needed.
+            Assert.Same(key, cache.GetKey(keyInfo, connection, command: null));
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+            Assert.Equal(0, provider.DecryptCallCount);
+        }
+
+        /// <summary>
         /// Verifies that cancellation of GetKeyAsync is observed before the provider call and while it
         /// is in flight, and that nothing is published to the cache in either case.
         /// </summary>

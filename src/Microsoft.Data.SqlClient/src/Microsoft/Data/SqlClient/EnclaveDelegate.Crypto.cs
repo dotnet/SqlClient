@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysToBeSentToEnclave, enclaveSessionParameters.ServerName, connection, command);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysToBeSentToEnclave, connection, command);
             return BuildEnclavePackage(decryptedKeysToBeSentToEnclave, queryText, counter, sqlEnclaveSession, enclaveSessionParameters.ServerName);
         }
 
@@ -192,6 +192,11 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
+                // @TODO: GetEnclaveSession is still synchronous. On a session cache hit it is pure in-memory
+                // work, but on a miss it performs blocking attestation HTTP. Making it awaitable requires the
+                // async enclave provider hierarchy (Phase 3 of the async Always Encrypted spec), which adds
+                // public virtual API and therefore ships separately. Until then this is the one remaining
+                // blocking call on the asynchronous Always Encrypted path.
                 GetEnclaveSession(
                     attestationProtocol,
                     enclaveType,
@@ -212,7 +217,6 @@ namespace Microsoft.Data.SqlClient
 
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = await GetDecryptedKeysToBeSentToEnclaveAsync(
                     keysToBeSentToEnclave,
-                    enclaveSessionParameters.ServerName,
                     connection,
                     command,
                     cancellationToken)

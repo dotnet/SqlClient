@@ -187,7 +187,10 @@ namespace Microsoft.Data.SqlClient
                 return decryptedKey;
             }
 
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            // Deliberately not cancellable. The expensive, remote part of this method is already done; the
+            // section below is in-memory only. Honouring cancellation here would throw away a completed key
+            // decryption and leave the next caller to repeat it.
+            await _cacheLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 // Another caller may have populated the entry while this one was decrypting. In that case the

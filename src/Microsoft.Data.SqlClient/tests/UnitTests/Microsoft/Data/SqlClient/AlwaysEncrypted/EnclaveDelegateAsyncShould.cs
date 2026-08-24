@@ -94,7 +94,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
                 NewKeyTable(NewCipherInfoEntry()),
-                serverName: "async-ae-enclave-unit-test",
                 connection,
                 command: null,
                 CancellationToken.None);
@@ -120,7 +119,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
                 NewKeyTable(NewCipherInfoEntry(ordinal: 0), NewCipherInfoEntry(ordinal: 1), NewCipherInfoEntry(ordinal: 2)),
-                serverName: "async-ae-enclave-unit-test",
                 connection,
                 command: null,
                 CancellationToken.None);
@@ -142,7 +140,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             List<ColumnEncryptionKeyInfo> keys = EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
                 NewKeyTable(NewCipherInfoEntry()),
-                serverName: "async-ae-enclave-unit-test",
                 connection,
                 command: null);
 
@@ -167,7 +164,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
                     NewKeyTable(NewCipherInfoEntry()),
-                    serverName: "async-ae-enclave-unit-test",
                     connection,
                     command: null,
                     cts.Token));
@@ -191,7 +187,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             SqlException exception = await Assert.ThrowsAsync<SqlException>(
                 () => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
                     NewKeyTable(NewCipherInfoEntry()),
-                    serverName: "async-ae-enclave-unit-test",
                     connection,
                     command: null,
                     CancellationToken.None));

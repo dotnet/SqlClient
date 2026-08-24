@@ -60,11 +60,12 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            foreach (SqlCipherMetadata cipherMetadata in metadata.KeysToLoad)
+            IReadOnlyList<SqlCipherMetadata> keysToLoad = metadata.KeysToLoad;
+            for (int i = 0; i < keysToLoad.Count; i++)
             {
                 try
                 {
-                    SqlSecurityUtility.DecryptSymmetricKey(cipherMetadata, sqlCommand.Connection, sqlCommand);
+                    SqlSecurityUtility.DecryptSymmetricKey(keysToLoad[i], sqlCommand.Connection, sqlCommand);
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
                 {
@@ -145,7 +146,9 @@ namespace Microsoft.Data.SqlClient
 
             // Create a copy of the cipherMD in order to load the key.
             // The key shouldn't be loaded in the cached version for security reasons.
-            List<SqlCipherMetadata> keysToLoad = new();
+            // Allocated lazily: a cached query whose parameters are all plaintext needs no list at all,
+            // and this runs on every metadata cache hit.
+            List<SqlCipherMetadata> keysToLoad = null;
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata cipherMdCopy = null;
@@ -165,7 +168,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (cipherMdCopy is not null)
                 {
-                    keysToLoad.Add(cipherMdCopy);
+                    (keysToLoad ??= new List<SqlCipherMetadata>()).Add(cipherMdCopy);
                 }
             }
 
@@ -187,12 +190,13 @@ namespace Microsoft.Data.SqlClient
             CachedQueryMetadata metadata,
             CancellationToken cancellationToken)
         {
-            foreach (SqlCipherMetadata cipherMetadata in metadata.KeysToLoad)
+            IReadOnlyList<SqlCipherMetadata> keysToLoad = metadata.KeysToLoad;
+            for (int i = 0; i < keysToLoad.Count; i++)
             {
                 try
                 {
                     await SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                        cipherMetadata,
+                        keysToLoad[i],
                         sqlCommand.Connection,
                         sqlCommand,
                         cancellationToken).ConfigureAwait(false);
@@ -259,7 +263,7 @@ namespace Microsoft.Data.SqlClient
             internal CachedQueryMetadata(string enclaveLookupKey, List<SqlCipherMetadata> keysToLoad)
             {
                 EnclaveLookupKey = enclaveLookupKey;
-                KeysToLoad = keysToLoad;
+                KeysToLoad = (IReadOnlyList<SqlCipherMetadata>)keysToLoad ?? Array.Empty<SqlCipherMetadata>();
             }
 
             /// <summary>
@@ -270,7 +274,7 @@ namespace Microsoft.Data.SqlClient
             /// <summary>
             /// The parameter cipher metadata whose column encryption keys still have to be decrypted.
             /// </summary>
-            internal List<SqlCipherMetadata> KeysToLoad { get; }
+            internal IReadOnlyList<SqlCipherMetadata> KeysToLoad { get; }
         }
 
         /// <summary>

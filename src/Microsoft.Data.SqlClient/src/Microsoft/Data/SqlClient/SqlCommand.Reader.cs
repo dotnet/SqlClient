@@ -1030,11 +1030,16 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Test-only failpoint that forces a retryable enclave failure during package generation.
         /// </summary>
+        /// <remarks>
+        /// Both guards are required and are not redundant: <see cref="ConditionalAttribute"/> elides the
+        /// call sites in non-DEBUG builds, while the <c>#if DEBUG</c> is needed because the body still
+        /// compiles there and the field it reads is itself DEBUG-only.
+        /// </remarks>
+        // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
         [Conditional("DEBUG")]
         private void ThrowIfForcedRetryableEnclaveQueryExecutionException()
         {
             #if DEBUG
-            // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
             // Test-only code for forcing a retryable exception to occur
             if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
             {
@@ -1855,6 +1860,11 @@ namespace Microsoft.Data.SqlClient
                 // The remainder of the execution issues blocking TDS writes, so it must never run inline on
                 // the caller's thread (nor on a network callback thread). Task.Run reproduces the thread pool
                 // hand-off that the previous ContinueWith-based continuation provided.
+                // Capture the caller's cancellation token here, on the thread that started the
+                // execution. The body below runs after a thread pool hand-off and may observe the field
+                // already cleared by the execution's cleanup continuation.
+                CancellationToken cancellationToken = isAsync ? _asyncExecutionCancellationToken : CancellationToken.None;
+
                 task = Task.Run(() => ContinueRunExecuteReaderTdsAsync(
                     describeParameterEncryptionTask,
                     cmdBehavior,
@@ -1865,7 +1875,8 @@ namespace Microsoft.Data.SqlClient
                     parameterEncryptionStart,
                     asyncWrite,
                     isRetry,
-                    ds));
+                    ds,
+                    cancellationToken));
 
                 return ds;
             }
@@ -1912,7 +1923,8 @@ namespace Microsoft.Data.SqlClient
             long parameterEncryptionStart,
             bool asyncWrite,
             bool isRetry,
-            SqlDataReader ds)
+            SqlDataReader ds,
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -1920,11 +1932,15 @@ namespace Microsoft.Data.SqlClient
             }
             catch
             {
+                // Unlike ConsumeDescribeParameterEncryptionResultsAsync, cancellation is reset here as
+                // well as failure. That asymmetry is deliberate: this method replaced
+                // AsyncHelper.ContinueTaskWithState, which supplied an onCancellation callback, whereas
+                // that one replaced CreateContinuationTaskWithState, which did not.
                 CachedAsyncState?.ResetAsyncState();
                 throw;
             }
 
-            await GenerateEnclavePackageAsync(_asyncExecutionCancellationToken).ConfigureAwait(false);
+            await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
 
             RunExecuteReaderTds(
                 cmdBehavior,

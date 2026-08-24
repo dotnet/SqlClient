@@ -48,13 +48,12 @@ namespace Microsoft.Data.SqlClient
         /// Decrypt the keys that need to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="serverName"></param>
-        /// <param name="connection"></param>
-        /// <param name="command"></param>
+        /// <param name="connection">Connection executing the query</param>
+        /// <param name="command">Command executing the query</param>
         /// <returns></returns>
-        internal List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection, SqlCommand command)
+        internal List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, SqlConnection connection, SqlCommand command)
         {
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>(keysTobeSentToEnclave.Count);
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
@@ -75,18 +74,16 @@ namespace Microsoft.Data.SqlClient
         /// thread while the enclave package is being assembled.
         /// </remarks>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="serverName">Name of the server the keys are being resolved for</param>
         /// <param name="connection">Connection executing the query</param>
         /// <param name="command">Command executing the query</param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
         internal async Task<List<ColumnEncryptionKeyInfo>> GetDecryptedKeysToBeSentToEnclaveAsync(
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave,
-            string serverName,
             SqlConnection connection,
             SqlCommand command,
             CancellationToken cancellationToken)
         {
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>(keysTobeSentToEnclave.Count);
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
