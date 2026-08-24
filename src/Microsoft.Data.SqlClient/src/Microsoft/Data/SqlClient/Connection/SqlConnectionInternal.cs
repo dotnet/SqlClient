@@ -2071,7 +2071,6 @@ namespace Microsoft.Data.SqlClient.Connection
             // a transaction it is already enlisted in; scrubbing then would hit the same #146
             // problem, so it is skipped.
             if (_isolationLevelDirty &&
-                !LocalAppContextSwitches.UseLegacyIsolationLevelBehavior &&
                 EnlistedTransaction is null &&
                 !IsConnectionDoomed)
             {

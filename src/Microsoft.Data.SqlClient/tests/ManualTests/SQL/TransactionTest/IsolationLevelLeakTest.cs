@@ -4,7 +4,6 @@
 
 using System;
 using System.Transactions;
-using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -138,49 +137,6 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     }
 
                     scope.Complete();
-                }
-            }
-            finally
-            {
-                SqlConnection.ClearAllPools();
-            }
-        }
-
-        // Negative test: legacy switch ON brings the old leak back.
-        // Only meaningful on on-prem SQL Server: Azure SQL DB resets the
-        // session isolation level inside sp_reset_connection, so the leak
-        // never materializes there regardless of the switch.
-        // Uses LocalAppContextSwitchesHelper to force the cached switch value
-        // in LocalAppContextSwitches (production code reads the cache, not
-        // AppContext, after first use). The helper restores the previous
-        // value on dispose.
-        [ConditionalFact(
-            typeof(DataTestUtility),
-            nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
-        public static void LegacySwitch_PreservesOldLeakBehavior()
-        {
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.UseLegacyIsolationLevelBehavior = true;
-
-            // Distinct app name so this test gets its own pool group.
-            string cs = BuildPooledConnString("IsoLeakTest-Legacy");
-            try
-            {
-                int spid1;
-                using (SqlConnection c = new SqlConnection(cs))
-                {
-                    c.Open();
-                    spid1 = GetSpid(c);
-                    using SqlTransaction tx = c.BeginTransaction(IsolationLevel.Serializable);
-                    tx.Rollback();
-                }
-
-                using (SqlConnection c = new SqlConnection(cs))
-                {
-                    c.Open();
-                    Assert.Equal(spid1, GetSpid(c));
-                    Assert.Equal("Serializable", GetIso(c)); // legacy: leaks
                 }
             }
             finally

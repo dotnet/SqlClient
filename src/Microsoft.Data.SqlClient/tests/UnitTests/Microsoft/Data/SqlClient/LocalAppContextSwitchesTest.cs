@@ -34,7 +34,6 @@ public class LocalAppContextSwitchesTest
         switchesHelper.EnableMultiSubnetFailoverByDefault = null;
         switchesHelper.IgnoreServerProvidedFailoverPartner = null;
         switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
-        switchesHelper.UseLegacyIsolationLevelBehavior = null;
         switchesHelper.LegacyRowVersionNullBehavior = null;
         switchesHelper.LegacyVarTimeZeroScaleBehaviour = null;
         switchesHelper.MakeReadAsyncBlocking = null;
@@ -69,7 +68,6 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
-        Assert.False(switchesHelper.UseLegacyIsolationLevelBehavior);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);

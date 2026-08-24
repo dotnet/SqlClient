@@ -49,7 +49,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     #endif
     private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
     private readonly bool? _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal;
-    private readonly bool? _useLegacyIsolationLevelBehaviorOriginal;
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -108,8 +107,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
             _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal =
                 GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
-            _useLegacyIsolationLevelBehaviorOriginal =
-                GetSwitchValue("s_useLegacyIsolationLevelBehavior");
             _legacyRowVersionNullBehaviorOriginal =
                 GetSwitchValue("s_legacyRowVersionNullBehavior");
             _legacyVarTimeZeroScaleBehaviourOriginal =
@@ -176,9 +173,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
-            SetSwitchValue(
-                "s_useLegacyIsolationLevelBehavior",
-                _useLegacyIsolationLevelBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyRowVersionNullBehavior", 
                 _legacyRowVersionNullBehaviorOriginal);
@@ -284,15 +278,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchPropertyValue(nameof(UseLegacyFailoverAlternationOnLoginSqlErrors));
         set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
-    }
-
-    /// <summary>
-    /// Get or set the UseLegacyIsolationLevelBehavior switch value.
-    /// </summary>
-    public bool? UseLegacyIsolationLevelBehavior
-    {
-        get => GetSwitchPropertyValue(nameof(UseLegacyIsolationLevelBehavior));
-        set => SetSwitchValue("s_useLegacyIsolationLevelBehavior", value);
     }
 
     /// <summary>

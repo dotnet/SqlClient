@@ -69,7 +69,6 @@ since 2017 with production impact.
 | Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
 | Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is not enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** stale session state on the way out of the pool |
-| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` |
 | Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
 | Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
 
@@ -145,7 +144,6 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
-| App context switch | `UseLegacyIsolationLevelBehavior` | `UseLegacyTransactionScopeIsolationBehavior` |
 | `Snapshot` handling | Reset to `READ COMMITTED` like any other level | Deliberately **skipped** |
 
 ---

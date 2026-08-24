@@ -845,8 +845,8 @@ namespace Microsoft.Data.Common
 
 
         private const string ONDEMAND_PREFIX = "-ondemand";
-        private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
-        private const string AZURE_SYNAPSE_DEDICATED = ".sql.azuresynapse.";
+        private const string AZURE_SYNAPSE = ".sql.azuresynapse.";
+        private const string AZURE_SYNAPSE_ONDEMAND = ONDEMAND_PREFIX + AZURE_SYNAPSE;
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -894,7 +894,7 @@ namespace Microsoft.Data.Common
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
-                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0;
+                || dataSource.IndexOf(AZURE_SYNAPSE_ONDEMAND, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
@@ -902,15 +902,13 @@ namespace Microsoft.Data.Common
         /// SQL pool.
         /// </summary>
         /// <remarks>Dedicated pools are addressed as "&lt;workspace&gt;.sql.azuresynapse.net", while
-        /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name. The two
-        /// behave differently: dedicated pools reject SET TRANSACTION ISOLATION LEVEL for every level
-        /// except READ UNCOMMITTED, whereas serverless pools accept it like any other Azure SQL
-        /// endpoint. Serverless pools are therefore excluded here.</remarks>
+        /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name and are
+        /// therefore excluded here.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
             return dataSource is not null
-                && dataSource.IndexOf(AZURE_SYNAPSE_DEDICATED, StringComparison.OrdinalIgnoreCase) >= 0
-                && dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) < 0;
+                && dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0
+                && dataSource.IndexOf(AZURE_SYNAPSE_ONDEMAND, StringComparison.OrdinalIgnoreCase) < 0;
         }
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
