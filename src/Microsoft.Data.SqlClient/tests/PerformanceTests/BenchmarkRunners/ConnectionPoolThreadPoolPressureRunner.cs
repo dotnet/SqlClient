@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             ThreadPool.GetMinThreads(
                 out _originalMinWorkerThreads, out _originalMinCompletionPortThreads);
-            ThreadPool.SetMinThreads(MinWorkerThreads, _originalMinCompletionPortThreads);
+            SetMinWorkerThreads(MinWorkerThreads, _originalMinCompletionPortThreads);
 
             var builder = new SqlConnectionStringBuilder(s_config.ConnectionString)
             {
@@ -104,8 +104,39 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [GlobalCleanup]
         public void Cleanup()
         {
-            ThreadPool.SetMinThreads(
+            // Restoring matters beyond this benchmark: the floor is process-wide, so leaving it
+            // raised would silently change the conditions for every runner that follows in the
+            // same process.
+            SetMinWorkerThreads(
                 _originalMinWorkerThreads, _originalMinCompletionPortThreads);
+        }
+
+        /// <summary>
+        /// Pins the threadpool worker floor, failing loudly if it does not take effect.
+        ///
+        /// <see cref="MinWorkerThreads"/> is the only variable this benchmark manipulates, so a
+        /// refused or clamped request would leave every configuration running at the same floor
+        /// and produce a comparison that looks valid but measures nothing. The return value alone
+        /// is not sufficient evidence, so the value is also read back.
+        /// </summary>
+        private static void SetMinWorkerThreads(int workerThreads, int completionPortThreads)
+        {
+            if (!ThreadPool.SetMinThreads(workerThreads, completionPortThreads))
+            {
+                throw new InvalidOperationException(
+                    $"ThreadPool.SetMinThreads({workerThreads}, {completionPortThreads}) was refused. " +
+                    "The threadpool floor is this benchmark's independent variable, so the run would " +
+                    "otherwise report a comparison that did not actually vary it.");
+            }
+
+            ThreadPool.GetMinThreads(out int actualWorkerThreads, out _);
+            if (actualWorkerThreads != workerThreads)
+            {
+                throw new InvalidOperationException(
+                    $"ThreadPool.SetMinThreads({workerThreads}, ...) reported success but the floor " +
+                    $"read back as {actualWorkerThreads}. The runtime clamped the request, so this " +
+                    "configuration would not measure the intended threadpool pressure.");
+            }
         }
 
         [IterationSetup]
