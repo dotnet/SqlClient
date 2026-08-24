@@ -30,14 +30,18 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 - Added four `virtual` asynchronous counterparts to the synchronous methods on `SqlColumnEncryptionKeyStoreProvider` — `DecryptColumnEncryptionKeyAsync`, `EncryptColumnEncryptionKeyAsync`, `SignColumnMasterKeyMetadataAsync`, and `VerifyColumnMasterKeyMetadataAsync` — each accepting an optional `CancellationToken`. The default implementations delegate to the existing synchronous methods, so existing custom providers are unaffected.
   ([#3673](https://github.com/dotnet/SqlClient/pull/3673))
 
-- Substantially expanded `ChannelDbConnectionPool` (the opt-in pool behind `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`) toward parity with the default pool: transaction support, broken-connection replacement, background warmup and replenishment to `Min Pool Size`, idle pruning driven by `Connection Idle Timeout`, optional connection-creation rate limiting, and metrics/tracing parity. Default pooling behavior is unchanged.
+- Implemented those four asynchronous APIs in `SqlColumnEncryptionAzureKeyVaultProvider`, calling the Azure SDK's own asynchronous methods and flowing the supplied `CancellationToken`. Concurrent cache misses for the same key are gated so a burst of callers issues a single Key Vault request. See the [AKV release notes](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md) for the `VerifyColumnMasterKeyMetadata` signature-validation behavior change and the 7.1 runtime requirement.
+  ([#4540](https://github.com/dotnet/SqlClient/pull/4540))
+
+- Substantially expanded `ChannelDbConnectionPool` (the opt-in pool behind `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`) toward parity with the default pool: transaction support, broken-connection replacement, leaked-connection reclamation, background warmup and replenishment to `Min Pool Size`, idle pruning driven by `Connection Idle Timeout`, optional connection-creation rate limiting, and metrics/tracing parity. Default pooling behavior is unchanged.
   ([#4395](https://github.com/dotnet/SqlClient/pull/4395),
    [#4396](https://github.com/dotnet/SqlClient/pull/4396),
    [#4429](https://github.com/dotnet/SqlClient/pull/4429),
    [#4452](https://github.com/dotnet/SqlClient/pull/4452),
    [#4463](https://github.com/dotnet/SqlClient/pull/4463),
    [#4487](https://github.com/dotnet/SqlClient/pull/4487),
-   [#4504](https://github.com/dotnet/SqlClient/pull/4504))
+   [#4504](https://github.com/dotnet/SqlClient/pull/4504),
+   [#4529](https://github.com/dotnet/SqlClient/pull/4529))
 
 ### Changed
 
@@ -63,9 +67,12 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 - Updated the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` dependencies to `7.1.0-preview3.26226.3`.
   ([#4564](https://github.com/dotnet/SqlClient/pull/4564))
 
-- Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview3`, removing obsolete `Azure.Identity` API usage with no public API or behavior change. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview3.md).
+- Bypassed SQL Graph column alias mapping in `SqlBulkCopy` when neither the source nor destination table contains graph pseudo-columns, recovering a bulk copy performance regression. Graph table bulk copy behavior is unchanged.
+  ([#4535](https://github.com/dotnet/SqlClient/pull/4535))
 
-- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview3` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview3.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview3.md).
+- Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview3`, removing obsolete `Azure.Identity` API usage and fixing Entra ID tenant parsing for multi-segment authorities. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview3.md).
+
+- Re-shipped `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` as `7.1.0-preview3` with new asynchronous key store provider APIs, and `Microsoft.Data.SqlClient.Extensions.Abstractions` and `Microsoft.Data.SqlClient.Internal.Logging` as `7.1.0-preview3` (version alignment only, no functional changes). See release notes for [AKV](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0-preview3.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0-preview3.md).
 
 ### Fixed
 
@@ -86,6 +93,9 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 
 - Fixed several async entry points in `SqlBulkCopy`, `SqlDataReader`, and `SqlCommand` that captured fatal exceptions such as `OutOfMemoryException` into faulted `Task`s instead of letting them propagate.
   ([#4437](https://github.com/dotnet/SqlClient/pull/4437))
+
+- Fixed `Authentication=Active Directory Service Principal` (and the other Entra ID flows) failing against endpoints that return a multi-segment authority such as the Dataverse / Dynamics 365 TDS endpoint; the tenant id is now taken from the first path segment of the STSURL authority instead of the last. Ships in `Microsoft.Data.SqlClient.Extensions.Azure`.
+  ([#4521](https://github.com/dotnet/SqlClient/pull/4521))
 
 - Addressed CodeQL findings by removing SHA-1 from the portable PDB checksum algorithm map and annotating the Always Encrypted RSA PKCS#1 v1.5 signature paths.
   ([#4517](https://github.com/dotnet/SqlClient/pull/4517))
