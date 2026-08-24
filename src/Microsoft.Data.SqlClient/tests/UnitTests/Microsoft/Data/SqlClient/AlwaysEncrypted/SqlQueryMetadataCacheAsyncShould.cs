@@ -67,9 +67,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             parameter.CipherMetadata = new SqlCipherMetadata(
                 entry,
                 ordinal: 0,
-                cipherAlgorithmId: 2, // AEAD_AES_256_CBC_HMAC_SHA256
+                cipherAlgorithmId: TdsEnums.AEAD_AES_256_CBC_HMAC_SHA256,
                 cipherAlgorithmName: null,
-                encryptionType: 1, // Deterministic
+                encryptionType: (byte)SqlClientEncryptionType.Deterministic,
                 normalizationRuleVersion: 1);
 
             return command;

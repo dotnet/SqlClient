@@ -113,11 +113,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (sqlClientSymmetricKey == null)
             {
-                throw SQL.NullArgumentInternal(nameof(sqlClientSymmetricKey), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+                throw SQL.NullArgumentInternal(nameof(sqlClientSymmetricKey), nameof(EnclaveDelegate), nameof(CreateColumnEncryptionKeyInfo));
             }
             if (cipherInfo.ColumnEncryptionKeyValues == null)
             {
-                throw SQL.NullArgumentInternal(nameof(cipherInfo.ColumnEncryptionKeyValues), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+                throw SQL.NullArgumentInternal(nameof(cipherInfo.ColumnEncryptionKeyValues), nameof(EnclaveDelegate), nameof(CreateColumnEncryptionKeyInfo));
             }
             if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0))
             {
