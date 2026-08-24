@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </para>
         /// </remarks>
         [Benchmark]
-        public async Task RapidFireOpenClose()
+        public async Task RapidFireOpenCloseAsync()
         {
             // NOTE: the Math.Max floor dominates for most [Params] combinations, so total
             // checkouts do NOT scale cleanly with pool capacity — at Parallelism 20 and 25 both
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         /// <summary>
-        /// Sync counterpart to <see cref="RapidFireOpenClose"/>: the same zero-hold churn, but
+        /// Sync counterpart to <see cref="RapidFireOpenCloseAsync"/>: the same zero-hold churn, but
         /// every checkout goes through the blocking <c>Open()</c> path.
         /// </summary>
         /// <remarks>

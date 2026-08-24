@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// concern for the new ChannelDbConnectionPool, which aims to avoid extra allocations
     /// on the hot path (issue #3356).
     ///
-    /// This overlaps <see cref="ConnectionPoolStressRunner.RapidFireOpenClose"/> in shape —
+    /// This overlaps <see cref="ConnectionPoolStressRunner.RapidFireOpenCloseAsync"/> in shape —
     /// the inner loop is identical — but not in purpose, and the two are not
     /// interchangeable. Being single-threaded, this runner has no scheduling or wake-up
     /// component, which makes it far more sensitive: its sync and async variants have

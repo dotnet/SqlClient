@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// roughly N x connect latency. V2 has no such gate, so the opens overlap and total
     /// latency approaches a single connect.
     ///
-    /// Contrast with <see cref="ConnectionPoolStressRunner.RapidFireOpenClose"/>, which also
+    /// Contrast with <see cref="ConnectionPoolStressRunner.RapidFireOpenCloseAsync"/>, which also
     /// starts from a cold pool but releases each connection immediately. Because nothing is
     /// held, one physical connection can satisfy every caller in turn, so that benchmark
     /// rewards a pool that grows as slowly as possible and penalizes concurrent creation.
