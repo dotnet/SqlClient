@@ -903,7 +903,10 @@ namespace Microsoft.Data.Common
         /// </summary>
         /// <remarks>Dedicated pools are addressed as "&lt;workspace&gt;.sql.azuresynapse.net", while
         /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name and are
-        /// therefore excluded here.</remarks>
+        /// therefore excluded here. The domain is matched as a substring rather than a suffix so that
+        /// top-level domains the driver does not enumerate, such as sovereign clouds, are still
+        /// classified; a host that merely embeds the domain is classified too, which is benign because
+        /// a false positive only skips an optimization.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
             return dataSource is not null

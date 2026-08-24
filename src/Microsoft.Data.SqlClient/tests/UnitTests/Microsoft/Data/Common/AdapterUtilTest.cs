@@ -93,12 +93,24 @@ public class AdapterUtilTest
     [InlineData("myworkspace.sql.azuresynapse.net", true)]
     [InlineData("MYWORKSPACE.SQL.AZURESYNAPSE.NET", true)]
     [InlineData("tcp:myworkspace.sql.azuresynapse.net,1433", true)]
+    [InlineData("myworkspace.sql.azuresynapse.net\\instance", true)]
+    // The domain is matched as a substring rather than a suffix, so top-level domains that are not
+    // enumerated anywhere in the driver - including sovereign clouds - are still classified.
+    [InlineData("myworkspace.sql.azuresynapse.azure.cn", true)]
+    // Consequence of that substring match: a host that merely embeds the domain is also classified.
+    // This is deliberate and benign. A false positive only skips the isolation level reset, which
+    // leaves the connection behaving exactly as it does in shipped versions of the driver, whereas a
+    // false negative would issue a statement that dedicated pools reject with error 104409 on every
+    // checkout. The same trade-off is already made by IsAzureSynapseOnDemandEndpoint.
+    [InlineData("myworkspace.sql.azuresynapse.net.example", true)]
     // Serverless / on-demand pools use the same suffix but carry an "-ondemand" workspace suffix.
     [InlineData("myworkspace-ondemand.sql.azuresynapse.net", false)]
     [InlineData("MYWORKSPACE-ONDEMAND.SQL.AZURESYNAPSE.NET", false)]
+    [InlineData("tcp:myworkspace-ondemand.sql.azuresynapse.net,1433", false)]
     // Unrelated endpoints.
     [InlineData("myserver.database.windows.net", false)]
     [InlineData("myserver-ondemand.database.windows.net", false)]
+    [InlineData("sql.azuresynapse.net", false)]
     [InlineData("localhost", false)]
     [InlineData("", false)]
     public void IsAzureSynapseDedicatedPoolEndpoint_ClassifiesDataSource(string dataSource, bool expected) =>
