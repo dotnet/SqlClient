@@ -31,8 +31,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         /// <summary>
         /// Max pool size — controls how many physical connections the pool can hold.
-        /// When Parallelism exceeds this, tasks must wait for a free connection.
         /// </summary>
+        /// <remarks>
+        /// Note that every <see cref="Parallelism"/> value is below every value here, so this
+        /// limit is only actually reached by <see cref="PoolExhaustionRecovery"/>, which
+        /// deliberately oversubscribes it. For the other benchmarks in this class the pool
+        /// never saturates and this parameter is close to inert: the V2 pool's idle channel is
+        /// unbounded, so a capacity that is never reached changes no behaviour. Treat a spread
+        /// between two MaxPoolSize values at the same Parallelism as a noise estimate rather
+        /// than a real effect.
+        /// </remarks>
         [Params(50, 100)]
         public int MaxPoolSize { get; set; }
 
@@ -79,13 +87,41 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         /// <summary>
         /// Pure open/close churn — every task opens a pooled connection, immediately closes it,
-        /// and repeats. Measures raw pool checkout/return throughput under contention.
-        /// The per-task loop count scales with MaxPoolSize so total checkouts stay proportional
-        /// to pool capacity regardless of how the [Params] values change.
+        /// and repeats.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is a <em>scheduling</em> benchmark, not a measure of raw checkout throughput.
+        /// Because nothing happens between checkout and return, the tasks stay phase-locked and
+        /// the idle channel oscillates around empty, so the inline <c>TryRead</c> fast path
+        /// misses and most checkouts park in <c>ReadAsync</c> and resume on a threadpool
+        /// continuation. What is measured is dominated by that wake-up cost plus
+        /// <see cref="Task.Run(Action)"/> overhead: a pooled checkout costs single-digit
+        /// microseconds, while this benchmark attributes tens of microseconds to each one.
+        /// </para>
+        /// <para>
+        /// For the per-checkout cost of the pool's acquire/return path itself, use
+        /// <see cref="ConnectionPoolChurnRunner"/>, which runs this same loop single-threaded
+        /// against a warm pool. For concurrent behaviour under a realistic workload — where a
+        /// connection is held for the duration of a query, so returns and checkouts decorrelate
+        /// and the fast path hits — use <see cref="ConnectionPoolContentionRunner"/>. A
+        /// regression here alongside flat or improved results in those two indicates a change in
+        /// wake-up scheduling, not in checkout cost.
+        /// </para>
+        /// <para>
+        /// Also note that <see cref="IterationCleanup"/> drops the pool between iterations, so
+        /// each iteration amortises a cold-start burst of physical connects (a few percent of
+        /// the mean). That largely cancels between baseline and current, but it adds variance.
+        /// </para>
+        /// </remarks>
         [Benchmark]
         public async Task RapidFireOpenClose()
         {
+            // NOTE: the Math.Max floor dominates for most [Params] combinations, so total
+            // checkouts do NOT scale cleanly with pool capacity — at Parallelism 20 and 25 both
+            // MaxPoolSize values run an identical workload. Kept as-is so results stay
+            // comparable with previously published runs; see the redesign issue before relying
+            // on the MaxPoolSize axis here.
             int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
