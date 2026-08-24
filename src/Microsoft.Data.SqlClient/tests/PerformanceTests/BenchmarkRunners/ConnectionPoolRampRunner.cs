@@ -56,6 +56,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private string _connectionString;
 
+        /// <summary>
+        /// Upper bound on the rendezvous wait. The rendezvous is released on the failure path
+        /// too, so this should never be reached; it exists so that a bug in the barrier fails
+        /// the run quickly instead of hanging the perf pipeline indefinitely.
+        /// </summary>
+        private static readonly TimeSpan s_rampTimeout = TimeSpan.FromMinutes(2);
+
         [GlobalSetup]
         public void Setup()
         {
@@ -103,16 +110,24 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 tasks[i] = Task.Run(async () =>
                 {
                     using var conn = new SqlConnection(_connectionString);
-                    await conn.OpenAsync();
+                    try
+                    {
+                        await conn.OpenAsync();
+                    }
+                    finally
+                    {
+                        // Signal from a finally so a caller that fails to open still counts as
+                        // arrived. Otherwise the countdown never reaches zero, the release is
+                        // never set, and every other caller awaits forever.
+                        if (allConnected.Signal())
+                        {
+                            release.TrySetResult(true);
+                        }
+                    }
 
                     // Hold the connection until every caller has one, forcing the pool to
                     // grow to Parallelism physical connections.
-                    if (allConnected.Signal())
-                    {
-                        release.TrySetResult(true);
-                    }
-
-                    await release.Task;
+                    await release.Task.WaitAsync(s_rampTimeout);
                     // Dispose returns the connection to the pool.
                 });
             }
@@ -136,10 +151,22 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 tasks[i] = Task.Factory.StartNew(() =>
                 {
                     using var conn = new SqlConnection(_connectionString);
-                    conn.Open();
+                    try
+                    {
+                        conn.Open();
+                    }
+                    finally
+                    {
+                        // See ColdStartRampAsync: signalling from a finally keeps a failed
+                        // open from stranding every other caller in Wait().
+                        allConnected.Signal();
+                    }
 
-                    allConnected.Signal();
-                    allConnected.Wait();
+                    if (!allConnected.Wait(s_rampTimeout))
+                    {
+                        throw new TimeoutException(
+                            $"Cold-start ramp did not reach {Parallelism} connections within {s_rampTimeout}.");
+                    }
                     // Dispose returns the connection to the pool.
                 }, TaskCreationOptions.LongRunning);
             }
