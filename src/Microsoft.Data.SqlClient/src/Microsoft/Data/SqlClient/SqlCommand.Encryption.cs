@@ -251,14 +251,18 @@ namespace Microsoft.Data.SqlClient
         /// column encryption key has been decrypted through the asynchronous key store provider APIs.
         /// </para>
         /// <para>
-        /// The work is dispatched with <see cref="Task.Run(Func{Task})"/> because the body issues blocking TDS
-        /// reads before reaching its first suspension point, and <c>PrepareForTransparentEncryption</c> is
-        /// invoked synchronously on the caller's thread by the asynchronous execution entry points. Dispatching
-        /// keeps that thread free, matching the behaviour of the continuation chain this replaced, while every
-        /// subsequent <c>await</c> releases the pooled thread for the duration of key store provider I/O.
+        /// The work is dispatched with <see cref="Task.Run(Func{Task})"/> rather than awaited inline because
+        /// the body issues blocking TDS reads before reaching a suspension point, and
+        /// <c>PrepareForTransparentEncryption</c> runs synchronously on the caller's thread under the
+        /// asynchronous execution entry points. Awaiting inline would run those reads on the caller's thread
+        /// whenever <paramref name="fetchInputParameterEncryptionInfoTask"/> is <c>null</c> or already
+        /// completed. This preserves the behaviour of the two continuations it replaced, which reached the
+        /// thread pool via <c>Task.Run</c> and via <c>ContinueWith</c> without
+        /// <see cref="TaskContinuationOptions.ExecuteSynchronously"/> respectively, so neither could run
+        /// inline either. Once dispatched, every <c>await</c> releases the pooled thread for the duration of
+        /// key store provider I/O.
         /// </para>
         /// </remarks>
-        /// <param name="returnTask">Receives the task representing the pending work</param>
         /// <param name="fetchInputParameterEncryptionInfoTask">
         /// Task representing the pending network write of the describe-parameter-encryption request, or
         /// <c>null</c> when that write completed synchronously.
@@ -267,21 +271,19 @@ namespace Microsoft.Data.SqlClient
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Map of encryption RPC requests to their original RPC requests</param>
         /// <param name="describeParameterEncryptionNeeded">Whether describe parameter encryption was required</param>
         /// <param name="isRetry">Indicates if this is a retry from a failed call</param>
-        private void GetParameterEncryptionDataReader(
-            out Task returnTask,
+        /// <returns>A task that completes once the describe-parameter-encryption results have been consumed</returns>
+        private Task GetParameterEncryptionDataReaderAsync(
             Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool describeParameterEncryptionNeeded,
-            bool isRetry)
-        {
-            returnTask = Task.Run(() => GetParameterEncryptionDataReaderAsync(
+            bool isRetry) =>
+            Task.Run(() => ConsumeDescribeParameterEncryptionResultsAsync(
                 fetchInputParameterEncryptionInfoTask,
                 describeParameterEncryptionDataReader,
                 describeParameterEncryptionRpcOriginalRpcMap,
                 describeParameterEncryptionNeeded,
                 isRetry));
-        }
 
         /// <summary>
         /// Awaits the describe-parameter-encryption request and consumes its results asynchronously.
@@ -292,7 +294,7 @@ namespace Microsoft.Data.SqlClient
         /// while consuming the results run the finally block but leave the cached async state alone. These
         /// semantics are inherited from the callback-based continuation this method replaced.
         /// </remarks>
-        private async Task GetParameterEncryptionDataReaderAsync(
+        private async Task ConsumeDescribeParameterEncryptionResultsAsync(
             Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
@@ -731,8 +733,7 @@ namespace Microsoft.Data.SqlClient
                         // execution pending. Note that this should be done outside the task's
                         // continuation delegate.
                         processFinallyBlock = false;
-                        GetParameterEncryptionDataReader(
-                            out returnTask,
+                        returnTask = GetParameterEncryptionDataReaderAsync(
                             fetchInputParameterEncryptionInfoTask,
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
@@ -751,8 +752,7 @@ namespace Microsoft.Data.SqlClient
                             // execution pending. Note that this should be done outside the task's
                             // continuation delegate.
                             processFinallyBlock = false;
-                            GetParameterEncryptionDataReader(
-                                out returnTask,
+                            returnTask = GetParameterEncryptionDataReaderAsync(
                                 fetchInputParameterEncryptionInfoTask: null,
                                 describeParameterEncryptionDataReader,
                                 describeParameterEncryptionRpcOriginalRpcMap,
