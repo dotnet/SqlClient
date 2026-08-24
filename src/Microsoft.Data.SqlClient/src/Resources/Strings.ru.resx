@@ -2082,6 +2082,12 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Если ключевому слову строки подключения "Integrated Security" задано значение "true" или "SSPI", свойство "AccessTokenCallback" задать не удастся.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Если в строке подключения указан параметр "Authentication=Active Directory Default", свойство AccessTokenCallback задать не удастся.</value>
   </data>
