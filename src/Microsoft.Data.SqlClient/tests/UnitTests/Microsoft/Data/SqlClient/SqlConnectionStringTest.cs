@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 builder.TransparentNetworkIPResolution = tnirInConnString.Value;
             }
 
-            SqlConnectionOptions connectionOptions = new(builder.ConnectionString);
+            SqlConnectionString connectionOptions = new(builder.ConnectionString);
 
             Assert.Equal(
                 expectedValue,
