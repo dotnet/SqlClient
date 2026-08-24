@@ -82,12 +82,16 @@ namespace Microsoft.Data.SqlClient.Tests
             // disable enumeration of the test data to avoid warnings on the
             // console.
             DisableDiscoveryEnumeration = true)]
-        public void TestSqlException(Action<string> connectAction, string connectionString)
+        public void TestConnectionFailure(Action<string> connectAction, string connectionString)
         {
-            Assert.Throws<SqlException>(() =>
-            {
-                connectAction(connectionString);
-            });
+            Exception exception = Record.Exception(() => connectAction(connectionString));
+
+            Assert.NotNull(exception);
+            Assert.True(
+                exception is SqlException
+                || exception is InvalidOperationException
+                    && exception.Message == SystemDataResourceManager.Instance.ADP_PooledOpenTimeout,
+                $"Unexpected exception: {exception}");
         }
     }
 }

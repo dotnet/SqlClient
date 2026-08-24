@@ -589,19 +589,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that an empty pool still delegates physical connection creation when the caller's
-        /// timeout budget has just expired and propagates the physical connection error unchanged.
+        /// Verifies that an expired caller timeout prevents physical connection creation.
         /// </summary>
         [Fact]
-        public void GetConnectionExpiredTimeout_EmptyPoolStillAttemptsPhysicalConnection()
+        public void GetConnectionExpiredTimeout_DoesNotAttemptPhysicalConnection()
         {
             // Arrange
-            var physicalConnectionException = new NotSupportedException("Physical connection failed.");
-            var connectionFactory = new CountingTimeoutConnectionFactory(physicalConnectionException);
+            var connectionFactory = new CountingTimeoutConnectionFactory();
             var pool = ConstructPool(connectionFactory);
 
             // Act
-            NotSupportedException exception = Assert.Throws<NotSupportedException>(() =>
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 pool.TryGetConnection(
                     new SqlConnection(),
                     taskCompletionSource: null,
@@ -609,8 +607,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     out _));
 
             // Assert
-            Assert.Same(physicalConnectionException, exception);
-            Assert.Equal(1, connectionFactory.CreateCount);
+            Assert.Equal(ADP.PooledOpenTimeout().Message, exception.Message);
+            Assert.Equal(0, connectionFactory.CreateCount);
         }
 
         /// <summary>
@@ -2207,18 +2205,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal sealed class CountingTimeoutConnectionFactory : SqlConnectionFactory
         {
-            private readonly Exception? _exception;
-
-            /// <summary>
-            /// Creates a factory that throws either the supplied marker exception or the standard
-            /// pooled-open timeout when physical connection creation is requested.
-            /// </summary>
-            /// <param name="exception">Optional exception to throw from physical creation.</param>
-            internal CountingTimeoutConnectionFactory(Exception? exception = null)
-            {
-                _exception = exception;
-            }
-
             /// <summary>
             /// Gets the number of times the pool asked the factory to create a physical connection.
             /// </summary>
@@ -2237,7 +2223,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CreateCount++;
-                throw _exception ?? ADP.PooledOpenTimeout();
+                throw ADP.PooledOpenTimeout();
             }
         }
 
