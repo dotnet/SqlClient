@@ -302,6 +302,34 @@ from the assembly, nor reading that type's custom attributes runs anything from
 it — a module initializer or static constructor runs on first real member access,
 which is what `GetUdtValue` would otherwise perform.
 
+#### Compatibility impact
+
+This policy is a behavior change for applications that use **custom** UDTs. The
+built-in spatial types (`SqlGeography`, `SqlGeometry`, `SqlHierarchyId`) are
+unaffected, since `Microsoft.SqlServer.Types` is permitted by identity.
+
+An application is affected when the custom UDT's assembly is not yet loaded at
+the moment the value is read. That is common whenever the *driver* materializes
+the value and the application never names the type in its own code — generic data
+access layers, micro-ORMs, `DataTable.Load`, and schema discovery. In those cases
+the driver's own `Assembly.Load` was previously the thing that pulled the
+assembly in, and it is now refused.
+
+The symptom depends on the API:
+
+| API | Symptom |
+|-----|---------|
+| `reader[i]`, `GetValue`, UDT output parameters | `SqlException` naming the assembly and the allow list |
+| `GetFieldType`, `GetSchemaTable`, `GetColumnSchema` | Returns `null` for the UDT column's type rather than throwing |
+
+The second row is the harder one to diagnose, because `GetFieldType` does not
+normally return `null`; a caller that dereferences the result sees an unrelated
+`NullReferenceException`. A denial is always traced through
+`SqlClientEventSource` regardless of which path was taken, so enabling event
+source tracing will identify the assembly.
+
+The remedy in every case is to name the assembly on the allow list.
+
 ### Usage Example
 ```csharp
 // Set via AppContext before opening any connection
