@@ -16,6 +16,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// - Connection reuse with interleaved queries
     /// - Pool exhaustion and recovery under pressure
     ///
+    /// The pool is pre-warmed to full capacity in <see cref="Setup"/> and is deliberately
+    /// <em>not</em> cleared between iterations, so these benchmarks measure steady-state
+    /// checkout and return rather than physical connection establishment. Establishing
+    /// connections costs orders of magnitude more than a pooled checkout (milliseconds versus
+    /// microseconds), so leaving any creation in the measured body swamps the pool cost this
+    /// class exists to measure. Cold-start behaviour is covered separately and deliberately by
+    /// <see cref="ConnectionPoolRampRunner"/>.
+    ///
     /// Related issues: #601, #979, #3356
     /// </summary>
     public class ConnectionPoolStressRunner : BaseRunner
@@ -33,13 +41,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// Max pool size — controls how many physical connections the pool can hold.
         /// </summary>
         /// <remarks>
-        /// Note that every <see cref="Parallelism"/> value is below every value here, so this
-        /// limit is only actually reached by <see cref="PoolExhaustionRecovery"/>, which
-        /// deliberately oversubscribes it. For the other benchmarks in this class the pool
-        /// never saturates and this parameter is close to inert: the V2 pool's idle channel is
-        /// unbounded, so a capacity that is never reached changes no behaviour. Treat a spread
-        /// between two MaxPoolSize values at the same Parallelism as a noise estimate rather
-        /// than a real effect.
+        /// The pool is pre-warmed to this many connections and pinned there by an equal
+        /// <c>Min Pool Size</c>, so this is the number of connections actually resident for the
+        /// whole run rather than just a ceiling. Note that every <see cref="Parallelism"/> value
+        /// is below every value here, so the limit itself is only reached by
+        /// <see cref="PoolExhaustionRecovery"/>, which deliberately oversubscribes it. For the
+        /// other benchmarks the pool never saturates, so this parameter mostly varies how many
+        /// idle connections the checkout path is choosing among. Treat a spread between two
+        /// MaxPoolSize values at the same Parallelism as a noise estimate rather than a real
+        /// effect.
         /// </remarks>
         [Params(50, 100)]
         public int MaxPoolSize { get; set; }
@@ -47,8 +57,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [GlobalSetup]
         public void Setup()
         {
+            // Pin Min Pool Size to Max Pool Size so the pool holds full capacity for the whole
+            // run: pruning cannot shrink it back down, and no benchmark body has to establish a
+            // physical connection.
             _connectionString = s_config.ConnectionString +
-                $";Pooling=True;Max Pool Size={MaxPoolSize};Min Pool Size=5;Connect Timeout=60";
+                $";Pooling=True;Max Pool Size={MaxPoolSize};Min Pool Size={MaxPoolSize};Connect Timeout=60";
 
             // Create a small table for query workloads.
             // Hash the machine name instead of using it verbatim: hostnames can be long enough
@@ -56,22 +69,55 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // than using Math.Abs, which throws OverflowException when the hash is int.MinValue.
             string machineHash = ((uint)Environment.MachineName.GetHashCode()).ToString("x8");
             _tableName = $"[perf_PoolStress_{machineHash}_{Guid.NewGuid():N}]";
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-            using var cmd = new SqlCommand(
-                $"CREATE TABLE {_tableName} (Id INT IDENTITY PRIMARY KEY, Val INT)", conn);
-            cmd.ExecuteNonQuery();
 
-            // Seed a few rows so SELECT queries return data
-            using var insert = new SqlCommand(
-                $"INSERT INTO {_tableName} (Val) VALUES (1),(2),(3),(4),(5)", conn);
-            insert.ExecuteNonQuery();
+            // Scoped so this connection is back in the pool before PrewarmPool runs: that method
+            // holds MaxPoolSize connections at once, so an extra live one would hit the cap and
+            // block until Connect Timeout.
+            {
+                using var conn = new SqlConnection(_connectionString);
+                conn.Open();
+                using var cmd = new SqlCommand(
+                    $"CREATE TABLE {_tableName} (Id INT IDENTITY PRIMARY KEY, Val INT)", conn);
+                cmd.ExecuteNonQuery();
+
+                // Seed a few rows so SELECT queries return data
+                using var insert = new SqlCommand(
+                    $"INSERT INTO {_tableName} (Val) VALUES (1),(2),(3),(4),(5)", conn);
+                insert.ExecuteNonQuery();
+            }
+
+            PrewarmPool();
         }
 
-        [IterationCleanup]
-        public void IterationCleanup()
+        /// <summary>
+        /// Fills the pool to <see cref="MaxPoolSize"/> live connections before any measurement
+        /// starts, so benchmark bodies only ever exercise checkout and return.
+        /// </summary>
+        /// <remarks>
+        /// Every connection is opened before any is released. Releasing as we go would let the
+        /// pool hand the same idle connection back repeatedly and create only one, which is the
+        /// whole failure this is meant to avoid. <c>Min Pool Size</c> alone is not enough either:
+        /// it is backfilled lazily, so the first measured iteration would still pay for creation.
+        /// </remarks>
+        private void PrewarmPool()
         {
-            SqlConnection.ClearAllPools();
+            var warm = new SqlConnection[MaxPoolSize];
+            try
+            {
+                for (int i = 0; i < warm.Length; i++)
+                {
+                    warm[i] = new SqlConnection(_connectionString);
+                    warm[i].Open();
+                }
+            }
+            finally
+            {
+                // Returns them all to the pool; Min Pool Size keeps them resident from here on.
+                foreach (var conn in warm)
+                {
+                    conn?.Dispose();
+                }
+            }
         }
 
         [GlobalCleanup]
@@ -87,31 +133,25 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         /// <summary>
         /// Pure open/close churn — every task opens a pooled connection, immediately closes it,
-        /// and repeats.
+        /// and repeats. With the pool pre-warmed to full capacity, every open is a pure checkout,
+        /// so this measures the pool's acquire/return path under concurrency.
         /// </summary>
         /// <remarks>
         /// <para>
-        /// This is a <em>scheduling</em> benchmark, not a measure of raw checkout throughput.
         /// Because nothing happens between checkout and return, the tasks stay phase-locked and
-        /// the idle channel oscillates around empty, so the inline <c>TryRead</c> fast path
-        /// misses and most checkouts park in <c>ReadAsync</c> and resume on a threadpool
-        /// continuation. What is measured is dominated by that wake-up cost plus
-        /// <see cref="Task.Run(Action)"/> overhead: a pooled checkout costs single-digit
-        /// microseconds, while this benchmark attributes tens of microseconds to each one.
+        /// the idle channel oscillates around empty even though the pool is full. That makes this
+        /// benchmark unusually sensitive to how a returned connection is handed to a waiting
+        /// caller: under the V2 pool an inline <c>TryRead</c> miss parks the caller in
+        /// <c>ReadAsync</c>, so it resumes on a threadpool continuation. Read it as a
+        /// zero-hold-time worst case for wake-up scheduling, not as typical application
+        /// behaviour: real callers do some work while holding a connection, which decorrelates
+        /// returns from checkouts and lets the fast path hit.
         /// </para>
         /// <para>
-        /// For the per-checkout cost of the pool's acquire/return path itself, use
-        /// <see cref="ConnectionPoolChurnRunner"/>, which runs this same loop single-threaded
-        /// against a warm pool. For concurrent behaviour under a realistic workload — where a
-        /// connection is held for the duration of a query, so returns and checkouts decorrelate
-        /// and the fast path hits — use <see cref="ConnectionPoolContentionRunner"/>. A
-        /// regression here alongside flat or improved results in those two indicates a change in
-        /// wake-up scheduling, not in checkout cost.
-        /// </para>
-        /// <para>
-        /// Also note that <see cref="IterationCleanup"/> drops the pool between iterations, so
-        /// each iteration amortises a cold-start burst of physical connects (a few percent of
-        /// the mean). That largely cancels between baseline and current, but it adds variance.
+        /// Compare against <see cref="ConnectionPoolChurnRunner"/> for the same loop with no
+        /// concurrency, and <see cref="ConnectionPoolContentionRunner"/> for concurrency with a
+        /// realistic hold time. A regression here alongside flat or improved results in those two
+        /// indicates a change in wake-up scheduling rather than in checkout cost.
         /// </para>
         /// </remarks>
         [Benchmark]
@@ -119,9 +159,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         {
             // NOTE: the Math.Max floor dominates for most [Params] combinations, so total
             // checkouts do NOT scale cleanly with pool capacity — at Parallelism 20 and 25 both
-            // MaxPoolSize values run an identical workload. Kept as-is so results stay
-            // comparable with previously published runs; see the redesign issue before relying
-            // on the MaxPoolSize axis here.
+            // MaxPoolSize values run an identical workload, which makes the spread between them
+            // a useful read on this benchmark's own noise floor.
             int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
