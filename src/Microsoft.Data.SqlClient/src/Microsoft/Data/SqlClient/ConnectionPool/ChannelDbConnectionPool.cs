@@ -1533,6 +1533,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return null;
             }
 
+            // Counted before activation for the same reason as GetInternalConnection: if
+            // PrepareConnection fails it returns the connection to the pool, which emits the
+            // matching soft disconnect. Counting after would leave that disconnect unpaired and
+            // drive the active-soft-connects gauge negative.
+            Metrics.SoftConnectRequest();
             PrepareConnection(owningConnection, connection, transaction);
             return connection;
         }
