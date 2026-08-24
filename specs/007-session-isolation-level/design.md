@@ -66,12 +66,12 @@ since 2017 with production impact.
 
 | | |
 |---|---|
-| Code path | `SqlConnectionInternal.ResetConnection()` — the pool **return** / `Deactivate` path |
-| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on pool return issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
-| Direction | **Scrub** session state on the way back into the pool |
+| Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
+| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is **not** enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
+| Direction | **Scrub** stale session state on the way out of the pool |
 | App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` |
 | Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
-| Cost | No extra round trip — the queued `sp_reset_connection` piggybacks the batch's TDS header |
+| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. `PrepareResetConnection` performs no I/O of its own — it only sets a flag consumed at the next packet write — so the legacy close path sent nothing, and this batch is a genuinely new exchange. Both PRs therefore cost one round trip; they differ only in *which* checkout pays it. |
 
 ---
 
@@ -126,8 +126,9 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Mechanism | When a reset is pending, re-issue `SET TRANSACTION ISOLATION LEVEL <ambient>` mapped from `Transaction.IsolationLevel` |
 | Direction | **Re-assert** session state on the way back out of the pool |
 | App context switch | None — the previous behavior is a correctness bug, not a compatibility contract |
-| Special case | `Snapshot` is intentionally **not** re-asserted — switching to `SNAPSHOT` while a transaction is open causes SQL Server to fail and roll back the transaction, and the delegated transaction was already begun under snapshot isolation by the TM request |
-| Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends |
+| Special case | `ReadCommitted` is **skipped** — `sp_reset_connection` already returns the session to `READ COMMITTED`, and no database setting renames that level (`READ_COMMITTED_SNAPSHOT` changes the behavior of `READ COMMITTED`, not its name), so the batch would be a no-op |
+| Special case | `Snapshot` **is** re-asserted. Moving *into* `SNAPSHOT` part-way through a transaction begun at another level aborts that transaction, but the preserved transaction on this path was itself begun under snapshot isolation by the TM request — so returning to `SNAPSHOT` is legal, and necessary, because the reset may have cleared it |
+| Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends, except when the ambient level is `ReadCommitted` |
 
 ---
 
@@ -141,22 +142,24 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Affected servers | On-prem SQL Server (reset does not clear) | Azure SQL DB (reset does clear) |
 | API surface | `SqlTransaction` **and** `TransactionScope` | `TransactionScope` only |
 | Trigger | TM `Begin` set a non-default level | Re-enlist short-circuit with a pending reset |
-| Code path | `ResetConnection()` / `Deactivate` (pool **return**) | `Enlist()` (pool **checkout**) |
+| Code path | `Activate()` (pool **checkout**, not enlisted) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
 | App context switch | `UseLegacyIsolationLevelBehavior` | None |
-| `Snapshot` handling | Reset to `READ COMMITTED` like any other level | Deliberately **skipped** |
+| `Snapshot` handling | Reset to `READ COMMITTED` like any other level | **Re-asserted** |
+| `ReadCommitted` handling | Never dirty, so never scrubbed | **Skipped** — the reset already lands there |
 
 ---
 
 ## 5. Why neither fix subsumes the other
 
-**Would #4330 alone fix #146?** No. It runs only on pool **return** and only ever writes
-`READ COMMITTED`. The #146 repro never completes the transaction between the two opens, and
-even if the reset did run it would write the *wrong* level — the ambient level is
-`Serializable` / `ReadUncommitted`, not `READ COMMITTED`. Applying it there would make #146
-strictly worse, turning an Azure-only bug into a universal one.
+**Would #4330 alone fix #146?** No — and it is explicitly built not to make #146 worse. #4330
+runs on the **checkout** path (`Activate()`) but only ever writes `READ COMMITTED`, which is the
+*wrong* level for the #146 repro (the ambient level there is `Serializable` / `ReadUncommitted`).
+Its scrub is therefore gated on the connection **not** being enlisted, so it never fires on the
+re-attach path #4335 owns. Without that gate it would turn #146 from an Azure-only bug into a
+universal one.
 
 **Would #4335 alone fix #96?** No. It fires only inside `Enlist()` on the
 "same transaction re-attach" branch — i.e. while an ambient `TransactionScope` is still open.
@@ -166,35 +169,50 @@ variant never goes through `Enlist()` at all, so the leak path is never reached.
 **Could one generalized fix cover both?** Only by conflating two opposite intents in a single
 place:
 
-- On pool **return**, the desired behavior is to *forget* the level (#96).
-- On pool **checkout inside a live scope**, the desired behavior is to *remember and re-apply*
-  it (#146).
+- On checkout of a connection with **no live transaction**, the desired behavior is to *forget*
+  the stale level (#96).
+- On checkout of a connection **re-attaching to a still-live scope**, the desired behavior is to
+  *remember and re-apply* it (#146).
 
-They live at opposite ends of the pooling lifecycle and require different values written,
-different trigger conditions, and different `Snapshot` semantics. Merging them would also mean
-a single app context switch governing two unrelated behavior changes, preventing an
-application from opting into one without the other.
+Both now sit on the checkout side of the pooling lifecycle, but they are distinguished by
+enlistment state and require different values written, different trigger conditions, and
+different `Snapshot` semantics. Merging them would also mean a single app context switch
+governing two unrelated behavior changes, preventing an application from opting into one
+without the other.
 
 ---
 
 ## 6. Why the two PRs should still be reviewed together
 
-- They touch the same file (`SqlConnectionInternal.cs`), use the same helper pattern, add tests
-  to the same folder (`tests/ManualTests/SQL/TransactionTest/`), and both extend
-  `LocalAppContextSwitches` and its test helper — so they **will conflict textually** and should
-  be sequenced.
+- They touch the same file (`SqlConnectionInternal.cs`), use the same helper pattern, and add
+  tests to the same folder (`tests/ManualTests/SQL/TransactionTest/`) — so they **will conflict
+  textually** and should be sequenced. Whichever lands second should extract the shared
+  `SET`-batch helper rather than leaving a second near-copy in the file.
 - Both rest on the same `sp_reset_connection` premise, which a reviewer need only validate once.
 - With both merged the end-to-end behavior becomes coherent:
   - inside a live scope, the ambient level is honored on every open (#4335);
-  - once the transaction ends and the connection is pooled, the level is scrubbed (#4330).
-- Two separate switches is the correct granularity: an application can opt out of the extra
-  round trip introduced by #4335 while keeping the #96 leak fix, or vice versa.
+  - once the transaction ends and the connection is vended again, the stale level is scrubbed
+    (#4330).
+
+#### Dirty-tracking interaction
+
+#4330 sets `_isolationLevelDirty` in `ExecuteTransaction2005` on a TM `Begin` carrying a
+non-default level. In the common delegated case that `Begin` is the first `Open()` inside the
+scope — the same event that establishes the level #4335 later re-asserts — so the re-assert
+re-writes an already-tracked value and nothing goes untracked.
+
+The residual case is a connection that joined an **already-promoted** transaction via
+`PropagateTransactionCookie`: no local `Begin` runs, so the flag stays `false` and a level
+raised by the re-assert would not be scrubbed on a later checkout. Whichever PR lands second
+should set the flag on the re-assert path to close this.
 
 ### Suggested review order
 
 1. **#4330** first — broader blast radius (all servers, both `SqlTransaction` and
    `TransactionScope`), long-standing and frequently requested, and self-contained on the
-   deactivate path.
-2. **#4335** second — rebase onto #4330, then resolve the open performance question
-   (unconditional `SET` vs. Azure-gated vs. deferring the `SET` so it prefixes the user's next
-   batch).
+   activate path.
+2. **#4335** second — rebase onto #4330, extract the shared `SET`-batch helper, and set
+   `_isolationLevelDirty` on the re-assert path.
+
+Note: #4335 no longer adds an app context switch, so the `LocalAppContextSwitches` conflict the
+two PRs would otherwise have had is already gone.
