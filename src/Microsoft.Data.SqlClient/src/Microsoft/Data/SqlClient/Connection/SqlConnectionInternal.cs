@@ -797,7 +797,9 @@ namespace Microsoft.Data.SqlClient.Connection
             // another one, the connection simply switches enlistments. This behavior matches
             // OLEDB and ODBC.
 
-            Enlist(transaction);
+            // This is a user-initiated enlistment rather than a connection-open, so any batch we
+            // have to emit here is bounded by the command timeout rather than the connect timeout.
+            Enlist(transaction, ConnectionOptions.CommandTimeout);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
@@ -2050,12 +2052,12 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 if (ConnectionOptions.Enlist)
                 {
-                    Enlist(transaction);
+                    Enlist(transaction, ConnectionOptions.ConnectTimeout);
                 }
             }
             else
             {
-                Enlist(null);
+                Enlist(null, ConnectionOptions.ConnectTimeout);
             }
         }
 
@@ -2341,13 +2343,19 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
-                Enlist(tx);
+                Enlist(tx, ConnectionOptions.ConnectTimeout);
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Enlist(Transaction transaction)
+        /// <param name="transaction">Ambient transaction to attach to, or null to un-enlist.</param>
+        /// <param name="timeout">
+        /// Timeout, in seconds, for any T-SQL batch this method has to emit. Callers on the
+        /// connection-open path pass the connect timeout; a caller reaching here from
+        /// <see cref="EnlistTransaction"/> passes the command timeout.
+        /// </param>
+        private void Enlist(Transaction transaction, int timeout)
         {
             // This method should not be called while the connection has a reference to an active
             // delegated transaction. Manual enlistment via SqlConnection.EnlistTransaction should
@@ -2408,14 +2416,14 @@ namespace Microsoft.Data.SqlClient.Connection
                 // database default. The queued reset piggybacks this batch's TDS
                 // header, so the reset itself costs nothing extra, but the SET batch
                 // is an additional round trip on re-checkout.
-                ReassertSessionIsolationLevel(transaction.IsolationLevel);
+                ReassertSessionIsolationLevel(transaction.IsolationLevel, timeout);
             }
         }
 
         // Re-issues SET TRANSACTION ISOLATION LEVEL on the physical state object so
         // the next batch in this pooled connection observes the System.Transactions
         // ambient isolation level even after sp_reset_connection resets the session.
-        private void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso)
+        private void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso, int timeout)
         {
             string isoSql;
             switch (sysIso)
@@ -2433,22 +2441,27 @@ namespace Microsoft.Data.SqlClient.Connection
                     isoSql = "SERIALIZABLE";
                     break;
                 case System.Transactions.IsolationLevel.Snapshot:
-                    // Switching to SNAPSHOT while a transaction is active causes SQL
-                    // Server to fail and roll back that transaction. On this path the
-                    // preserved transaction is always still open, and it was already
-                    // begun under snapshot isolation by the transaction manager
-                    // request, so there is nothing to re-assert.
-                    return;
+                    // Moving *into* SNAPSHOT part-way through a transaction that began under a
+                    // different level aborts that transaction, but the preserved transaction on
+                    // this path was itself begun under snapshot isolation by the transaction
+                    // manager request. Returning to SNAPSHOT is therefore legal, and it is
+                    // required, because sp_reset_connection may have cleared the session level.
+                    isoSql = "SNAPSHOT";
+                    break;
                 default:
                     // Unspecified / Chaos: nothing meaningful to assert.
                     return;
             }
 
+            // Matches the batch/Run shape used by ChangeDatabase, including its up-front
+            // validation that the parser is usable and the physical state object is idle.
+            ValidateConnectionForExecute(null);
+
             try
             {
                 Task executeTask = _parser.TdsExecuteSQLBatch(
                     $"SET TRANSACTION ISOLATION LEVEL {isoSql};",
-                    ConnectionOptions.ConnectTimeout,
+                    timeout,
                     notificationRequest: null,
                     _parser._physicalStateObj,
                     sync: true);
