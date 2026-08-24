@@ -1,0 +1,75 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Threading.Tasks;
+using BenchmarkDotNet.Attributes;
+
+namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.LargeDataReadRunner;
+
+public class Plaintext : LargeDataReadRunnerBase
+{
+    public override IEnumerable<CommandBehavior> ExecutedCommandBehaviors =>
+        [CommandBehavior.Default, CommandBehavior.SequentialAccess];
+
+    /// <summary>
+    /// Size of the client-side read buffer used to drain the VARBINARY(MAX) column.
+    /// Kept small (8 KB) and large (1 MB) to observe whether buffer size relative to
+    /// the payload materially changes throughput.
+    /// </summary>
+    public IEnumerable<int> ReadBufferBytes => [8_192, 1_048_576];
+
+    protected override SqlConnection OpenConnection()
+    {
+        SqlConnection conn = new(s_config.ConnectionString);
+
+        conn.Open();
+        return conn;
+    }
+
+    protected override Tests.Common.Fixtures.DatabaseObjects.Table CreateTable() =>
+        new(_connection, nameof(Plaintext), "(Id INT IDENTITY PRIMARY KEY, Data VARBINARY(MAX))");
+
+    [Benchmark]
+    [ArgumentsSource(nameof(ReadBufferBytes))]
+    public void ReadLargeDataSync_GetBytes(int readBufferBytes)
+    {
+        using SqlCommand cmd = new($"SELECT Data FROM {_table.Name}", _connection);
+        using SqlDataReader reader = cmd.ExecuteReader(CommandBehavior);
+        byte[] buffer = new byte[readBufferBytes];
+
+        while (reader.Read())
+        {
+            long offset = 0;
+            long bytesRead;
+            do
+            {
+                bytesRead = reader.GetBytes(0, offset, buffer, 0, buffer.Length);
+                offset += bytesRead;
+            } while (bytesRead > 0);
+        }
+    }
+
+    [Benchmark]
+    [ArgumentsSource(nameof(ReadBufferBytes))]
+    public async Task ReadLargeDataAsync_GetStream(int readBufferBytes)
+    {
+        await using SqlCommand cmd = new($"SELECT Data FROM {_table.Name}", _connection);
+        await using SqlDataReader reader = await cmd.ExecuteReaderAsync(CommandBehavior);
+        byte[] buffer = new byte[readBufferBytes];
+
+        while (await reader.ReadAsync())
+        {
+            await using Stream stream = reader.GetStream(0);
+            int bytesRead;
+
+            do
+            {
+                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+            } while (bytesRead > 0);
+        }
+    }
+}

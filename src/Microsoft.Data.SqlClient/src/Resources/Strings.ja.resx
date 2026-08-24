@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>エンクレーブ レポートの署名の検証に失敗しました。レポートの署名が、HGS ルート証明書を使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server から受信したエンクレーブ レポートの形式が適切ではありません。カスタマー サポート サービスにお問い合わせください。</value>
   </data>
@@ -2079,6 +2082,12 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' 接続文字列キーワードが 'true' または 'SSPI' に設定されている場合、AccessTokenCallback プロパティを設定できません。</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>接続文字列に 'Authentication=Active Directory Default' が指定されている場合、AccessTokenCallback プロパティを設定できません。</value>
   </data>
@@ -2156,6 +2165,9 @@
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>接続プールに空きスロットが見つかりませんでした。</value>
+  </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>接続プールに存在しなくなったため、接続を置き換えることができませんでした。</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>接続プールはシャットダウンされています。</value>

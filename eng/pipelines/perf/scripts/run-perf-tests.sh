@@ -28,6 +28,9 @@
 #
 set -euo pipefail
 
+# Keep the checkout clean: never let the helper scripts drop __pycache__/*.pyc into eng/.
+export PYTHONDONTWRITEBYTECODE=1
+
 ####################################################################################################
 # Argument parsing
 ####################################################################################################
@@ -36,6 +39,14 @@ configuration="Release"
 framework="net9.0"
 resultsSubDir="perf-results"
 baselineVersion=""
+# Alternative to --baseline-version: benchmark against Microsoft.Data.SqlClient built from ANOTHER
+# git ref of this repository (e.g. 'main') instead of a released NuGet package.  Used by the PR perf
+# pipeline, which compares the branch under test against the source it would merge into.  The two
+# baseline selectors are mutually exclusive.
+baselineSourceRef=""
+# Remote used to obtain the baseline ref when it cannot be fetched from the copied checkout's own
+# 'origin' (e.g. the source tree reached the VM without its .git directory, or origin needs auth).
+baselineRepoUrl="https://github.com/dotnet/SqlClient.git"
 regressionThreshold="10"
 # When true, a candidate-slower-than-baseline regression fails the run (wiki 339 §3 gate).
 # Default off so the pipeline reports deltas without blocking until the gate is trusted.
@@ -57,7 +68,8 @@ useConnectionPoolV2=""
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
-         "[--baseline-version <ver>] [--regression-threshold <pct>] [--fail-on-regression]" \
+         "[--baseline-version <ver> | --baseline-source-ref <ref> [--baseline-repo-url <url>]]" \
+         "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
@@ -69,6 +81,8 @@ while [[ $# -gt 0 ]]; do
         --framework)     framework="$2";     shift 2 ;;
         --results-subdir) resultsSubDir="$2"; shift 2 ;;
         --baseline-version) baselineVersion="$2"; shift 2 ;;
+        --baseline-source-ref) baselineSourceRef="$2"; shift 2 ;;
+        --baseline-repo-url) baselineRepoUrl="$2"; shift 2 ;;
         --regression-threshold) regressionThreshold="$2"; shift 2 ;;
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
@@ -89,6 +103,12 @@ case "${runMode}" in
     *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
        usage; exit 2 ;;
 esac
+# The two baseline selectors describe different builds of the same "baseline" pass, so requesting
+# both is always a mistake; fail fast rather than silently honouring one of them.
+if [[ -n "${baselineVersion}" && -n "${baselineSourceRef}" ]]; then
+    echo "ERROR: --baseline-version and --baseline-source-ref are mutually exclusive." >&2
+    usage; exit 2
+fi
 if ! [[ "${confirmationRuns}" =~ ^[0-9]+$ ]] || [[ "${confirmationRuns}" -lt 1 ]]; then
     echo "ERROR: --confirmation-runs must be a positive integer (got '${confirmationRuns}')." >&2
     usage; exit 2
@@ -127,6 +147,7 @@ echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
+echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
 echo "  Run mode       : ${runMode} (confirmation runs: ${confirmationRuns})"
 echo "  SQL_SERVER     : ${SQL_SERVER:-<unset, will default to localhost>}"
 echo "  PERF_CLIENT_CPUS: ${PERF_CLIENT_CPUS:-<unset>}"
@@ -267,7 +288,7 @@ DIAG_DIR="${RESULTS_DIR}/diagnostics"
 mkdir -p "${DIAG_DIR}"
 
 # --- §2.8 Allocator tuning (exported so the 'dotnet run' children inherit it) ---------------------
-# Large-buffer benches (AsyncLargeDataRead, SqlBulkCopy) re-mmap a big buffer every iteration under
+# Large-buffer benches (LargeDataRead, SqlBulkCopy) re-mmap a big buffer every iteration under
 # glibc malloc; keep those allocations on the heap and stop trimming freed pages so they are reused,
 # which removes a major source of per-iteration variance.
 export MALLOC_MMAP_THRESHOLD_="${MALLOC_MMAP_THRESHOLD_:-134217728}"   # 128 MiB
@@ -385,10 +406,11 @@ PY
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
-# Two passes are executed so the pipeline can compare the branch under test against a released
-# baseline:
-#   * baseline  -> Microsoft.Data.SqlClient restored from NuGet.org at ${baselineVersion}
-#                  (ReferenceType=Package + CPM VersionOverride).  Skipped when no baseline is given.
+# Two passes are executed so the pipeline can compare the branch under test against a baseline:
+#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at ${baselineVersion}
+#                  (ReferenceType=Package + CPM VersionOverride), or - when ${baselineSourceRef} is
+#                  given instead - the driver built from another git ref of this repository (e.g.
+#                  'main', used by the PR perf pipeline).  Skipped when neither is given.
 #   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
 #
 # BenchmarkDotNet writes its artifacts to ./BenchmarkDotNet.Artifacts relative to the working
@@ -410,6 +432,123 @@ write_baseline_nuget_config() {
   </packageSources>
 </configuration>
 XML
+}
+
+# --- Source baseline (--baseline-source-ref) ------------------------------------------------------
+# Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
+# pass can build the driver from that source instead of restoring a released package.  The tree is
+# placed OUTSIDE the checkout so it is never picked up by the candidate build, by the results copy,
+# or by a repo-root glob.
+BASELINE_SRC_DIR="$(dirname -- "${REPO_ROOT}")/sqlclient-perf-baseline-src"
+BASELINE_SRC_LABEL=""
+
+# prepare_baseline_source <ref>
+# Prefers the copied checkout's own 'origin' (no extra network round-trip, and it resolves the ref
+# exactly as the pipeline's repository does); falls back to a shallow clone of --baseline-repo-url
+# when the source tree arrived without .git, or when origin is unreachable/needs credentials.
+#
+# The checkout is copied to the VM WITHOUT credentials (ADO's checkout task defaults to
+# persistCredentials:false), so a fetch from an authenticated origin has no way to succeed.  Every
+# git command that may touch the network is therefore run through git_net(), which guarantees it
+# fails fast and loudly instead of blocking the job on a credential prompt.
+GIT_NET_TIMEOUT_SECS="${GIT_NET_TIMEOUT_SECS:-300}"
+
+# git_net <log-name> <git args...>
+# Runs a network-facing git command non-interactively, under a hard timeout, capturing all output to
+# ${DIAG_DIR}/git-<log-name>.log.  Returns git's exit status (124 if the timeout fired).
+#
+#   * GIT_TERMINAL_PROMPT=0 turns "needs credentials" into an immediate error rather than a
+#     'Username for ...' prompt that waits forever with nothing on the console.
+#   * '-c credential.helper=' clears any configured helper (e.g. Git Credential Manager), which
+#     would otherwise try to prompt through its own UI/stdin and hang in the same way.
+#   * </dev/null stops git from consuming this script's stdin if it prompts anyway.
+#   * timeout is a last-resort backstop for any OTHER network stall (DNS, proxy blackhole, ...) so a
+#     single git call can never again burn the entire job.
+git_net() {
+    local logName="$1"; shift
+    local log="${DIAG_DIR}/git-${logName}.log"
+    local -a cmd=(git -c credential.helper= "$@")
+
+    if command -v timeout >/dev/null 2>&1; then
+        cmd=(timeout --signal=TERM --kill-after=30 "${GIT_NET_TIMEOUT_SECS}" "${cmd[@]}")
+    fi
+
+    GIT_TERMINAL_PROMPT=0 "${cmd[@]}" </dev/null >"${log}" 2>&1
+}
+
+# Echo the tail of a git_net log so a failure is explained in the build log instead of vanishing.
+report_git_failure() {
+    local logName="$1" status="$2"
+    local log="${DIAG_DIR}/git-${logName}.log"
+    if [[ "${status}" -eq 124 ]]; then
+        echo "  (git ${logName} timed out after ${GIT_NET_TIMEOUT_SECS}s)" >&2
+    else
+        echo "  (git ${logName} exited ${status})" >&2
+    fi
+    [[ -s "${log}" ]] && sed 's/^/  | /' "${log}" >&2
+    return 0
+}
+
+prepare_baseline_source() {
+    local ref="$1"
+
+    if ! command -v git >/dev/null 2>&1; then
+        echo "ERROR: git is required for --baseline-source-ref but was not found on the VM." >&2
+        exit 1
+    fi
+
+    rm -rf "${BASELINE_SRC_DIR}"
+
+    local acquired="false"
+    local status=0
+    # '.git' is a directory in a normal clone but a FILE in a git worktree, so test for existence
+    # rather than for a directory.
+    if [[ -e "${REPO_ROOT}/.git" ]]; then
+        echo "Fetching baseline ref '${ref}' from the checkout's origin ..."
+        # Fetch into a private remote-tracking namespace so an existing local branch of the same name
+        # (the checkout may itself be on 'main') is never used in place of the fetched ref.
+        if git_net fetch -C "${REPO_ROOT}" fetch --no-tags --depth 1 origin \
+                "+refs/heads/${ref}:refs/remotes/perfbaseline/${ref}"; then
+            git -C "${REPO_ROOT}" worktree prune >/dev/null 2>&1 || true
+            if git -C "${REPO_ROOT}" worktree add --detach "${BASELINE_SRC_DIR}" \
+                    "refs/remotes/perfbaseline/${ref}" >"${DIAG_DIR}/git-worktree.log" 2>&1; then
+                acquired="true"
+            else
+                report_git_failure worktree "$?"
+            fi
+        else
+            report_git_failure fetch "$?"
+        fi
+        [[ "${acquired}" == "true" ]] \
+            || echo "WARNING: could not materialise '${ref}' from the checkout's origin; falling back to ${baselineRepoUrl}." >&2
+    fi
+
+    if [[ "${acquired}" != "true" ]]; then
+        echo "Cloning baseline ref '${ref}' from ${baselineRepoUrl} ..."
+        rm -rf "${BASELINE_SRC_DIR}"
+        # NOTE: '|| status=$?' rather than 'if ! git_net ...' - the '!' would reset $? to 0 and the
+        # reported exit code would always be a misleading 0.
+        status=0
+        git_net clone clone --quiet --depth 1 --branch "${ref}" \
+            "${baselineRepoUrl}" "${BASELINE_SRC_DIR}" || status=$?
+        if [[ "${status}" -ne 0 ]]; then
+            report_git_failure clone "${status}"
+            echo "ERROR: could not obtain baseline ref '${ref}' from either the checkout's origin or ${baselineRepoUrl}." >&2
+            exit 1
+        fi
+    fi
+
+    BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"
+    if [[ ! -f "${BASELINE_PERF_PROJECT}" ]]; then
+        echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
+        exit 1
+    fi
+
+    local sha
+    sha="$(git -C "${BASELINE_SRC_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    # Label recorded in the comparison output so a run states exactly which baseline commit it used.
+    BASELINE_SRC_LABEL="${ref}@${sha}"
+    echo "Baseline source ready: ${BASELINE_SRC_DIR} (${BASELINE_SRC_LABEL})"
 }
 
 # capture_cpu_telemetry <label> <before|after>
@@ -444,11 +583,13 @@ print(total)
 PY
 }
 
-# run_pass <label> <extra dotnet build/run args...>
-# Builds and runs one benchmark pass, pinned to PERF_CLIENT_CPUS, collecting artifacts into
-# ${RESULTS_DIR}/<label>.
+# run_pass <label> <project> <extra dotnet build/run args...>
+# Builds and runs one benchmark pass from <project>, pinned to PERF_CLIENT_CPUS, collecting artifacts
+# into ${RESULTS_DIR}/<label>.  <project> is the candidate's perf project for every pass except a
+# source-baseline pass, which builds the baseline ref's own perf project.
 run_pass() {
     local label="$1"; shift
+    local project="$1"; shift
     local extra_args=("$@")
 
     local run_dir="${REPO_ROOT}/perf-run-${label}"
@@ -457,14 +598,15 @@ run_pass() {
 
     echo "------------------------------------------------------------------"
     echo " Pass: ${label}"
+    echo "   Project   : ${project}"
     echo "   Extra args: ${extra_args[*]:-<none>}"
     echo "------------------------------------------------------------------"
 
     echo "Building performance tests (${configuration}, ${framework}) for '${label}' ..."
-    dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
+    dotnet build "${project}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
         "${extra_args[@]}"
 
-    local run_cmd=(dotnet run --project "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" \
+    local run_cmd=(dotnet run --project "${project}" -c "${configuration}" -f "${framework}" \
         --no-build "${extra_args[@]}")
 
     if [[ -n "${PERF_CLIENT_CPUS:-}" ]] && command -v taskset >/dev/null 2>&1; then
@@ -506,33 +648,62 @@ run_pass() {
     fi
 }
 
-# build_variant <label> <extra dotnet build args...>
+# build_variant <label> <project> <extra dotnet build args...>
 # Builds the PerformanceTests app once into its own output directory (perf-build-<label>) so the
 # interleaved orchestrator can invoke it repeatedly without rebuilding.  The two variants (baseline
-# package vs candidate source) must go to distinct dirs because they share the project's bin path.
+# package or baseline source vs candidate source) must go to distinct dirs because they would
+# otherwise share the project's bin path.
 build_variant() {
     local label="$1"; shift
+    local project="$1"; shift
     local out_dir="${REPO_ROOT}/perf-build-${label}"
     rm -rf "${out_dir}"
     mkdir -p "${out_dir}"
-    echo "Building '${label}' variant (${configuration}, ${framework}) into ${out_dir} ..."
-    dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
+    echo "Building '${label}' variant (${configuration}, ${framework}) from ${project} into ${out_dir} ..."
+    dotnet build "${project}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
         -o "${out_dir}" "$@"
 }
 
-# --- Baseline pass (released NuGet package) -------------------------------------------------------
-if [[ -n "${baselineVersion}" && "${runMode}" == "interleaved" ]]; then
+# --- Resolve how the baseline pass is produced ----------------------------------------------------
+# Both baseline flavours end up as "a perf project plus build args"; resolving them once here keeps
+# the interleaved and sequential paths below identical for the package and source baselines.
+baselineLabel=""
+baselineProject="${PERF_PROJECT}"
+baselineBuildArgs=()
+
+if [[ -n "${baselineVersion}" ]]; then
+    # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
+    write_baseline_nuget_config
+    baselineLabel="${baselineVersion}"
+    baselineBuildArgs=(
+        -p:ReferenceType=Package
+        -p:MdsPackageVersion="${baselineVersion}"
+        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
+    )
+elif [[ -n "${baselineSourceRef}" ]]; then
+    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
+    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
+    prepare_baseline_source "${baselineSourceRef}"
+    baselineLabel="${BASELINE_SRC_LABEL}"
+    baselineProject="${BASELINE_PERF_PROJECT}"
+fi
+
+# Record the resolved baseline label (for a source baseline this is '<ref>@<sha>') in the results
+# tree.  The results directory is copied back to the agent, so a post-test step can read this and
+# tag the build with the exact baseline that was measured - something the pipeline itself cannot do,
+# since the SHA is only known once the ref has been resolved here on the VM.
+if [[ -n "${baselineLabel}" ]]; then
+    printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
+fi
+
+if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ################################################################################################
-    write_baseline_nuget_config
-    build_variant "baseline" \
-        -p:ReferenceType=Package \
-        -p:MdsPackageVersion="${baselineVersion}" \
-        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
-    build_variant "current"
+    build_variant "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
+    build_variant "current" "${PERF_PROJECT}"
 
     interleave_args=(
         --baseline-exe-dir "${REPO_ROOT}/perf-build-baseline"
@@ -541,7 +712,7 @@ if [[ -n "${baselineVersion}" && "${runMode}" == "interleaved" ]]; then
         --results-dir "${RESULTS_DIR}"
         --threshold "${regressionThreshold}"
         --reps "${confirmationRuns}"
-        --baseline-version "${baselineVersion}"
+        --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
     )
     if [[ "${failOnRegression}" == "true" ]]; then
@@ -551,21 +722,17 @@ if [[ -n "${baselineVersion}" && "${runMode}" == "interleaved" ]]; then
     echo "Running interleaved benchmarks (best-of-${confirmationRuns}) ..."
     python3 "${SCRIPT_DIR}/interleave_perf.py" "${interleave_args[@]}"
 
-elif [[ -n "${baselineVersion}" ]]; then
+elif [[ -n "${baselineLabel}" ]]; then
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
-    write_baseline_nuget_config
-    run_pass "baseline" \
-        -p:ReferenceType=Package \
-        -p:MdsPackageVersion="${baselineVersion}" \
-        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
-    run_pass "current"
+    run_pass "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
+    run_pass "current" "${PERF_PROJECT}"
 
-    echo "Comparing current branch against baseline ${baselineVersion} ..."
+    echo "Comparing current branch against baseline ${baselineLabel} ..."
     mkdir -p "${RESULTS_DIR}/comparison"
     compare_args=(
         --baseline-dir "${RESULTS_DIR}/baseline"
         --current-dir "${RESULTS_DIR}/current"
-        --baseline-version "${baselineVersion}"
+        --baseline-version "${baselineLabel}"
         --threshold "${regressionThreshold}"
         --out-md "${RESULTS_DIR}/comparison/comparison.md"
         --out-json "${RESULTS_DIR}/comparison/comparison.json"
@@ -581,8 +748,8 @@ elif [[ -n "${baselineVersion}" ]]; then
 
 else
     # --- No baseline: current-only run (no comparison) --------------------------------------------
-    echo "No --baseline-version supplied; running current only (no comparison)."
-    run_pass "current"
+    echo "Neither --baseline-version nor --baseline-source-ref supplied; running current only (no comparison)."
+    run_pass "current" "${PERF_PROJECT}"
 fi
 
 echo "Collected results:"

@@ -1,6 +1,6 @@
-# Publish-Symbols Tests
+# OneBranch PowerShell Tests
 
-Pester tests for the `publish-symbols.ps1` script used by the symbol publishing pipeline step.
+Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 
 ## Prerequisites
 
@@ -31,6 +31,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 
 | Area                  | What's tested                                                    |
 | --------------------- | ---------------------------------------------------------------- |
+| Version computation   | Canonical output parsing, revisions, wrapping, effective package selection, and failures |
 | Parameter validation  | Empty strings rejected for all mandatory parameters              |
 | URL construction      | Base URL, register URL, request URL built from parameters        |
 | Request bodies        | Registration body, default publish flags, flag overrides         |
@@ -40,4 +41,5 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
-- Tests validate the script at `../publish-symbols.ps1` relative to this directory.
+- Version tests mock `dotnet`, so they do not invoke MSBuild or require a restored repository.
+- Tests validate scripts in the parent directory relative to this directory.

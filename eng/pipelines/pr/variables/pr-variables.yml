@@ -35,6 +35,24 @@ variables:
   - name: stageNameSecrets
     value: "secrets_stage"
 
+  # Base names of the artifacts published by this pipeline.
+  #
+  # Pipeline artifact names must be unique within a build, and neither the job ID nor the stage
+  # name changes when a job is re-run. Every publish step therefore appends
+  # $(System.JobAttempt) (and, where relevant, $(System.JobId)) to these base names so that
+  # re-running a failed job does not collide with the artifact published by a previous attempt.
+  #
+  # These are defined here, rather than inline at the publish step, so that producers and any
+  # future consumers of the artifacts stay in sync through a single definition.
+
+  # Base name of the build output artifact published by the pack stage.
+  - name: packArtifactBaseName
+    value: "build_and_pack_projects"
+
+  # Base name of the merged code coverage artifact published by the coverage stage.
+  - name: coverageArtifactBaseName
+    value: "merged_coverage"
+
   # Base name of the test result artifacts. Job ID should be appended to this to prevent collision.
   - name: testResultsArtifactBaseName
     value: "test_results"

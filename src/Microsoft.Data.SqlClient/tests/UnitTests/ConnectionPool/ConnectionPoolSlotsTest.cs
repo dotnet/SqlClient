@@ -226,6 +226,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
+        public void GetEnumerator_ReturnsTrackedConnections()
+        {
+            // Arrange
+            var poolSlots = new ConnectionPoolSlots(3);
+            DbConnectionInternal first = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { })!;
+            DbConnectionInternal second = poolSlots.Add(
+                createCallback: () => new MockDbConnectionInternal(),
+                cleanupCallback: (conn) => { })!;
+
+            // Act
+            int count = 0;
+            bool sawFirst = false;
+            bool sawSecond = false;
+            foreach (DbConnectionInternal connection in poolSlots)
+            {
+                count++;
+                sawFirst |= connection == first;
+                sawSecond |= connection == second;
+            }
+
+            // Assert
+            Assert.Equal(2, count);
+            Assert.True(sawFirst);
+            Assert.True(sawSecond);
+        }
+
+        [Fact]
         public void TryRemove_ExistingConnection_ReturnsTrueAndDecrementsReservationCount()
         {
             // Arrange

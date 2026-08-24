@@ -1,9 +1,11 @@
 ---
 applyTo: "**/Directory.Packages.props,**/*.csproj,**/Directory.Build.props,**/*.nuspec"
 ---
-# Choosing Package Versions in Multi-Targeted Projects
+# Choosing Third-Party Package Dependency Versions
 
-Guidance for choosing NuGet package versions in multi-targeted projects (e.g. `net462;net8.0;net9.0`).
+Guidance for choosing versions of **external (third-party) NuGet package dependencies** in multi-targeted projects (e.g. `net462;net8.0;net9.0`).
+
+> **Scope:** This document covers dependencies consumed from NuGet — packages the SqlClient repo does NOT own. For versioning of SqlClient's own inter-sibling packages (Logging, Abstractions, SqlClient, Azure, AKV Provider, SqlServer.Server), see `sqlclient-package-versions.instructions.md`.
 
 ## Rule
 For runtime-aligned packages, **the package major must match the target runtime major**: 8.x on `net8.0`, 9.x on `net9.0`, 10.x on `net10.0`, and so on. TFMs that aren't tied to a specific runtime major (`net462`, `netstandard2.0`) get the major of the floor LTS. Other categories are versioned as described below.

@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
   </data>
@@ -2079,6 +2082,12 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>AccessTokenCallback-Eigenschaft kann nicht festgelegt werden, wenn das Schlüsselwort für Verbindungszeichenfolgen 'Integrated Security' auf 'true' oder 'SSPI' gesetzt wurde.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Die Eigenschaft AccessTokenCallback kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Default" angegeben wurde.</value>
   </data>
@@ -2156,6 +2165,9 @@
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Im Verbindungspool wurde kein freier Slot gefunden.</value>
+  </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Die Verbindung konnte nicht ersetzt werden, da sie nicht mehr im Verbindungspool vorhanden ist.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Der Verbindungspool wurde heruntergefahren.</value>
