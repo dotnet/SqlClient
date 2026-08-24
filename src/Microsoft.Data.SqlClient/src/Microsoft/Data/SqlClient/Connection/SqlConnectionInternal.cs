@@ -4010,9 +4010,9 @@ namespace Microsoft.Data.SqlClient.Connection
             _isolationLevelDirty = false;
 
             // Azure Synapse Analytics dedicated SQL pools reject every isolation level except
-            // READ UNCOMMITTED with error 104409, and READ COMMITTED SNAPSHOT is the only isolation
-            // level those pools ever run under, so there is nothing to scrub. Skipping up front
-            // avoids spending a round trip on a statement that can only fail there.
+            // READ UNCOMMITTED with error 104409, so the session can never have been elevated away
+            // from that level and there is nothing to scrub. Skipping up front avoids spending a
+            // round trip on a statement that can only fail there.
             if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
             {
                 return;
