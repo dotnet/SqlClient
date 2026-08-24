@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.TDS.Servers;
@@ -27,6 +28,7 @@ public class BatchDiagnosticsTests : IDisposable
     private const string WriteCommandBefore = "Microsoft.Data.SqlClient.WriteCommandBefore";
     private const string WriteCommandAfter = "Microsoft.Data.SqlClient.WriteCommandAfter";
     private const string WriteCommandError = "Microsoft.Data.SqlClient.WriteCommandError";
+    private const string SqlClientListenerName = "SqlClientDiagnosticListener";
 
     private static readonly string[] BatchCommandTexts = { "SELECT 1;", "SELECT 2;", "SELECT 3;" };
 
@@ -106,12 +108,13 @@ public class BatchDiagnosticsTests : IDisposable
     [Fact]
     public void Batch_Dispose_ReleasesCachedBatchCommandsView()
     {
-        using SqlConnection connection = new(_connectionString);
-        connection.Open();
+        // SqlBatch caches the view before it does any I/O, and needs only a non-null connection to
+        // get there, so this observes disposal without a server, a login or a packet write.
+        using SqlConnection connection = new();
         SqlBatch batch = CreateBatch(connection);
 
         // The view is allocated by the execute path, so it has to run before disposal is meaningful.
-        Assert.ThrowsAny<SqlException>(() => batch.ExecuteNonQuery());
+        Assert.Throws<InvalidOperationException>(() => batch.ExecuteNonQuery());
         Assert.NotNull(BatchAccessor.ReadOnlyCommands(batch));
 
         batch.Dispose();
@@ -135,6 +138,43 @@ public class BatchDiagnosticsTests : IDisposable
 
         Assert.Null(collector.SinglePayload<SqlClientCommandBefore>(WriteCommandBefore).BatchCommands);
         Assert.Null(collector.SinglePayload<SqlClientCommandAfter>(WriteCommandAfter).BatchCommands);
+    }
+
+    /// <summary>
+    /// Verifies that disposing a CommandEventCollector leaves no SqlClient DiagnosticListener
+    /// enabled.  The driver publishes one listener per owning type - SqlCommand, SqlConnection and
+    /// SqlTransaction - all under the same name, so a collector that tracks a single subscription
+    /// releases one of them and leaves the rest enabled for every later test in the process.
+    /// </summary>
+    [Fact]
+    public void CommandEventCollector_Dispose_LeavesNoListenerEnabled()
+    {
+        // Each listener is created by its owning type's initializer, so force all three to have
+        // run rather than depending on which type an earlier test happened to touch first.
+        RuntimeHelpers.RunClassConstructor(typeof(SqlCommand).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(SqlConnection).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(SqlTransaction).TypeHandle);
+
+        List<DiagnosticListener> listeners = SqlClientListeners();
+        Assert.NotEmpty(listeners);
+
+        using (new CommandEventCollector())
+        {
+            Assert.All(listeners, listener => Assert.True(listener.IsEnabled(WriteCommandAfter)));
+        }
+
+        Assert.All(listeners, listener => Assert.False(listener.IsEnabled(WriteCommandAfter)));
+    }
+
+    /// <summary>
+    /// Every DiagnosticListener the driver has published under the SqlClient name.  Subscribing to
+    /// AllListeners replays the listeners that already exist, which is the only way to reach them.
+    /// </summary>
+    private static List<DiagnosticListener> SqlClientListeners()
+    {
+        List<DiagnosticListener> listeners = new();
+        DiagnosticListener.AllListeners.Subscribe(new ListenerCollector(listeners)).Dispose();
+        return listeners;
     }
 
     private static SqlBatch CreateBatch(SqlConnection connection)
@@ -191,6 +231,33 @@ public class BatchDiagnosticsTests : IDisposable
     }
 
     /// <summary>
+    /// Records the SqlClient DiagnosticListeners replayed to it by AllListeners, without
+    /// subscribing to any of them.
+    /// </summary>
+    private sealed class ListenerCollector : IObserver<DiagnosticListener>
+    {
+        private readonly List<DiagnosticListener> _listeners;
+
+        public ListenerCollector(List<DiagnosticListener> listeners) => _listeners = listeners;
+
+        public void OnNext(DiagnosticListener listener)
+        {
+            if (listener.Name == SqlClientListenerName)
+            {
+                _listeners.Add(listener);
+            }
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+    }
+
+    /// <summary>
     /// Collects the payloads written to the SqlClient DiagnosticListener for the lifetime of the
     /// instance.
     /// </summary>
@@ -198,8 +265,8 @@ public class BatchDiagnosticsTests : IDisposable
         : IObserver<DiagnosticListener>, IObserver<KeyValuePair<string, object?>>, IDisposable
     {
         private readonly List<KeyValuePair<string, object?>> _events = new();
+        private readonly List<IDisposable> _listenerSubscriptions = new();
         private readonly IDisposable _allListenersSubscription;
-        private IDisposable? _listenerSubscription;
 
         public CommandEventCollector() =>
             _allListenersSubscription = DiagnosticListener.AllListeners.Subscribe(this);
@@ -214,9 +281,16 @@ public class BatchDiagnosticsTests : IDisposable
 
         public void OnNext(DiagnosticListener listener)
         {
-            if (listener.Name == "SqlClientDiagnosticListener")
+            if (listener.Name == SqlClientListenerName)
             {
-                _listenerSubscription = listener.Subscribe(this);
+                // The driver publishes one listener per owning type under this name, and a
+                // listener created later still arrives here, so every subscription has to be
+                // kept.  Dropping one leaves that listener enabled for the rest of the process.
+                IDisposable subscription = listener.Subscribe(this);
+                lock (_listenerSubscriptions)
+                {
+                    _listenerSubscriptions.Add(subscription);
+                }
             }
         }
 
@@ -238,8 +312,17 @@ public class BatchDiagnosticsTests : IDisposable
 
         public void Dispose()
         {
-            _listenerSubscription?.Dispose();
+            // Stop new listeners arriving first, so nothing is added behind the loop below.
             _allListenersSubscription.Dispose();
+            lock (_listenerSubscriptions)
+            {
+                foreach (IDisposable subscription in _listenerSubscriptions)
+                {
+                    subscription.Dispose();
+                }
+
+                _listenerSubscriptions.Clear();
+            }
         }
     }
 }
