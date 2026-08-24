@@ -74,6 +74,8 @@
   <!-- Other references -->
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
+
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
   </ItemGroup>
 
   <!-- NativeMemoryProfiler relies on ETW and is only supported on Windows. -->
