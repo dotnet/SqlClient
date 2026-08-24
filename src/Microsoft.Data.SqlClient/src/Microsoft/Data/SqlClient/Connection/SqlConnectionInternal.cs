@@ -2432,8 +2432,13 @@ namespace Microsoft.Data.SqlClient.Connection
                     isoSql = "READ UNCOMMITTED";
                     break;
                 case System.Transactions.IsolationLevel.ReadCommitted:
-                    isoSql = "READ COMMITTED";
-                    break;
+                    // sp_reset_connection returns the session to READ COMMITTED, and SQL Server
+                    // has no database setting that changes that named level (READ_COMMITTED_SNAPSHOT
+                    // changes the behavior of READ COMMITTED, not its name). Re-asserting it would
+                    // therefore be a no-op, so skip the batch and save the round trip. This is the
+                    // common case for applications that opt out of the TransactionScope default of
+                    // Serializable.
+                    return;
                 case System.Transactions.IsolationLevel.RepeatableRead:
                     isoSql = "REPEATABLE READ";
                     break;

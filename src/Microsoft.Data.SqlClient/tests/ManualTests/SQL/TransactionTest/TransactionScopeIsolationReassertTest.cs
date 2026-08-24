@@ -34,6 +34,10 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         public static TheoryData<System.Transactions.IsolationLevel, string> IsolationLevels => new()
         {
             { System.Transactions.IsolationLevel.ReadUncommitted, "ReadUncommitted" },
+            // ReadCommitted exercises the skip path: the driver deliberately does not emit a SET
+            // for it, because that is what the session already reverts to after the reset. The
+            // assertion guards that assumption.
+            { System.Transactions.IsolationLevel.ReadCommitted, "ReadCommitted" },
             { System.Transactions.IsolationLevel.RepeatableRead, "RepeatableRead" },
             { System.Transactions.IsolationLevel.Serializable, "Serializable" },
         };

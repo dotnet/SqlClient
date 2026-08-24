@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("SequentialXmlRead", b => b.SequentialXmlReadRunnerConfig, typeof(SequentialXmlReadRunner)),
             new BenchmarkUnit("JsonVsVarcharRead", b => b.JsonVsVarcharReadRunnerConfig, typeof(JsonVsVarcharReadRunner)),
             new BenchmarkUnit("BeginTransaction", b => b.BeginTransactionRunnerConfig, typeof(BeginTransactionRunner)),
+            new BenchmarkUnit("TransactionScopeIsolation", b => b.TransactionScopeIsolationRunnerConfig, typeof(TransactionScopeIsolationRunner)),
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
             new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
