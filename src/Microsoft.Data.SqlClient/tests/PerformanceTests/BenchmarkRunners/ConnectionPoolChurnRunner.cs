@@ -20,6 +20,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// concern for the new ChannelDbConnectionPool, which aims to avoid extra allocations
     /// on the hot path (issue #3356).
     ///
+    /// This overlaps <see cref="ConnectionPoolStressRunner.RapidFireOpenClose"/> in shape —
+    /// the inner loop is identical — but not in purpose, and the two are not
+    /// interchangeable. Being single-threaded with exactly one pooled connection, this
+    /// runner has no scheduling or wake-up component, which makes it far more sensitive:
+    /// its sync and async variants have agreed to within 0.3 percentage points, whereas
+    /// the concurrent runner's own duplicate-workload parameter pairs have disagreed by
+    /// around 20. Use this one to decide whether per-checkout cost or allocation moved, and
+    /// the concurrent runner to decide whether hand-off between threads moved. A regression
+    /// there with a flat result here points at scheduling rather than at the checkout path.
+    ///
     /// The pool implementation (legacy vs V2) is a process-level choice — see the remarks
     /// on <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2 false
     /// then true) to compare.

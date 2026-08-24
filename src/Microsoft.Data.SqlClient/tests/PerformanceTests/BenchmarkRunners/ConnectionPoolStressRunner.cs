@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     /// <summary>
     /// Stress-tests the connection pool with randomized parallel access patterns:
-    /// - Massive concurrent open/close churn
+    /// - Massive concurrent open/close churn, both sync and async
     /// - Randomized hold durations simulating real workloads
     /// - Mixed sync/async callers competing for pooled connections
     /// - Connection reuse with interleaved queries
@@ -179,7 +179,40 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         /// <summary>
-        /// Randomized hold — each task opens a connection, holds it for a random duration
+        /// Sync counterpart to <see cref="RapidFireOpenClose"/>: the same zero-hold churn, but
+        /// every checkout goes through the blocking <c>Open()</c> path.
+        /// </summary>
+        /// <remarks>
+        /// Worth measuring separately because the two paths diverge inside the pool. The V2 pool
+        /// has no synchronous channel read, so a sync caller that misses the inline fast path has
+        /// to run the async wait synchronously, which is a materially different cost from
+        /// awaiting it. With the pool pre-warmed and never saturated by these
+        /// <see cref="Parallelism"/> values, this stays on the fast path and so measures
+        /// concurrent sync checkout without the wake-up behaviour that
+        /// <see cref="ConnectionPoolContentionRunner"/> covers under saturation.
+        ///
+        /// Workers run on threadpool threads deliberately: sync database calls in ASP.NET run
+        /// there, so that is the configuration whose behaviour actually matters.
+        /// </remarks>
+        [Benchmark]
+        public async Task RapidFireOpenCloseSync()
+        {
+            int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
+            var tasks = new Task[Parallelism];
+            for (int i = 0; i < Parallelism; i++)
+            {
+                tasks[i] = Task.Run(() =>
+                {
+                    for (int j = 0; j < iterationsPerTask; j++)
+                    {
+                        using var conn = new SqlConnection(_connectionString);
+                        conn.Open();
+                        // immediate return to pool
+                    }
+                });
+            }
+            await Task.WhenAll(tasks);
+        }
         /// (0-50ms), optionally runs a query, then returns it. Simulates realistic mixed
         /// workloads where some connections are held briefly and others longer.
         /// </summary>
