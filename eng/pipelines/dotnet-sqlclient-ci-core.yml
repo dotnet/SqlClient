@@ -426,6 +426,37 @@ stages:
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
 
+        # Windows Server 22 with local SQL Server 2022, x64 build platform.
+        #
+        # SQL Server 2025 is covered by windows_sql_25_x64 below.  This
+        # configuration keeps SQL Server 2022 in the coverage matrix, alongside
+        # the 2016/2017/2019 configurations above.
+        windows_sql_22_x64:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql22: ADO-MMS22-SQL22
+          TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          configSqlFor: local
+          operatingSystem: Windows
+          # config.jsonc properties
+          configProperties:
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: true
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            SQLRootPath: $(SQL22RootPath)
+            enableLocalDB: true
+
         # Windows Server 25 with local SQL Server 2025, x64 build platform.
         windows_sql_25_x64:
           pool: ${{parameters.defaultPoolName }}
@@ -555,6 +586,32 @@ stages:
             UserManagedIdentityClientId: $(UserManagedIdentityClientId_eastus)
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        # Linux Ubuntu 22 with local SQL Server 2022, x64 build platform.
+        #
+        # Keeps Linux SQL Server 2022 coverage now that the primary Linux
+        # configuration below runs against SQL Server 2025.
+        linux_ub22_sql_22:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Ubuntu22_Sql22: ADO-UB22-SQL22
+          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          configSqlFor: local
+          operatingSystem: Linux
+          configProperties:
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: false
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
 
         # Linux Ubuntu 24 with local SQL Server 2025, x64 build platform.
         linux_ub24_sql_25:
