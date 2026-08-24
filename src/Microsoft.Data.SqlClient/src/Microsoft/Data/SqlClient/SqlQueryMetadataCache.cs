@@ -207,6 +207,14 @@ namespace Microsoft.Data.SqlClient
                     OnKeyLoadFailed(sqlCommand, clearParameterMetadata: true);
                     return false;
                 }
+                catch (OperationCanceledException)
+                {
+                    // Cancellation says nothing about whether the cached metadata is still valid, so
+                    // leave the entry in place for the next caller instead of forcing it to pay for
+                    // another describe parameter encryption round trip. This case cannot arise on the
+                    // synchronous path, which is why only this overload handles it.
+                    throw;
+                }
                 catch (Exception)
                 {
                     OnKeyLoadFailed(sqlCommand, clearParameterMetadata: false);

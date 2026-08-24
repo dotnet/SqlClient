@@ -144,8 +144,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
         }
 
+        /// <summary>
+        /// Cancellation says nothing about whether the cached metadata is still valid, so a cancelled
+        /// key load must not report a hit and must not evict the entry. Evicting it would make the next
+        /// caller pay for a full describe parameter encryption round trip.
+        /// </summary>
         [Fact]
-        public async Task CompleteCachedQueryMetadataAsync_WhenCancelled_DoesNotReportHit()
+        public async Task CompleteCachedQueryMetadataAsync_WhenCancelled_DoesNotReportHitOrEvictTheEntry()
         {
             TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 43) };
             SqlCommand command = NewCachedCommand(provider);
@@ -159,6 +164,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => SqlQueryMetadataCache.GetInstance()
                     .CompleteCachedQueryMetadataAsync(command, metadata, cts.Token));
+
+            // The entry must still be there, and a subsequent uncancelled load must succeed.
+            Assert.True(SqlQueryMetadataCache.GetInstance()
+                .TryGetCachedQueryMetadata(command, out SqlQueryMetadataCache.CachedQueryMetadata retryMetadata));
+
+            Assert.True(await SqlQueryMetadataCache.GetInstance()
+                .CompleteCachedQueryMetadataAsync(command, retryMetadata, CancellationToken.None));
+
+            Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
         }
 
         /// <summary>
