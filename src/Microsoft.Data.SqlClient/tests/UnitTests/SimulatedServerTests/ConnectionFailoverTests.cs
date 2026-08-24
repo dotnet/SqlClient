@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", secondConnection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
 
-            Assert.Equal(1, failoverServer.Login7Count);
+            Assert.Equal(1, failoverServer.PreLoginCount);
 
             // Act
             // Request a new connection, should initiate a fresh connection attempt if the pool was cleared.
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, initialServer.PreLoginCount);
-            Assert.Equal(2, failoverServer.Login7Count);
+            Assert.Equal(2, failoverServer.PreLoginCount);
         }
 
         [Fact]
@@ -355,9 +355,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
-        // Same CI-load timing sensitivity as the retry-disabled sibling above: a slow
-        // failover login can exhaust the 5-second budget before the partner completes.
-        [Trait("Category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
@@ -617,10 +614,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Fail();
         }
 
-        /// <summary>
-        /// Verifies an explicit failover partner takes precedence over server-provided metadata
-        /// persisted by a pooled connection.
-        /// </summary>
         [Fact]
         public void TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner()
         {
@@ -651,10 +644,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "master",
                 Encrypt = false,
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
-                // Isolate provider metadata from pool groups left by tests whose ephemeral ports
-                // are later reused.
-                ApplicationName =
-                    $"{nameof(TransientFault_IgnoreServerProvidedFailoverPartner_ShouldConnectToUserProvidedPartner)}-{Guid.NewGuid():N}",
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
                 // provided failover partner will never be used.
@@ -680,22 +669,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Opening a new connection will use the failover partner stored in the pool group.
             // This will fail if the server provided failover partner was stored to the pool group.
             using SqlConnection failoverConnection = new(builder.ConnectionString);
-            try
-            {
-                failoverConnection.Open();
+            failoverConnection.Open();
 
-                // Assert
-                Assert.Equal(ConnectionState.Open, failoverConnection.State);
-                Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
-                // 1 for the initial connection
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-                // 1 for the failover connection
-                Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
-            }
-            finally
-            {
-                SqlConnection.ClearPool(failoverConnection);
-            }
+            // Assert
+            Assert.Equal(ConnectionState.Open, failoverConnection.State);
+
+            Assert.Equal($"localhost,{failoverServer.EndPoint.Port}", failoverConnection.DataSource);
+            // 1 for the initial connection
+            Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // 1 for the failover connection
+            Assert.Equal(1, failoverServer.PreLoginCount - failoverServer.AbandonedPreLoginCount);
         }
 
         /// <summary>
@@ -774,9 +757,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 {
                     IsEnabledTransientError = true,
                     Number = errorCode,
-                    // Keep the parser open so this test isolates login-token handling from
-                    // fatal connection-break behavior.
-                    ErrorClass = 16,
                     FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
                 });
             server.Start();
@@ -789,26 +769,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 Encrypt = false,
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}",
-                ApplicationName =
-                    $"{nameof(TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover)}-{Guid.NewGuid():N}",
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
-            try
-            {
-                // Asserts async open with explicit partner still avoids failover alternation.
-                await connection.OpenAsync();
+            // Asserts async open with explicit partner still avoids failover alternation.
+            await connection.OpenAsync();
 
-                Assert.Equal(ConnectionState.Open, connection.State);
-                Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-                Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
-                // Login-phase errors must NOT trigger failover alternation
-                Assert.Equal(0, failoverServer.PreLoginCount);
-            }
-            finally
-            {
-                SqlConnection.ClearPool(connection);
-            }
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+            // Login-phase errors must NOT trigger failover alternation
+            Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
         /// <summary>
