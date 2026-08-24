@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -987,12 +987,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             #if NET
             yield return new object[] { DateOnly.MinValue, "date",
-                new Dictionary<TestVariations, ExceptionChecker> {
-                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }},
+                new Dictionary<TestVariations, ExceptionChecker>(),
                 new Dictionary<TestVariations, object>()
                 {
                     { TestVariations.TestSimpleParameter_Type, new DateTime(0) },
@@ -1014,12 +1009,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 },
                 new Dictionary<TestVariations, string>()};
             yield return new object[] { DateOnly.MaxValue, "date",
-                new Dictionary<TestVariations, ExceptionChecker> {
-                    { TestVariations.TestSimpleParameter_Variant, SqlDateTimeOverflow },
-                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, SqlDateTimeOverflow },
-                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, SqlDateTimeOverflow },
-                    { TestVariations.SqlBulkCopyDataTable_Variant, SqlDateTimeOverflow },
-                    { TestVariations.SqlBulkCopyDataRow_Variant, SqlDateTimeOverflow }},
+                new Dictionary<TestVariations, ExceptionChecker>(),
                 new Dictionary<TestVariations, object>()
                 {
                     { TestVariations.TestSimpleParameter_Type, new DateTime(3155378112000000000) },
@@ -1040,9 +1030,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     { TestVariations.SqlBulkCopyDataRow_Variant, new DateTime(3155378112000000000) }
                 },
                 new Dictionary<TestVariations, string>()
-                {
-                    {TestVariations.TestSqlDataRecordParameterToTVP_Variant, "datetime"}
-                }
             };
             #endif
             yield return new object[] { DateTime.MinValue, "date",

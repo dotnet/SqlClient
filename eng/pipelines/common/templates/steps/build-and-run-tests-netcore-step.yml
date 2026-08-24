@@ -4,13 +4,11 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: abstractionsPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.
+  - name: packageVersion
     type: string
-    default: $(abstractionsPackageVersion)
-
-  - name: mdsPackageVersion
-    type: string
-    default: $(mdsPackageVersion)
+    default: $(packageVersion)
 
   - name: platform
     type: string
@@ -48,8 +46,7 @@ steps:
       -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
       -p:ReferenceType=Package
       -p:Configuration=Release
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky&category!=interactive"
@@ -69,8 +66,7 @@ steps:
       -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
       -p:ReferenceType=Package
       -p:Configuration=Release
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
       --no-build
       -v n
       --filter "category=flaky"
@@ -91,8 +87,7 @@ steps:
       -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
       -p:ReferenceType=Package
       -p:Configuration=Release
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
       --no-build
       -v n
       --filter "category!=failing&category!=flaky&category!=interactive"
@@ -113,8 +108,7 @@ steps:
       -p:TargetNetCoreVersion=${{ parameters.TargetNetCoreVersion }}
       -p:ReferenceType=Package
       -p:Configuration=Release
-      -p:AbstractionsPackageVersion=${{ parameters.abstractionsPackageVersion }}
-      -p:SqlClientPackageVersion=${{ parameters.mdsPackageVersion }}
+      -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
       --no-build
       -v n
       --filter "category=flaky"

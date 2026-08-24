@@ -88,6 +88,9 @@ if (Test-Path Variable:\PSNativeCommandUseErrorActionPreference) {
     $PSNativeCommandUseErrorActionPreference = $false
 }
 
+# Keep the checkout clean: never let the helper scripts drop __pycache__/*.pyc into eng/.
+$env:PYTHONDONTWRITEBYTECODE = "1"
+
 # Run a native command (in a scriptblock) with stderr-as-terminating-error suppressed, then throw
 # $FailureMessage if it exited non-zero.  Use for native calls whose non-zero exit must fail the run.
 function Invoke-Native {

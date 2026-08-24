@@ -39,11 +39,9 @@ Defined in `stages/build-stages.yml`. Four build stages plus validation, ordered
 Each build job copies PDB files into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published pipeline artifact alongside the NuGet packages in `$(JOB_OUTPUT)/packages/`.
 
 Stage conditional rules:
-- Wrap stages/jobs in `${{ if }}` compile-time conditionals based on build parameters
-- `buildSqlClient` controls Stages 2, 3, validation, and Logging (when AKV is disabled)
-- `buildAKVProvider AND buildSqlClient` controls Stage 4
-- `buildSqlServerServer` controls SqlServer.Server job in Stage 1
-- Logging builds when `buildAKVProvider OR buildSqlClient` is true
+- The SqlClient family (Logging, Abstractions, SqlClient, Azure, AKV Provider) is **always built** — Stages 2, 3, and 4 and the Logging job in Stage 1 are unconditional. There is no `buildSqlClient`/`buildAKVProvider` toggle.
+- `buildSqlServer` is the only build toggle; it controls just the SqlServer.Server job in Stage 1.
+- When `buildSqlServer` is true, SqlClient/AKV depend on the freshly-built SqlServer artifact (downloaded into the local feed). When false, they depend on the most recently published SqlServer package — a version-only dependency (no artifact download) restored from NuGet.
 
 ## Job Templates
 
@@ -62,7 +60,8 @@ When adding a new package to the OneBranch flow:
 
 - Defined in `stages/publish-symbols-stage.yml`; produces stage `publish_symbols`
 - Entire stage excluded at compile time when `publishSymbols` is false
-- `dependsOn` is conditional based on which `build*` parameters are set, mirroring the build stage dependency graph
+- The SqlClient family symbols are always published; the SqlServer.Server symbols job is conditional on `buildSqlServer`
+- `dependsOn` covers all family build stages (always present), plus `build_independent` for SqlServer
 - One job per package (`publish-symbols-job.yml`), each downloading its build artifact and publishing PDBs from `symbols/`
 - Each package's PDBs are published separately with unique artifact names and version information
 - Build jobs copy PDBs into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published artifact
@@ -88,16 +87,15 @@ When adding a new package to the OneBranch flow:
 
 ## Parameters
 
-Build parameters (all boolean, default `true`):
+Build parameters:
 - `debug` — enable debug output (default `false`)
 - `isPreview` — use preview version numbers (default `false`)
 - `publishSymbols` — publish symbols to servers (default `false`)
-- `buildSqlServerServer` — build SqlServer.Server package
-- `buildSqlClient` — build SqlClient, Extensions.Azure, Abstractions, and Logging
-- `buildAKVProvider` — build AKV Provider (requires `buildSqlClient`)
+- `buildSqlServer` — build the Microsoft.SqlServer.Server package (default `true` in the non-official/nightly pipeline, `false` in the official pipeline). The SqlClient family is always built, so this is the only build toggle. It also drives the SqlServer dependency version the family uses (built/next vs published). Requesting `releaseSqlServer` without `buildSqlServer` fails template expansion.
 
-Release parameters (all boolean, default `false`):
-- `releaseSqlServerServer`, `releaseLogging`, `releaseAbstractions`, `releaseSqlClient`, `releaseAzure`, `releaseAKVProvider`
+Release parameters (boolean, default `false`):
+- `releaseSqlClient` — release the entire SqlClient family together (Logging, Abstractions, SqlClient, Azure, AKV Provider) at the shared version
+- `releaseSqlServer` — release Microsoft.SqlServer.Server (versioned separately)
 
 Official-only parameter:
 - `releaseToProduction` — controls both NuGet target feed and symbol server destination (default `false`):

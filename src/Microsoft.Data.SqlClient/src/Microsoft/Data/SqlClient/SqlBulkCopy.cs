@@ -82,6 +82,8 @@ namespace Microsoft.Data.SqlClient
             _results = new List<Result>();
         }
 
+        internal int Count => _results.Count;
+
         internal Result this[int idx] => _results[idx];
 
         // Callback function for the tdsparser
@@ -151,11 +153,12 @@ namespace Microsoft.Data.SqlClient
             public readonly bool IsDataFeed;
         }
 
-        // The initial query will return three tables.
+        // The initial query will return four result sets, but the column aliases result set will
+        // be empty when not required.
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
-        // Column aliases has 3 columns and n rows
+        // Column aliases has 2 columns and n rows
 
         private const int MetaDataResultId = 1;
 
@@ -191,6 +194,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlBulkCopyColumnMappingCollection _columnMappings;
         private SqlBulkCopyColumnMappingCollection _localColumnMappings;
+        private bool _localColumnMappingsResolveAliases;
 
         private SqlConnection _connection;
         private SqlTransaction _internalTransaction;
@@ -244,6 +248,7 @@ namespace Microsoft.Data.SqlClient
 
         // Metadata caching fields for CacheMetadata option
         internal BulkCopySimpleResultSet CachedMetadata { get; private set; }
+        private bool _cachedMetadataResolveAliases;
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
@@ -373,6 +378,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 CachedMetadata = null;
+                _cachedMetadataResolveAliases = false;
                 _destinationTableName = value;
             }
         }
@@ -484,6 +490,45 @@ namespace Microsoft.Data.SqlClient
             string objectName = ADP.BuildMultiPartName(parts);
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
+            string createColumnAliasesTableQuery = """
+
+CREATE TABLE #Column_Aliases
+(
+    [Canonical_Column_Name] SYSNAME,
+    [Canonical_Column_Id] INT,
+    [Aliased_Column_Name] SYSNAME
+)
+""";
+            string populateColumnAliasesQuery = _localColumnMappingsResolveAliases
+                ? $"""
+
+        EXEC sp_executesql N'
+        INSERT INTO #Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
+            SELECT [name], [column_id], ''$to_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 8
+        UNION ALL
+            SELECT [name], [column_id], ''$from_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 5
+        UNION ALL
+            SELECT [name], [column_id], ''$edge_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$edge[_]id[_]%''
+        UNION ALL
+            SELECT [name], [column_id], ''$node_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$node[_]id[_]%''',
+        N'@Object_ID INT', @Object_ID = @Object_ID
+"""
+                : string.Empty;
+            string removeShadowedColumnAliasesQuery = _localColumnMappingsResolveAliases
+                ? $"""
+
+    DELETE FROM #Column_Aliases
+    WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
+"""
+                : string.Empty;
+            string selectColumnAliasesQuery = """
+
+SELECT [Canonical_Column_Name], [Aliased_Column_Name]
+FROM #Column_Aliases
+ORDER BY [Canonical_Column_Id] ASC
+
+DROP TABLE #Column_Aliases
+""";
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -543,13 +588,7 @@ DECLARE @Column_Name_Query_SORT NVARCHAR(MAX);
 DECLARE @Column_Name_Query NVARCHAR(MAX);
 DECLARE @Column_Names NVARCHAR(MAX) = NULL;
 DECLARE @Has_Sys_All_Columns_Permissions INT = HAS_PERMS_BY_NAME('{catalogNameStringLiteral}.[sys].[all_columns]', 'OBJECT', 'SELECT');
-
-CREATE TABLE #Column_Aliases
-(
-    [Canonical_Column_Name] SYSNAME,
-    [Canonical_Column_Id] INT,
-    [Aliased_Column_Name] SYSNAME
-)
+{createColumnAliasesTableQuery}
 
 IF CAST(SERVERPROPERTY('EngineEdition') AS INT) = 6
 BEGIN
@@ -567,17 +606,7 @@ BEGIN
     IF EXISTS (SELECT TOP 1 * FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = OBJECT_ID('{catalogNameStringLiteral}.[sys].[all_columns]') AND [name] = 'graph_type')
     BEGIN
         SET @Column_Name_Query_FILTER = N'WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) NOT IN (1, 3, 4, 6, 7)';
-
-        EXEC sp_executesql N'
-        INSERT INTO #Column_Aliases ([Canonical_Column_Name], [Canonical_Column_Id], [Aliased_Column_Name])
-            SELECT [name], [column_id], ''$to_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 8
-        UNION ALL
-            SELECT [name], [column_id], ''$from_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 5
-        UNION ALL
-            SELECT [name], [column_id], ''$edge_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$edge[_]id[_]%''
-        UNION ALL
-            SELECT [name], [column_id], ''$node_id'' FROM {catalogNameStringLiteral}.[sys].[all_columns] WHERE [object_id] = @Object_ID AND COALESCE([graph_type], 0) = 2 AND [name] LIKE ''$node[_]id[_]%''',
-        N'@Object_ID INT', @Object_ID = @Object_ID
+{populateColumnAliasesQuery}
     END
     ELSE
     BEGIN
@@ -586,9 +615,7 @@ BEGIN
     SET @Column_Name_Query = @Column_Name_Query_SELECT + ' FROM {catalogNameStringLiteral}.[sys].[all_columns] ' + @Column_Name_Query_FILTER + ' ' + @Column_Name_Query_SORT + ';'
 
     EXEC sp_executesql @Column_Name_Query, N'@Object_ID INT, @Column_Names NVARCHAR(MAX) OUTPUT', @Object_ID = @Object_ID, @Column_Names = @Column_Names OUTPUT;
-
-    DELETE FROM #Column_Aliases
-    WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
+{removeShadowedColumnAliasesQuery}
 END
 
 SELECT @Column_Names = COALESCE(@Column_Names, '*');
@@ -598,12 +625,7 @@ EXEC(N'SELECT ' + @Column_Names + N' FROM {escapedObjectName}');
 SET FMTONLY OFF;
 
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
-
-SELECT [Canonical_Column_Name], [Aliased_Column_Name]
-FROM #Column_Aliases
-ORDER BY [Canonical_Column_Id] ASC
-
-DROP TABLE #Column_Aliases
+{selectColumnAliasesQuery}
 """;
         }
 
@@ -614,7 +636,7 @@ DROP TABLE #Column_Aliases
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             // Check if we have valid cached metadata for the current destination table
-            if (CachedMetadata != null)
+            if (IsCachedMetadataValid())
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
                 result = CachedMetadata;
@@ -655,11 +677,18 @@ DROP TABLE #Column_Aliases
             }
         }
 
+        internal bool IsCachedMetadataValid()
+        {
+            return CachedMetadata != null
+                && (!_localColumnMappingsResolveAliases || _cachedMetadataResolveAliases);
+        }
+
         private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
         {
             if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
             {
                 CachedMetadata = result;
+                _cachedMetadataResolveAliases = _localColumnMappingsResolveAliases;
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
             }
         }
@@ -1068,6 +1097,7 @@ DROP TABLE #Column_Aliases
         public void ClearCachedMetadata()
         {
             CachedMetadata = null;
+            _cachedMetadataResolveAliases = false;
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.ClearCachedMetadata | Info | Metadata cache cleared");
         }
 
@@ -1092,6 +1122,7 @@ DROP TABLE #Column_Aliases
                 _columnMappings = null;
                 _parser = null;
                 CachedMetadata = null;
+                _cachedMetadataResolveAliases = false;
                 _operationMetaData = null;
                 try
                 {
@@ -1630,6 +1661,39 @@ DROP TABLE #Column_Aliases
             SqlServerEscapeHelper.EscapeIdentifier(query, columnName);
             query.Append(" ");
             query.Append(typeName);
+        }
+
+        private void ResetLocalColumnMappings()
+        {
+            _localColumnMappings = null;
+            _localColumnMappingsResolveAliases = false;
+        }
+
+        private bool ShouldResolveColumnAliases()
+        {
+            if (_localColumnMappings is null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _localColumnMappings.Count; i++)
+            {
+                if (IsGraphColumnAlias(_localColumnMappings[i].DestinationColumn))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsGraphColumnAlias(string name)
+        {
+            string unquotedName = UnquotedName(name);
+            return string.Equals(unquotedName, "$node_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$edge_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$from_id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(unquotedName, "$to_id", StringComparison.OrdinalIgnoreCase);
         }
 
         private string UnquotedName(string name)
@@ -2330,6 +2394,11 @@ DROP TABLE #Column_Aliases
                 _localColumnMappings.ValidateCollection();
                 foreach (SqlBulkCopyColumnMapping bulkCopyColumn in _localColumnMappings)
                 {
+                    bulkCopyColumn.MappedDestinationColumn = null;
+                }
+
+                foreach (SqlBulkCopyColumnMapping bulkCopyColumn in _localColumnMappings)
+                {
                     if (bulkCopyColumn._internalSourceColumnOrdinal == -1)
                     {
                         unspecifiedColumnOrdinals = true;
@@ -2342,6 +2411,8 @@ DROP TABLE #Column_Aliases
                 _localColumnMappings = new SqlBulkCopyColumnMappingCollection();
                 _localColumnMappings.CreateDefaultMapping(columnCount);
             }
+
+            _localColumnMappingsResolveAliases = ShouldResolveColumnAliases();
 
             // perf: If the user specified all column ordinals we do not need to get a schematable
             if (unspecifiedColumnOrdinals)
@@ -3057,7 +3128,7 @@ DROP TABLE #Column_Aliases
                             // Bulk copy task is completed at this moment.
                             if (task.IsCanceled)
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 try
                                 {
                                     sqlBulkCopy.CleanUpStateObject();
@@ -3069,11 +3140,12 @@ DROP TABLE #Column_Aliases
                             }
                             else if (task.Exception != null)
                             {
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 source.SetException(task.Exception.InnerException);
                             }
                             else
                             {
-                                sqlBulkCopy._localColumnMappings = null;
+                                sqlBulkCopy.ResetLocalColumnMappings();
                                 try
                                 {
                                     sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
@@ -3098,7 +3170,7 @@ DROP TABLE #Column_Aliases
                 }
                 else
                 {
-                    _localColumnMappings = null;
+                    ResetLocalColumnMappings();
 
                     try
                     {
@@ -3117,7 +3189,7 @@ DROP TABLE #Column_Aliases
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                _localColumnMappings = null;
+                ResetLocalColumnMappings();
 
                 try
                 {

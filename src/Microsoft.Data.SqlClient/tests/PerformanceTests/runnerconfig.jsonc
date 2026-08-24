@@ -22,6 +22,17 @@
     // This section contains the configuration for each benchmark.
     // You can enable/disable benchmarks and configure the number of iterations, invocations, 
     // warmup runs, and row count for each benchmark.
+    //
+    // Two optional per-benchmark settings are available for slow benchmarks:
+    //   "TimeoutMinutes" - overrides BenchmarkDotNet's 5 minute in-process execution timeout.
+    //                      Omit (or set 0) to keep the default. Benchmarks that exceed it fail
+    //                      with "takes too long to run. Prefer to use out-of-process
+    //                      toolchains for long-running benchmarks." Note that switching to an
+    //                      out-of-process toolchain is NOT viable for this suite, because the
+    //                      AppContext switches above only apply to the process running Main.
+    //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a
+    //                      single operation takes seconds, to skip the harness-overhead
+    //                      measurement that "Throughput" performs.
     "Benchmarks": {
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
@@ -55,7 +66,7 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        "DataTypeReaderAsyncRunnerConfig": {
+        "AlwaysEncryptedDataTypeReaderRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
             "IterationCount": 20,
@@ -63,13 +74,33 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        "AsyncLargeDataReadRunnerConfig": {
+        // The large-data read benchmarks move up to 20 MB per operation, so a single
+        // operation takes seconds rather than microseconds. Three settings account for that:
+        //   IterationCount is reduced (20 network-bound iterations add little statistical
+        //     value over 5, but cost 4x the wall time);
+        //   RunStrategy is "Monitoring" so BenchmarkDotNet skips the harness-overhead
+        //     measurement that "Throughput" performs, which is meaningless at this scale;
+        //   TimeoutMinutes raises the in-process executor's 5 minute default, which these
+        //     benchmarks otherwise exceed and fail with "takes too long to run".
+        "LargeDataReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 20,
+            "IterationCount": 5,
             "InvocationCount": 1,
             "WarmupCount": 1,
-            "RowCount": 0
+            "RowCount": 0,
+            "RunStrategy": "Monitoring",
+            "TimeoutMinutes": 30
+        },
+        "AlwaysEncryptedLargeDataReadRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 5,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0,
+            "RunStrategy": "Monitoring",
+            "TimeoutMinutes": 30
         },
         "MarsOverheadRunnerConfig": {
             "Enabled": true,
