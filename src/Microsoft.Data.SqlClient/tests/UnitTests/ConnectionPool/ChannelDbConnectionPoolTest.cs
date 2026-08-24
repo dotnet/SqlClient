@@ -183,9 +183,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     out DbConnectionInternal? extraConnection);
             });
 
-            Assert.Equal(
-                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
-                ex.Message);
+            Assert.StartsWith(ADP.PooledOpenTimeout().Message, ex.Message);
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
@@ -229,9 +227,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => taskCompletionSource.Task);
 
-            Assert.Equal(
-                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
-                ex.Message);
+            Assert.StartsWith(ADP.PooledOpenTimeout().Message, ex.Message);
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
@@ -2366,9 +2362,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert: Caller A should observe the timeout
             var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
-            Assert.Equal(
-                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
-                exA.Message);
+            Assert.StartsWith(ADP.PooledOpenTimeout().Message, exA.Message);
 
             // Caller B should still be waiting (8s of virtual budget remain)
             Assert.False(callerBTask.IsCompleted, "Caller B should still be waiting");

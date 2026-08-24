@@ -204,6 +204,131 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        /// <summary>
+        /// Verifies failed connection-open retries are preserved in chronological order on the
+        /// terminal exception without replacing that exception's own error details.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TransientFault_RetriesExhausted_ExposesRetryFailures(bool async)
+        {
+            const int errorCode = 40613;
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments
+                {
+                    IsEnabledTransientError = true,
+                    Number = errorCode,
+                    RepeatCount = 2,
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                ConnectRetryCount = 1,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 10,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            SqlException terminal = async
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
+
+            Assert.Equal(errorCode, terminal.Number);
+            SqlException retryFailure =
+                Assert.Single(terminal.ConnectionOpenRetryFailures);
+            Assert.Equal(errorCode, retryFailure.Number);
+            Assert.Empty(retryFailure.ConnectionOpenRetryFailures);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
+        }
+
+        /// <summary>
+        /// Verifies a timeout on the final connection attempt retains the transient server error
+        /// that caused the preceding retry.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TransientFault_FinalRetryTimesOut_ExposesRetryFailure(bool async)
+        {
+            const int transientErrorCode = 40613;
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments
+                {
+                    IsEnabledTransientError = true,
+                    Number = transientErrorCode,
+                    RepeatCount = 1,
+                    DelayAfterTransientErrors = TimeSpan.FromSeconds(10),
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                ConnectRetryCount = 1,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 3,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            SqlException terminal = async
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
+
+            Assert.Equal(TdsEnums.TIMEOUT_EXPIRED, terminal.Number);
+            SqlException retryFailure =
+                Assert.Single(terminal.ConnectionOpenRetryFailures);
+            Assert.Equal(transientErrorCode, retryFailure.Number);
+            Assert.Equal(ConnectionState.Closed, connection.State);
+        }
+
+        /// <summary>
+        /// Verifies failures from a connection open that eventually succeeds are released rather
+        /// than appearing on later, unrelated errors from that connection.
+        /// </summary>
+        [Fact]
+        public void TransientFault_RetrySucceeds_DoesNotLeakFailuresToLaterErrors()
+        {
+            const int transientErrorCode = 40613;
+            const int commandErrorCode = 50000;
+            using TransientTdsErrorTdsServer server = new(
+                new TransientTdsErrorTdsServerArguments
+                {
+                    IsEnabledTransientError = true,
+                    Number = transientErrorCode,
+                    RepeatCount = 1,
+                });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "localhost," + server.EndPoint.Port,
+                ConnectRetryCount = 1,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 10,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            server.SetErrorBehavior(
+                isEnabledTransientError: true,
+                errorNumber: commandErrorCode,
+                repeatCount: 2,
+                message: "later command failure");
+            using SqlCommand command = new("SELECT 1", connection);
+
+            SqlException commandFailure =
+                Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
+
+            Assert.Equal(commandErrorCode, commandFailure.Number);
+            Assert.Empty(commandFailure.ConnectionOpenRetryFailures);
+        }
+
         // Flaky under CI load only (never reproduces locally): the retry login can exhaust
         // the connect-timeout budget on a slow agent and surface a post-login Connection
         // Timeout (observed pre-login handshake ~4.4s), so the async open propagates a

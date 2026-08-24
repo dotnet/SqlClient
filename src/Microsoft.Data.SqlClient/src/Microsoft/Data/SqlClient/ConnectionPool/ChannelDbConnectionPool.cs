@@ -161,6 +161,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// requester to start the loop, and reset to 0 by the loop when it drains.
         /// </summary>
         private int _warmupLoopRunning;
+
+        /// <summary>
+        /// Number of abandoned connections this pool has reclaimed. Acquisition requests sample
+        /// this counter so a timeout can report reclamation that occurred while that request waited.
+        /// </summary>
+        private long _reclaimedConnectionCount;
         #endregion
 
         /// <summary>
@@ -490,7 +496,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     lock (newConnection)
                     {
                         // PostPop requires a lock on the connection.
-                        newConnection.PostPop(owningObject);
+                        newConnection.PostPop(
+                            owningObject,
+                            _timeProvider.GetUtcNow().UtcDateTime);
                     }
 
                     // Carry the old connection's enlistment over to the replacement so that a
@@ -1049,6 +1057,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
         /// <param name="timeout">The overall timeout budget. Passed through to the physical connection
         /// so it uses the remaining budget rather than starting a fresh timeout.</param>
+        /// <param name="waitReason">Receives why no connection could be created when the method
+        /// returns null.</param>
         /// <returns>The new internal connection, or null if the pool has no available slot or the
         /// rate limiter is currently saturated. In the latter case the caller should fall back to
         /// the idle-channel wait; the rate limiter will write a null to the idle channel when a
@@ -1059,8 +1069,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private DbConnectionInternal? OpenNewInternalConnection(
             DbConnection? owningConnection,
             CancellationToken cancellationToken,
-            TimeoutTimer timeout)
+            TimeoutTimer timeout,
+            out PoolAcquisitionWaitReason waitReason)
         {
+            waitReason = PoolAcquisitionWaitReason.Unknown;
             cancellationToken.ThrowIfCancellationRequested();
 
             // Fast-fail if the pool is in the blocking-period error state. FR-006. Warmup goes
@@ -1081,6 +1093,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
+                bool rateLimited = false;
+
                 // Reserve a pool slot up front so we don't pay the rate-limit cost only to
                 // discover the pool is full. Add() reserves synchronously and returns null
                 // immediately if no slot is available; the rate-limit check only happens inside
@@ -1112,6 +1126,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         {
                             if (!lease.IsAcquired)
                             {
+                                rateLimited = true;
+
                                 // TODO: When we fail to acquire a lease, surface the lease metadata
                                 // (e.g. RateLimitMetadataName.RetryAfter, ReasonPhrase) in the error
                                 // path so the user can identify why the lease was denied.
@@ -1218,6 +1234,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 else
                 {
+                    waitReason = rateLimited
+                        ? PoolAcquisitionWaitReason.ConnectionCreationRateLimited
+                        : PoolAcquisitionWaitReason.PoolFull;
+
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
                         "ChannelDbConnectionPool.OpenNewInternalConnection | INFO | {0}, No connection created; pool is full or creation is rate limited.",
                         Id);
@@ -1458,6 +1478,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Transaction? ambientTransaction)
         {
             DbConnectionInternal? connection = null;
+            PoolAcquisitionWaitReason waitReason = PoolAcquisitionWaitReason.Unknown;
+            long reclaimedConnectionCountAtStart =
+                Interlocked.Read(ref _reclaimedConnectionCount);
+            bool enteredParkedWait = false;
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Getting connection.", Id);
@@ -1505,10 +1529,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we didn't find an idle connection, try to open a new one. This may
                     // return null if the pool is full or the rate limiter is currently saturated;
                     // in either case the caller falls through to the idle-channel wait below.
-                    connection ??= OpenNewInternalConnection(
-                        owningConnection,
-                        cancellationToken,
-                        timeout);
+                    if (connection is null)
+                    {
+                        connection = OpenNewInternalConnection(
+                            owningConnection,
+                            cancellationToken,
+                            timeout,
+                            out PoolAcquisitionWaitReason currentWaitReason);
+
+                        if (connection is null)
+                        {
+                            waitReason = currentWaitReason;
+                        }
+                    }
 
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
@@ -1520,6 +1553,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // O(MaxPoolSize) walk on every saturated acquire in applications that never leak.
                     if (connection is null)
                     {
+                        enteredParkedWait = true;
                         Reclaimer.EnterParkedWait();
                         try
                         {
@@ -1538,7 +1572,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
                         "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Wait timed out.", Id);
 
-                    throw ADP.PooledOpenTimeout();
+                    int waitingRequestCount =
+                        Reclaimer.ParkedWaiters + (enteredParkedWait ? 1 : 0);
+                    PoolAcquisitionDiagnostics diagnostics =
+                        CaptureAcquisitionDiagnostics(
+                            waitReason,
+                            reclaimedConnectionCountAtStart,
+                            Math.Max(1, waitingRequestCount));
+                    throw ADP.PooledOpenTimeout(diagnostics);
                 }
                 catch (ChannelClosedException)
                 {
@@ -1662,6 +1703,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
 
                 Metrics.ReclaimedConnectionRequest();
+                Interlocked.Increment(ref _reclaimedConnectionCount);
                 returned++;
             }
 
@@ -1672,6 +1714,72 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     Id,
                     returned);
             }
+        }
+
+        /// <summary>
+        /// Captures a best-effort pool snapshot on the timeout path.
+        /// </summary>
+        private PoolAcquisitionDiagnostics CaptureAcquisitionDiagnostics(
+            PoolAcquisitionWaitReason waitReason,
+            long reclaimedConnectionCountAtStart,
+            int waitingRequestCount)
+        {
+            int connectionCount = Count;
+            int reservationCount = _connectionSlots.ReservationCount;
+
+            if (waitReason == PoolAcquisitionWaitReason.Unknown)
+            {
+                waitReason = reservationCount >= checked((int)MaxPoolSize)
+                    ? PoolAcquisitionWaitReason.PoolFull
+                    : PoolAcquisitionWaitReason.ConnectionCreationInProgress;
+            }
+
+            var builder = new PoolAcquisitionDiagnosticsBuilder(
+                _timeProvider.GetUtcNow().UtcDateTime);
+
+            foreach (DbConnectionInternal connection in _connectionSlots)
+            {
+                bool locked = false;
+                try
+                {
+                    Monitor.TryEnter(connection, ref locked);
+                    if (locked)
+                    {
+                        builder.Observe(connection);
+                    }
+                    else
+                    {
+                        builder.ObserveLockContention();
+                    }
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        Monitor.Exit(connection);
+                    }
+                }
+            }
+
+            long reclaimedConnectionCount =
+                Math.Max(
+                    0,
+                    Interlocked.Read(ref _reclaimedConnectionCount) -
+                    reclaimedConnectionCountAtStart);
+
+            return new PoolAcquisitionDiagnostics(
+                waitReason,
+                checked((int)MaxPoolSize),
+                connectionCount,
+                builder.IdleConnectionCount,
+                Math.Max(0, reservationCount - connectionCount),
+                waitingRequestCount,
+                builder.CheckedOutConnectionCount,
+                builder.TransactionConnectionCount,
+                builder.AbandonedConnectionCount,
+                builder.UnclassifiedConnectionCount,
+                builder.LongestCheckoutDuration,
+                reclaimedConnectionCount);
         }
 
         /// <summary>
@@ -1722,7 +1830,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             lock (connection)
             {
                 // Protect against Clear which calls IsEmancipated, which is affected by PrePush and PostPop
-                connection.PostPop(owningObject);
+                connection.PostPop(
+                    owningObject,
+                    _timeProvider.GetUtcNow().UtcDateTime);
             }
 
             try
@@ -1940,7 +2050,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         connection = OpenNewInternalConnection(
                             owningConnection: null,
                             cancellationToken: token,
-                            timeout: timeout);
+                            timeout: timeout,
+                            waitReason: out _);
                     }
                     catch (OperationCanceledException)
                     {

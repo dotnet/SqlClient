@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.</value>
   </data>
+  <data name="ADP_PooledOpenTimeoutDetails" xml:space="preserve">
+    <value>Pool diagnostics: wait reason={0}; max pool size={1}; total connections={2}; idle connections={3}; pending opens={4}; waiting requests={5}; checked-out connections={6}; transaction-held connections={7}; abandoned connections={8}; unclassified connections={9}; longest checkout={10}; abandoned connections reclaimed during this wait={11}.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Timeout attempting to open the connection.  The time period elapsed prior to attempting to open the connection has been exceeded.  This may have occurred because of too many simultaneous non-pooled connection attempts.</value>
   </data>
@@ -2177,6 +2180,12 @@
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>The connection pool has been shut down.</value>
+  </data>
+  <data name="SQL_ConnectionOpenRetryFailures" xml:space="preserve">
+    <value>Connection open retry failures ({0}):</value>
+  </data>
+  <data name="SQL_ConnectionOpenRetryFailure" xml:space="preserve">
+    <value>Retry {0}: {1}: {2}</value>
   </data>
   <data name="SQL_Packet_RequiredLengthUnavailable" xml:space="preserve">
     <value>Cannot get RequiredLength when HasDataLength is false.</value>
