@@ -2413,9 +2413,13 @@ namespace Microsoft.Data.SqlClient.Connection
                 // does not preserve the SQL Server session isolation level on every
                 // server (notably Azure SQL DB), so without re-asserting the level the
                 // second and later opens inside the scope would silently run at the
-                // database default. The queued reset piggybacks this batch's TDS
-                // header, so the reset itself costs nothing extra, but the SET batch
-                // is an additional round trip on re-checkout.
+                // database default.
+                //
+                // When a SET batch is emitted, the queued reset rides along on that
+                // batch's TDS header, so the reset itself costs nothing extra and the
+                // SET is the only added round trip. For ReadCommitted no batch is sent
+                // at all (see ReassertSessionIsolationLevel), so the reset simply rides
+                // the user's next command exactly as it would have without this fix.
                 ReassertSessionIsolationLevel(transaction.IsolationLevel, timeout);
             }
         }

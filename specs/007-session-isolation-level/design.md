@@ -69,7 +69,7 @@ since 2017 with production impact.
 | Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
 | Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is **not** enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** stale session state on the way out of the pool |
-| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` |
+| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` — introduced by PR #4330; it does not exist on `main` or on the #4335 branch |
 | Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
 | Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. `PrepareResetConnection` performs no I/O of its own — it only sets a flag consumed at the next packet write — so the legacy close path sent nothing, and this batch is a genuinely new exchange. Both PRs therefore cost one round trip; they differ only in *which* checkout pays it. |
 
@@ -180,7 +180,7 @@ than merely cheap.
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
-| App context switch | `UseLegacyIsolationLevelBehavior` | None |
+| App context switch | `UseLegacyIsolationLevelBehavior` (added by #4330) | None |
 | `Snapshot` handling | Reset to `READ COMMITTED` like any other level | **Re-asserted** |
 | `ReadCommitted` handling | Never dirty, so never scrubbed | **Skipped** — the reset already lands there |
 
