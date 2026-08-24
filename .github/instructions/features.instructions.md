@@ -258,20 +258,29 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
 | `Switch.Microsoft.Data.SqlClient.UseLegacyUdtAssemblyLoad` | `false` | Restores the pre-policy behavior of loading any assembly named by a server-supplied UDT assembly-qualified name, and of skipping the `[SqlUserDefinedType]` check |
-| `Switch.Microsoft.Data.SqlClient.UseStrictUdtAssemblyLoad` | `false` | Restricts UDT assembly loads to `Microsoft.SqlServer.Types` and the allow list only, excluding assemblies that merely happen to be present in the process |
 
 ### UDT Assembly Load Policy
 
 A server-supplied UDT assembly-qualified name reaches `Assembly.Load`, so the
 driver applies a deny-by-default policy before handing the name to the loader.
+There is a single enforcing behavior, which permits:
 
-| Mode | Selected by | Permits |
-|------|-------------|---------|
-| `Restricted` (default) | neither switch | `Microsoft.SqlServer.Types` (identity pinned), the allow list, assemblies already loaded into the process, and assemblies statically referenced by them |
-| `Strict` | `UseStrictUdtAssemblyLoad` | `Microsoft.SqlServer.Types` (identity pinned) and the allow list only |
-| `Legacy` | `UseLegacyUdtAssemblyLoad` (wins over `Strict`) | everything, i.e. the pre-policy behavior |
+| Permitted | Notes |
+|-----------|-------|
+| `Microsoft.SqlServer.Types` | Identity pinned: the version is normalized to the connection's negotiated type system version, and the public key token to the one Microsoft signs with |
+| Assemblies on the allow list | The application explicitly naming what it is willing to have loaded |
+| Assemblies already loaded into the process | Resolved to the instance the process already holds; the server-supplied version and public key token are discarded |
 
-Applications that use custom UDTs whose assemblies are loaded on demand can name
+Everything else is refused. In particular, an assembly that is only *statically
+referenced* by a loaded assembly is **not** permitted, because loading it is a
+genuinely new load — precisely what this policy keeps under the application's
+control rather than the server's.
+
+Setting `UseLegacyUdtAssemblyLoad` disables the policy entirely and restores the
+pre-policy behavior. It is a temporary compatibility escape hatch, not a
+supported configuration.
+
+Applications that use custom UDTs whose assemblies are loaded on demand must name
 them explicitly through the `Microsoft.Data.SqlClient.UdtAssemblyAllowList`
 AppContext data element, a semicolon-separated list of assembly names:
 
@@ -285,9 +294,13 @@ Each entry is matched only on the components it specifies, so a simple name
 permits any version, culture, and public key token, while a fully-qualified name
 must match exactly.
 
-Independently of the mode, a resolved type that is not annotated with
-`SqlUserDefinedTypeAttribute` is rejected before any of its code runs (except in
-`Legacy` mode).
+Independently of the assembly policy, a resolved type that is not annotated with
+`SqlUserDefinedTypeAttribute` is rejected before any of its code runs (except
+under `UseLegacyUdtAssemblyLoad`). This is the gate that actually prevents
+foreign code execution: on CoreCLR, neither `Assembly.Load`, nor resolving a type
+from the assembly, nor reading that type's custom attributes runs anything from
+it — a module initializer or static constructor runs on first real member access,
+which is what `GetUdtValue` would otherwise perform.
 
 ### Usage Example
 ```csharp

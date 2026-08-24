@@ -2980,16 +2980,16 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version, TypeSystemAssemblyVersion);
             }
 
-            // The assembly name arrives from the server, and loading an assembly
-            // runs its module initializer, so the driver must decide whether it
-            // is willing to load this assembly before it hands the name to the
-            // loader. This call also pins the identity (version and public key
-            // token) of the built-in SQL CLR types assembly, so that the
-            // built-in exemption cannot be satisfied by a same-named assembly
-            // that happens to sit on the probing path.
-            if (!UdtAssemblyPolicy.IsAllowed(asmRef, TypeSystemAssemblyVersion))
+            // The assembly name arrives from the server, so the driver must
+            // decide whether it is willing to bring this assembly into the
+            // process before it hands the name to the loader. This call also
+            // pins the identity (version and public key token) of the built-in
+            // SQL CLR types assembly, so that the built-in exemption cannot be
+            // satisfied by a same-named assembly that happens to sit on the
+            // probing path.
+            if (!UdtAssemblyPolicy.TryResolve(asmRef, TypeSystemAssemblyVersion, out Assembly alreadyLoaded))
             {
-                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | ERR | UDT assembly '{0}' was not loaded because it is not permitted by the '{1}' UDT assembly load policy.", asmRef.Name, UdtAssemblyPolicy.Mode);
+                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | ERR | UDT assembly '{0}' was not loaded because the UDT assembly load policy does not permit it.", asmRef.Name);
 
                 if (throwOnError)
                 {
@@ -2997,6 +2997,16 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 return null;
+            }
+
+            // The policy permitted the reference because the process had already
+            // loaded an assembly of that simple name. Use that instance rather
+            // than binding the server-supplied version and public key token,
+            // which could otherwise resolve to a different assembly and cause
+            // the new load this policy exists to prevent.
+            if (alreadyLoaded != null)
+            {
+                return alreadyLoaded;
             }
 
             try

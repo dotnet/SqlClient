@@ -13,50 +13,44 @@ using Microsoft.Data.SqlClient.Internal;
 namespace Microsoft.Data.SqlClient;
 
 /// <summary>
-/// The policy modes that govern which assemblies the driver is willing to load
-/// while resolving a server-supplied UDT assembly-qualified name.
-/// </summary>
-internal enum UdtAssemblyLoadMode
-{
-    /// <summary>
-    /// Only the pinned <c>Microsoft.SqlServer.Types</c> assembly and assemblies
-    /// named on the application-supplied allow list may be loaded.
-    /// </summary>
-    Strict,
-
-    /// <summary>
-    /// The <see cref="Strict"/> set, plus assemblies that are already loaded
-    /// into the process and assemblies that are statically referenced by
-    /// already-loaded assemblies.  This is the default.
-    /// </summary>
-    Restricted,
-
-    /// <summary>
-    /// Any assembly named by the server may be loaded.  This restores the
-    /// behavior of the driver prior to the introduction of this policy and is
-    /// not recommended.
-    /// </summary>
-    Legacy
-}
-
-/// <summary>
 /// Decides whether the driver may load an assembly named by a server-supplied
 /// UDT assembly-qualified name.
 ///
 /// A TDS response describing a UDT column or output parameter carries an
 /// <c>AssemblyQualifiedName</c> that the driver must resolve to a CLR
-/// <see cref="Type"/>.  Resolving it involves loading the named assembly, and
-/// loading an assembly executes that assembly's module initializer.  A server
-/// (or an on-path attacker against a connection that has opted out of
-/// certificate validation) therefore gets to choose which assembly the client
-/// process loads unless the driver constrains the choice, which is what this
-/// class does.
+/// <see cref="Type"/>.  A server (or an on-path attacker against a connection
+/// that has opted out of certificate validation) therefore gets to choose which
+/// assembly the client process loads unless the driver constrains the choice,
+/// which is what this class does.
+///
+/// There is a single enforcing behavior.  An assembly may be loaded when it is
+/// the built-in <c>Microsoft.SqlServer.Types</c> assembly with its identity
+/// pinned, when the application has named it on the allow list, or when it is
+/// already loaded into the process.  Everything else is refused.
+///
+/// The already-loaded case is free: re-loading an assembly that the process has
+/// already loaded returns the existing instance and introduces nothing new.
+/// Assemblies that are merely statically referenced are deliberately *not*
+/// permitted, because loading one is a genuinely new load, which is the thing
+/// this policy exists to keep under the application's control rather than the
+/// server's.  An application whose custom UDT assembly is not loaded at the time
+/// its first UDT value arrives must name it on the allow list.
+///
+/// Note that loading an assembly is not by itself the point at which foreign
+/// code runs: on CoreCLR neither <see cref="Assembly.Load(AssemblyName)"/>, nor
+/// resolving a type from it, nor reading that type's custom attributes executes
+/// anything from the target assembly; a module initializer runs on first real
+/// access to a member.  That final gate is
+/// <c>SqlConnection.CheckGetExtendedUDTInfo</c>, which requires
+/// <c>SqlUserDefinedTypeAttribute</c> before <c>GetUdtValue</c> may invoke
+/// anything.  This class is the layer in front of it, limiting which assemblies
+/// a server can cause to be pulled into the process at all.
 ///
 /// The evaluation is deliberately cheap: apart from a one-time subscription to
-/// <see cref="AppDomain.AssemblyLoad"/>, a decision is a couple of hash-set
-/// lookups.  The set of known assembly names is rebuilt only when an assembly
-/// is actually loaded into the process, so a hostile server that streams a
-/// large number of distinct assembly names cannot force repeated disk probing.
+/// <see cref="AppDomain.AssemblyLoad"/>, a decision is a dictionary lookup.  The
+/// map of loaded assemblies is maintained incrementally, so a hostile server
+/// that streams a large number of distinct assembly names cannot force repeated
+/// enumeration or disk probing.
 /// </summary>
 internal static class UdtAssemblyPolicy
 {
@@ -106,17 +100,21 @@ internal static class UdtAssemblyPolicy
     private static bool s_assemblyLoadHandlerAttached;
 
     /// <summary>
-    /// The simple names of every assembly that is loaded into the process, plus
-    /// the simple names of every assembly they statically reference.  Null when
-    /// it has not been built yet.
+    /// Maps the simple name of every assembly loaded into the process to the
+    /// loaded instance.  Null when it has not been built yet.
     ///
-    /// Once built, the set is maintained incrementally by the
-    /// <see cref="AppDomain.AssemblyLoad"/> handler rather than rebuilt, so an
-    /// application that loads assemblies while reading UDTs does not repeatedly
-    /// pay for a full enumeration of the process's assemblies and their
-    /// reference lists.
+    /// The instance is retained, not just the name, so that a reference which
+    /// is permitted because the process has already loaded that simple name is
+    /// satisfied with the assembly the process actually holds.  Binding the
+    /// server-supplied version, culture and public key token instead would let
+    /// a server name a loaded simple name with a different identity and thereby
+    /// still trigger a new load, which is exactly what this tier must not do.
+    ///
+    /// When several assemblies share a simple name, the first one seen wins.
+    /// All of them are already in the process, so the choice cannot widen the
+    /// policy; at worst the subsequent type lookup fails.
     /// </summary>
-    private static HashSet<string>? s_knownAssemblyNames;
+    private static Dictionary<string, Assembly>? s_loadedAssemblies;
 
     /// <summary>
     /// The raw allow list string that <see cref="s_allowList"/> was parsed
@@ -134,30 +132,12 @@ internal static class UdtAssemblyPolicy
     #region Properties
 
     /// <summary>
-    /// The policy mode currently in effect.
-    /// </summary>
-    internal static UdtAssemblyLoadMode Mode
-    {
-        get
-        {
-            // Legacy wins over Strict so that an application that has opted
-            // back into the old behavior gets it unambiguously.
-            if (LocalAppContextSwitches.UseLegacyUdtAssemblyLoad)
-            {
-                return UdtAssemblyLoadMode.Legacy;
-            }
-
-            return LocalAppContextSwitches.UseStrictUdtAssemblyLoad
-                ? UdtAssemblyLoadMode.Strict
-                : UdtAssemblyLoadMode.Restricted;
-        }
-    }
-
-    /// <summary>
     /// True when the policy has been disabled entirely in favor of the
-    /// pre-policy behavior.
+    /// pre-policy behavior, in which any assembly the server names may be
+    /// loaded and no user-defined type check is performed.
     /// </summary>
-    internal static bool LegacyBehaviorEnabled => Mode == UdtAssemblyLoadMode.Legacy;
+    internal static bool LegacyBehaviorEnabled =>
+        LocalAppContextSwitches.UseLegacyUdtAssemblyLoad;
 
     #endregion
 
@@ -191,12 +171,22 @@ internal static class UdtAssemblyPolicy
     /// when no connection context is available, in which case only the public
     /// key token is pinned and the loader picks the version.
     /// </param>
-    /// <returns>True when the assembly may be loaded.</returns>
-    internal static bool IsAllowed(AssemblyName asmRef, Version? typeSystemAssemblyVersion)
+    /// <param name="assembly">
+    /// On a permitted result, the assembly the caller must use, or null when
+    /// the caller is to load <paramref name="asmRef"/> itself.  A non-null value
+    /// means the process had already loaded an assembly with this simple name
+    /// and the caller must use that instance rather than binding the
+    /// server-supplied identity.
+    /// </param>
+    /// <returns>True when the assembly may be used.</returns>
+    internal static bool TryResolve(
+        AssemblyName asmRef,
+        Version? typeSystemAssemblyVersion,
+        out Assembly? assembly)
     {
-        UdtAssemblyLoadMode mode = Mode;
+        assembly = null;
 
-        if (mode == UdtAssemblyLoadMode.Legacy)
+        if (LegacyBehaviorEnabled)
         {
             return true;
         }
@@ -216,17 +206,18 @@ internal static class UdtAssemblyPolicy
             return true;
         }
 
+        // The allow list is the application stating which assemblies it is
+        // willing to have loaded on a server's say-so, so the reference is
+        // handed to the loader as given.
         if (MatchesAllowList(asmRef))
         {
             return true;
         }
 
-        if (mode == UdtAssemblyLoadMode.Restricted && IsKnownToProcess(simpleName!))
-        {
-            return true;
-        }
-
-        return false;
+        // Otherwise the only remaining basis is that the process already holds
+        // an assembly by this simple name, in which case that instance is used
+        // and the server-supplied identity is discarded.
+        return TryGetLoadedAssembly(simpleName!, out assembly);
     }
 
     /// <summary>
@@ -266,7 +257,7 @@ internal static class UdtAssemblyPolicy
         {
             s_allowList = null;
             s_allowListSource = null;
-            s_knownAssemblyNames = null;
+            s_loadedAssemblies = null;
         }
     }
 
@@ -392,113 +383,106 @@ internal static class UdtAssemblyPolicy
     }
 
     /// <summary>
-    /// Determines whether an assembly with the given simple name is already
-    /// loaded into the process, or is statically referenced by an assembly that
-    /// is.
+    /// Looks up an assembly that the process has already loaded under the given
+    /// simple name.
     /// </summary>
-    private static bool IsKnownToProcess(string simpleName) =>
-        GetKnownAssemblyNames().Contains(simpleName);
-
-    /// <summary>
-    /// Returns the set of assembly simple names that are loaded into the
-    /// process or referenced by an assembly that is, building it on first use
-    /// and thereafter relying on the <see cref="AppDomain.AssemblyLoad"/>
-    /// handler to keep it current.
-    /// </summary>
-    private static HashSet<string> GetKnownAssemblyNames()
+    private static bool TryGetLoadedAssembly(string simpleName, out Assembly? assembly)
     {
-        EnsureAssemblyLoadHandlerAttached();
-
         lock (s_lock)
         {
-            if (s_knownAssemblyNames is not null)
-            {
-                return s_knownAssemblyNames;
-            }
-
-            HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
-
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                AddAssemblyNames(names, assembly);
-            }
-
-            s_knownAssemblyNames = names;
-
-            return names;
+            return GetLoadedAssemblies().TryGetValue(simpleName, out assembly);
         }
     }
 
     /// <summary>
-    /// Adds the simple name of <paramref name="assembly"/> and the simple names
-    /// of every assembly it statically references to <paramref name="names"/>.
+    /// Returns the map of loaded assembly simple names to instances, building it
+    /// on first use and thereafter relying on the
+    /// <see cref="AppDomain.AssemblyLoad"/> handler to keep it current.
     /// </summary>
-    private static void AddAssemblyNames(HashSet<string> names, Assembly assembly)
+    /// <remarks>
+    /// Callers must hold <see cref="s_lock"/>.
+    /// </remarks>
+    private static Dictionary<string, Assembly> GetLoadedAssemblies()
+    {
+        EnsureAssemblyLoadHandlerAttached();
+
+        if (s_loadedAssemblies is not null)
+        {
+            return s_loadedAssemblies;
+        }
+
+        Dictionary<string, Assembly> loaded = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Remember(loaded, assembly);
+        }
+
+        s_loadedAssemblies = loaded;
+
+        return loaded;
+    }
+
+    /// <summary>
+    /// Records <paramref name="assembly"/> under its simple name, keeping the
+    /// first assembly seen for a given name.
+    /// </summary>
+    private static void Remember(Dictionary<string, Assembly> loaded, Assembly assembly)
     {
         if (assembly.IsDynamic)
         {
-            // A dynamic assembly has no manifest to read references from, and
-            // it cannot be a target of Assembly.Load by name anyway.
+            // A dynamic assembly cannot be the target of Assembly.Load by name,
+            // and asking one for its name can throw.
             return;
         }
 
-        string? name = null;
-
         try
         {
-            name = assembly.GetName().Name;
-            if (!string.IsNullOrEmpty(name))
-            {
-                names.Add(name!);
-            }
+            string? name = assembly.GetName().Name;
 
-            foreach (AssemblyName reference in assembly.GetReferencedAssemblies())
+            if (!string.IsNullOrEmpty(name) && !loaded.ContainsKey(name!))
             {
-                if (!string.IsNullOrEmpty(reference.Name))
-                {
-                    names.Add(reference.Name!);
-                }
+                loaded.Add(name!, assembly);
             }
         }
         catch (Exception e) when (ADP.IsCatchableExceptionType(e))
         {
-            // Reading the name or the reference list can fail for assemblies
-            // loaded from a byte array or produced by a trimmer.  Losing one
-            // assembly's references only makes the policy stricter.
+            // Reading the name can fail for assemblies loaded from a byte array
+            // or produced by a trimmer.  Losing one only makes the policy
+            // stricter.
             SqlClientEventSource.Log.TryTraceEvent(
-                "UdtAssemblyPolicy.AddAssemblyNames | INFO | Unable to read references of '{0}'.",
-                name);
+                "UdtAssemblyPolicy.Remember | INFO | Unable to read the name of a loaded assembly.");
         }
     }
 
     /// <summary>
-    /// Attaches the assembly load handler that keeps the cached
-    /// known-assembly-name set current, if it has not been attached already.
+    /// Attaches the assembly load handler that keeps the cached map of loaded
+    /// assemblies current, if it has not been attached already.
     /// </summary>
+    /// <remarks>
+    /// Callers must hold <see cref="s_lock"/>.
+    /// </remarks>
     private static void EnsureAssemblyLoadHandlerAttached()
     {
-        lock (s_lock)
+        if (s_assemblyLoadHandlerAttached)
         {
-            if (s_assemblyLoadHandlerAttached)
-            {
-                return;
-            }
-
-            AppDomain.CurrentDomain.AssemblyLoad += static (_, args) =>
-            {
-                lock (s_lock)
-                {
-                    // Nothing to update if the set has not been built yet; it
-                    // will pick the assembly up when it is.
-                    if (s_knownAssemblyNames is not null)
-                    {
-                        AddAssemblyNames(s_knownAssemblyNames, args.LoadedAssembly);
-                    }
-                }
-            };
-
-            s_assemblyLoadHandlerAttached = true;
+            return;
         }
+
+        AppDomain.CurrentDomain.AssemblyLoad += static (_, args) =>
+        {
+            lock (s_lock)
+            {
+                // Nothing to update if the map has not been built yet; it will
+                // pick the assembly up when it is.
+                if (s_loadedAssemblies is not null)
+                {
+                    Remember(s_loadedAssemblies, args.LoadedAssembly);
+                }
+            }
+        };
+
+        s_assemblyLoadHandlerAttached = true;
     }
 
     #endregion

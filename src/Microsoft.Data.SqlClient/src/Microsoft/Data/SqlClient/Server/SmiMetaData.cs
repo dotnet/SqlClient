@@ -379,8 +379,7 @@ namespace Microsoft.Data.SqlClient.Server
                 if (_clrType == null && SqlDbType.Udt == _databaseType && _udtAssemblyQualifiedName != null)
                 {
                     // The assembly-qualified name can originate from the server,
-                    // and loading an assembly runs its module initializer, so
-                    // the resolution goes through the same policy that
+                    // so the resolution goes through the same policy that
                     // SqlConnection.ResolveTypeAssembly applies. There is no
                     // connection context here, so no type system version is
                     // available to pin the built-in SQL CLR types assembly to;
@@ -388,8 +387,8 @@ namespace Microsoft.Data.SqlClient.Server
                     _clrType = Type.GetType(
                         typeName: _udtAssemblyQualifiedName,
                         assemblyResolver: static asmRef =>
-                            UdtAssemblyPolicy.IsAllowed(asmRef, typeSystemAssemblyVersion: null)
-                                ? Assembly.Load(asmRef)
+                            UdtAssemblyPolicy.TryResolve(asmRef, typeSystemAssemblyVersion: null, out Assembly loaded)
+                                ? loaded ?? Assembly.Load(asmRef)
                                 : throw SQL.UdtAssemblyNotAllowed(asmRef.Name),
                         typeResolver: null,
                         throwOnError: true);

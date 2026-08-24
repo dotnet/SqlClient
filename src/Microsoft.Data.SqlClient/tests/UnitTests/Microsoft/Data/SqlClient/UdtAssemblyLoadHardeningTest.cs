@@ -252,14 +252,13 @@ public class UdtAssemblyLoadHardeningTest
         private readonly LocalAppContextSwitchesHelper _switches;
         private readonly object? _originalAllowList;
 
-        public PolicyScope(bool legacy = false, bool strict = false)
+        public PolicyScope(bool legacy = false)
         {
             _switches = new LocalAppContextSwitchesHelper();
             _originalAllowList =
                 AppContext.GetData(UdtAssemblyPolicy.AllowListAppContextDataName);
 
             _switches.UseLegacyUdtAssemblyLoad = legacy;
-            _switches.UseStrictUdtAssemblyLoad = strict;
 
             AppDomain.CurrentDomain.SetData(
                 UdtAssemblyPolicy.AllowListAppContextDataName,

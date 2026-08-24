@@ -147,15 +147,6 @@ internal static class LocalAppContextSwitches
     private const string UseLegacyUdtAssemblyLoadString =
         "Switch.Microsoft.Data.SqlClient.UseLegacyUdtAssemblyLoad";
 
-    /// <summary>
-    /// The name of the app context switch that controls whether the UDT
-    /// assembly load policy refuses to load assemblies that are merely present
-    /// in the process, permitting only the built-in SQL Server CLR types
-    /// assembly and assemblies named on the application's allow list.
-    /// </summary>
-    private const string UseStrictUdtAssemblyLoadString =
-        "Switch.Microsoft.Data.SqlClient.UseStrictUdtAssemblyLoad";
-
     #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
@@ -279,11 +270,6 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyUdtAssemblyLoad switch.
     /// </summary>
     private static SwitchValue s_useLegacyUdtAssemblyLoad = SwitchValue.None;
-
-    /// <summary>
-    /// The cached value of the UseStrictUdtAssemblyLoad switch.
-    /// </summary>
-    private static SwitchValue s_useStrictUdtAssemblyLoad = SwitchValue.None;
 
     #if NET
     /// <summary>
@@ -641,14 +627,14 @@ internal static class LocalAppContextSwitches
 
     /// <summary>
     /// When set to true, the driver loads any assembly named by a
-    /// server-supplied UDT assembly-qualified name, which is the behavior that
-    /// predates the UDT assembly load policy.
+    /// server-supplied UDT assembly-qualified name, and skips the check that
+    /// the resolved type is annotated with SqlUserDefinedTypeAttribute.  This is
+    /// the behavior that predates the UDT assembly load policy.
     ///
-    /// This switch takes precedence over
-    /// <see cref="UseStrictUdtAssemblyLoad"/>.  Enabling it allows a server, or
-    /// an attacker on the network path of a connection that has opted out of
-    /// certificate validation, to choose which assemblies the client process
-    /// loads, so it should only be used as a temporary compatibility measure.
+    /// Enabling it allows a server, or an attacker on the network path of a
+    /// connection that has opted out of certificate validation, to choose which
+    /// assemblies the client process loads, so it should only be used as a
+    /// temporary compatibility measure.
     ///
     /// The default value of this switch is false.
     /// </summary>
@@ -657,24 +643,6 @@ internal static class LocalAppContextSwitches
             UseLegacyUdtAssemblyLoadString,
             defaultValue: false,
             ref s_useLegacyUdtAssemblyLoad);
-
-    /// <summary>
-    /// When set to true, the UDT assembly load policy permits only the built-in
-    /// Microsoft.SqlServer.Types assembly and assemblies named on the
-    /// application's allow list (the Microsoft.Data.SqlClient.UdtAssemblyAllowList
-    /// AppContext data element).
-    ///
-    /// When false (the default), assemblies that are already loaded into the
-    /// process, or that are statically referenced by an assembly that is, are
-    /// also permitted.
-    ///
-    /// The default value of this switch is false.
-    /// </summary>
-    public static bool UseStrictUdtAssemblyLoad =>
-        AcquireAndReturn(
-            UseStrictUdtAssemblyLoadString,
-            defaultValue: false,
-            ref s_useStrictUdtAssemblyLoad);
 
     #if NET
     /// <summary>
