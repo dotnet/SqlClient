@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.RateLimiting;
@@ -13,6 +14,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
@@ -23,6 +25,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// Unit tests for <see cref="ChannelDbConnectionPool"/> covering connection acquisition,
     /// timeouts, reuse, pool clearing, blocking-period behavior, and timeout-budget propagation.
     /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolTest
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
@@ -250,10 +253,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool-exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -280,6 +289,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert
             Assert.Equal(firstConnection, extraConnection);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -349,10 +360,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -402,6 +419,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -423,10 +442,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
@@ -464,6 +489,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
+
+            GC.KeepAlive(owningConnections);
         }
 
         /// <summary>
@@ -858,49 +885,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
-        #region Not Implemented Method Tests
-
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.PutObjectFromTransactedPool"/> remains
-        /// unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestPutObjectFromTransactedPool()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
+        #region Replace Connection Tests
 
         /// <summary>
         /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
+        /// replaces a checked-out connection with a new, distinct connection instance.
         /// </summary>
         [Fact]
         public void TestReplaceConnection()
         {
             // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(SuccessfulConnectionFactory, timeProvider: fakeTime);
+            SqlConnection owner = new();
 
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+            pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? oldConnection);
+
+            Assert.NotNull(oldConnection);
+
+            var newConnection = pool.ReplaceConnection(owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            Assert.NotNull(newConnection);
+            Assert.NotSame(oldConnection, newConnection);
         }
 
-        /// <summary>
-        /// Verifies that <see cref="ChannelDbConnectionPool.TransactionEnded(System.Transactions.Transaction, Microsoft.Data.ProviderBase.DbConnectionInternal)"/>
-        /// remains unimplemented and throws <see cref="NotImplementedException"/>.
-        /// </summary>
-        [Fact]
-        public void TestTransactionEnded()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
-        }
         #endregion
 
         #region Pool Clear Tests
@@ -1380,6 +1391,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
+            internal SuccessfulSqlConnectionFactory()
+            {
+            }
+
+            /// <summary>
+            /// Constructs a factory reporting to <paramref name="metrics"/> instead of the
+            /// process-wide default, so a test can assert exact counters on the same instance
+            /// used by the pool under test.
+            /// </summary>
+            internal SuccessfulSqlConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
             /// <summary>
             /// Gets the last timeout budget passed through by the pool to the factory.
             /// </summary>
@@ -1398,7 +1423,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
-                return new StubDbConnectionInternal();
+                return new StubDbConnectionInternal(Metrics);
             }
         }
 
@@ -1430,6 +1455,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
+            internal StubDbConnectionInternal(ISqlClientMetrics? metrics = null)
+                : base(metrics)
+            {
+            }
+
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
 
@@ -1442,12 +1472,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             public override void EnlistTransaction(Transaction transaction)
             {
-                return;
+                if (transaction != null)
+                {
+                    EnlistedTransaction = transaction;
+                }
             }
 
             protected override void Activate(Transaction transaction)
             {
-                return;
+                EnlistedTransaction = transaction;
             }
 
             protected override void Deactivate()
@@ -1615,16 +1648,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that a connection creation failure enters the blocking-period error state when
         /// blocking is enabled for the pool, and stays out of it when blocking is disabled. The
         /// blocking policy is driven by the connection string's Pool Blocking Period:
-        /// Default/Auto enable blocking for a non-Azure host (localhost), AlwaysBlock forces it on,
+        /// Default/Auto enable blocking for a non-Azure host, AlwaysBlock forces it on,
         /// and NeverBlock suppresses it. FR-006, FR-007.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds across multiple jobs with Assert Expected:True/Actual:False in <2ms): the
-        // assertion races the background warmup/replenishment work added in #4452 before the
-        // pool's error-state transition is observable. Not a defect in this PR.
-        [Trait("Category", "flaky")]
+        /// <remarks>
+        /// The Auto cases here assert the real Auto => "not an Azure endpoint" => blocking mapping,
+        /// so they cannot pin Pool Blocking Period to sidestep endpoint classification. They
+        /// deliberately avoid the data source "localhost": ADPHelper (used by the simulated-server
+        /// Azure routing tests) temporarily registers "localhost" as an Azure endpoint in the
+        /// process-wide ADP.s_azureSqlServerEndpoints list. Because a pool decides whether blocking
+        /// is enabled exactly once, in its constructor, a pool built inside that window would
+        /// classify localhost as Azure and never block, making these assertions flaky under
+        /// parallel collection execution.
+        /// </remarks>
         [Theory]
-        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for localhost
+        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=Auto;", true)]      // Auto => blocks for non-Azure host
         [InlineData("Pool Blocking Period=NeverBlock;", false)]
         [InlineData("Pool Blocking Period=AlwaysBlock;", true)]
@@ -1632,7 +1670,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions($"Data Source=localhost;{blockingPeriodClause}"),
+                new SqlConnectionOptions($"Data Source=non-azure-test-host;{blockingPeriodClause}"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1658,17 +1696,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that once the pool enters the blocking period, subsequent synchronous requests
         /// fail fast with the cached exception without attempting another physical open.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): races the background warmup/replenishment work added in #4452 before the
-        // pool's error-state transition is observable. Not a defect in this PR.
-        [Trait("Category", "flaky")]
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock: this test needs blocking enabled but is not
+        /// testing endpoint classification, and leaving it on Auto would make it depend on
+        /// "localhost" not being registered as an Azure endpoint by a concurrently running test
+        /// (see ErrorOccurred_OnFailure_FollowsBlockingPeriod for the full explanation).
+        /// </remarks>
         [Fact]
         public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
         {
             // Arrange
             var factory = new CountingTimeoutConnectionFactory();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1702,16 +1742,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// Verifies that clearing the pool while in the blocking-period error state resets the
         /// externally visible error indicator.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): races the background warmup/replenishment work added in #4452 before the
-        // pool's error-state transition is observable. Not a defect in this PR.
-        [Trait("Category", "flaky")]
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Clear_InErrorState_ResetsErrorOccurred()
         {
             // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -1742,10 +1782,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <see cref="FakeTimeProvider"/> so the test is deterministic and does not wait on
         /// wall-clock time. FR-006, FR-009.
         /// </summary>
-        // Flaky under CI load only (passes locally 3/3 and on main CI; fails on PR merge
-        // builds): races the background warmup/replenishment work added in #4452 before the
-        // pool's error-state transition is observable. Not a defect in this PR.
-        [Trait("Category", "flaky")]
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
         [Fact]
         public void Failure_ThenBlockingPeriodExpiry_AllowsSuccessfulCreate()
         {
@@ -1753,7 +1793,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var factory = new ToggleFailureConnectionFactory();
             var fakeTime = new FakeTimeProvider();
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;"),
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
                 new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,

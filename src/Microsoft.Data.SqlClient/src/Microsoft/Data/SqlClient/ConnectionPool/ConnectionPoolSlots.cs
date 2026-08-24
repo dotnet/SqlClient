@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
@@ -59,7 +60,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private readonly DbConnectionInternal?[] _connections;
         private readonly uint _capacity;
-        private volatile int _reservations;
+        // Mutated only through Interlocked and read only through Volatile.Read, so the fields
+        // themselves do not need to be volatile.
+        private int _reservations;
+        private int _connectionCount;
 
         /// <summary>
         /// Constructs a ConnectionPoolSlots instance with the given fixed capacity.
@@ -82,13 +86,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _capacity = fixedCapacity;
             _reservations = 0;
+            _connectionCount = 0;
             _connections = new DbConnectionInternal?[fixedCapacity];
         }
 
         /// <summary>
-        /// Gets the total number of reservations currently held.
+        /// Gets the total number of reservations currently held. This includes reservations held on
+        /// behalf of connections that are still being opened and are therefore not yet tracked.
         /// </summary>
-        internal int ReservationCount => _reservations;
+        internal int ReservationCount => Volatile.Read(ref _reservations);
+
+        /// <summary>
+        /// Gets the number of connections currently tracked by this collection. Unlike
+        /// <see cref="ReservationCount"/>, this excludes reservations held for connections that are
+        /// still being opened, so it reports connections that actually belong to the pool.
+        /// </summary>
+        internal int ConnectionCount => Volatile.Read(ref _connectionCount);
 
         /// <summary>
         /// Adds a connection to the collection.
@@ -127,6 +140,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
                     {
+                        Interlocked.Increment(ref _connectionCount);
                         reservation.Keep();
                         return connection;
                     }
@@ -148,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private void ReleaseReservation()
         {
             Interlocked.Decrement(ref _reservations);
-            Debug.Assert(_reservations >= 0, "Released a reservation that wasn't held");
+            Debug.Assert(Volatile.Read(ref _reservations) >= 0, "Released a reservation that wasn't held");
         }
 
         /// <summary>
@@ -162,6 +176,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
                 {
+                    Interlocked.Decrement(ref _connectionCount);
                     ReleaseReservation();
                     return true;
                 }
@@ -171,12 +186,75 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Atomically replaces an existing connection with a new one in the same slot.
+        /// The reservation count is unchanged because the slot is reused.
+        /// </summary>
+        /// <param name="oldConnection">The connection currently occupying the slot.</param>
+        /// <param name="newConnection">The connection to place into the slot.</param>
+        /// <returns>True if the old connection was found and replaced; otherwise, false.</returns>
+        internal bool TryReplace(DbConnectionInternal oldConnection, DbConnectionInternal newConnection)
+        {
+            for (int i = 0; i < _connections.Length; i++)
+            {
+                if (Interlocked.CompareExchange(ref _connections[i], newConnection, oldConnection) == oldConnection)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Enumerates the connections currently tracked by this collection. Best-effort: slots are
+        /// read individually, so a caller must tolerate entries that have since left the pool, and an
+        /// entry added during the walk may or may not be seen. Intended for infrequent bookkeeping
+        /// passes, not for hot paths.
+        /// </summary>
+        public Enumerator GetEnumerator() => new(_connections);
+
+        /// <summary>
+        /// Enumerates the non-null slots without allocating an iterator state machine.
+        /// </summary>
+        internal struct Enumerator
+        {
+            private readonly DbConnectionInternal?[] _connections;
+            private int _index;
+            private DbConnectionInternal? _current;
+
+            internal Enumerator(DbConnectionInternal?[] connections)
+            {
+                _connections = connections;
+                _index = -1;
+                _current = null;
+            }
+
+            public DbConnectionInternal Current => _current!;
+
+            public bool MoveNext()
+            {
+                while (++_index < _connections.Length)
+                {
+                    DbConnectionInternal? connection = Volatile.Read(ref _connections[_index]);
+                    if (connection is not null)
+                    {
+                        _current = connection;
+                        return true;
+                    }
+                }
+
+                _current = null;
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Attempts to reserve a spot in the collection.
         /// </summary>
         /// <returns>A Reservation if successful, otherwise returns null.</returns>
         private Reservation<ConnectionPoolSlots>? TryReserve()
         {
-            for (var expected = _reservations; expected < _capacity; expected = _reservations)
+            for (var expected = Volatile.Read(ref _reservations); expected < _capacity; expected = Volatile.Read(ref _reservations))
             {
                 // Try to reserve a spot in the collection by incrementing _reservations.
                 // If _reservations changed underneath us, then another thread already reserved the spot we were trying to take.

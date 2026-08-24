@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Channels;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Diagnostics;
 
 #nullable enable
 
@@ -20,13 +21,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
         private readonly ChannelReader<DbConnectionInternal?> _reader;
         private readonly ChannelWriter<DbConnectionInternal?> _writer;
+        private readonly ISqlClientMetrics _metrics;
         private volatile int _count;
 
-        internal IdleConnectionChannel()
+        /// <param name="metrics">
+        /// The metrics sink of the pool that owns this channel. Defaults to the process-wide
+        /// instance so tests can construct a channel without a pool.
+        /// </param>
+        internal IdleConnectionChannel(ISqlClientMetrics? metrics = null)
         {
             var channel = Channel.CreateUnbounded<DbConnectionInternal?>();
             _reader = channel.Reader;
             _writer = channel.Writer;
+            _metrics = metrics ?? SqlClientDiagnostics.Metrics;
         }
 
         /// <summary>
@@ -56,6 +63,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (connection is not null)
                 {
                     Interlocked.Increment(ref _count);
+                    _metrics.EnterFreeConnection();
                 }
                 return true;
             }
@@ -74,6 +82,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 if (connection is not null)
                 {
                     Interlocked.Decrement(ref _count);
+                    _metrics.ExitFreeConnection();
                 }
 
                 return true;
@@ -93,6 +102,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connection is not null)
             {
                 Interlocked.Decrement(ref _count);
+                _metrics.ExitFreeConnection();
             }
 
             return connection;

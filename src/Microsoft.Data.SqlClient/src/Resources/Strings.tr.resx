@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Kapanım raporunun imza doğrulaması başarısız oldu. Rapor imzası, HGS kök sertifikası kullanılarak hesaplanan imzayla eşleşmiyor. Uç nokta için DNS eşlemesini doğrulayın - daha fazla için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server'dan alınan kapanım raporu doğru biçimde değil. Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
@@ -2079,6 +2082,12 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Bağlantı dizesinde 'Authentication=Active Directory Default' belirtilmişse AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
@@ -2156,6 +2165,9 @@
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Bağlantı havuzunda boş bir yuva bulunamadı.</value>
+  </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Bağlantı artık bağlantı havuzunda yer almadığı için değiştirilemedi.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Bağlantı havuzu kapatıldı.</value>

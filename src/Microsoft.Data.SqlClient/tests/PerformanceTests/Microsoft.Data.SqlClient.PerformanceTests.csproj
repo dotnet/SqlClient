@@ -30,13 +30,52 @@
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'"  />
+    <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a    -->
+    <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. Under Central       -->
+    <!-- Package Management a plain Version is ignored, so VersionOverride is used; when       -->
+    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are      -->
+    <!-- mutually exclusive on whether MdsPackageVersion was provided.                         -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
+                      VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
+
+  <!-- Microsoft.Data.SqlClient 7.1.0-preview1.26124.5 declares transitive dependencies on the      -->
+  <!-- prerelease Microsoft.Data.SqlClient.Extensions.Abstractions and                              -->
+  <!-- Microsoft.Data.SqlClient.Internal.Logging 1.0.0-preview1.26124.5 packages, which were never  -->
+  <!-- published to NuGet.org.  Restoring that exact baseline therefore fails with NU1603 (the      -->
+  <!-- prerelease dependency is not found and the released 1.0.0 is substituted).  Pin explicit     -->
+  <!-- direct references to the released 1.0.0 packages - which satisfy the (>= prerelease)          -->
+  <!-- constraint - but only for that specific baseline version so other builds are unaffected.     -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == '7.1.0-preview1.26124.5'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" VersionOverride="1.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" VersionOverride="1.0.0" />
+  </ItemGroup>
+
+  <!-- Baseline API availability =========================================== -->
+  <!-- In Package mode the perf pipeline can pin an older released MDS as the baseline, so this      -->
+  <!-- project must compile against the OLDEST baseline anyone may queue - a benchmark that calls an -->
+  <!-- API introduced after that baseline breaks the baseline pass with CS1061.  MdsBaselineMajor-   -->
+  <!-- Version is the major version of the pinned baseline; the cumulative MDS_GE_<n> constants let  -->
+  <!-- individual benchmarks guard a call and fall back to an older equivalent.  Leading whitespace  -->
+  <!-- and a "v" prefix are tolerated.  Project mode, Package mode without an explicit version, and  -->
+  <!-- any version string whose major cannot be parsed all fail toward "current" (sentinel 99999, so -->
+  <!-- every constant is defined), because those builds reference a current MDS.  Add a new          -->
+  <!-- MDS_GE_<n> line here as newer baselines start being used.                                     -->
+  <PropertyGroup>
+    <MdsBaselineMajorVersion Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''">$([System.Text.RegularExpressions.Regex]::Match('$(MdsPackageVersion)', '^\s*[vV]?([0-9]+)').Groups[1].Value)</MdsBaselineMajorVersion>
+    <MdsBaselineMajorVersion Condition="'$(MdsBaselineMajorVersion)' == ''">99999</MdsBaselineMajorVersion>
+    <DefineConstants Condition="'$(MdsBaselineMajorVersion)' &gt;= '6'">$(DefineConstants);MDS_GE_6</DefineConstants>
+    <DefineConstants Condition="'$(MdsBaselineMajorVersion)' &gt;= '7'">$(DefineConstants);MDS_GE_7</DefineConstants>
+  </PropertyGroup>
 
   <!-- Other references -->
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
+
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
   </ItemGroup>
 
   <!-- NativeMemoryProfiler relies on ETW and is only supported on Windows. -->

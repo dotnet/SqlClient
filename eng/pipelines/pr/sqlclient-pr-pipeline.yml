@@ -109,6 +109,7 @@ stages:
       buildConfiguration: Debug
       buildSuffix: pr
       stageName: ${{ variables.stageNamePack }}
+      packArtifactBaseName: ${{ variables.packArtifactBaseName }}
 
   # Stage 1b: Generate secrets
   - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml@self
@@ -142,6 +143,7 @@ stages:
   # Stage 3: Collect code coverage
   - template: /eng/pipelines/pr/stages/collect-coverage-stage.yml@self
     parameters:
+      coverageArtifactBaseName: ${{ variables.coverageArtifactBaseName }}
       dependsOn:
         - ${{ each platform in parameters.platforms }}:
             - "test_${{ platform.displayName }}"
