@@ -1452,7 +1452,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
-
         /// <summary>
         /// Test connection factory that always throws the pooled-open timeout to exercise failure
         /// paths in the pool.
