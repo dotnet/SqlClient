@@ -322,11 +322,18 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// wait. Measures how well the pool handles back-pressure when all connections are
         /// checked out and callers are queued.
         /// </summary>
+        /// <remarks>
+        /// <see cref="Parallelism"/> sets how far the pool is oversubscribed, and so how deep
+        /// the queue of waiting callers gets. It is the queue depth rather than the concurrency
+        /// level here, because saturating the pool already takes <see cref="MaxPoolSize"/>
+        /// tasks before any caller has to wait at all.
+        /// </remarks>
         [Benchmark]
         public async Task PoolExhaustionRecovery()
         {
-            // Ensure we exceed pool capacity
-            int taskCount = Math.Max(Parallelism, MaxPoolSize * 2);
+            // Saturate the pool, then oversubscribe it by Parallelism so exactly that many
+            // callers are queued waiting for a connection to come back.
+            int taskCount = MaxPoolSize + Parallelism;
             var tasks = new Task[taskCount];
             for (int i = 0; i < taskCount; i++)
             {
