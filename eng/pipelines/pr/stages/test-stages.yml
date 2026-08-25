@@ -155,6 +155,21 @@ stages:
               packageShortName: "Azure"
               testDisplayName: "azure"
 
+          # TestAkvProvider
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              platformImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+              packageShortName: "AkvProvider"
+              testDisplayName: "akvprovider"
+
           # TestSqlClientFunctional
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
             parameters:

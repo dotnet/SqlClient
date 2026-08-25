@@ -150,8 +150,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
         public static void ClearAllPoolsTest(string connectionString, bool usePoolV2)
         {
-            using LocalAppContextSwitchesHelper switchesHelper = new();
-            switchesHelper.UseConnectionPoolV2 = usePoolV2;
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
 
             SqlConnection.ClearAllPools();
             Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
@@ -178,9 +177,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// NOTE: 'emancipated' means that the internal connection's SqlConnection has fallen out of scope and has no references, but was not explicitly disposed\closed
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void ReclaimEmancipatedOnOpenTest(string connectionString)
+        [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
+        public static void ReclaimEmancipatedOnOpenTest(string connectionString, bool usePoolV2)
         {
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
+
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
@@ -205,9 +206,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Tests if, when max pool size is reached, Open() will block until a connection becomes available
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void MaxPoolWaitForConnectionTest(string connectionString)
+        [ClassData(typeof(ConnectionPoolConnectionStringAndPoolVersionProvider))]
+        public static void MaxPoolWaitForConnectionTest(string connectionString, bool usePoolV2)
         {
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
+
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 

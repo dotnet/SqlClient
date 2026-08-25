@@ -1968,6 +1968,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>无法验证 enclave 报告的签名。报告签名与使用 HGS 根证书计算出的签名不匹配。请验证终结点的 DNS 映射 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553。如果正确，请联系客户支持服务。</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>从 SQL Server 收到的 enclave 报告的格式不正确。请联系客户支持服务。</value>
   </data>
@@ -2078,6 +2081,12 @@
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>如果 "Integrated Security" 连接字符串关键字设置为 "true" 或 "SSPI"，则无法设置 AccessTokenCallback 属性。</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
+    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
+    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Default"，则无法设置 AccessTokenCallback 属性。</value>

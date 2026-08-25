@@ -41,6 +41,9 @@
 #   https://sqlclientdrivers.visualstudio.com/ADO.Net/_build?definitionId=1825
 
 # Set the pipeline run name to the day-of-year and the daily run counter.
+# This becomes BuildNumber, used as the revision component of FileVersion
+# (Major.Minor.Patch.Revision). Revision must fit in a 16-bit unsigned int (max 65535).
+# Format $(DayOfYear)$(Rev:rr) yields e.g. 15401 (day 154, run 01) — always < 65535.
 name: $(DayOfYear)$(Rev:rr)
 
 # Do not trigger this pipeline for PRs.
@@ -166,6 +169,7 @@ extends:
   parameters:
     buildConfiguration: ${{ parameters.buildConfiguration }}
     buildPlatforms: ${{ parameters.buildPlatforms }}
+    buildSuffix: 'ci'
     referenceType: Project
     debug: ${{ parameters.debug }}
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

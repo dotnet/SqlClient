@@ -88,99 +88,29 @@
     </PackBuildArgument>
 
     <!--
-      PackageVersionAbstractions
-      Applies to:     BuildAbstractions, PackAbstractions
-      Description:    Specifies what version to assign to the Microsoft.Data.SqlClient.Extensions.Abstractions
-                      package. If this is omitted, the assigned version will default to the version
-                      calculated by Versions.props. If this is provided, it will override the
-                      package version and assembly versions will be calculated based on it.
-
-      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      (with -p:ReferenceType=Package)
-      Description:    Specifies what version of Microsoft.Data.SqlClient.Extensions.Abstractions
-                      to use when compiling/packaging/testing the specified package.
-
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
+      SqlClient family package versions
+      =================================
+      The Internal.Logging, Extensions.Abstractions, Extensions.Azure, and
+      AlwaysEncrypted.AzureKeyVaultProvider packages are all part of the SqlClient family and share
+      the SqlClient version.  There are no longer separate per-package version parameters for these
+      packages — use PackageVersionSqlClient (below) to set the version for the entire family.
     -->
-    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
-    <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
-      -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
-    </PackageVersionAbstractionsArgument>
-
-    <!--
-      PackageVersionAkvProvider
-      Applies to:     BuildAkvProvider, PackAkvProvider
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-                      when building/packing the AKV provider. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
-    -->
-    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
-    <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
-      -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
-    </PackageVersionAkvProviderArgument>
-
-    <!--
-      PackageVersionAzure
-      Applies to:     BuildAzure, PackAzure
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Extensions.Azure
-                      when building/packing the Azure package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
-    -->
-    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
-    <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
-      -p:AzurePackageVersion=$(PackageVersionAzure)
-    </PackageVersionAzureArgument>
-
-    <!--
-      PackageVersionLogging
-      Applies to:     BuildLogging, PackLogging
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Internal.Logging
-                      when building/packing the Logging package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-
-      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      BuildAbstractions, PackAbstractions
-                      BuildAzure, PackAzure,
-                      (with -p:ReferenceType=Package)
-      Description:    Specifies what version of Microsoft.Data.SqlClient.Internal.Logging
-                      to use when compiling/packaging/testing the specified package.
-
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
-    -->
-    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
-    <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
-      -p:LoggingPackageVersion=$(PackageVersionLogging)
-    </PackageVersionLoggingArgument>
 
     <!--
       PackageVersionSqlClient
-      Applies to:     TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      TestAzure
-                      (with -p:ReferenceType=Package)
-      Description     Specifies what version of Microsoft.Data.SqlClient to use when compiling
-                      to use when compiling/packaging/testing the specified package.
-
-      Applies to:     BuildSqlClient*, PackSqlClient
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient when building/
-                      packing the SqlClient package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
+      Applies to:
+        Build:        BuildSqlClient*, BuildLogging, BuildAbstractions, BuildAzure, BuildAkvProvider
+        Pack:         PackSqlClient, PackLogging, PackAbstractions, PackAzure, PackAkvProvider
+        Test:         TestSqlClient, TestSqlClientFunctional, TestSqlClientManual, TestAzure
+                      (Package reference mode only)
+      Description:    Specifies the version of the SqlClient *family*.  All family packages
+                      (Microsoft.Data.SqlClient, Internal.Logging, Extensions.Abstractions,
+                      Extensions.Azure, and the AlwaysEncrypted.AzureKeyVaultProvider) share this
+                      single version, which is used both as the assigned package/assembly version
+                      when building/packing a family package and as the dependency version when a
+                      family package references another. Build and Pack targets use it in both
+                      reference modes; Test targets consume it only in Package reference mode. If
+                      omitted, the version defaults to the value calculated by Versions.props.
 
       Default value:  [blank]
       Example:        7.0.0-preview4
@@ -192,7 +122,10 @@
 
     <!--
       PackageVersionSqlServer
-      Applies to:     BuildSqlServer
+      Applies to:
+        Build:        BuildSqlServer and BuildSqlClient* in Package reference mode
+        Pack:         PackSqlServer and PackSqlClient in Package reference mode
+        Test:         TestSqlClientUnit and TestSqlClientManual in Package reference mode
       Description:    Specifies the package version to use for Microsoft.SqlServer.Server. If this
                       is specified, it will be used preferentially: assembly version and file
                       version will be derived from the specified package version.
@@ -393,6 +326,71 @@
   -->
   <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
 
+  <!-- ================================================================= -->
+  <!-- Version Extraction Targets
+       =========================
+       The SqlClient family shares one version, so there are two extraction targets:
+
+         GetVersionsSqlClient  — the SqlClient family version (Internal.Logging,
+                                 Extensions.Abstractions, Microsoft.Data.SqlClient,
+                                 Extensions.Azure, and the AKV Provider all share this).
+         GetVersionsSqlServer  — the independently-versioned Microsoft.SqlServer.Server.
+
+       Each emits labeled messages at High importance that pipelines capture by grepping stdout:
+         PackageVersion: <value>
+         FileVersion: <value>
+       GetVersionsSqlServer additionally emits its last-shipped version:
+         PublishedVersion: <value>
+
+       Usage:
+         dotnet build build.proj -t:GetVersionsSqlClient -v:m -nologo -p:BuildNumber=1234
+         # stdout contains:
+         #   PackageVersion: 7.1.0-preview1
+         #   FileVersion: 7.1.0.1234
+  -->
+
+  <Target Name="GetVersionsSqlClient">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsSqlServer">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SqlServerProjectPath)&quot; -getProperty:SqlServerPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
   <!--
     Test: Run all test targets for all driver projects.
 
@@ -401,7 +399,7 @@
     environments. Please consider running project specific test targets or specific test sets within
     the project.
   -->
-  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestAkvProvider;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
@@ -471,8 +469,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -502,7 +498,6 @@
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -533,8 +528,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -565,8 +558,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -609,8 +600,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
@@ -658,8 +647,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -704,8 +691,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -751,6 +736,7 @@
   <PropertyGroup>
     <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
+    <AkvProviderTestProjectPath>$(AkvProviderSrcRoot)test/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test.csproj</AkvProviderTestProjectPath>
     <AkvProviderArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/$(Configuration)/</AkvProviderArtifactRoot>
   </PropertyGroup>
 
@@ -768,13 +754,10 @@
         <!--Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAkvProviderArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -798,13 +781,10 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAkvProviderArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -827,9 +807,37 @@
       SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- TestAkvProvider: Runs Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider unit tests -->
+  <Target Name="TestAkvProvider">
+    <PropertyGroup>
+      <!--
+        Note: These tests exclusively use project references, so neither ReferenceType nor any
+        package version arguments are specified in this command.
+      -->
+      <LogFilePrefix>AkvProviderTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Importance="High" Text=">>> Running tests for AKV Provider"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
-
   <PropertyGroup>
     <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
     <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
@@ -851,11 +859,10 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -878,11 +885,10 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -956,11 +962,10 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAzureArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -983,11 +988,10 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAzureArgument)
+        $(PackageVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1027,8 +1031,6 @@
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -1060,7 +1062,7 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1083,7 +1085,7 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1179,7 +1181,21 @@
   </PropertyGroup>
 
   <!-- BuildTests: Builds all test projects for all supported OS combinations. -->
-  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+
+  <!-- BuildAkvProviderTests: Builds the AKV Provider test project (OS-agnostic). -->
+  <Target Name="BuildAkvProviderTests">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building AKV Provider Tests"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
   <!-- BuildAbstractionsTests: Builds the Abstractions test project (OS-agnostic). -->
   <Target Name="BuildAbstractionsTests">

@@ -1,0 +1,81 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# Compute Versions Stage (CI/PR)
+# ===============================
+# Extracts package/file versions up-front in a single fast job.
+# Downstream stages consume these via stage dependency output variables:
+#
+#   stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion']
+#
+# The SqlClient family (Logging, Abstractions, SqlClient, Azure, AKV Provider) shares one version;
+# Microsoft.SqlServer.Server is versioned separately.  In CI/PR mode, all packages always use their
+# "next" version (with BuildSuffix appended). There is no released-vs-dependency distinction as in
+# the OneBranch official pipeline.
+#
+# This stage MUST run before all build stages so they can consume computed versions.
+
+parameters:
+  # Build suffix appended to prerelease tag (e.g. 'ci' or 'pr').
+  - name: buildSuffix
+    type: string
+
+stages:
+  - stage: compute_versions_ci
+    displayName: "Compute Package Versions"
+    dependsOn: []
+
+    jobs:
+      - job: compute_versions_job
+        displayName: "Extract versions from Versions.props"
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+          # Install the global.json-pinned .NET SDK before running any dotnet build, so this stage
+          # does not rely on whatever SDK happens to be on the agent image.
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.) required by build.proj targets that
+          # may run during the GetVersions* evaluation.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+          # Extract package + file versions for the SqlClient family
+          # (GetVersionsSqlClient) and Microsoft.SqlServer.Server (GetVersionsSqlServer).
+          # Each target emits labeled stdout lines.
+          - script: |
+              set -euo pipefail
+              echo "Extracting versions with BuildNumber=$(Build.BuildNumber) BuildSuffix=${{ parameters.buildSuffix }}..."
+
+              extract() {
+                local label="$1"
+                local output
+                output=$(dotnet build "$(Build.SourcesDirectory)/build.proj" \
+                  -t:"GetVersions${label}" -v:m -nologo \
+                  -p:BuildNumber=$(Build.BuildNumber) \
+                  -p:BuildSuffix=${{ parameters.buildSuffix }})
+                local pkg file
+                # Trim trailing whitespace and any CR so versions never carry stray characters
+                # into downstream package/file versions or command-line arguments.
+                pkg=$(echo "$output" | sed -n 's/^ *PackageVersion: //p' | tr -d '\r' | sed 's/[[:space:]]*$//')
+                file=$(echo "$output" | sed -n 's/^ *FileVersion: //p' | tr -d '\r' | sed 's/[[:space:]]*$//')
+                # Fail fast if the expected labels were not found, rather than silently propagating
+                # empty versions to downstream stages.
+                if [ -z "$pkg" ] || [ -z "$file" ]; then
+                  echo "ERROR: failed to extract PackageVersion/FileVersion for ${label}." >&2
+                  echo "$output" >&2
+                  exit 1
+                fi
+                echo "  ${label}: pkg=$pkg  file=$file"
+                echo "##vso[task.setvariable variable=${label}PackageVersion;isOutput=true]$pkg"
+                echo "##vso[task.setvariable variable=${label}FileVersion;isOutput=true]$file"
+              }
+
+              # The SqlClient family shares one version; SqlServer is separate.
+              extract SqlClient
+              extract SqlServer
+            displayName: "Extract All Versions"
+            name: "versions"

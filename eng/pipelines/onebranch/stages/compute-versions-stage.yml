@@ -1,0 +1,82 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Compute Versions Stage
+# ======================
+# Computes package versions up-front in a single fast job.  Downstream stages
+# consume these via stage/job output variables, e.g.:
+#
+#   stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion']
+#
+# Design:
+#   - The SqlClient family (Logging, Abstractions, SqlClient, Azure, AKV Provider) shares a single
+#     version and always uses its "next" version (from Versions.props + BuildNumber).
+#   - Microsoft.SqlServer.Server is versioned separately: it uses its "next" version when it is
+#     being built this run, or its "published" (last shipped to NuGet) version when it is not built
+#     (so the SqlClient family depends on the most recently published SqlServer package).
+#   - Runs can append the Build.BuildId revision to packages built in that run, reducing
+#     collisions when repeatedly publishing the same base version for testing.
+#   - Versions are extracted via build.proj GetVersions* targets by parsing stdout.
+#
+# This stage MUST run before all build stages so they can consume computed versions.
+
+parameters:
+  # Whether to append the Build.BuildId revision to package and file versions.
+  - name: addRevision
+    type: boolean
+
+  # Whether Microsoft.SqlServer.Server is being built this run.  This drives the SqlServer version
+  # selection (next when built, published when not); the SqlClient family always uses its next
+  # version.  When SqlServer is not built, the SqlClient family depends on the published SqlServer
+  # package restored from NuGet.
+  - name: buildSqlServer
+    type: boolean
+
+stages:
+  - stage: compute_versions
+    displayName: "Compute Package Versions"
+
+    jobs:
+      - job: compute_versions_job
+        displayName: "Extract versions from Versions.props"
+        pool:
+          type: linux
+
+        variables:
+          ob_outputDirectory: $(Build.SourcesDirectory)/no_publish
+          # Disable all SDL scanning — this job only evaluates MSBuild properties.
+          ob_sdl_apiscan_enabled: false
+          ob_sdl_binskim_break: false
+          ob_sdl_binskim_enabled: false
+
+        steps:
+          - pwsh: |
+              New-Item -Path "$(ob_outputDirectory)" -ItemType Directory -Force
+              "**" | Out-File -FilePath "$(ob_outputDirectory)/.artifactignore" -Encoding ascii
+            displayName: 'Suppress artifact publishing'
+
+          # Install the global.json-pinned .NET SDK before running any dotnet build, so this stage
+          # does not rely on whatever SDK happens to be on the agent image.
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          # Restore dotnet local tools (pwsh, apicompat, etc.) required by build.proj targets that
+          # may run during the GetVersions* evaluation.
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+          # Extract canonical versions, resolve the effective built/published values, optionally
+          # add the run revision, and publish the downstream stage output variables.
+          - task: PowerShell@2
+            displayName: "Compute Effective Versions"
+            name: "versions"
+            inputs:
+              targetType: filePath
+              pwsh: true
+              filePath: $(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/compute-versions.ps1
+              arguments: >-
+                -ProjectPath "$(Build.SourcesDirectory)/build.proj"
+                -Revision "$(Build.BuildId)"
+                -BuildSqlServer $${{ parameters.buildSqlServer }}
+                -AddRevision $${{ parameters.addRevision }}
