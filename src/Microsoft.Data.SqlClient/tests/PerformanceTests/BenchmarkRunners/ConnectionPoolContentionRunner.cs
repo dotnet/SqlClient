@@ -49,13 +49,24 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public int Parallelism { get; set; }
 
         /// <summary>
-        /// Maximum pool size, exercised across three regimes relative to
-        /// <see cref="Parallelism"/>: larger than the worker count (idle spare
-        /// connections, no contention), equal to it (fully subscribed, no contention), and
-        /// smaller than it (pool exhaustion forces workers to wait for a connection to be
-        /// returned — back-pressure).
+        /// Maximum pool size, exercised across the full demand/capacity ladder relative to
+        /// <see cref="Parallelism"/>: larger than the worker count (idle spare connections, no
+        /// contention), equal to it (fully subscribed, no contention), and progressively smaller
+        /// than it (pool exhaustion forces workers to wait for a connection to be returned —
+        /// back-pressure).
         /// </summary>
-        [Params(100, 50, 10)]
+        /// <remarks>
+        /// At <see cref="Parallelism"/> 50 these give demand/capacity ratios of 0.25, 0.5, 1, 2
+        /// and 5. The intermediate over-subscribed step (ratio 2) is deliberate: back-pressure
+        /// regressions show up only once demand exceeds capacity, and without a point between
+        /// "fully subscribed" and "five times over" there is no way to tell how quickly the cost
+        /// grows once the pool starts running dry.
+        ///
+        /// 200 is included because it is the most commonly configured explicit Max Pool Size in
+        /// production, so the least-contended row corresponds to a real deployment rather than
+        /// only to the driver default.
+        /// </remarks>
+        [Params(200, 100, 50, 25, 10)]
         public int MaxPoolSize { get; set; }
 
         /// <summary>

@@ -44,14 +44,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// its connection until all of them have connected, so the pool must open exactly
         /// this many physical connections.
         /// </summary>
-        [Params(10, 25, 50)]
+        [Params(10, 25, 50, 100)]
         public int Parallelism { get; set; }
 
         /// <summary>
         /// Max pool size. Deliberately larger than every <see cref="Parallelism"/> value so
         /// the ramp is never bounded by pool capacity.
         /// </summary>
-        [Params(100)]
+        [Params(200)]
         public int MaxPoolSize { get; set; }
 
         private string _connectionString;

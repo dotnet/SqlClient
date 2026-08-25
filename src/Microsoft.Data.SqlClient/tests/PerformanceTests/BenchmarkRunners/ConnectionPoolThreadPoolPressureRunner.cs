@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
@@ -16,8 +18,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// A sync <c>Open()</c> against a saturated pool blocks its thread. When those threads
     /// are threadpool threads, a pool whose waiter wake-up requires a queued continuation
     /// cannot make progress: every thread is blocked in a wait, so the wake-up sits in the
-    /// queue until the threadpool injects another thread. Injection is rate limited to
-    /// roughly one or two threads per second, so each stall costs about a second.
+    /// queue until the threadpool injects another thread.
+    ///
+    /// Injection is not a single mechanism. Since .NET 6 the runtime recognises cooperative
+    /// blocking and compensates on a fast path — up to one thread per processor immediately
+    /// with no delay, then in 25ms steps capped at 250ms. Only once that budget is spent does
+    /// the caller fall back to the gate thread's starvation detection, which adds one thread
+    /// per 500ms cycle. Stalls here are therefore tens to a few hundred milliseconds, not the
+    /// whole seconds the pre-.NET 6 gate-thread-only path would have cost.
     ///
     /// <see cref="ConnectionPoolContentionRunner"/> covers the same shape at the default
     /// threadpool floor, which makes it dependent on hill-climbing timing and therefore
@@ -33,11 +41,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// The effect is tail latency, not a shifted median, so compare distributions rather
     /// than means alone.
     ///
-    /// A regression here is a statement about application configuration, not a pool defect.
-    /// An application that blocks more thread pool threads than the thread pool has workers
-    /// is already misconfigured, and pre-warming the thread pool is the application's
-    /// responsibility rather than the driver's. This runner exists to characterise where
-    /// that boundary is and to catch it moving, not to drive the delta to zero.
+    /// A regression here is largely a statement about application configuration rather than a
+    /// pool defect, but the starved configuration is not exotic. The threadpool's default
+    /// minimum is <see cref="Environment.ProcessorCount"/>, and that honours cgroup CPU quotas,
+    /// so a service in a 1-2 vCPU container runs with a floor of 1 or 2 by default and ASP.NET
+    /// Core never raises it. Blocking more threads than the floor is the common case for sync
+    /// callers, not a misconfiguration they opted into. This runner exists to characterise
+    /// where that boundary is and to catch it moving, not to drive the delta to zero.
     ///
     /// The pool implementation (legacy vs V2) is a process-level choice - see the remarks on
     /// <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2 false then
@@ -62,12 +72,48 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public int MaxPoolSize { get; set; }
 
         /// <summary>
-        /// Threadpool minimum worker thread count, pinned for the duration of the run. The
-        /// low value is below <see cref="Parallelism"/> (starved); the high value is above
-        /// it (control).
+        /// Threadpool minimum worker thread count, pinned for the duration of the run.
         /// </summary>
-        [Params(8, 128)]
+        /// <remarks>
+        /// Sourced from <see cref="MinWorkerThreadsValues"/> rather than fixed constants,
+        /// because this number is only meaningful relative to
+        /// <see cref="Environment.ProcessorCount"/> — see that property for why.
+        /// </remarks>
+        [ParamsSource(nameof(MinWorkerThreadsValues))]
         public int MinWorkerThreads { get; set; }
+
+        /// <summary>
+        /// The minimum worker counts to sweep, expressed as multiples of
+        /// <see cref="Environment.ProcessorCount"/>.
+        /// </summary>
+        /// <remarks>
+        /// Fixed constants would not survive a change of machine. The processor count is both
+        /// the value this parameter displaces (it is the runtime's own default floor) and the
+        /// size of the runtime's immediate cooperative-blocking injection budget, so the same
+        /// absolute number means "starved" on one host and "generous" on another. A constant
+        /// chosen to starve a 16-core benchmark machine would quietly stop starving anything on
+        /// a 4-core developer box, and the benchmark would keep reporting numbers that no longer
+        /// measure the wake path.
+        ///
+        /// The multiples map onto real deployments: a quarter of the processor count stands in
+        /// for the default floor of a 2-4 vCPU container, 1x is the runtime default that almost
+        /// every application actually runs, 2x is the most common explicit multiplier in shipped
+        /// code, and 8x is the control — comfortably above <see cref="Parallelism"/> so
+        /// injection never gates progress.
+        ///
+        /// Floored at 1 because <c>SetMinThreads</c> rejects 0, and de-duplicated because the
+        /// lower multiples collapse together on very small hosts.
+        /// </remarks>
+        public static IEnumerable<int> MinWorkerThreadsValues =>
+            new[]
+            {
+                Environment.ProcessorCount / 4,
+                Environment.ProcessorCount,
+                Environment.ProcessorCount * 2,
+                Environment.ProcessorCount * 8,
+            }
+            .Select(static value => Math.Max(1, value))
+            .Distinct();
 
         /// <summary>
         /// Number of open/query/close operations each worker performs per invocation.

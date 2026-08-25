@@ -34,7 +34,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Number of concurrent tasks hammering the pool.
         /// </summary>
-        [Params(10, 20, 25)]
+        /// <remarks>
+        /// Two values spanning 5x rather than a tighter cluster. Every benchmark here runs at
+        /// every <see cref="MaxPoolSize"/>, so this axis is multiplied across seven benchmarks
+        /// and intermediate values buy far less than they cost — adjacent values in a narrow
+        /// range mostly re-measure the same regime.
+        /// </remarks>
+        [Params(10, 50)]
         public int Parallelism { get; set; }
 
         /// <summary>
@@ -43,13 +49,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <remarks>
         /// The pool is pre-warmed to this many connections and pinned there by an equal
         /// <c>Min Pool Size</c>, so this is the number of connections actually resident for the
-        /// whole run rather than just a ceiling. Note that every <see cref="Parallelism"/> value
-        /// is below every value here, so the limit itself is only reached by
-        /// <see cref="PoolExhaustionRecovery"/>, which deliberately oversubscribes it. For the
-        /// other benchmarks the pool never saturates, so this parameter mostly varies how many
-        /// idle connections the checkout path is choosing among. Treat a spread between two
+        /// whole run rather than just a ceiling. The limit itself is only reached by
+        /// <see cref="PoolExhaustionRecovery"/>, which deliberately oversubscribes it, and by the
+        /// fully-subscribed corner where <see cref="Parallelism"/> equals this value. Everywhere
+        /// else the pool never saturates, so this parameter mostly varies how many idle
+        /// connections the checkout path is choosing among; treat a spread between two
         /// MaxPoolSize values at the same Parallelism as a noise estimate rather than a real
-        /// effect.
+        /// effect. The fully-subscribed corner is the exception — there the spread is a real
+        /// effect, because one side has idle spares to choose from and the other has none.
         /// </remarks>
         [Params(50, 100)]
         public int MaxPoolSize { get; set; }

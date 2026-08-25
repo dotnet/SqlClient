@@ -64,8 +64,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// the V2 pool cycles through every idle connection in turn, touching all of their
         /// buffers and parser state. Depth is therefore the axis that exposes reuse locality,
         /// and measuring only depth 1 would hide it entirely.
+        ///
+        /// The middle depth is what makes the axis diagnostic rather than merely directional.
+        /// Depths 1 and 100 alone show only that reuse locality degrades somewhere in between;
+        /// they cannot distinguish a threshold (cost appears once the pool exceeds some working
+        /// set) from a gradient (cost grows smoothly with depth). Those imply different fixes.
         /// </remarks>
-        [Params(1, 100)]
+        [Params(1, 10, 100)]
         public int PoolDepth { get; set; }
 
         private string _connectionString;
