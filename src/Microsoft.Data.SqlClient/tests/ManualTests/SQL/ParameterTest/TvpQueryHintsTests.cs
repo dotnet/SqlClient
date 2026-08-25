@@ -11,21 +11,39 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
-    /// Tests for TVP query hints (sort order, uniqueness, default columns).
+    /// Creates the table type and stored procedure used by <see cref="TvpQueryHintsTests"/> exactly
+    /// once for the whole test class.
     /// </summary>
-    public sealed class TvpQueryHintsTests : IDisposable
+    /// <remarks>
+    /// Every test in the class needs an identically shaped table type and procedure, so creating them
+    /// per test only multiplies the amount of DDL issued against the (shared) test database. On Azure
+    /// SQL Database the resulting schema-modification lock contention was enough to push
+    /// CREATE/DROP TYPE and CREATE/DROP PROCEDURE past the default 30 second command timeout, which
+    /// showed up as sporadic "Execution Timeout Expired" failures in the manual test legs. Sharing a
+    /// single type/procedure via a class fixture cuts the DDL statement count by 5x, and the extended
+    /// command timeout below absorbs the contention that remains.
+    /// </remarks>
+    public sealed class TvpQueryHintsFixture : IDisposable
     {
-        private readonly SqlConnection _conn;
-        private readonly SqlCommand _cmd;
-        private readonly SqlParameter _param;
-        private readonly string _procName;
+        /// <summary>
+        /// Command timeout (in seconds) applied to every command issued on <see cref="Connection"/>.
+        /// Deliberately generous: DDL against a shared Azure SQL Database can block for a long time
+        /// behind concurrently executing test legs.
+        /// </summary>
+        private const int CommandTimeoutSeconds = 120;
+
         private readonly string _typeName;
 
-        public TvpQueryHintsTests()
+        public SqlConnection Connection { get; }
+
+        public string ProcedureName { get; }
+
+        public TvpQueryHintsFixture()
         {
             Guid randomizer = Guid.NewGuid();
             _typeName = string.Format("dbo.[QHint_{0}]", randomizer);
-            _procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
+            ProcedureName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
+
             string createTypeSql = string.Format(
                     "CREATE TYPE {0} AS TABLE("
                         + " c1 Int DEFAULT -1,"
@@ -34,29 +52,101 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         + " c4 Int DEFAULT -1)",
                         _typeName);
             string createProcSql = string.Format(
-                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", _procName, _typeName);
+                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", ProcedureName, _typeName);
 
-            _conn = new SqlConnection(DataTestUtility.TCPConnectionString);
-            _conn.Open();
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                CommandTimeout = CommandTimeoutSeconds
+            };
 
-            _cmd = new SqlCommand(createTypeSql, _conn);
-            _cmd.ExecuteNonQuery();
+            Connection = new SqlConnection(builder.ConnectionString);
 
-            _cmd.CommandText = createProcSql;
-            _cmd.ExecuteNonQuery();
+            // Partial construction must not leak the objects created so far, otherwise a transient
+            // failure here would orphan a type in the shared database.
+            try
+            {
+                Connection.Open();
 
-            _cmd.CommandText = _procName;
-            _cmd.CommandType = CommandType.StoredProcedure;
-            _param = _cmd.Parameters.Add("@tvp", SqlDbType.Structured);
+                using SqlCommand cmd = new(createTypeSql, Connection);
+                cmd.ExecuteNonQuery();
+
+                try
+                {
+                    cmd.CommandText = createProcSql;
+                    cmd.ExecuteNonQuery();
+                }
+                catch
+                {
+                    DropType();
+                    throw;
+                }
+            }
+            catch
+            {
+                Connection.Dispose();
+                throw;
+            }
         }
 
         public void Dispose()
         {
-            string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", _procName, _typeName);
-            using SqlCommand cmd = new(dropSql, _conn);
-            cmd.ExecuteNonQuery();
-            _conn.Dispose();
+            // Each step runs even if an earlier one fails, so a transient error while dropping the
+            // procedure cannot leave the type (or the connection) behind.
+            try
+            {
+                DropProcedure();
+            }
+            finally
+            {
+                try
+                {
+                    DropType();
+                }
+                finally
+                {
+                    Connection.Dispose();
+                }
+            }
         }
+
+        // Stored procedures live in sys.objects, so OBJECT_ID is the correct existence check here.
+        private void DropProcedure()
+        {
+            using SqlCommand cmd = new(
+                $"IF (OBJECT_ID(@objectName) IS NOT NULL) DROP PROCEDURE {ProcedureName}", Connection);
+            cmd.Parameters.AddWithValue("@objectName", ProcedureName);
+            cmd.ExecuteNonQuery();
+        }
+
+        // User-defined types live in sys.types rather than sys.objects, so OBJECT_ID never resolves
+        // them and would silently skip the drop, leaking the type into the shared database.
+        private void DropType()
+        {
+            using SqlCommand cmd = new(
+                $"IF (TYPE_ID(@typeName) IS NOT NULL) DROP TYPE {_typeName}", Connection);
+            cmd.Parameters.AddWithValue("@typeName", _typeName);
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+    /// <summary>
+    /// Tests for TVP query hints (sort order, uniqueness, default columns).
+    /// </summary>
+    public sealed class TvpQueryHintsTests : IClassFixture<TvpQueryHintsFixture>, IDisposable
+    {
+        private readonly SqlCommand _cmd;
+        private readonly SqlParameter _param;
+
+        public TvpQueryHintsTests(TvpQueryHintsFixture fixture)
+        {
+            _cmd = new SqlCommand(fixture.ProcedureName, fixture.Connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+            _param = _cmd.Parameters.Add("@tvp", SqlDbType.Structured);
+        }
+
+        public void Dispose() => _cmd.Dispose();
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SortOrderSimple()
