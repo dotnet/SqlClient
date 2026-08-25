@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             Debug.Assert(cacheLookupKey.Length <= capacity, "We needed to allocate a larger array");
 
             // Lookup the key in cache
-            if (!(_cache.TryGetValue(cacheLookupKey, out SymmetricKey? encryptionKey))
+            if (!_cache.TryGetValue(cacheLookupKey, out SymmetricKey? encryptionKey)
                 // A null cryptographic key is never added to the cache, but this null check satisfies the nullability warning.
                 || encryptionKey is null)
             {
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 try
                 {
                     // Perform a second check to see if the key was added to the cache while waiting for the lock, to avoid redundant work.
-                    if (!(_cache.TryGetValue(cacheLookupKey, out encryptionKey))
+                    if (!_cache.TryGetValue(cacheLookupKey, out encryptionKey)
                         || encryptionKey is null)
                     {
                         Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
