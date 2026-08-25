@@ -47,12 +47,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         {
             Output = output;
             _connection = new SqlConnection(s_connectionString);
-            _connection.Open();
 
-            // NOTE: If this constructor throws, xUnit never calls Dispose, so the objects created so far
-            //   (each with a GUID-based name) would be left in the database permanently.
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so the connection and the
+            //   objects created so far (each with a GUID-based name) would be left behind permanently.
+            //   Opening the connection is inside the try for the same reason: a failed Open still
+            //   leaves a SqlConnection instance that nothing else will ever dispose.
             try
             {
+                _connection.Open();
+
                 _vectorTable = new Table(_connection, namePrefix + "TestTable",
                     $"(Id INT PRIMARY KEY IDENTITY, VectorData {columnDefinition} NULL)");
 
