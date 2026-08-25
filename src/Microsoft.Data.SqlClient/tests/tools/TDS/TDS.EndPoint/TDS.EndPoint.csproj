@@ -12,53 +12,6 @@
     <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="FederatedAuthentication\FederatedAuthenticationTicketService.cs" />
-    <Compile Include="FederatedAuthentication\IFederatedAuthenticationTicket.cs" />
-    <Compile Include="FederatedAuthentication\Rps.cs" />
-    <Compile Include="FederatedAuthentication\RpsTicket.cs" />
-    <Compile Include="ITDSClientContext.cs" />
-    <Compile Include="ITDSServerSession.cs" />
-    <Compile Include="SSPI\SecBuffer.cs" />
-    <Compile Include="SSPI\SecBufferDescType.cs" />
-    <Compile Include="SSPI\SecConstants.cs" />
-    <Compile Include="SSPI\SecBufferDesc.cs" />
-    <Compile Include="SSPI\SecBufferType.cs" />
-    <Compile Include="SSPI\SecContextRequirements.cs" />
-    <Compile Include="SSPI\SecDataRepresentation.cs" />
-    <Compile Include="SSPI\SecPgkCredentials.cs" />
-    <Compile Include="SSPI\SecPkgInfo.cs" />
-    <Compile Include="SSPI\SecResult.cs" />
-    <Compile Include="SSPI\SecurityHandle.cs" />
-    <Compile Include="SSPI\SecurityInteger.cs" />
-    <Compile Include="PlaceholderStream.cs" />
-    <Compile Include="SSPI\SSPIResponse.cs" />
-    <Compile Include="TDSClientEndPoint.cs" />
-    <Compile Include="ITDSClient.cs" />
-    <Compile Include="ITDSServer.cs" />
-    <Compile Include="TDSClientParser.cs" />
-    <Compile Include="TDSEndPointInfo.cs" />
-    <Compile Include="TDSEndPointTransportType.cs" />
-    <Compile Include="TDSParser.cs" />
-    <Compile Include="TDSServerEndPoint.cs" />
-    <Compile Include="TDSServerEndPointConnection.cs" />
-    <Compile Include="TDSServerParser.cs" />
-  </ItemGroup>
-
-  <!-- Windows Only Files -->
-  <ItemGroup Condition="'$(TargetOs)' == 'Windows_NT'">
-    <Compile Include="SSPI\SSPIContext.Windows.cs" />
-    <Compile Include="SSPI\SecurityWrapper.cs" />
-  </ItemGroup>
-
-  <!-- Unix Only Files -->
-  <ItemGroup Condition="'$(TargetOs)' != 'Windows_NT'">
-    <Compile Include="SSPI\SSPIContext.Unix.cs" />
-  </ItemGroup>
-
   <!-- References ====================================================== -->
   <ItemGroup>
     <PackageReference Include="System.Security.Principal.Windows" />
