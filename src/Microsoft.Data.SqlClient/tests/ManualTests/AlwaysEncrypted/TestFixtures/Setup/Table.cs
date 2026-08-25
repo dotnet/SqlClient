@@ -12,11 +12,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Drop(SqlConnection sqlConnection)
         {
-            string sql = $"DROP TABLE [{Name}];";
+            // NOTE: The drop is guarded so that cleanup is idempotent. An unguarded DROP throws when
+            //   the object was never created (for example when setup failed part way through), which
+            //   would abort the enclosing drop loop and leak every remaining object.
+            string sql = $"IF (OBJECT_ID(@name) IS NOT NULL) DROP TABLE [{Name}];";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = sql;
+                command.Parameters.AddWithValue("@name", $"[{Name}]");
                 command.ExecuteNonQuery();
             }
         }

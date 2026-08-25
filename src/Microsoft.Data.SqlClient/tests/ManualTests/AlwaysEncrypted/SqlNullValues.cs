@@ -26,34 +26,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
 
-            foreach (string connStr in DataTestUtility.AEConnStringsSetup)
+            // NOTE: If setup fails part way through, this constructor never returns, so xUnit never calls
+            //   Dispose and the functions created so far (whose names embed a GUID) would be leaked.
+            try
             {
-                // Insert data and create functions for SqlNullValues test.
-                using (SqlConnection sqlConnection = new SqlConnection(connStr))
+                foreach (string connStr in DataTestUtility.AEConnStringsSetup)
                 {
-                    sqlConnection.Open();
-
-                    using (SqlCommand cmd = new SqlCommand(string.Format("INSERT INTO [{0}] (c1) VALUES (@c1)", tableName), sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    // Insert data and create functions for SqlNullValues test.
+                    using (SqlConnection sqlConnection = new SqlConnection(connStr))
                     {
-                        SqlParameter param = cmd.Parameters.Add("@c1", SqlDbType.Int);
-                        param.Value = DBNull.Value;
-                        cmd.ExecuteNonQuery();
+                        sqlConnection.Open();
 
-                        param.Value = 10;
-                        cmd.ExecuteNonQuery();
-                    }
+                        using (SqlCommand cmd = new SqlCommand(string.Format("INSERT INTO [{0}] (c1) VALUES (@c1)", tableName), sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                        {
+                            SqlParameter param = cmd.Parameters.Add("@c1", SqlDbType.Int);
+                            param.Value = DBNull.Value;
+                            cmd.ExecuteNonQuery();
 
-                    string sql1 = $"CREATE FUNCTION {UdfName}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END";
-                    string sql2 = $"CREATE FUNCTION {UdfNameNotNull}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END";
-                    using (SqlCommand cmd = sqlConnection.CreateCommand())
-                    {
-                        cmd.CommandText = sql1;
-                        cmd.ExecuteNonQuery();
+                            param.Value = 10;
+                            cmd.ExecuteNonQuery();
+                        }
 
-                        cmd.CommandText = sql2;
-                        cmd.ExecuteNonQuery();
+                        string sql1 = $"CREATE FUNCTION {UdfName}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END";
+                        string sql2 = $"CREATE FUNCTION {UdfNameNotNull}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END";
+                        using (SqlCommand cmd = sqlConnection.CreateCommand())
+                        {
+                            cmd.CommandText = sql1;
+                            cmd.ExecuteNonQuery();
+
+                            cmd.CommandText = sql2;
+                            cmd.ExecuteNonQuery();
+                        }
                     }
                 }
+            }
+            catch
+            {
+                Dispose();
+                throw;
             }
         }
 
@@ -158,13 +168,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
+                // Each step is best-effort so that one failure cannot leak the remaining functions or
+                // skip cleanup for the remaining connection strings.
+                try
                 {
-                    sqlConnection.Open();
-                    Table.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection);
-                    DataTestUtility.DropFunction(sqlConnection, UdfName);
-                    DataTestUtility.DropFunction(sqlConnection, UdfNameNotNull);
+                    using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
+                    {
+                        sqlConnection.Open();
+
+                        TryCleanup(() => Table.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection));
+                        TryCleanup(() => DataTestUtility.DropFunction(sqlConnection, UdfName));
+                        TryCleanup(() => DataTestUtility.DropFunction(sqlConnection, UdfNameNotNull));
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(SqlNullValuesTests)}: cleanup connection failed: {ex.Message}");
+                }
+            }
+        }
+
+        private static void TryCleanup(Action cleanupAction)
+        {
+            try
+            {
+                cleanupAction();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(SqlNullValuesTests)}: cleanup step failed: {ex.Message}");
             }
         }
     }

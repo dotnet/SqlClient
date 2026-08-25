@@ -119,7 +119,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public ExceptionGenericErrorFixture()
         {
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
-            CreateAndPopulateSimpleTable();
+
+            // NOTE: If setup fails part way through, this constructor never returns, so xUnit never
+            //   calls Dispose and the objects created so far would be leaked. Their names embed a
+            //   GUID, so anything left behind stays in the shared test database forever.
+            try
+            {
+                CreateAndPopulateSimpleTable();
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
 
         private void CreateAndPopulateSimpleTable()
@@ -155,23 +167,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 SqlConnectionStringBuilder sb = new SqlConnectionStringBuilder(connectionStr);
-                using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
-                {
-                    using (SqlCommand cmd = new SqlCommand($"drop table {encryptedTableName}", conn))
-                    {
-                        cmd.CommandType = CommandType.Text;
-                        cmd.ExecuteNonQuery();
 
-                        cmd.CommandText = $"drop procedure {encryptedProcedureName}";
-                        cmd.ExecuteNonQuery();
+                // NOTE: Cleanup is best-effort and guarded. Previously the drops shared one command
+                //   with no IF EXISTS guard, so a failure to drop the table leaked the procedure and
+                //   skipped the server TCE setting reset for every remaining connection string.
+                try
+                {
+                    using (SqlConnection conn = CertificateUtility.GetOpenConnection(false, sb))
+                    {
+                        using (SqlCommand cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandType = CommandType.Text;
+
+                            TryExecute(cmd, $"IF (OBJECT_ID('{encryptedTableName}') IS NOT NULL) DROP TABLE {encryptedTableName}");
+                            TryExecute(cmd, $"IF (OBJECT_ID('{encryptedProcedureName}') IS NOT NULL) DROP PROCEDURE {encryptedProcedureName}");
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(ExceptionGenericErrorFixture)}: cleanup failed: {ex.Message}");
                 }
 
                 // Only use traceoff for non-sysadmin role accounts, Azure accounts does not have the permission.
                 if (DataTestUtility.IsNotAzureServer())
                 {
-                    CertificateUtility.ChangeServerTceSetting(true, sb);
+                    try
+                    {
+                        CertificateUtility.ChangeServerTceSetting(true, sb);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"{nameof(ExceptionGenericErrorFixture)}: failed to reset TCE setting: {ex.Message}");
+                    }
                 }
+            }
+        }
+
+        private static void TryExecute(SqlCommand command, string commandText)
+        {
+            try
+            {
+                command.CommandText = commandText;
+                command.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(ExceptionGenericErrorFixture)}: cleanup statement failed ({commandText}): {ex.Message}");
             }
         }
     }

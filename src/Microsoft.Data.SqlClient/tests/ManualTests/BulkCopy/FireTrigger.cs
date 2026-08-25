@@ -40,10 +40,13 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
-                Helpers.ProcessCommandBatch(dstCmd, prologue);
 
                 try
                 {
+                    // NOTE: Setup runs inside the try so that a partial failure (for example the
+                    //   trigger failing to create) still runs the epilogue and drops the tables.
+                    Helpers.ProcessCommandBatch(dstCmd, prologue);
+
                     using (SqlConnection srcConn = new SqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                     {
@@ -73,7 +76,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 }
                 finally
                 {
-                    Helpers.ProcessCommandBatch(dstCmd, epilogue);
+                    // NOTE: Each drop is run independently so that one failure does not leak the
+                    //   remaining objects (in particular the trigger).
+                    Helpers.ProcessCleanupBatch(dstCmd, epilogue);
                 }
             }
         }

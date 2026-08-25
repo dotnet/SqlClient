@@ -186,8 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
             finally
             {
-                Helpers.TryDropTable(dstConstr, dstTable1);
-                Helpers.TryDropTable(dstConstr, dstTable2);
+                Helpers.DropTables(dstConstr, dstTable1, dstTable2);
             }
         }
     }

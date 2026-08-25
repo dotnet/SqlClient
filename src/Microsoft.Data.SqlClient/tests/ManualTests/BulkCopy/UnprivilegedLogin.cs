@@ -54,17 +54,28 @@ public sealed class UnprivilegedLogin : IDisposable
         _managementConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
         _managementConnection.Open();
 
-        _unprivilegedLogin = new ServerLogin(_managementConnection, nameof(UnprivilegedLogin), _managementConnection.Database);
-        _unprivilegedAppUser = new DatabaseUser(_managementConnection, _managementConnection.Database, _unprivilegedLogin);
-        _unprivilegedMasterUser = new DatabaseUser(_managementConnection, "master", _unprivilegedLogin);
-
-        using (SqlCommand permissionsModificationCommand = _managementConnection.CreateCommand())
+        // NOTE: If setup fails part way through, this constructor never returns, so xUnit never calls
+        //   Dispose and the login/users created so far would be leaked. A server login in particular
+        //   is instance-wide, so it survives long after the test database is recreated.
+        try
         {
-            permissionsModificationCommand.CommandText = $"DENY SELECT ON [master].[sys].[all_columns] TO {_unprivilegedMasterUser.Name}";
-            permissionsModificationCommand.ExecuteNonQuery();
+            _unprivilegedLogin = new ServerLogin(_managementConnection, nameof(UnprivilegedLogin), _managementConnection.Database);
+            _unprivilegedAppUser = new DatabaseUser(_managementConnection, _managementConnection.Database, _unprivilegedLogin);
+            _unprivilegedMasterUser = new DatabaseUser(_managementConnection, "master", _unprivilegedLogin);
 
-            permissionsModificationCommand.CommandText = $"DENY SELECT ON [{_managementConnection.Database}].[sys].[all_columns] TO {_unprivilegedAppUser.Name}";
-            permissionsModificationCommand.ExecuteNonQuery();
+            using (SqlCommand permissionsModificationCommand = _managementConnection.CreateCommand())
+            {
+                permissionsModificationCommand.CommandText = $"DENY SELECT ON [master].[sys].[all_columns] TO {_unprivilegedMasterUser.Name}";
+                permissionsModificationCommand.ExecuteNonQuery();
+
+                permissionsModificationCommand.CommandText = $"DENY SELECT ON [{_managementConnection.Database}].[sys].[all_columns] TO {_unprivilegedAppUser.Name}";
+                permissionsModificationCommand.ExecuteNonQuery();
+            }
+        }
+        catch
+        {
+            Dispose();
+            throw;
         }
 
         SqlConnectionStringBuilder tcpConnectionBuilder = new(DataTestUtility.TCPConnectionString)
@@ -205,9 +216,24 @@ public sealed class UnprivilegedLogin : IDisposable
 
     public void Dispose()
     {
-        _unprivilegedAppUser?.Dispose();
-        _unprivilegedMasterUser?.Dispose();
-        _unprivilegedLogin?.Dispose();
+        // Each drop is best-effort: a failure to remove one object must not prevent the others (in
+        // particular the instance-wide server login) from being removed.
+        DisposeSafely(_unprivilegedAppUser);
+        DisposeSafely(_unprivilegedMasterUser);
+        DisposeSafely(_unprivilegedLogin);
+
         _managementConnection?.Dispose();
+    }
+
+    private static void DisposeSafely(IDisposable? disposable)
+    {
+        try
+        {
+            disposable?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"{nameof(UnprivilegedLogin)}: cleanup failed: {ex.Message}");
+        }
     }
 }

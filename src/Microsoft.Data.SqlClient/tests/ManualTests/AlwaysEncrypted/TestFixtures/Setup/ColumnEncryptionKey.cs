@@ -43,12 +43,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public override void Drop(SqlConnection sqlConnection)
         {
-            string sql = $"DROP COLUMN ENCRYPTION KEY [{Name}]";
+            // NOTE: The drop is guarded so that cleanup is idempotent. An unguarded DROP throws when
+            //   the key was never created (for example when setup failed part way through), which
+            //   would abort the enclosing drop loop and leak every remaining object.
+            string sql = $"IF EXISTS (SELECT 1 FROM sys.column_encryption_keys WHERE name = @name) DROP COLUMN ENCRYPTION KEY [{Name}]";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = sql;
                 command.CommandTimeout = 60;
+                command.Parameters.AddWithValue("@name", Name);
                 command.ExecuteNonQuery();
             }
         }

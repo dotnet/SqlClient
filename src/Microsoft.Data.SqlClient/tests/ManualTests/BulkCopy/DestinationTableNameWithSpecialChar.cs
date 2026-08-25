@@ -70,7 +70,10 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 }
                 finally
                 {
-                    Helpers.ProcessCommandBatch(typeof(SqlConnection), constr, prologue);
+                    // NOTE: Each drop is run independently so that a failure to drop the source table
+                    //   does not leak the destination table (the names embed a GUID, so anything left
+                    //   behind stays in the shared test database forever).
+                    Helpers.ProcessCleanupBatch(typeof(SqlConnection), constr, prologue);
                 }
             }
         }

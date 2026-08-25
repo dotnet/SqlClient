@@ -78,8 +78,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 }
                 finally
                 {
-                    Helpers.TryExecute(dstCmd, "drop table " + targettable);
-                    Helpers.TryExecute(dstCmd, "drop table " + targetCustomerTable);
+                    Helpers.DropTable(dstCmd, targettable);
+                    Helpers.DropTable(dstCmd, targetCustomerTable);
                 }
             }
         }

@@ -25,15 +25,22 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 varchar(7000))");
             }
 
-            DoBulkCopy(constr, dstTable, 2);
-            DoBulkCopy(constr, dstTable, 0);
-
-            using (SqlConnection dstConn = new SqlConnection(constr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
+            // NOTE: The table name embeds a GUID, so it must be dropped even when the bulk copy or an
+            //   assertion below fails, otherwise it is left in the shared test database forever.
+            try
             {
-                dstConn.Open();
+                DoBulkCopy(constr, dstTable, 2);
+                DoBulkCopy(constr, dstTable, 0);
+            }
+            finally
+            {
+                using (SqlConnection dstConn = new SqlConnection(constr))
+                using (SqlCommand dstCmd = dstConn.CreateCommand())
+                {
+                    dstConn.Open();
 
-                Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
+                }
             }
         }
 

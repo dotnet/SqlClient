@@ -49,13 +49,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             _connection = new SqlConnection(s_connectionString);
             _connection.Open();
 
-            _vectorTable = new Table(_connection, namePrefix + "TestTable",
-                $"(Id INT PRIMARY KEY IDENTITY, VectorData {columnDefinition} NULL)");
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so the objects created so far
+            //   (each with a GUID-based name) would be left in the database permanently.
+            try
+            {
+                _vectorTable = new Table(_connection, namePrefix + "TestTable",
+                    $"(Id INT PRIMARY KEY IDENTITY, VectorData {columnDefinition} NULL)");
 
-            _bulkCopySrcTable = new Table(_connection, namePrefix + "BulkCopyTestTable",
-                "(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)");
+                _bulkCopySrcTable = new Table(_connection, namePrefix + "BulkCopyTestTable",
+                    "(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)");
 
-            string storedProcBody = $@"
+                string storedProcBody = $@"
                 @InputVectorJson VARCHAR(MAX),   -- Input: Serialized float[] as JSON string
                 @OutputVectorJson VARCHAR(MAX) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
@@ -72,7 +76,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 ORDER BY Id DESC;
                 END;";
 
-            _storedProc = new StoredProcedure(_connection, namePrefix + "AsVarcharSp", storedProcBody);
+                _storedProc = new StoredProcedure(_connection, namePrefix + "AsVarcharSp", storedProcBody);
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
 
             _selectCmdString = $"SELECT VectorData FROM {_vectorTable.Name} ORDER BY Id DESC";
             _insertCmdString = $"INSERT INTO {_vectorTable.Name} (VectorData) VALUES (@VectorData)";
@@ -80,11 +90,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public void Dispose()
         {
-            // RAII objects drop themselves on Dispose in reverse order.
-            _storedProc?.Dispose();
-            _bulkCopySrcTable?.Dispose();
-            _vectorTable?.Dispose();
+            // RAII objects drop themselves on Dispose in reverse order. Each drop is best-effort so
+            // that one failure cannot leak the remaining objects.
+            DisposeSafely(_storedProc);
+            DisposeSafely(_bulkCopySrcTable);
+            DisposeSafely(_vectorTable);
             _connection?.Dispose();
+        }
+
+        private static void DisposeSafely(IDisposable disposable)
+        {
+            try
+            {
+                disposable?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(VectorBackwardCompatTestBase)}: cleanup failed: {ex.Message}");
+            }
         }
 
         #region Shared Helpers

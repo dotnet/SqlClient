@@ -56,8 +56,11 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 }
                 finally
                 {
-                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
-                    Helpers.TryExecute(dstCmd, "drop schema " + dstschema);
+                    // NOTE: Each statement is run independently. Previously a failed "drop table"
+                    //   (for example when the create failed) aborted the cleanup and leaked the
+                    //   schema, while also masking the original exception.
+                    Helpers.TryCleanup(dstCmd, "drop table " + dstTable);
+                    Helpers.TryCleanup(dstCmd, "drop schema " + dstschema);
                 }
             }
         }

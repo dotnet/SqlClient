@@ -64,7 +64,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Directory.CreateDirectory(s_fullPathToClientCert);
             }
 
-            RunPowershellScript(s_fullPathToPowershellScript);
+            // NOTE: The setup script installs a certificate into the LocalMachine root store and writes
+            //   the scratch files. If it fails part way through, xUnit never calls Dispose, so run the
+            //   cleanup here to avoid leaving the certificate behind.
+            try
+            {
+                RunPowershellScript(s_fullPathToPowershellScript);
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
 
         private static bool IsLocalHost()
@@ -254,18 +265,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
-            string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
-            using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
-            certStore.Open(OpenFlags.ReadWrite);
-            X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
-            if (certCollection.Count > 0)
+            // NOTE: Each step is independent. Previously a missing thumbprint file (or a failed store
+            //   removal) aborted the whole cleanup, leaving the certificate in the LocalMachine root
+            //   store and the scratch directory on disk.
+            try
             {
-                certStore.Remove(certCollection[0]);
+                if (File.Exists(s_fullPathTothumbprint))
+                {
+                    string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
+                    using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
+                    certStore.Open(OpenFlags.ReadWrite);
+                    X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                    if (certCollection.Count > 0)
+                    {
+                        certStore.Remove(certCollection[0]);
+                    }
+                    certStore.Close();
+                }
             }
-            certStore.Close();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: failed to remove certificate: {ex.Message}");
+            }
 
-            File.Delete(s_fullPathTothumbprint);
-            Directory.Delete(s_fullPathToClientCert, true);
+            TryCleanup(() => File.Delete(s_fullPathTothumbprint));
+            TryCleanup(() => Directory.Delete(s_fullPathToClientCert, true));
+        }
+
+        private static void TryCleanup(Action cleanupAction)
+        {
+            try
+            {
+                cleanupAction();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(CertificateTestWithTdsServer)}: cleanup step failed: {ex.Message}");
+            }
         }
 
         private static void RemoveForceEncryptionFromRegistryPath(string registryPath)
@@ -292,8 +328,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (disposing && !string.IsNullOrEmpty(s_fullPathTothumbprint))
                 {
-                    RemoveCertificate();
-                    RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
+                    // NOTE: The registry/service reset must run even if certificate removal fails,
+                    //   otherwise the SQL Server instance is left with ForceEncryption enabled and a
+                    //   reference to a certificate that may no longer exist.
+                    try
+                    {
+                        RemoveCertificate();
+                    }
+                    finally
+                    {
+                        RemoveForceEncryptionFromRegistryPath(ForceEncryptionRegistryPath);
+                    }
                 }
             }
             else

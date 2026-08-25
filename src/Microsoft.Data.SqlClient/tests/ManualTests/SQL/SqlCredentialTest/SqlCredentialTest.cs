@@ -198,18 +198,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void DropTestUser(string username)
         {
             // Removes a created test user.
-            string dropUserCmd = $"IF EXISTS (SELECT * FROM sys.schemas WHERE name = '{username}') BEGIN DROP SCHEMA {username} END;"
-                                + $"IF EXISTS (SELECT * FROM sys.database_principals WHERE type = 'S' AND name = '{username}') BEGIN DROP USER {username} END;"
-                                + $"DROP LOGIN {username}";
+            // NOTE: Each statement runs independently and is guarded so that a failure to drop the
+            //   schema or database user does not leak the login, which is instance-wide and would
+            //   otherwise survive well beyond the test run.
+            string[] dropStatements =
+            {
+                $"IF EXISTS (SELECT * FROM sys.schemas WHERE name = '{username}') BEGIN DROP SCHEMA {username} END;",
+                $"IF EXISTS (SELECT * FROM sys.database_principals WHERE type = 'S' AND name = '{username}') BEGIN DROP USER {username} END;",
+                $"IF EXISTS (SELECT * FROM sys.server_principals WHERE name = '{username}') BEGIN DROP LOGIN {username} END;",
+            };
 
             // Pool must be cleared to prevent DROP LOGIN failure.
             SqlConnection.ClearAllPools();
 
             using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var cmd = new SqlCommand(dropUserCmd, conn))
+            using (var cmd = new SqlCommand(string.Empty, conn))
             {
                 conn.Open();
-                cmd.ExecuteNonQuery();
+
+                foreach (string statement in dropStatements)
+                {
+                    try
+                    {
+                        cmd.CommandText = statement;
+                        cmd.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"{nameof(SqlCredentialTest)}: cleanup statement failed ({statement}): {ex.Message}");
+                    }
+                }
             }
         }
     }

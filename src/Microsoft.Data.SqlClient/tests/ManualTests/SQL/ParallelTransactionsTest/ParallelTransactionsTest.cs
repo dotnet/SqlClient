@@ -152,7 +152,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection con1 = new SqlConnection(connectionString))
             {
                 con1.Open();
-                SqlCommand cmd = new SqlCommand("Drop table " + tempTableName, con1);
+                SqlCommand cmd = new SqlCommand(
+                    string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", tempTableName), con1);
                 cmd.ExecuteNonQuery();
             }
         }

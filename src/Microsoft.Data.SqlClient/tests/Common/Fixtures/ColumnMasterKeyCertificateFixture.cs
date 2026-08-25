@@ -28,11 +28,21 @@ public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
     {
         if (createCertificate)
         {
-            ColumnMasterKeyCertificate = CreateCertificate(nameof(ColumnMasterKeyCertificate), Array.Empty<string>(), Array.Empty<string>());
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so the certificate placed in
+            //   the store (and its persisted key container) would be leaked.
+            try
+            {
+                ColumnMasterKeyCertificate = CreateCertificate(nameof(ColumnMasterKeyCertificate), Array.Empty<string>(), Array.Empty<string>());
 
-            AddToStore(ColumnMasterKeyCertificate, StoreLocation.CurrentUser, StoreName.My);
+                AddToStore(ColumnMasterKeyCertificate, StoreLocation.CurrentUser, StoreName.My);
 
-            ColumnMasterKeyCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{ColumnMasterKeyCertificate.Thumbprint}";
+                ColumnMasterKeyCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{ColumnMasterKeyCertificate.Thumbprint}";
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
     }
 }

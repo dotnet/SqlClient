@@ -50,7 +50,23 @@ public abstract class CertificateFixtureBase : IDisposable
 
     private readonly List<CertificateStoreContext> _certificateStoreModifications = new List<CertificateStoreContext>();
 
+    /// <summary>
+    /// Every certificate handed out by <see cref="CreateCertificate"/>. Certificates are created with
+    /// <see cref="X509KeyStorageFlags.PersistKeySet"/>, which writes the private key to a key container on
+    /// disk. Removing the certificate from a store does not remove that container, so the containers must
+    /// be deleted explicitly or they accumulate indefinitely across test runs.
+    /// </summary>
+    private readonly List<X509Certificate2> _createdCertificates = new List<X509Certificate2>();
+
     protected X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false)
+    {
+        X509Certificate2 certificate = CreateCertificateCore(subjectName, dnsNames, ipAddresses, forceCsp);
+
+        _createdCertificates.Add(certificate);
+        return certificate;
+    }
+
+    private X509Certificate2 CreateCertificateCore(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false)
     {
         // This will always generate a certificate with:
         // * Start date: 24hrs ago
@@ -281,21 +297,39 @@ catch [Exception]
 
     protected virtual void Dispose(bool disposing)
     {
+        // Collect everything that needs disposing before touching any of it: removal from a store and
+        // deletion of the persisted key are both best-effort, but the handles must always be released.
+        List<X509Certificate2> certificates = new List<X509Certificate2>(_createdCertificates);
+
+        // Remove the certificates from any store they were added to. This must happen before the
+        // certificates are disposed, because a disposed certificate cannot be matched against a store.
         foreach (CertificateStoreContext storeContext in _certificateStoreModifications)
         {
             using X509Store store = new X509Store(storeContext.Name, storeContext.Location);
 
+            bool opened;
             try
             {
                 store.Open(OpenFlags.ReadWrite);
+                opened = true;
             }
             catch (Exception)
             {
-                continue;
+                opened = false;
             }
 
             foreach (X509Certificate2 cert in storeContext.Certificates)
             {
+                if (!certificates.Contains(cert))
+                {
+                    certificates.Add(cert);
+                }
+
+                if (!opened)
+                {
+                    continue;
+                }
+
                 try
                 {
                     if (store.Certificates.Contains(cert))
@@ -307,11 +341,65 @@ catch [Exception]
                 {
                     continue;
                 }
-
-                cert.Dispose();
             }
 
             storeContext.Certificates.Clear();
+        }
+
+        _certificateStoreModifications.Clear();
+
+        foreach (X509Certificate2 cert in certificates)
+        {
+            DeletePersistedPrivateKey(cert);
+
+            try
+            {
+                cert.Dispose();
+            }
+            catch (Exception)
+            {
+                // Nothing further can be done about a certificate that refuses to release its handle.
+            }
+        }
+
+        _createdCertificates.Clear();
+    }
+
+    /// <summary>
+    /// Deletes the on-disk key container backing a certificate's private key, if there is one.
+    /// </summary>
+    /// <remarks>
+    /// This is best-effort: the certificate may have no private key, the key may be ephemeral, or the
+    /// current user may lack permission to delete it (for example, for a machine-scoped key).
+    /// </remarks>
+    private static void DeletePersistedPrivateKey(X509Certificate2 certificate)
+    {
+        try
+        {
+            if (!certificate.HasPrivateKey)
+            {
+                return;
+            }
+
+            using RSA? privateKey = certificate.GetRSAPrivateKey();
+
+            switch (privateKey)
+            {
+                case RSACryptoServiceProvider csp:
+                    csp.PersistKeyInCsp = false;
+                    break;
+#if NET
+                case RSACng cng:
+                    cng.Key.Delete();
+                    break;
+#endif
+                default:
+                    break;
+            }
+        }
+        catch (Exception)
+        {
+            // Best-effort; a stale key container is preferable to failing the test run during cleanup.
         }
     }
 }
