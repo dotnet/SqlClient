@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -85,43 +85,39 @@ namespace Microsoft.Data.SqlClient.Tests
 
 #if NET
         /// <summary>
-        /// Regression test: triggering the configurable retry logic loader must not leave a
-        /// process-wide <see cref="System.Runtime.Loader.AssemblyLoadContext.Default"/> resolving
-        /// handler installed that probes the current working directory. The working directory is
-        /// ambient process state unrelated to where the application's binaries live, so resolving
-        /// assemblies from it can load code from an unintended location.
+        /// Regression test: triggering the configurable retry logic loader through its normal
+        /// entry points must not leave a process-wide
+        /// <see cref="System.Runtime.Loader.AssemblyLoadContext.Default"/> resolving handler
+        /// installed. Such a handler participates in resolution of every assembly the host
+        /// application fails to find, and serves them out of this component's probing directory,
+        /// which can load code from an unintended location.
         /// </summary>
         [Fact]
-        public void RetryLogicProviderDoesNotEnableCurrentDirectoryAssemblyProbing()
+        public void RetryLogicProviderDoesNotLeaveAssemblyProbingEnabled()
         {
             // Touch the default retry logic providers to force SqlConfigurableRetryLogicLoader
             // construction via its normal code path.
             Assert.NotNull(new SqlCommand().RetryLogicProvider);
             Assert.NotNull(new SqlConnection().RetryLogicProvider);
 
-            string probeDirectory = Path.Combine(Path.GetTempPath(), "mds-crl-plant-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(probeDirectory);
-            string originalCurrentDirectory = Environment.CurrentDirectory;
+            // A file that is not a valid assembly, planted in the loader's probing directory
+            // under a name no other component could be asking for. If a handler is still
+            // subscribed it finds this file and fails with BadImageFormatException. With correct
+            // behavior the runtime never looks here and reports the assembly as simply not found.
+            string assemblySimpleName = "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
+            string plantedFile = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
 
+            File.WriteAllText(plantedFile, "not an assembly");
             try
             {
-                // A file that is not a valid assembly. If the loader probes the current working
-                // directory it will try to load this file and fail with BadImageFormatException.
-                // With correct behavior the runtime never looks here and reports the assembly as
-                // simply not found.
-                string assemblySimpleName = "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
-                File.WriteAllText(Path.Combine(probeDirectory, assemblySimpleName + ".dll"), "not an assembly");
-
-                Environment.CurrentDirectory = probeDirectory;
-
-                Assert.Throws<FileNotFoundException>(() => Assembly.Load(new AssemblyName(assemblySimpleName)));
+                Assert.Throws<FileNotFoundException>(
+                    () => Assembly.Load(new AssemblyName(assemblySimpleName)));
             }
             finally
             {
-                Environment.CurrentDirectory = originalCurrentDirectory;
                 try
                 {
-                    Directory.Delete(probeDirectory, true);
+                    File.Delete(plantedFile);
                 }
                 catch (IOException)
                 {

@@ -5,7 +5,7 @@
 #if NET
 
 using System;
-using System.Linq;
+using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using Xunit;
@@ -30,11 +30,11 @@ public class SqlConfigurableRetryLogicLoaderTest
     /// default load context.
     /// </summary>
     [Fact]
-    public void Constructor_WithNoConfiguration_DoesNotSubscribeToDefaultLoadContext()
+    public void Constructor_WithNoConfiguration_DoesNotLeaveAssemblyProbingEnabled()
     {
         _ = new SqlConfigurableRetryLogicLoader(null, null);
 
-        AssertNoLoaderResolvingHandlerAttached();
+        AssertNoAssemblyProbingHandlerInstalled();
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public class SqlConfigurableRetryLogicLoaderTest
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void Constructor_WithoutRetryLogicType_DoesNotSubscribeToDefaultLoadContext(string? retryLogicType)
+    public void Constructor_WithoutRetryLogicType_DoesNotLeaveAssemblyProbingEnabled(string? retryLogicType)
     {
         TestRetryConnectionSection section = CreateSection(retryLogicType);
 
@@ -53,7 +53,7 @@ public class SqlConfigurableRetryLogicLoaderTest
 
         // The built-in factory still resolves the requested method.
         Assert.NotNull(loader.ConnectionProvider);
-        AssertNoLoaderResolvingHandlerAttached();
+        AssertNoAssemblyProbingHandlerInstalled();
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class SqlConfigurableRetryLogicLoaderTest
     /// resolution, but the handler must be removed again once type resolution has finished.
     /// </summary>
     [Fact]
-    public void Constructor_WithUnresolvableRetryLogicType_DoesNotLeaveHandlerSubscribed()
+    public void Constructor_WithUnresolvableRetryLogicType_DoesNotLeaveAssemblyProbingEnabled()
     {
         TestRetryConnectionSection section =
             CreateSection("Some.Namespace.NoSuchType, Some.Assembly.That.Does.Not.Exist");
@@ -70,7 +70,7 @@ public class SqlConfigurableRetryLogicLoaderTest
 
         // Resolution fails and falls back to the built-in factory rather than throwing.
         Assert.NotNull(loader.ConnectionProvider);
-        AssertNoLoaderResolvingHandlerAttached();
+        AssertNoAssemblyProbingHandlerInstalled();
     }
 
     private static TestRetryConnectionSection CreateSection(string? retryLogicType) =>
@@ -85,39 +85,43 @@ public class SqlConfigurableRetryLogicLoaderTest
         };
 
     /// <summary>
-    /// Asserts that no delegate declared by <see cref="SqlConfigurableRetryLogicLoader"/> is
-    /// subscribed to the <see cref="AssemblyLoadContext.Default"/> resolving event.
+    /// Asserts that a failed assembly load is not served out of the loader's probing directory,
+    /// which can only happen while a resolving handler installed by
+    /// <see cref="SqlConfigurableRetryLogicLoader"/> is subscribed to
+    /// <see cref="AssemblyLoadContext.Default"/>.
     /// </summary>
     /// <remarks>
-    /// The event exposes only add/remove accessors, so its backing field is read reflectively.
-    /// If the runtime ever renames that field this assertion fails loudly rather than silently
-    /// passing, which is the desired behaviour for a regression test.
+    /// A file that is not a valid assembly is planted in the probing directory under a name no
+    /// other component could be asking for. If a handler is still subscribed it finds that file
+    /// and tries to load it, which surfaces as <see cref="BadImageFormatException"/>. With no
+    /// handler subscribed the runtime never looks there and reports the assembly as simply not
+    /// found. This asserts the behaviour that actually matters to a host application rather than
+    /// inspecting loader or runtime internals.
     /// </remarks>
-    private static void AssertNoLoaderResolvingHandlerAttached()
+    private static void AssertNoAssemblyProbingHandlerInstalled()
     {
-        FieldInfo? resolvingField = typeof(AssemblyLoadContext).GetField(
-            "_resolving",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        // The probing directory is the application base directory, which for a test run is the
+        // directory the test assembly was loaded from.
+        string assemblySimpleName = "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
+        string plantedFile = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
 
-        Assert.True(
-            resolvingField is not null,
-            "Could not locate the backing field of AssemblyLoadContext.Resolving. This test needs " +
-            "updating for the current runtime.");
-
-        Delegate? resolving = (Delegate?)resolvingField!.GetValue(AssemblyLoadContext.Default);
-
-        string[] offenders = resolving is null
-            ? []
-            : resolving.GetInvocationList()
-                .Where(handler => handler.Method.DeclaringType == typeof(SqlConfigurableRetryLogicLoader))
-                .Select(handler => handler.Method.Name)
-                .ToArray();
-
-        Assert.True(
-            offenders.Length == 0,
-            $"SqlConfigurableRetryLogicLoader left {offenders.Length} handler(s) subscribed to " +
-            $"AssemblyLoadContext.Default.Resolving: {string.Join(", ", offenders)}. A process-wide " +
-            "handler changes assembly resolution for the entire application.");
+        File.WriteAllText(plantedFile, "not an assembly");
+        try
+        {
+            Assert.Throws<FileNotFoundException>(
+                () => Assembly.Load(new AssemblyName(assemblySimpleName)));
+        }
+        finally
+        {
+            try
+            {
+                File.Delete(plantedFile);
+            }
+            catch (IOException)
+            {
+                // Best effort cleanup.
+            }
+        }
     }
 
     private sealed class TestRetryConnectionSection : ISqlConfigurableRetryConnectionSection
