@@ -45,9 +45,10 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 
 ### Changed
 
-- Completed the removal of OS-specific compilation from `Microsoft.Data.SqlClient`; the driver now builds a single cross-platform assembly and the `_WINDOWS`/`_UNIX` symbols have been removed. Package structure and contents are unchanged, and Windows-only native SNI types now trim cleanly on Linux and macOS.
+- Completed the removal of OS-specific compilation from `Microsoft.Data.SqlClient`; the driver now builds a single cross-platform assembly and the `_WINDOWS`/`_UNIX` symbols have been removed. OS-specific build targets and output paths were also removed. Package structure and contents are unchanged, and Windows-only native SNI types now trim cleanly on Linux and macOS.
   ([#4207](https://github.com/dotnet/SqlClient/pull/4207),
-   [#4465](https://github.com/dotnet/SqlClient/pull/4465))
+   [#4465](https://github.com/dotnet/SqlClient/pull/4465),
+   [#4474](https://github.com/dotnet/SqlClient/pull/4474))
 
 - Reduced managed allocations in the async read path by restoring reuse of `PacketData` nodes via a bounded free list on `StateSnapshot`.
   ([#4536](https://github.com/dotnet/SqlClient/pull/4536))
