@@ -199,7 +199,8 @@ feature extension (`0x0E`):
 | `2` | `float16` is supported in addition to `float32`. |
 
 The version requested at login is chosen by the `Vector Type Support` connection string
-keyword, and the server acknowledges the highest version they have in common:
+keyword, which may also be written `VectorTypeSupport`, and the server acknowledges the
+highest version they have in common:
 
 | Keyword value | Requested version |
 |---------------|-------------------|

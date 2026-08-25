@@ -231,7 +231,8 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.Uid,
                             DbConnectionStringSynonyms.User);
             AddKeywordToMap(DbConnectionStringKeywords.UserInstance);
-            AddKeywordToMap(DbConnectionStringKeywords.VectorTypeSupport);
+            AddKeywordToMap(DbConnectionStringKeywords.VectorTypeSupport,
+                            DbConnectionStringSynonyms.VectorTypeSupport);
             AddKeywordToMap(DbConnectionStringKeywords.WorkstationId,
                             DbConnectionStringSynonyms.WorkstationId,
                             DbConnectionStringSynonyms.WsId);

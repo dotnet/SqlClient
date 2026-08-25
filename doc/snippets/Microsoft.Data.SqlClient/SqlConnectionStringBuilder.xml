@@ -1232,8 +1232,8 @@ The following example converts an existing connection string from using SQL Serv
         <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V1" />.
       </value>
       <remarks>
-        Corresponds to the <c>Vector Type Support</c> connection string keyword, whose
-        values are <c>off</c>, <c>v1</c> and <c>v2</c>.
+        Corresponds to the <c>Vector Type Support</c> and <c>VectorTypeSupport</c> keys
+        within the connection string, whose values are <c>off</c>, <c>v1</c> and <c>v2</c>.
       </remarks>
       <exception cref="T:System.ArgumentOutOfRangeException">
         The value is not a member of <see cref="T:Microsoft.Data.SqlClient.SqlVectorTypeSupport" />.

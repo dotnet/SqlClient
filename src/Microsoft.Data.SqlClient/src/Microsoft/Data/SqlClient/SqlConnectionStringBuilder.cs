@@ -288,6 +288,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.ConnectTimeout, Keywords.ConnectTimeout },
                 { DbConnectionStringSynonyms.FailoverPartner, Keywords.FailoverPartner },
                 { DbConnectionStringSynonyms.PacketSize, Keywords.PacketSize },
+                { DbConnectionStringSynonyms.VectorTypeSupport, Keywords.VectorTypeSupport },
             };
             return pairs;
         }
