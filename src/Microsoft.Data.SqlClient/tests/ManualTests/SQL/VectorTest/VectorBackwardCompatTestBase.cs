@@ -101,7 +101,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             _connection?.Dispose();
         }
 
-        private static void DisposeSafely(IDisposable disposable)
+        // NOTE: This file is not in a nullable annotations context, so the parameter is annotated
+        //   under a scoped `#nullable enable`. The nullability is not incidental: on the
+        //   constructor-failure path Dispose runs with some of these fields still null, so accepting
+        //   null is the contract rather than a defensive afterthought.
+#nullable enable
+        private static void DisposeSafely(IDisposable? disposable)
+#nullable restore
         {
             try
             {
