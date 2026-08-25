@@ -449,9 +449,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     using (SqlConnection connection2 = new SqlConnection(_connectionString))
                     {
+                        // The READCOMMITTEDLOCK hint guarantees locking read committed semantics even when the
+                        // target database has READ_COMMITTED_SNAPSHOT enabled (the default for Azure SQL Database),
+                        // where the reader would otherwise return the last committed row version without blocking.
                         SqlCommand command2 =
-                            new SqlCommand("select * from " + _tempTableName1 + " where CustomerID='ZYXWV'",
-                                connection2);
+                            new SqlCommand("select * from " + _tempTableName1 + " with (readcommittedlock) where CustomerID='ZYXWV'",
+                                connection2)
+                            {
+                                CommandTimeout = 5
+                            };
 
                         connection2.Open();
                         SqlTransaction tx2 = connection2.BeginTransaction(IsolationLevel.ReadCommitted);
