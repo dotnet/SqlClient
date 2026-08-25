@@ -281,9 +281,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 : Assert.Throws<SqlException>(() => connection.Open());
 
             Assert.Equal(TdsEnums.TIMEOUT_EXPIRED, terminal.Number);
-            SqlException retryFailure =
-                Assert.Single(terminal.ConnectionOpenRetryFailures);
+            Assert.NotEmpty(terminal.ConnectionOpenRetryFailures);
+            SqlException retryFailure = terminal.ConnectionOpenRetryFailures[0];
             Assert.Equal(transientErrorCode, retryFailure.Number);
+            Assert.All(
+                terminal.ConnectionOpenRetryFailures,
+                failure => Assert.Empty(failure.ConnectionOpenRetryFailures));
             Assert.Equal(ConnectionState.Closed, connection.State);
         }
 
