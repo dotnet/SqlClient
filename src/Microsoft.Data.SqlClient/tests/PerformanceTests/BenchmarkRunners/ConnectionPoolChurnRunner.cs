@@ -85,7 +85,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 MaxPoolSize = 100,
                 // Pin the floor at the requested depth so pruning cannot shrink the pool back
                 // down mid-run and change what the benchmark is measuring.
-                MinPoolSize = PoolDepth
+                MinPoolSize = PoolDepth,
+                // Matches ConnectionPoolStressRunner. At the larger PoolDepth, setup establishes
+                // a hundred physical connections back to back, and the default 15s is tight for
+                // that against a loaded remote server.
+                ConnectTimeout = 60
             };
             _connectionString = builder.ConnectionString;
 
