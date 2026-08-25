@@ -34,7 +34,13 @@ public sealed class Table : DatabaseObject
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF (OBJECT_ID('{Name}') IS NOT NULL) DROP TABLE {Name}", Connection);
+        // NOTE: The name is passed to OBJECT_ID() as a parameter rather than being interpolated
+        //   into a string literal, because it embeds Environment.UserName/MachineName (see
+        //   DatabaseObject.GenerateLongName) and an apostrophe in either would break the batch.
+        //   The identifier in DROP TABLE is already bracket-quoted by GenerateLongName.
+        using SqlCommand dropCommand = new($"IF (OBJECT_ID(@name) IS NOT NULL) DROP TABLE {Name}", Connection);
+
+        dropCommand.Parameters.AddWithValue("@name", Name);
 
         dropCommand.ExecuteNonQuery();
     }

@@ -92,7 +92,13 @@ public sealed class ServerLogin : DatabaseObject<string>
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF SUSER_ID('{UnescapedName}') IS NOT NULL DROP LOGIN {Name}", Connection);
+        // NOTE: The name is passed to SUSER_ID() as a parameter rather than being interpolated into
+        //   a string literal, because it embeds Environment.UserName/MachineName (see
+        //   DatabaseObject.GenerateLongName) and an apostrophe in either would break the batch.
+        //   The identifier in DROP LOGIN is already bracket-quoted by GenerateLongName.
+        using SqlCommand dropCommand = new($"IF SUSER_ID(@name) IS NOT NULL DROP LOGIN {Name}", Connection);
+
+        dropCommand.Parameters.AddWithValue("@name", UnescapedName);
 
         dropCommand.ExecuteNonQuery();
     }

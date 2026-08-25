@@ -48,24 +48,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             Connection = new SqlConnection(builder.ConnectionString);
-            Connection.Open();
 
-            _tableType = new UserDefinedType(Connection, "QHint",
-                "TABLE("
-                    + " c1 Int DEFAULT -1,"
-                    + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
-                    + " c3 DateTime DEFAULT '1/1/2006',"
-                    + " c4 Int DEFAULT -1)");
+            // Partial construction must not leak the objects created so far, otherwise a transient
+            // failure here would orphan a type in the shared database.
+            try
+            {
+                Connection.Open();
 
-            _procedure = new StoredProcedure(Connection, "QHint_Proc",
-                $"(@tvp {_tableType.Name} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1");
+                _tableType = new UserDefinedType(Connection, "QHint",
+                    "TABLE("
+                        + " c1 Int DEFAULT -1,"
+                        + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
+                        + " c3 DateTime DEFAULT '1/1/2006',"
+                        + " c4 Int DEFAULT -1)");
+
+                try
+                {
+                    _procedure = new StoredProcedure(Connection, "QHint_Proc",
+                        $"(@tvp {_tableType.Name} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1");
+                }
+                catch
+                {
+                    _tableType.Dispose();
+                    throw;
+                }
+            }
+            catch
+            {
+                Connection.Dispose();
+                throw;
+            }
         }
 
         public void Dispose()
         {
-            _procedure.Dispose();
-            _tableType.Dispose();
-            Connection.Dispose();
+            // Each step runs even if an earlier one fails, so a transient error while dropping the
+            // procedure cannot leave the type (or the connection) behind.
+            try
+            {
+                _procedure.Dispose();
+            }
+            finally
+            {
+                try
+                {
+                    _tableType.Dispose();
+                }
+                finally
+                {
+                    Connection.Dispose();
+                }
+            }
         }
     }
 
