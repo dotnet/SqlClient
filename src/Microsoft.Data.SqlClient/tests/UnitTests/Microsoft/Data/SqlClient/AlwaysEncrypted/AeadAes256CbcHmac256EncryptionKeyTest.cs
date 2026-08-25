@@ -22,9 +22,12 @@ public class AeadAes256CbcHmac256EncryptionKeyTest
     [Fact]
     public void Constructor_ThrowsOnInvalidSize()
     {
+        // Arrange
         byte[] invalidSizeRootKey = [0x01, 0x02, 0x03, 0x04];
+        // Act
         Action createEncryptionKey = () => new AeadAes256CbcHmac256EncryptionKey(invalidSizeRootKey);
 
+        // Assert
         Assert.NotEqual(AeadAes256CbcHmac256EncryptionKey.KeySizeInBytes, invalidSizeRootKey.Length);
         Assert.Throws<ArgumentException>(createEncryptionKey);
     }
@@ -37,14 +40,17 @@ public class AeadAes256CbcHmac256EncryptionKeyTest
     [Fact]
     public void Constructor_SucceedsOnValidSize()
     {
+        // Arrange
         byte[] validRootKey = [
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
         ];
+        // Act
         AeadAes256CbcHmac256EncryptionKey encryptionKey = new(validRootKey);
 
+        // Assert
         Assert.Equal(AeadAes256CbcHmac256EncryptionKey.KeySizeInBytes, encryptionKey.EncryptionKey.Length);
         Assert.Equal(AeadAes256CbcHmac256EncryptionKey.KeySizeInBytes, encryptionKey.MacKey.Length);
         Assert.Equal(AeadAes256CbcHmac256EncryptionKey.KeySizeInBytes, encryptionKey.IvKey.Length);

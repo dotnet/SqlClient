@@ -21,9 +21,12 @@ public class SymmetricKeyTest
     [Fact]
     public void Constructor_WrapsByteArray()
     {
+        // Arrange
         byte[] dummySymmetricKeyMaterial = [0x00];
+        // Act
         SymmetricKey symmetricKey = new(dummySymmetricKeyMaterial);
 
+        // Assert
         Assert.Same(dummySymmetricKeyMaterial, symmetricKey.RootKey);
     }
 
@@ -34,9 +37,11 @@ public class SymmetricKeyTest
     [Fact]
     public void Constructor_ThrowsOnNullOrEmptyArray()
     {
+        // Act
         Action createNullArray = () => new SymmetricKey(rootKey: null);
         Action createEmptyArray = () => new SymmetricKey(rootKey: []);
 
+        // Assert
         Assert.Throws<ArgumentNullException>(createNullArray);
         Assert.Throws<ArgumentNullException>(createEmptyArray);
     }

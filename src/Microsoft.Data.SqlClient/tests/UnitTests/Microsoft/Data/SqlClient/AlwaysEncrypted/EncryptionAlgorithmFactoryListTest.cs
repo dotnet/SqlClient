@@ -22,10 +22,13 @@ public class EncryptionAlgorithmFactoryListTest
     {
         const string InvalidAlgorithmName = nameof(EncryptionAlgorithmFactoryListTest);
 
+        // Arrange
         byte[] dummySymmetricKeyMaterial = [0x00];
         SymmetricKey dummySymmetricKey = new(dummySymmetricKeyMaterial);
+        // Act
         Action getAlgorithm = () => EncryptionAlgorithmFactoryList.GetAlgorithm(dummySymmetricKey, 0x01, InvalidAlgorithmName, out _);
 
+        // Assert
         ArgumentException thrownException = Assert.Throws<ArgumentException>(getAlgorithm);
 
         Assert.Contains(InvalidAlgorithmName, thrownException.Message);

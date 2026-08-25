@@ -21,11 +21,14 @@ public class AeadAes256CbcHmac256FactoryTest
     [Fact]
     public void InvalidEncryptionType_Throws()
     {
+        // Arrange
         byte[] dummySymmetricKeyMaterial = [0x00];
         SymmetricKey symmetricKey = new(dummySymmetricKeyMaterial);
+        // Act
         Action createEncryptionAlgorithm = () =>
             AeadAes256CbcHmac256Factory.Instance.Create(symmetricKey, (EncryptionType)0xFF, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
+        // Assert
         Assert.Throws<ArgumentException>(createEncryptionAlgorithm);
     }
 
@@ -36,6 +39,7 @@ public class AeadAes256CbcHmac256FactoryTest
     [Fact]
     public void MultipleCreateCalls_ReturnCachedAlgorithm()
     {
+        // Arrange
         byte[] validFirstRootKeyMaterial = [
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
@@ -51,10 +55,12 @@ public class AeadAes256CbcHmac256FactoryTest
         SymmetricKey firstRootKey = new(validFirstRootKeyMaterial);
         SymmetricKey secondRootKey = new(validSecondRootKeyMaterial);
 
+        // Act
         SqlClientEncryptionAlgorithm initialFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
         SqlClientEncryptionAlgorithm cachedFirstAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(firstRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
         SqlClientEncryptionAlgorithm initialSecondAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(secondRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
+        // Assert
         Assert.Equal(initialFirstAlgorithm, cachedFirstAlgorithm);
         Assert.NotEqual(initialFirstAlgorithm, initialSecondAlgorithm);
 
