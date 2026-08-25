@@ -1458,14 +1458,18 @@ DROP TABLE #Column_Aliases
 
         /// <summary>
         /// Whether a vector destination column is supplied from a textual source, in which
-        /// case the value is transferred as text and converted by the server.
+        /// case the value is parsed into the destination's base type by the client.
         /// </summary>
         /// <remarks>
-        /// A vector has no textual form on the wire, so such a column is declared as a
-        /// <c>varchar(max)</c> in the <c>INSERT BULK</c> statement. The server then parses
-        /// the JSON array into the destination's base type, which is the only way to write a
-        /// base type the client cannot represent, and avoids a conversion whose result could
-        /// differ from the server's.
+        /// A JSON array is always coerced to a float32 payload, so it has to be rewritten
+        /// when the destination's base type is not float32. The server does not convert
+        /// within the data stream: the <c>INSERT BULK</c> declaration states the
+        /// destination's base type, and elements of each base type differ in size.
+        /// <para>
+        /// A payload read from another vector column is left as it is, so a copy between
+        /// columns of different base types is reported by the server rather than being
+        /// silently narrowed.
+        /// </para>
         /// </remarks>
         private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata) =>
             metadata.type == SqlDbTypeExtensions.Vector &&
