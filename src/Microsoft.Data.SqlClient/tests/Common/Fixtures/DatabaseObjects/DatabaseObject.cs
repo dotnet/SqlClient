@@ -38,7 +38,21 @@ public abstract class DatabaseObject<TState> : IDisposable
         {
             EnsureConnectionOpen();
             DropObject();
-            CreateObject(definition);
+
+            try
+            {
+                CreateObject(definition);
+            }
+            catch
+            {
+                // CREATE can fail *after* the server has created the object: a command timeout or a
+                // dropped connection reports failure for a statement that may already have committed.
+                // Every generated name embeds a GUID, so anything left behind is orphaned forever in
+                // the (shared) test database. Make a best-effort attempt to remove it, but let the
+                // original failure surface.
+                TryDropBestEffort();
+                throw;
+            }
         }
     }
 
@@ -251,7 +265,9 @@ public abstract class DatabaseObject<TState> : IDisposable
     /// </summary>
     /// <remarks>
     /// By the time this is called, <see cref="Connection"/> will be open.
-    /// Must not throw an exception if the object does not exist.
+    /// Must not throw an exception if the object does not exist, and must be safe to call more than
+    /// once: a failed drop is retried on a fresh connection, and a failed create attempts a drop to
+    /// avoid leaking an object whose creation may nonetheless have committed on the server.
     /// </remarks>
     protected abstract void DropObject();
 
@@ -259,13 +275,77 @@ public abstract class DatabaseObject<TState> : IDisposable
     {
         if (_shouldDrop)
         {
-            EnsureConnectionOpen();
-            DropObject();
+            try
+            {
+                EnsureConnectionOpen();
+                DropObject();
+            }
+            catch
+            {
+                // The drop is all that stands between a failed run and an object orphaned forever
+                // in the shared test database, so it gets one retry on a healthy connection. A bare
+                // `throw` preserves the original exception (and its stack) if that retry also fails.
+                if (!TryDropAfterReconnect())
+                {
+                    throw;
+                }
+            }
         }
         // This explicitly does not drop the wrapped SqlConnection; this is sometimes
         // used in a loop to create multiple UDTs.
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Drops the object, swallowing any failure.
+    /// </summary>
+    /// <remarks>
+    /// Only for use on paths that are already unwinding because of a more interesting failure,
+    /// where a cleanup error must not replace the exception in flight.
+    /// </remarks>
+    private void TryDropBestEffort()
+    {
+        try
+        {
+            EnsureConnectionOpen();
+            DropObject();
+        }
+        catch
+        {
+            TryDropAfterReconnect();
+        }
+    }
+
+    /// <summary>
+    /// Re-attempts the drop on a healthy connection.
+    /// </summary>
+    /// <returns><c>true</c> if the object was dropped; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// A drop usually fails because <see cref="Connection"/> itself has gone bad: a command timeout
+    /// can leave it unusable, and a transport failure kills it outright. Closing and reopening
+    /// returns the broken connection to the pool and acquires a healthy one, which is the difference
+    /// between a transient blip and an object orphaned forever in the shared test database.
+    ///
+    /// This deliberately reuses the existing <see cref="SqlConnection"/> rather than constructing a
+    /// new one from its connection string: `Persist Security Info` defaults to false, so the password
+    /// is no longer readable from <see cref="SqlConnection.ConnectionString"/> once it has been
+    /// opened, and a copy would fail to authenticate.
+    /// </remarks>
+    private bool TryDropAfterReconnect()
+    {
+        try
+        {
+            Connection.Close();
+            Connection.Open();
+            DropObject();
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 
