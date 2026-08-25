@@ -34,7 +34,10 @@ public sealed class UserDefinedType : DatabaseObject
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF (OBJECT_ID('{Name}') IS NOT NULL) DROP TYPE {Name}", Connection);
+        // NOTE: User-defined types live in sys.types, not sys.objects, so OBJECT_ID() always
+        //   returns NULL for them. Using it here silently skipped every drop and leaked the type
+        //   into the (shared) test database. TYPE_ID() is the correct lookup.
+        using SqlCommand dropCommand = new($"IF (TYPE_ID('{Name}') IS NOT NULL) DROP TYPE {Name}", Connection);
 
         dropCommand.ExecuteNonQuery();
     }
