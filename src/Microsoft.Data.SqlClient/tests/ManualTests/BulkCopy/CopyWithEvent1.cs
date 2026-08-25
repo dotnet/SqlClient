@@ -1,9 +1,10 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -38,47 +39,39 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CopyWithEvent1", false);
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
-                try
-                {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_CopyWithEvent1", "(orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select top 100 * from orders", srcConn))
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select top 100 * from orders", srcConn))
+                {
+                    srcConn.Open();
+
+                    using (DbDataReader reader = srcCmd.ExecuteReader())
+                    using (bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.UseInternalTransaction, null))
                     {
-                        srcConn.Open();
+                        bulkcopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnRowCopied);
 
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
-                        using (bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.UseInternalTransaction, null))
-                        {
-                            bulkcopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnRowCopied);
+                        bulkcopy.DestinationTableName = dstTable.Name;
+                        bulkcopy.NotifyAfter = 50;
 
-                            bulkcopy.DestinationTableName = dstTable;
-                            bulkcopy.NotifyAfter = 50;
+                        SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
-                            SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                        ColumnMappings.Add("OrderID", "orderid");
+                        ColumnMappings.Add("CustomerID", "customerid");
+                        ColumnMappings.Add("RequiredDate", "rdate");
+                        ColumnMappings.Add("Freight", "freight");
+                        ColumnMappings.Add("ShipName", "shipname");
 
-                            ColumnMappings.Add("OrderID", "orderid");
-                            ColumnMappings.Add("CustomerID", "customerid");
-                            ColumnMappings.Add("RequiredDate", "rdate");
-                            ColumnMappings.Add("Freight", "freight");
-                            ColumnMappings.Add("ShipName", "shipname");
-
-                            bulkcopy.NotifyAfter = 3;
-                            DataTestUtility.AssertThrows<OperationAbortedException>(() => bulkcopy.WriteToServer(reader));
-                            bulkcopy.SqlRowsCopied -= new SqlRowsCopiedEventHandler(OnRowCopied);
-                            bulkcopy.Close();
-                        }
+                        bulkcopy.NotifyAfter = 3;
+                        DataTestUtility.AssertThrows<OperationAbortedException>(() => bulkcopy.WriteToServer(reader));
+                        bulkcopy.SqlRowsCopied -= new SqlRowsCopiedEventHandler(OnRowCopied);
+                        bulkcopy.Close();
                     }
-                }
-                finally
-                {
-                    Helpers.DropTable(dstCmd, dstTable);
                 }
             }
         }

@@ -1,10 +1,11 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -17,41 +18,33 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_MissingTargetColumns", false);
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
-                try
-                {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(10))");
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_MissingTargetColumns", "(col1 int, col2 nvarchar(10))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
+                {
+                    srcConn.Open();
+
+                    using (DbDataReader reader = srcCmd.ExecuteReader())
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                     {
-                        srcConn.Open();
+                        bulkcopy.DestinationTableName = dstTable.Name;
+                        SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
-                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                        {
-                            bulkcopy.DestinationTableName = dstTable;
-                            SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                        ColumnMappings.Add("EmployeeID", "col1");
+                        ColumnMappings.Add("LastName", "col3"); // this column does not exist
+                        ColumnMappings.Add("FirstName", "col4"); // this column does not exist
 
-                            ColumnMappings.Add("EmployeeID", "col1");
-                            ColumnMappings.Add("LastName", "col3"); // this column does not exist
-                            ColumnMappings.Add("FirstName", "col4"); // this column does not exist
+                        string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnName;
+                        errorMsg = string.Format(errorMsg, "col3,col4");
 
-                            string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnName;
-                            errorMsg = string.Format(errorMsg, "col3,col4");
-
-                            DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
-                        }
+                        DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
                     }
-                }
-                finally
-                {
-                    Helpers.DropTable(dstCmd, dstTable);
                 }
             }
         }

@@ -25,6 +25,40 @@ public sealed class Table : DatabaseObject
     {
     }
 
+    private Table(SqlConnection connection, string name, string definition, bool shouldCreate)
+        : base(connection, name, definition, shouldCreate, shouldDrop: true)
+    {
+    }
+
+    /// <summary>
+    /// Creates a table using the caller-supplied name verbatim, instead of generating one.
+    /// </summary>
+    /// <remarks>
+    /// Prefer the prefix-based constructor: generated names embed a GUID and so cannot collide
+    /// between concurrent test runs against a shared database. This overload exists for the
+    /// minority of tests that must control the name exactly - either because the name itself is
+    /// under test (for example, one containing special characters), or because the same table has
+    /// to be addressed through several different connections.
+    /// </remarks>
+    /// <param name="connection">The SQL connection used to interact with the database.</param>
+    /// <param name="name">The table name, already quoted/escaped by the caller if it needs to be.</param>
+    /// <param name="definition">The SQL definition describing the structure of the table, including columns and data types.</param>
+    public static Table WithName(SqlConnection connection, string name, string definition)
+        => new(connection, name, definition, shouldCreate: true);
+
+    /// <summary>
+    /// Adopts an already-existing table so that it is dropped when the returned instance is
+    /// disposed. No table is created.
+    /// </summary>
+    /// <remarks>
+    /// Useful when a table is created by other means (for example, by a helper that also populates
+    /// it, or over a different connection) but still needs deterministic cleanup.
+    /// </remarks>
+    /// <param name="connection">The SQL connection used to drop the table.</param>
+    /// <param name="name">The table name, already quoted/escaped by the caller if it needs to be.</param>
+    public static Table AdoptExisting(SqlConnection connection, string name)
+        => new(connection, name, definition: string.Empty, shouldCreate: false);
+
     protected override void CreateObject(string definition)
     {
         using SqlCommand createCommand = new($"CREATE TABLE {Name} {definition}", Connection);

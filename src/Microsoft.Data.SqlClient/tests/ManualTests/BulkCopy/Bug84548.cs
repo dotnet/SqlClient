@@ -4,6 +4,7 @@
 
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -16,73 +17,57 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string targettable = DataTestUtility.GetShortName("SqlBulkCopyTest_Bug84548", false);
-            string targetCustomerTable = targettable + "_customer";
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
+            using SqlConnection dstConn = new SqlConnection(dstConstr);
+            dstConn.Open();
+
+            // The order table takes a foreign key on the customer table, so it must be dropped first.
+            // Disposal runs in reverse declaration order, which gives that for free.
+            using Table customerTable = new Table(dstConn, "SqlBulkCopyTest_Bug84548_customer",
+                "([CustomerID] [nchar] (5) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,"
+                    + " PRIMARY KEY CLUSTERED (CustomerID) ON [PRIMARY]) ON [PRIMARY]");
+
+            using Table orderTable = new Table(dstConn, "SqlBulkCopyTest_Bug84548",
+                "([OrderID] [int] NOT NULL,"
+                    + " [CustomerID] [nchar] (5) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,"
+                    + " PRIMARY KEY CLUSTERED ([OrderID]) ON [PRIMARY],"
+                    + $" FOREIGN KEY ([CustomerID]) REFERENCES {customerTable.Name} ([CustomerID])"
+                    + ") ON [PRIMARY]");
+
+            using (SqlConnection srcConn = new SqlConnection(srcConstr))
             {
-                dstConn.Open();
-                try
+                srcConn.Open();
+
+                // First copy the customer ID list across
+                SqlCommand customerCommand = new SqlCommand("SELECT CustomerID from Customers", srcConn);
+                using (DbDataReader reader = customerCommand.ExecuteReader())
                 {
-                    Helpers.TryExecute(dstCmd, "CREATE TABLE [" + targetCustomerTable + "] ([CustomerID] [nchar] (5) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL, CONSTRAINT [PK_" + targetCustomerTable + "] PRIMARY KEY CLUSTERED (CustomerID) ON [PRIMARY]) ON [PRIMARY]");
-
-                    Helpers.TryExecute(dstCmd,
-                        "CREATE TABLE [" + targettable + "] ([OrderID] [int] NOT NULL , " +
-                        " [CustomerID] [nchar] (5) COLLATE SQL_Latin1_General_CP1_CI_AS NULL , " +
-                        " CONSTRAINT [PK_" + targettable + "] PRIMARY KEY  CLUSTERED " +
-                        " (" +
-                        "  [OrderID]" +
-                        " )  ON [PRIMARY] ," +
-                        " CONSTRAINT [FK_" + targettable + "_Customers] FOREIGN KEY " +
-                        " (" +
-                        "  [CustomerID]" +
-                        " ) REFERENCES [" + targetCustomerTable + "] (" +
-                        " [CustomerID]" +
-                        " )" +
-                        ") ON [PRIMARY]");
-
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                     {
-                        srcConn.Open();
-
-                        // First copy the customer ID list across
-                        SqlCommand customerCommand = new SqlCommand("SELECT CustomerID from Customers", srcConn);
-                        using (DbDataReader reader = customerCommand.ExecuteReader())
-                        {
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                            {
-                                bulkcopy.DestinationTableName = targetCustomerTable;
-                                bulkcopy.WriteToServer(reader);
-                            }
-                        }
-
-                        SqlCommand srcCmd = new SqlCommand("select OrderID, CustomerID from Orders where OrderId = 10643", srcConn);
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
-                        {
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                            {
-                                bulkcopy.DestinationTableName = targettable;
-                                SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-
-                                ColumnMappings.Add("OrderID", "OrderID");
-                                ColumnMappings.Add("CustomerID", "CustomerID");
-
-                                bulkcopy.WriteToServer(reader);
-
-                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
-                            }
-                        }
+                        bulkcopy.DestinationTableName = customerTable.Name;
+                        bulkcopy.WriteToServer(reader);
                     }
-                    Helpers.VerifyResults(dstConn, targettable, 2, 1);
                 }
-                finally
+
+                SqlCommand srcCmd = new SqlCommand("select OrderID, CustomerID from Orders where OrderId = 10643", srcConn);
+                using (DbDataReader reader = srcCmd.ExecuteReader())
                 {
-                    Helpers.DropTable(dstCmd, targettable);
-                    Helpers.DropTable(dstCmd, targetCustomerTable);
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
+                    {
+                        bulkcopy.DestinationTableName = orderTable.Name;
+                        SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+
+                        ColumnMappings.Add("OrderID", "OrderID");
+                        ColumnMappings.Add("CustomerID", "CustomerID");
+
+                        bulkcopy.WriteToServer(reader);
+
+                        DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
+                    }
                 }
             }
+
+            Helpers.VerifyResults(dstConn, orderTable.Name, 2, 1);
         }
     }
 }
-

@@ -1,10 +1,11 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -16,26 +17,13 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         public void Test()
         {
             string constr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_Bug903514", false);
-            using (SqlConnection dstConn = new SqlConnection(constr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
-            {
-                dstConn.Open();
+            using SqlConnection dstConn = new SqlConnection(constr);
+            dstConn.Open();
 
-                Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 varchar(7000))");
-            }
+            using Table dstTable = new(dstConn, "SqlBulkCopyTest_Bug903514", "(col1 int, col2 varchar(7000))");
 
-            // NOTE: The table name embeds a GUID, so it must be dropped even when the bulk copy or an
-            //   assertion below fails, otherwise it is left in the shared test database forever.
-            try
-            {
-                DoBulkCopy(constr, dstTable, 2);
-                DoBulkCopy(constr, dstTable, 0);
-            }
-            finally
-            {
-                Helpers.DropTables(constr, dstTable);
-            }
+            DoBulkCopy(constr, dstTable.Name, 2);
+            DoBulkCopy(constr, dstTable.Name, 0);
         }
 
         private static void DoBulkCopy(string dstConstr, string dstTable, int timeout)

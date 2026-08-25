@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -26,17 +27,16 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_AsyncTest4", false);
             // Use this semaphore to ensure that results are written to the log in the correct order
             SemaphoreSlim outputSemaphore = new SemaphoreSlim(0, 1);
 
-            Task t = TestAsync(srcConstr, dstConstr, dstTable, outputSemaphore);
+            Task t = TestAsync(srcConstr, dstConstr, outputSemaphore);
             outputSemaphore.Release();
             t.Wait();
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
         }
 
-        private static async Task TestAsync(string srcConstr, string dstConstr, string dstTable, SemaphoreSlim outputSemaphore)
+        private static async Task TestAsync(string srcConstr, string dstConstr, SemaphoreSlim outputSemaphore)
         {
             DataSet dataset;
             SqlDataAdapter adapter;
@@ -48,52 +48,45 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             {
                 dstConn.Open();
 
-                try
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_AsyncTest4", "(orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
+
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select top 100 * from orders", srcConn))
                 {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
+                    srcConn.Open();
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select top 100 * from orders", srcConn))
+                    dataset = new DataSet("MyDataSet");
+                    adapter = new SqlDataAdapter(srcCmd);
+                    adapter.Fill(dataset);
+                    datatable = dataset.Tables[0];
+                    rows = new DataRow[datatable.Rows.Count];
+                    for (int i = 0; i < rows.Length; i++)
                     {
-                        srcConn.Open();
-
-                        dataset = new DataSet("MyDataSet");
-                        adapter = new SqlDataAdapter(srcCmd);
-                        adapter.Fill(dataset);
-                        datatable = dataset.Tables[0];
-                        rows = new DataRow[datatable.Rows.Count];
-                        for (int i = 0; i < rows.Length; i++)
-                        {
-                            rows[i] = datatable.Rows[i];
-                        }
+                        rows[i] = datatable.Rows[i];
                     }
-
-                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                    {
-
-                        bulkcopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnRowCopied);
-
-                        bulkcopy.DestinationTableName = dstTable;
-                        bulkcopy.NotifyAfter = 50;
-
-                        SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-
-                        ColumnMappings.Add(0, "orderid");
-                        ColumnMappings.Add(1, "customerid");
-                        ColumnMappings.Add(4, "rdate");
-                        ColumnMappings.Add(7, "freight");
-                        ColumnMappings.Add(8, "shipname");
-
-                        await bulkcopy.WriteToServerAsync(rows);
-                        bulkcopy.SqlRowsCopied -= new SqlRowsCopiedEventHandler(OnRowCopied);
-                    }
-                    await outputSemaphore.WaitAsync();
-                    Helpers.VerifyResults(dstConn, dstTable, 5, 100);
                 }
-                finally
+
+                using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                 {
-                    Helpers.DropTable(dstCmd, dstTable);
+
+                    bulkcopy.SqlRowsCopied += new SqlRowsCopiedEventHandler(OnRowCopied);
+
+                    bulkcopy.DestinationTableName = dstTable.Name;
+                    bulkcopy.NotifyAfter = 50;
+
+                    SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+
+                    ColumnMappings.Add(0, "orderid");
+                    ColumnMappings.Add(1, "customerid");
+                    ColumnMappings.Add(4, "rdate");
+                    ColumnMappings.Add(7, "freight");
+                    ColumnMappings.Add(8, "shipname");
+
+                    await bulkcopy.WriteToServerAsync(rows);
+                    bulkcopy.SqlRowsCopied -= new SqlRowsCopiedEventHandler(OnRowCopied);
                 }
+                await outputSemaphore.WaitAsync();
+                Helpers.VerifyResults(dstConn, dstTable.Name, 5, 100);
             }
         }
     }

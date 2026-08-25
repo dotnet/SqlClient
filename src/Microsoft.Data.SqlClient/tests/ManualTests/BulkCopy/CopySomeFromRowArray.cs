@@ -1,9 +1,10 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System.Data;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -16,7 +17,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CopySomeFromRowArray", false);
             DataSet dataset;
             SqlDataAdapter adapter;
             DataTable datatable;
@@ -27,44 +27,37 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             {
                 dstConn.Open();
 
-                try
-                {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(20), col3 nvarchar(10), col4 datetime)");
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_CopySomeFromRowArray", "(col1 int, col2 nvarchar(20), col3 nvarchar(10), col4 datetime)");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select * from employees", srcConn))
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select * from employees", srcConn))
+                {
+                    srcConn.Open();
+
+                    dataset = new DataSet("MyDataSet");
+                    adapter = new SqlDataAdapter(srcCmd);
+                    adapter.Fill(dataset);
+                    datatable = dataset.Tables[0];
+                    rows = new DataRow[datatable.Rows.Count];
+                    for (int i = 0; i < rows.Length; i++)
                     {
-                        srcConn.Open();
-
-                        dataset = new DataSet("MyDataSet");
-                        adapter = new SqlDataAdapter(srcCmd);
-                        adapter.Fill(dataset);
-                        datatable = dataset.Tables[0];
-                        rows = new DataRow[datatable.Rows.Count];
-                        for (int i = 0; i < rows.Length; i++)
-                        {
-                            rows[i] = datatable.Rows[i];
-                        }
-
-                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                        {
-                            bulkcopy.DestinationTableName = dstTable;
-                            bulkcopy.BatchSize = 4;
-
-                            SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-
-                            ColumnMappings.Add(0, "col1");
-                            ColumnMappings.Add(2, "col3");
-
-                            bulkcopy.WriteToServer(rows);
-                            bulkcopy.Close();
-                        }
-                        Helpers.VerifyResults(dstConn, dstTable, 4, 9);
+                        rows[i] = datatable.Rows[i];
                     }
-                }
-                finally
-                {
-                    Helpers.DropTable(dstCmd, dstTable);
+
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
+                    {
+                        bulkcopy.DestinationTableName = dstTable.Name;
+                        bulkcopy.BatchSize = 4;
+
+                        SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+
+                        ColumnMappings.Add(0, "col1");
+                        ColumnMappings.Add(2, "col3");
+
+                        bulkcopy.WriteToServer(rows);
+                        bulkcopy.Close();
+                    }
+                    Helpers.VerifyResults(dstConn, dstTable.Name, 4, 9);
                 }
             }
         }
