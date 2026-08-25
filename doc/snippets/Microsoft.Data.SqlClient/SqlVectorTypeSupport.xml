@@ -40,6 +40,13 @@
         <c>System.Half</c> is unavailable, it is surfaced as a JSON array string and can be
         read as a <c>SqlVector&lt;float&gt;</c> on request.
       </summary>
+      <remarks>
+        On .NET Framework, the driver widens each element of a <c>float16</c> column to single
+        precision as it reads, and renders the result as a JSON array for the string read
+        paths. On .NET, a <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no
+        per-element conversion takes place. Take this into account when you choose this value
+        for a .NET Framework application which reads <c>float16</c> columns in bulk.
+      </remarks>
     </V2>
   </members>
 </docs>

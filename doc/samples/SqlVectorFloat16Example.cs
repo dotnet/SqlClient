@@ -118,13 +118,16 @@ CREATE TABLE {TableName}
             int id = reader.GetInt32(0);
 
 #if NET
-            // On .NET, the column's own base type is available directly.
+            // On .NET, the column's own base type is available directly. A SqlVector<Half>
+            // wraps the payload the server sent, so no per-element conversion takes place.
             SqlVector<Half> exact = reader.GetSqlVector<Half>(1);
             Console.WriteLine($"  Id={id} as Half:  [{string.Join(", ", exact.Memory.ToArray())}]");
 #endif
 
             // On any framework, the elements can be widened to single precision. Widening
-            // from float16 is exact, so no information is lost.
+            // from float16 is exact, so no information is lost. On .NET Framework this is
+            // the cheapest strongly typed read: the string read paths widen the elements
+            // as well, and then serialize the result as a JSON array.
             SqlVector<float> widened = reader.GetSqlVector<float>(1);
             Console.WriteLine($"  Id={id} as float: [{string.Join(", ", widened.Memory.ToArray())}]");
 

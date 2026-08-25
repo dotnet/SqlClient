@@ -174,6 +174,19 @@ Notes:
   }
   ```
 
+> [!NOTE]
+> On .NET Framework, `float16` workloads do more work per value than they do on .NET.
+> Because `System.Half` isn't available, the driver widens each element to single
+> precision when it reads a `float16` column, and renders the result as a JSON array for
+> the string read paths. On .NET, a `SqlVector<Half>` wraps the payload the server sent,
+> so no per-element conversion takes place. Writes differ in the same way: .NET can send a
+> `SqlVector<Half>` unchanged, while .NET Framework sends a JSON string or a
+> `SqlVector<float>`, which the driver converts to the column's base type.
+>
+> If you read `float16` columns in bulk on .NET Framework, prefer
+> `GetSqlVector<float>` over the string read paths. Both widen the elements, but only the
+> string paths also serialize the result.
+
 #### Vector Feature Extension Versions
 
 The vector base types available on a connection are negotiated through the `VECTORSUPPORT`

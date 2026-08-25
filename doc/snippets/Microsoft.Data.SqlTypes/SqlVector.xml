@@ -24,6 +24,16 @@
           Otherwise such a column is returned as a <c>varchar(max)</c> containing a JSON array.
         </para>
         <para>
+          On .NET Framework, <c>float16</c> workloads do more work per value than they do on
+          .NET. Because <see cref="T:System.Half" /> isn't available, the driver widens each
+          element to single precision when it reads a <c>float16</c> column, and renders the
+          result as a JSON array for the string read paths. On .NET, a
+          <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no per-element
+          conversion takes place. If you read <c>float16</c> columns in bulk on .NET Framework,
+          prefer <c>GetSqlVector&lt;float&gt;</c> over the string read paths: both widen the
+          elements, but only the string paths also serialize the result.
+        </para>
+        <para>
           Conversion between base types is performed by SQL Server, which reports an error if a
           value is outside the range the destination can represent. Converting from
           <c>float32</c> to <c>float16</c> loses precision for values which the narrower type
