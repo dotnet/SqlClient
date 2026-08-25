@@ -24,6 +24,15 @@ public sealed class VectorColumnMetadataTests
 
     public static bool IsFloat16Supported => DataTestUtility.IsSqlVectorFloat16Supported;
 
+    /// <summary>
+    /// Whether the server reports a version which reflects the features it has. Rows in the
+    /// DataTypes schema collection are filtered by the version the server reports, and the
+    /// vector row is declared from 17.00 onwards. Azure SQL reports 12.00 whatever it
+    /// supports, so the row is filtered out there even though the type is available. The
+    /// json type, which is declared the same way, has the same gap.
+    /// </summary>
+    public static bool ReportsItsRealVersion => DataTestUtility.IsNotAzureServer();
+
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData(1)]
     [InlineData(3)]
@@ -82,7 +91,7 @@ public sealed class VectorColumnMetadataTests
         Assert.Null(column["NoSuchProperty"]);
     }
 
-    [ConditionalFact(nameof(IsSupported))]
+    [ConditionalFact(nameof(IsSupported), nameof(ReportsItsRealVersion))]
     public void SchemaCollectionIncludesVectorType()
     {
         using SqlConnection connection = new(_connectionString);

@@ -28,9 +28,11 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     private const string ParameterName = "@VectorData";
 
     /// <summary>
-    /// The server's error for a float32 value which cannot be narrowed to float16.
+    /// The server's errors for a value which cannot be narrowed to float16. Both describe
+    /// the same overflow, and which one is raised depends on the server build: SQL Server
+    /// 2025 reports 42284 for a vector parameter where Azure SQL reports 42241.
     /// </summary>
-    private const int Float32ToFloat16OutOfRangeError = 42284;
+    private static readonly int[] s_float16OutOfRangeErrors = [42284, 42241];
 
     private readonly string _connectionString = DataTestUtility.VectorFloat16ConnectionString;
     private readonly SqlConnection _managementConnection;
@@ -253,7 +255,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         SqlException exception = Assert.Throws<SqlException>(() =>
             Insert(_float16Table, new SqlVector<float>(new float[] { 70000f, 1f, 2f })));
 
-        Assert.Equal(Float32ToFloat16OutOfRangeError, exception.Number);
+        Assert.Contains(exception.Number, s_float16OutOfRangeErrors);
     }
 
     #endregion
