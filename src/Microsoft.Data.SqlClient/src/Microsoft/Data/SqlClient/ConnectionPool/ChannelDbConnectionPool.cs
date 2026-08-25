@@ -1804,6 +1804,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // once. Such a gate cannot prevent sync work from consuming thread pool threads, because
             // waiting on it blocks the calling thread just as opaquely; it only moves the invisible
             // block one frame up and starves the very continuations these waiters depend on.
+            //
+            // Blocking on a Task is the classic sync-over-async deadlock shape when a single-threaded
+            // SynchronizationContext is installed (WPF, WinForms, legacy ASP.NET). It is safe here
+            // only because IdleConnectionChannel.ReadAsync awaits with ConfigureAwait(false), so its
+            // completion never needs the context this thread is holding. Do not remove that.
             return _idleChannel.ReadAsync(cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
