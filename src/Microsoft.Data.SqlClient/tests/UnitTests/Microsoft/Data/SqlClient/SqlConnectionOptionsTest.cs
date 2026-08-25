@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             if (tnirEnabledInConnString.HasValue)
             {
 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
-            builder.TransparentNetworkIPResolution = tnirEnabledInConnString.Value;
+                builder.TransparentNetworkIPResolution = tnirEnabledInConnString.Value;
 #pragma warning restore 618
             }
             SqlConnectionOptions connectionString = new(builder.ConnectionString);
