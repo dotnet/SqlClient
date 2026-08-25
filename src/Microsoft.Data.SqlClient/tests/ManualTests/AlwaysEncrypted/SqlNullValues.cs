@@ -7,6 +7,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
+// NOTE: Aliased because the AE test fixtures declare their own Table type alongside the shared one.
+using SetupTable = Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup.Table;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -16,6 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private SQLSetupStrategy fixture;
         private readonly string tableName;
+        private readonly List<IDisposable> _databaseObjects = new();
+        private readonly List<SqlConnection> _connections = new();
         private string UdfName = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetVal");
         private string UdfNameNotNull = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetValNotNull");
 
@@ -47,17 +52,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             cmd.ExecuteNonQuery();
                         }
 
-                        string sql1 = $"CREATE FUNCTION {UdfName}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END";
-                        string sql2 = $"CREATE FUNCTION {UdfNameNotNull}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END";
-                        using (SqlCommand cmd = sqlConnection.CreateCommand())
-                        {
-                            cmd.CommandText = sql1;
-                            cmd.ExecuteNonQuery();
-
-                            cmd.CommandText = sql2;
-                            cmd.ExecuteNonQuery();
-                        }
                     }
+
+                    // The same function names have to exist behind every AE connection string, so
+                    //   they are created with an explicit name rather than a generated one, and the
+                    //   connection each was created on is held open until cleanup.
+                    SqlConnection functionConnection = new SqlConnection(connStr);
+                    functionConnection.Open();
+                    _connections.Add(functionConnection);
+
+                    _databaseObjects.Add(ScalarFunction.WithName(functionConnection, UdfName,
+                        $"() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END"));
+                    _databaseObjects.Add(ScalarFunction.WithName(functionConnection, UdfNameNotNull,
+                        $"() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END"));
                 }
             }
             catch
@@ -166,19 +173,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
+            for (int i = _databaseObjects.Count - 1; i >= 0; i--)
+            {
+                TryCleanup(_databaseObjects[i].Dispose);
+            }
+            _databaseObjects.Clear();
+
+            foreach (SqlConnection connection in _connections)
+            {
+                TryCleanup(connection.Dispose);
+            }
+            _connections.Clear();
+
             foreach (string connStrAE in DataTestUtility.AEConnStringsSetup)
             {
-                // Each step is best-effort so that one failure cannot leak the remaining functions or
-                // skip cleanup for the remaining connection strings.
                 try
                 {
                     using (SqlConnection sqlConnection = new SqlConnection(connStrAE))
                     {
                         sqlConnection.Open();
 
-                        TryCleanup(() => Table.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection));
-                        TryCleanup(() => DataTestUtility.DropFunction(sqlConnection, UdfName));
-                        TryCleanup(() => DataTestUtility.DropFunction(sqlConnection, UdfNameNotNull));
+                        TryCleanup(() => SetupTable.DeleteData(fixture.SqlNullValuesTable.Name, sqlConnection));
                     }
                 }
                 catch (Exception ex)

@@ -19,6 +19,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             //   TABLE statements in the derived classes. An unqualified name resolves against the
             //   connection's default schema, so if that is not dbo the guard would return NULL and
             //   silently skip the drop, leaking the table.
+            // NOTE: T-SQL cannot parameterize an identifier, so the name is parameterized in the
+            //   guard - where it is compared as a string - but must be interpolated into the DROP
+            //   itself. The interpolated identifier is bracket-quoted, and the value only ever
+            //   comes from the test's own generated name.
             string sql = $"IF (OBJECT_ID(@name) IS NOT NULL) DROP TABLE [dbo].[{Name}];";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
