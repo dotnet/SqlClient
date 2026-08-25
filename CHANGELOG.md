@@ -50,7 +50,7 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
    [#4465](https://github.com/dotnet/SqlClient/pull/4465),
    [#4474](https://github.com/dotnet/SqlClient/pull/4474))
 
-- Reduced managed allocations in the async read path by restoring reuse of `PacketData` nodes via a bounded free list on `StateSnapshot`.
+- Reduced managed allocations in the async read path by restoring reuse of `PacketData` nodes via a bounded free list on `StateSnapshot`. This applies to the default async read path and is not gated behind any AppContext switch.
   ([#4536](https://github.com/dotnet/SqlClient/pull/4536))
 
 - Converted 119 `SqlClientEventSource` trace call sites back to parameterized format strings so no formatted string is allocated when tracing is disabled. Trace output is unchanged.
