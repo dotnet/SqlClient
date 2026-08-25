@@ -1222,6 +1222,23 @@ The following example converts an existing connection string from using SQL Serv
         </para>
       </remarks>
     </PoolBlockingPeriod>
+    <VectorTypeSupport>
+      <summary>
+        Gets or sets the level of support for the <c>vector</c> data type which the driver
+        negotiates with the server.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlVectorTypeSupport" />. The default is
+        <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V1" />.
+      </value>
+      <remarks>
+        Corresponds to the <c>Vector Type Support</c> connection string keyword, whose
+        values are <c>off</c>, <c>v1</c> and <c>v2</c>.
+      </remarks>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The value is not a member of <see cref="T:Microsoft.Data.SqlClient.SqlVectorTypeSupport" />.
+      </exception>
+    </VectorTypeSupport>
     <Pooling>
       <summary>
         Gets or sets a Boolean value that indicates whether the connection will be pooled or explicitly opened every time that the connection is requested.

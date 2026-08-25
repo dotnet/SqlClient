@@ -839,7 +839,8 @@ DROP TABLE #Column_Aliases
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
                     }
 
-                    switch (metadata.metaType.NullableType)
+                    {
+                        switch (metadata.metaType.NullableType)
                     {
                         case TdsEnums.SQLNUMERICN:
                         case TdsEnums.SQLDECIMALN:
@@ -909,6 +910,7 @@ DROP TABLE #Column_Aliases
                                 }
                                 break;
                             }
+                        }
                     }
 
                     // Get collation for column i
@@ -1430,11 +1432,46 @@ DROP TABLE #Column_Aliases
             }
         }
 
+        /// <summary>
+        /// The CLR type of a source column, or <see langword="null"/> when the source cannot
+        /// report one.
+        /// </summary>
+        private Type GetSourceColumnType(int sourceOrdinal)
+        {
+            switch (_rowSourceType)
+            {
+                case ValueSourceType.DbDataReader:
+                case ValueSourceType.IDataReader:
+                    return _sqlDataReaderRowSource?.GetFieldType(sourceOrdinal);
+
+                case ValueSourceType.DataTable:
+                case ValueSourceType.RowArray:
+                    return _dataTableSource?.Columns[sourceOrdinal].DataType;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Whether a vector destination column is supplied from a textual source, in which
+        /// case the value is transferred as text and converted by the server.
+        /// </summary>
+        /// <remarks>
+        /// A vector has no textual form on the wire, so such a column is declared as a
+        /// <c>varchar(max)</c> in the <c>INSERT BULK</c> statement. The server then parses
+        /// the JSON array into the destination's base type, which is the only way to write a
+        /// base type the client cannot represent, and avoids a conversion whose result could
+        /// differ from the server's.
+        /// </remarks>
+        private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata) =>
+            metadata.type == SqlDbTypeExtensions.Vector &&
+            GetSourceColumnType(sourceOrdinal) == typeof(string);
+
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
             _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
-
             // Handle special Sql data types for SqlDataReader and DataTables
             ValueMethod method;
             bool isSqlType;
@@ -1736,10 +1773,10 @@ DROP TABLE #Column_Aliases
         /// column's base type, leaving payloads which already use that base type untouched.
         /// </summary>
         /// <remarks>
-        /// Unlike an ordinary parameter, a bulk copy declares the destination's base type in
-        /// the <c>INSERT BULK</c> statement, so the payload must use that base type. The
-        /// server cannot convert it, because binary16 and binary32 elements differ in size
-        /// and a mismatch is reported as a column length error.
+        /// Used only for a textual source, whose JSON array is always coerced to a float32
+        /// payload regardless of the destination's base type. The server does not convert
+        /// within the bulk copy data stream, because binary16 and binary32 elements differ
+        /// in size and the <c>INSERT BULK</c> declaration fixes the element width.
         /// </remarks>
         private static object ConvertVectorToBaseType(object value, byte destinationElementType)
         {
@@ -1750,14 +1787,12 @@ DROP TABLE #Column_Aliases
                 return value;
             }
 
-            // The payload is converted directly rather than through a strongly typed vector,
-            // so that .NET Framework, which has no System.Half, can also write to float16
-            // destinations.
             return SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
         }
 
-        private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
+        private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed, int sourceOrdinal)
         {
+            bool isTextSourcedVector = IsTextSourcedVectorColumn(sourceOrdinal, metadata);
             coercedToDataFeed = false;
 
             if (isNull)
@@ -1844,17 +1879,20 @@ DROP TABLE #Column_Aliases
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
 
-                        // The INSERT BULK declaration for a vector column states the
-                        // destination's base type, so the payload written to the wire must
-                        // use that base type too. A mismatch is rejected by the server as a
-                        // column length error rather than being converted, because binary16
-                        // and binary32 elements differ in size.
+                        // A JSON string is always coerced to a float32 payload, so a textual
+                        // source bound for a column with a different base type has to be
+                        // rewritten to that base type. The INSERT BULK declaration states the
+                        // destination's base type, and the server does not convert within the
+                        // data stream, because binary16 and binary32 elements differ in size.
                         //
-                        // This runs after coercion because the payload produced by coercion
-                        // uses the source value's own base type: a JSON string always yields
-                        // float32, which is how a float16 column reads back on frameworks
-                        // without System.Half.
-                        value = ConvertVectorToBaseType(value, scale);
+                        // Only a textual source is converted. A payload read from another
+                        // vector column keeps its own base type, so copying between columns
+                        // of different base types is reported by the server rather than being
+                        // silently narrowed.
+                        if (isTextSourcedVector)
+                        {
+                            value = ConvertVectorToBaseType(value, scale);
+                        }
                         break;
 
                     case TdsEnums.SQLINTN:
@@ -2517,7 +2555,8 @@ DROP TABLE #Column_Aliases
             _SqlMetaData metadata = _sortedColumnMappings[col]._metadata;
             if (!isDataFeed)
             {
-                value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
+                value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed,
+                    _sortedColumnMappings[col]._sourceColumnOrdinal);
 
                 // If column encryption is requested via connection string option, perform encryption here
                 if (!isNull && // if value is not NULL

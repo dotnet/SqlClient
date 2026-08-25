@@ -42,6 +42,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         /// </summary>
         public virtual bool IsDefaultRepresentation => true;
 
+        /// <summary>
+        /// The connection string the suite runs against. A float16 column is only exchanged
+        /// in its binary form when the connection opts in to the feature extension version
+        /// which covers that base type, so a suite for such a column overrides this.
+        /// </summary>
+        public virtual string ConnectionString => DataTestUtility.TCPConnectionString;
+
         public int ValidSampleScalarDataLength => SampleScalarData.Length;
 
         public IEnumerable<object?[]> TestData =>
@@ -109,6 +116,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public static bool IsSupported => TestDataInstance.IsSupported;
 
+        /// <summary>
+        /// The bulk copy source modes which apply to this suite. Mode 2 supplies the value as
+        /// a <see cref="SqlVector{T}"/> through a <see cref="DataTable"/>, which carries its
+        /// own base type; it is therefore only valid when that base type is the column's.
+        /// </summary>
+        public static IEnumerable<object[]> BulkCopySourceModes
+        {
+            get
+            {
+                yield return new object[] { 1 };
+
+                if (TestDataInstance.IsDefaultRepresentation)
+                {
+                    yield return new object[] { 2 };
+                }
+            }
+        }
+
         public static IEnumerable<object?[]> TestData => TestDataInstance.TestData;
 
         public NativeVectorTestsBase()
@@ -116,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             int vectorDimensions = TestDataInstance.ValidSampleScalarDataLength;
             string tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
 
-            _connectionString = DataTestUtility.TCPConnectionString;
+            _connectionString = TestDataInstance.ConnectionString;
             _managementConnection = new SqlConnection(_connectionString);
             _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
             _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
@@ -430,8 +455,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(nameof(IsSupported))]
-        [InlineData(1)]
-        [InlineData(2)]
+        [MemberData(nameof(BulkCopySourceModes))]
         public void TestBulkCopyFromSqlTable(int bulkCopySourceMode)
         {
             // Setup source with test data and create destination table for bulkcopy.
@@ -526,8 +550,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         }
 
         [ConditionalTheory(nameof(IsSupported))]
-        [InlineData(1)]
-        [InlineData(2)]
+        [MemberData(nameof(BulkCopySourceModes))]
         public async Task TestBulkCopyFromSqlTableAsync(int bulkCopySourceMode)
         {
             // Setup source with test data and create destination table for bulk copy.

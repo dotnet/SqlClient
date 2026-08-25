@@ -112,7 +112,7 @@ public sealed class VectorColumnMetadataTests
         // own: it reports string for a float16 column on .NET Framework, which is what a
         // varchar column reports too, and it cannot distinguish the two base types at all
         // for a caller which wants to read both through one representation.
-        using SqlConnection connection = new(_connectionString);
+        using SqlConnection connection = new(DataTestUtility.VectorFloat16ConnectionString);
         connection.Open();
 
         using SqlCommand command = new(

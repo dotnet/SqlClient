@@ -75,6 +75,7 @@ This is a comprehensive reference of supported connection string keywords.
 | `Column Encryption Setting` | Disabled | Always Encrypted mode |
 | `Enclave Attestation Url` | | Enclave attestation URL |
 | `Type System Version` | Latest | Type system version |
+| `Vector Type Support` | v1 | Vector base types exchanged in binary form: `off`, `v1`, `v2` |
 | `Replication` | False | Replication support |
 | `User Instance` | False | SQL Express user instance |
 | `ConnectRetryCount` | 1 | Connection retry count |
@@ -135,20 +136,43 @@ transported. The base type is selected by the type parameter of `SqlVector<T>`.
 
 Notes:
 
+- The `float16` base type is only exchanged in its binary form when the connection asks for
+  it through the `Vector Type Support` keyword. See below.
 - `System.Half` does not exist on .NET Framework, so `SqlVector<Half>` cannot be used there.
   A `float16` column is instead reported as a string, and can be read either as a JSON array
   through `GetString`/`GetSqlString`/`GetFieldValue<string>`, or as a `SqlVector<float>` via
   `GetSqlVector<float>`, which widens the elements. Widening from `float16` is exact.
 - `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` while
   it is in preview.
-- Conversion between base types is performed by SQL Server for parameters, and by the driver
-  for `SqlBulkCopy`, where the destination's base type is stated in the `INSERT BULK`
-  statement. Narrowing to `float16` loses precision, and fails for values outside its range:
-  the server reports the failure for a parameter, and the driver throws an
-  `OverflowException` for a bulk copy.
+- SQL Server converts between base types for a parameter. A bulk copy is different: the
+  `INSERT BULK` statement states the destination's base type, and the server then requires a
+  binary payload of exactly that width, so it performs no conversion within the data stream.
+  A textual source is therefore parsed into the destination's base type by the driver, and
+  narrowing to `float16` throws an `OverflowException` for a value outside its range. A
+  payload read from another vector column keeps its own base type, so copying between
+  columns of different base types is reported by the server.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
-  for columns which are not vectors.
+  for columns which are not vectors. This is the only way to tell the two base types apart
+  when a `float16` column is surfaced as a JSON string, because `GetFieldType` reports
+  `string` for such a column just as it does for a `varchar` one:
+
+  ```csharp
+  DbColumn column = reader.GetColumnSchema()[0];
+
+  string baseType   = (string)column["VectorBaseType"];    // "float16" | "float32"
+  int    dimensions = (int)   column["VectorDimensions"];  // element count
+
+  // The dimension count is known before any row is read, so a buffer can be sized once.
+  float[] buffer = new float[dimensions];
+
+  while (reader.Read())
+  {
+      // Widening from float16 is exact, so single precision reads either base type
+      // losslessly, and is the only strongly typed option on .NET Framework.
+      reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
+  }
+  ```
 
 #### Vector Feature Extension Versions
 
@@ -161,8 +185,25 @@ feature extension (`0x0E`):
 | `1` | `float32` is supported. Columns with any other base type are returned as `varchar(max)`. |
 | `2` | `float16` is supported in addition to `float32`. |
 
-The driver always requests the highest version it supports, and the server acknowledges the
-highest version they have in common.
+The version requested at login is chosen by the `Vector Type Support` connection string
+keyword, and the server acknowledges the highest version they have in common:
+
+| Keyword value | Requested version |
+|---------------|-------------------|
+| `off` | The feature extension is not requested at all. |
+| `v1` | `1` — this is the **default**. |
+| `v2` | `2` |
+
+The default is `v1`, so an application opts in to the `float16` representation rather than
+receiving it when it upgrades the driver. The equivalent property is
+`SqlConnectionStringBuilder.VectorTypeSupport`, of type `SqlVectorTypeSupport`.
+
+```csharp
+var builder = new SqlConnectionStringBuilder(connectionString)
+{
+    VectorTypeSupport = SqlVectorTypeSupport.V2
+};
+```
 
 ## SqlCommand Execution Modes
 

@@ -32,7 +32,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     /// </summary>
     private const int Float32ToFloat16OutOfRangeError = 42284;
 
-    private readonly string _connectionString = DataTestUtility.TCPConnectionString;
+    private readonly string _connectionString = DataTestUtility.VectorFloat16ConnectionString;
     private readonly SqlConnection _managementConnection;
     private readonly Table _float16Table;
     private readonly Table _float32Table;
@@ -261,14 +261,51 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     #region Bulk copy across base types
 
     [ConditionalTheory(nameof(IsSupported))]
-    [InlineData("float16", "float32")]
-    [InlineData("float32", "float16")]
-    [InlineData("float16", "float16")]
-    public void BulkCopiesBetweenColumnsOfEitherBaseType(string sourceBaseType, string destinationBaseType)
+    [InlineData("float16")]
+    [InlineData("float32")]
+    public void BulkCopiesBetweenColumnsOfTheSameBaseType(string baseType)
     {
-        // Unlike a parameter, a bulk copy states the destination's base type in the
-        // INSERT BULK statement, so the driver converts the payload rather than relying on
-        // the server, which rejects a size mismatch instead of converting it.
+        // A payload read from a vector column is transferred to a column of the same base
+        // type as-is, with no conversion and no intermediate representation.
+        Table table = baseType == "float16" ? _float16Table : _float32Table;
+
+        Insert(table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+
+        using SqlConnection sourceConnection = new(_connectionString);
+        sourceConnection.Open();
+        using SqlCommand selectCommand = new($"SELECT {ColumnName} FROM {table.Name}", sourceConnection);
+        using SqlDataReader sourceReader = selectCommand.ExecuteReader();
+
+        using SqlConnection destinationConnection = new(_connectionString);
+        destinationConnection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(sourceReader);
+        }
+
+        using SqlCommand verifyCommand =
+            new($"SELECT TOP 1 {ColumnName} FROM {table.Name} ORDER BY Id DESC", destinationConnection);
+        using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
+
+        Assert.True(verifyReader.Read());
+        Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
+    }
+
+    [ConditionalTheory(nameof(IsSupported))]
+    [InlineData("float32", "float16")]
+    #if NET
+    // On .NET Framework a float16 column reads as text, so this pairing takes the textual
+    // path and the value is converted rather than rejected.
+    [InlineData("float16", "float32")]
+    #endif
+    public void BulkCopyRejectsColumnsOfDifferentBaseTypes(string sourceBaseType, string destinationBaseType)
+    {
+        // A payload read from a vector column keeps its own base type, and the INSERT BULK
+        // declaration states the destination's, so the server reports the mismatch. The
+        // driver does not silently rewrite the payload: a caller which wants the conversion
+        // reads the source column as text, which the server converts.
         Table source = sourceBaseType == "float16" ? _float16Table : _float32Table;
         Table destination = destinationBaseType == "float16" ? _float16Table : _float32Table;
 
@@ -282,52 +319,74 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlConnection destinationConnection = new(_connectionString);
         destinationConnection.Open();
 
-        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = destination.Name })
-        {
-            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
-            bulkCopy.WriteToServer(sourceReader);
-        }
+        using SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = destination.Name };
+        bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
 
-        using SqlCommand verifyCommand =
-            new($"SELECT TOP 1 {ColumnName} FROM {destination.Name} ORDER BY Id DESC", destinationConnection);
-        using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
-
-        Assert.True(verifyReader.Read());
-        Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
+        Assert.Throws<SqlException>(() => bulkCopy.WriteToServer(sourceReader));
     }
 
-    [ConditionalTheory(nameof(IsSupported))]
-    [InlineData("float16", "float32")]
-    [InlineData("float32", "float16")]
-    [InlineData("float16", "float16")]
-    public void BulkCopyPreservesNullsBetweenColumnsOfEitherBaseType(string sourceBaseType, string destinationBaseType)
+    #if !NET
+    [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesFloat16ToFloat32ThroughTheTextualRepresentation()
     {
-        Table source = sourceBaseType == "float16" ? _float16Table : _float32Table;
-        Table destination = destinationBaseType == "float16" ? _float16Table : _float32Table;
-
-        // Interleaved, so that a row's nullness cannot be satisfied by position alone.
-        Insert(source, DBNull.Value);
-        Insert(source, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
-        Insert(source, DBNull.Value);
-        Insert(source, DBNull.Value);
+        // On .NET Framework a float16 column reads as a JSON string, so a copy into a
+        // float32 column takes the textual path and the value is converted rather than
+        // rejected. This is the counterpart of the .NET case above.
+        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
 
         using SqlConnection sourceConnection = new(_connectionString);
         sourceConnection.Open();
-        using SqlCommand selectCommand =
-            new($"SELECT {ColumnName} FROM {source.Name} ORDER BY Id", sourceConnection);
+        using SqlCommand selectCommand = new($"SELECT {ColumnName} FROM {_float16Table.Name}", sourceConnection);
         using SqlDataReader sourceReader = selectCommand.ExecuteReader();
 
         using SqlConnection destinationConnection = new(_connectionString);
         destinationConnection.Open();
 
-        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = destination.Name })
+        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = _float32Table.Name })
         {
             bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
             bulkCopy.WriteToServer(sourceReader);
         }
 
         using SqlCommand verifyCommand =
-            new($"SELECT TOP 4 {ColumnName} FROM {destination.Name} ORDER BY Id DESC", destinationConnection);
+            new($"SELECT TOP 1 {ColumnName} FROM {_float32Table.Name} ORDER BY Id DESC", destinationConnection);
+        using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
+
+        Assert.True(verifyReader.Read());
+        Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
+    }
+    #endif
+
+    [ConditionalTheory(nameof(IsSupported))]
+    [InlineData("float16")]
+    [InlineData("float32")]
+    public void BulkCopyPreservesNullsBetweenColumnsOfTheSameBaseType(string baseType)
+    {
+        Table table = baseType == "float16" ? _float16Table : _float32Table;
+
+        // Interleaved, so that a row's nullness cannot be satisfied by position alone.
+        Insert(table, DBNull.Value);
+        Insert(table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Insert(table, DBNull.Value);
+        Insert(table, DBNull.Value);
+
+        using SqlConnection sourceConnection = new(_connectionString);
+        sourceConnection.Open();
+        using SqlCommand selectCommand =
+            new($"SELECT {ColumnName} FROM {table.Name} ORDER BY Id", sourceConnection);
+        using SqlDataReader sourceReader = selectCommand.ExecuteReader();
+
+        using SqlConnection destinationConnection = new(_connectionString);
+        destinationConnection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(destinationConnection) { DestinationTableName = table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(sourceReader);
+        }
+
+        using SqlCommand verifyCommand =
+            new($"SELECT TOP 4 {ColumnName} FROM {table.Name} ORDER BY Id DESC", destinationConnection);
         using SqlDataReader verifyReader = verifyCommand.ExecuteReader();
 
         // Read back in descending order, so the expected pattern is the reverse of the
@@ -372,11 +431,67 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
 
     [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesJsonStringSourceIntoFloat32ColumnAtV1()
+    {
+        // Control: at v1 a float32 column IS presented as a vector, so the declaration says
+        // vector(N) and the string is coerced to a float32 payload by the client.
+        string v1 = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+        {
+            VectorTypeSupport = SqlVectorTypeSupport.V1
+        }.ConnectionString;
+
+        DataTable table = new();
+        table.Columns.Add(ColumnName, typeof(string));
+        table.Rows.Add("[1.5,2.5,3.5]");
+
+        using SqlConnection connection = new(v1);
+        connection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float32Table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(table);
+        }
+
+        using SqlCommand command =
+            new($"SELECT TOP 1 CAST({ColumnName} AS varchar(100)) FROM {_float32Table.Name} ORDER BY Id DESC", connection);
+        Assert.Contains("1.5", (string)command.ExecuteScalar());
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesJsonStringSourceIntoFloat16ColumnAtV1()
+    {
+        // At v1 the server presents a float16 column as varchar(max), so the ordinary text
+        // path applies and the server performs the conversion.
+        string v1 = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+        {
+            VectorTypeSupport = SqlVectorTypeSupport.V1
+        }.ConnectionString;
+
+        DataTable table = new();
+        table.Columns.Add(ColumnName, typeof(string));
+        table.Rows.Add("[1.5,2.5,3.5]");
+
+        using SqlConnection connection = new(v1);
+        connection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(table);
+        }
+
+        using SqlCommand command =
+            new($"SELECT TOP 1 CAST({ColumnName} AS varchar(100)) FROM {_float16Table.Name} ORDER BY Id DESC", connection);
+        Assert.Contains("1.5", (string)command.ExecuteScalar());
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
     public void BulkCopyRejectsValuesOutsideTheFloat16Range()
     {
         DataTable table = new();
-        table.Columns.Add(ColumnName, typeof(SqlVector<float>));
-        table.Rows.Add(new SqlVector<float>(new float[] { 70000f, 1f, 2f }));
+        table.Columns.Add(ColumnName, typeof(string));
+        table.Rows.Add("[70000,1,2]");
 
         using SqlConnection connection = new(_connectionString);
         connection.Open();
@@ -384,9 +499,10 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name };
         bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
 
-        // The client narrows the payload here, so it reports the overflow itself rather
-        // than letting the saturated infinity reach the server, which would reject it as a
-        // malformed vector instead. Bulk copy wraps the failure to name the column and row.
+        // A textual source is parsed into the destination's base type by the client, so the
+        // client reports the overflow itself rather than letting the saturated infinity
+        // reach the server, which would reject it as a malformed vector instead. Bulk copy
+        // wraps the failure to name the column and row.
         InvalidOperationException exception =
             Assert.Throws<InvalidOperationException>(() => bulkCopy.WriteToServer(table));
 

@@ -97,6 +97,7 @@ namespace Microsoft.Data.SqlClient
         private readonly bool _mars;
         private readonly bool _persistSecurityInfo;
         private readonly PoolBlockingPeriod _poolBlockingPeriod;
+        private readonly SqlVectorTypeSupport _vectorTypeSupport;
         private readonly bool _pooling;
         private readonly bool _replication;
         private readonly bool _userInstance;
@@ -230,6 +231,7 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.Uid,
                             DbConnectionStringSynonyms.User);
             AddKeywordToMap(DbConnectionStringKeywords.UserInstance);
+            AddKeywordToMap(DbConnectionStringKeywords.VectorTypeSupport);
             AddKeywordToMap(DbConnectionStringKeywords.WorkstationId,
                             DbConnectionStringSynonyms.WorkstationId,
                             DbConnectionStringSynonyms.WsId);
@@ -269,6 +271,7 @@ namespace Microsoft.Data.SqlClient
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
+            _vectorTypeSupport = ConvertValueToVectorTypeSupport();
             _encrypt = ConvertValueToSqlConnectionEncrypt();
             _enlist = ConvertValueToBoolean(DbConnectionStringKeywords.Enlist, DbConnectionStringDefaults.Enlist);
             _mars = ConvertValueToBoolean(DbConnectionStringKeywords.MultipleActiveResultSets, DbConnectionStringDefaults.MultipleActiveResultSets);
@@ -686,6 +689,8 @@ namespace Microsoft.Data.SqlClient
         internal string UserID => _userID;
         internal string WorkstationId => _workstationId;
         internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
+
+        internal SqlVectorTypeSupport VectorTypeSupport => _vectorTypeSupport;
         internal string ServerSPN => _serverSPN;
         internal string FailoverPartnerSPN => _failoverPartnerSPN;
 
@@ -960,6 +965,23 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
                 throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.PoolBlockingPeriod, e);
+            }
+        }
+
+        internal SqlVectorTypeSupport ConvertValueToVectorTypeSupport()
+        {
+            if (!TryGetParsetableValue(DbConnectionStringKeywords.VectorTypeSupport, out string value))
+            {
+                return DbConnectionStringDefaults.VectorTypeSupport;
+            }
+
+            try
+            {
+                return VectorTypeSupportUtilities.ConvertToVectorTypeSupport(DbConnectionStringKeywords.VectorTypeSupport, value);
+            }
+            catch (Exception e) when (e is FormatException || e is OverflowException)
+            {
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.VectorTypeSupport, e);
             }
         }
 

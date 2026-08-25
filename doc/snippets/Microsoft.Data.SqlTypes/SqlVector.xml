@@ -19,12 +19,24 @@
           server converts.
         </para>
         <para>
+          A <c>float16</c> column is only exchanged in its binary form when the connection asks
+          for it through the <c>Vector Type Support</c> keyword, which defaults to <c>v1</c>.
+          Otherwise such a column is returned as a <c>varchar(max)</c> containing a JSON array.
+        </para>
+        <para>
           Conversion between base types is performed by SQL Server, which reports an error if a
           value is outside the range the destination can represent. Converting from
           <c>float32</c> to <c>float16</c> loses precision for values which the narrower type
-          cannot represent exactly, in the same way as inserting a JSON literal does. During a
-          bulk copy the driver performs the conversion instead, and throws an
-          <see cref="T:System.OverflowException" /> for a value outside the destination's range.
+          cannot represent exactly, in the same way as inserting a JSON literal does.
+        </para>
+        <para>
+          A bulk copy is different, because the <c>INSERT BULK</c> statement states the
+          destination column's base type and the server then requires a binary payload of
+          exactly that width. A textual source is therefore parsed into the destination's base
+          type by the driver, which throws an
+          <see cref="T:System.OverflowException" /> for a value outside that range. A payload
+          read from another vector column keeps its own base type, so copying between columns
+          of different base types is reported by the server.
         </para>
       </remarks>
     </SqlVector>

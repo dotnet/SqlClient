@@ -44,6 +44,10 @@ public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<flo
     // The column's base type is float16, so single precision is a widening representation
     // which the caller has to ask for rather than the driver's default.
     public override bool IsDefaultRepresentation => false;
+
+    // float16 is only exchanged in its binary form when the connection asks for the
+    // feature extension version which covers it.
+    public override string ConnectionString => DataTestUtility.VectorFloat16ConnectionString;
 }
 
 /// <summary>

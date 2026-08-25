@@ -26,8 +26,11 @@ using System.Threading.Tasks;
 class VectorFloat16ConsoleApp
 {
     // It is recommended to use a secure connection string in production code with valid cert.
+    //
+    // "Vector Type Support=v2" opts in to the float16 base type. It defaults to v1, under
+    // which a float16 column is returned as a varchar(max) containing a JSON array.
     private const string ConnectionString =
-        "Server=localhost;Database=Demo2;Integrated Security=true;Encrypt=true;TrustServerCertificate=true;";
+        "Server=localhost;Database=Demo2;Integrated Security=true;Encrypt=true;TrustServerCertificate=true;Vector Type Support=v2;";
 
     private const string TableName = "[dbo].[VectorFloat16Demo]";
 

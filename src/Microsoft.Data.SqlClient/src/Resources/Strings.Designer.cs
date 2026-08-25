@@ -1519,6 +1519,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The level of vector type support to negotiate with the server..
+        /// </summary>
+        internal static string DbConnectionString_VectorTypeSupport {
+            get {
+                return ResourceManager.GetString("DbConnectionString_VectorTypeSupport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Defines the blocking period behavior for a connection pool..
         /// </summary>
         internal static string DbConnectionString_PoolBlockingPeriod {

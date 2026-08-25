@@ -831,8 +831,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         // Test to verify that the server and client negotiate
         // the common feature extension version.
-        // MDS currently supports vector feature ext version 0x2,
-        // which adds the float16 base type to the float32 support in 0x1.
+        // The connection requests the version configured by the Vector Type Support
+        // keyword, which defaults to v1. These cases opt in to v2, which adds the
+        // float16 base type to the float32 support in v1.
         [Theory]
         // A server which supports the same version as the client negotiates that version.
         [InlineData(true, 0x2, 0x2)]
@@ -907,6 +908,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so an expected failure does not poison a shared pool
+                // The keyword defaults to v1, so opt in to the version under test.
+                VectorTypeSupport = SqlVectorTypeSupport.V2,
             }.ConnectionString;
             using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
@@ -974,6 +977,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+                // The ceiling being tested is the client's, so request the highest version
+                // the client understands.
+                VectorTypeSupport = SqlVectorTypeSupport.V2,
             }.ConnectionString;
 
             using SqlConnection connection = new(connStr);
@@ -983,6 +989,62 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Confirms the harness really did send the unsupported version, so the failure
             // above is the client's ceiling rather than an unrelated connection problem.
             Assert.Equal(serverVersion, acknowledgedVersion);
+        }
+
+        // Test that the vector feature extension version requested at login follows the
+        // Vector Type Support keyword, and that the request is omitted entirely when the
+        // keyword asks for no vector support.
+        [Theory]
+        // The keyword defaults to v1, so an application which says nothing keeps the
+        // representation it had before float16 existed.
+        [InlineData(null, true, 0x1)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2)]
+        // Off omits the feature request, leaving vector columns as varchar(max).
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0)]
+        public void TestVectorFeatExtVersionFollowsConnectionString(
+            SqlVectorTypeSupport? setting,
+            bool expectRequest,
+            byte expectedRequestedVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = 0x2;
+
+            bool requestSeen = false;
+            byte requestedVersion = 0;
+
+            server.OnLogin7Validated = loginToken =>
+            {
+                TDSLogin7GenericOptionToken option = loginToken.FeatureExt?
+                    .OfType<TDSLogin7GenericOptionToken>()
+                    .FirstOrDefault(t => t.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    requestSeen = true;
+                    requestedVersion = option.Data[0];
+                }
+            };
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+
+            if (setting.HasValue)
+            {
+                builder.VectorTypeSupport = setting.Value;
+            }
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(expectRequest, requestSeen);
+            Assert.Equal(expectedRequestedVersion, requestedVersion);
         }
 
         // Test that the driver sends the UserAgent feature extension when

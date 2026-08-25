@@ -27,6 +27,17 @@ public enum PoolBlockingPeriod
     NeverBlock = 2,
 }
 
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/SqlVectorTypeSupport/*'/>
+public enum SqlVectorTypeSupport
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/Off/*'/>
+    Off = 0,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/V1/*'/>
+    V1 = 1,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/V2/*'/>
+    V2 = 2,
+}
+
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/SortOrder/*'/>
 public enum SortOrder
 {
@@ -1425,6 +1436,10 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.DisplayNameAttribute("Pool Blocking Period")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public Microsoft.Data.SqlClient.PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/VectorTypeSupport/*'/>
+    [System.ComponentModel.DisplayNameAttribute("Vector Type Support")]
+    [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+    public Microsoft.Data.SqlClient.SqlVectorTypeSupport VectorTypeSupport { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
     [System.ComponentModel.DisplayNameAttribute("Pooling")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
