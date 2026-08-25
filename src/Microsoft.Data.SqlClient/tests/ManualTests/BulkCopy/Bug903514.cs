@@ -34,13 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
             finally
             {
-                using (SqlConnection dstConn = new SqlConnection(constr))
-                using (SqlCommand dstCmd = dstConn.CreateCommand())
-                {
-                    dstConn.Open();
-
-                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
-                }
+                Helpers.DropTables(constr, dstTable);
             }
         }
 

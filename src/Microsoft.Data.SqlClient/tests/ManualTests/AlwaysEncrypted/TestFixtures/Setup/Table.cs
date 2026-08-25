@@ -15,12 +15,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             // NOTE: The drop is guarded so that cleanup is idempotent. An unguarded DROP throws when
             //   the object was never created (for example when setup failed part way through), which
             //   would abort the enclosing drop loop and leak every remaining object.
-            string sql = $"IF (OBJECT_ID(@name) IS NOT NULL) DROP TABLE [{Name}];";
+            // NOTE: Both the lookup and the DROP are schema-qualified to [dbo] to match the CREATE
+            //   TABLE statements in the derived classes. An unqualified name resolves against the
+            //   connection's default schema, so if that is not dbo the guard would return NULL and
+            //   silently skip the drop, leaking the table.
+            string sql = $"IF (OBJECT_ID(@name) IS NOT NULL) DROP TABLE [dbo].[{Name}];";
 
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = sql;
-                command.Parameters.AddWithValue("@name", $"[{Name}]");
+                command.Parameters.AddWithValue("@name", $"[dbo].[{Name}]");
                 command.ExecuteNonQuery();
             }
         }
