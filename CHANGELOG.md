@@ -88,6 +88,12 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 - Fixed a TDS stream error when passing a `DateOnly` value as a parameter with `SqlDbType.Variant`.
   ([#4294](https://github.com/dotnet/SqlClient/pull/4294))
 
+- Fixed `DateOnly` values written to a `sql_variant` column of a table-valued parameter being sent as `datetime` instead of `date`, which also caused an overflow for values out of `datetime` range.
+  ([#4439](https://github.com/dotnet/SqlClient/pull/4439))
+
+- Fixed the `ServerCertificate` connection-string keyword not being honored when the platform reported no TLS policy errors, and made an unloadable certificate file fail closed instead of silently falling back to host-name validation.
+  ([#4445](https://github.com/dotnet/SqlClient/pull/4445))
+
 - Fixed `SqlConnection.AccessTokenCallback` not disabling Transparent Network IP Resolution by default, unlike `SqlConnection.AccessToken`, along with a related connection pool key defect.
   ([#4520](https://github.com/dotnet/SqlClient/pull/4520))
 
