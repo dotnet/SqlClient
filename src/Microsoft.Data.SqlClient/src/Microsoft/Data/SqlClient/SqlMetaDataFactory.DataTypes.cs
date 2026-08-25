@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
-    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet)
+    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet, byte vectorVersion)
     {
         DataTable dataTypesDataTable = CreateDataTypesDataTable();
 
@@ -75,7 +75,14 @@ internal sealed partial class SqlMetaDataFactory
         AddUniqueIdentifierType();
         AddSqlVariantType();
         AddRowVersionType();
-        AddVectorType();
+
+        // A vector type is reported when the connection has negotiated one, rather than
+        // when the server reports a version which is new enough to have it. Azure SQL
+        // reports 12.00 whatever it supports, so a version is not enough to tell.
+        if (vectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
+        {
+            AddVectorType();
+        }
 
         dataTypesDataTable.EndLoadData();
         dataTypesDataTable.AcceptChanges();
@@ -384,7 +391,6 @@ internal sealed partial class SqlMetaDataFactory
             // A vector literal is written as a JSON array in a string literal.
             typeRow[DbMetaDataColumnNames.LiteralPrefix] = "'";
             typeRow[DbMetaDataColumnNames.LiteralSuffix] = "'";
-            typeRow[MinimumVersionKey] = "17.00.000.0";
 
             dataTypesDataTable.Rows.Add(typeRow);
         }
