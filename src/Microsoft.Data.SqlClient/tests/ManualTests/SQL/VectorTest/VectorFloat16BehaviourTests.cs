@@ -431,6 +431,34 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
 
     [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesJsonStringSourceFromANonSqlClientReader()
+    {
+        // The source column type has to be read through IDataReader rather than through the
+        // SqlDataReader field, which is null unless the reader is a SqlDataReader. A reader
+        // from another provider still reports a string column, so the value is parsed into
+        // the destination's base type as it is for any other textual source.
+        DataTable table = new();
+        table.Columns.Add(ColumnName, typeof(string));
+        table.Rows.Add(DBNull.Value);
+        table.Rows.Add("[1.5,2.5,3.5]");
+
+        using IDataReader reader = table.CreateDataReader();
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(reader);
+        }
+
+        using SqlDataReader verify = Select(_float16Table);
+        Assert.True(verify.Read());
+        Assert.Equal([1.5f, 2.5f, 3.5f], verify.GetSqlVector<float>(0).Memory.ToArray());
+    }
+
+    [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceIntoFloat32ColumnAtV1()
     {
         // Control: at v1 a float32 column IS presented as a vector, so the declaration says

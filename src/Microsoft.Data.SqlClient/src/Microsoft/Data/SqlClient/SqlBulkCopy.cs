@@ -1442,7 +1442,10 @@ DROP TABLE #Column_Aliases
             {
                 case ValueSourceType.DbDataReader:
                 case ValueSourceType.IDataReader:
-                    return _sqlDataReaderRowSource?.GetFieldType(sourceOrdinal);
+                    // Not _sqlDataReaderRowSource, which is null unless the reader is a
+                    // SqlDataReader. Every reader source implements IDataReader, and
+                    // GetFieldType is declared by IDataRecord.
+                    return (_rowSource as IDataReader)?.GetFieldType(sourceOrdinal);
 
                 case ValueSourceType.DataTable:
                 case ValueSourceType.RowArray:
