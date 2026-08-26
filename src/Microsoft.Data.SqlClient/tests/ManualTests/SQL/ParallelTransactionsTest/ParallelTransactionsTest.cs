@@ -142,14 +142,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return tempTableName;
         }
 
+        /// <remarks>
+        /// Best-effort: both callers invoke this from a <c>finally</c>, so a throw here would surface
+        /// in place of the failure that is already propagating and hide the real test result. The
+        /// table is named on failure so the leak stays attributable.
+        /// </remarks>
         private static void DropTempTable(string connectionString, string tempTableName)
         {
-            using (SqlConnection con1 = new SqlConnection(connectionString))
+            try
             {
-                con1.Open();
-                using SqlCommand cmd = new SqlCommand(
-                    string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", tempTableName), con1);
-                cmd.ExecuteNonQuery();
+                using (SqlConnection con1 = new SqlConnection(connectionString))
+                {
+                    con1.Open();
+                    using SqlCommand cmd = new SqlCommand(
+                        string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", tempTableName), con1);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to drop temp table '{tempTableName}'; it may be orphaned in the test database. {ex}");
             }
         }
     }
