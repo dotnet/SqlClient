@@ -27,7 +27,7 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 
 ### Added
 
-- Added four `virtual` asynchronous counterparts to the synchronous methods on `SqlColumnEncryptionKeyStoreProvider` — `DecryptColumnEncryptionKeyAsync`, `EncryptColumnEncryptionKeyAsync`, `SignColumnMasterKeyMetadataAsync`, and `VerifyColumnMasterKeyMetadataAsync` — each accepting an optional `CancellationToken`. The default implementations delegate to the existing synchronous methods, so existing custom providers are unaffected.
+- Added four `virtual` asynchronous counterparts to the synchronous methods on `SqlColumnEncryptionKeyStoreProvider` — `DecryptColumnEncryptionKeyAsync`, `EncryptColumnEncryptionKeyAsync`, `SignColumnMasterKeyMetadataAsync`, and `VerifyColumnMasterKeyMetadataAsync` — each accepting an optional `CancellationToken`. The default implementations delegate to the existing synchronous methods, so existing custom providers are unaffected. These APIs are introduced for provider authors but are not consumed by the driver yet; a future release will enable their use from the driver's own asynchronous APIs.
   ([#3673](https://github.com/dotnet/SqlClient/pull/3673))
 
 - Implemented those four asynchronous APIs in `SqlColumnEncryptionAzureKeyVaultProvider`, calling the Azure SDK's own asynchronous methods and flowing the supplied `CancellationToken`. Concurrent cache misses for the same key are gated so a burst of callers issues a single Key Vault request. See the [AKV release notes](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md) for the `VerifyColumnMasterKeyMetadata` signature-validation behavior change and the 7.1 runtime requirement.
