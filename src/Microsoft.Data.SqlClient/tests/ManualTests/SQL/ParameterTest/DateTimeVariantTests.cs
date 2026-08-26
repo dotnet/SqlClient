@@ -412,6 +412,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         value = ((DateOnly)paramValue).ToString();
                     }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
+                    }
                     #endif
                     else
                     {
@@ -487,6 +491,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         value = ((DateOnly)paramValue).ToString();
                     }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
+                    }
                     #endif
                     else
                     {
@@ -559,6 +567,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         value = ((DateOnly)paramValue).ToString();
                     }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
+                    }
                     #endif
                     else
                     {
@@ -615,6 +627,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     else if (paramValue.GetType() == typeof(DateOnly))
                     {
                         value = ((DateOnly)paramValue).ToString();
+                    }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
                     }
                     #endif
                     else
@@ -673,6 +689,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     else if (paramValue.GetType() == typeof(DateOnly))
                     {
                         value = ((DateOnly)paramValue).ToString();
+                    }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
                     }
                     #endif
                     else
@@ -746,6 +766,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     else if (paramValue.GetType() == typeof(DateOnly))
                     {
                         value = ((DateOnly)paramValue).ToString();
+                    }
+                    else if (paramValue.GetType() == typeof(TimeOnly))
+                    {
+                        value = ((TimeOnly)paramValue).ToString("O");
                     }
                     #endif
                     else
@@ -1223,6 +1247,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.SqlBulkCopyDataTable_Variant, "datetime"},
                     {TestVariations.SqlBulkCopyDataRow_Variant, "datetime"}
                 }};
+            #if NET
+            yield return new object[] { TimeOnly.MinValue, "time",
+                new Dictionary<TestVariations, ExceptionChecker>(),
+                new Dictionary<TestVariations, object>()
+                {
+                    { TestVariations.TestSimpleParameter_Type, TimeSpan.Zero },
+                    { TestVariations.TestSimpleParameter_Variant, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataReader_TVP_Type, TimeSpan.Zero },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, TimeSpan.Zero },
+                    { TestVariations.TestSimpleDataReader_Type, TimeSpan.Zero },
+                    { TestVariations.TestSimpleDataReader_Variant, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopyDataTable_Type, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopyDataRow_Type, TimeSpan.Zero },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, TimeSpan.Zero }
+                },
+                new Dictionary<TestVariations, string>()};
+            yield return new object[] { TimeOnly.MaxValue, "time",
+                new Dictionary<TestVariations, ExceptionChecker>(),
+                new Dictionary<TestVariations, object>()
+                {
+                    { TestVariations.TestSimpleParameter_Type, new TimeSpan(863999999999) },
+                    { TestVariations.TestSimpleParameter_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Type, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataRecordParameterToTVP_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Type, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataReaderParameterToTVP_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataReader_TVP_Type, new TimeSpan(863999999999) },
+                    { TestVariations.TestSqlDataReader_TVP_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.TestSimpleDataReader_Type, new TimeSpan(863999999999) },
+                    { TestVariations.TestSimpleDataReader_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Type, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopySqlDataReader_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopyDataTable_Type, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopyDataTable_Variant, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopyDataRow_Type, new TimeSpan(863999999999) },
+                    { TestVariations.SqlBulkCopyDataRow_Variant, new TimeSpan(863999999999) }
+                },
+                new Dictionary<TestVariations, string>()
+            };
+            #endif
             yield return new object[] { TimeSpan.MinValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, TimeOverflow },
