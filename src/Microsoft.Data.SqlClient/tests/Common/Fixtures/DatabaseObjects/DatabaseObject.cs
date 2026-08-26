@@ -272,25 +272,19 @@ public abstract class DatabaseObject<TState> : IDisposable
     /// </remarks>
     protected abstract void DropObject();
 
+    /// <remarks>
+    /// This never throws. These objects are overwhelmingly consumed via <c>using</c>, so a throwing
+    /// <c>Dispose</c> would surface in place of an exception already in flight and replace a real
+    /// test failure with a cleanup error — the very "cleanup masks the real failure" problem these
+    /// types exist to remove. A drop that cannot be completed is reported by
+    /// <see cref="TryDropAfterReconnect"/> instead, which names the object so the leak stays
+    /// attributable without destroying the diagnosis of the failure that caused it.
+    /// </remarks>
     public void Dispose()
     {
         if (_shouldDrop)
         {
-            try
-            {
-                EnsureConnectionOpen();
-                DropObject();
-            }
-            catch
-            {
-                // The drop is all that stands between a failed run and an object orphaned forever
-                // in the shared test database, so it gets one retry on a healthy connection. A bare
-                // `throw` preserves the original exception (and its stack) if that retry also fails.
-                if (!TryDropAfterReconnect())
-                {
-                    throw;
-                }
-            }
+            TryDropBestEffort();
         }
         // This explicitly does not drop the wrapped SqlConnection; this is sometimes
         // used in a loop to create multiple UDTs.
@@ -302,8 +296,11 @@ public abstract class DatabaseObject<TState> : IDisposable
     /// Drops the object, swallowing any failure.
     /// </summary>
     /// <remarks>
-    /// Only for use on paths that are already unwinding because of a more interesting failure,
-    /// where a cleanup error must not replace the exception in flight.
+    /// The drop is all that stands between a failed run and an object orphaned forever in the
+    /// shared test database, so it gets one retry on a healthy connection before giving up. A
+    /// failure is never propagated: this runs either during <see cref="Dispose"/> or on a path
+    /// already unwinding because of a more interesting failure, and in both cases a cleanup error
+    /// must not replace the exception in flight.
     /// </remarks>
     private void TryDropBestEffort()
     {
@@ -345,10 +342,9 @@ public abstract class DatabaseObject<TState> : IDisposable
         }
         catch (Exception ex)
         {
-            // This is the last chance to remove the object, so report the leak. Callers either
-            // rethrow (surfacing the original failure, which on its own does not say *which* object
-            // was left behind) or swallow the failure entirely, which would otherwise orphan the
-            // object silently.
+            // This is the last chance to remove the object, and no caller propagates the failure,
+            // so this report is the only trace the leak will leave. Naming the object matters:
+            // without it there is nothing to tell a maintainer *which* object was orphaned.
             Console.WriteLine($"Failed to drop {GetType().Name} '{Name}'; it may be orphaned in the test database. {ex}");
 
             return false;
