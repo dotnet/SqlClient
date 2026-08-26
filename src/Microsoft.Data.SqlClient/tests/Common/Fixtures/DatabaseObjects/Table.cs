@@ -21,12 +21,12 @@ public sealed class Table : DatabaseObject
     /// <param name="prefix">The prefix for the table name. Can begin with '#' or '##' to indicate a temporary table.</param>
     /// <param name="definition">The SQL definition describing the structure of the table, including columns and data types.</param>
     public Table(SqlConnection connection, string prefix, string definition)
-        : base(connection, GenerateLongName(prefix), definition, shouldCreate: true, shouldDrop: true)
+        : base(connection, GenerateLongName(prefix), definition)
     {
     }
 
-    private Table(SqlConnection connection, string name, string definition, bool shouldCreate)
-        : base(connection, name, definition, shouldCreate, shouldDrop: true)
+    private Table(SqlConnection connection, string name, string definition, NameIsVerbatim _)
+        : base(connection, name, definition)
     {
     }
 
@@ -44,20 +44,7 @@ public sealed class Table : DatabaseObject
     /// <param name="name">The table name, already quoted/escaped by the caller if it needs to be.</param>
     /// <param name="definition">The SQL definition describing the structure of the table, including columns and data types.</param>
     public static Table WithName(SqlConnection connection, string name, string definition)
-        => new(connection, name, definition, shouldCreate: true);
-
-    /// <summary>
-    /// Adopts an already-existing table so that it is dropped when the returned instance is
-    /// disposed. No table is created.
-    /// </summary>
-    /// <remarks>
-    /// Useful when a table is created by other means (for example, by a helper that also populates
-    /// it, or over a different connection) but still needs deterministic cleanup.
-    /// </remarks>
-    /// <param name="connection">The SQL connection used to drop the table.</param>
-    /// <param name="name">The table name, already quoted/escaped by the caller if it needs to be.</param>
-    public static Table AdoptExisting(SqlConnection connection, string name)
-        => new(connection, name, definition: string.Empty, shouldCreate: false);
+        => new(connection, name, definition, NameIsVerbatim.Yes);
 
     protected override void CreateObject(string definition)
     {

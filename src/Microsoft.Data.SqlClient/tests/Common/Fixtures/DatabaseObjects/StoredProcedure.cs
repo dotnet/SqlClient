@@ -21,12 +21,12 @@ public sealed class StoredProcedure : DatabaseObject
     /// <param name="prefix">The stored procedure name. Can begin with '#' or '##' to indicate a temporary procedure.</param>
     /// <param name="definition">The SQL definition of the stored procedure.</param>
     public StoredProcedure(SqlConnection connection, string prefix, string definition)
-        : base(connection, GenerateLongName(prefix), definition, shouldCreate: true, shouldDrop: true)
+        : base(connection, GenerateLongName(prefix), definition)
     {
     }
 
-    private StoredProcedure(SqlConnection connection, string name, string definition, bool shouldCreate)
-        : base(connection, name, definition, shouldCreate, shouldDrop: true)
+    private StoredProcedure(SqlConnection connection, string name, string definition, NameIsVerbatim _)
+        : base(connection, name, definition)
     {
     }
 
@@ -43,7 +43,7 @@ public sealed class StoredProcedure : DatabaseObject
     /// <param name="name">The procedure name, already quoted/escaped by the caller if it needs to be.</param>
     /// <param name="definition">The SQL definition of the stored procedure.</param>
     public static StoredProcedure WithName(SqlConnection connection, string name, string definition)
-        => new(connection, name, definition, shouldCreate: true);
+        => new(connection, name, definition, NameIsVerbatim.Yes);
 
     protected override void CreateObject(string definition)
     {

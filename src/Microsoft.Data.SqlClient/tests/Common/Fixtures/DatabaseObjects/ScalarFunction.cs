@@ -22,12 +22,12 @@ public sealed class ScalarFunction : DatabaseObject
     /// <param name="prefix">The prefix for the function name.</param>
     /// <param name="definition">The SQL definition of the function, following the function name.</param>
     public ScalarFunction(SqlConnection connection, string prefix, string definition)
-        : base(connection, GenerateLongName(prefix), definition, shouldCreate: true, shouldDrop: true)
+        : base(connection, GenerateLongName(prefix), definition)
     {
     }
 
-    private ScalarFunction(SqlConnection connection, string name, string definition, bool shouldCreate)
-        : base(connection, name, definition, shouldCreate, shouldDrop: true)
+    private ScalarFunction(SqlConnection connection, string name, string definition, NameIsVerbatim _)
+        : base(connection, name, definition)
     {
     }
 
@@ -44,7 +44,7 @@ public sealed class ScalarFunction : DatabaseObject
     /// <param name="name">The function name, already quoted/escaped by the caller if it needs to be.</param>
     /// <param name="definition">The SQL definition of the function, following the function name.</param>
     public static ScalarFunction WithName(SqlConnection connection, string name, string definition)
-        => new(connection, name, definition, shouldCreate: true);
+        => new(connection, name, definition, NameIsVerbatim.Yes);
 
     protected override void CreateObject(string definition)
     {

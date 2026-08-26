@@ -19,21 +19,12 @@ public sealed class Schema : DatabaseObject
     /// <param name="connection">The SQL connection used to interact with the database.</param>
     /// <param name="prefix">The prefix for the schema name.</param>
     public Schema(SqlConnection connection, string prefix)
-        : base(connection, GenerateLongName(prefix), definition: string.Empty, shouldCreate: true, shouldDrop: true)
+        : base(connection, GenerateLongName(prefix), definition: string.Empty)
     {
-    }
-
-    /// <summary>
-    /// Distinguishes the verbatim-name constructor from the prefix-based one, which would
-    /// otherwise have an identical signature.
-    /// </summary>
-    private enum NameIsVerbatim
-    {
-        Yes
     }
 
     private Schema(SqlConnection connection, string name, NameIsVerbatim _)
-        : base(connection, name, definition: string.Empty, shouldCreate: true, shouldDrop: true)
+        : base(connection, name, definition: string.Empty)
     {
     }
 

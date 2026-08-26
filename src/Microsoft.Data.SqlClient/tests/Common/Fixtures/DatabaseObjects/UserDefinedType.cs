@@ -21,7 +21,7 @@ public sealed class UserDefinedType : DatabaseObject
     /// <param name="prefix">The type name.</param>
     /// <param name="definition">The SQL definition of the type.</param>
     public UserDefinedType(SqlConnection connection, string prefix, string definition)
-        : base(connection, "[dbo]." + GenerateLongName(prefix), definition, shouldCreate: true, shouldDrop: true)
+        : base(connection, "[dbo]." + GenerateLongName(prefix), definition)
     {
     }
 
