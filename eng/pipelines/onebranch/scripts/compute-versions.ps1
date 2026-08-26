@@ -14,23 +14,32 @@
 
     Two mutually exclusive package version shapes are supported:
 
-      - AddRevision false (default). Prerelease packages append the pipeline build number after the
-        prerelease suffix, producing the shape shipped by earlier previews, such as
-        1.2.3-preview1.26238.3. Stable packages are left untouched. The file-version build number is
-        the first build number segment, giving file version 1.2.3.26238. This keeps the file version
-        date-encoded and traceable back to the run that produced it.
+    When AddRevision is true, BuildNumber is ignored if specified. For non-preview releases, versions
+    will be 1.2.3.<revision>. For preview releases, versions will be 1.2.3.<revision>-previewX.
 
-      - AddRevision true. The mapped revision is inserted as the fourth numeric component of package
-        versions built during this run, with any prerelease suffix retained after it. For example,
-        1.2.3-preview1 with revision 165500 becomes package version 1.2.3.34430-preview1 and file
-        version 1.2.3.34430. This shape exists for repeated test publishes of the same base version.
+    When AddRevision is false, BuildNumber must be specified. Non-preview versions will be 1.2.3, and
+    preview releases will be 1.2.3-previewX.<build_number>.
+
+    This asymmetry maintains the existing package versioning practice where previews include a
+    date-coded build number, but normal releases do not.
+
+    File versions are always four-part and always carry a build number in the fourth component, even
+    when the package version does not:
+
+      - AddRevision true. The fourth component is the mapped revision, so package and file versions
+        agree. A package version of 1.2.3.34430-preview1 has file version 1.2.3.34430.
+
+      - AddRevision false. The fourth component is the first segment of BuildNumber. A package
+        version of 1.2.3-preview1.26238.3 has file version 1.2.3.26238, and a stable package version
+        of 1.2.3 still has file version 1.2.3.26238. This keeps every file version date-encoded and
+        traceable back to the run that produced it.
 
     The supplied revision is mapped to the range 1 through 65535 before canonical versions
     are evaluated so every file version has a valid fourth component. Revisions above 65535 wrap
-    through the valid unsigned 16-bit file-version range. The script logs the mapping because the
-    revision may then collide with an earlier run. An unbuilt SqlServer package is never revised or
-    stamped with a build number because its effective version must continue to identify the package
-    that already exists on NuGet.
+    through the valid unsigned 16-bit file-version range. When AddRevision is true the script logs
+    the mapping because the revision may then collide with an earlier run. An unbuilt SqlServer
+    package is never revised or stamped with a build number because its effective version must
+    continue to identify the package that already exists on NuGet.
 
     The script emits these output variables for downstream stages:
       - VersionRevision
@@ -42,12 +51,13 @@
 
 .PARAMETER Revision
     Positive integer used to distinguish versions. Values above 65535 are wrapped into the unsigned
-    16-bit revision range.
+    16-bit revision range. Only consumed when AddRevision is true.
 
 .PARAMETER BuildNumber
-    Pipeline build number in the form <date>.<run>, such as 26238.3. Appended to prerelease package
-    versions when AddRevision is false, and its first segment is emitted as the file-version build
-    number so file versions remain date-encoded.
+    Pipeline build number in the form <date>.<run>, such as 26238.3. Required when AddRevision is
+    false, and ignored when AddRevision is true. When required, it is appended to prerelease package
+    versions and its first segment becomes the file-version build number, so file versions remain
+    date-encoded.
 
 .PARAMETER BuildSqlServer
     Whether this run builds Microsoft.SqlServer.Server. When false, the effective SqlServer package
@@ -76,18 +86,17 @@
     ./compute-versions.ps1 `
         -ProjectPath ./build.proj `
         -Revision 165500 `
-        -BuildNumber 26238.3 `
         -BuildSqlServer $true `
         -AddRevision $true
 
     Computes versions for a run that builds SqlServer and appends mapped revision 34430 to both
-    package families and their file versions.
+    package families and their file versions. BuildNumber is not supplied because AddRevision is
+    true.
 
 .EXAMPLE
     ./compute-versions.ps1 `
         -ProjectPath ./build.proj `
         -Revision 165500 `
-        -BuildNumber 26238.3 `
         -BuildSqlServer $false `
         -AddRevision $true
 
@@ -110,9 +119,9 @@ param(
     [ValidateRange(1, [long]::MaxValue)]
     [long]$Revision,
 
-    [Parameter(Mandatory = $true, HelpMessage = "Pipeline build number, such as 26238.3.")]
-    [ValidatePattern("^\d+\.\d+$")]
-    [string]$BuildNumber,
+    [Parameter(HelpMessage = "Pipeline build number, such as 26238.3. Required when AddRevision is false.")]
+    [ValidatePattern("^$|^\d+\.\d+$")]
+    [string]$BuildNumber = "",
 
     [Parameter(Mandatory = $true, HelpMessage = "Whether Microsoft.SqlServer.Server is built in this run.")]
     [bool]$BuildSqlServer,
@@ -129,7 +138,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $wrappedRevision = (($Revision - 1) % 65535) + 1
-if ($Revision -gt 65535) {
+if ($AddRevision -and $Revision -gt 65535) {
     Write-Host "Revision $Revision exceeds the unsigned 16-bit limit and wrapped to $wrappedRevision; this revision may collide with an earlier run."
 }
 
@@ -300,7 +309,7 @@ $sqlServerPackageVersion = if ($BuildSqlServer) {
     $sqlServerVersions.PublishedVersion
 }
 
-$fileVersionBuildNumber = $BuildNumber.Split(".")[0]
+$fileVersionBuildNumber = $null
 
 if ($AddRevision) {
     $sqlClientPackageVersion = Add-VersionRevision `
@@ -318,6 +327,12 @@ if ($AddRevision) {
     Write-Host "Version revision: $wrappedRevision (input=$Revision)"
 }
 else {
+    if ([string]::IsNullOrWhiteSpace($BuildNumber)) {
+        throw "BuildNumber is required when AddRevision is false."
+    }
+
+    $fileVersionBuildNumber = $BuildNumber.Split(".")[0]
+
     $sqlClientPackageVersion = Add-VersionBuildNumber `
         -Version $sqlClientPackageVersion `
         -BuildNumber $BuildNumber
