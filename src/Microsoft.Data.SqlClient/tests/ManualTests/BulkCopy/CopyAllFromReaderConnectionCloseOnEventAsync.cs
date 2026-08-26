@@ -25,7 +25,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string sourceQuery = "select EmployeeID, LastName, FirstName, REPLICATE('a', 8000) from employees";
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 

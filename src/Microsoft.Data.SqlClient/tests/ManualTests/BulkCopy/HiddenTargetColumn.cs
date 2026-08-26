@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string destinationHistoryTable = DataTestUtility.GetShortName("HiddenTargetColumn_History");
 
             using (SqlConnection dstConn = new SqlConnection(connectionString))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 

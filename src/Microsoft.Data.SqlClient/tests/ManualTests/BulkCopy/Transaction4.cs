@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_Transaction4", "(col1 int, col2 nvarchar(20), col3 nvarchar(10))");

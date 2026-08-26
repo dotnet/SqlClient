@@ -36,7 +36,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string sourceQuery = string.Format(sourceQueryTemplate, srcTable);
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_AsyncTest5", "(col1 int, col2 nvarchar(20), col3 nvarchar(10))");

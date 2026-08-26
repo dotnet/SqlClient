@@ -27,7 +27,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         private static async Task TestAsync(string srcConstr, string dstConstr)
         {
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_TransactionTestAsync", "(col1 int, col2 nvarchar(20), col3 nvarchar(10))");

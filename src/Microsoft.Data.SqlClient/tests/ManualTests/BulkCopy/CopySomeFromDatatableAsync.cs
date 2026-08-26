@@ -35,7 +35,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             DataTable datatable;
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
