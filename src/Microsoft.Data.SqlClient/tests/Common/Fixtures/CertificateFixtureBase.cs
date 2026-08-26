@@ -313,8 +313,14 @@ catch [Exception]
                 store.Open(OpenFlags.ReadWrite);
                 opened = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Every certificate destined for this store is about to be skipped, so this is the
+                // only chance to say so. Without it the certificates leak across runs with no trace.
+                Console.WriteLine(
+                    $"Failed to open certificate store '{storeContext.Name}' in '{storeContext.Location}' " +
+                    $"for cleanup; {storeContext.Certificates.Count} certificate(s) may be left behind. {ex}");
+
                 opened = false;
             }
 
@@ -337,8 +343,14 @@ catch [Exception]
                         store.Remove(cert);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    // Same reasoning as the store-open failure above: report the leak rather than
+                    // letting the certificate linger in the store silently.
+                    Console.WriteLine(
+                        $"Failed to remove certificate '{cert.Subject}' from store '{storeContext.Name}' " +
+                        $"in '{storeContext.Location}'; it may be left behind. {ex}");
+
                     continue;
                 }
             }
