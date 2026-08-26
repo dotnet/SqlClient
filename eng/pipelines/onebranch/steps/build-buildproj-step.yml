@@ -57,8 +57,8 @@ parameters:
     type: string
 
 steps:
-  # Download the assembly signing key from secure file storage.
-  - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+  # Download the driver strong-name signing key from secure file storage.
+  - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
 
   - task: DotNetCoreCLI@2
     displayName: 'build.proj - Build${{ parameters.packageShortName }}'

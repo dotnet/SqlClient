@@ -110,10 +110,9 @@ parameters:
       - diagnostic
 
   # True when building on the internal ADO.Net project.  Internal builds may perform additional or
-  # different steps, such as assembly signing.
+  # different steps, such as strong-name signing.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self

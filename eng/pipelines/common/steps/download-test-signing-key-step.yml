@@ -1,0 +1,22 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# This template downloads the test strong-name signing key from ADO secure files.  This key is used
+# to sign the test assemblies so that they satisfy the driver's InternalsVisibleTo declarations.
+#
+# The secure file is only available to the internal ADO.Net project, so this template must only be
+# used by internal builds.
+#
+# Downstream steps reference the key's path via:
+#
+#   $(testKeyFile.secureFilePath)
+
+steps:
+
+  - task: DownloadSecureFile@1
+    displayName: Download Test Signing Key
+    inputs:
+      secureFile: sqlclient-test-key.snk
+    name: testKeyFile
