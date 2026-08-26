@@ -73,6 +73,57 @@ public class SqlConfigurableRetryLogicLoaderTest
         AssertNoAssemblyProbingHandlerInstalled();
     }
 
+    /// <summary>
+    /// The path a custom retry logic type is actually resolved on. This is the only path that
+    /// legitimately installs the probing handler, and it must be removed again once resolution
+    /// has finished.
+    /// </summary>
+    /// <remarks>
+    /// The retry logic type is resolved out of this test assembly, which is reached through the
+    /// loader's probing directory rather than through normal assembly resolution. The invocation
+    /// counter confirms the configured type really was resolved and used, so this is exercising
+    /// the successful branch of type resolution rather than silently falling back to the built-in
+    /// factory.
+    /// </remarks>
+    [Fact]
+    public void Constructor_WithResolvableRetryLogicType_DoesNotLeaveAssemblyProbingEnabled()
+    {
+        Assembly testAssembly = typeof(SqlConfigurableRetryLogicLoaderTest).Assembly;
+        string assemblySimpleName = testAssembly.GetName().Name!;
+
+        // The loader probes for '<simple name>.dll'. The test assembly's file name does not
+        // necessarily match its simple name, so make a copy that does.
+        string probePath = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
+        bool copied = false;
+        if (!File.Exists(probePath))
+        {
+            File.Copy(testAssembly.Location, probePath);
+            copied = true;
+        }
+
+        try
+        {
+            TestRetryConnectionSection section = CreateSection(
+                $"{typeof(ProbedRetryLogicFactory).FullName}, {assemblySimpleName}");
+            section.RetryMethod = nameof(ProbedRetryLogicFactory.CreateProbedRetryProvider);
+
+            ProbedRetryLogicFactory.InvocationCount = 0;
+
+            SqlConfigurableRetryLogicLoader loader = new(section, null);
+
+            Assert.Equal(1, ProbedRetryLogicFactory.InvocationCount);
+            Assert.NotNull(loader.ConnectionProvider);
+            AssertNoAssemblyProbingHandlerInstalled();
+        }
+        finally
+        {
+            if (copied)
+            {
+                DeleteProbeFile(probePath);
+            }
+        }
+    }
+
     private static TestRetryConnectionSection CreateSection(string? retryLogicType) =>
         new()
         {
@@ -100,27 +151,81 @@ public class SqlConfigurableRetryLogicLoaderTest
     /// </remarks>
     private static void AssertNoAssemblyProbingHandlerInstalled()
     {
-        // The probing directory is the application base directory, which for a test run is the
-        // directory the test assembly was loaded from.
-        string assemblySimpleName = "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
-        string plantedFile = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
+        string assemblySimpleName = NewProbeAssemblyName();
+        string plantedFile = PlantProbeFile(assemblySimpleName);
 
-        File.WriteAllText(plantedFile, "not an assembly");
         try
         {
-            Assert.Throws<FileNotFoundException>(
-                () => Assembly.Load(new AssemblyName(assemblySimpleName)));
+            Assert.False(
+                IsProbingHandlerInstalled(assemblySimpleName),
+                "A resolving handler that probes the loader's probing directory is subscribed to " +
+                "the default assembly load context.");
         }
         finally
         {
-            try
-            {
-                File.Delete(plantedFile);
-            }
-            catch (IOException)
-            {
-                // Best effort cleanup.
-            }
+            DeleteProbeFile(plantedFile);
+        }
+    }
+
+    /// <summary>
+    /// Reports whether a resolving handler that serves assemblies out of the loader's probing
+    /// directory is currently subscribed to <see cref="AssemblyLoadContext.Default"/>.
+    /// </summary>
+    /// <remarks>
+    /// This distinguishes the two states using only public behaviour, which is what actually
+    /// matters to a host application. With such a handler subscribed the planted file is found
+    /// and an attempt is made to load it, which fails as
+    /// <see cref="BadImageFormatException"/> because it is not a valid assembly. With no such
+    /// handler subscribed the runtime never looks in that directory and reports the assembly as
+    /// simply not found.
+    /// </remarks>
+    private static bool IsProbingHandlerInstalled(string assemblySimpleName)
+    {
+        try
+        {
+            Assembly.Load(new AssemblyName(assemblySimpleName));
+
+            // Unreachable: the planted file is deliberately not a valid assembly, so a handler
+            // that found it cannot have loaded it successfully.
+            return true;
+        }
+        catch (BadImageFormatException)
+        {
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    private static string NewProbeAssemblyName() =>
+        "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
+
+    /// <summary>
+    /// Plants a file that is not a valid assembly in the loader's probing directory, under a
+    /// name no other component could be asking for.
+    /// </summary>
+    private static string PlantProbeFile(string assemblySimpleName)
+    {
+        // The probing directory is the application base directory, which for a test run is the
+        // directory the test assembly was loaded from.
+        string plantedFile = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
+
+        File.WriteAllText(plantedFile, "not an assembly");
+
+        return plantedFile;
+    }
+
+    private static void DeleteProbeFile(string plantedFile)
+    {
+        try
+        {
+            File.Delete(plantedFile);
+        }
+        catch (IOException)
+        {
+            // Best effort cleanup.
         }
     }
 
@@ -139,6 +244,27 @@ public class SqlConfigurableRetryLogicLoaderTest
         public string RetryMethod { get; set; } = string.Empty;
 
         public string TransientErrors { get; set; } = string.Empty;
+    }
+}
+
+/// <summary>
+/// A retry logic factory that is resolved through the loader's probing directory rather than
+/// through normal assembly resolution, so tests can tell a successful custom type resolution
+/// apart from a silent fallback to the built-in factory.
+/// </summary>
+/// <remarks>
+/// This has to be a public, non-nested type because the loader discovers candidates by
+/// enumerating the resolved assembly's exported types.
+/// </remarks>
+public static class ProbedRetryLogicFactory
+{
+    internal static int InvocationCount;
+
+    public static SqlRetryLogicBaseProvider CreateProbedRetryProvider(SqlRetryLogicOption option)
+    {
+        InvocationCount++;
+
+        return SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
     }
 }
 
