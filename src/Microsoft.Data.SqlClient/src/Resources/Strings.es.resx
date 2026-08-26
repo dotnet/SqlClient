@@ -2083,10 +2083,10 @@
     <value>No se puede establecer la propiedad AccessTokenCallback si la palabra clave de cadena de conexión "Integrated Security" se ha establecido en "true" o "SSPI".</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+    <value>No se puede establecer la propiedad AccessToken o AccessTokenCallback si ya se ha establecido la propiedad SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+    <value>No se puede establecer la propiedad SspiContextProvider si ya se ha establecido la propiedad AccessToken o AccessTokenCallback.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>No se puede establecer la propiedad AccessTokenCallback si se ha especificado 'Authentication=Active Directory Default' en la cadena de conexión.</value>
