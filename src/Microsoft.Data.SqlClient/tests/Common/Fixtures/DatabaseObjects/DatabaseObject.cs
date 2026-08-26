@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Text;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
@@ -342,8 +343,14 @@ public abstract class DatabaseObject<TState> : IDisposable
 
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            // This is the last chance to remove the object, so report the leak. Callers either
+            // rethrow (surfacing the original failure, which on its own does not say *which* object
+            // was left behind) or swallow the failure entirely, which would otherwise orphan the
+            // object silently.
+            Console.WriteLine($"Failed to drop {GetType().Name} '{Name}'; it may be orphaned in the test database. {ex}");
+
             return false;
         }
     }

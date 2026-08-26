@@ -33,8 +33,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             {
                 dstConn.Open();
 
-                // The table is declared after the schema so that it is dropped first: a schema
-                //   cannot be dropped while it still contains objects.
+                // The table is not currently created inside the schema, but it is declared second so
+                // that it is dropped first regardless: a schema cannot be dropped while it still
+                // contains objects.
                 using Schema schema = Schema.WithName(dstConn, dstschema);
                 using Table table = Table.WithName(dstConn, dstTable, "(orderid int, customerid nchar(5))");
 
