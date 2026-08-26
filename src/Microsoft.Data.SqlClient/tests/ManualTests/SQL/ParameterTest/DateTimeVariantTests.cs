@@ -1315,6 +1315,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {TestVariations.TestSqlDataRecordParameterToTVP_Variant, TimeSpan.Zero},
                 },
                 new Dictionary<TestVariations, string>()};
+            yield return new object[] { TimeSpan.FromSeconds(1.0), "time",
+                new Dictionary<TestVariations, ExceptionChecker>(),
+                new Dictionary<TestVariations, object>(),
+                new Dictionary<TestVariations, string>()};
             yield return new object[] { TimeSpan.MaxValue, "time",
                 new Dictionary<TestVariations, ExceptionChecker> {
                     { TestVariations.TestSimpleParameter_Type, TimeOverflow },
