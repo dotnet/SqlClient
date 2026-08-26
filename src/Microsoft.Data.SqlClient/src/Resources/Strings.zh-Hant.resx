@@ -1969,7 +1969,7 @@
     <value>驗證記憶體保護區報表的簽章失敗。報表的簽章與使用 HGS 根憑證計算所得的簽章不符。請驗證端點的 DNS 對應 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。若其正確，請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>記憶體保護區證明失敗，因為已簽署的記憶體保護區報表未繫結至用來建立工作階段的記憶體保護區公開金鑰。記憶體保護區公開金鑰必須符合已簽署報表所認可的值 - 如需詳細資料，請參閱 https://go.microsoft.com/fwlink/?linkid=2160553。若其正確，請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>從 SQL Server 收到的記憶體保護區報表的格式不正確。請連絡客戶支援服務。</value>
@@ -2135,6 +2135,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在資料行 '{0}' 上取得 JsonDocument 的嘗試無效。JsonDocument 僅支援 JSON 類型的資料行。</value>
