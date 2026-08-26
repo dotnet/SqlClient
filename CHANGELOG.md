@@ -33,7 +33,7 @@ See the [full release notes](release-notes/7.1/7.1.0-preview3.md) for detailed d
 - Implemented those four asynchronous APIs in `SqlColumnEncryptionAzureKeyVaultProvider`, calling the Azure SDK's own asynchronous methods and flowing the supplied `CancellationToken`. Concurrent cache misses for the same key are gated so a burst of callers issues a single Key Vault request. See the [AKV release notes](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0-preview3.md) for the `VerifyColumnMasterKeyMetadata` signature-validation behavior change and the 7.1 runtime requirement.
   ([#4540](https://github.com/dotnet/SqlClient/pull/4540))
 
-- Substantially expanded `ChannelDbConnectionPool` (the opt-in pool behind `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`) toward parity with the default pool: transaction support, broken-connection replacement, leaked-connection reclamation, background warmup and replenishment to `Min Pool Size`, idle pruning driven by `Connection Idle Timeout`, optional connection-creation rate limiting, and metrics/tracing parity. Default pooling behavior is unchanged.
+- Substantially expanded `ChannelDbConnectionPool` (the opt-in pool behind `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`) to parity with the default pool: transaction support, broken-connection replacement, leaked-connection reclamation, background warmup and replenishment to `Min Pool Size`, idle pruning driven by `Connection Idle Timeout`, optional connection-creation rate limiting, and metrics/tracing parity. Default pooling behavior is unchanged.
   ([#4395](https://github.com/dotnet/SqlClient/pull/4395),
    [#4396](https://github.com/dotnet/SqlClient/pull/4396),
    [#4429](https://github.com/dotnet/SqlClient/pull/4429),
