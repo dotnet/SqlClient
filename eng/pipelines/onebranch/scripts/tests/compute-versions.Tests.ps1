@@ -8,6 +8,15 @@ BeforeAll {
     $projectPath = Join-Path $TestDrive 'build.proj'
     Set-Content -LiteralPath $projectPath -Value '<Project />'
 
+    # An arbitrary but well-formed pipeline build number, used only by the tests that exercise the
+    # path which consumes one. The script never reads the ambient build number; the pipeline passes
+    # $(Build.BuildNumber) as a parameter, so any well-formed value works here and a fixed one keeps
+    # the expected output deterministic. Assertions derive from these rather than repeating literals
+    # so the relationship between the two is visible.
+    $script:testBuildNumber = '26238.3'
+    $script:testBuildNumberPattern = [regex]::Escape($script:testBuildNumber)
+    $script:testFileVersionBuildNumber = $script:testBuildNumber.Split('.')[0]
+
     function Invoke-ComputeVersions {
         param(
             [long]$Revision = 42,
@@ -65,11 +74,11 @@ Describe 'compute-versions.ps1 Effective Versions' {
     }
 
     It 'appends the build number after the prerelease suffix when package revisioning is disabled' {
-        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber '26238.3'
+        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber $script:testBuildNumber
 
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.26238\.3'
-        $output | Should -Match 'VersionRevision;isOutput=true]26238'
+        $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
+        $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
+        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
     }
 
     It 'inserts the revision before prerelease suffixes for built packages' {
@@ -98,36 +107,36 @@ Describe 'compute-versions.ps1 Effective Versions' {
     }
 
     It 'emits the build number rather than the wrapped revision when package revisioning is disabled' {
-        $output = Invoke-ComputeVersions -Revision 65536 -AddRevision $false -BuildNumber '26238.3'
+        $output = Invoke-ComputeVersions -Revision 65536 -AddRevision $false -BuildNumber $script:testBuildNumber
 
         $output | Should -Not -Match 'task\.logissue type=warning'
         $output | Should -Not -Match 'wrapped to'
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.26238\.3'
-        $output | Should -Match 'VersionRevision;isOutput=true]26238'
+        $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
+        $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
+        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
     }
 
     It 'retains the published SqlServer package unstamped when SqlServer is not built' {
-        $output = Invoke-ComputeVersions -BuildSqlServer $false -AddRevision $false -BuildNumber '26238.3'
+        $output = Invoke-ComputeVersions -BuildSqlServer $false -AddRevision $false -BuildNumber $script:testBuildNumber
 
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
+        $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
         $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0'
-        $output | Should -Not -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0\.26238'
+        $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.0\.0\.$script:testFileVersionBuildNumber"
     }
 
     It 'omits the build number from non-preview package versions when package revisioning is disabled' {
         Set-DotnetMock -SqlClientPackageVersion '7.1.0' -SqlServerPackageVersion '1.1.0'
 
-        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber '26238.3'
+        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber $script:testBuildNumber
 
         $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0(\r?\n|$)'
         $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0(\r?\n|$)'
-        $output | Should -Not -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0[\.-]26238'
-        $output | Should -Not -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0[\.-]26238'
+        $output | Should -Not -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0[\.-]$script:testFileVersionBuildNumber"
+        $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0[\.-]$script:testFileVersionBuildNumber"
 
         # The file version is still stamped so every build produces a distinct, date-encoded
         # file version even for non-preview releases.
-        $output | Should -Match 'VersionRevision;isOutput=true]26238'
+        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
     }
 
     It 'revises non-preview package versions when package revisioning is enabled' {
