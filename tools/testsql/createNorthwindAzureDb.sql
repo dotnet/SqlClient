@@ -17,11 +17,6 @@ GO
 ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION OFF;
 GO
 /*********************************************************************************/
-ALTER DATABASE CURRENT SET READ_COMMITTED_SNAPSHOT OFF WITH ROLLBACK IMMEDIATE;
-GO
-ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION OFF;
-GO
-/*********************************************************************************/
 
 ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 0;
 GO
