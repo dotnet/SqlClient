@@ -12,15 +12,24 @@
     The published SqlServer version is needed when SqlServer is not built because downstream
     SqlClient projects restore that existing package from NuGet.
 
-    The supplied revision is mapped to the range 1 through 65535 before canonical versions
-    are evaluated so every file version has a valid fourth component. When AddRevision is true, that
-    same mapped value is inserted as the fourth numeric component of package versions built during
-    this run. Any prerelease suffix remains after the revision. For example, 1.2.3-preview1 with
-    revision 165500 becomes package version 1.2.3.34430-preview1 and file version 1.2.3.34430.
+    Two mutually exclusive package version shapes are supported:
 
-    Revisions above 65535 wrap through the valid unsigned 16-bit file-version range. The script logs
-    the mapping because the revision may then collide with an earlier run. An unbuilt SqlServer
-    package is never revised because its effective version must continue to identify the package
+      - AddRevision false (default). Prerelease packages append the pipeline build number after the
+        prerelease suffix, producing the shape shipped by earlier previews, such as
+        1.2.3-preview1.26238.3. Stable packages are left untouched. The file-version build number is
+        the first build number segment, giving file version 1.2.3.26238. This keeps the file version
+        date-encoded and traceable back to the run that produced it.
+
+      - AddRevision true. The mapped revision is inserted as the fourth numeric component of package
+        versions built during this run, with any prerelease suffix retained after it. For example,
+        1.2.3-preview1 with revision 165500 becomes package version 1.2.3.34430-preview1 and file
+        version 1.2.3.34430. This shape exists for repeated test publishes of the same base version.
+
+    The supplied revision is mapped to the range 1 through 65535 before canonical versions
+    are evaluated so every file version has a valid fourth component. Revisions above 65535 wrap
+    through the valid unsigned 16-bit file-version range. The script logs the mapping because the
+    revision may then collide with an earlier run. An unbuilt SqlServer package is never revised or
+    stamped with a build number because its effective version must continue to identify the package
     that already exists on NuGet.
 
     The script emits these output variables for downstream stages:
@@ -34,6 +43,11 @@
 .PARAMETER Revision
     Positive integer used to distinguish versions. Values above 65535 are wrapped into the unsigned
     16-bit revision range.
+
+.PARAMETER BuildNumber
+    Pipeline build number in the form <date>.<run>, such as 26238.3. Appended to prerelease package
+    versions when AddRevision is false, and its first segment is emitted as the file-version build
+    number so file versions remain date-encoded.
 
 .PARAMETER BuildSqlServer
     Whether this run builds Microsoft.SqlServer.Server. When false, the effective SqlServer package
@@ -51,6 +65,18 @@
     ./compute-versions.ps1 `
         -ProjectPath ./build.proj `
         -Revision 165500 `
+        -BuildNumber 26238.3 `
+        -BuildSqlServer $true `
+        -AddRevision $false
+
+    Computes versions for an official-style run that builds SqlServer. Prerelease package versions
+    become 7.1.0-preview3.26238.3 and file versions become 7.1.0.26238.
+
+.EXAMPLE
+    ./compute-versions.ps1 `
+        -ProjectPath ./build.proj `
+        -Revision 165500 `
+        -BuildNumber 26238.3 `
         -BuildSqlServer $true `
         -AddRevision $true
 
@@ -61,6 +87,7 @@
     ./compute-versions.ps1 `
         -ProjectPath ./build.proj `
         -Revision 165500 `
+        -BuildNumber 26238.3 `
         -BuildSqlServer $false `
         -AddRevision $true
 
@@ -82,6 +109,10 @@ param(
     [Parameter(Mandatory = $true, HelpMessage = "Positive integer version revision.")]
     [ValidateRange(1, [long]::MaxValue)]
     [long]$Revision,
+
+    [Parameter(Mandatory = $true, HelpMessage = "Pipeline build number, such as 26238.3.")]
+    [ValidatePattern("^\d+\.\d+$")]
+    [string]$BuildNumber,
 
     [Parameter(Mandatory = $true, HelpMessage = "Whether Microsoft.SqlServer.Server is built in this run.")]
     [bool]$BuildSqlServer,
@@ -198,6 +229,43 @@ function Add-VersionRevision {
 
 <#
 .SYNOPSIS
+    Appends a pipeline build number to a prerelease package version.
+
+.DESCRIPTION
+    Reproduces the version shape used by earlier previews, where the build number follows the
+    prerelease suffix, such as 7.1.0-preview3.26238.3. Stable versions are returned unchanged
+    because released packages are not stamped with a build number.
+
+.PARAMETER Version
+    Package version with a three-part numeric base and optional prerelease suffix.
+
+.PARAMETER BuildNumber
+    Pipeline build number to append.
+
+.OUTPUTS
+    The package version with the build number appended to its prerelease suffix, or the original
+    version when it carries no prerelease suffix.
+#>
+function Add-VersionBuildNumber {
+    param(
+        [string]$Version,
+        [string]$BuildNumber
+    )
+
+    $parts = $Version -split "-", 2
+    if ($parts[0] -notmatch "^\d+\.\d+\.\d+$") {
+        throw "Expected a three-part numeric version base, but received '$Version'."
+    }
+
+    if ($parts.Count -eq 2) {
+        return "$($parts[0])-$($parts[1]).$BuildNumber"
+    }
+
+    return $Version
+}
+
+<#
+.SYNOPSIS
     Emits an Azure DevOps job output variable for consumption by downstream stages.
 
 .PARAMETER Name
@@ -232,6 +300,8 @@ $sqlServerPackageVersion = if ($BuildSqlServer) {
     $sqlServerVersions.PublishedVersion
 }
 
+$fileVersionBuildNumber = $BuildNumber.Split(".")[0]
+
 if ($AddRevision) {
     $sqlClientPackageVersion = Add-VersionRevision `
         -Version $sqlClientPackageVersion `
@@ -242,7 +312,22 @@ if ($AddRevision) {
             -Revision $wrappedRevision
     }
 
+    # The revision is already the fourth component of the package version, so it is also the
+    # file-version build number.
+    $fileVersionBuildNumber = $wrappedRevision
     Write-Host "Version revision: $wrappedRevision (input=$Revision)"
+}
+else {
+    $sqlClientPackageVersion = Add-VersionBuildNumber `
+        -Version $sqlClientPackageVersion `
+        -BuildNumber $BuildNumber
+    if ($BuildSqlServer) {
+        $sqlServerPackageVersion = Add-VersionBuildNumber `
+            -Version $sqlServerPackageVersion `
+            -BuildNumber $BuildNumber
+    }
+
+    Write-Host "Version build number: $BuildNumber (file version build number=$fileVersionBuildNumber)"
 }
 
 Write-Host "Effective versions:"
@@ -251,4 +336,4 @@ Write-Host "  SqlServer:          $sqlServerPackageVersion"
 
 Set-PipelineOutputVariable -Name "SqlClientPackageVersion" -Value $sqlClientPackageVersion
 Set-PipelineOutputVariable -Name "SqlServerPackageVersion" -Value $sqlServerPackageVersion
-Set-PipelineOutputVariable -Name "VersionRevision" -Value $wrappedRevision
+Set-PipelineOutputVariable -Name "VersionRevision" -Value $fileVersionBuildNumber

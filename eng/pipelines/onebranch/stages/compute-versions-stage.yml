@@ -17,8 +17,11 @@
 #   - Microsoft.SqlServer.Server is versioned separately: it uses its "next" version when it is
 #     being built this run, or its "published" (last shipped to NuGet) version when it is not built
 #     (so the SqlClient family depends on the most recently published SqlServer package).
-#   - Runs can append the Build.BuildId revision to packages built in that run, reducing
-#     collisions when repeatedly publishing the same base version for testing.
+#   - Runs use their "next" version from Versions.props. By default the pipeline build number is
+#     appended to prerelease package versions (7.1.0-preview3.26238.3) and its date segment becomes
+#     the file-version build number (7.1.0.26238), matching the shape shipped by earlier previews.
+#     Runs can instead append the Build.BuildId revision, reducing collisions when repeatedly
+#     publishing the same base version for testing.
 #   - Versions are extracted via build.proj GetVersions* targets by parsing stdout.
 #
 # This stage MUST run before all build stages so they can consume computed versions.
@@ -78,5 +81,6 @@ stages:
               arguments: >-
                 -ProjectPath "$(Build.SourcesDirectory)/build.proj"
                 -Revision "$(Build.BuildId)"
+                -BuildNumber "$(Build.BuildNumber)"
                 -BuildSqlServer $${{ parameters.buildSqlServer }}
                 -AddRevision $${{ parameters.addRevision }}

@@ -11,6 +11,7 @@ BeforeAll {
     function Invoke-ComputeVersions {
         param(
             [long]$Revision = 42,
+            [string]$BuildNumber = '26238.3',
             [bool]$BuildSqlServer = $true,
             [bool]$AddRevision = $true
         )
@@ -18,6 +19,7 @@ BeforeAll {
         & $scriptPath `
             -ProjectPath $projectPath `
             -Revision $Revision `
+            -BuildNumber $BuildNumber `
             -BuildSqlServer $BuildSqlServer `
             -AddRevision $AddRevision *>&1 | Out-String
     }
@@ -51,12 +53,12 @@ Describe 'compute-versions.ps1 Effective Versions' {
         Set-SuccessfulDotnetMock
     }
 
-    It 'emits canonical package versions and the revision when package revisioning is disabled' {
+    It 'appends the build number after the prerelease suffix when package revisioning is disabled' {
         $output = Invoke-ComputeVersions -AddRevision $false
 
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1'
-        $output | Should -Match 'VersionRevision;isOutput=true]42'
+        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
+        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.26238\.3'
+        $output | Should -Match 'VersionRevision;isOutput=true]26238'
     }
 
     It 'inserts the revision before prerelease suffixes for built packages' {
@@ -84,14 +86,37 @@ Describe 'compute-versions.ps1 Effective Versions' {
         $output | Should -Match 'VersionRevision;isOutput=true]1'
     }
 
-    It 'emits the wrapped revision when package revisioning is disabled' {
+    It 'emits the build number rather than the wrapped revision when package revisioning is disabled' {
         $output = Invoke-ComputeVersions -Revision 65536 -AddRevision $false
 
-        $output | Should -Match 'Revision 65536.*wrapped to 1'
         $output | Should -Not -Match 'task\.logissue type=warning'
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1'
-        $output | Should -Match 'VersionRevision;isOutput=true]1'
+        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
+        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.26238\.3'
+        $output | Should -Match 'VersionRevision;isOutput=true]26238'
+    }
+
+    It 'retains the published SqlServer package unstamped when SqlServer is not built' {
+        $output = Invoke-ComputeVersions -BuildSqlServer $false -AddRevision $false
+
+        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.26238\.3'
+        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0'
+        $output | Should -Not -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0\.26238'
+    }
+
+    It 'leaves stable package versions unstamped' {
+        Mock -CommandName 'dotnet' -MockWith {
+            $global:LASTEXITCODE = 0
+            return @(
+                '  PackageVersion: 7.1.0'
+                '  PublishedVersion: 7.0.0'
+            )
+        }
+
+        $output = Invoke-ComputeVersions -AddRevision $false
+
+        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\r?\n'
+        $output | Should -Not -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.26238'
+        $output | Should -Match 'VersionRevision;isOutput=true]26238'
     }
 }
 
