@@ -56,6 +56,24 @@ public abstract class DatabaseObject<TState> : IDisposable
         }
     }
 
+    /// <summary>
+    /// Adopts an object that already exists, so that it is dropped when this instance is disposed.
+    /// Nothing is created.
+    /// </summary>
+    /// <remarks>
+    /// Necessary for objects the server creates as a side effect of creating something else, which
+    /// therefore have no CREATE statement of their own but still have to be dropped. The temporal
+    /// history table behind <see cref="TemporalTable"/> is the motivating case.
+    /// </remarks>
+    protected DatabaseObject(SqlConnection connection, string name, TState state, ExistingObject _)
+    {
+        Connection = connection;
+        State = state;
+        Name = name;
+
+        EnsureConnectionOpen();
+    }
+
     private void EnsureConnectionOpen()
     {
         const int MaxWaits = 2;
@@ -396,6 +414,11 @@ public abstract class DatabaseObject : DatabaseObject<object?>
 {
     protected DatabaseObject(SqlConnection connection, string name, string definition)
         : base(connection, name, definition, state: null)
+    {
+    }
+
+    protected DatabaseObject(SqlConnection connection, string name, ExistingObject adopt)
+        : base(connection, name, state: null, adopt)
     {
     }
 }

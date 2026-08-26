@@ -30,6 +30,11 @@ public sealed class Table : DatabaseObject
     {
     }
 
+    private Table(SqlConnection connection, string name, ExistingObject adopt)
+        : base(connection, name, adopt)
+    {
+    }
+
     /// <summary>
     /// Creates a table using the caller-supplied name verbatim, instead of generating one.
     /// </summary>
@@ -45,6 +50,20 @@ public sealed class Table : DatabaseObject
     /// <param name="definition">The SQL definition describing the structure of the table, including columns and data types.</param>
     public static Table WithName(SqlConnection connection, string name, string definition)
         => new(connection, name, definition, NameIsVerbatim.Yes);
+
+    /// <summary>
+    /// Adopts a table that already exists, so that it is dropped when the returned instance is
+    /// disposed. No table is created.
+    /// </summary>
+    /// <remarks>
+    /// For tables the server creates as a side effect of creating something else, and which
+    /// therefore have no CREATE statement of their own but must still be dropped — the history
+    /// table behind a <see cref="TemporalTable"/> being the motivating case.
+    /// </remarks>
+    /// <param name="connection">The SQL connection used to drop the table.</param>
+    /// <param name="name">The table name, already quoted/escaped by the caller if it needs to be.</param>
+    public static Table AdoptExisting(SqlConnection connection, string name)
+        => new(connection, name, ExistingObject.Adopt);
 
     protected override void CreateObject(string definition)
     {
