@@ -184,7 +184,9 @@ For a basic local SQL Server run, prepare:
 - A SQL Server instance that the test machine can reach.
 - Shared Memory, TCP, and Named Pipes protocols enabled when testing local Windows SQL Server scenarios.
 - The `NORTHWIND` database created from [tools/testsql/createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql). For
-  Azure SQL, use [tools/testsql/createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
+  Azure SQL, use [tools/testsql/createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql). Both scripts turn
+  `READ_COMMITTED_SNAPSHOT` and `ALLOW_SNAPSHOT_ISOLATION` off, which some transaction tests rely on. Azure SQL Database
+  enables `READ_COMMITTED_SNAPSHOT` by default, so run the script against the database rather than setting it up by hand.
 - The `UdtTestDb` database created from [tools/testsql/createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql) if you
   want UDT tests to run.
 - A login or integrated-security principal with permissions to create and drop the temporary objects used by the tests.
