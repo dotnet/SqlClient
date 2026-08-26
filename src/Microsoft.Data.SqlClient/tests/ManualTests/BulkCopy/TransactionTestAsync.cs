@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         bulkcopy.DestinationTableName = dstTable.Name;
                         SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
-                        SqlTransaction myTrans = dstConn.BeginTransaction();
+                        using SqlTransaction myTrans = dstConn.BeginTransaction();
                         try
                         {
                             await bulkcopy.WriteToServerAsync(reader);

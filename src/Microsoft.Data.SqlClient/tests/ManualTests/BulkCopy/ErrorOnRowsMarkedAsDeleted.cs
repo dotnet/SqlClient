@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
 
             // create SQL table with one int field, similar to the above DataTable
-            SqlCommand cmd = conn.CreateCommand();
+            using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "CREATE TABLE [" + tableName + "] (IntVal int)";
             cmd.ExecuteNonQuery();
 
@@ -146,9 +146,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             finally
             {
                 // delete the table
-                cmd = conn.CreateCommand();
-                cmd.CommandText = "DROP TABLE [" + tableName + "]";
-                cmd.ExecuteNonQuery();
+                using SqlCommand dropCmd = conn.CreateCommand();
+                dropCmd.CommandText = "DROP TABLE [" + tableName + "]";
+                dropCmd.ExecuteNonQuery();
             }
         }
     }

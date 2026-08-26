@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 
                     using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
-                        SqlTransaction myTrans = dstConn.BeginTransaction();
+                        using SqlTransaction myTrans = dstConn.BeginTransaction();
                         using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
                         {
                             bulkcopy.DestinationTableName = dstTable.Name;
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                             try
                             {
                                 bulkcopy.WriteToServer(reader);
-                                SqlCommand myCmd = dstConn.CreateCommand();
+                                using SqlCommand myCmd = dstConn.CreateCommand();
                                 myCmd.CommandText = "select * from " + dstTable.Name;
                                 myCmd.Transaction = myTrans;
                                 using (DbDataReader reader1 = myCmd.ExecuteReader())

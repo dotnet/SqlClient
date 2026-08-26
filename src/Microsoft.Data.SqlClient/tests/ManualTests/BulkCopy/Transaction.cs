@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         bulkcopy.DestinationTableName = dstTable.Name;
                         SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
-                        SqlTransaction myTrans = dstConn.BeginTransaction();
+                        using SqlTransaction myTrans = dstConn.BeginTransaction();
                         try
                         {
                             DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader));

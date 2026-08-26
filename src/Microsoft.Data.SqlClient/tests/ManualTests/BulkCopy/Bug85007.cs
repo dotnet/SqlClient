@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         }
                     }
 
-                    SqlCommand srcCmd = new SqlCommand("select * from orders", srcConn);
+                    using SqlCommand srcCmd = new SqlCommand("select * from orders", srcConn);
                     using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
 

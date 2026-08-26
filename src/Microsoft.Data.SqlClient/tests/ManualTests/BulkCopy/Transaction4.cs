@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     {
                         conn3.Open();
                         // Start a local transaction on the wrong connection.
-                        SqlTransaction myTrans = conn3.BeginTransaction();
+                        using SqlTransaction myTrans = conn3.BeginTransaction();
                         string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadConflictingTransactionOption;
                         DataTestUtility.AssertThrows<ArgumentException>(() => new SqlBulkCopy(dstConn, SqlBulkCopyOptions.UseInternalTransaction, myTrans), exceptionMessage: errorMsg);
                     }

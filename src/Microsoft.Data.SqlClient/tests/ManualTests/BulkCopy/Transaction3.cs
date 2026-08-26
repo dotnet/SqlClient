@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     {
                         conn3.Open();
                         // Start a local transaction on the wrong connection.
-                        SqlTransaction myTrans = conn3.BeginTransaction();
+                        using SqlTransaction myTrans = conn3.BeginTransaction();
                         using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
                         {
                             SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                             string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
                             DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
 
-                            SqlCommand myCmd = dstConn.CreateCommand();
+                            using SqlCommand myCmd = dstConn.CreateCommand();
                             myCmd.CommandText = "select * from " + dstTable.Name;
                             myCmd.Transaction = myTrans;
 

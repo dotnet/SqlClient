@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                         bulkcopy.DestinationTableName = dstTable.Name;
                         SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
-                        SqlCommand myCmd = dstConn.CreateCommand();
+                        using SqlCommand myCmd = dstConn.CreateCommand();
                         myCmd.CommandText = "begin transaction";
                         myCmd.ExecuteNonQuery();
 
