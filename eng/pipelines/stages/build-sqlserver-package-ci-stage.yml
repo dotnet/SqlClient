@@ -62,7 +62,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -72,7 +71,6 @@ parameters:
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 stages:
 

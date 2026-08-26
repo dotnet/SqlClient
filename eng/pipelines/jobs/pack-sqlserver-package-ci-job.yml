@@ -52,7 +52,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -62,7 +61,6 @@ parameters:
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 jobs:
 
@@ -109,12 +107,11 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
-      # Download the assembly signing key for internal Package-mode builds.
+      # Create the NuGet packages.  Internal Package-mode builds strong-name sign the assemblies
+      # with the driver key.
       - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
-        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+        - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
 
-      # Create the NuGet packages.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
           inputs:
