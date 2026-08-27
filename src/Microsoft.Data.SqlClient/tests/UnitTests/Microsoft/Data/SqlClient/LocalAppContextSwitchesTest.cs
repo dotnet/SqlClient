@@ -73,7 +73,12 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Assert.False(switchesHelper.UseManagedNetworking);
+            // The managed SNI test leg enables this switch process-wide via runtimeconfig.json,
+            // so compare against AppContext rather than assuming the switch is unset.
+            System.AppContext.TryGetSwitch(
+                "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows",
+                out bool useManagedNetworking);
+            Assert.Equal<bool?>(useManagedNetworking, switchesHelper.UseManagedNetworking);
         }
         else
         {
