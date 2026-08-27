@@ -1969,7 +1969,7 @@
     <value>Weryfikacja podpisu w raporcie enklawy zakończyła się niepowodzeniem. Podpis raportu jest niezgodny z podpisem obliczonym przy użyciu certyfikatu głównego usługi Ochrona hosta. Sprawdź mapowanie DNS dla punktu końcowego — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Zaświadczanie enklawy nie powiodło się, ponieważ podpisany raport enklawy nie został powiązany z kluczem publicznym enklawy używanym do ustanowienia sesji. Klucz publiczny enklawy musi być zgodny z wartością zatwierdzoną przez podpisany raport — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Raport enklawy odebrany z systemu SQL Server nie ma prawidłowego formatu. Skontaktuj się z Działem Obsługi Klienta.</value>
@@ -2083,10 +2083,10 @@
     <value>Nie można ustawić właściwości AccessTokenCallback, jeśli słowo kluczowe parametrów połączenia „Integrated Security” ma wartość „true” lub „SSPI”.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+    <value>Nie można ustawić właściwości AccessToken lub AccessTokenCallback, jeśli ustawiono właściwość SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+    <value>Nie można ustawić właściwości SspiContextProvider, jeśli ustawiono właściwość AccessToken lub AccessTokenCallback.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Nie można ustawić właściwości AccessTokenCallback, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Default”.</value>
@@ -2135,6 +2135,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Certyfikat dostarczony przez serwer nie jest zgodny z certyfikatem dostarczonym przez opcję ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Nieprawidłowa próba pobrania pliku JsonDocument w kolumnie „{0}”. Obiekt JsonDocument jest obsługiwany tylko w przypadku kolumn typu JSON.</value>

@@ -35,7 +35,13 @@ public sealed class DatabaseUser : DatabaseObject<string>
 
     protected override void DropObject()
     {
-        using SqlCommand dropCommand = new($"IF USER_ID('{UnescapedName}') IS NOT NULL DROP USER {Name}", Connection);
+        // NOTE: The name is passed to USER_ID() as a parameter rather than being interpolated into
+        //   a string literal, because it embeds Environment.UserName/MachineName (see
+        //   DatabaseObject.GenerateLongName) and an apostrophe in either would break the batch.
+        //   The identifier in DROP USER is already bracket-quoted by GenerateLongName.
+        using SqlCommand dropCommand = new($"IF USER_ID(@name) IS NOT NULL DROP USER {Name}", Connection);
+
+        dropCommand.Parameters.AddWithValue("@name", UnescapedName);
 
         ExecuteCommandInDatabase(dropCommand);
     }

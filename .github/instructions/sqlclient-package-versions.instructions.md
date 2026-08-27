@@ -136,29 +136,47 @@ Each downstream build job receives:
 
 Since an explicit `<Pkg>PackageVersion` is provided, Versions.props hits Priority 1 — uses the value verbatim.
 
-#### Non-Official Test Publication Revisions
+#### Package Version Shapes: `addRevision`
 
-Both OneBranch pipelines expose `addRevision` (default `false`). Their human-readable run name
-remains `$(Year:YY)$(DayOfYear)$(Rev:.r)`, while version revisions come from globally unique
-`Build.BuildId`. The compute stage always maps `Build.BuildId` into the unsigned 16-bit file-version
-range before evaluating canonical file versions:
+Both OneBranch pipelines expose `addRevision` (default `false`), which selects between two mutually
+exclusive package version shapes. Their human-readable run name is `$(Year:YY)$(DayOfYear)$(Rev:.r)`,
+and the compute stage receives both that run name (as `Build.BuildNumber`) and the globally unique
+`Build.BuildId` (as the revision).
+
+**Default path — `addRevision: false`.** The pipeline run name is appended after any prerelease
+suffix, reproducing the shape shipped by earlier previews. `Build.BuildId` is not used:
+
+- `1.2.3` stays `1.2.3` — non-preview releases are never stamped with a build number
+- `1.2.3-preview1` becomes `1.2.3-preview1.<build_number>`, e.g. `7.1.0-preview3.26238.3`
+- The matching file version is `1.2.3.<date_segment>`, e.g. `7.1.0.26238`
+
+Note the asymmetry: the *package* version omits the build number for non-preview releases, but the
+*file* version always carries one in its fourth component. This keeps every shipped assembly
+date-encoded and traceable to the run that produced it, while preserving the released package
+version customers expect.
+
+**Opt-in path — `addRevision: true`.** Version revisions come from `Build.BuildId` instead, which is
+mapped into the unsigned 16-bit file-version range before canonical file versions are evaluated:
 
 ```text
 revision = ((Build.BuildId - 1) % 65535) + 1
 ```
 
-Build IDs `1` through `65535` therefore map directly; subsequent IDs wrap back through that range.
-The compute stage logs the mapping whenever wrapping occurs because the revision can then collide
-with an earlier run. When `addRevision` is enabled, the mapped value is inserted before any package
-prerelease suffix so package and file versions use the same revision:
+Build IDs `1` through `65535` map directly; subsequent IDs wrap back through that range. The compute
+stage logs the mapping whenever wrapping occurs because the revision can then collide with an earlier
+run. The mapped value is inserted before any package prerelease suffix so package and file versions
+use the same revision:
 
 - `1.2.3` becomes `1.2.3.<revision>`
 - `1.2.3-preview1` becomes `1.2.3.<revision>-preview1`
 - The matching file version is `1.2.3.<revision>`
 
-Only packages built in the current run are revised. When `buildSqlServer` is `false`, the effective
-SqlServer version remains `SqlServerPublishedVersion` so dependency restore continues to request the
-package that actually exists on NuGet.
+This shape exists for repeated test publishes of the same base version, where each run needs a
+distinct package version. `Build.BuildNumber` is not used on this path.
+
+Only packages built in the current run are revised or stamped. When `buildSqlServer` is `false`, the
+effective SqlServer version remains `SqlServerPublishedVersion` so dependency restore continues to
+request the package that actually exists on NuGet.
 
 An explicit four-part package version is also treated as the complete file version base by both
 canonical Versions.props files; they do not append `FileVersionBuildNumber` as a fifth component.
