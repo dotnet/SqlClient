@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup), nameof(DataTestUtility.IsUserManagedIdentitySupported))]
         public void FedAuthTokenRefreshTest()
         {
             SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);

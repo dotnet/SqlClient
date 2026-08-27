@@ -112,7 +112,7 @@ public class AADConnectionTest
     public static void ADIntegratedUsingSSPI()
     {
         // test Passes with correct connection string.
-        string connStr = Config.TcpConnectionString
+        string connStr = Config.TCPConnectionString
             .RemoveAuthAndCredsProperties()
             .AddAADIntegratedAuthenticationToConnString();
         ConnectAndDisconnect(connStr);
@@ -153,7 +153,7 @@ public class AADConnectionTest
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_SystemManagedIdentityTest()
     {
-        string connectionString = Config.TcpConnectionString
+        string connectionString = Config.TCPConnectionString
             .RemoveAuthAndCredsProperties()
             .AddManagedIdentityAuthenticationToConnString();
 
@@ -172,7 +172,7 @@ public class AADConnectionTest
         nameof(Config.IsAzureSqlServer))]
     public static void Azure_UserManagedIdentityTest()
     {
-        string connectionString = Config.TcpConnectionString
+        string connectionString = Config.TCPConnectionString
             .RemoveAuthAndCredsProperties()
             .AddManagedIdentityAuthenticationToConnString()
             .AddUserToConnString(Config.UserManagedIdentityClientId);
