@@ -2137,10 +2137,10 @@
     <value>Certyfikat dostarczony przez serwer nie jest zgodny z certyfikatem dostarczonym przez opcję ServerCertificate.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>Nie można załadować lub przeanalizować pliku certyfikatu określonego przez opcję „ServerCertificate”: „{0}”.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>Określono opcję „ServerCertificate”, ale serwer nie przedstawia certyfikatu, który można porównać z nim.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Nieprawidłowa próba pobrania pliku JsonDocument w kolumnie „{0}”. Obiekt JsonDocument jest obsługiwany tylko w przypadku kolumn typu JSON.</value>
