@@ -101,11 +101,8 @@ jobs:
       # Align the checkout with the commit that produced the upstream packages.
       - template: /eng/pipelines/common/steps/align-source-with-upstream-step.yml@self
 
-      # Download the SqlClient packages produced by the triggering pipeline, while using the
-      # nuget.org SqlServer.Server package version.
+      # Download the exact driver packages produced by the triggering pipeline.
       - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
-        parameters:
-          sqlServerVersionOverride: 1.0.0
 
       # Install the SDK and all runtimes required by the test matrix.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
