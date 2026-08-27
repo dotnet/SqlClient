@@ -239,6 +239,67 @@ if ($sqlcmd) {
     throw "sqlcmd was not found on the VM; cannot create the perf database [$DbName]."
 }
 
+# SQL Server 2025 verifies SQL-authentication passwords with 100,000 PBKDF2 iterations. That work
+# costs about 150 ms per physical login and overwhelms connection benchmarks that intentionally
+# disable or clear pooling. Use the supported Windows-authentication path over local TCP loopback.
+function Test-IsLocalSqlServer {
+    param([string] $Server)
+
+    try {
+        $serverAddresses = [System.Net.Dns]::GetHostAddresses($Server)
+    } catch [System.Net.Sockets.SocketException] {
+        Write-Warning "Could not resolve SQL Server [$Server] while checking whether it is local."
+        return $false
+    }
+
+    $localAddresses = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() |
+        ForEach-Object { $_.GetIPProperties().UnicastAddresses } |
+        ForEach-Object { $_.Address }
+    return $null -ne ($serverAddresses | Where-Object { $localAddresses -contains $_ } |
+        Select-Object -First 1)
+}
+
+if (Test-IsLocalSqlServer $SqlServer) {
+    $BenchmarkSqlServer = "localhost"
+    $benchmarkIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $identityLiteral = $benchmarkIdentity.Replace("'", "''")
+    $configureBenchmarkIdentity = @"
+DECLARE @ddl nvarchar(max);
+IF SUSER_ID(N'$identityLiteral') IS NULL
+BEGIN
+    SET @ddl = N'CREATE LOGIN ' + QUOTENAME(N'$identityLiteral') + N' FROM WINDOWS';
+    EXEC sys.sp_executesql @ddl;
+END
+USE [$DbName];
+IF USER_ID(N'$identityLiteral') IS NULL
+BEGIN
+    SET @ddl = N'CREATE USER ' + QUOTENAME(N'$identityLiteral') +
+        N' FOR LOGIN ' + QUOTENAME(N'$identityLiteral');
+    EXEC sys.sp_executesql @ddl;
+END;
+IF IS_ROLEMEMBER(N'db_owner', N'$identityLiteral') <> 1
+BEGIN
+    SET @ddl = N'ALTER ROLE [db_owner] ADD MEMBER ' + QUOTENAME(N'$identityLiteral');
+    EXEC sys.sp_executesql @ddl;
+END;
+"@
+    Invoke-Native {
+        & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 -Q $configureBenchmarkIdentity
+    } "sqlcmd failed to configure Windows benchmark identity [$benchmarkIdentity]"
+    Invoke-Native {
+        & $sqlcmd.Source -S "tcp:$BenchmarkSqlServer,1433" -E -d $DbName -C -b -l 15 `
+            -Q "SET NOCOUNT ON; SELECT SUSER_SNAME(), USER_NAME();"
+    } "Loopback integrated-authentication preflight failed for benchmark identity [$benchmarkIdentity]"
+    $BenchmarkConnectionString = "Server=tcp:$BenchmarkSqlServer,1433;Integrated Security=True;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=True;"
+    Write-Host "Verified Windows integrated authentication over local TCP loopback."
+} else {
+    # Preserve the injected endpoint and SQL authentication for external SQL Server deployments.
+    $BenchmarkSqlServer = $SqlServer
+    $escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
+    $BenchmarkConnectionString = "Server=tcp:$BenchmarkSqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=True;"
+    Write-Host "Using SQL authentication for external SQL Server [$BenchmarkSqlServer]."
+}
+
 ####################################################################################################
 # Noise-reduction controls (InternalDriverTools wiki 339, "Reducing Noise in Performance Tests").
 #
@@ -308,11 +369,7 @@ $rawConfig = Get-Content $srcConfig -Raw
 $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
 $cfg = ConvertFrom-Json $rawConfig
 
-# SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
-# quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
-# value instead of corrupting the connection string.
-$escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
-$cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+$cfg.ConnectionString = $BenchmarkConnectionString
 # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
 # the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
 # benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
@@ -328,7 +385,7 @@ Set-CfgBool $cfg "UseManagedSniOnWindows" $UseManagedSniOnWindows
 Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $UseOptimizedAsyncBehaviour
 Set-CfgBool $cfg "UseConnectionPoolV2" $UseConnectionPoolV2
 $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
-Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
+Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$BenchmarkSqlServer,1433; Initial Catalog=$DbName)"
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
