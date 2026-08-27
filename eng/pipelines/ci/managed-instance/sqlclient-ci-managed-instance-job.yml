@@ -104,12 +104,7 @@ jobs:
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
       # pipeline, stage them into the local NuGet feed, and resolve their exact versions into the
       # sqlClient/sqlServer/abstractions/logging/azure PackageVersion variables.
-      #
-      # sqlServerVersionOverride pins Microsoft.SqlServer.Server to the released stable 1.0.0 to
-      # avoid an NU1605 downgrade against the >= 1.0.0 dependency from Microsoft.SqlServer.Types.
       - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
-        parameters:
-          sqlServerVersionOverride: 1.0.0
 
       # Install the .NET SDK and the runtimes needed to execute the test frameworks.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
@@ -170,8 +165,6 @@ jobs:
             -p:TestSet=123
             -p:ReferenceType=Package
             -p:Configuration=${{ parameters.buildConfiguration }}
-            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
-            -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
             -p:TestResultsFolderPath=TestResults
