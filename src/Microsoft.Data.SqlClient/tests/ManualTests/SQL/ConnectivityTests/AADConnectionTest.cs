@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
+        [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsUserManagedIdentitySupported))]
         public static void TestCustomProviderAuthentication()
         {
             SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);

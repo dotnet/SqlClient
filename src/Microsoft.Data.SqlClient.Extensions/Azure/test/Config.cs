@@ -45,7 +45,6 @@ internal static class Config
     internal static string ServicePrincipalSecret { get; } = string.Empty;
     internal static string SystemAccessToken { get; } = string.Empty;
     internal static bool SystemAssignedManagedIdentitySupported { get; } = false;
-    internal static string TcpConnectionString { get; } = string.Empty;
     internal static string TenantId { get; } = string.Empty;
     internal static bool UseManagedSniOnWindows { get; } = false;
     internal static string UserManagedIdentityClientId { get; } = string.Empty;
@@ -58,7 +57,7 @@ internal static class Config
     internal static bool IsAzureSqlConnectionString() => !TCPConnectionString.IsEmpty() && IsAzureSqlServer();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
-    internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();
+    internal static bool HasTcpConnectionString() => !TCPConnectionString.IsEmpty();
     internal static bool HasTenantId() => !TenantId.IsEmpty();
     internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.IsEmpty();
     internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.IsEmpty();
@@ -172,9 +171,9 @@ internal static class Config
             Console.WriteLine(
                 $"  SystemAssignedManagedIdentitySupported: {SystemAssignedManagedIdentitySupported}");
             Console.WriteLine(
-                $"  TcpConnectionString:                    {TcpConnectionString}");
+                $"  TcpConnectionString:                    {TCPConnectionString}");
             Console.WriteLine(
-                $"                                          {Base64Encode(TcpConnectionString)}");
+                $"                                          {Base64Encode(TCPConnectionString)}");
             Console.WriteLine(
                 $"  TenantId:                               {TenantId}");
             Console.WriteLine(
