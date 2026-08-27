@@ -325,7 +325,7 @@ supplies the isolated dedicated host, the tuned SQL instance, and the disjoint c
 | Fail loud | Preflight `SELECT 1` before any pass, **and** a post-pass guard that fails the run if a pass produced **zero** benchmark results — so an empty comparison can never be reported green. |
 | Warm-up | Touches the target DB in the preflight to warm the buffer pool / plan cache before the first measured benchmark. |
 | Allocator tuning (Linux) | Exports `MALLOC_MMAP_THRESHOLD_=128MiB` and `MALLOC_TRIM_THRESHOLD_=-1` so large-buffer benches (`LargeDataRead`, `SqlBulkCopy`) stop re-`mmap`ing per iteration. |
-| Network tuning (Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ParallelAsyncConnection`). Never fails the run. |
+| Network tuning (Linux) | Best-effort `sysctl` to widen the ephemeral port range and enable `tcp_tw_reuse` for churn benches (`ConnectionPoolStress`, `ConnectionPoolRamp`, `ConnectionPoolThreadPoolPressure`, `ParallelAsyncConnection`). Never fails the run. |
 | Diagnostics | Writes `results/diagnostics/`: SQL instance config (MAXDOP, memory, affinity, tempdb files, `@@VERSION`), host CPU topology, and per-pass CPU-clock/thermal telemetry (before/after each pass). |
 | Regression gate | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
 | Interleaving | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |

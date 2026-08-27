@@ -294,6 +294,7 @@ def orchestrate(runner, units, results_dir, threshold, reps):
     unconfirmed = [e for e in entries if e["status"] == "regression-unconfirmed"]
     return entries, confirmed, unconfirmed
 
+
 # --------------------------------------------------------------------------------------------------
 # Rendering.
 # --------------------------------------------------------------------------------------------------
@@ -346,7 +347,6 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
             )
         )
     lines.append("")
-
     return "\n".join(lines)
 
 
@@ -414,8 +414,7 @@ def main(argv=None):
 
     # Outputs.
     comparison_dir = os.path.join(results_dir, "comparison")
-    md = render_markdown(entries, confirmed, unconfirmed,
-                         args.baseline_version, args.threshold, args.reps)
+    md = render_markdown(entries, confirmed, unconfirmed, args.baseline_version, args.threshold, args.reps)
     with open(os.path.join(comparison_dir, "comparison.md"), "w", encoding="utf-8") as fh:
         fh.write(md + "\n")
     with open(os.path.join(comparison_dir, "comparison.json"), "w", encoding="utf-8") as fh:
