@@ -66,9 +66,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// effect. The fully-subscribed corner is the exception — there the spread is a real
         /// effect, because one side has idle spares to choose from and the other has none.
         ///
-        /// This reading only holds because every benchmark here performs the same amount of work
-        /// at both MaxPoolSize values. Do not make a benchmark body's operation count a function
-        /// of MaxPoolSize, or the spread stops being a noise estimate.
+        /// This reading holds for every benchmark here except
+        /// <see cref="PoolExhaustionRecovery"/>, whose task count is <c>MaxPoolSize +
+        /// Parallelism</c>: at Parallelism 10 the two cells run 60 and 110 tasks, so their spread
+        /// is mostly the extra work. That coupling is intrinsic, since exhausting the pool means
+        /// first saturating it. Elsewhere, do not make a benchmark body's operation count a
+        /// function of MaxPoolSize, or the spread stops being a noise estimate there too.
         /// </remarks>
         [Params(50, 100)]
         public int MaxPoolSize { get; set; }

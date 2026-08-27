@@ -18,9 +18,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// A sync <c>Open()</c> against a saturated pool blocks its thread. When those threads
     /// are threadpool threads, a pool whose waiter wake-up requires a queued continuation
     /// cannot make progress: every thread is blocked in a wait, so the wake-up sits in the
-    /// queue until the threadpool injects another thread. Since .NET 6 the runtime detects
-    /// cooperative blocking and injects quickly, so stalls are tens to a few hundred
-    /// milliseconds rather than whole seconds.
+    /// queue until the threadpool injects another thread. On the TFMs this project builds the
+    /// runtime is told about cooperative blocking and compensates quickly, so stalls are tens
+    /// to a few hundred milliseconds. net462 has no equivalent notification and is slower, but
+    /// this suite does not build it, so that path is not measured here.
     ///
     /// <see cref="ConnectionPoolContentionRunner"/> covers the same shape at the default
     /// threadpool floor, which makes it dependent on hill-climbing timing and therefore
