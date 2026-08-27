@@ -628,7 +628,6 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
         $(IsolatedBuildArgument)
         $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
