@@ -981,27 +981,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
-            //
-            // We must not read Transaction.Current inside the Task.Run below. A
-            // TransactionScope created with TransactionScopeAsyncFlowOption.Enabled stores the
-            // transaction in an AsyncLocal, which does flow onto the pool's worker thread, so that
-            // would appear to work. But Enabled is not the default: a plain TransactionScope keeps
-            // the transaction in thread-static storage, which does not flow, and reading
-            // Transaction.Current on the worker would silently fail to enlist. The WaitHandle pool
-            // enlists correctly in that case, so this is also a compatibility requirement.
-            // AsyncState is correct under both options.
-            //
-            // This does not make the suppressed-flow pattern work -- the caller's own scope is
-            // still broken past the first await -- but it keeps the connection in the transaction
-            // the caller intended rather than silently running outside it.
-            //
-            // Note that we deliberately do not assign Transaction.Current on the thread pool
-            // thread either. That assignment writes to thread-static storage which is *not* unwound
-            // when the ExecutionContext is restored, so it would outlive this open and be observed
-            // by unrelated work later scheduled onto the same thread pool thread -- including the
-            // login-time auto-enlistment that non-pooled connections perform against
-            // Transaction.Current. The WaitHandle pool can get away with assigning it because it
-            // processes pending opens on a dedicated non-thread-pool thread.
+            // Do not read Transaction.Current in the Task.Run below: a plain TransactionScope keeps
+            // the transaction in thread-static storage, which does not flow to the worker, so the
+            // enlistment would silently be skipped. Do not assign Transaction.Current there either;
+            // that storage is not unwound afterwards and would leak into later work on that thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
             // Fast path: return true rather than completing the TaskCompletionSource, so
@@ -1451,25 +1434,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// without blocking, waiting, or opening a physical connection.
         /// </summary>
         /// <remarks>
-        /// <para>
-        /// This is the fast path shared by the sync and async entry points of
-        /// <see cref="TryGetConnection"/>. It performs the same two lookups the main loop in
-        /// <see cref="GetInternalConnection"/> begins with - the transacted store, then the idle
-        /// channel - and returns null the moment neither can satisfy the request, leaving the
-        /// caller to fall back to the full path.
-        /// </para>
-        /// <para>
-        /// Keeping this separate from <see cref="GetInternalConnection"/> is what makes it cheap.
-        /// That method is an async state machine that allocates a <see cref="Task{TResult}"/> even
-        /// when it completes synchronously, and it creates a timer-backed
-        /// <see cref="CancellationTokenSource"/> up front, before it knows whether it will ever
-        /// wait. Neither is needed to hand back a connection that is already sitting in the pool.
-        /// </para>
-        /// <para>
-        /// It deliberately does NOT call <see cref="OpenNewInternalConnection"/>: that blocks on
-        /// network I/O, which must not happen on an async caller's thread. Callers that miss here
-        /// go through <see cref="GetInternalConnection"/>, which may open a connection.
-        /// </para>
+        /// The fast path shared by the sync and async entry points of
+        /// <see cref="TryGetConnection"/>: it tries the transacted store, then the idle channel, and
+        /// returns null if neither can satisfy the request. It is kept separate from
+        /// <see cref="GetInternalConnection"/> because that method allocates a
+        /// <see cref="Task{TResult}"/> and a timer-backed <see cref="CancellationTokenSource"/> even
+        /// when it completes synchronously. It never calls
+        /// <see cref="OpenNewInternalConnection"/>, which would block on network I/O.
         /// </remarks>
         /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
         /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread,

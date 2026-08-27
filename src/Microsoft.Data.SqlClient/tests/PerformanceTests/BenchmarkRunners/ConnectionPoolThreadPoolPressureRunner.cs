@@ -18,14 +18,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// A sync <c>Open()</c> against a saturated pool blocks its thread. When those threads
     /// are threadpool threads, a pool whose waiter wake-up requires a queued continuation
     /// cannot make progress: every thread is blocked in a wait, so the wake-up sits in the
-    /// queue until the threadpool injects another thread.
-    ///
-    /// Injection is not a single mechanism. Since .NET 6 the runtime recognises cooperative
-    /// blocking and compensates on a fast path — up to one thread per processor immediately
-    /// with no delay, then in 25ms steps capped at 250ms. Only once that budget is spent does
-    /// the caller fall back to the gate thread's starvation detection, which adds one thread
-    /// per 500ms cycle. Stalls here are therefore tens to a few hundred milliseconds, not the
-    /// whole seconds the pre-.NET 6 gate-thread-only path would have cost.
+    /// queue until the threadpool injects another thread. Since .NET 6 the runtime detects
+    /// cooperative blocking and injects quickly, so stalls are tens to a few hundred
+    /// milliseconds rather than whole seconds.
     ///
     /// <see cref="ConnectionPoolContentionRunner"/> covers the same shape at the default
     /// threadpool floor, which makes it dependent on hill-climbing timing and therefore
@@ -42,11 +37,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// than means alone.
     ///
     /// A regression here is largely a statement about application configuration rather than a
-    /// pool defect, but the starved configuration is not exotic. The threadpool's default
-    /// minimum is <see cref="Environment.ProcessorCount"/>, and that honours cgroup CPU quotas,
-    /// so a service in a 1-2 vCPU container runs with a floor of 1 or 2 by default and ASP.NET
-    /// Core never raises it. Blocking more threads than the floor is the common case for sync
-    /// callers, not a misconfiguration they opted into. This runner exists to characterise
+    /// pool defect, but the starved configuration is not exotic: the default minimum is
+    /// <see cref="Environment.ProcessorCount"/>, which honours cgroup CPU quotas, so a service
+    /// in a 1-2 vCPU container runs with a floor of 1 or 2. This runner exists to characterise
     /// where that boundary is and to catch it moving, not to drive the delta to zero.
     ///
     /// The pool implementation (legacy vs V2) is a process-level choice - see the remarks on
