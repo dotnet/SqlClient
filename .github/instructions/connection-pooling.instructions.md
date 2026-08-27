@@ -124,20 +124,6 @@ private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
 await _idleConnectionReader.WaitToReadAsync(token);
 ```
 
-### Sync Over Async Blocking
-```csharp
-// Block via Task, not an opaque primitive, so the thread pool learns this
-// thread is stalled and can inject a worker to run the read's continuation.
-return _idleChannel.ReadAsync(cancellationToken).AsTask().GetAwaiter().GetResult();
-```
-
-The idle channel is created without `AllowSynchronousContinuations`, so the continuation
-that completes a pending read is queued to the thread pool. Blocking on an opaque primitive
-(`ManualResetEventSlim`, `SemaphoreSlim`) hides the stall from the thread pool, so under
-saturation every parked thread waits on a continuation the pool does not know it needs to
-run. Do not reintroduce a semaphore around this wait: it cannot stop sync work from
-consuming thread pool threads, since waiting on it blocks just as opaquely.
-
 ## Best Practices
 
 ### Application Design
