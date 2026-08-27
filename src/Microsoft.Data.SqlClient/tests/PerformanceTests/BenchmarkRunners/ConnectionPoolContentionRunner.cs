@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         conn.Open();
                         using var cmd = conn.CreateCommand();
                         cmd.CommandText = "SELECT 1";
-                        var result = cmd.ExecuteScalar();
+                        _ = cmd.ExecuteScalar();
                         // Dispose returns the connection to the pool.
                     }
                 });

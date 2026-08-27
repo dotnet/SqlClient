@@ -266,8 +266,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Act
             TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            SqlConnection secondOwner = new();
             var completed = pool.TryGetConnection(
-                new SqlConnection(),
+                secondOwner,
                 taskCompletionSource,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? internalConnection
@@ -279,6 +280,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // OpenAsyncRetry allocation and the ContinueWith thread pool dispatch.
             Assert.True(completed);
             Assert.Equal(pooledConnection, internalConnection);
+
+            // The fast path must also activate the connection and assign ownership, exactly as the
+            // full path does. Without this the pool would hand back an unowned, unactivated
+            // connection and the assertions above would still pass.
+            Assert.Same(secondOwner, internalConnection!.Owner);
 
             // The TaskCompletionSource must be left alone; the caller abandons it on a
             // synchronous completion.
@@ -309,8 +315,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.ReturnInternalConnection(pooledConnection, owningConnection);
 
             // Act
+            SqlConnection secondOwner = new();
             var completed = pool.TryGetConnection(
-                new SqlConnection(),
+                secondOwner,
                 taskCompletionSource: null,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? internalConnection
@@ -319,6 +326,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.True(completed);
             Assert.Equal(pooledConnection, internalConnection);
+            Assert.Same(secondOwner, internalConnection!.Owner);
             Assert.Equal(1, pool.Count);
         }
 

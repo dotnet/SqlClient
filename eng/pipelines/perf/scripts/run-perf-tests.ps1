@@ -158,14 +158,15 @@ if ((-not [string]::IsNullOrEmpty($SwitchUnderTest)) -and ((-not [string]::IsNul
 # -SwitchUnderTest forces its switch explicitly for each pass (baseline=false, current=true), so a
 # separately-supplied -Use* flag for that SAME switch would be silently overridden; warn rather than
 # let that go unnoticed.  Other -Use* flags still apply normally to both passes.
+$conflictingFlag = ""
 $conflictingFlagValue = switch ($SwitchUnderTest) {
-    "UseConnectionPoolV2"        { $UseConnectionPoolV2 }
-    "UseOptimizedAsyncBehaviour" { $UseOptimizedAsyncBehaviour }
-    "UseManagedSniOnWindows"     { $UseManagedSniOnWindows }
+    "UseConnectionPoolV2"        { $conflictingFlag = "-UseConnectionPoolV2";        $UseConnectionPoolV2 }
+    "UseOptimizedAsyncBehaviour" { $conflictingFlag = "-UseOptimizedAsyncBehaviour"; $UseOptimizedAsyncBehaviour }
+    "UseManagedSniOnWindows"     { $conflictingFlag = "-UseManagedSniOnWindows";     $UseManagedSniOnWindows }
     default                      { "" }
 }
 if (-not [string]::IsNullOrEmpty($conflictingFlagValue)) {
-    Write-Warning "-$SwitchUnderTest is ignored when -SwitchUnderTest is $SwitchUnderTest (baseline forces false, current forces true)."
+    Write-Warning "$conflictingFlag=$conflictingFlagValue is ignored when -SwitchUnderTest is $SwitchUnderTest (baseline forces false, current forces true)."
 }
 if ([string]::IsNullOrEmpty($SqlPassword)) {
     throw "SQL_PASSWORD environment variable is not set (expected from the perf template)."

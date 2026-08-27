@@ -32,6 +32,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private string _tableName;
 
         /// <summary>
+        /// Total checkouts performed by <see cref="RapidFireOpenCloseAsync"/> and
+        /// <see cref="RapidFireOpenCloseSync"/>, held constant across every <see cref="Parallelism"/>
+        /// and <see cref="MaxPoolSize"/> combination so a spread between cells reflects the pool,
+        /// not a different amount of work. Divides evenly by both Parallelism values.
+        /// </summary>
+        private const int RapidFireCheckouts = 1000;
+
+        /// <summary>
         /// Number of concurrent tasks hammering the pool.
         /// </summary>
         /// <remarks>
@@ -57,6 +65,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// MaxPoolSize values at the same Parallelism as a noise estimate rather than a real
         /// effect. The fully-subscribed corner is the exception — there the spread is a real
         /// effect, because one side has idle spares to choose from and the other has none.
+        ///
+        /// This reading only holds because every benchmark here performs the same amount of work
+        /// at both MaxPoolSize values. Do not make a benchmark body's operation count a function
+        /// of MaxPoolSize, or the spread stops being a noise estimate.
         /// </remarks>
         [Params(50, 100)]
         public int MaxPoolSize { get; set; }
@@ -164,11 +176,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task RapidFireOpenCloseAsync()
         {
-            // NOTE: the Math.Max floor dominates for most [Params] combinations, so total
-            // checkouts do NOT scale cleanly with pool capacity — at Parallelism 20 and 25 both
-            // MaxPoolSize values run an identical workload, which makes the spread between them
-            // a useful read on this benchmark's own noise floor.
-            int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
+            int iterationsPerTask = RapidFireCheckouts / Parallelism;
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
@@ -193,10 +201,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// Worth measuring separately because the two paths diverge inside the pool. The V2 pool
         /// has no synchronous channel read, so a sync caller that misses the inline fast path has
         /// to run the async wait synchronously, which is a materially different cost from
-        /// awaiting it. With the pool pre-warmed and never saturated by these
-        /// <see cref="Parallelism"/> values, this stays on the fast path and so measures
-        /// concurrent sync checkout without the wake-up behaviour that
-        /// <see cref="ConnectionPoolContentionRunner"/> covers under saturation.
+        /// awaiting it. At <see cref="Parallelism"/> 10 the pool has idle spares throughout, so
+        /// that cell measures concurrent sync checkout on the fast path. At Parallelism 50 with
+        /// <see cref="MaxPoolSize"/> 50 the pool is fully subscribed and the zero-hold loop can
+        /// drain the idle channel, so that cell is this class's coverage of the synchronous
+        /// wake path.
         ///
         /// Workers run on threadpool threads deliberately: sync database calls in ASP.NET run
         /// there, so that is the configuration whose behaviour actually matters.
@@ -204,7 +213,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task RapidFireOpenCloseSync()
         {
-            int iterationsPerTask = Math.Max(20, MaxPoolSize / Math.Max(1, Parallelism) * 4);
+            int iterationsPerTask = RapidFireCheckouts / Parallelism;
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
@@ -220,6 +229,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
             await Task.WhenAll(tasks);
         }
+
+        /// <summary>
+        /// Randomized hold — each task opens a connection, holds it for a random duration
         /// (0-50ms), optionally runs a query, then returns it. Simulates realistic mixed
         /// workloads where some connections are held briefly and others longer.
         /// </summary>
