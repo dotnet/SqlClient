@@ -217,6 +217,10 @@ public class SqlConfigurableRetryLogicLoaderTest
         return plantedFile;
     }
 
+    /// <summary>
+    /// Removes a planted probe file. Cleanup failures are ignored so that a test reports on
+    /// product behaviour rather than on the state of the file system.
+    /// </summary>
     private static void DeleteProbeFile(string plantedFile)
     {
         try
@@ -225,7 +229,12 @@ public class SqlConfigurableRetryLogicLoaderTest
         }
         catch (IOException)
         {
-            // Best effort cleanup.
+            // The file is in use, most likely because it was successfully loaded as an assembly
+            // and is therefore locked for the lifetime of the process.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // The file is read only, or the caller lacks permission to delete it.
         }
     }
 
