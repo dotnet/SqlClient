@@ -294,7 +294,7 @@
     <TestSet Condition="'$(TestSet)' == ''" />
 
     <!--
-      UseManagedSNIOnWindows
+      UseManagedSniOnWindows
       Applies to:     TestSqlClientFunctional, TestSqlClientUnit
       Description:    Runs the tests against the managed SNI implementation by enabling the
                       Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows AppContext
@@ -304,10 +304,10 @@
       Default value:  false
       Allowed values: (true|false)
     -->
-    <UseManagedSNIOnWindows Condition="'$(UseManagedSNIOnWindows)' == ''">false</UseManagedSNIOnWindows>
-    <UseManagedSNIOnWindowsArgument Condition="'$(UseManagedSNIOnWindows.ToLower())' == 'true'">
-      -p:UseManagedSNIOnWindows=true
-    </UseManagedSNIOnWindowsArgument>
+    <UseManagedSniOnWindows Condition="'$(UseManagedSniOnWindows)' == ''">false</UseManagedSniOnWindows>
+    <UseManagedSniOnWindowsArgument Condition="'$(UseManagedSniOnWindows.ToLower())' == 'true'">
+      -p:UseManagedSniOnWindows=true
+    </UseManagedSniOnWindowsArgument>
   </PropertyGroup>
 
   <!-- ================================================================= -->
@@ -628,7 +628,7 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(UseManagedSNIOnWindowsArgument)
+        $(UseManagedSniOnWindowsArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
@@ -702,7 +702,7 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(UseManagedSNIOnWindowsArgument)
+        $(UseManagedSniOnWindowsArgument)
         $(ReferenceTypeArgument)
         $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)

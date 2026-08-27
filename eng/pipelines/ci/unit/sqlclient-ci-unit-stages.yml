@@ -61,7 +61,7 @@ stages:
             jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
             operatingSystem: Windows
             runtime: ${{ runtime }}
-            useManagedSNI: false
+            useManagedSni: false
             vmImage: ADO-Win25
 
       # .NET runs with both native and managed SNI.
@@ -76,7 +76,7 @@ stages:
             jobNameSuffix: windows_native_sni_${{ replace(runtime, '.', '_') }}
             operatingSystem: Windows
             runtime: ${{ runtime }}
-            useManagedSNI: false
+            useManagedSni: false
             vmImage: ADO-Win25
 
         # Run the .NET tests with managed SNI.
@@ -89,7 +89,7 @@ stages:
             jobNameSuffix: windows_managed_sni_${{ replace(runtime, '.', '_') }}
             operatingSystem: Windows
             runtime: ${{ runtime }}
-            useManagedSNI: true
+            useManagedSni: true
             vmImage: ADO-Win25
 
   # Run the Linux runtime matrix with managed SNI.
