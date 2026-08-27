@@ -1004,26 +1004,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // processes pending opens on a dedicated non-thread-pool thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
 
-            // Fast path: if the pool can satisfy this request right now, hand the connection back
-            // synchronously and report the request as completed.
-            //
-            // Returning true here (rather than completing the TaskCompletionSource and returning
-            // false) is what makes this cheap, and it is what
-            // WaitHandleDbConnectionPool.TryGetConnection does on its own inline hit. Reporting the
-            // open as incomplete sends SqlConnection.InternalOpenAsync down its asynchronous
-            // completion path, which allocates an OpenAsyncRetry, a CancellationTokenRegistration
-            // and a Tuple, and then schedules the continuation with
-            // ContinueWith(..., TaskScheduler.Default). That continuation costs a thread pool
-            // dispatch even when the TaskCompletionSource is already completed, so completing it
-            // inline would move the dispatch rather than remove it. Returning true instead lets
-            // InternalOpenAsync take its synchronous branch and skip all of it.
-            //
-            // The TaskCompletionSource is deliberately left untouched. The caller abandons it when
-            // the open completes synchronously, exactly as it does for the WaitHandle pool.
-            //
-            // Like v1's inline attempt (allowCreate: false), this never opens a physical
-            // connection, so the caller's thread is never blocked on network I/O. Exceptions
-            // propagate synchronously, which is also what the WaitHandle pool does from here.
+            // Fast path: return true rather than completing the TaskCompletionSource, so
+            // InternalOpenAsync takes its sync branch and skips a thread pool dispatch.
             DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
             if (pooled is not null)
             {
