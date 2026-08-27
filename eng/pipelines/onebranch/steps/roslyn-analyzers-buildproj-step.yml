@@ -53,27 +53,34 @@
 #
 #   | Task injection (v3)                    | Purpose                             | How this template covers it                       |
 #   |----------------------------------------|-------------------------------------|---------------------------------------------------|
-#   | /p:Features=                           | Turns on Roslyn IOperation +        | latest-all: SDK 18 Roslyn has IOperation on by    |
-#   |   "IOperation,flow-analysis"           | dataflow so the taint/crypto        | default, so these rules run. Add                  |
+#   | /p:Features=                           | Turns on Roslyn IOperation +        | latest-recommended: SDK 18 Roslyn has IOperation  |
+#   |   "IOperation,flow-analysis"           | dataflow so the taint/crypto        | on by default, so these rules run. Add            |
 #   |                                        | security rules (CA3xxx/CA5xxx) run. | <Features>flow-analysis</Features> to             |
 #   |                                        |                                     | Directory.Build.props if any go missing.          |
-#   | /p:CodeAnalysisRuleSet=                | Selects the exact SDL rule IDs +    | AnalysisLevel=latest-all, a superset of the SDL   |
-#   |   ...Sdl.Recommended.Warning.ruleset   | severities; disables non-SDL rules. | CA rules. The internal IA* rules need the         |
+#   | /p:CodeAnalysisRuleSet=                | Selects the exact SDL rule IDs +    | AnalysisLevel=latest-recommended. This is the     |
+#   |   ...Sdl.Recommended.Warning.ruleset   | severities; disables non-SDL rules. | SDK's own "recommended" mode, NOT the private SDL |
+#   |                                        |                                     | ruleset, so complete overlap is not guaranteed;   |
+#   |                                        |                                     | see the CAVEAT in Directory.Build.props. The      |
+#   |                                        |                                     | internal IA* rules need the                       |
 #   |                                        |                                     | Microsoft.Internal.Analyzers package, which is    |
 #   |                                        |                                     | Microsoft-internal-only and MUST NOT be added to  |
 #   |                                        |                                     | the public governed feed, so they are not         |
 #   |                                        |                                     | reproduced here. See NOTE ON THE INTERNAL IA*     |
 #   |                                        |                                     | RULES below.                                      |
-#   | /p:TreatWarningsAsErrors=false         | Record every diagnostic instead of  | <TreatWarningsAsErrors>false</...> in the         |
-#   |                                        | failing at the first one.           | EnableAnalyzers block of Directory.Build.props.   |
+#   | /p:TreatWarningsAsErrors=false         | Record every diagnostic instead of  | NOT reproduced. We keep the repo-wide             |
+#   |                                        | failing at the first one.           | TreatWarningsAsErrors=true, so a warning-clean    |
+#   |                                        |                                     | compile is a precondition for complete analysis.  |
+#   |                                        |                                     | The build step below sets continueOnError so the  |
+#   |                                        |                                     | collector still runs on whatever SARIF exists.    |
 #   | /p:RunCodeAnalysis=false               | Disables legacy *binary* FxCop      | Already false by default in SDK-style projects;   |
 #   |                                        | (not the Roslyn analyzers).         | we never enable it.                               |
 #   | /p:GdnRoslynAnalyzersRunId=<guid>      | Gates the injected props/targets so | Not needed. We enable analyzers directly on the   |
 #   |                                        | they apply only to this build.      | leaf projects, so there is no global injection to |
 #   |                                        |                                     | gate (see the note below).                        |
-#   | ImportBefore *.props / ImportAfter     | Adds the analyzer assemblies and    | Analyzers: EnableNETAnalyzers + latest-all        |
-#   |   *.targets under %LOCALAPPDATA%\...\  | sets ErrorLog=<per-project>.sarif.  | (no EnforceCodeStyleInBuild). ErrorLog: we set    |
-#   |   MSBuild\Current                      |                                     | <ErrorLog>$(MSBuildProjectFullPath)....sarif</>   |
+#   | ImportBefore *.props / ImportAfter     | Adds the analyzer assemblies and    | Analyzers: EnableNETAnalyzers +                   |
+#   |   *.targets under %LOCALAPPDATA%\...\  | sets ErrorLog=<per-project>.sarif.  | latest-recommended (no EnforceCodeStyleInBuild).  |
+#   |   MSBuild\Current                      |                                     | ErrorLog: we set                                  |
+#   |                                        |                                     | <ErrorLog>$(MSBuildProjectFullPath)....sarif</>   |
 #   |                                        |                                     | (SARIF v1 -- NO version=2; see the sanitizer      |
 #   |                                        |                                     | note in Directory.Build.props).                   |
 #
@@ -90,7 +97,7 @@
 #   is NOT on nuget.org, and it MUST NOT be added to this repo's governed feed
 #   (sqlclientdrivers.pkgs.visualstudio.com/public/...), which is PUBLIC-scoped -- doing so would
 #   leak internal tooling and breach its internal-use license. So the leaf-project analysis above
-#   (AnalysisLevel=latest-all) covers the CA* rules but NOT the IA* rules.
+#   (AnalysisLevel=latest-recommended) covers the CA* rules but NOT the IA* rules.
 #
 #   The IA* rules can only be run from the PRIVATE ADO.Net project pipelines, where a Microsoft-
 #   internal NuGet feed is reachable. NuGet.analysis.config adds that feed using an environment-
@@ -133,6 +140,11 @@ steps:
   # "dotnet build" that build.proj execs turns on the full Roslyn analyzer set and verifies its SARIF.
   - task: DotNetCoreCLI@2
     displayName: 'Build for Roslyn analysis - build.proj Build${{ parameters.packageShortName }}'
+    # The analysis pass inherits the repo-wide TreatWarningsAsErrors=true, so any project that is
+    # not warning-clean fails this build. That must not abort the job -- the collector in Step 4
+    # still needs to gather whatever SARIF logs were produced, and Guardian's Post Analysis decides
+    # whether the findings actually break the build.
+    continueOnError: true
     inputs:
       command: build
       projects: '$(REPO_ROOT)/build.proj'
