@@ -103,6 +103,17 @@ variables:
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
 
 stages:
+  # NOTE: '$(PoolNameDefault)' comes from the 'sqlclient-testconfig-v1'
+  # variable group, which is imported by
+  # /eng/pipelines/pr/variables/pr-variables.yml (included above).  It is
+  # referenced here, at the pipeline root, and passed down to every stage as a
+  # parameter, so that no template reads the pool name from a variable group
+  # directly.
+  #
+  # The CI pipelines are configured from a different variable group and use
+  # '$(ci_var_defaultPoolName)' instead; see
+  # /eng/pipelines/dotnet-sqlclient-ci-core.yml.
+
   # Stage 1a: Build and pack all projects in the repository
   - template: /eng/pipelines/pr/stages/pack-stage.yml@self
     parameters:

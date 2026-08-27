@@ -1969,7 +1969,7 @@
     <value>Kapanım raporunun imza doğrulaması başarısız oldu. Rapor imzası, HGS kök sertifikası kullanılarak hesaplanan imzayla eşleşmiyor. Uç nokta için DNS eşlemesini doğrulayın - daha fazla için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>İmzalı kapanım raporu oturum oluşturulurken kullanılan kapanım ortak anahtarına bağlanmadığı için, kapanım kanıtlaması başarısız oldu. Kapanım ortak anahtarı, imzalı rapor tarafından işlenen değerle eşleşmelidir - diğer ayrıntılar için bkz. see https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa, Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server'dan alınan kapanım raporu doğru biçimde değil. Müşteri Destek Hizmetleri'ne başvurun.</value>
@@ -2083,10 +2083,10 @@
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
+    <value>AccessToken veya AccessTokenCallback özelliği, SspiContextProvider özelliği ayarlanmışsa ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+    <value>SspiContextProvider özelliği, AccessToken veya AccessTokenCallback özelliği ayarlanmışsa ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Bağlantı dizesinde 'Authentication=Active Directory Default' belirtilmişse AccessTokenCallback özelliği ayarlanamaz.</value>
@@ -2135,6 +2135,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Sunucu tarafından sağlanan sertifika, ServerCertificate seçeneği tarafından sağlanan sertifikayla eşleşmiyor.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>

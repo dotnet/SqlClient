@@ -94,6 +94,18 @@ parameters:
       - Debug
       - Release
 
+  # The name of the 1ES pool that all CI jobs run in.
+  #
+  # This is the single place in the CI pipelines where the pool name is read
+  # from a variable group; every stage and job below receives it as a
+  # parameter so that the value flows down from here.
+  #
+  # 'ci_var_defaultPoolName' is defined in the 'ADO Build properties' variable
+  # group (see /eng/pipelines/libraries/ci-build-variables.yml), for both the
+  # Public and ADO.Net projects.  The PR pipelines are configured from a
+  # different variable group and use '$(PoolNameDefault)' instead; see
+  # /eng/pipelines/pr/sqlclient-pr-pipeline.yml.
+  #
   - name: defaultPoolName
     type: string
     default: $(ci_var_defaultPoolName)
@@ -161,11 +173,13 @@ stages:
   # compute_versions_ci outputs directly, so no version parameters are passed here.
   - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
     parameters:
+      poolName: ${{ parameters.defaultPoolName }}
       buildSuffix: ${{ parameters.buildSuffix }}
 
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
+      poolName: ${{ parameters.defaultPoolName }}
       debug: ${{ parameters.debug }}
 
   # Build the SqlServer package, and publish it to the pipeline artifacts
@@ -173,6 +187,7 @@ stages:
   # generation stage since it has no package dependencies.
   - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
     parameters:
+      adoPoolName: ${{ parameters.defaultPoolName }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -183,6 +198,7 @@ stages:
   # generation stage since it has no package dependencies.
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
+      adoPoolName: ${{ parameters.defaultPoolName }}
       loggingArtifactsName: $(loggingArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -195,6 +211,7 @@ stages:
   # Abstractions has a package dependency on Logging.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
+      adoPoolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -213,6 +230,7 @@ stages:
   #
   - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
     parameters:
+      adoPoolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       loggingArtifactsName: $(loggingArtifactsName)
@@ -233,6 +251,7 @@ stages:
   # given artifact name.
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
+      adoPoolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -256,6 +275,7 @@ stages:
   # published as pipeline artifacts.
   - template: /eng/pipelines/stages/verify-nuget-packages-ci-stage.yml@self
     parameters:
+      poolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
@@ -303,6 +323,7 @@ stages:
           - template: /eng/pipelines/common/templates/jobs/ci-code-coverage-job.yml@self
             parameters:
               debug: ${{ parameters.debug }}
+              poolName: ${{ parameters.defaultPoolName }}
               # We only want to upload coverage results to CodeCov from certain
               # pipelines.  We use the pipeline name (Build.DefinitionName) to
               # choose.  This is a predefined variable that is available at

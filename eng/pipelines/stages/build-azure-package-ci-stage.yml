@@ -40,17 +40,17 @@ parameters:
     default: []
 
   # The name of the pool to use for jobs that require customized VM images.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  # Any pool specified here must contain images with the following names:
+  #
+  #   - ADO-MMS25-SQL25
+  #   - ADO-UB24-SQL25
+  #
   - name: adoPoolName
     type: string
-    # This variable should be defined in AzureDevOps Library variable groups,
-    # for both the Public and ADO.Net projects.
-    #
-    # Any pool specified here must contain images with the following names:
-    #
-    #   - ADO-MMS25-SQL25
-    #   - ADO-UB24-SQL25
-    #
-    default: $(ci_var_defaultPoolName)
 
   # The name of the pipeline artifacts to publish.
   - name: azureArtifactsName
@@ -241,6 +241,7 @@ stages:
 
       - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.adoPoolName }}
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           packageVersion: $(packageVersion)
           azureArtifactsName: ${{ parameters.azureArtifactsName }}

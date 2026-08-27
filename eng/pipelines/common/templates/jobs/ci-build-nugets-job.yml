@@ -20,9 +20,12 @@ parameters:
       - Project
 
   # The name of Azure Pipelines pool to use.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
   - name: poolName
     type: string
-    default: $(ci_var_defaultPoolName)
 
   # The name of the Azure Pipelines image to use within the pool.
   - name: imageOverride

@@ -50,11 +50,12 @@ parameters:
     - diagnostic
 
   # The name of the 1ES pool to run in.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
   - name: poolName
     type: string
-    # This variable should be defined in AzureDevOps Library variable groups,
-    # for both the Public and ADO.Net projects.
-    default: $(ci_var_defaultPoolName)
 
   # The name of the VM image to run on, within the pool.
   - name: vmImage
