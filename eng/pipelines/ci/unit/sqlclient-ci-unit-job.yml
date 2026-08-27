@@ -125,13 +125,6 @@ jobs:
           inputs:
             secureFile: sqlclient-test-key.snk
 
-      # Configure the test suite's Windows SNI implementation.
-      - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          saPassword: ''
-          UseManagedSNIOnWindows: ${{ parameters.useManagedSNI }}
-
       # Ensure test result publishing has a stable source directory.
       - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
         displayName: Create TestResults Directory
@@ -153,6 +146,7 @@ jobs:
             -p:TestFramework=${{ parameters.runtime }}
             -p:ReferenceType=Package
             -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:UseManagedSNIOnWindows=${{ parameters.useManagedSNI }}
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
             -p:TestResultsFolderPath=TestResults
@@ -171,6 +165,7 @@ jobs:
             -p:TestFramework=${{ parameters.runtime }}
             -p:ReferenceType=Package
             -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:UseManagedSNIOnWindows=${{ parameters.useManagedSNI }}
             -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
             -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)

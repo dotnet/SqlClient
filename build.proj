@@ -292,6 +292,22 @@
       Examples:       "1", "12", "AE", "12AE"
     -->
     <TestSet Condition="'$(TestSet)' == ''" />
+
+    <!--
+      UseManagedSNIOnWindows
+      Applies to:     TestSqlClientFunctional, TestSqlClientUnit
+      Description:    Runs the tests against the managed SNI implementation by enabling the
+                      Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows AppContext
+                      switch in the test host's runtime configuration. The switch is ignored on
+                      .NET Framework, which only supports native SNI, and on non-Windows
+                      platforms, which always use managed SNI.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <UseManagedSNIOnWindows Condition="'$(UseManagedSNIOnWindows)' == ''">false</UseManagedSNIOnWindows>
+    <UseManagedSNIOnWindowsArgument Condition="'$(UseManagedSNIOnWindows.ToLower())' == 'true'">
+      -p:UseManagedSNIOnWindows=true
+    </UseManagedSNIOnWindowsArgument>
   </PropertyGroup>
 
   <!-- ================================================================= -->
@@ -612,6 +628,7 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
+        $(UseManagedSNIOnWindowsArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
 
@@ -685,6 +702,7 @@
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
+        $(UseManagedSNIOnWindowsArgument)
         $(ReferenceTypeArgument)
         $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)
