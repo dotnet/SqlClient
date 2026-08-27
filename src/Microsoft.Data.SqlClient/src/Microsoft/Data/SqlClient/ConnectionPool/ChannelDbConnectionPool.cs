@@ -1739,29 +1739,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>The connection read from the channel.</returns>
         private DbConnectionInternal? ReadChannelSyncOverAsync(CancellationToken cancellationToken)
         {
-            // Channel exposes no synchronous blocking read, so a sync caller has to block on the
-            // async read. ValueTask cannot be blocked on directly (GetResult throws if the operation
-            // has not completed), so materialize a Task and block on that.
-            //
-            // Blocking through the Task is deliberate rather than incidental. The idle channel is
-            // created without AllowSynchronousContinuations, so the continuation that hands this
-            // thread its connection is queued to the thread pool instead of running inline on the
-            // returning thread. Task-based blocking notifies the thread pool that this thread is
-            // stalled, which lets it inject a worker to run that continuation promptly. Blocking on
-            // an opaque primitive (ManualResetEventSlim, SemaphoreSlim) hides the stall: when every
-            // pool thread is parked here, nothing runs the continuations until the thread pool's
-            // slow injection heuristic fires on its own, adding hundreds of milliseconds to each
-            // acquire while the pool is saturated.
-            //
-            // For the same reason there is no semaphore limiting how many threads may be in here at
-            // once. Such a gate cannot prevent sync work from consuming thread pool threads, because
-            // waiting on it blocks the calling thread just as opaquely; it only moves the invisible
-            // block one frame up and starves the very continuations these waiters depend on.
-            //
-            // Blocking on a Task is the classic sync-over-async deadlock shape when a single-threaded
-            // SynchronizationContext is installed (WPF, WinForms, legacy ASP.NET). It is safe here
-            // only because IdleConnectionChannel.ReadAsync awaits with ConfigureAwait(false), so its
-            // completion never needs the context this thread is holding. Do not remove that.
+            // Channel has no blocking read. Block on the Task rather than an opaque primitive: the
+            // idle channel is created without AllowSynchronousContinuations, so the completing
+            // continuation is queued, and Task blocking lets the thread pool inject a worker to run it.
             return _idleChannel.ReadAsync(cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
