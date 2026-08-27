@@ -95,13 +95,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Asynchronously reads a value from the channel.
         /// Decrements the idle count when a non-null connection is read.
         /// </summary>
-        /// <remarks>
-        /// The <c>ConfigureAwait(false)</c> below is load bearing. Sync callers reach this method
-        /// through <c>ChannelDbConnectionPool.ReadChannelSyncOverAsync</c>, which blocks on the
-        /// returned operation. If this resumption captured a single-threaded
-        /// <see cref="SynchronizationContext"/> (WPF, WinForms, legacy ASP.NET), completing it would
-        /// require the very thread that is blocked waiting for it, deadlocking the caller.
-        /// </remarks>
         internal async ValueTask<DbConnectionInternal?> ReadAsync(CancellationToken cancellationToken)
         {
             var connection = await _reader.ReadAsync(cancellationToken).ConfigureAwait(false);
