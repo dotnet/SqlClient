@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 
 namespace Microsoft.Data.SqlClient
 {
