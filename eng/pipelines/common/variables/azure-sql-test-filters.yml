@@ -1,0 +1,14 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  # Keep Azure SQL PR coverage focused on the connectivity test group and the core BulkCopy suite.
+  # These tests all belong to manual test set 2.
+  - name: azureSqlConnectionAndBulkCopyTestsFilter
+    value: '(FullyQualifiedName~Microsoft.Data.SqlClient.ManualTests.BulkCopy|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.AADConnectionTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.ConnectionBehaviorTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.ConnectivityTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.TcpDefaultForAzureTest)&category!=failing&category!=flaky&category!=interactive'
+
+  - name: azureSqlConnectionAndBulkCopyFlakyTestsFilter
+    value: '(FullyQualifiedName~Microsoft.Data.SqlClient.ManualTests.BulkCopy|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.SqlBulkCopyTests|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.AADConnectionTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.ConnectionBehaviorTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.ConnectivityTest|FullyQualifiedName~Microsoft.Data.SqlClient.ManualTesting.Tests.TcpDefaultForAzureTest)&category=flaky'

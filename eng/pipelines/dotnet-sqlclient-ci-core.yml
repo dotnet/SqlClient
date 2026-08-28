@@ -88,6 +88,12 @@ parameters:
     type: boolean
     default: true
 
+  # If true, Azure SQL manual-test legs run only connectivity and core BulkCopy tests from set 2.
+  # PR pipelines enable this; scheduled CI retains the full configured test sets.
+  - name: runFocusedAzureSqlTests
+    type: boolean
+    default: false
+
   # If true, run manual tests against legacy SQL Server versions (2016, 2017).
   # Enabled for CI pipelines; disabled for PR pipelines to keep validation fast.
   - name: runLegacySqlTests
@@ -111,6 +117,7 @@ parameters:
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+  - template: /eng/pipelines/common/variables/azure-sql-test-filters.yml@self
 
   - name: abstractionsArtifactsName
     value: Abstractions.Artifacts
@@ -488,7 +495,12 @@ stages:
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }}
+          ${{ if eq(parameters.runFocusedAzureSqlTests, true) }}:
+            testSets: [2]
+            manualTestFilters: $(azureSqlConnectionAndBulkCopyTestsFilter)
+            flakyManualTestFilters: $(azureSqlConnectionAndBulkCopyFlakyTestsFilter)
+          ${{ else }}:
+            testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
           configSqlFor: azure
           operatingSystem: Windows
@@ -518,7 +530,12 @@ stages:
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: ${{parameters.testSets }}
+          ${{ if eq(parameters.runFocusedAzureSqlTests, true) }}:
+            testSets: [2]
+            manualTestFilters: $(azureSqlConnectionAndBulkCopyTestsFilter)
+            flakyManualTestFilters: $(azureSqlConnectionAndBulkCopyFlakyTestsFilter)
+          ${{ else }}:
+            testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
           configSqlFor: azure
           operatingSystem: Windows
@@ -569,7 +586,12 @@ stages:
           TargetFrameworks: ${{parameters.targetFrameworksUnix }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
+          ${{ if eq(parameters.runFocusedAzureSqlTests, true) }}:
+            testSets: [2]
+            manualTestFilters: $(azureSqlConnectionAndBulkCopyTestsFilter)
+            flakyManualTestFilters: $(azureSqlConnectionAndBulkCopyFlakyTestsFilter)
+          ${{ else }}:
+            testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
           configSqlFor: azure
           operatingSystem: Linux
