@@ -18,6 +18,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 
@@ -375,7 +376,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
-        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata
@@ -610,10 +611,10 @@ namespace Microsoft.Data.SqlClient
             {
                 MetaType metatype = _metaType;
                 // HACK!!!
-                // We didn't want to expose SmallVarBinary on SqlDbType so we 
-                // stuck it at the end of SqlDbType in v1.0, except that now 
+                // We didn't want to expose SmallVarBinary on SqlDbType so we
+                // stuck it at the end of SqlDbType in v1.0, except that now
                 // we have new data types after that and it's smack dab in the
-                // middle of the valid range.  To prevent folks from setting 
+                // middle of the valid range.  To prevent folks from setting
                 // this invalid value we have to have this code here until we
                 // can take the time to fix it later.
                 if (TdsEnums.SmallVarBinary == value)
@@ -887,7 +888,7 @@ namespace Microsoft.Data.SqlClient
             set => _sourceColumn = value;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         [ResCategory(nameof(Strings.DataCategory_Update))]
 #if NET
         [ResDescription(nameof(Strings.SqlParameter_SourceColumnNullMapping))]
@@ -1742,7 +1743,7 @@ namespace Microsoft.Data.SqlClient
             long actualLen = GetActualSize();
             long maxLen = Size;
 
-            // GetActualSize returns bytes length, but smi expects char length for 
+            // GetActualSize returns bytes length, but smi expects char length for
             //  character types, so adjust
             if (!mt.IsLong)
             {
@@ -2045,7 +2046,7 @@ namespace Microsoft.Data.SqlClient
                 GetCoercedValue();
             }
 
-            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
                 (_value == null || _value == DBNull.Value) &&
                 (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
             {
@@ -2106,15 +2107,15 @@ namespace Microsoft.Data.SqlClient
 
                 // Bug: VSTFDevDiv #636867
                 // Notes:
-                // 'actualSizeInBytes' is the size of value passed; 
+                // 'actualSizeInBytes' is the size of value passed;
                 // 'sizeInCharacters' is the parameter size;
-                // 'actualSizeInBytes' is in bytes; 
-                // 'this.Size' is in charaters; 
-                // 'sizeInCharacters' is in characters; 
+                // 'actualSizeInBytes' is in bytes;
+                // 'this.Size' is in charaters;
+                // 'sizeInCharacters' is in characters;
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
                 // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
-                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
+                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and
                 // 'maxSize' to 'maxSizeInBytes'
                 // The idea is to
                 //  1) revert the regression from bug 479739
