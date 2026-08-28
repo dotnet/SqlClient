@@ -226,7 +226,7 @@ jobs:
             -p:BuildNumber='$(Build.BuildNumber)'
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
             -p:TestFramework=${{ parameters.platformDotnet }}
-            -p:TestFilters='${{ parameters.testFilters }}'
+            -p:TestFilters="${{ parameters.testFilters }}"
             -p:TestSet=${{ parameters.testSet }}
             -p:TestResultsFolderPath=${{ variables.testResultsPath }}
 
