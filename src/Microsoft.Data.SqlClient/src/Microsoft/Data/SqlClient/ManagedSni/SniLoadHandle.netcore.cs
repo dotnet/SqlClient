@@ -5,6 +5,7 @@
 #if NET
 
 using System;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 

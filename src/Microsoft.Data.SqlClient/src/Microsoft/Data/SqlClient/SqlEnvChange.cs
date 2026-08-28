@@ -4,6 +4,7 @@
 
 using System;
 using System.Buffers;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

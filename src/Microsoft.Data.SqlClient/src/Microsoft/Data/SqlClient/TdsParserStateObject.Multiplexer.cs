@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -38,11 +39,11 @@ namespace Microsoft.Data.SqlClient
                 uint dataSize = 0;
                 bool usedPartialPacket = false;
                 uint getDataError = 0;
-                
+
                 if (PartialPacketContainsCompletePacket())
                 {
                     Packet partialPacket = _partialPacket;
-                    // the partial packet can contain more than a single packet worth of data so to consume the 
+                    // the partial packet can contain more than a single packet worth of data so to consume the
                     //  partial packet we must use the CurrentLength not just the RequiredLength and then later
                     //  the multiplexer will split out the complete packet for consumption and maintain the
                     //  additional data
@@ -100,7 +101,7 @@ namespace Microsoft.Data.SqlClient
                         // if a partial packet was reconstructed it must be handled first
                         if (consumePartialPacket)
                         {
-                            // the partial packet has been processed by the multiplexer and should now have 
+                            // the partial packet has been processed by the multiplexer and should now have
                             //  only data from a single packet in it so we should use RequiredLength which
                             //  is defined by the packet header here not CurrentLength
                             Debug.Assert(PartialPacket != null && PartialPacket.RequiredLength == PartialPacket.CurrentLength);
@@ -214,7 +215,7 @@ namespace Microsoft.Data.SqlClient
             {
                 partialPacket.Dispose();
             }
-#endif 
+#endif
         }
 
         // this check is used in two places that must be identical so it is
