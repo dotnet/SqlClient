@@ -156,6 +156,9 @@ jobs:
         parameters:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
+          revision: ${{ parameters.revision }}
+          versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
+          packageVersion: ${{ parameters.packageVersion }}
 
       # Build the package, producing DLLs only (no NuGet package yet).
       - template: /eng/pipelines/onebranch/steps/build-buildproj-step.yml@self
