@@ -1798,8 +1798,8 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Generates (if appropriate) and sends a Federated Authentication Access token to the
         /// server, using the Federated Authentication Info.
         /// </summary>
-        /// <param name="fedAuthInfo">Federated Authentication Info.</param>
-        internal void OnFedAuthInfo(SqlFedAuthInfo fedAuthInfo)
+        /// <param name="fedAuthInfoToken">Federated Authentication Info.</param>
+        internal void OnFedAuthInfo(TdsFedAuthInfoToken fedAuthInfoToken)
         {
             // @TODO: Seriously, put this into a hash set or give it a helper or something! We're gonna forget one in *one* spot and cause a big ol bug someday.
             Debug.Assert((ConnectionOptions._hasUserIdKeyword && ConnectionOptions._hasPasswordKeyword)
@@ -1813,7 +1813,7 @@ namespace Microsoft.Data.SqlClient.Connection
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
-            Debug.Assert(fedAuthInfo != null, "info should not be null.");
+            Debug.Assert(fedAuthInfoToken != null, "info should not be null.");
             Debug.Assert(_dbConnectionPoolAuthenticationContextKey == null,
                 "_dbConnectionPoolAuthenticationContextKey should be null.");
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFedAuthInfo> {0}, Generating federated authentication token", ObjectID);
@@ -1834,8 +1834,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Construct the dbAuthenticationContextKey with information from FedAuthInfo and
                 // store for later use, when inserting in to the token cache.
                 _dbConnectionPoolAuthenticationContextKey = new DbConnectionPoolAuthenticationContextKey(
-                    fedAuthInfo.StsUrl,
-                    fedAuthInfo.Spn);
+                    fedAuthInfoToken.StsUrl,
+                    fedAuthInfoToken.Spn);
 
                 // Try to retrieve the authentication context from the pool, if one does exist for
                 // this key.
@@ -1878,7 +1878,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     else if (_forceExpiryLocked)
                     {
                         attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(
-                            fedAuthInfo,
+                            fedAuthInfoToken,
                             dbConnectionPoolAuthenticationContext,
                             out _fedAuthToken);
                     }
@@ -1905,7 +1905,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         // context before trying to update. If the lock could not be obtained, it
                         // will return false, without attempting to fetch a new token.
                         attemptRefreshTokenLocked = TryGetFedAuthTokenLocked(
-                            fedAuthInfo,
+                            fedAuthInfoToken,
                             dbConnectionPoolAuthenticationContext,
                             out _fedAuthToken);
 
@@ -1943,7 +1943,7 @@ namespace Microsoft.Data.SqlClient.Connection
             if (dbConnectionPoolAuthenticationContext == null || attemptRefreshTokenUnLocked)
             {
                 // Get the Federated Authentication Token.
-                _fedAuthToken = GetFedAuthToken(fedAuthInfo);
+                _fedAuthToken = GetFedAuthToken(fedAuthInfoToken);
                 Debug.Assert(_fedAuthToken != null, "_fedAuthToken should not be null.");
 
                 if (_dbConnectionPool != null)
@@ -2776,8 +2776,8 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Get the Federated Authentication Token.
         /// </summary>
-        /// <param name="fedAuthInfo">Information obtained from server as Federated Authentication Info.</param>
-        private SqlFedAuthToken GetFedAuthToken(SqlFedAuthInfo fedAuthInfo)
+        /// <param name="fedAuthInfoToken">Information obtained from server as Federated Authentication Info.</param>
+        private SqlFedAuthToken GetFedAuthToken(TdsFedAuthInfoToken fedAuthInfoToken)
         {
             // Number of milliseconds to sleep for the initial back off, if a
             // retry period is not specified by the provider.
@@ -2803,8 +2803,8 @@ namespace Microsoft.Data.SqlClient.Connection
                 {
                     var authParamsBuilder = new SqlAuthenticationParametersBuilder(
                             authenticationMethod: ConnectionOptions.Authentication,
-                            resource: fedAuthInfo.Spn,
-                            authority: fedAuthInfo.StsUrl,
+                            resource: fedAuthInfoToken.Spn,
+                            authority: fedAuthInfoToken.StsUrl,
                             serverName: ConnectionOptions.DataSource,
                             databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
@@ -4158,7 +4158,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Tries to acquire a lock on the authentication context. If successful in acquiring the
         /// lock, gets a new token and assigns it in the out parameter. Else returns false.
         /// </summary>
-        /// <param name="fedAuthInfo">Federated Authentication Info</param>
+        /// <param name="fedAuthInfoToken">Federated Authentication Info</param>
         /// <param name="dbConnectionPoolAuthenticationContext">
         /// Authentication Context cached in the connection pool.
         /// </param>
@@ -4166,12 +4166,12 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Out parameter, carrying the token if we acquired a lock and got the token.
         /// </param>
         private bool TryGetFedAuthTokenLocked(
-            SqlFedAuthInfo fedAuthInfo,
+            TdsFedAuthInfoToken fedAuthInfoToken,
             DbConnectionPoolAuthenticationContext dbConnectionPoolAuthenticationContext,
             out SqlFedAuthToken fedAuthToken)
         {
 
-            Debug.Assert(fedAuthInfo != null, "fedAuthInfo should not be null.");
+            Debug.Assert(fedAuthInfoToken != null, "fedAuthInfo should not be null.");
             Debug.Assert(dbConnectionPoolAuthenticationContext != null,
                 "dbConnectionPoolAuthenticationContext should not be null.");
 
@@ -4215,7 +4215,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 if (authenticationContextLocked)
                 {
                     // Get the Federated Authentication Token.
-                    fedAuthToken = GetFedAuthToken(fedAuthInfo);
+                    fedAuthToken = GetFedAuthToken(fedAuthInfoToken);
 
                     Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");
                 }
