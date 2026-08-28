@@ -11,6 +11,7 @@ using System.Text;
 using Interop.Windows.Kernel32;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK
 using System.Collections.Generic;

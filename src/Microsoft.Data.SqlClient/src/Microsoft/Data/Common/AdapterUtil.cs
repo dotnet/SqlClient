@@ -25,6 +25,7 @@ using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK
 using System.Reflection;

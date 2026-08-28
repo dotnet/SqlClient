@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -696,7 +697,7 @@ namespace Microsoft.Data.SqlClient
             short offset = (short)value.Offset.TotalMinutes;
 
 #if NET
-            // In TDS protocol: 
+            // In TDS protocol:
             // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
             //
             //   date is represented as one 3 - byte unsigned integer that represents the number of days since January 1, year 1.
@@ -720,7 +721,7 @@ namespace Microsoft.Data.SqlClient
             // If length = 8, 8 - 5 = 3 bytes is used for time.
             // If length = 10, 10 - 5 = 5 bytes is used for time.
             _stateObj.WriteByteSpan(result.Slice(0, length - 5)); // this writes the time value to the state object using dynamic length based on the scale.
-            
+
             // Date is represented as 3 bytes. So, 3 bytes are written to the state object.
             BinaryPrimitives.WriteInt32LittleEndian(result, days);
             _stateObj.WriteByteSpan(result.Slice(0, 3));

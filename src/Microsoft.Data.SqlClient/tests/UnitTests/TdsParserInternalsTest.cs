@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 #nullable enable
@@ -16,7 +17,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         private readonly TdsParser _parser = new(false, false);
 
         // TODO(ADO-37888): Avoid reflection by exposing a way for tests to intercept outbound TDS packets.
-        // Helper function to extract private _physicalStateObj fields raw buffer and no. of bytes written so far 
+        // Helper function to extract private _physicalStateObj fields raw buffer and no. of bytes written so far
         private static (byte[] buffer, int count) ExtractOutputBuffer(TdsParser parser)
         {
             FieldInfo stateField = typeof(TdsParser)
