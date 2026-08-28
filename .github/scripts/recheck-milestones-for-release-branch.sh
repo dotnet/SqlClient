@@ -27,6 +27,20 @@
 # milestone and base branch, since the check re-runs on every 'milestoned' and
 # 'edited' activity, so the newest run always reflects the current PR state.
 #
+# LIMITATION
+# ----------
+# A re-run replays the original run's commit, which means it executes the
+# workflow definition and script as they existed then. Only the release branch
+# lookup is evaluated live.
+#
+# So a pull request whose most recent milestone check predates the arrival of
+# the target-branch rule will replay the older check, pass it, and keep its
+# stale result. This is transitional: any pull request with activity after the
+# rule shipped has a run that contains it. It is not detected here, because
+# distinguishing a stale replay costs an extra API call per pull request and
+# the window closes on its own. After the first release branch is cut following
+# a change to the check itself, review the affected pull requests by hand.
+#
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
 #   RELEASE_BRANCH     The branch that was just created (e.g. "release/7.1").

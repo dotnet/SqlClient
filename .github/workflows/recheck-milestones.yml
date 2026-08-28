@@ -18,6 +18,11 @@
 # request scoped, and so the elevated 'actions: write' permission needed to
 # re-run checks is isolated from the PR gate.
 #
+# A re-run replays the original run's commit, so a pull request whose last
+# milestone check predates a change to the check itself replays the older
+# version and keeps its stale result. See the LIMITATION section in
+# .github/scripts/recheck-milestones-for-release-branch.sh.
+#
 # See .github/scripts/recheck-milestones-for-release-branch.sh for the details.
 #
 #################################################################################
