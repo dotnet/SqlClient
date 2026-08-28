@@ -18,6 +18,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient

@@ -4,17 +4,10 @@
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Login;
 
-internal enum PreLoginOptions
+internal enum PreLoginHandshakeStatus
 {
-    VERSION,
-    ENCRYPT,
-    INSTANCE,
-    THREADID,
-    MARS,
-    TRACEID,
-    FEDAUTHREQUIRED,
-    NUMOPT,
-    LASTOPT = 255
+    Successful,
+    InstanceFailure
 }

@@ -5,7 +5,7 @@
 using System;
 using Microsoft.Data.Common;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal struct MultiPartTableName
 {

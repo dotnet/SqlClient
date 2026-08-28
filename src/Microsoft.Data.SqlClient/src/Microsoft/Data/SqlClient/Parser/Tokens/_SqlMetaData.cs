@@ -5,7 +5,7 @@
 using System;
 using System.Data;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class _SqlMetaData : SqlMetaDataPriv
 {
