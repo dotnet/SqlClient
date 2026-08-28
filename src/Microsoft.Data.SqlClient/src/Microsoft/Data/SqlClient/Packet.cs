@@ -4,13 +4,13 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Contains a buffer for a partial or full packet and methods to get information about the status of
-    /// the packet that the buffer represents.<br /> 
+    /// the packet that the buffer represents.<br />
     /// This class is used to contain partial packet data and helps ensure that the packet data is completely
     /// received before a full packet is made available to the rest of the library
     /// </summary>
@@ -112,8 +112,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// returns a boolean value indicating whether the <see cref="Buffer"/> contains enough
-        /// data for a valid tds header, has a <see cref="DataLength"/> set and that the 
-        /// <see cref="CurrentLength"/> is greater than or equal to the <see cref="DataLength"/> + tds header length.<br /> 
+        /// data for a valid tds header, has a <see cref="DataLength"/> set and that the
+        /// <see cref="CurrentLength"/> is greater than or equal to the <see cref="DataLength"/> + tds header length.<br />
         /// </summary>
         public bool ContainsCompletePacket => _dataLength != UnknownDataLength && (TdsEnums.HEADER_LEN + _dataLength) <= _totalLength;
 
@@ -185,5 +185,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-#endif 
+#endif
 }

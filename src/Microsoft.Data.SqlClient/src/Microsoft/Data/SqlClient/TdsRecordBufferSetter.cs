@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -215,7 +216,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(ReadyForToken == _currentField, "Not on first or last column!");
             Debug.Assert(_metaData.IsMultiValued, "Unsupported call for single-valued types");
             #endif
-            
+
             // For TVP types, write no-more-rows token
             _stateObj.WriteByte(TdsEnums.TVP_END_TOKEN);
 
@@ -258,7 +259,7 @@ namespace Microsoft.Data.SqlClient
                     return;
                 }
 
-                // Handle readyfortoken by using count of columns in the loop.            
+                // Handle readyfortoken by using count of columns in the loop.
                 targetColumn = _metaData.FieldMetaData.Count;
             }
 

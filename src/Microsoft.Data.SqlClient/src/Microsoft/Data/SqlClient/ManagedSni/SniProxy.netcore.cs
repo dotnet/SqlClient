@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Text;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
