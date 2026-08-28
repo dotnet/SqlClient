@@ -26,18 +26,6 @@ using System.Runtime.ConstrainedExecution;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class LastIOTimer
-    {
-        internal long _value;
-    }
-
-    internal enum TdsOperationStatus : int
-    {
-        Done = 0,
-        NeedMoreData = 1,
-        InvalidData = 2
-    }
-
     internal abstract partial class TdsParserStateObject
     {
         private static readonly ContextCallback s_readAsyncCallbackComplete = ReadAsyncCallbackComplete;
