@@ -300,9 +300,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if(IsAzureSqlConnectionString(TCPConnectionString))
             {
-                // Remove legacy authentication/credential properties from the connection string.
-                // Tests should add their own auth method (e.g., AccessToken, Authentication keyword).
-                TCPConnectionString = TCPConnectionString.RemoveAuthAndCredsProperties();
+                TCPConnectionString = TCPConnectionString
+                    .RemoveAuthAndCredsProperties()
+                    .AddManagedIdentityAuthenticationToConnString();
+                SqlAuthenticationProvider.SetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                    new TestManagedIdentityAuthenticationProvider());
             }
 
             if (TracingEnabled)
@@ -352,14 +355,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            // Many of our tests require a Managed Identity provider to be
-            // registered.
-            //
-            // TODO: Figure out which ones and install on-demand rather than
-            // globally.
-            SqlAuthenticationProvider.SetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
-                new UserAssignedManagedIdentityProvider());
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -675,8 +670,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             && !string.IsNullOrEmpty(AKVTenantId)
             && IsNotAzureSynapse();
 
-        private static readonly DefaultAzureCredential s_defaultCredential = 
-            new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+        private static readonly Lazy<DefaultAzureCredential> s_defaultCredential =
+            new(() => new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId }));
 
         public static string GetUserIdentityConnectionString()
             => TCPConnectionString
@@ -684,7 +679,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 .AddManagedIdentityAuthenticationToConnString()
                 .AddUserToConnString(UserManagedIdentityClientId);
         
-        public static TokenCredential GetTokenCredential() => s_defaultCredential;
+        public static TokenCredential GetTokenCredential() => s_defaultCredential.Value;
 
         public static bool IsTargetReadyForAeWithKeyStore()
         {
@@ -854,6 +849,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             (IsSystemManagedIdentitySupported ? GetSystemIdentityAccessTokenAsync() : 
                 Task.FromResult<string>(null));
 
+        private sealed class TestManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
+        {
+            public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
+            {
+                string accessToken = await GetAccessTokenAsync().ConfigureAwait(false);
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    throw new TestAuthenticationProviderException("An access token is required to connect to Azure SQL.");
+                }
+
+                DateTimeOffset expiresOn = GetAccessTokenExpiration(accessToken);
+                if (expiresOn == DateTimeOffset.MinValue)
+                {
+                    throw new TestAuthenticationProviderException("The Azure SQL access token has no valid expiration.");
+                }
+
+                return new SqlAuthenticationToken(accessToken, expiresOn);
+            }
+
+            public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) =>
+                authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+
+            private sealed class TestAuthenticationProviderException : SqlAuthenticationProviderException
+            {
+                internal TestAuthenticationProviderException(string message)
+                    : base(message)
+                {
+                }
+            }
+        }
+
         /// <summary>
         /// Creates a connection and assigns a managed identity access token when the connection
         /// targets Azure SQL without an explicit authentication method.
@@ -885,9 +911,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return connection;
         }
 
+        private static bool IsAccessTokenRefreshRequired(string accessToken) =>
+            string.IsNullOrEmpty(accessToken)
+            || GetAccessTokenExpiration(accessToken) <= DateTimeOffset.UtcNow.AddMinutes(5);
+
+        private static DateTimeOffset GetAccessTokenExpiration(string accessToken)
+        {
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                return DateTimeOffset.MinValue;
+            }
+
+            string[] segments = accessToken.Split('.');
+            if (segments.Length < 2)
+            {
+                return DateTimeOffset.MinValue;
+            }
+
+            try
+            {
+                string payload = segments[1].Replace('-', '+').Replace('_', '/');
+                payload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
+                string json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+                Match expiration = Regex.Match(json, "\"exp\"\\s*:\\s*(\\d+)");
+                return expiration.Success && long.TryParse(expiration.Groups[1].Value, out long seconds)
+                    ? DateTimeOffset.FromUnixTimeSeconds(seconds)
+                    : DateTimeOffset.MinValue;
+            }
+            catch (FormatException)
+            {
+                return DateTimeOffset.MinValue;
+            }
+        }
+
         public static async Task<string> GetSystemIdentityAccessTokenAsync()
         {
-            if (IsSystemManagedIdentitySupported && AADSystemIdentityAccessToken == null && IsAzureConnStringSetup())
+            if (IsSystemManagedIdentitySupported
+                && IsAccessTokenRefreshRequired(AADSystemIdentityAccessToken)
+                && IsAzureConnStringSetup())
             {
                 AADSystemIdentityAccessToken = await AADUtility.GetManagedIdentityToken().ConfigureAwait(false);
                 if (AADSystemIdentityAccessToken == null)
@@ -900,7 +961,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static async Task<string> GetUserIdentityAccessTokenAsync()
         {
-            if (IsUserManagedIdentitySupported && AADUserIdentityAccessToken == null && IsAzureConnStringSetup())
+            if (IsUserManagedIdentitySupported
+                && IsAccessTokenRefreshRequired(AADUserIdentityAccessToken)
+                && IsAzureConnStringSetup())
             {
                 // Pass User Assigned Managed Identity Client Id here.
                 AADUserIdentityAccessToken = await AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).ConfigureAwait(false);

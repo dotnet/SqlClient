@@ -249,7 +249,7 @@ jobs:
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.poolImage, 'macos-latest')) }}
-          TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+          TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)
           # Avoid exposing secrets to pipeline jobs triggered via forks.  This
