@@ -9,7 +9,7 @@ using System.Diagnostics;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     // TdsRecordBufferSetter handles writing a structured value out to a TDS stream
     internal class TdsRecordBufferSetter : SmiTypedGetterSetter

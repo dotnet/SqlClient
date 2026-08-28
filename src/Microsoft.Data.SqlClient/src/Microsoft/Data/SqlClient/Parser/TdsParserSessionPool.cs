@@ -9,7 +9,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal class TdsParserSessionPool
     {
