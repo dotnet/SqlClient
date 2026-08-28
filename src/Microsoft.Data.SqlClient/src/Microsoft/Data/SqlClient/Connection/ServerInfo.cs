@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 
 namespace Microsoft.Data.SqlClient.Connection
 {
