@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(false)]
         public static void TestGetSchema(bool openTransaction)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 SqlTransaction transaction = null;
 
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(false)]
         public static async Task TestGetSchemaAsync(bool openTransaction)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 SqlTransaction transaction = null;
 
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestCommandBuilder()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder())
             using (SqlCommand command = connection.CreateCommand())
             {
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestInitialCatalogStandardValues()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 string currentDb = connection.Database;
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);

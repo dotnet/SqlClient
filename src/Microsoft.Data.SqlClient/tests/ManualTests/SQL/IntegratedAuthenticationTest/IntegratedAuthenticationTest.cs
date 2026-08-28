@@ -73,10 +73,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             var provider = new TestSspiContextProvider();
-            using SqlConnection conn = new(builder.ConnectionString)
-            {
-                SspiContextProvider = provider,
-            };
+            using SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString);
+            conn.SspiContextProvider = provider;
 
             // The custom provider captures auth params and returns false,
             // causing an SSPI generation failure wrapped in SqlException.

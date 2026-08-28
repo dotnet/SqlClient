@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                using SqlConnection connection = new(TCPConnectionString);
+                using SqlConnection connection = CreateConnection();
                 // Enable preview features (required while float16 is in preview), then declare a
                 // float16 vector and select it back. Without a negotiated float16 feature extension,
                 // the server returns the value as a varchar(max) JSON string, which the client can
@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetSqlServerProperty(string connectionString, ServerProperty property)
         {
-            using SqlConnection conn = new(connectionString);
+            using SqlConnection conn = CreateConnection(connectionString);
             conn.Open();
             return GetSqlServerProperty(conn, property);
         }
@@ -479,7 +479,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             try
             {
-                SqlConnection conn = new(builder.ConnectionString);
+                SqlConnection conn = CreateConnection(builder.ConnectionString);
                 conn.Open();
                 isTDS8Supported = true;
             }
@@ -500,7 +500,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 var builder = new SqlConnectionStringBuilder(TCPConnectionString);
                 builder.ConnectTimeout = 2;
-                using (var connection = new SqlConnection(builder.ToString()))
+                using (var connection = CreateConnection(builder.ToString()))
                 using (var command = new SqlCommand("SELECT COUNT(*) FROM sys.databases WHERE name=@name", connection))
                 {
                     connection.Open();
@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsObjectPresent(string objectName)
         {
-            using SqlConnection connection = new(TCPConnectionString);
+            using SqlConnection connection = CreateConnection();
             using SqlCommand command = new("SELECT OBJECT_ID(@name)", connection);
 
             connection.Open();
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsTypePresent(string typeName)
         {
-            using SqlConnection connection = new(TCPConnectionString);
+            using SqlConnection connection = CreateConnection();
             using SqlCommand command = new("SELECT COUNT(1) FROM SYS.TYPES WHERE [name] = @name", connection);
 
             connection.Open();
@@ -536,7 +536,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsServerRoleMember(string roleName)
         {
-            using SqlConnection connection = new(TCPConnectionString);
+            using SqlConnection connection = CreateConnection();
             using SqlCommand command = new("SELECT IS_SRVROLEMEMBER(@role)", connection);
 
             connection.Open();
@@ -548,7 +548,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static int GetAuthenticationMode()
         {
-            using SqlConnection connection = new(TCPConnectionString);
+            using SqlConnection connection = CreateConnection();
 
             connection.Open();
             using SqlCommand command = new("EXEC xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'LoginMode'", connection);
@@ -741,7 +741,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool retval = false;
             if (AreConnStringsSetup() && IsNotAzureSynapse())
             {
-                using SqlConnection connection = new(TCPConnectionString);
+                using SqlConnection connection = CreateConnection();
                 using SqlCommand command = new();
                 command.Connection = connection;
                 command.CommandText = "SELECT CONNECTIONPROPERTY('SUPPORT_UTF8')";
@@ -854,11 +854,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             (IsSystemManagedIdentitySupported ? GetSystemIdentityAccessTokenAsync() : 
                 Task.FromResult<string>(null));
 
+        /// <summary>
+        /// Creates a connection and assigns a managed identity access token when the connection
+        /// targets Azure SQL without an explicit authentication method.
+        /// </summary>
+        /// <param name="connectionString">The connection string used to create the connection.</param>
+        /// <returns>A connection configured for the target server.</returns>
+        public static SqlConnection CreateConnection(string connectionString = null)
+        {
+            connectionString ??= TCPConnectionString;
+            SqlConnection connection = new(connectionString);
+            SqlConnectionStringBuilder builder = new(connectionString);
+
+            if (IsAzureSqlConnectionString(connectionString)
+                && builder.Authentication == SqlAuthenticationMethod.NotSpecified
+                && !builder.IntegratedSecurity
+                && string.IsNullOrEmpty(builder.UserID)
+                && string.IsNullOrEmpty(builder.Password))
+            {
+                string accessToken = GetAccessTokenAsync().GetAwaiter().GetResult();
+                if (string.IsNullOrEmpty(accessToken))
+                {
+                    connection.Dispose();
+                    throw new InvalidOperationException("An access token is required to connect to Azure SQL.");
+                }
+
+                connection.AccessToken = accessToken;
+            }
+
+            return connection;
+        }
+
         public static async Task<string> GetSystemIdentityAccessTokenAsync()
         {
             if (IsSystemManagedIdentitySupported && AADSystemIdentityAccessToken == null && IsAzureConnStringSetup())
             {
-                AADSystemIdentityAccessToken = await AADUtility.GetManagedIdentityToken();
+                AADSystemIdentityAccessToken = await AADUtility.GetManagedIdentityToken().ConfigureAwait(false);
                 if (AADSystemIdentityAccessToken == null)
                 {
                     IsSystemManagedIdentitySupported = false;
@@ -872,7 +903,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsUserManagedIdentitySupported && AADUserIdentityAccessToken == null && IsAzureConnStringSetup())
             {
                 // Pass User Assigned Managed Identity Client Id here.
-                AADUserIdentityAccessToken = await AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId);
+                AADUserIdentityAccessToken = await AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).ConfigureAwait(false);
                 if (AADUserIdentityAccessToken == null)
                 {
                     IsUserManagedIdentitySupported = false;

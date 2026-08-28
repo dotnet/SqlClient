@@ -28,14 +28,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Uncommenting the following makes the deadlock go away as a workaround. If the transaction is promoted before
             // the first SqlClient enlistment, it never goes into the delegated state.
             // _ = TransactionInterop.GetTransmitterPropagationToken(transaction);
-            await using var conn = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await using var conn = DataTestUtility.CreateConnection();
             await conn.OpenAsync();
             conn.EnlistTransaction(transaction);
 
             // Enlisting the transaction in second connection causes the transaction to be promoted.
             // After this, the transaction state will be "delegated" (delegated to SQL Server), and the commit below will
             // trigger a call to SqlDelegatedTransaction.SinglePhaseCommit.
-            await using var conn2 = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await using var conn2 = DataTestUtility.CreateConnection();
             await conn2.OpenAsync();
             conn2.EnlistTransaction(transaction);
 
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Required, TimeSpan.MaxValue))
                 {
                     // Leave first connection open so that the transaction is promoted
-                    SqlConnection rootConnection = new SqlConnection(ConnectionString);
+                    SqlConnection rootConnection = DataTestUtility.CreateConnection(ConnectionString);
                     await rootConnection.OpenAsync();
                     using (SqlCommand command = rootConnection.CreateCommand())
                     {
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     // Closing and reopening cycles the connection through the pool.
                     // We want to verify that the transaction state is preserved through this cycle.
-                    SqlConnection enlistedConnection = new SqlConnection(ConnectionString);
+                    SqlConnection enlistedConnection = DataTestUtility.CreateConnection(ConnectionString);
                     enlistedConnection.Open();
                     enlistedConnection.Close();
                     enlistedConnection.Open();
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Suppress))
             {
-                using (SqlConnection connection = new SqlConnection(ConnectionString))
+                using (SqlConnection connection = DataTestUtility.CreateConnection(ConnectionString))
                 {
                     connection.Open();
                     using (SqlCommand command = connection.CreateCommand())

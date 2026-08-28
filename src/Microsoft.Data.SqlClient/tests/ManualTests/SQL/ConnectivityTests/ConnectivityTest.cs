@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ApplicationName = "HostNameTest"
             };
 
-            using (SqlConnection sqlConnection = new(builder.ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 int sqlClientSPID = sqlConnection.ServerProcessId;
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 0 // Infinite
             };
 
-            using SqlConnection conn = new(builder.ConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString);
             CancellationTokenSource cts = new(30000);
             // Will throw TaskCanceledException and fail the test in the event of a hang
             await conn.OpenAsync(cts.Token);
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sqlProviderName = builder.ApplicationName;
             string sqlProviderProcessID = Process.GetCurrentProcess().Id.ToString();
 
-            using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 string strCommand = $"SELECT PROGRAM_NAME,HOSTPROCESS FROM SYS.SYSPROCESSES WHERE PROGRAM_NAME LIKE ('%{sqlProviderName}%')";
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             // No connection resiliency
-            using (SqlConnection conn = new(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 conn.Open();
                 InternalConnectionWrapper wrapper = new(conn, true, builder.ConnectionString);
@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             builder.ConnectRetryCount = 2;
             // Also check SPID changes with connection resiliency
-            using (SqlConnection conn = new(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 conn.Open();
                 int clientSPID = conn.ServerProcessId;
@@ -377,7 +377,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 15,
                 ConnectRetryCount = 3
             };
-            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
 
             timer.Start();
@@ -403,7 +403,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 15,
                 ConnectRetryCount = 3
             };
-            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
 
             timer.Start();
@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = DataTestUtility.AliasName
             };
-            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString);
             Assert.Equal(DataTestUtility.AliasName, builder.DataSource);
             try
             {
@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
             b.DataSource = "admin:localhost";
-            using SqlConnection sqlConnection = new(b.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(b.ConnectionString);
             sqlConnection.Open();
         }
 
@@ -505,14 +505,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // This test may fail if Encrypt = false but the test server requires encryption
             b.TrustServerCertificate = false;
 
-            using SqlConnection sqlConnection = new(b.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(b.ConnectionString);
             sqlConnection.Open();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ConnectionFireInfoMessageEventOnUserErrorsShouldSucceed()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 string command = "print";
                 string commandParam = "OK";

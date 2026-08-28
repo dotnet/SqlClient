@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteTest()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
 
             using SqlCommand command = new(GenerateCommandText(), connection);
             connection.Open();
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void FailureTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
                 connection.Open();
