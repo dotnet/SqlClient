@@ -15,7 +15,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
