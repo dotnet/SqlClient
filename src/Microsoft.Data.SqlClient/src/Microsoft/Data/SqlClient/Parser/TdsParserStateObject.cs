@@ -24,7 +24,7 @@ using Microsoft.Data.SqlClient.Utilities;
 using System.Runtime.ConstrainedExecution;
 #endif
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal abstract partial class TdsParserStateObject
     {
