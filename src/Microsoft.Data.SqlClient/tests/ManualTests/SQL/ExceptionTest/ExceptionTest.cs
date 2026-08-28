@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false }).ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false }).ConnectionString))
             {
                 sqlConnection.InfoMessage += handler;
                 sqlConnection.Open();
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return false;
             }
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
 
             SqlInfoMessageEventHandler handler = new SqlInfoMessageEventHandler(warningCallback);
-            SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            SqlConnection sqlConnection = DataTestUtility.CreateConnection();
             sqlConnection.InfoMessage += handler;
             sqlConnection.Open();
             foreach (string orderClause in new string[] { "", " order by FirstName" })
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             TaskScheduler.UnobservedTaskException += handler;
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
                 using (var command = new SqlCommand("select null; select * from dbo.NonexistentTable;", connection))

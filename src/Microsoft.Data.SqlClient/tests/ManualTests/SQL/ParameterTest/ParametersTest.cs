@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Rows = { { x, y } }
             };
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using UserDefinedType udtCoordPair = new(connection, "Type", "TABLE (x INT, y INT)");
@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 record2,
             };
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using UserDefinedType udtGeographyTable = new(connection, "Type", "TABLE ([Id] [uniqueidentifier] NULL, [geom] [geography] NULL)");
@@ -546,7 +546,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(38, false)]
         public static async Task ZeroDecimalParameter_CommandInsert(byte scale, bool useAsync)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             if (useAsync)
             {
                 await connection.OpenAsync();
@@ -593,7 +593,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(true)]
         public static async Task DecimalParameter_RejectsInsufficientPrecision(bool useAsync)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             if (useAsync)
             {
                 await connection.OpenAsync();
@@ -629,7 +629,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(true)]
         public static async Task TestOutOfRangeDecimalParameter_CommandSelect(bool useAsync)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             if (useAsync)
             {
                 await connection.OpenAsync();
@@ -638,7 +638,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
             }
-
             using SqlCommand cmd = new("SELECT @Value", connection);
             // A System.Decimal value has a maximum precision of 29 digits. We specify a Precision of 38 and a Scale of 2 in order
             // to prove that the client can change the scale and precision of the decimal value in ways which System.Decimal doesn't
@@ -792,7 +791,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 1;
             int secondInput = 2;
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Second, @First", connection);
@@ -813,7 +812,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_NamesMustMatch()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @DoesNotExist", connection);
@@ -838,7 +837,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_AllNamesMustBeDeclared()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection);
@@ -867,7 +866,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @First, @Second, @First", connection);
@@ -895,7 +894,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection);
@@ -917,7 +916,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int secondInput = 2;
             int thirdInput = 3;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection);
@@ -937,7 +936,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int firstInput = 12;
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using StoredProcedure sproc = new(connection, "P", "@in int AS RETURN(@in)");
@@ -977,7 +976,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var cancellationToken = new CancellationTokenSource(50);
             var expectedGuid = Guid.NewGuid();
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
             using SqlCommand cm = connection.CreateCommand();
             cm.CommandType = CommandType.Text;

@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 5;
 
-            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 conn.Open();
                 using (SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", conn))
@@ -601,7 +601,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // With MARS off, one SqlConnection cannot have multiple DataReaders even if they are from different SqlCommands
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 string openReaderExistsMessage = SystemDataResourceManager.Instance.ADP_OpenReaderExists("Connection");
 
@@ -649,7 +649,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void MarsConcurrencyTest()
         {
             var table = DataTestUtility.GetShortName("MarsConcurrencyTest", withBracket: false);
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             {
                 conn.Open();
                 using var cmd = new SqlCommand
@@ -697,7 +697,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    using var dropConn = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    using var dropConn = DataTestUtility.CreateConnection();
                     dropConn.Open();
                     DataTestUtility.DropTable(dropConn, table);
                 }

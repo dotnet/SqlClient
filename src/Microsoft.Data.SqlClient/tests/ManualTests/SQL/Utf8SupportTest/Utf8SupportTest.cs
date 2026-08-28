@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUTF8Supported), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckSupportUtf8ConnectionProperty()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand())
             {
                 command.Connection = connection;
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             builder.InitialCatalog = "master";
 
-            using SqlConnection cn = new(builder.ConnectionString);
+            using SqlConnection cn = DataTestUtility.CreateConnection(builder.ConnectionString);
             cn.Open();
 
             try
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 PrepareDatabaseUTF8(cn, dbName, tblName, letters);
 
                 builder.InitialCatalog = dbName;
-                using SqlConnection cnnTest = new(builder.ConnectionString);
+                using SqlConnection cnnTest = DataTestUtility.CreateConnection(builder.ConnectionString);
                 // creating a databse is a time consumer action and could be retried.
                 SqlRetryLogicOption retryOption = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(200) };
                 cnnTest.RetryLogicProvider = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(retryOption);
