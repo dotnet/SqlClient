@@ -6,7 +6,6 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.Parser

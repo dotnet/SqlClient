@@ -9,7 +9,6 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Text;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient.Parser

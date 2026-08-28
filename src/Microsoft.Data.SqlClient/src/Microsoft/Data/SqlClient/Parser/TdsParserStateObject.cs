@@ -17,7 +17,6 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Internal;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
