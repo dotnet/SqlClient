@@ -840,14 +840,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
-        public static async Task<bool> IsAccessTokenAsyncSetup() => 
-            !string.IsNullOrEmpty(await GetSystemIdentityAccessTokenAsync()) 
-            || !string.IsNullOrEmpty(await GetUserIdentityAccessTokenAsync());
+        public static async Task<bool> IsAccessTokenAsyncSetup() =>
+            !string.IsNullOrEmpty(await GetAccessTokenAsync());
 
-        public static Task<string> GetAccessTokenAsync() => 
-            IsUserManagedIdentitySupported ? GetUserIdentityAccessTokenAsync() : 
-            (IsSystemManagedIdentitySupported ? GetSystemIdentityAccessTokenAsync() : 
-                Task.FromResult<string>(null));
+        public static async Task<string> GetAccessTokenAsync()
+        {
+            if (IsUserManagedIdentitySupported)
+            {
+                string accessToken = await GetUserIdentityAccessTokenAsync().ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    return accessToken;
+                }
+            }
+
+            return IsSystemManagedIdentitySupported
+                ? await GetSystemIdentityAccessTokenAsync().ConfigureAwait(false)
+                : null;
+        }
 
         private sealed class TestManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
         {
