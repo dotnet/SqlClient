@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -40,7 +41,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [ExcludeFromCodeCoverage]
         public static IEnumerable<object[]> OnlyAsync() { yield return new object[] { true }; }
-        
+
         [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void PassThroughSinglePacket(bool isAsync)
         {
@@ -126,7 +127,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var input = SplitPackets(38, expected,
                 (8 + 30), // full
-                (8 + 10) + (8 + 12), // full, part next 
+                (8 + 10) + (8 + 12), // full, part next
                 18 // part end
             );
 
@@ -381,7 +382,7 @@ namespace Microsoft.Data.SqlClient.Tests
             header[1] = 0; // Status, 0 - normal message
             BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.HEADER_LEN_FIELD_OFFSET, 2),
                 (short)(TdsEnums.HEADER_LEN + dataSize)); // total length
-            BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.SPID_OFFSET, 2), short.MaxValue); // SPID 
+            BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.SPID_OFFSET, 2), short.MaxValue); // SPID
             header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 4] = id; // PacketID
             header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 5] = 0; // Window
 
@@ -510,7 +511,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [ExcludeFromCodeCoverage]
         public static List<PacketData> LoadPacketBinFiles(string directoryName)
         {
-            // expects a set of files contained in a directory with the name 
+            // expects a set of files contained in a directory with the name
             // formatted as packet_{number}_{dataSize}.bin each packet will be
             // loaded into a byte[]
 

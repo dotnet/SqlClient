@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -15,9 +16,9 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This is a very simplistic, lightweight pooler.  It wasn't
         //       intended to handle huge number of items, just to keep track
         //       of the session objects to ensure that they're cleaned up in
-        //       a timely manner, to avoid holding on to an unacceptable 
+        //       a timely manner, to avoid holding on to an unacceptable
         //       amount of server-side resources in the event that consumers
-        //       let their data readers be GC'd, instead of explicitly 
+        //       let their data readers be GC'd, instead of explicitly
         //       closing or disposing of them
 
         private const int MaxInactiveCount = 10; // pick something, preferably small...
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
 
         private readonly TdsParser _parser;       // parser that owns us
-        private readonly List<TdsParserStateObject> _cache;        // collection of all known sessions 
+        private readonly List<TdsParserStateObject> _cache;        // collection of all known sessions
         private int _cachedCount;  // lock-free _cache.Count
         private TdsParserStateObject[] _freeStateObjects; // collection of all sessions available for reuse
         private int _freeStateObjectCount; // Number of available free sessions
@@ -65,8 +66,8 @@ namespace Microsoft.Data.SqlClient
             {
                 lock (_cache)
                 {
-                    // NOTE: The PutSession call below may choose to remove the 
-                    //       session from the cache, which will throw off our 
+                    // NOTE: The PutSession call below may choose to remove the
+                    //       session from the cache, which will throw off our
                     //       enumerator.  We avoid that by simply indexing backward
                     //       through the array.
 
