@@ -5,6 +5,8 @@
 // @TODO: Merge with other implementations (and/or introduce polymorphism to handle this indirection)
 #if NET
 
+using Microsoft.Data.SqlClient.Parser;
+
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
