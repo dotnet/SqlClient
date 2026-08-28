@@ -1,8 +1,9 @@
 # GitHub Actions Script Tests
 
 This directory contains tests for the shell scripts used by the
-[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml) and
-[check-milestone](./../../../.github/workflows/check-milestone.yml) GitHub Actions workflows.
+[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
+[check-milestone](./../../../.github/workflows/check-milestone.yml) and
+[recheck-milestones](./../../../.github/workflows/recheck-milestones.yml) GitHub Actions workflows.
 These tests are intended to be run manually by developers when they are changing the associated
 scripts, and not as part of any CI runs.
 

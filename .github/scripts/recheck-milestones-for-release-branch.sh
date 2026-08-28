@@ -42,7 +42,7 @@
 #   the Actions UI; a maintainer can then re-run those checks by hand.
 #
 # USAGE
-#   Called from the check-milestone.yml workflow. Can also be run locally:
+#   Called from the recheck-milestones.yml workflow. Can also be run locally:
 #
 #     export RELEASE_BRANCH="release/7.1"
 #     export DEFAULT_BRANCH="main"
