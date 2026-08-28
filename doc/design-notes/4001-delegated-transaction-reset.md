@@ -19,7 +19,7 @@ what the existing test suite does and does not actually verify.
 This distinction is the crux of the entire bug.
 
 When a connection participates in a `TransactionScope`, it ends up in one of **two
-mutually exclusive** states.
+distinct** states. They overlap, but neither implies the other.
 
 ### Delegated root — "I *own* this transaction"
 
@@ -28,10 +28,26 @@ down to SQL Server rather than paying for a distributed coordinator. The transac
 lives **on** the connection.
 
 - `IsTransactionRoot` → `true`
-- `EnlistedTransaction` → **`null`**
+- `EnlistedTransaction` → set at first, then **cleared** later (see below)
 
-The `null` is not an oversight. There is no external transaction object to point at,
-because the transaction *is here*.
+`IsTransactionRoot` is not a stored flag. It is derived:
+
+```csharp
+internal bool IsTransactionRoot => DelegatedTransaction?.IsActive == true;
+```
+
+Enlistment sets `EnlistedTransaction` unconditionally, so a *freshly* delegated root
+has both. But once the transaction is no longer `Active`,
+`DbConnectionInternal.DetachCurrentTransactionIfEnded` clears `EnlistedTransaction`:
+
+```csharp
+transactionIsDead = enlistedTransaction.TransactionInformation.Status != TransactionStatus.Active;
+if (transactionIsDead) { DetachTransaction(enlistedTransaction, true); }
+```
+
+The delegated transaction, meanwhile, can still report `IsActive == true`. That
+transient **half-state** — root, but no `EnlistedTransaction` — is precisely the state
+issue #4001 reproduces in.
 
 ### Enlisted participant — "I *joined* someone else's transaction"
 
@@ -43,9 +59,10 @@ each connection enlists in it.
 
 ### The trap
 
-These two states never look alike. **A delegated root always has a `null`
-`EnlistedTransaction`.** Any check that tests only one of these fields silently
-misses the other case — and does so with no exception at the point of the mistake.
+Neither field subsumes the other: a delegated root can have a `null`
+`EnlistedTransaction`, and an enlisted participant is never a root. Any check that
+tests only one of these fields silently misses the other case — and does so with no
+exception at the point of the mistake.
 
 ---
 
@@ -96,12 +113,16 @@ internal protected override bool IsNonPoolableTransactionRoot
     => IsTransactionRoot && (!Is2008OrNewer || Pool == null);
 ```
 
-Since `Is2008OrNewer` is true for every supported server, the entire pre-#3019
-condition reduces to:
+Substituting, the pre-#3019 condition was:
 
 ```csharp
-IsTransactionRoot && Pool != null
+IsTransactionRoot && Is2008OrNewer && Pool != null
 ```
+
+The `Is2008OrNewer` term is not vestigial. `AdapterUtil.ValidateTdsVersion` still accepts
+`TdsEnums.SQL2005_VERSION`, and `ConnectionCapabilities.Is2008R2OrNewer` returns `false`
+for it. A pre-2008 server cannot carry a delegated transaction across a reset, so such a
+connection must not be recycled with one attached.
 
 So the two conditions were:
 
@@ -120,13 +141,26 @@ This reframes the fix: the goal is not to undo #3019, it is to finish it.
 
 ## 4. The fix
 
+The predicate is extracted into a helper so it can be tested directly:
+
 ```csharp
-_parser.PrepareResetConnection(
-    Pool is not null &&
-    (IsTransactionRoot || EnlistedTransaction is not null));
+internal static bool ShouldPreserveTransactionOnReset(
+    bool isPooled,
+    bool isTransactionRoot,
+    bool is2008OrNewer,
+    bool hasEnlistedTransaction)
+{
+    if (!isPooled)
+    {
+        return false;
+    }
+
+    return (isTransactionRoot && is2008OrNewer) || hasEnlistedTransaction;
+}
 ```
 
-This is exactly `OLD || NEW`.
+This is exactly `OLD || NEW`, with both prior conditions preserved verbatim — including
+the `Is2008OrNewer` guard that only ever applied to the delegated-root arm.
 
 ---
 
@@ -135,12 +169,13 @@ This is exactly `OLD || NEW`.
 This is the question that matters most, and it is answerable by inspection rather than
 by testing. Every reachable state, for a pooled connection:
 
-| `IsTransactionRoot` | `EnlistedTransaction` | Pre-#3019 | #3019 | **This fix** |
-|:---:|:---:|:---:|:---:|:---:|
-| `false` | `null` | `false` | `false` | `false` |
-| **`true`** | **`null`** | ✅ `true` | ❌ `false` ← **#4001** | ✅ **`true`** |
-| **`false`** | **set** | ❌ `false` ← **#2970** | ✅ `true` | ✅ **`true`** |
-| `true` | set | `true` | `true` | `true` |
+| `IsTransactionRoot` | `Is2008OrNewer` | `EnlistedTransaction` | Pre-#3019 | #3019 | **This fix** |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| `false` | `true` | `null` | `false` | `false` | `false` |
+| **`true`** | **`true`** | **`null`** | ✅ `true` | ❌ `false` ← **#4001** | ✅ **`true`** |
+| `true` | `false` | `null` | `false` | `false` | `false` |
+| **`false`** | any | **set** | ❌ `false` ← **#2970** | ✅ `true` | ✅ **`true`** |
+| `true` | any | set | see above | `true` | `true` |
 
 Read the **#2970 row**. That is the row PR #3019 was created to fix, and this fix still
 evaluates `true` there. It is untouched.
@@ -148,8 +183,9 @@ evaluates `true` there. It is untouched.
 Reintroducing #2970 would require that cell to flip to `false`, and `A || B` cannot
 evaluate `false` while `B` is `true`. The guarantee is structural, not empirical.
 
-The condition is a strict **superset** of both prior behaviors. There is no input on
-which it returns `false` where either predecessor returned `true`.
+Because each arm reproduces its original predecessor exactly, the condition returns
+`true` wherever either predecessor did, and never returns `false` where one of them
+returned `true`.
 
 ---
 
@@ -230,8 +266,43 @@ to cover #2970 — is tagged `[Trait("Category", "flaky")]` and passes against c
 carries the #2970 bug.
 
 The practical conclusion: **the 9/9 result is evidence of no collateral damage, not
-evidence that the fix works.** The evidence that the fix works is the reproduction
-matrix above and the structural argument in section 5. Those should carry the weight.
+evidence that the fix works.**
+
+### The regression test that was added
+
+An end-to-end reproduction was attempted extensively and abandoned. The `#4001` state
+requires a narrow simultaneity — the transaction's status already non-`Active` (so
+`DetachCurrentTransactionIfEnded` has cleared `EnlistedTransaction`) while
+`DelegatedTransaction.IsActive` is still `true` — and which of two teardown paths in
+`SqlDelegatedTransaction` wins is a race:
+
+- `TransactionEnded` sets `_active = false` and *immediately* calls
+  `DoomThisConnection()`. If this path runs first, the delegate is already inactive
+  before any reset, so the state is never observed.
+- `Rollback`, driven from `TransactionScope.Dispose`, sets `_active = false` *after* the
+  reset. This is the ordering the reporter hit.
+
+Roughly twenty harness variants — varying pool size, pool implementation, promotion
+success, explicit rollback, and parking the delegate in the transacted pool ahead of the
+enlistment — consistently drove the first path. A test built on that race would be
+flaky, which is the same defect `Test_EnlistedTransactionPreservedWhilePooled` already
+demonstrates.
+
+Instead the predicate was extracted into
+`SqlConnectionInternal.ShouldPreserveTransactionOnReset` and pinned directly by
+`SqlConnectionInternalResetTransactionTests`, following the existing precedent of
+`ResolveLoginTimeout` / `SqlConnectionInternalTimeoutTests`. The tests were themselves
+mutation-tested:
+
+| Condition compiled into the helper | Bug it contains | New tests |
+|---|---|---|
+| `hasEnlistedTransaction` (#3019) | **#4001** | ❌ 2 failed |
+| `isTransactionRoot && is2008OrNewer` (pre-#3019) | **#2970** | ❌ 4 failed |
+| Union without the 2008 guard | pre-2008 regression | ❌ 2 failed |
+| The shipped condition | none | ✅ 15 passed |
+
+This satisfies "fails before the change, passes after" for **both** regressions, and
+does so deterministically and without a server.
 
 ---
 
