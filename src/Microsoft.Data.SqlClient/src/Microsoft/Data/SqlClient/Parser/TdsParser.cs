@@ -2777,14 +2777,14 @@ namespace Microsoft.Data.SqlClient.Parser
                     case TdsEnums.SQLFEDAUTHINFO:
                         {
                             _connHandler._federatedAuthenticationInfoReceived = true;
-                            SqlFedAuthInfo info;
+                            TdsFedAuthInfoToken infoToken;
 
-                            result = TryProcessFedAuthInfo(stateObj, tokenLength, out info);
+                            result = TryProcessFedAuthInfo(stateObj, tokenLength, out infoToken);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
-                            _connHandler.OnFedAuthInfo(info);
+                            _connHandler.OnFedAuthInfo(infoToken);
                             break;
                         }
                     case TdsEnums.SQLSESSIONSTATE:
@@ -4390,9 +4390,9 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsOperationStatus.Done;
         }
 
-        private TdsOperationStatus TryProcessFedAuthInfo(TdsParserStateObject stateObj, int tokenLen, out SqlFedAuthInfo sqlFedAuthInfo)
+        private TdsOperationStatus TryProcessFedAuthInfo(TdsParserStateObject stateObj, int tokenLen, out TdsFedAuthInfoToken tdsFedAuthInfoToken)
         {
-            sqlFedAuthInfo = null;
+            tdsFedAuthInfoToken = null;
             string spn = null;
             string stsUrl = null;
 
@@ -4521,8 +4521,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoDoesNotContainStsurlAndSpn);
             }
 
-            sqlFedAuthInfo = new(spn, stsUrl);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", sqlFedAuthInfo);
+            tdsFedAuthInfoToken = new(spn, stsUrl);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo> Processed FEDAUTHINFO token stream: {0}", tdsFedAuthInfoToken);
 
             return TdsOperationStatus.Done;
         }
