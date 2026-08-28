@@ -74,7 +74,7 @@ public class AADConnectionTest
             @"Failed to authenticate the user.*Authentication=ActiveDirectoryManagedIdentity",
             RegexOptions.IgnoreCase);
 
-        Assert.Matches(expected, e.GetBaseException().Message);
+        Assert.Matches(expected, e.Message);
     }
 
     [ConditionalFact(

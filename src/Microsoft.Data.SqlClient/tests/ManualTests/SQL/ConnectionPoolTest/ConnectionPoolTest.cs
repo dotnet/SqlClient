@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return string.Empty;
             }
 
-            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
             {
                 MultipleActiveResultSets = mars,
                 Pooling = true
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return string.Empty;
             }
 
-            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
             {
                 MultipleActiveResultSets = mars,
                 Pooling = true
@@ -139,27 +139,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task AccessTokenConnectionPoolingTest()
         {
             SqlConnection.ClearAllPools();
+            string accessToken = await DataTestUtility.GetAccessTokenAsync();
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
+            connection.AccessToken = accessToken;
             connection.Open();
             InternalConnectionWrapper internalConnection = new(connection);
             ConnectionPoolWrapper connectionPool = new(connection);
             connection.Close();
 
-            using SqlConnection connection2 = new(DataTestUtility.TCPConnectionString);
-            connection2.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            using SqlConnection connection2 = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
+            connection2.AccessToken = accessToken;
             connection2.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
             connection2.Close();
 
-            string azureConnStrWithApp = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) 
+            string azureConnStrWithApp = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
                 { 
                     ApplicationName = "SqlConnectionPoolUnitTest" 
                 }.ConnectionString;
             using SqlConnection connection3 = new(azureConnStrWithApp);
-            connection3.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            connection3.AccessToken = accessToken;
             connection3.Open();
             Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
             Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
@@ -167,8 +168,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             connectionPool.Cleanup();
 
-            using SqlConnection connection4 = new(DataTestUtility.TCPConnectionString);
-            connection4.AccessToken = await DataTestUtility.GetAccessTokenAsync();
+            using SqlConnection connection4 = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
+            connection4.AccessToken = accessToken;
             connection4.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");

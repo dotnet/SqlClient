@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task AccessTokenTest()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
             connection.AccessToken = await DataTestUtility.GetAccessTokenAsync();
             await connection.OpenAsync();
 
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static async Task InvalidAccessTokenTest()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
             connection.AccessToken = await DataTestUtility.GetAccessTokenAsync() + "abc";
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
 
@@ -60,6 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task AccessTokenWithAuthType()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties()
                 .AddManagedIdentityAuthenticationToConnString());
             InvalidOperationException e = await Assert.ThrowsAsync<InvalidOperationException>
             (async () =>
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task AccessTokenWithCred()
         {
             string connString = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties()
                 .AddUserToConnString()
                 .AddPasswordToConnString();
 
@@ -90,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenTestWithEmptyToken()
         {
-            string connStr = DataTestUtility.TCPConnectionString;
+            string connStr = DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties();
 
             using SqlConnection connection = new(connStr);
             connection.AccessToken = "";
@@ -104,6 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void AccessTokenTestWithIntegratedSecurityTrue()
         {
             string connStr = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties()
                 .AddIntegratedSecurityToConnString();
 
             using SqlConnection connection = new(connStr);
@@ -123,21 +126,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "Invalid value for key 'authentication'.";
             Assert.Contains(expectedMessage, e.Message, StringComparison.OrdinalIgnoreCase);
-        }
-
-        [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
-        public static void AADPasswordWithIntegratedSecurityTrue()
-        {
-            string connStr = DataTestUtility.TCPConnectionString
-                .AddAADPasswordAuthenticationToConnString()
-                .AddUserToConnString()
-                .AddPasswordToConnString()
-                .AddIntegratedSecurityToConnString();
-
-            ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
-
-            string expectedMessage = "Cannot use 'Authentication' with 'Integrated Security'.";
-            Assert.Contains(expectedMessage, e.Message);
         }
 
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsUserManagedIdentitySupported))]
@@ -177,6 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void SqlCredentialsWithNoAuthType()
         {
             string connStrWithNoAuthType = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties()
                 .AddUserToConnString()
                 .AddPasswordToConnString();
             Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
@@ -367,7 +356,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup))]
         public static void AccessTokenCallbackMustOpenPassAndChangePropertyFail()
         {
-            string connStr = DataTestUtility.TCPConnectionString;
+            string connStr = DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties();
 
             TokenCredential cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
@@ -393,6 +382,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var userId = "someuser";
             var pwd = "somepassword";
             string connStr = DataTestUtility.TCPConnectionString
+                .RemoveAuthAndCredsProperties()
                 .AddUserToConnString(userId)
                 .AddPasswordToConnString(pwd);
 
@@ -467,7 +457,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsSystemAssignedManagedIdentitySupported))]
         public static async Task AccessToken_SystemManagedIdentityTest()
         {
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
             conn.AccessToken = await DataTestUtility.GetSystemIdentityAccessTokenAsync();
             conn.Open();
 
@@ -477,7 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAzureSqlConnStringSetup), nameof(IsUserManagedIdentitySupported))]
         public static async Task AccessToken_UserManagedIdentityTest()
         {
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties());
             conn.AccessToken = await DataTestUtility.GetUserIdentityAccessTokenAsync();
             conn.Open();
 

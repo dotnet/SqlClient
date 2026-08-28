@@ -59,20 +59,6 @@ namespace Microsoft.Data.SqlClient.Tests.Common
         }
 
         /// <summary>
-        /// Adds AAD password authentication to the connection string to test the connection string parsing logic
-        /// </summary>
-        public static string AddAADPasswordAuthenticationToConnString(this string connectionString)
-        {
-            var builder = new SqlConnectionStringBuilder(connectionString)
-            {
-#pragma warning disable CS0618 // ActiveDirectoryPassword is deprecated; used here only for testing legacy authentication scenarios
-                Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword
-            };
-#pragma warning restore CS0618
-            return builder.ConnectionString;
-        }
-
-        /// <summary>
         /// Adds AAD integrated authentication to the connection string to test the connection string parsing logic
         /// </summary>
         public static string AddAADIntegratedAuthenticationToConnString(this string connectionString)

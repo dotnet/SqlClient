@@ -493,8 +493,8 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
@@ -521,8 +521,8 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AADServicePrincipalId: $(AADServicePrincipalId)
@@ -570,8 +570,8 @@ stages:
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AADServicePrincipalId: $(AADServicePrincipalId)
