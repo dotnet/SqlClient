@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
