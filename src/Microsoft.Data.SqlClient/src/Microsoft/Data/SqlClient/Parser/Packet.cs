@@ -4,9 +4,8 @@
 
 using System;
 using System.Diagnostics;
-using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// Contains a buffer for a partial or full packet and methods to get information about the status of
