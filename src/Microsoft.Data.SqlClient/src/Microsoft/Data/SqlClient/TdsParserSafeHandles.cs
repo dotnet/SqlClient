@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
