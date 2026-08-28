@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 #if NET
-using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Internal;
 #endif
 
