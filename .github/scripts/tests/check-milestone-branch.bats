@@ -46,6 +46,7 @@ mock_release_branches() {
 
   cat > "${STUB_DIR}/gh" <<MOCK
 #!/usr/bin/env bash
+echo "GH: \$*" >> "${STUB_DIR}/gh.log"
 printf '%s' '${refs}'
 MOCK
   chmod +x "${STUB_DIR}/gh"
@@ -53,8 +54,9 @@ MOCK
 
 # Install a 'gh' mock that fails, simulating an API error.
 mock_gh_failure() {
-  cat > "${STUB_DIR}/gh" <<'MOCK'
+  cat > "${STUB_DIR}/gh" <<MOCK
 #!/usr/bin/env bash
+echo "GH: \$*" >> "${STUB_DIR}/gh.log"
 echo "HTTP 403: rate limit exceeded" >&2
 exit 1
 MOCK
@@ -142,6 +144,24 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"targeting 'master' is correct"* ]]
+}
+
+# ── API invocation ───────────────────────────────────────────────────────────
+
+@test "queries the release refs endpoint with the expected arguments" {
+  export MILESTONE_TITLE="7.1.0"
+  export BASE_REF="main"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  grep -qF "GH: api repos/dotnet/SqlClient/git/matching-refs/heads/release/ --jq .[].ref" "${STUB_DIR}/gh.log"
+}
+
+@test "does not call the API when the PR targets a release branch" {
+  export MILESTONE_TITLE="7.0.3"
+  export BASE_REF="release/7.0"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ ! -f "${STUB_DIR}/gh.log" ]
 }
 
 # ── Release branch targets ───────────────────────────────────────────────────
