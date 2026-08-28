@@ -71,16 +71,14 @@
     -->
     <ErrorLog>$(MSBuildProjectFullPath).$([System.Guid]::NewGuid().ToString()).sarif</ErrorLog>
     <!--
-      NOTE: the analysis pass deliberately does NOT override the repo-wide TreatWarningsAsErrors=true
-      set above, even though the Guardian RoslynAnalyzers task passes /p:TreatWarningsAsErrors=false
-      in its build-driving modes.
+      Disable promoting Warnings to Errors, which would cause the analysis build to fail on any
+      Roslyn findings, and possibly inhibit full analysis.  This is how the Guardian RoslynAnalyzers
+      task behaves, so we aren't introducing any new risk.
 
-      The consequence is that a project which does not compile warning-clean fails the analysis build
-      and truncates its SARIF log. We accept that: an official build should be warning-clean anyway,
-      so a clean compile is a precondition for complete Roslyn analysis rather than something to work
-      around. The analysis step sets continueOnError so a failure here still lets the rest of the job
-      (and the Guardian collector) run - see roslyn-analyzers-buildproj-step.yml.
+      This has no effect on normal builds, which still use TreatWarningsAsErrors=true as set above.
+      Genuine compiler errors still fail the build.
     -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <!-- Internal Analysis (IA* rules) - private ADO.Net pipelines only ========================== -->

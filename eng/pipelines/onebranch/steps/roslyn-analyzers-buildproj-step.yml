@@ -67,11 +67,11 @@
 #   |                                        |                                     | the public governed feed, so they are not         |
 #   |                                        |                                     | reproduced here. See NOTE ON THE INTERNAL IA*     |
 #   |                                        |                                     | RULES below.                                      |
-#   | /p:TreatWarningsAsErrors=false         | Record every diagnostic instead of  | NOT reproduced. We keep the repo-wide             |
-#   |                                        | failing at the first one.           | TreatWarningsAsErrors=true, so a warning-clean    |
-#   |                                        |                                     | compile is a precondition for complete analysis.  |
-#   |                                        |                                     | The build step below sets continueOnError so the  |
-#   |                                        |                                     | collector still runs on whatever SARIF exists.    |
+#   | /p:TreatWarningsAsErrors=false         | Record every diagnostic instead of  | <TreatWarningsAsErrors>false</...> in the         |
+#   |                                        | failing at the first one.           | EnableAnalyzers block of Directory.Build.props.   |
+#   |                                        |                                     | Warning-clean compilation is still enforced by    |
+#   |                                        |                                     | the ordinary build later in each job, which does  |
+#   |                                        |                                     | run with TreatWarningsAsErrors=true.              |
 #   | /p:RunCodeAnalysis=false               | Disables legacy *binary* FxCop      | Already false by default in SDK-style projects;   |
 #   |                                        | (not the Roslyn analyzers).         | we never enable it.                               |
 #   | /p:GdnRoslynAnalyzersRunId=<guid>      | Gates the injected props/targets so | Not needed. We enable analyzers directly on the   |
@@ -140,11 +140,6 @@ steps:
   # "dotnet build" that build.proj execs turns on the full Roslyn analyzer set and verifies its SARIF.
   - task: DotNetCoreCLI@2
     displayName: 'Build for Roslyn analysis - build.proj Build${{ parameters.packageShortName }}'
-    # The analysis pass inherits the repo-wide TreatWarningsAsErrors=true, so any project that is
-    # not warning-clean fails this build. That must not abort the job -- the collector in Step 4
-    # still needs to gather whatever SARIF logs were produced, and Guardian's Post Analysis decides
-    # whether the findings actually break the build.
-    continueOnError: true
     inputs:
       command: build
       projects: '$(REPO_ROOT)/build.proj'
