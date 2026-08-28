@@ -2137,10 +2137,10 @@
     <value>服务器提供的证书与 ServerCertificate 选项提供的证书不匹配。</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>无法加载或解析 "ServerCertificate" 选项指定的证书文件: "{0}"。</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>已指定 "ServerCertificate" 选项，但服务器未提供可与其比较的证书。</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在列 ‘{0}’ 上获取 JsonDocument 的尝试无效。只有 json 类型的列支持 JsonDocument。</value>
