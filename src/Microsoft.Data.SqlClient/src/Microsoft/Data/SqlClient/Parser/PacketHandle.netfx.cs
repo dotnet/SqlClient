@@ -6,9 +6,8 @@
 #if NETFRAMEWORK
 
 using System;
-using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
