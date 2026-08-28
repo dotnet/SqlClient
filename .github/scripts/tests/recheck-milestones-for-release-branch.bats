@@ -33,14 +33,24 @@ setup() {
   mock_gh "100 aaa111 7.1.0
 101 bbb222 8.0.0-preview1
 102 ccc333 7.1.0-preview3"
+
+  # Default: one run per head SHA, correctly associated with its PR.
+  set_runs aaa111 '{"workflow_runs":[{"id":"run-aaa111","pull_requests":[{"number":100}]}]}'
+  set_runs bbb222 '{"workflow_runs":[{"id":"run-bbb222","pull_requests":[{"number":101}]}]}'
+  set_runs ccc333 '{"workflow_runs":[{"id":"run-ccc333","pull_requests":[{"number":102}]}]}'
 }
 
 teardown() {
   rm -rf "${STUB_DIR}"
 }
 
-# Install a 'gh' mock. $1 is the 'pr list' output; the run lookup returns
-# "run-<sha>" and 'run rerun' succeeds unless RERUN_FAILS is set.
+# Register the workflow-runs response for a given head SHA.
+set_runs() {
+  printf '%s' "$2" > "${STUB_DIR}/runs-$1.json"
+}
+
+# Install a 'gh' mock. $1 is the 'pr list' output; 'api' serves the JSON
+# registered by set_runs, and 'run rerun' succeeds unless RERUN_FAILS is set.
 mock_gh() {
   cat > "${STUB_DIR}/gh" <<MOCK
 #!/usr/bin/env bash
@@ -50,11 +60,12 @@ case "\$1" in
     printf '%s\n' '${1}'
     ;;
   api)
-    if [[ -n "\${NO_RUN_FOUND:-}" ]]; then
-      exit 0
-    fi
     sha="\$(sed -n 's/.*head_sha=\([^&]*\).*/\1/p' <<< "\$2")"
-    echo "run-\${sha}"
+    if [[ -n "\${NO_RUN_FOUND:-}" || ! -f "${STUB_DIR}/runs-\${sha}.json" ]]; then
+      echo '{"workflow_runs":[]}'
+    else
+      cat "${STUB_DIR}/runs-\${sha}.json"
+    fi
     ;;
   run)
     [[ -z "\${RERUN_FAILS:-}" ]] || exit 1
@@ -151,6 +162,30 @@ MOCK
   [ "$status" -eq 0 ]
   grep -qF "head_sha=aaa111" "${STUB_DIR}/gh.log"
   grep -qF "GH: run rerun run-aaa111 --repo dotnet/SqlClient" "${STUB_DIR}/gh.log"
+}
+
+@test "picks the run belonging to this PR when a head sha backs several PRs" {
+  # The newest run for the SHA belongs to a different PR against another base.
+  set_runs aaa111 '{"workflow_runs":[
+    {"id":"run-other","pull_requests":[{"number":999}]},
+    {"id":"run-aaa111","pull_requests":[{"number":100}]}
+  ]}'
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  grep -qF "GH: run rerun run-aaa111 --repo dotnet/SqlClient" "${STUB_DIR}/gh.log"
+  ! grep -qF "run rerun run-other" "${STUB_DIR}/gh.log"
+}
+
+@test "falls back to the newest run when the PR association is missing" {
+  # Runs from forked repositories carry an empty 'pull_requests' array.
+  set_runs aaa111 '{"workflow_runs":[
+    {"id":"run-newest","pull_requests":[]},
+    {"id":"run-older","pull_requests":[]}
+  ]}'
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PR #100"* ]]
+  grep -qF "GH: run rerun run-newest --repo dotnet/SqlClient" "${STUB_DIR}/gh.log"
 }
 
 @test "reports when no open PR carries a matching milestone" {

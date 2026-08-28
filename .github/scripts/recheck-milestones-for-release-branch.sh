@@ -97,9 +97,21 @@ while read -r NUMBER HEAD_SHA MILESTONE_TITLE; do
 
   MATCHED=$((MATCHED + 1))
 
-  RUN_ID=$(gh api \
-    "repos/${GITHUB_REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/runs?head_sha=${HEAD_SHA}&per_page=1" \
-    --jq '.workflow_runs[0].id // empty' 2>/dev/null)
+  RUNS=$(gh api \
+    "repos/${GITHUB_REPOSITORY}/actions/workflows/${WORKFLOW_FILE}/runs?head_sha=${HEAD_SHA}&per_page=100" \
+    2>/dev/null)
+
+  # One head commit can back PRs against several bases, so prefer the run that
+  # names this PR rather than just the newest run for the SHA.
+  RUN_ID=$(jq -r --argjson pr "${NUMBER}" \
+    '([.workflow_runs[] | select(any(.pull_requests[]?; .number == $pr))] | first | .id) // empty' \
+    <<< "${RUNS}" 2>/dev/null)
+
+  # 'pull_requests' is empty for runs from forked repositories, so fall back to
+  # the newest run for the SHA when the association is unavailable.
+  if [[ -z "${RUN_ID}" ]]; then
+    RUN_ID=$(jq -r '.workflow_runs[0].id // empty' <<< "${RUNS}" 2>/dev/null)
+  fi
 
   if [[ -z "${RUN_ID}" ]]; then
     echo "::warning::PR #${NUMBER} (milestone '${MILESTONE_TITLE}') has no milestone check run to re-run; re-check it manually."
