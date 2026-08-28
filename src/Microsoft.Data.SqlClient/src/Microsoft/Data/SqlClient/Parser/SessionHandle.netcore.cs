@@ -3,11 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 // @TODO: Merge with other implementations (and/or introduce polymorphism to handle this indirection)
-#if NETFRAMEWORK
+#if NET
 
-using Microsoft.Data.SqlClient.Parser;
-
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
@@ -16,26 +14,32 @@ namespace Microsoft.Data.SqlClient
     /// abstract methods.
     /// </summary>
     /// <remarks>
-    /// It is a ref struct so that it can only be used to transport the handles and not store them
-    /// If you change this type you must also change the version for the other platform.
+    /// It is a ref struct so that it can only be used to transport the handles and not store them.
     /// </remarks>
     internal readonly ref struct SessionHandle
     {
-        // @TODO: Make internal, auto-property
-        public readonly SNIHandle NativeHandle;
+        public const int NativeHandleType = 1;
+        public const int ManagedHandleType = 2;
 
-        public SessionHandle(SNIHandle nativeHandle)
+        // @TODO: Make auto-properties
+        public readonly ManagedSni.SniHandle ManagedHandle;
+        public readonly SNIHandle NativeHandle;
+        public readonly int Type;
+
+        public SessionHandle(ManagedSni.SniHandle managedHandle, SNIHandle nativeHandle, int type)
         {
+            Type = type;
+            ManagedHandle = managedHandle;
             NativeHandle = nativeHandle;
         }
 
-        public bool IsNull
-        {
-            get => NativeHandle is null;
-        }
+        public bool IsNull => (Type == NativeHandleType) ? NativeHandle is null : ManagedHandle is null;
+
+        public static SessionHandle FromManagedSession(ManagedSni.SniHandle managedSessionHandle) =>
+            new SessionHandle(managedSessionHandle, nativeHandle: null, ManagedHandleType);
 
         public static SessionHandle FromNativeHandle(SNIHandle nativeSessionHandle) =>
-            new SessionHandle(nativeSessionHandle);
+            new SessionHandle(managedHandle: null, nativeSessionHandle, NativeHandleType);
     }
 }
 
