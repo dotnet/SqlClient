@@ -9,18 +9,19 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Interop.Windows.Sni
 {
     internal sealed class SniNativeMethodsNotSupported : ISniNativeMethods
     {
         private readonly string _architecture;
-        
+
         public SniNativeMethodsNotSupported(Architecture architecture)
         {
             _architecture = architecture.ToString();
         }
-        
+
         public uint SniAddProvider(SNIHandle pConn, Provider provider, ref AuthProviderInfo pInfo) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
