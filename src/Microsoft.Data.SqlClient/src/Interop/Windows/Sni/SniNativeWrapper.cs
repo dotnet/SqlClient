@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
@@ -20,13 +21,13 @@ namespace Microsoft.Data.SqlClient
     internal static class SniNativeWrapper
     {
         #region Member Variables
-        
+
         private const int SniIpv6AddrStringBufferLength = 48;
-        
+
         #if NET
         private const int SniOpenTimeOut = -1;
         #endif
-        
+
         #if NETFRAMEWORK
         private static readonly ISniNativeMethods s_nativeMethods = RuntimeInformation.ProcessArchitecture switch
         {
@@ -38,11 +39,11 @@ namespace Microsoft.Data.SqlClient
         #else
         private static readonly SniNativeMethods s_nativeMethods = new SniNativeMethods();
         #endif
-        
+
         private static int s_sniMaxComposedSpnLength = -1;
-        
+
         #endregion
-        
+
         internal static int SniMaxComposedSpnLength
         {
             get
@@ -56,10 +57,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region Public Methods
-        
+
         internal static uint SniAddProvider(SNIHandle pConn, Provider provNum, ref AuthProviderInfo pInfo) =>
             s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
-        
+
         #if NETFRAMEWORK
         internal static uint SniAddProvider(SNIHandle pConn,
             Provider providerEnum,
@@ -78,19 +79,19 @@ namespace Microsoft.Data.SqlClient
             return ret;
         }
         #endif
-        
+
         internal static uint SniAddProvider(SNIHandle pConn, Provider provNum, ref uint pInfo) =>
             s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
-        
+
         internal static uint SniCheckConnection(SNIHandle pConn) =>
             s_nativeMethods.SniCheckConnection(pConn);
-        
+
         internal static uint SniClose(IntPtr pConn) =>
             s_nativeMethods.SniClose(pConn);
-        
+
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
-        
+
         internal static uint SniGetConnectionIpString(SNIHandle pConn, ref string connIpStr)
         {
             StringBuilder addrBuffer = new StringBuilder(SniIpv6AddrStringBufferLength);
@@ -105,13 +106,13 @@ namespace Microsoft.Data.SqlClient
 
             return ret;
         }
-        
+
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
-        
+
         internal static void SniGetLastError(out SniError pErrorStruct) =>
             s_nativeMethods.SniGetLastError(out pErrorStruct);
-        
+
         internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
 
@@ -128,7 +129,7 @@ namespace Microsoft.Data.SqlClient
 
             return result;
         }
-        
+
         internal static uint SniOpenMarsSession(
             ConsumerInfo consumerInfo,
             SNIHandle parent,
@@ -169,12 +170,12 @@ namespace Microsoft.Data.SqlClient
             bool fSync,
             int timeout,
             bool fParallel,
-            
+
             #if NETFRAMEWORK
             int transparentNetworkResolutionStateNo,
             int totalTimeout,
             #endif
-            
+
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDnsInfo,
             string hostNameInCertificate)
@@ -285,13 +286,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static void SniPacketAllocate(SafeHandle pConn, IoType ioType, ref IntPtr pPacket) =>
             pPacket = s_nativeMethods.SniPacketAllocateWrapper(pConn, ioType);
-        
+
         internal static uint SniPacketGetData(IntPtr packet, byte[] readBuffer, ref uint dataSize) =>
             s_nativeMethods.SniPacketGetDataWrapper(packet, readBuffer, (uint)readBuffer.Length, out dataSize);
-        
+
         internal static void SniPacketRelease(IntPtr pPacket) =>
             s_nativeMethods.SniPacketRelease(pPacket);
-        
+
         internal static unsafe void SniPacketSetData(SNIPacket packet, byte[] data, int length)
         {
             fixed (byte* pData = data)
@@ -299,25 +300,25 @@ namespace Microsoft.Data.SqlClient
                 s_nativeMethods.SniPacketSetData(packet, pData, (uint)length);
             }
         }
-        
+
         internal static void SniPacketReset(SNIHandle pConn, IoType ioType, SNIPacket pPacket, ConsumerNumber consNum) =>
             s_nativeMethods.SniPacketReset(pConn, ioType, pPacket, consNum);
-        
+
         internal static uint SniQueryInfo(QueryType qType, ref uint pbQInfo) =>
             s_nativeMethods.SniQueryInfo(qType, ref pbQInfo);
-        
+
         internal static uint SniQueryInfo(QueryType qType, ref IntPtr pbQInfo) =>
             s_nativeMethods.SniQueryInfo(qType, ref pbQInfo);
-        
+
         internal static uint SniReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket) =>
             s_nativeMethods.SniReadAsync(pConn, ref ppNewPacket);
-        
+
         internal static uint SniReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout) =>
             s_nativeMethods.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-        
+
         internal static uint SniRemoveProvider(SNIHandle pConn, Provider provNum) =>
             s_nativeMethods.SniRemoveProvider(pConn, provNum);
-        
+
         internal static unsafe uint SniSecGenClientContext(
             SNIHandle pConnectionObject,
             ReadOnlySpan<byte> inBuff,
@@ -353,22 +354,22 @@ namespace Microsoft.Data.SqlClient
                 ObjectPools.BufferWriter.Return(serverWriter);
             }
         }
-        
+
         internal static uint SniSecInitPackage(ref uint pcbMaxToken) =>
             s_nativeMethods.SniSecInitPackage(ref pcbMaxToken);
-        
+
         internal static void SniServerEnumClose(IntPtr packet) =>
             s_nativeMethods.SniServerEnumClose(packet);
-        
+
         internal static IntPtr SniServerEnumOpen() =>
             s_nativeMethods.SniServerEnumOpen();
-        
+
         internal static int SniServerEnumRead(IntPtr packet, char[] readBuffer, int bufferLength, out bool more) =>
             s_nativeMethods.SniServerEnumRead(packet, readBuffer, bufferLength, out more);
-        
+
         internal static uint SniSetInfo(SNIHandle pConn, QueryType qType, ref uint pbQInfo) =>
             s_nativeMethods.SniSetInfo(pConn, qType, ref pbQInfo);
-        
+
         internal static uint SniTerminate() =>
             s_nativeMethods.SniTerminate();
 
@@ -430,7 +431,7 @@ namespace Microsoft.Data.SqlClient
             sync
                 ? s_nativeMethods.SniWriteSyncOverAsync(pConn, packet)
                 : s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
-        
+
 #endregion
 
         #region Private Methods
@@ -446,7 +447,7 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             nativeConsumerInfo.ConsumerKey = consumerInfo.key;
         }
-        
+
         #endregion
     }
 }

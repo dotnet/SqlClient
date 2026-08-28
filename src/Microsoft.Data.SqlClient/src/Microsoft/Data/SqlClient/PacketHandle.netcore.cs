@@ -6,6 +6,7 @@
 #if NET
 
 using System;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

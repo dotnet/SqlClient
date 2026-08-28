@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Interop.Windows.Sni
 {
