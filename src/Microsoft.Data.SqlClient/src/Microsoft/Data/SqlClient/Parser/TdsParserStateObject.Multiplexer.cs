@@ -7,9 +7,9 @@ using System.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
-    partial class TdsParserStateObject
+    internal partial class TdsParserStateObject
     {
         private Packet _partialPacket;
         internal Packet PartialPacket => _partialPacket;
