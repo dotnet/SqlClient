@@ -16,17 +16,12 @@
 #
 # See .github/scripts/check-milestone-branch.sh for the full rule set.
 #
-# This job never executes PR-authored code: it checks out only .github/scripts from the base
-# branch and reads the PR metadata from the event payload.
 #################################################################################
 
 name: Check Milestone
 
 on:
-  # 'pull_request_target' is used instead of 'pull_request' because
-  # 'pull_request' workflows do not run while a PR has a merge conflict —
-  # a common state right after a stacked PR is retargeted.
-  pull_request_target:
+  pull_request:
     # The 'edited' type covers base branch changes, so retargeting a PR (manually,
     # or automatically when a stacked PR's parent merges) re-runs this check.
     types: [opened, reopened, edited, synchronize, milestoned, demilestoned]
@@ -55,7 +50,6 @@ jobs:
         if: github.event.pull_request.milestone != null
         uses: actions/checkout@v6
         with:
-          # Checks out the base branch, not the PR head, so the script is trusted.
           # Only the scripts directory is needed; skip full history.
           sparse-checkout: .github/scripts
           sparse-checkout-cone-mode: false
