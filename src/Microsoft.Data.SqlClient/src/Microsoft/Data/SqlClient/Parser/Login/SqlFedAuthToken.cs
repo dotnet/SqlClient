@@ -6,7 +6,7 @@
 
 using System.Text;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Login;
 
 internal sealed class SqlFedAuthToken
 {

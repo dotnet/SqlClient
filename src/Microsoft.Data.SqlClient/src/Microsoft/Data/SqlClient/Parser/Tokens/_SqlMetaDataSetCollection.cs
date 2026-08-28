@@ -5,7 +5,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class _SqlMetaDataSetCollection
 {

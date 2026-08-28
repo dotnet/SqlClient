@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class _SqlMetaDataSet
 {

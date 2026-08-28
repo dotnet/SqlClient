@@ -24,6 +24,8 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Utilities;

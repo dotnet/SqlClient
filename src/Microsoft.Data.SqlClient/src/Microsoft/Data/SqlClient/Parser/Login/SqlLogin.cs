@@ -5,7 +5,7 @@
 using System.Security;
 using Microsoft.Data.Common.ConnectionString;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Login;
 
 internal sealed class SqlLogin
 {

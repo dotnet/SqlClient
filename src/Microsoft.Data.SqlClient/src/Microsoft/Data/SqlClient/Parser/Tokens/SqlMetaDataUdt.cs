@@ -5,7 +5,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class SqlMetaDataUdt
 {
