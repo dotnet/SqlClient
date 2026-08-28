@@ -1,7 +1,8 @@
-# Cherry-Pick Workflow Tests
+# GitHub Actions Script Tests
 
 This directory contains tests for the shell scripts used by the
-[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml) GitHub Actions workflow.
+[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml) and
+[check-milestone](./../../../.github/workflows/check-milestone.yml) GitHub Actions workflows.
 These tests are intended to be run manually by developers when they are changing the associated
 scripts, and not as part of any CI runs.
 
@@ -85,6 +86,7 @@ bats .github/scripts/tests/
 ```bash
 bats .github/scripts/tests/extract-hotfix-versions.bats
 bats .github/scripts/tests/cherry-pick-to-release.bats
+bats .github/scripts/tests/check-milestone-branch.bats
 ```
 
 ### Run a specific test by name
@@ -112,10 +114,11 @@ bats --formatter pretty .github/scripts/tests/
 | ---- | ----- | ------ |
 | `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
 | `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
+| `check-milestone-branch.bats` | 19 | Milestone version parsing, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API failure handling |
 
 ## How the Tests Work
 
-Both test files use the same general approach:
+All test files use the same general approach:
 
 1. **`setup()`** creates a temporary directory and populates it with mock `git` and `gh` executables
    — simple shell scripts that echo predetermined responses. Environment variables (`VERSION`,
