@@ -4,7 +4,7 @@
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class SqlFedAuthInfo
 {
