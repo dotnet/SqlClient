@@ -12,7 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     // TdsValueSetter handles writing a single value out to a TDS stream
     //   This class can easily be extended to handle multiple versions of TDS by sub-classing and virtualizing

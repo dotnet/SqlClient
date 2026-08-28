@@ -14,12 +14,11 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
-using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.ManagedSni;
 
 #nullable enable
 
-// @TODO: If this is in the manages SNI namespace, it should be in the managed SNI folder
-namespace Microsoft.Data.SqlClient.ManagedSni
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {

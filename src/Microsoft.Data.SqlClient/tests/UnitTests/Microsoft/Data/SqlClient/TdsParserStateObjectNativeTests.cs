@@ -4,6 +4,7 @@
 
 #if NETFRAMEWORK || WINDOWS
 
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
