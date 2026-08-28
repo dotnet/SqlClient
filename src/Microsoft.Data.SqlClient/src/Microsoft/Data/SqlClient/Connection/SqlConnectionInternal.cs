@@ -17,6 +17,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -1993,7 +1994,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.

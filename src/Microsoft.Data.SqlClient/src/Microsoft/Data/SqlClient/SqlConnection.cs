@@ -24,6 +24,7 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
