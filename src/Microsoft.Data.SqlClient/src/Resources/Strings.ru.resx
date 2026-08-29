@@ -2137,10 +2137,10 @@
     <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>Не удалось загрузить или проанализировать файл сертификата, указанный параметром "ServerCertificate": "{0}".</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>Параметр "ServerCertificate" был указан, но сервер не представил сертификат, с которым можно было бы его сравнить.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>

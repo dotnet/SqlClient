@@ -2137,10 +2137,10 @@
     <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>'ServerCertificate' 옵션으로 지정된 인증서 파일을 로드하거나 구문 분석할 수 없습니다. '{0}'.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>'ServerCertificate' 옵션이 지정되었지만 서버에서 비교할 수 있는 인증서를 제공하지 않았습니다.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>열 '{0}'의 JsonDocument를 가져오려는 시도가 잘못되었습니다. JsonDocument는 json 형식의 열에 대해서만 지원됩니다.</value>
