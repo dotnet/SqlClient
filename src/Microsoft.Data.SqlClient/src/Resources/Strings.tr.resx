@@ -2137,10 +2137,10 @@
     <value>Sunucu tarafından sağlanan sertifika, ServerCertificate seçeneği tarafından sağlanan sertifikayla eşleşmiyor.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>'ServerCertificate' seçeneğiyle belirtilen sertifika dosyası yüklenemedi veya ayrıştırılamadı: '{0}'.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>'ServerCertificate' seçeneği belirtildi, ancak sunucu bununla karşılaştırılabilecek bir sertifika sunmadı.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>
