@@ -4,7 +4,7 @@
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal sealed class SqlReturnValue : SqlMetaDataPriv
+internal sealed class TdsReturnValueToken : SqlMetaDataPriv
 {
     // @TODO: Make auto properties (and rename to match)
     internal string parameter;
@@ -14,7 +14,7 @@ internal sealed class SqlReturnValue : SqlMetaDataPriv
     internal ushort parmIndex;      //2005 or later only
     #endif
 
-    internal SqlReturnValue() : base()
+    internal TdsReturnValueToken() : base()
     {
         value = new SqlBuffer();
     }
