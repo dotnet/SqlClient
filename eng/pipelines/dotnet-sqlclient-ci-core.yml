@@ -126,6 +126,15 @@ parameters:
     type: boolean
     default: true
 
+  # If true, run manual tests against SQL Server 2022.
+  #
+  # The primary test configurations run against SQL Server 2025, so SQL Server
+  # 2022 is CI-only coverage.  PR pipelines disable it to keep validation fast.
+  #
+  - name: runSql22Tests
+    type: boolean
+    default: true
+
   # Build suffix appended to the prerelease tag. PR pipelines pass 'pr',
   # CI pipelines pass 'ci'. Official builds leave this empty.
   - name: buildSuffix
@@ -599,6 +608,62 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
+
+        # SQL Server 2022 coverage, on Windows and Linux.
+        #
+        # The primary configurations run against SQL Server 2025, so these keep
+        # SQL Server 2022 in the matrix.  They are grouped under a single
+        # conditional so that PR pipelines can opt out of them as a unit.
+        ${{ if eq(parameters.runSql22Tests, true) }}:
+          # Windows Server 22 with local SQL Server 2022, x64 build platform.
+          windows_sql_22_x64:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Win22_Sql22: ADO-MMS22-SQL22
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            configSqlFor: local
+            operatingSystem: Windows
+            # config.jsonc properties
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: true
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              FileStreamDirectory: $(FileStreamDirectory)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
+              SQLRootPath: $(SQL22RootPath)
+              enableLocalDB: true
+
+          # Linux Ubuntu 22 with local SQL Server 2022, x64 build platform.
+          linux_ub22_sql_22:
+            pool: ${{parameters.defaultPoolName }}
+            images:
+              Ubuntu22_Sql22: ADO-UB22-SQL22
+            TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: [AnyCPU]
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: [true]
+            configSqlFor: local
+            operatingSystem: Linux
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: false
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+              AliasName: $(SQLAliasName)
 
         # Linux Ubuntu 24 with Azure SQL Server, x64 build platform.
         linux_azure_sql:
