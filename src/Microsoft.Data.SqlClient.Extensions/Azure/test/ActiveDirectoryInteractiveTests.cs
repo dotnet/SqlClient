@@ -16,7 +16,7 @@ public class ActiveDirectoryInteractiveTests
     }
 
     [Fact]
-    [Trait("Category", "interactive")]
+    [Trait("category", "interactive")]
     public async Task TestConnection()
     {
         string connectionString = new SqlConnectionStringBuilder()

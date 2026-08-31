@@ -2311,7 +2311,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         //     The test running when the crash occurred:
         //     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest.ConcurrentCallers_ShouldTimeoutIndependently
         //     testhost_7576_20260724T235829_hangdump.dmp
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Fact]
         public async Task ConcurrentCallers_ShouldTimeoutIndependently()
         {

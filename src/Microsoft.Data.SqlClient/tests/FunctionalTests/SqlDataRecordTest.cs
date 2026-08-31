@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         #if NETFRAMEWORK
-        [Trait("Category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
+        [Trait("category", "signed")] // Requires strong-name signed Microsoft.SqlServer.Server
         #endif
         [MemberData(
             nameof(GetUdtTypeTestData.Get),

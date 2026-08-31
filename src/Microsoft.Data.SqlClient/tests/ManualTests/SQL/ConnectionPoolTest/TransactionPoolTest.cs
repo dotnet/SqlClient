@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //     Expected: 2
         //     Actual:   3
         //     at Microsoft.Data.SqlClient.ManualTesting.Tests.TransactionPoolTest.TransactionCleanupTest(String connectionString) in TransactionPoolTest.cs:line 101
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
         public static void TransactionCleanupTest(string connectionString)
