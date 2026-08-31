@@ -236,6 +236,26 @@
     </TestCodeCoverageArgument>
 
     <!--
+      ============================================================================================
+      TRAIT CASING CONVENTION - read this before adding a trait or a filter anywhere in the repo.
+
+      Always use a lower-case "category" key AND lower-case values, both in [Trait(...)] attributes
+      in test code and in every filter expression (here and under eng/pipelines).
+
+      Why it matters: xunit.runner.visualstudio (2.8.2) resolves the filter's *property name*
+      against the set of trait keys discovered in the assembly using a case-SENSITIVE lookup, but
+      only on the execution path.  Test discovery (the "list tests" path) is case-INSENSITIVE.  So a
+      casing mismatch lists correctly and then silently misbehaves when the tests actually run:
+      "category!=x" matches everything and "category=x" matches nothing.  Trait *values* are always
+      compared case-insensitively, so only the key casing is dangerous.
+
+      The failure is per-assembly, which is why it hid for so long: it only surfaces when no test in
+      that assembly declares a lower-case "category" key.  Microsoft.DotNet.XUnitExtensions injects
+      one via [ActiveIssue], [OuterLoop], [PlatformSpecific] and friends, which masked the problem
+      in most of our test assemblies until Azure.Test - which uses none of those attributes - ran
+      its excluded "interactive" test in CI.
+      ============================================================================================
+
       TestFilters
       Applies to:     Test* targets
       Description:    Filter to use to include or exclude any tests. If not specified, this defaults
