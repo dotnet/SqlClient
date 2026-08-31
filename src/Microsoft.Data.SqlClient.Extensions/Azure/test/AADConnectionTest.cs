@@ -85,12 +85,11 @@ public class AADConnectionTest
         ConnectAndDisconnect(connStr);
     }
 
-    // This test requires a signed-in user identity configured for Entra Integrated
-    // authentication and is excluded from non-interactive test runs by default.
-    [Trait("Category", "interactive")]
+    // This test requires a Windows identity configured for Entra Integrated authentication
+    // to the target Azure SQL database, which is distinct from SQL Server integrated security.
     [ConditionalFact(
         typeof(Config),
-        nameof(Config.SupportsIntegratedSecurity),
+        nameof(Config.SupportsEntraIntegrated),
         nameof(Config.HasTcpConnectionString))]
     public static void ADIntegratedUsingSSPI()
     {

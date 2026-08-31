@@ -19,7 +19,10 @@
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultTenantId": "",
-    "SupportsIntegratedSecurity": true,
+    // True if the environment supports Entra Integrated authentication.
+    "SupportsEntraIntegrated": false,
+    // True if the environment supports Windows Integrated authentication.
+    "SupportsIntegratedSecurity": false,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
     "FileStreamDirectory": "",
