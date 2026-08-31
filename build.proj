@@ -1026,12 +1026,9 @@
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-      <ListTestsCommand>$(DotnetCommand) --list-tests</ListTestsCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Running tests for Azure"/>
-    <Message Text="    List command: $(ListTestsCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(ListTestsCommand)" />
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>

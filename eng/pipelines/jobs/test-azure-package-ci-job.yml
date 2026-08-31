@@ -279,26 +279,6 @@ jobs:
       # Run the tests for each .NET runtime.
       - ${{ each runtime in parameters.netRuntimes }}:
         - task: DotNetCoreCLI@2
-          displayName: List Tests [${{ runtime }}]
-          env:
-            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
-              ADO_POOL: 1
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            ${{ if eq(parameters.debug, true) }}:
-              TEST_DEBUG_EMIT: 1
-          inputs:
-            connectedServiceName: dotnetMSI-managed-identity
-            command: test
-            projects: $(project)
-            publishTestResults: false
-            arguments: >-
-              $(buildArguments)
-              --no-build
-              --list-tests
-              -f ${{ runtime }}
-              --filter "category != failing & category != flaky & category != interactive"
-
-        - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
             # Many of our tests require access to Azure resources that are
@@ -327,26 +307,6 @@ jobs:
               --filter "category != failing & category != flaky & category != interactive"
 
         - task: DotNetCoreCLI@2
-          displayName: List Flaky Tests [${{ runtime }}]
-          env:
-            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
-              ADO_POOL: 1
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            ${{ if eq(parameters.debug, true) }}:
-              TEST_DEBUG_EMIT: 1
-          inputs:
-            connectedServiceName: dotnetMSI-managed-identity
-            command: test
-            projects: $(project)
-            publishTestResults: false
-            arguments: >-
-              $(buildArguments)
-              --no-build
-              --list-tests
-              -f ${{ runtime }}
-              --filter "category = flaky"
-
-        - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
           env:
             ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
@@ -367,26 +327,6 @@ jobs:
       # Run the tests for each .NET Framework runtime.
       - ${{ each runtime in parameters.netFrameworkRuntimes }}:
         - task: DotNetCoreCLI@2
-          displayName: List Tests [${{ runtime }}]
-          env:
-            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
-              ADO_POOL: 1
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            ${{ if eq(parameters.debug, true) }}:
-              TEST_DEBUG_EMIT: 1
-          inputs:
-            connectedServiceName: dotnetMSI-managed-identity
-            command: test
-            projects: $(project)
-            publishTestResults: false
-            arguments: >-
-              $(buildArguments)
-              --no-build
-              --list-tests
-              -f ${{ runtime }}
-              --filter "category != failing & category != flaky & category != interactive"
-
-        - task: DotNetCoreCLI@2
           displayName: Test [${{ runtime }}]
           env:
             ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
@@ -405,26 +345,6 @@ jobs:
               --filter "category != failing & category != flaky & category != interactive"
 
         - task: DotNetCoreCLI@2
-          displayName: List Flaky Tests [${{ runtime }}]
-          env:
-            ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
-              ADO_POOL: 1
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-            ${{ if eq(parameters.debug, true) }}:
-              TEST_DEBUG_EMIT: 1
-          inputs:
-            connectedServiceName: dotnetMSI-managed-identity
-            command: test
-            projects: $(project)
-            publishTestResults: false
-            arguments: >-
-              $(buildArguments)
-              --no-build
-              --list-tests
-              -f ${{ runtime }}
-              --filter "category = flaky"
-
-        - task: DotNetCoreCLI@2
           displayName: Test Flaky [${{ runtime }}]
           env:
             ${{ if ne(parameters.poolName, 'Azure Pipelines') }}:
@@ -441,10 +361,3 @@ jobs:
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
-
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Azure Test Binaries
-        inputs:
-          artifact: AzureTestBinaries_$(System.JobId)
-          targetPath: src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}
-        condition: succeededOrFailed()
