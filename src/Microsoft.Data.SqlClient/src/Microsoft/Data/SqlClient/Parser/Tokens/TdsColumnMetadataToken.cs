@@ -9,6 +9,10 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
+/// <summary>
+/// Represents a metadata token that contains column information from the TDS stream. This
+/// corresponds to a SQLCOLMETADATA or SQLALTMETADATA token.
+/// </summary>
 internal sealed class TdsColumnMetadataToken
 {
     /// <summary>
