@@ -2137,10 +2137,10 @@
     <value>Certifikát poskytnutý serverem neodpovídá certifikátu poskytnutému možností ServerCertificate.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>Soubor certifikátu určený možností 'ServerCertificate' se nepodařilo načíst ani parsovat: '{0}'.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>Byla zadána možnost 'ServerCertificate', ale server nepředložil certifikát, který by s ním bylo možné porovnat.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Neplatný pokus o získání třídy JsonDocument ve sloupci {0}. Třída JsonDocument se podporuje jenom pro sloupce typu json.</value>

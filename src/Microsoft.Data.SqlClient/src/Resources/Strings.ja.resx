@@ -2137,10 +2137,10 @@
     <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>'ServerCertificate' オプションで指定された証明書ファイルを読み込むことも解析することもできませんでした: '{0}'。</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>'ServerCertificate' オプションが指定されましたが、サーバーから、このオプションと照合できる証明書が提示されませんでした。</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>列 '{0}' で JsonDocument を取得しようとしましたが無効です。JsonDocument は json 型の列でのみサポートされています。</value>
