@@ -9,15 +9,15 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 internal sealed class _SqlMetaDataSetCollection
 {
-    private readonly List<_SqlMetaDataSet> _altMetaDataSetArray;
-    internal _SqlMetaDataSet metaDataSet;
+    private readonly List<TdsColumnMetadataToken> _altMetaDataSetArray;
+    internal TdsColumnMetadataToken metaDataSet;
 
     internal _SqlMetaDataSetCollection()
     {
-        _altMetaDataSetArray = new List<_SqlMetaDataSet>();
+        _altMetaDataSetArray = new List<TdsColumnMetadataToken>();
     }
 
-    internal void SetAltMetaData(_SqlMetaDataSet altMetaDataSet)
+    internal void SetAltMetaData(TdsColumnMetadataToken altMetaDataSet)
     {
         // If altmetadata with same id is found, override it rather than adding a new one
         int newId = altMetaDataSet.id;
@@ -35,9 +35,9 @@ internal sealed class _SqlMetaDataSetCollection
         _altMetaDataSetArray.Add(altMetaDataSet);
     }
 
-    internal _SqlMetaDataSet GetAltMetaData(int id)
+    internal TdsColumnMetadataToken GetAltMetaData(int id)
     {
-        foreach (_SqlMetaDataSet altMetaDataSet in _altMetaDataSetArray)
+        foreach (TdsColumnMetadataToken altMetaDataSet in _altMetaDataSetArray)
         {
             if (altMetaDataSet.id == id)
             {
@@ -52,7 +52,7 @@ internal sealed class _SqlMetaDataSetCollection
     {
         _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
 
-        foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
+        foreach (TdsColumnMetadataToken set in _altMetaDataSetArray)
         {
             result._altMetaDataSetArray.Add(set.Clone());
         }
