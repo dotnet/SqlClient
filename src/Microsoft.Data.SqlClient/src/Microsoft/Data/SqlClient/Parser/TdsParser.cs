@@ -11454,14 +11454,14 @@ namespace Microsoft.Data.SqlClient.Parser
             //     Note- Cek table (with 0 entries) will be present if TCE
             //     was enabled and server supports it!
             // OR if encryption was disabled in connection options
-            if (metadataCollection.cekTable == null ||
+            if (metadataCollection.CekTable == null ||
                 !ShouldEncryptValuesForBulkCopy())
             {
                 WriteShort(0x00, stateObj);
                 return;
             }
 
-            SqlTceCipherInfoTable cekTable = metadataCollection.cekTable;
+            SqlTceCipherInfoTable cekTable = metadataCollection.CekTable;
             ushort count = (ushort)cekTable.Size;
 
             WriteShort(count, stateObj);
