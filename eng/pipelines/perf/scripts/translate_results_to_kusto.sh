@@ -60,13 +60,26 @@ commitDate="$(git -C "$repoDir" show -s --format=%cI "$commitHash" 2>/dev/null |
 shortSha="$(git -C "$repoDir" rev-parse --short "$commitHash" 2>/dev/null || echo "$commitHash")"
 
 # The benchmark runner's config governs which SqlClient behaviours a run exercised; its top-level
-# boolean flags are recorded in PerfRun.Config for both passes.
-runnerConfig="$repoDir/src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.jsonc"
+# boolean flags are recorded in PerfRun.Config for both passes. Prefer the redacted config artifact
+# emitted by the perf VM so Kusto translation records the settings that produced these results.
+runnerConfig="$resultsDir/runnerconfig.json"
 configOverrides=(
     --config-override "UseManagedSniOnWindows=${CFG_USE_MANAGED_SNI}"
     --config-override "UseOptimizedAsyncBehaviour=${CFG_USE_OPTIMIZED_ASYNC}"
     --config-override "UseConnectionPoolV2=${CFG_USE_CONNECTION_POOL_V2}"
 )
+configArgs=(--runner-config "$runnerConfig")
+if [ ! -f "$runnerConfig" ]; then
+    defaultRunnerConfig="$repoDir/src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.default.jsonc"
+    liveRunnerConfig="$repoDir/src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.jsonc"
+    if [ -f "$defaultRunnerConfig" ]; then
+        runnerConfig="$defaultRunnerConfig"
+    else
+        runnerConfig="$liveRunnerConfig"
+    fi
+    echo "##vso[task.logissue type=warning]Redacted runner config artifact not found; falling back to $runnerConfig with pipeline overrides."
+    configArgs=(--runner-config "$runnerConfig" "${configOverrides[@]}")
+fi
 
 # --- current (branch under test) ---
 python3 "$scriptsDir/perf_to_kusto.py" \
@@ -84,8 +97,7 @@ python3 "$scriptsDir/perf_to_kusto.py" \
     --version-string "$shortSha" \
     --commit-hash "$commitHash" \
     --commit-date "$commitDate" \
-    --runner-config "$runnerConfig" \
-    "${configOverrides[@]}" \
+    "${configArgs[@]}" \
     --is-comparable-base false
 
 # --- baseline (released NuGet package), when a baseline pass ran ---
@@ -105,8 +117,7 @@ if [ -d "$resultsDir/baseline" ]; then
         --branch-name "refs/tags/v$baseVer" \
         --version-string "$baseVer" \
         --commit-hash "v$baseVer" \
-        --runner-config "$runnerConfig" \
-        "${configOverrides[@]}" \
+        "${configArgs[@]}" \
         --is-comparable-base true
 fi
 

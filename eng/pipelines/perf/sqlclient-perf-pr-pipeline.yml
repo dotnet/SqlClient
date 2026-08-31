@@ -110,7 +110,7 @@ parameters:
 
   # Optional SqlClient behaviour flags. These are applied to the benchmark runner config used by
   # BOTH the baseline and candidate passes on the VM.  Defaults match the checked-in
-  # runnerconfig.jsonc, so leaving them untouched preserves the default behaviour.
+  # runnerconfig.default.jsonc, so leaving them untouched preserves the default behaviour.
   - name: useManagedSniOnWindows
     displayName: UseManagedSniOnWindows
     type: boolean
@@ -142,7 +142,7 @@ variables:
   # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
   # keeps the single testScriptArgs below readable instead of duplicating a full arg string across
   # the whole platform x baseline x fail-gate matrix.  Config flags are always passed (their
-  # defaults match runnerconfig.jsonc), so they live in the common chunk.
+  # defaults match runnerconfig.default.jsonc), so they live in the common chunk.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
       value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'

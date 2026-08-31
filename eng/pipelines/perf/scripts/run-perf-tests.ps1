@@ -47,7 +47,7 @@ param(
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
-    # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
+    # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
     [ValidateSet("", "true", "false")]
     [string]$UseManagedSniOnWindows = "",
@@ -295,6 +295,8 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
+$ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
+$SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -302,33 +304,44 @@ $env:RUNNER_CONFIG = $RunnerConfig
 # It needs no per-run modification, so point the env var at the checked-in file directly.
 $env:DATATYPES_CONFIG = Join-Path $PerfDir "datatypes.json"
 
-$srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
-$rawConfig = Get-Content $srcConfig -Raw
-# Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
-$rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
-$cfg = ConvertFrom-Json $rawConfig
-
-# SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
-# quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
-# value instead of corrupting the connection string.
-$escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
-$cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
-# Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
-# the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
-# benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
-function Set-CfgBool {
-    param($Config, [string]$Name, [string]$Value)
-    if (-not [string]::IsNullOrEmpty($Value)) {
-        $b = [System.Boolean]::Parse($Value)
-        if ($Config.PSObject.Properties.Name -contains $Name) { $Config.$Name = $b }
-        else { $Config | Add-Member -NotePropertyName $Name -NotePropertyValue $b }
+$RunnerConfigReady = $false
+function Write-RunnerConfig {
+    if ($script:RunnerConfigReady) { return }
+    if (-not (Test-Path $SourceRunnerConfig)) {
+        throw "Runner config was not created at $SourceRunnerConfig"
     }
+
+    $rawConfig = Get-Content $SourceRunnerConfig -Raw
+    # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
+    $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
+    $cfg = ConvertFrom-Json $rawConfig
+
+    # SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
+    # quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
+    # value instead of corrupting the connection string.
+    $escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
+    $cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+    # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value leaves
+    # the checked-in default untouched; otherwise the flag is forced to the requested boolean so the
+    # benchmarks run with (and PerfRun.Config records) exactly the requested behaviour.
+    function Set-CfgBool {
+        param($Config, [string]$Name, [string]$Value)
+        if (-not [string]::IsNullOrEmpty($Value)) {
+            $b = [System.Boolean]::Parse($Value)
+            if ($Config.PSObject.Properties.Name -contains $Name) { $Config.$Name = $b }
+            else { $Config | Add-Member -NotePropertyName $Name -NotePropertyValue $b }
+        }
+    }
+    Set-CfgBool $cfg "UseManagedSniOnWindows" $UseManagedSniOnWindows
+    Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $UseOptimizedAsyncBehaviour
+    Set-CfgBool $cfg "UseConnectionPoolV2" $UseConnectionPoolV2
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
+    $cfg.ConnectionString = "<redacted>"
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $ResultsRunnerConfig -Encoding UTF8
+    Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
+    Write-Host "Wrote redacted runner config to $ResultsRunnerConfig"
+    $script:RunnerConfigReady = $true
 }
-Set-CfgBool $cfg "UseManagedSniOnWindows" $UseManagedSniOnWindows
-Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $UseOptimizedAsyncBehaviour
-Set-CfgBool $cfg "UseConnectionPoolV2" $UseConnectionPoolV2
-$cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $RunnerConfig -Encoding UTF8
-Write-Host "Wrote runner config to $RunnerConfig (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
@@ -569,6 +582,18 @@ print(total)
     return [int]($out.Trim())
 }
 
+$CurrentDefaultOutputBuilt = $false
+function Build-CurrentDefaultOutput {
+    if ($script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built current performance tests ($Configuration, $Framework)."
+        return
+    }
+
+    Write-Host "Building current performance tests ($Configuration, $Framework) ..."
+    Invoke-Native { dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal } "Build failed for current performance tests"
+    $script:CurrentDefaultOutputBuilt = $true
+}
+
 # Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) from $Project and collects its
 # artifacts into results\<label>. $ExtraArgs are appended to both the build and run invocations.
 # $Project is the candidate's perf project for every pass except a source-baseline pass, which
@@ -584,8 +609,17 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
     Write-Host "   Extra args: $($ExtraArgs -join ' ')"
     Write-Host "------------------------------------------------------------------"
 
-    Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
-    Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+    if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0) -and $script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built performance tests ($Configuration, $Framework) for '$Label'."
+    } else {
+        Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
+        Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+        if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0)) {
+            $script:CurrentDefaultOutputBuilt = $true
+        }
+    }
+
+    Write-RunnerConfig
 
     Push-Location $runDir
     try {
@@ -706,6 +740,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     ####################################################################################################
     $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
     $currentExeDir = Build-Variant "current" $PerfProject @()
+    Write-RunnerConfig
 
     $interleaveArgs = @(
         "--baseline-exe-dir", $baselineExeDir,
@@ -726,6 +761,10 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    if (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
+        Build-CurrentDefaultOutput
+        Write-RunnerConfig
+    }
     Invoke-PerfPass "baseline" $BaselineProject $BaselineBuildArgs
     Invoke-PerfPass "current" $PerfProject @()
 

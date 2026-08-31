@@ -336,13 +336,16 @@ echo "Preflight: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is reachable and warme
 # 3. Inject the VM's SQL Server connection string into the benchmark runner config.
 #
 # The perf app reads its config from the file named by RUNNER_CONFIG (falling back to
-# runnerconfig.jsonc in the working directory).  We copy the checked-in config and replace only the
-# ConnectionString value so all benchmark tuning (iterations, row counts, enabled flags) is
+# runnerconfig.jsonc in the working directory).  The benchmark build materializes runnerconfig.jsonc
+# from runnerconfig.default.jsonc on clean checkouts; after that, copy the live config and replace
+# only the ConnectionString value so all benchmark tuning (iterations, row counts, enabled flags) is
 # preserved.  python3 is used to JSON-escape the (potentially special-character) password safely.
 ####################################################################################################
 
 RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
+RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
+SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -358,10 +361,20 @@ export PERF_CFG_USE_MANAGED_SNI="${useManagedSniOnWindows}"
 export PERF_CFG_USE_OPTIMIZED_ASYNC="${useOptimizedAsyncBehaviour}"
 export PERF_CFG_USE_CONNECTION_POOL_V2="${useConnectionPoolV2}"
 
-python3 - "$PERF_DIR/runnerconfig.jsonc" "$RUNNER_CONFIG" <<'PY'
+RUNNER_CONFIG_READY=false
+prepare_runner_config() {
+    if [[ "${RUNNER_CONFIG_READY}" == "true" ]]; then
+        return
+    fi
+    if [[ ! -f "${SOURCE_RUNNER_CONFIG}" ]]; then
+        echo "ERROR: Runner config was not created at ${SOURCE_RUNNER_CONFIG}" >&2
+        exit 1
+    fi
+
+    python3 - "$SOURCE_RUNNER_CONFIG" "$RUNNER_CONFIG" "$RESULTS_RUNNER_CONFIG" <<'PY'
 import json, os, re, sys
 
-src, dst = sys.argv[1], sys.argv[2]
+src, dst, results_dst = sys.argv[1], sys.argv[2], sys.argv[3]
 
 with open(src, "r", encoding="utf-8-sig") as fh:
     text = fh.read()
@@ -400,8 +413,16 @@ for env_name, cfg_key in (
 with open(dst, "w", encoding="utf-8") as fh:
     json.dump(cfg, fh, indent=2)
 
+results_cfg = dict(cfg)
+results_cfg["ConnectionString"] = "<redacted>"
+with open(results_dst, "w", encoding="utf-8") as fh:
+    json.dump(results_cfg, fh, indent=2)
+
 print(f"Wrote runner config to {dst} (Server=tcp:{server},1433; Initial Catalog={db})")
+print(f"Wrote redacted runner config to {results_dst}")
 PY
+    RUNNER_CONFIG_READY=true
+}
 
 ####################################################################################################
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
@@ -583,6 +604,18 @@ print(total)
 PY
 }
 
+CURRENT_DEFAULT_OUTPUT_BUILT=false
+build_current_default_output() {
+    if [[ "${CURRENT_DEFAULT_OUTPUT_BUILT}" == "true" ]]; then
+        echo "Using already-built current performance tests (${configuration}, ${framework})."
+        return
+    fi
+
+    echo "Building current performance tests (${configuration}, ${framework}) ..."
+    dotnet build "${PERF_PROJECT}" -c "${configuration}" -f "${framework}" --nologo -v minimal
+    CURRENT_DEFAULT_OUTPUT_BUILT=true
+}
+
 # run_pass <label> <project> <extra dotnet build/run args...>
 # Builds and runs one benchmark pass from <project>, pinned to PERF_CLIENT_CPUS, collecting artifacts
 # into ${RESULTS_DIR}/<label>.  <project> is the candidate's perf project for every pass except a
@@ -602,9 +635,20 @@ run_pass() {
     echo "   Extra args: ${extra_args[*]:-<none>}"
     echo "------------------------------------------------------------------"
 
-    echo "Building performance tests (${configuration}, ${framework}) for '${label}' ..."
-    dotnet build "${project}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
-        "${extra_args[@]}"
+    if [[ "${label}" == "current" && "${project}" == "${PERF_PROJECT}" \
+            && "${#extra_args[@]}" -eq 0 && "${CURRENT_DEFAULT_OUTPUT_BUILT}" == "true" ]]; then
+        echo "Using already-built performance tests (${configuration}, ${framework}) for '${label}'."
+    else
+        echo "Building performance tests (${configuration}, ${framework}) for '${label}' ..."
+        dotnet build "${project}" -c "${configuration}" -f "${framework}" --nologo -v minimal \
+            "${extra_args[@]}"
+        if [[ "${label}" == "current" && "${project}" == "${PERF_PROJECT}" \
+                && "${#extra_args[@]}" -eq 0 ]]; then
+            CURRENT_DEFAULT_OUTPUT_BUILT=true
+        fi
+    fi
+
+    prepare_runner_config
 
     local run_cmd=(dotnet run --project "${project}" -c "${configuration}" -f "${framework}" \
         --no-build "${extra_args[@]}")
@@ -704,6 +748,7 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     ################################################################################################
     build_variant "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
     build_variant "current" "${PERF_PROJECT}"
+    prepare_runner_config
 
     interleave_args=(
         --baseline-exe-dir "${REPO_ROOT}/perf-build-baseline"
@@ -724,6 +769,10 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
 
 elif [[ -n "${baselineLabel}" ]]; then
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    if [[ -n "${baselineSourceRef}" ]]; then
+        build_current_default_output
+        prepare_runner_config
+    fi
     run_pass "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
     run_pass "current" "${PERF_PROJECT}"
 
