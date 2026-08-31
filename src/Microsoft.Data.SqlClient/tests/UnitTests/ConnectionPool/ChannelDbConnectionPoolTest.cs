@@ -2403,7 +2403,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // More blocked waiters than the pool can serve AND than the threadpool floor, so the
             // wake path is exercised rather than every worker simply getting its own thread.
-            int workerCount = Math.Min(minWorker + MaxPoolSize + 8, 64);
+            // Deliberately uncapped: any ceiling would silently stop saturating on a host whose
+            // floor already exceeds it, turning this into a no-op exactly where it matters most.
+            int workerCount = minWorker + MaxPoolSize + 8;
 
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
