@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient
         private SqlStreamingXml _streamingXml; // Used by Getchars on an Xml column for sequential access
 
         // buffers and metadata
-        private _SqlMetaDataSet _metaData;                 // current metaData for the stream, it is lazily loaded
+        private TdsColumnMetadataToken _metaData;                 // current metaData for the stream, it is lazily loaded
         private _SqlMetaDataSetCollection _altMetaDataSetCollection;
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient
             return _sharedState._columnDataBytesRemaining;
         }
 
-        internal _SqlMetaDataSet MetaData
+        internal TdsColumnMetadataToken MetaData
         {
             get
             {
@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient
         internal virtual SmiExtendedMetaData[] GetInternalSmiMetaData()
         {
             SmiExtendedMetaData[] metaDataReturn = null;
-            _SqlMetaDataSet metaData = this.MetaData;
+            TdsColumnMetadataToken metaData = this.MetaData;
 
             if (metaData != null && 0 < metaData.Length)
             {
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.DataReaderClosed();
                 }
-                _SqlMetaDataSet md = this.MetaData;
+                TdsColumnMetadataToken md = this.MetaData;
                 if (md == null)
                 {
                     return 0;
@@ -462,7 +462,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         internal DataTable BuildSchemaTable()
         {
-            _SqlMetaDataSet md = this.MetaData;
+            TdsColumnMetadataToken md = this.MetaData;
             Debug.Assert(md != null, "BuildSchemaTable - unexpected null metadata information");
 
             DataTable schemaTable = new DataTable("SchemaTable");
@@ -3450,7 +3450,7 @@ namespace Microsoft.Data.SqlClient
                                         more = false;
                                         return result;
                                     }
-                                    _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
+                                    TdsColumnMetadataToken altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
                                     if (altMetaDataSet != null)
                                     {
                                         _metaData = altMetaDataSet;
@@ -4180,7 +4180,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal TdsOperationStatus TrySetAltMetaDataSet(_SqlMetaDataSet metaDataSet, bool metaDataConsumed)
+        internal TdsOperationStatus TrySetAltMetaDataSet(TdsColumnMetadataToken metaDataSet, bool metaDataConsumed)
         {
             if (_altMetaDataSetCollection == null)
             {
@@ -4262,7 +4262,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        internal TdsOperationStatus TrySetMetaData(_SqlMetaDataSet metaData, bool moreInfo)
+        internal TdsOperationStatus TrySetMetaData(TdsColumnMetadataToken metaData, bool moreInfo)
         {
             _metaData = metaData;
 
@@ -5646,7 +5646,7 @@ namespace Microsoft.Data.SqlClient
             public long _columnDataBytesRead;
             public long _columnDataBytesRemaining;
 
-            public _SqlMetaDataSet _metadata;
+            public TdsColumnMetadataToken _metadata;
             public _SqlMetaDataSetCollection _altMetaDataSetCollection;
             public MultiPartTableName[] _tableNames;
 
@@ -5829,7 +5829,7 @@ namespace Microsoft.Data.SqlClient
 
         private ReadOnlyCollection<DbColumn> BuildColumnSchema()
         {
-            _SqlMetaDataSet md = MetaData;
+            TdsColumnMetadataToken md = MetaData;
             DbColumn[] columnSchema = new DbColumn[md.Length];
             for (int i = 0; i < md.Length; i++)
             {

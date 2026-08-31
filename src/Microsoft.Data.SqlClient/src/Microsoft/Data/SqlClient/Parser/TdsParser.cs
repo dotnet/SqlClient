@@ -2582,7 +2582,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             if (dataStream != null)
                             {
-                                _SqlMetaDataSet metaDataSet;
+                                TdsColumnMetadataToken metaDataSet;
                                 result = TryProcessColInfo(dataStream.MetaData, dataStream, stateObj, out metaDataSet);
                                 if (result != TdsOperationStatus.Done)
                                 {
@@ -2796,7 +2796,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             if (tokenLength != TdsEnums.VARNULL)
                             {
-                                _SqlMetaDataSet metadata;
+                                TdsColumnMetadataToken metadata;
                                 result = TryProcessMetaData(tokenLength, stateObj, out metadata,
                                                         cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                                 if (result != TdsOperationStatus.Done)
@@ -3000,7 +3000,7 @@ namespace Microsoft.Data.SqlClient.Parser
                                 stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
                             }
 
-                            _SqlMetaDataSet cleanupAltMetaDataSet;
+                            TdsColumnMetadataToken cleanupAltMetaDataSet;
                             result = TryProcessAltMetaData(tokenLength, stateObj, out cleanupAltMetaDataSet);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -5101,7 +5101,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 SqlDataReader.SharedState sharedState = stateObj._readerState;
                 if (sharedState != null && sharedState._dataReady)
                 {
-                    _SqlMetaDataSet metadata = stateObj._cleanupMetaData;
+                    TdsColumnMetadataToken metadata = stateObj._cleanupMetaData;
                     TdsOperationStatus result;
                     if (stateObj._partialHeaderBytesRead > 0)
                     {
@@ -5181,13 +5181,13 @@ namespace Microsoft.Data.SqlClient.Parser
             ThrowExceptionAndWarning(stateObj);
         }
 
-        internal TdsOperationStatus TryProcessAltMetaData(int cColumns, TdsParserStateObject stateObj, out _SqlMetaDataSet metaData)
+        internal TdsOperationStatus TryProcessAltMetaData(int cColumns, TdsParserStateObject stateObj, out TdsColumnMetadataToken metaData)
         {
             Debug.Assert(cColumns > 0, "should have at least 1 column in altMetaData!");
 
             metaData = null;
 
-            _SqlMetaDataSet altMetaDataSet = new _SqlMetaDataSet(cColumns, null);
+            TdsColumnMetadataToken altMetaDataSet = new TdsColumnMetadataToken(cColumns, null);
 
             TdsOperationStatus result = stateObj.TryReadUInt16(out altMetaDataSet.id);
             if (result != TdsOperationStatus.Done)
@@ -5440,7 +5440,7 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsOperationStatus.Done;
         }
 
-        internal TdsOperationStatus TryProcessMetaData(int cColumns, TdsParserStateObject stateObj, out _SqlMetaDataSet metaData, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+        internal TdsOperationStatus TryProcessMetaData(int cColumns, TdsParserStateObject stateObj, out TdsColumnMetadataToken metaData, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             Debug.Assert(cColumns > 0, "should have at least 1 column in metadata!");
 
@@ -5458,7 +5458,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             // Read the ColumnData fields
-            _SqlMetaDataSet newMetaData = new _SqlMetaDataSet(cColumns, cipherTable);
+            TdsColumnMetadataToken newMetaData = new TdsColumnMetadataToken(cColumns, cipherTable);
             for (int i = 0; i < cColumns; i++)
             {
                 result = TryCommonProcessMetaData(stateObj, newMetaData[i], cipherTable, fColMD: true, columnEncryptionSetting: columnEncryptionSetting);
@@ -6013,7 +6013,7 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         // augments current metadata with table and key information
-        private TdsOperationStatus TryProcessColInfo(_SqlMetaDataSet columns, SqlDataReader reader, TdsParserStateObject stateObj, out _SqlMetaDataSet metaData)
+        private TdsOperationStatus TryProcessColInfo(TdsColumnMetadataToken columns, SqlDataReader reader, TdsParserStateObject stateObj, out TdsColumnMetadataToken metaData)
         {
             Debug.Assert(columns != null && columns.Length > 0, "no metadata available!");
 
@@ -6207,7 +6207,7 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         // Used internally by BulkCopy only
-        private TdsOperationStatus TryProcessRow(_SqlMetaDataSet columns, object[] buffer, int[] map, TdsParserStateObject stateObj)
+        private TdsOperationStatus TryProcessRow(TdsColumnMetadataToken columns, object[] buffer, int[] map, TdsParserStateObject stateObj)
         {
             SqlBuffer data = new SqlBuffer();
 
@@ -6407,12 +6407,12 @@ namespace Microsoft.Data.SqlClient.Parser
             return nullVal;
         }
 
-        internal TdsOperationStatus TrySkipRow(_SqlMetaDataSet columns, TdsParserStateObject stateObj)
+        internal TdsOperationStatus TrySkipRow(TdsColumnMetadataToken columns, TdsParserStateObject stateObj)
         {
             return TrySkipRow(columns, 0, stateObj);
         }
 
-        internal TdsOperationStatus TrySkipRow(_SqlMetaDataSet columns, int startCol, TdsParserStateObject stateObj)
+        internal TdsOperationStatus TrySkipRow(TdsColumnMetadataToken columns, int startCol, TdsParserStateObject stateObj)
         {
             for (int i = startCol; i < columns.Length; i++)
             {
@@ -9876,7 +9876,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     dtcReader.Bind(stateObj);
 
                     // force consumption of metadata
-                    _SqlMetaDataSet metaData = dtcReader.MetaData;
+                    TdsColumnMetadataToken metaData = dtcReader.MetaData;
                 }
                 else
                 {
@@ -11396,7 +11396,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// decrypt the CEK and keep it ready for encryption.
         /// </summary>
         /// <returns></returns>
-        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection, SqlCommand command = null)
+        internal void LoadColumnEncryptionKeys(TdsColumnMetadataToken metadataCollection, SqlConnection connection, SqlCommand command = null)
         {
             if (IsColumnEncryptionSupported && ShouldEncryptValuesForBulkCopy())
             {
@@ -11443,7 +11443,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// Writes a CEK Table (as part of  COLMETADATA token) for bulk copy.
         /// </summary>
         /// <returns></returns>
-        internal void WriteCekTable(_SqlMetaDataSet metadataCollection, TdsParserStateObject stateObj)
+        internal void WriteCekTable(TdsColumnMetadataToken metadataCollection, TdsParserStateObject stateObj)
         {
             if (!IsColumnEncryptionSupported)
             {
@@ -11546,7 +11546,7 @@ namespace Microsoft.Data.SqlClient.Parser
             stateObj.WriteByte(md.cipherMD.NormalizationRuleVersion);
         }
 
-        internal void WriteBulkCopyMetaData(_SqlMetaDataSet metadataCollection, int count, TdsParserStateObject stateObj)
+        internal void WriteBulkCopyMetaData(TdsColumnMetadataToken metadataCollection, int count, TdsParserStateObject stateObj)
         {
             if (!(State == TdsParserState.OpenNotLoggedIn || State == TdsParserState.OpenLoggedIn))
             {

@@ -18,13 +18,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void SqlMetaDataSet_Clone_ProducesIndependentCopy()
         {
             // Arrange: create a metadata set with 3 columns simulating a destination table
-            _SqlMetaDataSet original = new _SqlMetaDataSet(3);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(3);
             original[0].column = "col1";
             original[1].column = "col2";
             original[2].column = "col3";
 
             // Act: clone and then null out an entry in the clone (simulating column pruning)
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
             clone[2] = null;
 
             // Assert: the original is not affected by the mutation of the clone
@@ -40,14 +40,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void SqlMetaDataSet_Clone_NullingMultipleEntries_OriginalRetainsAll()
         {
             // Arrange: simulate a table with 4 columns
-            _SqlMetaDataSet original = new _SqlMetaDataSet(4);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(4);
             original[0].column = "id";
             original[1].column = "name";
             original[2].column = "email";
             original[3].column = "phone";
 
             // Act: clone and null out entries 1 and 3 (simulating mapping only id and email)
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
             clone[1] = null;
             clone[3] = null;
 
@@ -71,21 +71,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             // Arrange: simulate the scenario where multiple WriteToServer calls each
             // clone and prune different subsets of columns
-            _SqlMetaDataSet original = new _SqlMetaDataSet(3);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(3);
             original[0].column = "col1";
             original[1].column = "col2";
             original[2].column = "col3";
 
             // First operation: map only col1 and col2 (prune col3)
-            _SqlMetaDataSet clone1 = original.Clone();
+            TdsColumnMetadataToken clone1 = original.Clone();
             clone1[2] = null;
 
             // Second operation: map only col1 and col3 (prune col2)
-            _SqlMetaDataSet clone2 = original.Clone();
+            TdsColumnMetadataToken clone2 = original.Clone();
             clone2[1] = null;
 
             // Third operation: map all columns (no pruning needed)
-            _SqlMetaDataSet clone3 = original.Clone();
+            TdsColumnMetadataToken clone3 = original.Clone();
 
             // Assert: original is fully intact after all operations
             Assert.NotNull(original[0]);
@@ -112,12 +112,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             // Verify that cloned entries maintain correct ordinal values,
             // which are used for column matching in AnalyzeTargetAndCreateUpdateBulkCommand
-            _SqlMetaDataSet original = new _SqlMetaDataSet(3);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(3);
             original[0].column = "col1";
             original[1].column = "col2";
             original[2].column = "col3";
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.Equal(original[0].ordinal, clone[0].ordinal);
             Assert.Equal(original[1].ordinal, clone[1].ordinal);
@@ -134,11 +134,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cekTable[0] = new SqlTceCipherInfoEntry(ordinal: 0);
             cekTable[1] = new SqlTceCipherInfoEntry(ordinal: 1);
 
-            _SqlMetaDataSet original = new _SqlMetaDataSet(2, cekTable);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(2, cekTable);
             original[0].column = "col1";
             original[1].column = "col2";
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotNull(clone.cekTable);
             Assert.Same(original.cekTable, clone.cekTable);
@@ -152,11 +152,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // WriteBulkCopyMetaData checks md.isEncrypted to set the TDS IsEncrypted flag
             // and WriteCryptoMetadata checks it to decide whether to write cipher metadata.
             // If lost, encrypted columns are sent as plaintext.
-            _SqlMetaDataSet original = new _SqlMetaDataSet(1);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
             original[0].isEncrypted = true;
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.True(clone[0].isEncrypted);
         }
@@ -177,12 +177,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 normalizationRuleVersion: 1
             );
 
-            _SqlMetaDataSet original = new _SqlMetaDataSet(1);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
             original[0].isEncrypted = true;
             original[0].cipherMD = cipherMD;
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotNull(clone[0].cipherMD);
             Assert.Equal(2, clone[0].cipherMD.CipherAlgorithmId);
@@ -203,12 +203,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
             baseTI.precision = 0;
             baseTI.scale = 0;
 
-            _SqlMetaDataSet original = new _SqlMetaDataSet(1);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
             original[0].isEncrypted = true;
             original[0].baseTI = baseTI;
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotNull(clone[0].baseTI);
             Assert.Equal(System.Data.SqlDbType.NVarChar, clone[0].baseTI.type);
@@ -238,7 +238,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlMetaDataPriv baseTI = new SqlMetaDataPriv();
             baseTI.type = System.Data.SqlDbType.Int;
 
-            _SqlMetaDataSet original = new _SqlMetaDataSet(2, cekTable);
+            TdsColumnMetadataToken original = new TdsColumnMetadataToken(2, cekTable);
             original[0].column = "id";
             original[1].column = "secret";
             original[1].isEncrypted = true;
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             original[1].baseTI = baseTI;
 
             // Clone and prune column 0 (simulating mapping only the encrypted column)
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
             clone[0] = null;
 
             // The pruning must not affect the encrypted column's metadata
