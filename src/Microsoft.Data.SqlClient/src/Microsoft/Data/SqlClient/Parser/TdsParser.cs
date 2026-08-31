@@ -2933,16 +2933,19 @@ namespace Microsoft.Data.SqlClient.Parser
                         break;
                     case TdsEnums.SQLRETURNVALUE:
                         {
-                            SqlReturnValue returnValue;
-                            result = TryProcessReturnValue(tokenLength, stateObj, out returnValue,
-                                                       cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+                            result = TryProcessReturnValue(
+                                tokenLength,
+                                stateObj,
+                                out TdsReturnValueToken returnValueToken,
+                                cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
                             if (cmdHandler != null)
                             {
-                                cmdHandler.OnReturnValue(returnValue, stateObj);
+                                cmdHandler.OnReturnValue(returnValueToken, stateObj);
                             }
                             break;
                         }
@@ -4619,11 +4622,11 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal TdsOperationStatus TryProcessReturnValue(int length,
             TdsParserStateObject stateObj,
-            out SqlReturnValue returnValue,
+            out TdsReturnValueToken returnValueToken,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
-            returnValue = null;
-            SqlReturnValue rec = new SqlReturnValue();
+            returnValueToken = null;
+            TdsReturnValueToken rec = new TdsReturnValueToken();
             rec.length = length;        // RETURNVALUE has no token length; the sentinel is -1.
             TdsOperationStatus result = stateObj.TryReadUInt16(out _);
             if (result != TdsOperationStatus.Done)
@@ -4917,7 +4920,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            returnValue = rec;
+            returnValueToken = rec;
             return TdsOperationStatus.Done;
         }
 
