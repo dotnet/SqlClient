@@ -4906,13 +4906,13 @@ namespace Microsoft.Data.SqlClient.Parser
 
             if (isNull)
             {
-                GetNullSqlValue(rec.value, rec, SqlCommandColumnEncryptionSetting.Disabled, _connHandler);
+                GetNullSqlValue(rec.Value, rec, SqlCommandColumnEncryptionSetting.Disabled, _connHandler);
             }
             else
             {
                 // We should never do any decryption here, so pass disabled as the command encryption override.
                 // We only read the binary value and decryption will be performed by OnReturnValue().
-                result = TryReadSqlValue(rec.value, rec, intlen, stateObj, SqlCommandColumnEncryptionSetting.Disabled, columnName: null /*Not used*/);
+                result = TryReadSqlValue(rec.Value, rec, intlen, stateObj, SqlCommandColumnEncryptionSetting.Disabled, columnName: null /*Not used*/);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
