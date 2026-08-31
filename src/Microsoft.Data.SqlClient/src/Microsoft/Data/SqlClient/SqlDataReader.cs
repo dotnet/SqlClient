@@ -1468,15 +1468,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (_metaData == null || _metaData.schemaTable == null)
+                    if (_metaData == null || _metaData.SchemaTable == null)
                     {
                         if (this.MetaData != null)
                         {
-                            _metaData.schemaTable = BuildSchemaTable();
-                            Debug.Assert(_metaData.schemaTable != null, "No schema information yet!");
+                            _metaData.SchemaTable = BuildSchemaTable();
+                            Debug.Assert(_metaData.SchemaTable != null, "No schema information yet!");
                         }
                     }
-                    return _metaData?.schemaTable;
+                    return _metaData?.SchemaTable;
                 }
                 finally
                 {
@@ -4273,7 +4273,7 @@ namespace Microsoft.Data.SqlClient
             if (_metaData != null)
             {
 #if NETFRAMEWORK
-                _metaData.schemaTable = null;
+                _metaData.SchemaTable = null;
 #endif
                 _data = SqlBuffer.CreateBufferArray(metaData.Length);
             }
@@ -5807,19 +5807,19 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                if (_metaData == null || _metaData.dbColumnSchema == null)
+                if (_metaData == null || _metaData.DbColumnSchema == null)
                 {
                     if (this.MetaData != null)
                     {
 
-                        _metaData.dbColumnSchema = BuildColumnSchema();
-                        Debug.Assert(_metaData.dbColumnSchema != null, "No schema information yet!");
+                        _metaData.DbColumnSchema = BuildColumnSchema();
+                        Debug.Assert(_metaData.DbColumnSchema != null, "No schema information yet!");
                         // filter table?
                     }
                 }
                 if (_metaData != null)
                 {
-                    return _metaData.dbColumnSchema;
+                    return _metaData.DbColumnSchema;
                 }
                 return s_emptySchema;
             }
