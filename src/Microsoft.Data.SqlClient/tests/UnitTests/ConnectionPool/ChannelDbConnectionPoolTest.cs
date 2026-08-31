@@ -2390,26 +2390,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         /// <summary>
         /// Verifies that the saturated synchronous checkout path makes forward progress when every
-        /// waiter is blocked on a threadpool thread: far more sync callers than the pool can serve,
-        /// each blocking in <c>ReadChannelSyncOverAsync</c> until another returns its connection.
+        /// waiter is blocked in <c>ReadChannelSyncOverAsync</c> on a threadpool thread. This is the
+        /// net462 guard for that path, where the wake-up gets no cooperative-blocking notification;
+        /// it asserts liveness only, since the frameworks legitimately differ on latency.
         /// </summary>
-        /// <remarks>
-        /// This is the .NET Framework guard for that path. The sync wait blocks on a Task whose
-        /// completing continuation is queued (the idle channel disallows synchronous continuations),
-        /// so the wake-up needs a worker thread to run on. On net8.0+ the runtime is told the waiter
-        /// is cooperatively blocked and compensates immediately; net462 has no such notification, so
-        /// the wake-up depends on starvation detection and hill climbing instead. If that difference
-        /// ever became a deadlock rather than a delay, every waiter here would time out.
-        ///
-        /// Scope: this asserts liveness, not latency. It runs on every TFM the unit tests build,
-        /// which includes net462 on Windows. It deliberately does not assert a completion time,
-        /// because the two frameworks legitimately differ there and a timing assertion would be
-        /// flaky on shared CI agents.
-        ///
-        /// The worker count is derived from the threadpool's own floor so the waiters genuinely
-        /// exceed the threads available without injection; a fixed count would stop saturating on a
-        /// host with a high floor.
-        /// </remarks>
         [Fact]
         public void SyncCheckout_WhenSaturatedOnThreadPoolThreads_AllWaitersMakeProgress()
         {
