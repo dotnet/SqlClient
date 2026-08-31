@@ -1682,9 +1682,9 @@ namespace Microsoft.Data.SqlClient
             if (_inPrepare)
             {
                 // Store the returned prepare handle if we are returning from sp_prepare
-                if (!returnValue.value.IsNull)
+                if (!returnValue.Value.IsNull)
                 {
-                    _prepareHandle = returnValue.value.Int32;
+                    _prepareHandle = returnValue.Value.Int32;
                 }
 
                 _inPrepare = false;
@@ -1726,7 +1726,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!returnValue.value.IsNull)
+                    if (!returnValue.Value.IsNull)
                     {
                         try
                         {
@@ -1735,7 +1735,7 @@ namespace Microsoft.Data.SqlClient
                             // Get the key information from the parameter and decrypt the value.
                             returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
                             byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
-                                returnValue.value.ByteArray,
+                                returnValue.Value.ByteArray,
                                 returnValue.cipherMD,
                                 _activeConnection,
                                 this);
@@ -1794,9 +1794,9 @@ namespace Microsoft.Data.SqlClient
                             _activeConnection.CheckGetExtendedUDTInfo(returnValue, fThrow: true);
 
                             // Extract the byte array from the param value
-                            object data = returnValue.value.IsNull
+                            object data = returnValue.Value.IsNull
                                 ? DBNull.Value
-                                : returnValue.value.ByteArray;
+                                : returnValue.Value.ByteArray;
 
                             // Call the connection to instantiate the UDT object
                             thisParam.Value = _activeConnection.GetUdtValue(data, returnValue, returnDBNull: false);
@@ -1812,7 +1812,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(returnValue.value);
+                        thisParam.SetSqlBuffer(returnValue.Value);
                     }
 
                     // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
