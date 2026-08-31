@@ -55,6 +55,12 @@
     "Strings.*.resx", which matches the localized files but not the English
     "Strings.resx" source.
 
+.PARAMETER DryRun
+    Performs every read-only step - clone, copy, change detection and the
+    existing-pull-request lookup - but does not push the branch and does not
+    create or update a pull request. Use this to validate pipeline wiring
+    (paths, token scopes, OneLocBuild output) without publishing anything.
+
 .NOTES
     Intended to be invoked from the internal Localization-CI pipeline. It is
     safe to re-run: with no localization changes pending it is a no-op, and
@@ -82,7 +88,9 @@ param(
 
     [string]$ResourcesPath = 'src/Microsoft.Data.SqlClient/src/Resources',
 
-    [string]$ResourceFilePattern = 'Strings.*.resx'
+    [string]$ResourceFilePattern = 'Strings.*.resx',
+
+    [switch]$DryRun
 )
 
 Set-StrictMode -Version Latest
@@ -251,6 +259,9 @@ Write-Host "Repository : $repoSlug"
 Write-Host "Base       : $BaseBranch"
 Write-Host "Branch     : $BranchName"
 Write-Host "Resources  : $($localizedFiles.Count) file(s) from $sourceResources"
+if ($DryRun) {
+    Write-Host 'Mode       : DRY RUN (no push, no pull request changes)'
+}
 Write-Host ''
 
 $originalLocation = Get-Location
@@ -333,6 +344,9 @@ try {
     if ($branchUpToDate) {
         Write-Host "Branch '$BranchName' already has these exact changes on top of '$BaseBranch'. Skipping push."
     }
+    elseif ($DryRun) {
+        Write-Host "[DryRun] Would force-push '$BranchName' to $repoSlug."
+    }
     else {
         Invoke-Git push origin "${BranchName}:refs/heads/$BranchName" --force --quiet
         Write-Host "Pushed '$BranchName'."
@@ -356,15 +370,24 @@ try {
 
     if ($existingPr) {
         $prNumber = $existingPr.number
-        Write-Host "Reusing open PR #$prNumber - refreshing its description."
 
-        $patchUri = "https://api.github.com/repos/$repoSlug/pulls/$prNumber"
-        Invoke-GitHubApi -Uri $patchUri -Method 'PATCH' -Headers $headers -Body @{
-            title = $PrTitle
-            body  = $body
-        } | Out-Null
+        if ($DryRun) {
+            Write-Host "[DryRun] Would refresh open PR #$prNumber ($($existingPr.html_url))."
+        }
+        else {
+            Write-Host "Reusing open PR #$prNumber - refreshing its description."
 
-        Write-Host "Pull request updated: $($existingPr.html_url)"
+            $patchUri = "https://api.github.com/repos/$repoSlug/pulls/$prNumber"
+            Invoke-GitHubApi -Uri $patchUri -Method 'PATCH' -Headers $headers -Body @{
+                title = $PrTitle
+                body  = $body
+            } | Out-Null
+
+            Write-Host "Pull request updated: $($existingPr.html_url)"
+        }
+    }
+    elseif ($DryRun) {
+        Write-Host "[DryRun] No open pull request found. Would create one ($BranchName -> $BaseBranch)."
     }
     else {
         Write-Host 'No open pull request found. Creating one...'
@@ -383,7 +406,12 @@ try {
     #endregion
 
     Write-Host ''
-    Write-Host '=== Done ==='
+    if ($DryRun) {
+        Write-Host '=== Done (dry run - nothing was published) ==='
+    }
+    else {
+        Write-Host '=== Done ==='
+    }
 }
 finally {
     Set-Location -LiteralPath $originalLocation

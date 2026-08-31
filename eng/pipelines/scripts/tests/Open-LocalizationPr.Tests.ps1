@@ -242,4 +242,50 @@ Describe 'Open-LocalizationPr.ps1' {
             (Get-RestCallCount -Method 'POST' -UriPattern '*/pulls') | Should -Be 0
         }
     }
+
+    Context 'When running in dry-run mode' {
+
+        It 'Neither pushes nor creates a pull request' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir `
+                -DryRun
+
+            @($global:gitCalls | Where-Object { $_ -like 'push*' }).Count | Should -Be 0
+            (Get-RestCallCount -Method 'POST' -UriPattern '*/pulls') | Should -Be 0
+            (Get-RestCallCount -Method 'PATCH' -UriPattern '*/pulls/*') | Should -Be 0
+        }
+
+        It 'Still performs the existing pull request lookup' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir `
+                -DryRun
+
+            (Get-RestCallCount -Method 'GET' -UriPattern '*/pulls?*') | Should -Be 1
+        }
+
+        It 'Does not update an existing pull request' {
+            $global:remoteSha = 'remote0000'
+            $global:remoteTree = 'differenttree'
+            $global:remoteParent = 'oldbase000'
+            $global:openPullRequests = @(
+                @{ number = 4612; html_url = 'https://github.com/dotnet/SqlClient/pull/4612' }
+            )
+
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir `
+                -DryRun
+
+            @($global:gitCalls | Where-Object { $_ -like 'push*' }).Count | Should -Be 0
+            (Get-RestCallCount -Method 'PATCH' -UriPattern '*/pulls/4612') | Should -Be 0
+        }
+    }
 }
