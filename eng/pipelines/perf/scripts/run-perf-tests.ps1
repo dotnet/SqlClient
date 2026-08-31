@@ -155,6 +155,16 @@ if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and (-not [string]::IsNull
 if ((-not [string]::IsNullOrEmpty($SwitchUnderTest)) -and ((-not [string]::IsNullOrEmpty($BaselineVersion)) -or (-not [string]::IsNullOrEmpty($BaselineSourceRef)))) {
     throw "-SwitchUnderTest is mutually exclusive with -BaselineVersion and -BaselineSourceRef: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable."
 }
+# UseManagedSniOnWindows only selects an implementation on Windows.  PowerShell Core also runs on
+# Linux, so check the host rather than assume this script implies Windows: off-Windows both passes
+# use managed SNI and the experiment reports a ~0% delta that reads as "the switch is free".
+# $IsWindows is undefined on Windows PowerShell 5.1, which is itself Windows-only, so null is Windows.
+if ($SwitchUnderTest -eq "UseManagedSniOnWindows") {
+    $onWindows = if ($null -eq (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) { $true } else { $IsWindows }
+    if (-not $onWindows) {
+        throw "-SwitchUnderTest UseManagedSniOnWindows is Windows-only; elsewhere managed SNI is always used, so baseline and current would be identical. Re-run this experiment on the Windows platform."
+    }
+}
 # -SwitchUnderTest forces its switch explicitly for each pass (baseline=false, current=true), so a
 # separately-supplied -Use* flag for that SAME switch would be silently overridden; warn rather than
 # let that go unnoticed.  Other -Use* flags still apply normally to both passes.

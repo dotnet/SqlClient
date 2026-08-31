@@ -52,9 +52,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     public class ConnectionPoolThreadPoolPressureRunner : BaseRunner
     {
         /// <summary>
+        /// Number of concurrent sync workers. Also the reference point for the non-starved
+        /// control in <see cref="MinWorkerThreadsValues"/>, so it is a constant rather than a
+        /// literal on the attribute.
+        /// </summary>
+        private const int WorkerParallelism = 50;
+
+        /// <summary>
         /// Number of concurrent sync workers, all running on threadpool threads.
         /// </summary>
-        [Params(50)]
+        [Params(WorkerParallelism)]
         public int Parallelism { get; set; }
 
         /// <summary>
@@ -91,9 +98,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         /// The multiples map onto real deployments: a quarter of the processor count stands in
         /// for the default floor of a 2-4 vCPU container, 1x is the runtime default that almost
-        /// every application actually runs, 2x is the most common explicit multiplier in shipped
-        /// code, and 8x is the control — comfortably above <see cref="Parallelism"/> so
-        /// injection never gates progress.
+        /// every application actually runs, and 2x is the most common explicit multiplier in
+        /// shipped code.
+        ///
+        /// The control is the exception: it is pinned to twice <see cref="WorkerParallelism"/>
+        /// rather than a processor multiple, because a processor multiple is not guaranteed to
+        /// clear it. On a 4-core host <c>ProcessorCount * 8</c> is 32, below the 50 workers, so
+        /// every case would be starved and the sweep would have no non-starved baseline to
+        /// compare against. Taking the larger of the two keeps the processor-relative scaling on
+        /// hosts where it is already sufficient.
         ///
         /// Floored at 1 because <c>SetMinThreads</c> rejects 0, and de-duplicated because the
         /// lower multiples collapse together on very small hosts.
@@ -104,7 +117,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 Environment.ProcessorCount / 4,
                 Environment.ProcessorCount,
                 Environment.ProcessorCount * 2,
-                Environment.ProcessorCount * 8,
+                Math.Max(Environment.ProcessorCount * 8, WorkerParallelism * 2),
             }
             .Select(static value => Math.Max(1, value))
             .Distinct();

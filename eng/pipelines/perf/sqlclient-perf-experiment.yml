@@ -49,6 +49,10 @@ parameters:
   # The single runner-config switch under test.  Baseline runs it false, current runs it true, so the
   # reported delta is "what turning this switch ON does".  Restricted to the switches the run scripts
   # know how to stamp into the runner config; the scripts re-validate and fail fast on anything else.
+  #
+  # UseManagedSniOnWindows additionally requires platform=windows.  ADO cannot cross-validate two
+  # queue-time parameters here (this pipeline extends a template, so there is no step to check it
+  # before the job starts), so the run scripts reject that combination as their first action.
   - name: switchUnderTest
     displayName: Switch under test (baseline=off vs current=on)
     type: string

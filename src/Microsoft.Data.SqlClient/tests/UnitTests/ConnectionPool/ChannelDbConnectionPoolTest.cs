@@ -2386,6 +2386,108 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
         #endregion
 
+        #region Saturated Sync Wait Tests
+
+        /// <summary>
+        /// Verifies that the saturated synchronous checkout path makes forward progress when every
+        /// waiter is blocked on a threadpool thread: far more sync callers than the pool can serve,
+        /// each blocking in <c>ReadChannelSyncOverAsync</c> until another returns its connection.
+        /// </summary>
+        /// <remarks>
+        /// This is the .NET Framework guard for that path. The sync wait blocks on a Task whose
+        /// completing continuation is queued (the idle channel disallows synchronous continuations),
+        /// so the wake-up needs a worker thread to run on. On net8.0+ the runtime is told the waiter
+        /// is cooperatively blocked and compensates immediately; net462 has no such notification, so
+        /// the wake-up depends on starvation detection and hill climbing instead. If that difference
+        /// ever became a deadlock rather than a delay, every waiter here would time out.
+        ///
+        /// Scope: this asserts liveness, not latency. It runs on every TFM the unit tests build,
+        /// which includes net462 on Windows. It deliberately does not assert a completion time,
+        /// because the two frameworks legitimately differ there and a timing assertion would be
+        /// flaky on shared CI agents.
+        ///
+        /// The worker count is derived from the threadpool's own floor so the waiters genuinely
+        /// exceed the threads available without injection; a fixed count would stop saturating on a
+        /// host with a high floor.
+        /// </remarks>
+        [Fact]
+        public void SyncCheckout_WhenSaturatedOnThreadPoolThreads_AllWaitersMakeProgress()
+        {
+            // Arrange
+            const int MaxPoolSize = 4;
+            ThreadPool.GetMinThreads(out int minWorker, out _);
+
+            // More blocked waiters than the pool can serve AND than the threadpool floor, so the
+            // wake path is exercised rather than every worker simply getting its own thread.
+            int workerCount = Math.Min(minWorker + MaxPoolSize + 8, 64);
+
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: MaxPoolSize,
+                // Generous: a healthy run finishes far inside this, while a genuinely stuck wake
+                // path still fails the test rather than hanging the suite forever.
+                creationTimeout: 60,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            using var startGate = new ManualResetEventSlim(initialState: false);
+            var acquired = new ConcurrentBag<bool>();
+            var failures = new ConcurrentBag<Exception>();
+            var workers = new Task[workerCount];
+
+            // Act: release every worker at once so they pile onto the pool together.
+            for (int i = 0; i < workerCount; i++)
+            {
+                workers[i] = Task.Factory.StartNew(
+                    () =>
+                    {
+                        try
+                        {
+                            startGate.Wait();
+                            bool got = pool.TryGetConnection(
+                                new SqlConnection(),
+                                taskCompletionSource: null,
+                                TimeoutTimer.StartNew(TimeSpan.FromSeconds(60)),
+                                out DbConnectionInternal? connection);
+
+                            acquired.Add(got && connection is not null);
+
+                            // Return promptly: with MaxPoolSize connections shared by every worker,
+                            // each return is what wakes the next waiter.
+                            if (connection is not null)
+                            {
+                                pool.ReturnInternalConnection(connection, connection.Owner);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failures.Add(ex);
+                        }
+                    },
+                    CancellationToken.None,
+                    // LongRunning would hand each worker a dedicated thread, which is precisely the
+                    // starvation this test needs to reproduce. Keep them on threadpool threads.
+                    TaskCreationOptions.None,
+                    TaskScheduler.Default);
+            }
+
+            startGate.Set();
+
+            // Assert
+            Assert.True(
+                Task.WaitAll(workers, TimeSpan.FromSeconds(120)),
+                $"Saturated sync checkout did not drain: {acquired.Count} of {workerCount} workers " +
+                "finished. The waiter wake path is not making progress on this framework.");
+            Assert.Empty(failures);
+            Assert.Equal(workerCount, acquired.Count);
+            Assert.DoesNotContain(false, acquired);
+        }
+
+        #endregion
+
         #region Connection Timeout Awareness Tests
 
         /// <summary>

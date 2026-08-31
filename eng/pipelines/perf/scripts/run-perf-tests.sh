@@ -135,6 +135,13 @@ if [[ -n "${switchUnderTest}" ]]; then
         echo "ERROR: --switch-under-test must be one of: ${SUPPORTED_SWITCHES[*]} (got '${switchUnderTest}')." >&2
         usage; exit 2
     fi
+    # UseManagedSniOnWindows only selects an implementation on Windows.  This is the bash entry
+    # point, so both passes here would run identical managed SNI and the experiment would spend
+    # hours to report a ~0% delta that looks like "the switch is free" rather than "not applicable".
+    if [[ "${switchUnderTest}" == "UseManagedSniOnWindows" ]]; then
+        echo "ERROR: --switch-under-test UseManagedSniOnWindows is Windows-only; on Linux managed SNI is always used, so baseline and current would be identical. Re-run this experiment on the Windows platform." >&2
+        exit 2
+    fi
 fi
 if ! [[ "${confirmationRuns}" =~ ^[0-9]+$ ]] || [[ "${confirmationRuns}" -lt 1 ]]; then
     echo "ERROR: --confirmation-runs must be a positive integer (got '${confirmationRuns}')." >&2
