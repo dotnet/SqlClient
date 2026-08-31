@@ -1670,7 +1670,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnReturnValue(SqlReturnValue returnValue, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken returnValue, TdsParserStateObject stateObj)
         {
             // Move the return value to the corresponding output parameter.
             // Return parameters are sent in the order in which they were defined in the procedure.
@@ -1815,7 +1815,7 @@ namespace Microsoft.Data.SqlClient
                         thisParam.SetSqlBuffer(returnValue.value);
                     }
 
-                    // @TODO: This seems fishy to me, it seems like it should be part of the SqlReturnValue class
+                    // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
                     MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
 
                     if (returnValue.type is SqlDbType.Decimal)
