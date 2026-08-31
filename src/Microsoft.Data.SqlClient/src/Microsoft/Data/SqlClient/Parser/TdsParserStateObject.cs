@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.Parser
         private readonly byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
         internal int _partialHeaderBytesRead;
 
-        internal _SqlMetaDataSet _cleanupMetaData;
+        internal TdsColumnMetadataToken _cleanupMetaData;
         internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
 
         private SniContext _sniContext = SniContext.Undefined;
@@ -4928,7 +4928,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 private int _inBytesPacket;
                 private byte _messageStatus;
                 internal NullBitmap _nullBitmapInfo;
-                private _SqlMetaDataSet _cleanupMetaData;
+                private TdsColumnMetadataToken _cleanupMetaData;
                 internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
                 private ulong _longLen;
