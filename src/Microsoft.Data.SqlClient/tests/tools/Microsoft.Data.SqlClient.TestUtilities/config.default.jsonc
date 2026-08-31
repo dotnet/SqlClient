@@ -22,7 +22,9 @@
     // True if the environment supports Entra Integrated authentication.
     "SupportsEntraIntegrated": false,
     // True if the environment supports Windows Integrated authentication.
-    "SupportsIntegratedSecurity": false,
+    //
+    // TODO: Default values should be empty/false.
+    "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
     "FileStreamDirectory": "",
@@ -33,6 +35,7 @@
     "IsDNSCachingSupportedCR": false,
     "IsDNSCachingSupportedTR": false,
     "EnclaveAzureDatabaseConnString": "",
+    // TODO: Default values should be empty/false.
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",

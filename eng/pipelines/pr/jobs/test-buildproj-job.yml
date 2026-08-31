@@ -117,6 +117,14 @@ jobs:
             -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestResultsFolderPath=${{ variables.testResultsPath }}
 
+      - ${{ if eq(parameters.packageShortName, 'Azure') }}:
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Azure Test Binaries
+          inputs:
+            artifact: AzureTestBinaries_$(System.JobId)
+            targetPath: src/Microsoft.Data.SqlClient.Extensions/Azure/test/bin/${{ parameters.buildConfiguration }}/${{ parameters.platformDotnet }}
+          condition: succeededOrFailed()
+
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
         parameters:
