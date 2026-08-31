@@ -236,6 +236,27 @@ jobs:
         - pwsh: Get-Volume
           displayName: '[Debug] Show Disk Usage'
 
+      # Publish the Cobertura XML coverage files as pipeline artifacts for
+      # debugging purposes. Pipeline artifact names must be unique within a
+      # build, so include the attempt numbers to allow this job to be rerun.
+      - task: PublishPipelineArtifact@1
+        displayName: Publish .NET Framework Cobertura XML Artifact
+        inputs:
+          targetPath: coveragereportNetFx\Cobertura.xml
+          artifact: Cobertura NetFx $(System.StageAttempt)-$(System.JobAttempt)
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish .NET Core Cobertura XML Artifact
+        inputs:
+          targetPath: coveragereportNetCore\Cobertura.xml
+          artifact: Cobertura NetCore $(System.StageAttempt)-$(System.JobAttempt)
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Add-ons Cobertura XML Artifact
+        inputs:
+          targetPath: coveragereportAddOns\Cobertura.xml
+          artifact: Cobertura AddOns $(System.StageAttempt)-$(System.JobAttempt)
+
       - task: PublishCodeCoverageResults@2
         displayName: Publish code coverage results
         inputs:
