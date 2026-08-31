@@ -112,12 +112,13 @@ jobs:
           displayName: '[Debug] Show Disk Usage'
 
       # Publish the Cobertura XML coverage file as a pipeline artifact for
-      # debugging purposes.
+      # debugging purposes. Pipeline artifact names must be unique within a
+      # build, so include the attempt numbers to allow this job to be rerun.
       - task: PublishPipelineArtifact@1
         displayName: Publish Cobertura XML Artifact
         inputs:
           targetPath: $(workingDir)/merge
-          artifact: Cobertura Merge Results
+          artifact: Cobertura Merge Results $(System.StageAttempt)-$(System.JobAttempt)
 
       # Publish the Cobertura reports to the pipeline to be viewed in the Azure
       # DevOps pipeline run UI.
