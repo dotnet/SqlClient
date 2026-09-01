@@ -23,13 +23,13 @@ namespace Microsoft.Data.SqlClient
         private void Populate()
         {
             AllowDBNull = _metadata.IsNullable;
-            BaseCatalogName = _metadata.catalogName;
+            BaseCatalogName = _metadata.CatalogName;
             BaseColumnName = _metadata.baseColumn;
-            BaseSchemaName = _metadata.schemaName;
-            BaseServerName = _metadata.serverName;
-            BaseTableName = _metadata.tableName;
+            BaseSchemaName = _metadata.SchemaName;
+            BaseServerName = _metadata.ServerName;
+            BaseTableName = _metadata.TableName;
             ColumnName = _metadata.column;
-            ColumnOrdinal = _metadata.ordinal;
+            ColumnOrdinal = _metadata.Ordinal;
             ColumnSize = (_metadata.metaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
             IsAutoIncrement = _metadata.IsIdentity;
             IsIdentity = _metadata.IsIdentity;

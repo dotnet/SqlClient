@@ -119,9 +119,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.Equal(original[0].ordinal, clone[0].ordinal);
-            Assert.Equal(original[1].ordinal, clone[1].ordinal);
-            Assert.Equal(original[2].ordinal, clone[2].ordinal);
+            Assert.Equal(original[0].Ordinal, clone[0].Ordinal);
+            Assert.Equal(original[1].Ordinal, clone[1].Ordinal);
+            Assert.Equal(original[2].Ordinal, clone[2].Ordinal);
         }
 
         [Fact]

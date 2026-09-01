@@ -7,10 +7,13 @@ using System.Data;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
+/// <summary>
+/// Represents metadata information for a specific column in a TDS stream.
+/// </summary>
 internal sealed class TdsColumnMetadata : SqlMetaDataPriv
 {
     [Flags]
-    private enum MetadataFlags : int
+    private enum MetadataFlags
     {
         None = 0,
 
@@ -26,133 +29,184 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
         IsUpdatableMask = (Updatable | UpdateableUnknown) // two bit field (0 is read only, 1 is updatable, 2 is updatability unknown)
     }
 
-    internal string column;
+    /// <summary>
+    /// Represents the original name of the column in the data source if an alias is used.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryReadString.
     internal string baseColumn;
+
+    /// <summary>
+    /// Represents the name of the column in the TDS stream.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryReadString.
+    internal string column;
+
+    /// <summary>
+    /// Stores the multipart name details of the table associated with the column, including server,
+    /// catalog, schema, and table names.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryProcessOneTable.
     internal MultiPartTableName multiPartTableName;
-    internal readonly int ordinal;
-    internal byte tableNum;
+
+    /// <summary>
+    /// Represents the operation type associated with the column metadata, primarily used for
+    /// alternate-row column processing.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
     internal byte op;        // for altrow-columns only
-    internal ushort operand; // for altrow-columns only
-    private MetadataFlags flags;
+
+    /// <summary>
+    /// Identifies the table associated with a column, if applicable, within the context of a
+    /// metadata structure.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
+    internal byte tableNum;
+
+    private MetadataFlags _flags;
 
     internal TdsColumnMetadata(int ordinal) : base()
     {
-        this.ordinal = ordinal;
+        Ordinal = ordinal;
     }
 
-    private bool HasFlag(MetadataFlags flag)
-    {
-        return (flags & flag) != 0;
-    }
+    /// <summary>
+    /// Gets the catalog name associated with the column's metadata.
+    /// </summary>
+    internal string CatalogName => multiPartTableName.CatalogName;
 
-    internal string serverName
-    {
-        get
-        {
-            return multiPartTableName.ServerName;
-        }
-    }
-    internal string catalogName
-    {
-        get
-        {
-            return multiPartTableName.CatalogName;
-        }
-    }
-    internal string schemaName
-    {
-        get
-        {
-            return multiPartTableName.SchemaName;
-        }
-    }
-    internal string tableName
-    {
-        get
-        {
-            return multiPartTableName.TableName;
-        }
-    }
 
-    public byte Updatability
-    {
-        get => (byte)(flags & MetadataFlags.IsUpdatableMask);
-        set => flags = (MetadataFlags)((value & (byte)MetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)MetadataFlags.IsUpdatableMask));
-    }
+    internal bool Is2008DateTimeType => type is SqlDbType.Date
+                                             or SqlDbType.Time
+                                             or SqlDbType.DateTime2
+                                             or SqlDbType.DateTimeOffset;
 
-    public bool IsReadOnly
-    {
-        get => !HasFlag(MetadataFlags.IsUpdatableMask);
-    }
-
-    public bool IsDifferentName
-    {
-        get => HasFlag(MetadataFlags.IsDifferentName);
-        set => Set(MetadataFlags.IsDifferentName, value);
-    }
-
-    public bool IsKey
-    {
-        get => HasFlag(MetadataFlags.IsKey);
-        set => Set(MetadataFlags.IsKey, value);
-    }
-
-    public bool IsHidden
-    {
-        get => HasFlag(MetadataFlags.IsHidden);
-        set => Set(MetadataFlags.IsHidden, value);
-    }
-
-    public bool IsExpression
-    {
-        get => HasFlag(MetadataFlags.IsExpression);
-        set => Set(MetadataFlags.IsExpression, value);
-    }
-
-    public bool IsIdentity
-    {
-        get => HasFlag(MetadataFlags.IsIdentity);
-        set => Set(MetadataFlags.IsIdentity, value);
-    }
-
+    /// <summary>
+    /// Indicates whether the column is part of a sparse column set.
+    /// </summary>
     public bool IsColumnSet
     {
         get => HasFlag(MetadataFlags.IsColumnSet);
-        set => Set(MetadataFlags.IsColumnSet, value);
+        set => SetFlag(MetadataFlags.IsColumnSet, value);
     }
 
-    private void Set(MetadataFlags flag, bool value)
+    /// <summary>
+    /// Indicates whether the column has a name that differs from its original name in the data
+    /// source.
+    /// </summary>
+    public bool IsDifferentName
     {
-        flags = value ? flags | flag : flags & ~flag;
+        get => HasFlag(MetadataFlags.IsDifferentName);
+        set => SetFlag(MetadataFlags.IsDifferentName, value);
     }
 
-    internal bool Is2008DateTimeType
+    /// <summary>
+    /// Indicates whether the column in the metadata is based on an expression
+    /// rather than a direct column reference.
+    /// </summary>
+    public bool IsExpression
     {
-        get
-        {
-            return SqlDbType.Date == type || SqlDbType.Time == type || SqlDbType.DateTime2 == type || SqlDbType.DateTimeOffset == type;
-        }
+        get => HasFlag(MetadataFlags.IsExpression);
+        set => SetFlag(MetadataFlags.IsExpression, value);
     }
 
-    internal bool IsLargeUdt
+    /// <summary>
+    /// Indicates whether the column is hidden in the result set metadata.
+    /// </summary>
+    public bool IsHidden
     {
-        get
-        {
-            return type == SqlDbType.Udt && length == int.MaxValue;
-        }
+        get => HasFlag(MetadataFlags.IsHidden);
+        set => SetFlag(MetadataFlags.IsHidden, value);
     }
 
+    /// <summary>
+    /// Indicates whether the column is an identity column in the database.
+    /// </summary>
+    public bool IsIdentity
+    {
+        get => HasFlag(MetadataFlags.IsIdentity);
+        set => SetFlag(MetadataFlags.IsIdentity, value);
+    }
+
+    /// <summary>
+    /// Indicates whether the column is part of the primary key in the table or view.
+    /// </summary>
+    public bool IsKey
+    {
+        get => HasFlag(MetadataFlags.IsKey);
+        set => SetFlag(MetadataFlags.IsKey, value);
+    }
+
+    /// <summary>
+    /// Indicates whether the column is a large UDT with the maximum allowable length.
+    /// </summary>
+    internal bool IsLargeUdt => type == SqlDbType.Udt && length == int.MaxValue;
+
+    /// <summary>
+    /// Indicates whether the column is read-only in the context of the data source.
+    /// </summary>
+    public bool IsReadOnly => !HasFlag(MetadataFlags.IsUpdatableMask);
+
+    /// <summary>
+    /// Gets the zero-based position of the column within the result set metadata.
+    /// </summary>
+    internal int Ordinal { get; }
+
+    /// <summary>
+    /// Gets or sets the operand value associated with the column metadata.
+    /// </summary>
+    internal ushort Operand { get; set; }
+
+    /// <summary>
+    /// Represents the schema name associated with the table containing the column.
+    /// </summary>
+    internal string SchemaName => multiPartTableName.SchemaName;
+
+    /// <summary>
+    /// Gets the name of the server associated with the column's metadata.
+    /// </summary>
+    internal string ServerName => multiPartTableName.ServerName;
+
+    /// <summary>
+    /// Represents the name of the table associated with the column metadata.
+    /// </summary>
+    internal string TableName => multiPartTableName.TableName;
+
+    /// <summary>
+    /// Indicates whether the associated column can be updated.
+    /// </summary>
+    public byte Updatability
+    {
+        get => (byte)(_flags & MetadataFlags.IsUpdatableMask);
+        set => _flags = (MetadataFlags)((value & (byte)MetadataFlags.IsUpdatableMask) | ((int)_flags & ~(byte)MetadataFlags.IsUpdatableMask));
+    }
+
+    /// <summary>
+    /// Creates a copy of the current TdsColumnMetadata instance.
+    /// </summary>
+    /// <returns>
+    /// A new TdsColumnMetadata object that is a copy of the current instance.
+    /// </returns>
     public object Clone()
     {
-        TdsColumnMetadata result = new TdsColumnMetadata(ordinal);
+        TdsColumnMetadata result = new TdsColumnMetadata(Ordinal);
         result.CopyFrom(this);
         result.column = column;
         result.baseColumn = baseColumn;
         result.multiPartTableName = multiPartTableName;
         result.tableNum = tableNum;
-        result.flags = flags;
+        result._flags = _flags;
         result.op = op;
-        result.operand = operand;
+        result.Operand = Operand;
         return result;
+    }
+
+    private bool HasFlag(MetadataFlags flag)
+    {
+        return (_flags & flag) != 0;
+    }
+
+    private void SetFlag(MetadataFlags flag, bool value)
+    {
+        _flags = value ? _flags | flag : _flags & ~flag;
     }
 }

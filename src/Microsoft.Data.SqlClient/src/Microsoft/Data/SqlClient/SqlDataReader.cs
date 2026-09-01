@@ -344,10 +344,10 @@ namespace Microsoft.Data.SqlClient
                                 typeSpecificNamePart2,
                                 typeSpecificNamePart3,
                                 colMetaData.IsNullable,
-                                colMetaData.serverName,
-                                colMetaData.catalogName,
-                                colMetaData.schemaName,
-                                colMetaData.tableName,
+                                colMetaData.ServerName,
+                                colMetaData.CatalogName,
+                                colMetaData.SchemaName,
+                                colMetaData.TableName,
                                 colMetaData.baseColumn,
                                 colMetaData.IsKey,
                                 colMetaData.IsIdentity,
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
                 DataRow schemaRow = schemaTable.NewRow();
 
                 schemaRow[columnName] = col.column;
-                schemaRow[ordinal] = col.ordinal;
+                schemaRow[ordinal] = col.Ordinal;
                 //
                 // be sure to return character count for string types, byte count otherwise
                 // col.length is always byte count so for unicode types, half the length
@@ -706,21 +706,21 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[isReadOnly] = col.IsReadOnly;
                 schemaRow[isColumnSet] = col.IsColumnSet;
 
-                if (!string.IsNullOrEmpty(col.serverName))
+                if (!string.IsNullOrEmpty(col.ServerName))
                 {
-                    schemaRow[baseServerName] = col.serverName;
+                    schemaRow[baseServerName] = col.ServerName;
                 }
-                if (!string.IsNullOrEmpty(col.catalogName))
+                if (!string.IsNullOrEmpty(col.CatalogName))
                 {
-                    schemaRow[baseCatalogName] = col.catalogName;
+                    schemaRow[baseCatalogName] = col.CatalogName;
                 }
-                if (!string.IsNullOrEmpty(col.schemaName))
+                if (!string.IsNullOrEmpty(col.SchemaName))
                 {
-                    schemaRow[baseSchemaName] = col.schemaName;
+                    schemaRow[baseSchemaName] = col.SchemaName;
                 }
-                if (!string.IsNullOrEmpty(col.tableName))
+                if (!string.IsNullOrEmpty(col.TableName))
                 {
-                    schemaRow[baseTableName] = col.tableName;
+                    schemaRow[baseTableName] = col.TableName;
                 }
                 if (!string.IsNullOrEmpty(col.baseColumn))
                 {
@@ -2921,8 +2921,8 @@ namespace Microsoft.Data.SqlClient
                 if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
                     // Wrap the sequential stream in an XmlReader
-                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
-                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    _currentStream = new SqlSequentialStream(this, metaData.Ordinal);
+                    _lastColumnWithDataChunkRead = metaData.Ordinal;
                     return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: isAsync);
                 }
                 else
@@ -2971,8 +2971,8 @@ namespace Microsoft.Data.SqlClient
                         encoding = metaData.encoding;
                     }
 
-                    _currentTextReader = new SqlSequentialTextReader(this, metaData.ordinal, encoding);
-                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    _currentTextReader = new SqlSequentialTextReader(this, metaData.Ordinal, encoding);
+                    _lastColumnWithDataChunkRead = metaData.Ordinal;
                     return (T)(object)_currentTextReader;
                 }
                 else
@@ -3001,8 +3001,8 @@ namespace Microsoft.Data.SqlClient
 
                 if ((metaType.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
                 {
-                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
-                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    _currentStream = new SqlSequentialStream(this, metaData.Ordinal);
+                    _lastColumnWithDataChunkRead = metaData.Ordinal;
                     return (T)(object)_currentStream;
                 }
                 else
