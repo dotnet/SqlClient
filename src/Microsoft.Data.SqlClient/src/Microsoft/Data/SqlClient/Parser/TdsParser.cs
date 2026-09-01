@@ -5216,7 +5216,7 @@ namespace Microsoft.Data.SqlClient.Parser
             for (int i = 0; i < cColumns; i++)
             {
                 // internal meta data class
-                _SqlMetaData col = altMetaDataSet[i];
+                TdsColumnMetadata col = altMetaDataSet[i];
 
                 result = stateObj.TryReadByte(out col.op);
                 if (result != TdsOperationStatus.Done)
@@ -5680,7 +5680,7 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsOperationStatus.Done;
         }
 
-        private TdsOperationStatus TryCommonProcessMetaData(TdsParserStateObject stateObj, _SqlMetaData col, SqlTceCipherInfoTable cipherTable, bool fColMD, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+        private TdsOperationStatus TryCommonProcessMetaData(TdsParserStateObject stateObj, TdsColumnMetadata col, SqlTceCipherInfoTable cipherTable, bool fColMD, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             byte byteLen;
             uint userType;
@@ -6021,7 +6021,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
             for (int i = 0; i < columns.Length; i++)
             {
-                _SqlMetaData col = columns[i];
+                TdsColumnMetadata col = columns[i];
 
                 TdsOperationStatus result = stateObj.TryReadByte(out _);
                 if (result != TdsOperationStatus.Done)
@@ -6213,7 +6213,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
             for (int i = 0; i < columns.Length; i++)
             {
-                _SqlMetaData md = columns[i];
+                TdsColumnMetadata md = columns[i];
                 Debug.Assert(md != null, "_SqlMetaData should not be null for column " + i.ToString(CultureInfo.InvariantCulture));
 
                 bool isNull;
@@ -6416,7 +6416,7 @@ namespace Microsoft.Data.SqlClient.Parser
         {
             for (int i = startCol; i < columns.Length; i++)
             {
-                _SqlMetaData md = columns[i];
+                TdsColumnMetadata md = columns[i];
 
                 TdsOperationStatus result = TrySkipValue(md, i, stateObj);
                 if (result != TdsOperationStatus.Done)
@@ -11404,7 +11404,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 {
                     if (metadataCollection[col] != null)
                     {
-                        _SqlMetaData md = metadataCollection[col];
+                        TdsColumnMetadata md = metadataCollection[col];
                         if (md.isEncrypted)
                         {
                             SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection, command);
@@ -11513,7 +11513,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// Writes the crypto metadata (as part of COLMETADATA token) for encrypted columns.
         /// </summary>
         /// <returns></returns>
-        internal void WriteCryptoMetadata(_SqlMetaData md, TdsParserStateObject stateObj)
+        internal void WriteCryptoMetadata(TdsColumnMetadata md, TdsParserStateObject stateObj)
         {
             if (!IsColumnEncryptionSupported || // TCE Feature supported
                 !md.isEncrypted || // Column is not encrypted
@@ -11563,7 +11563,7 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 if (metadataCollection[i] != null)
                 {
-                    _SqlMetaData md = metadataCollection[i];
+                    TdsColumnMetadata md = metadataCollection[i];
 
                     // read user type - 4 bytes 2005, 2 backwards
                         WriteInt(0x0, stateObj);

@@ -12,9 +12,9 @@ namespace Microsoft.Data.SqlClient
 {
     internal class SqlDbColumn : DbColumn
     {
-        private readonly _SqlMetaData _metadata;
+        private readonly TdsColumnMetadata _metadata;
 
-        internal SqlDbColumn(_SqlMetaData md)
+        internal SqlDbColumn(TdsColumnMetadata md)
         {
             _metadata = md;
             Populate();

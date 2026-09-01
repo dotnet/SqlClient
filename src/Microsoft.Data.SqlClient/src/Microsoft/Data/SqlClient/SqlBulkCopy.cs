@@ -28,9 +28,9 @@ namespace Microsoft.Data.SqlClient
     internal sealed class _ColumnMapping
     {
         internal readonly int _sourceColumnOrdinal;
-        internal readonly _SqlMetaData _metadata;
+        internal readonly TdsColumnMetadata _metadata;
 
-        internal _ColumnMapping(int columnId, _SqlMetaData metadata)
+        internal _ColumnMapping(int columnId, TdsColumnMetadata metadata)
         {
             _sourceColumnOrdinal = columnId;
             _metadata = metadata;
@@ -797,7 +797,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
-                _SqlMetaData metadata = metaDataSet[i];
+                TdsColumnMetadata metadata = metaDataSet[i];
 
                 bool matched = false;
                 bool rejected = false;
@@ -1161,7 +1161,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // Unified method to read a value from the current row
         private object GetValueFromSourceRow(int destRowIndex, out bool isSqlType, out bool isDataFeed, out bool isNull)
         {
-            _SqlMetaData metadata = _sortedColumnMappings[destRowIndex]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[destRowIndex]._metadata;
             int sourceOrdinal = _sortedColumnMappings[destRowIndex]._sourceColumnOrdinal;
 
             switch (_rowSourceType)
@@ -1437,7 +1437,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
-            _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[ordinal]._metadata;
 
             // Handle special Sql data types for SqlDataReader and DataTables
             ValueMethod method;
@@ -1754,7 +1754,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
-        private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
+        private object ConvertValue(object value, TdsColumnMetadata metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
         {
             coercedToDataFeed = false;
 
@@ -2503,7 +2503,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             bool isNull;
             object value = GetValueFromSourceRow(col, out isSqlType, out isDataFeed, out isNull); //this will return Task/null in future: as rTask
 
-            _SqlMetaData metadata = _sortedColumnMappings[col]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[col]._metadata;
             if (!isDataFeed)
             {
                 value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
