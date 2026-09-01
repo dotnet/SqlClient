@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
 
         // buffers and metadata
         private TdsColumnMetadataToken _metaData;                 // current metaData for the stream, it is lazily loaded
-        private _SqlMetaDataSetCollection _altMetaDataSetCollection;
+        private TdsAltMetadataCollection _altMetaDataSetCollection;
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
@@ -4184,11 +4184,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (_altMetaDataSetCollection == null)
             {
-                _altMetaDataSetCollection = new _SqlMetaDataSetCollection();
+                _altMetaDataSetCollection = new TdsAltMetadataCollection();
             }
             else if (_snapshot != null && object.ReferenceEquals(_snapshot._altMetaDataSetCollection, _altMetaDataSetCollection))
             {
-                _altMetaDataSetCollection = (_SqlMetaDataSetCollection)_altMetaDataSetCollection.Clone();
+                _altMetaDataSetCollection = (TdsAltMetadataCollection)_altMetaDataSetCollection.Clone();
             }
             _altMetaDataSetCollection.SetAltMetaData(metaDataSet);
             _metaDataConsumed = metaDataConsumed;
@@ -5647,7 +5647,7 @@ namespace Microsoft.Data.SqlClient
             public long _columnDataBytesRemaining;
 
             public TdsColumnMetadataToken _metadata;
-            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
+            public TdsAltMetadataCollection _altMetaDataSetCollection;
             public MultiPartTableName[] _tableNames;
 
             public SqlSequentialStream _currentStream;

@@ -2997,7 +2997,7 @@ namespace Microsoft.Data.SqlClient.Parser
                             if (stateObj._cleanupAltMetaDataSetArray == null)
                             {
                                 // create object on demand (lazy creation)
-                                stateObj._cleanupAltMetaDataSetArray = new _SqlMetaDataSetCollection();
+                                stateObj._cleanupAltMetaDataSetArray = new TdsAltMetadataCollection();
                             }
 
                             TdsColumnMetadataToken cleanupAltMetaDataSet;
