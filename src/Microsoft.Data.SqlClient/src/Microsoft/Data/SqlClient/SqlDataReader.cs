@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
                 int returnIndex = 0;
                 for (int index = 0; index < metaData.Length; index++)
                 {
-                    _SqlMetaData colMetaData = metaData[index];
+                    TdsColumnMetadata colMetaData = metaData[index];
 
                     if (!colMetaData.IsHidden)
                     {
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
 
             for (int i = 0; i < md.Length; i++)
             {
-                _SqlMetaData col = md[i];
+                TdsColumnMetadata col = md[i];
                 DataRow schemaRow = schemaTable.NewRow();
 
                 schemaRow[columnName] = col.column;
@@ -1187,7 +1187,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private string GetDataTypeNameInternal(_SqlMetaData metaData)
+        private string GetDataTypeNameInternal(TdsColumnMetadata metaData)
         {
             string dataTypeName = null;
 
@@ -1263,7 +1263,7 @@ namespace Microsoft.Data.SqlClient
 #if !NETFRAMEWORK
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-        private Type GetFieldTypeInternal(_SqlMetaData metaData)
+        private Type GetFieldTypeInternal(TdsColumnMetadata metaData)
         {
             Type fieldType = null;
 
@@ -1320,16 +1320,16 @@ namespace Microsoft.Data.SqlClient
 
         internal virtual int GetLocaleId(int i)
         {
-            _SqlMetaData sqlMetaData = MetaData[i];
+            TdsColumnMetadata tdsColumnMetadata = MetaData[i];
             int lcid;
 
-            if (sqlMetaData.cipherMD != null)
+            if (tdsColumnMetadata.cipherMD != null)
             {
                 // If this column is encrypted, get the collation from baseTI
                 //
-                if (sqlMetaData.baseTI.collation != null)
+                if (tdsColumnMetadata.baseTI.collation != null)
                 {
-                    lcid = sqlMetaData.baseTI.collation.LCID;
+                    lcid = tdsColumnMetadata.baseTI.collation.LCID;
                 }
                 else
                 {
@@ -1338,9 +1338,9 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (sqlMetaData.collation != null)
+                if (tdsColumnMetadata.collation != null)
                 {
-                    lcid = sqlMetaData.collation.LCID;
+                    lcid = tdsColumnMetadata.collation.LCID;
                 }
                 else
                 {
@@ -1383,7 +1383,7 @@ namespace Microsoft.Data.SqlClient
 #if !NETFRAMEWORK
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-        private Type GetProviderSpecificFieldTypeInternal(_SqlMetaData metaData)
+        private Type GetProviderSpecificFieldTypeInternal(TdsColumnMetadata metaData)
         {
             Type providerSpecificFieldType = null;
 
@@ -2599,7 +2599,7 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: This method is called by the fast-paths in Async methods and, therefore, should be resilient to the DataReader being closed
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
-        private object GetSqlValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
+        private object GetSqlValueFromSqlBufferInternal(SqlBuffer data, TdsColumnMetadata metaData)
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
@@ -2770,7 +2770,7 @@ namespace Microsoft.Data.SqlClient
 
         // NOTE: This method is called by the fast-paths in Async methods and, therefore, should be resilient to the DataReader being closed
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
-        private object GetValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
+        private object GetValueFromSqlBufferInternal(SqlBuffer data, TdsColumnMetadata metaData)
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
@@ -2843,7 +2843,7 @@ namespace Microsoft.Data.SqlClient
             return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: isAsync);
         }
 
-        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
+        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, TdsColumnMetadata metaData, bool isAsync)
         {
             // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
@@ -3760,7 +3760,7 @@ namespace Microsoft.Data.SqlClient
             // bother to read here.
             if (!_data[_sharedState._nextColumnDataToRead].IsNull)
             {
-                _SqlMetaData columnMetaData = _metaData[_sharedState._nextColumnDataToRead];
+                TdsColumnMetadata columnMetaData = _metaData[_sharedState._nextColumnDataToRead];
 
                 TdsOperationStatus result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                     _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
@@ -3870,7 +3870,7 @@ namespace Microsoft.Data.SqlClient
 
             do
             {
-                _SqlMetaData columnMetaData = _metaData[_sharedState._nextColumnHeaderToRead];
+                TdsColumnMetadata columnMetaData = _metaData[_sharedState._nextColumnHeaderToRead];
 
                 if (isSequentialAccess)
                 {
@@ -5835,7 +5835,7 @@ namespace Microsoft.Data.SqlClient
             DbColumn[] columnSchema = new DbColumn[md.Length];
             for (int i = 0; i < md.Length; i++)
             {
-                _SqlMetaData col = md[i];
+                TdsColumnMetadata col = md[i];
                 SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
 
                 if (_typeSystem <= SqlConnectionOptions.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
