@@ -3007,7 +3007,7 @@ namespace Microsoft.Data.SqlClient.Parser
                                 return result;
                             }
 
-                            stateObj._cleanupAltMetaDataSetArray.SetAltMetaData(cleanupAltMetaDataSet);
+                            stateObj._cleanupAltMetaDataSetArray.SetAltMetadata(cleanupAltMetaDataSet);
                             if (dataStream != null)
                             {
                                 byte metadataConsumedByte;
@@ -3045,7 +3045,7 @@ namespace Microsoft.Data.SqlClient.Parser
                                     return result;
                                 }
 
-                                result = TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj);
+                                result = TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetadata(altRowId), stateObj);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     // skip altRow
