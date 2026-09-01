@@ -691,7 +691,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal string RoutingDestination { get; private set; }
 
-        internal RoutingInfo RoutingInfo { get; private set; } = null;
+        internal TdsEnvChangeRoutingInfo RoutingInfo { get; private set; } = null;
 
         internal int ServerProcessId
         {
