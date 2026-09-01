@@ -7,12 +7,12 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal sealed class _SqlMetaDataSetCollection
+internal sealed class TdsAltMetadataCollection
 {
     private readonly List<TdsColumnMetadataToken> _altMetaDataSetArray;
     internal TdsColumnMetadataToken metaDataSet;
 
-    internal _SqlMetaDataSetCollection()
+    internal TdsAltMetadataCollection()
     {
         _altMetaDataSetArray = new List<TdsColumnMetadataToken>();
     }
@@ -50,7 +50,7 @@ internal sealed class _SqlMetaDataSetCollection
 
     public object Clone()
     {
-        _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
+        TdsAltMetadataCollection result = new TdsAltMetadataCollection() { metaDataSet = metaDataSet?.Clone() };
 
         foreach (TdsColumnMetadataToken set in _altMetaDataSetArray)
         {
