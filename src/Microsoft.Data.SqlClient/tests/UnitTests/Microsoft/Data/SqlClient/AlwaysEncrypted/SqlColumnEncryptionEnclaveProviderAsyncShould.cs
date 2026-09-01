@@ -787,8 +787,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             private void EnterAttestation()
             {
-                Interlocked.Increment(ref _attestationCount);
-                AttestationStarted.Set();
                 int concurrent = Interlocked.Increment(ref _concurrentAttestations);
 
                 int observed = Volatile.Read(ref _maxConcurrentAttestations);
@@ -803,6 +801,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
                     observed = previous;
                 }
+
+                Interlocked.Increment(ref _attestationCount);
+                AttestationStarted.Set();
             }
 
             private void ExitAttestation() => Interlocked.Decrement(ref _concurrentAttestations);
