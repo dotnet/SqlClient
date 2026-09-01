@@ -7,10 +7,10 @@ using System.Data;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal sealed class _SqlMetaData : SqlMetaDataPriv
+internal sealed class TdsColumnMetadata : SqlMetaDataPriv
 {
     [Flags]
-    private enum _SqlMetadataFlags : int
+    private enum MetadataFlags : int
     {
         None = 0,
 
@@ -33,14 +33,14 @@ internal sealed class _SqlMetaData : SqlMetaDataPriv
     internal byte tableNum;
     internal byte op;        // for altrow-columns only
     internal ushort operand; // for altrow-columns only
-    private _SqlMetadataFlags flags;
+    private MetadataFlags flags;
 
-    internal _SqlMetaData(int ordinal) : base()
+    internal TdsColumnMetadata(int ordinal) : base()
     {
         this.ordinal = ordinal;
     }
 
-    private bool HasFlag(_SqlMetadataFlags flag)
+    private bool HasFlag(MetadataFlags flag)
     {
         return (flags & flag) != 0;
     }
@@ -76,52 +76,52 @@ internal sealed class _SqlMetaData : SqlMetaDataPriv
 
     public byte Updatability
     {
-        get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
-        set => flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
+        get => (byte)(flags & MetadataFlags.IsUpdatableMask);
+        set => flags = (MetadataFlags)((value & (byte)MetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)MetadataFlags.IsUpdatableMask));
     }
 
     public bool IsReadOnly
     {
-        get => !HasFlag(_SqlMetadataFlags.IsUpdatableMask);
+        get => !HasFlag(MetadataFlags.IsUpdatableMask);
     }
 
     public bool IsDifferentName
     {
-        get => HasFlag(_SqlMetadataFlags.IsDifferentName);
-        set => Set(_SqlMetadataFlags.IsDifferentName, value);
+        get => HasFlag(MetadataFlags.IsDifferentName);
+        set => Set(MetadataFlags.IsDifferentName, value);
     }
 
     public bool IsKey
     {
-        get => HasFlag(_SqlMetadataFlags.IsKey);
-        set => Set(_SqlMetadataFlags.IsKey, value);
+        get => HasFlag(MetadataFlags.IsKey);
+        set => Set(MetadataFlags.IsKey, value);
     }
 
     public bool IsHidden
     {
-        get => HasFlag(_SqlMetadataFlags.IsHidden);
-        set => Set(_SqlMetadataFlags.IsHidden, value);
+        get => HasFlag(MetadataFlags.IsHidden);
+        set => Set(MetadataFlags.IsHidden, value);
     }
 
     public bool IsExpression
     {
-        get => HasFlag(_SqlMetadataFlags.IsExpression);
-        set => Set(_SqlMetadataFlags.IsExpression, value);
+        get => HasFlag(MetadataFlags.IsExpression);
+        set => Set(MetadataFlags.IsExpression, value);
     }
 
     public bool IsIdentity
     {
-        get => HasFlag(_SqlMetadataFlags.IsIdentity);
-        set => Set(_SqlMetadataFlags.IsIdentity, value);
+        get => HasFlag(MetadataFlags.IsIdentity);
+        set => Set(MetadataFlags.IsIdentity, value);
     }
 
     public bool IsColumnSet
     {
-        get => HasFlag(_SqlMetadataFlags.IsColumnSet);
-        set => Set(_SqlMetadataFlags.IsColumnSet, value);
+        get => HasFlag(MetadataFlags.IsColumnSet);
+        set => Set(MetadataFlags.IsColumnSet, value);
     }
 
-    private void Set(_SqlMetadataFlags flag, bool value)
+    private void Set(MetadataFlags flag, bool value)
     {
         flags = value ? flags | flag : flags & ~flag;
     }
@@ -144,7 +144,7 @@ internal sealed class _SqlMetaData : SqlMetaDataPriv
 
     public object Clone()
     {
-        _SqlMetaData result = new _SqlMetaData(ordinal);
+        TdsColumnMetadata result = new TdsColumnMetadata(ordinal);
         result.CopyFrom(this);
         result.column = column;
         result.baseColumn = baseColumn;
