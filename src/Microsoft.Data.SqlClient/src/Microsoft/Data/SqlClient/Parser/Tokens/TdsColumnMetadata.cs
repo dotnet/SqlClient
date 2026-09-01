@@ -43,18 +43,18 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
     internal string column;
 
     /// <summary>
-    /// Stores the multipart name details of the table associated with the column, including server,
-    /// catalog, schema, and table names.
-    /// </summary>
-    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryProcessOneTable.
-    internal MultiPartTableName multiPartTableName;
-
-    /// <summary>
     /// Represents the operation type associated with the column metadata, primarily used for
     /// alternate-row column processing.
     /// </summary>
     // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
     internal byte op;        // for altrow-columns only
+
+    /// <summary>
+    /// Stores the multipart name details of the table associated with the column, including server,
+    /// catalog, schema, and table names.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryProcessOneTable.
+    internal TdsTableName tableName;
 
     /// <summary>
     /// Identifies the table associated with a column, if applicable, within the context of a
@@ -73,7 +73,7 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
     /// <summary>
     /// Gets the catalog name associated with the column's metadata.
     /// </summary>
-    internal string CatalogName => multiPartTableName.CatalogName;
+    internal string CatalogName => tableName.CatalogName;
 
 
     internal bool Is2008DateTimeType => type is SqlDbType.Date
@@ -160,17 +160,17 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
     /// <summary>
     /// Represents the schema name associated with the table containing the column.
     /// </summary>
-    internal string SchemaName => multiPartTableName.SchemaName;
+    internal string SchemaName => tableName.SchemaName;
 
     /// <summary>
     /// Gets the name of the server associated with the column's metadata.
     /// </summary>
-    internal string ServerName => multiPartTableName.ServerName;
+    internal string ServerName => tableName.ServerName;
 
     /// <summary>
     /// Represents the name of the table associated with the column metadata.
     /// </summary>
-    internal string TableName => multiPartTableName.TableName;
+    internal string TableName => tableName.TableName;
 
     /// <summary>
     /// Indicates whether the associated column can be updated.
@@ -193,7 +193,7 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
         result.CopyFrom(this);
         result.column = column;
         result.baseColumn = baseColumn;
-        result.multiPartTableName = multiPartTableName;
+        result.tableName = tableName;
         result.tableNum = tableNum;
         result._flags = _flags;
         result.op = op;
