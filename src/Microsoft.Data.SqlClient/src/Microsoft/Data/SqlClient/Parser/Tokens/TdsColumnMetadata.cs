@@ -8,7 +8,8 @@ using System.Data;
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
 /// <summary>
-/// Represents metadata information for a specific column in a TDS stream.
+/// Represents metadata information for a specific column in a TDS stream. Corresponds with a
+/// single column withing a SQLCOLMETADATA/SQLALTMETADATA token.
 /// </summary>
 internal sealed class TdsColumnMetadata : SqlMetaDataPriv
 {
