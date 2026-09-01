@@ -243,6 +243,72 @@ Describe 'Open-LocalizationPr.ps1' {
         }
     }
 
+    Context 'When pushing over an existing remote branch' {
+
+        BeforeEach {
+            $global:remoteSha = 'remote0000'
+            $global:remoteTree = 'differenttree'
+            $global:remoteParent = 'staleparent'
+            $global:openPullRequests = @(
+                @{ number = 4612; html_url = 'https://github.com/dotnet/SqlClient/pull/4612' }
+            )
+        }
+
+        It 'Leases the push against the observed remote SHA' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $push = @($global:gitCalls | Where-Object { $_ -like 'push*' })
+            $push.Count | Should -Be 1
+            $push[0] | Should -BeLike '*--force-with-lease=refs/heads/dev/automation/onelocbuild:remote0000*'
+            $push[0] | Should -Not -Match '(^|\s)--force(\s|$)'
+        }
+    }
+
+    Context 'When the remote branch does not exist yet' {
+
+        It 'Pushes without forcing' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $push = @($global:gitCalls | Where-Object { $_ -like 'push*' })
+            $push.Count | Should -Be 1
+            $push[0] | Should -Not -Match '--force'
+        }
+    }
+
+    Context 'Credential handling' {
+
+        It 'Keeps the access token out of the git remote URL' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'super-secret-token-value' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $global:gitCalls | Should -Not -Match 'super-secret-token-value'
+            @($global:gitCalls | Where-Object { $_ -like 'clone*' })[0] |
+                Should -BeLike '*https://github.com/dotnet/SqlClient.git*'
+        }
+
+        It 'Clears the git credential environment afterwards' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $env:GIT_CONFIG_COUNT | Should -BeNullOrEmpty
+            $env:GIT_CONFIG_VALUE_0 | Should -BeNullOrEmpty
+        }
+    }
+
     Context 'When running in dry-run mode' {
 
         It 'Neither pushes nor creates a pull request' {

@@ -182,15 +182,29 @@ function Invoke-GitHubApi {
         $status = $null
         $responseBody = ''
 
+        # PowerShell 7 already carries the response body on the error record and
+        # exposes an HttpResponseMessage, which has no GetResponseStream(). Windows
+        # PowerShell leaves ErrorDetails empty but does expose the stream, so try
+        # the error record first and keep the stream as a fallback.
+        if ($null -ne $_.ErrorDetails -and -not [string]::IsNullOrWhiteSpace($_.ErrorDetails.Message)) {
+            $responseBody = $_.ErrorDetails.Message
+        }
+
         if ($_.Exception.PSObject.Properties.Name -contains 'Response' -and $null -ne $_.Exception.Response) {
             $status = $_.Exception.Response.StatusCode.value__
-            try {
-                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                $responseBody = $reader.ReadToEnd()
-            }
-            catch {
-                # The response stream may already be consumed; the status code
-                # alone is still useful.
+
+            if ([string]::IsNullOrWhiteSpace($responseBody)) {
+                try {
+                    $stream = $_.Exception.Response.GetResponseStream()
+                    if ($null -ne $stream) {
+                        $reader = New-Object System.IO.StreamReader($stream)
+                        try { $responseBody = $reader.ReadToEnd() } finally { $reader.Dispose() }
+                    }
+                }
+                catch {
+                    # No readable stream (PowerShell 7) or it was already consumed;
+                    # the status code alone is still useful.
+                }
             }
         }
 
@@ -273,10 +287,16 @@ try {
         Remove-Item -LiteralPath $WorkingDirectory -Recurse -Force
     }
 
-    # The token is embedded in the remote URL so git can push without an
-    # interactive credential prompt. Git masks it in its own output, and the
-    # pipeline masks the secret in task logs.
-    $cloneUrl = "https://x-access-token:$AccessToken@github.com/$repoSlug.git"
+    # Authenticate through git's environment-based config rather than the remote
+    # URL, so the token never lands in .git/config, on a process command line, or
+    # in Invoke-Git's exception messages. GIT_CONFIG_* is honoured by git 2.31+
+    # and applies to clone, fetch and push alike.
+    $basicAuth = [Convert]::ToBase64String(
+        [Text.Encoding]::ASCII.GetBytes("x-access-token:$AccessToken"))
+    $env:GIT_CONFIG_COUNT = '1'
+    $env:GIT_CONFIG_KEY_0 = 'http.https://github.com/.extraheader'
+    $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $basicAuth"
+    $cloneUrl = "https://github.com/$repoSlug.git"
 
     Write-Host "Cloning $repoSlug@$BaseBranch..."
     Invoke-Git clone --branch $BaseBranch --quiet $cloneUrl $WorkingDirectory
@@ -345,10 +365,18 @@ try {
         Write-Host "Branch '$BranchName' already has these exact changes on top of '$BaseBranch'. Skipping push."
     }
     elseif ($DryRun) {
-        Write-Host "[DryRun] Would force-push '$BranchName' to $repoSlug."
+        Write-Host "[DryRun] Would push '$BranchName' to $repoSlug."
     }
     else {
-        Invoke-Git push origin "${BranchName}:refs/heads/$BranchName" --force --quiet
+        # Pin the push to the remote SHA observed above so an overlapping run that
+        # already updated the branch makes this push fail loudly, instead of
+        # silently discarding the other run's localization result.
+        $pushArgs = @('push', 'origin', "${BranchName}:refs/heads/$BranchName", '--quiet')
+        if ($remoteBranchExists) {
+            $pushArgs += "--force-with-lease=refs/heads/${BranchName}:$($remoteBranchSha.Trim())"
+        }
+
+        Invoke-Git @pushArgs
         Write-Host "Pushed '$BranchName'."
     }
 
@@ -415,6 +443,10 @@ try {
 }
 finally {
     Set-Location -LiteralPath $originalLocation
+
+    Remove-Item Env:\GIT_CONFIG_COUNT -ErrorAction SilentlyContinue
+    Remove-Item Env:\GIT_CONFIG_KEY_0 -ErrorAction SilentlyContinue
+    Remove-Item Env:\GIT_CONFIG_VALUE_0 -ErrorAction SilentlyContinue
 
     if ($ownedWorkingDirectory -and (Test-Path -LiteralPath $WorkingDirectory)) {
         Remove-Item -LiteralPath $WorkingDirectory -Recurse -Force -ErrorAction SilentlyContinue
