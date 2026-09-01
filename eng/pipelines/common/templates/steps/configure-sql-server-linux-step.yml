@@ -16,8 +16,16 @@ parameters:
 
 steps:
 
+  # Make sure sqlcmd is available; the SQL Server images do not always ship it.
+  - template: /eng/pipelines/common/templates/steps/install-sqlcmd-linux-step.yml@self
+
   # Configure SQL Server.
   - bash: |
+      if [ -z "${SQLCMD_BIN:-}" ]; then
+        echo "ERROR: sqlcmd was not resolved by the 'Install sqlcmd [Linux]' step."
+        exit 1
+      fi
+
       sudo systemctl stop mssql-server
 
       # Password for the SA user (required)
@@ -39,10 +47,11 @@ steps:
       do
         echo Waiting for SQL Server to start...
         sleep 3s
-        /opt/mssql-tools/bin/sqlcmd \
+        "$SQLCMD_BIN" \
           -S localhost \
           -U SA \
           -P "$MSSQL_SA_PW" \
+          ${SQLCMD_TRUST_ARG:-} \
           -Q "SELECT @@VERSION" 2>/dev/null
         errstatus=$?
         ((counter++))
@@ -55,3 +64,6 @@ steps:
         exit $errstatus
       fi
     displayName: 'Configure SQL Server [Linux]'
+    env:
+      SQLCMD_BIN: $(SqlCmdBin)
+      SQLCMD_TRUST_ARG: $(SqlCmdTrustArg)
