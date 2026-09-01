@@ -1417,6 +1417,9 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
       </value>
       <remarks>
         <para>
+          This property is obsolete. Use <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MultiSubnetFailover" /> instead.
+        </para>
+        <para>
           If the <c>Multi Subnet Failover</c> key is set to <c>true</c>, <c>Transparent Network IP Resolution</c> is ignored.
         </para>
         <para>

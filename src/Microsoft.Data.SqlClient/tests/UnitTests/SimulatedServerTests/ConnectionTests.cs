@@ -111,7 +111,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false
+                #pragma warning restore 618
 #endif
             };
 
@@ -252,7 +254,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+                #pragma warning restore 618
 #endif
             };
 
@@ -290,7 +294,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -338,7 +344,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
