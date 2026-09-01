@@ -21,17 +21,17 @@ internal sealed class TdsColumnMetadataToken
     // @TODO: This cannot be converted to an auto-property yet because it is accessed as an out parameter from TryReadUint16
     internal ushort id;
 
-    private readonly _SqlMetaData[] _metadataArray;
+    private readonly TdsColumnMetadata[] _metadataArray;
     private int _hiddenColumnCount; // @TODO: -1 is used as magic value for "unread hidden columns". We should derive all this from _visibleColumnMap?
     private int[] _visibleColumnMap;
 
     internal TdsColumnMetadataToken(int count)
     {
         _hiddenColumnCount = -1;
-        _metadataArray = new _SqlMetaData[count];
+        _metadataArray = new TdsColumnMetadata[count];
         for (int i = 0; i < _metadataArray.Length; ++i)
         {
-            _metadataArray[i] = new _SqlMetaData(i);
+            _metadataArray[i] = new TdsColumnMetadata(i);
         }
     }
 
@@ -56,10 +56,10 @@ internal sealed class TdsColumnMetadataToken
         }
         else
         {
-            _metadataArray = new _SqlMetaData[original._metadataArray.Length];
+            _metadataArray = new TdsColumnMetadata[original._metadataArray.Length];
             for (int idx = 0; idx < _metadataArray.Length; idx++)
             {
-                _metadataArray[idx] = (_SqlMetaData)original._metadataArray[idx].Clone();
+                _metadataArray[idx] = (TdsColumnMetadata)original._metadataArray[idx].Clone();
             }
         }
     }
@@ -68,7 +68,7 @@ internal sealed class TdsColumnMetadataToken
     /// Provides access to the metadata array associated with this token. Allows retrieval and
     /// updating of metadata at a specific index.
     /// </summary>
-    internal _SqlMetaData this[int index]
+    internal TdsColumnMetadata this[int index]
     {
         get => _metadataArray[index];
 
