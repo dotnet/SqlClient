@@ -129,7 +129,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "test",
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
 
@@ -199,7 +201,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -246,7 +250,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -388,7 +394,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);

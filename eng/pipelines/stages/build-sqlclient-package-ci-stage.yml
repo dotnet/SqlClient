@@ -18,7 +18,7 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
-  # The name of the 1ES pool to run in.
+  # The name of the 1ES pool to run in. Hosted Azure Pipelines pools are not supported.
   #
   # Supplied by the caller so that the pool name flows down from the pipeline
   # root, rather than being read from a variable group at this depth.

@@ -13,7 +13,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install gh-aw extension
         uses: github/gh-aw-actions/setup-cli@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9

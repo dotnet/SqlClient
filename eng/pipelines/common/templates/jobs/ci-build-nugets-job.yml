@@ -19,7 +19,7 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
-  # The name of Azure Pipelines pool to use.
+  # The name of the 1ES pool to use.
   #
   # Supplied by the caller so that the pool name flows down from the pipeline
   # root, rather than being read from a variable group at this depth.
@@ -27,7 +27,7 @@ parameters:
   - name: poolName
     type: string
 
-  # The name of the Azure Pipelines image to use within the pool.
+  # The imageOverride capability required from the 1ES pool.
   - name: imageOverride
     type: string
     default: ADO-Win25
