@@ -3990,7 +3990,7 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
-        /// Decides whether a connection reset must preserve the server side transaction, i.e.
+        /// Decides whether a connection reset must preserve the server-side transaction, i.e.
         /// whether <c>ST_RESET_CONNECTION_PRESERVE_TRANSACTION</c> should be sent instead of a
         /// plain <c>ST_RESET_CONNECTION</c>.
         /// </summary>
@@ -4016,7 +4016,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <item>
         /// It is the <b>root of a delegated transaction</b>: the transaction was delegated to
         /// this connection, so it lives on the server session this connection owns. Missing this
-        /// case resets the server side transaction out from under System.Transactions, which
+        /// case resets the server-side transaction out from under System.Transactions, which
         /// later breaks the connection while it is being recycled through the pool.
         /// See https://github.com/dotnet/SqlClient/issues/4001.
         /// </item>

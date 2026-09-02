@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 ///   </item>
 ///   <item>
 ///   Testing only <c>EnlistedTransaction</c> misses delegated transaction roots, whose
-///   server side transaction is then reset out from under System.Transactions, corrupting the
+///   server-side transaction is then reset out from under System.Transactions, corrupting the
 ///   connection as it is recycled through the pool
 ///   (https://github.com/dotnet/SqlClient/issues/4001).
 ///   </item>
