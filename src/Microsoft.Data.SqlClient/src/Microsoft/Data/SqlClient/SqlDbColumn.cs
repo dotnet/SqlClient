@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 
             IsReadOnly = _metadata.IsReadOnly;
 
-            UdtAssemblyQualifiedName = _metadata.Udt?.AssemblyQualifiedName;
+            UdtAssemblyQualifiedName = _metadata.UdtTypeInfo?.AssemblyQualifiedName;
 
         }
 
