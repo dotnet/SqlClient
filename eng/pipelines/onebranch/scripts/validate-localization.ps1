@@ -69,6 +69,7 @@ foreach ($localizedFile in $localizedFiles) {
     $localizedFilesByName.Add($localizedFile.Name, $localizedFile)
 }
 
+$failures = [System.Collections.Generic.List[string]]::new()
 $allowedEnglishMatches = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new([System.StringComparer]::Ordinal)
 if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
     if (-not (Test-Path -LiteralPath $AllowlistPath -PathType Leaf)) {
@@ -83,13 +84,18 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
 
     foreach ($fileProperty in $englishValueMatchesProperty.Value.PSObject.Properties) {
         if (-not $localizedFilesByName.ContainsKey($fileProperty.Name)) {
-            throw "Localization allowlist file references unknown resource file '$($fileProperty.Name)'."
+            $failures.Add("Localization allowlist file references unknown resource file '$($fileProperty.Name)'.")
+            continue
         }
 
         $keys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
         foreach ($key in @($fileProperty.Value)) {
-            if ([string]::IsNullOrWhiteSpace($key) -or -not $englishStrings.ContainsKey($key)) {
-                throw "Localization allowlist file references unknown or empty resource key '$key' for '$($fileProperty.Name)'."
+            if ([string]::IsNullOrWhiteSpace($key)) {
+                throw "Localization allowlist file contains an empty resource key for '$($fileProperty.Name)'."
+            }
+            if (-not $englishStrings.ContainsKey($key)) {
+                $failures.Add("Localization allowlist file references unknown resource key '$key' for '$($fileProperty.Name)'.")
+                continue
             }
             if ([string]::IsNullOrEmpty($englishStrings[$key])) {
                 throw "Localization allowlist key '$key' for '$($fileProperty.Name)' does not have a non-empty English value."
@@ -102,7 +108,6 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
     }
 }
 
-$failures = [System.Collections.Generic.List[string]]::new()
 $allowedMatchCount = 0
 foreach ($localizedFile in $localizedFiles) {
     $localizedStrings = Get-ResourceStrings -Path $localizedFile.FullName
