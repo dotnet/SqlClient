@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal sealed class SqlMetaDataUdt
+internal sealed class TdsUdtTypeInfo
 {
     #if NET
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
@@ -22,7 +22,7 @@ internal sealed class SqlMetaDataUdt
 
     internal string AssemblyQualifiedName;
 
-    public void CopyFrom(SqlMetaDataUdt original)
+    public void CopyFrom(TdsUdtTypeInfo original)
     {
         if (original != null)
         {
