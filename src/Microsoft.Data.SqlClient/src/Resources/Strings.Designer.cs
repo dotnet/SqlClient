@@ -916,6 +916,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback {
