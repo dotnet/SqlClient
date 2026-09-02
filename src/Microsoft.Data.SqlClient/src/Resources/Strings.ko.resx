@@ -2671,7 +2671,7 @@
     <value>SqlDbType.SmallDateTime 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 1900년 1월 1일 오전 12:00:00에서 2079년 6월 6일 오후 11:59:59 사이에 있어야 합니다.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
-    <value>SqlDbType.Time 오버플로가 발생했습니다.  '{0}' 값이 범위를 벗어났습니다. 이 값은 00:00:00.0000000에서 23:59:59.9999999 사이여야 합니다.</value>
+    <value>SqlDbType.Time 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 00:00:00.0000000에서 23:59:59.9999999 사이여야 합니다.</value>
   </data>
   <data name="SQL_MoneyOverflow" xml:space="preserve">
     <value>SqlDbType.SmallMoney 오버플로가 발생했습니다. '{0}' 값이 범위를 벗어났습니다. 이 값은 -214,748.3648에서 214,748.3647 사이여야 합니다.</value>
@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>서명된 엔클레이브 보고서가 세션을 설정하는 데 사용된 엔클레이브 공개 키에 바인딩되지 않아 엔클레이브 증명이 실패했습니다. 엔클레이브 공개 키는 서명된 보고서에 커밋된 값과 일치해야 합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 참조하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server에서 수신된 enclave 보고서의 형식이 잘못되었습니다. 고객 지원 서비스에 문의하세요.</value>
   </data>
@@ -4649,6 +4652,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>'ServerCertificate' 옵션으로 지정된 인증서 파일을 로드하거나 구문 분석할 수 없습니다. '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>'ServerCertificate' 옵션이 지정되었지만 서버에서 비교할 수 있는 인증서를 제공하지 않았습니다.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>열 '{0}'의 JsonDocument를 가져오려는 시도가 잘못되었습니다. JsonDocument는 json 형식의 열에 대해서만 지원됩니다.</value>

@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Ověření podpisu sestavy enklávy se nezdařilo. Podpis sestavy neodpovídá podpisu vypočítanému pomocí kořenového certifikátu HGS. Ověřte mapování DNS pro koncový bod. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud je to správně, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Ověření identity enklávy se nezdařilo, protože podepsaná sestava enklávy nebyla svázána s veřejným klíčem enklávy použitým k vytvoření relace. Veřejný klíč enklávy musí odpovídat hodnotě potvrzené podepsanou sestavou – další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud je to správně, obraťte se na oddělení služeb zákazníkům.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Sestava enklávy přijatá z SQL Server nemá správný formát. Obraťte se na služby zákaznické podpory.</value>
   </data>
@@ -4649,6 +4652,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Certifikát poskytnutý serverem neodpovídá certifikátu poskytnutému možností ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>Soubor certifikátu určený možností 'ServerCertificate' se nepodařilo načíst ani parsovat: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>Byla zadána možnost 'ServerCertificate', ale server nepředložil certifikát, který by s ním bylo možné porovnat.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Neplatný pokus o získání třídy JsonDocument ve sloupci {0}. Třída JsonDocument se podporuje jenom pro sloupce typu json.</value>

@@ -2668,7 +2668,7 @@
     <value>Alokacja pamięci dla połączenia wewnętrznego nie powiodła się.</value>
   </data>
   <data name="SQL_SmallDateTimeOverflow" xml:space="preserve">
-    <value>Przepełnienie elementu SqlDbType.SmallDateTime.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 1.01.1900 12:00:00 do 6.06.2079 23:59:59.</value>
+    <value>Przepełnienie elementu SqlDbType.SmallDateTime.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 1.01.1900 00:00:00 do 6.06.2079 23:59:59.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
     <value>Przepełnienie elementu SqlDbType.Time.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 00:00:00.0000000 do 23:59:59.9999999.</value>
@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Weryfikacja podpisu w raporcie enklawy zakończyła się niepowodzeniem. Podpis raportu jest niezgodny z podpisem obliczonym przy użyciu certyfikatu głównego usługi Ochrona hosta. Sprawdź mapowanie DNS dla punktu końcowego — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Zaświadczanie enklawy nie powiodło się, ponieważ podpisany raport enklawy nie został powiązany z kluczem publicznym enklawy używanym do ustanowienia sesji. Klucz publiczny enklawy musi być zgodny z wartością zatwierdzoną przez podpisany raport — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Raport enklawy odebrany z systemu SQL Server nie ma prawidłowego formatu. Skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
@@ -4649,6 +4652,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Certyfikat dostarczony przez serwer nie jest zgodny z certyfikatem dostarczonym przez opcję ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>Nie można załadować lub przeanalizować pliku certyfikatu określonego przez opcję „ServerCertificate”: „{0}”.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>Określono opcję „ServerCertificate”, ale serwer nie przedstawia certyfikatu, który można porównać z nim.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Nieprawidłowa próba pobrania pliku JsonDocument w kolumnie „{0}”. Obiekt JsonDocument jest obsługiwany tylko w przypadku kolumn typu JSON.</value>
