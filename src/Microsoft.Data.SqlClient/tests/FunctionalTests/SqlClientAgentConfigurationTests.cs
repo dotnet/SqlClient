@@ -13,13 +13,14 @@ namespace Microsoft.Data.SqlClient.Tests
     /// </summary>
     public class SqlClientAgentConfigurationTests
     {
-        // The FunctionalTests project employs a .NET Framework app.config file
-        // that registers the EntityFramework agent.  Verify that this consumes
-        // the single process-wide registration, so a later programmatic
-        // registration is rejected.
-        //
-        // This cannot be verified on .NET because the test host substitutes its
-        // own configuration file for the one built alongside this assembly.
+        /// <summary>
+        /// Verifies that an agent registered in the application configuration file consumes the
+        /// single process-wide registration, so a later programmatic registration is rejected.
+        /// </summary>
+        /// <remarks>
+        /// This cannot be verified on .NET because the test host substitutes its own configuration
+        /// file for the one built alongside this assembly.
+        /// </remarks>
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public void AppConfigAgent_PreventsProgrammaticRegistration()
         {

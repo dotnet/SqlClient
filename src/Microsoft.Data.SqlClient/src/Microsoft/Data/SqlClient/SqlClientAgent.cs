@@ -15,8 +15,7 @@ namespace Microsoft.Data.SqlClient;
 /// <summary>
 /// Identifies known middleware agents that use Microsoft.Data.SqlClient.
 /// </summary>
-[CLSCompliant(false)]
-public enum SqlClientAgent : ushort
+public enum SqlClientAgent
 {
     /// <summary>The Microsoft Entity Framework Core SQL Server provider.</summary>
     EntityFramework = 1,
@@ -99,7 +98,7 @@ internal static class SqlClientAgentRegistration
     internal static void Register(SqlClientAgent id)
     {
         Validate(id);
-        if (Interlocked.CompareExchange(ref s_agentId, (ushort)id, 0) != 0)
+        if (Interlocked.CompareExchange(ref s_agentId, (int)id, 0) != 0)
         {
             throw SQL.SqlClientAgentAlreadyRegistered();
         }
@@ -131,7 +130,7 @@ internal static class SqlClientAgentRegistration
         if (value is null
             || value.IndexOf(',') >= 0
             || !Enum.TryParse(value, ignoreCase: true, out SqlClientAgent id)
-            || (ushort)id == 0)
+            || !IsInRange(id))
         {
             throw SQL.InvalidSqlClientAgent(value ?? string.Empty, nameof(value));
         }
@@ -154,11 +153,24 @@ internal static class SqlClientAgentRegistration
     /// </exception>
     private static void Validate(SqlClientAgent id)
     {
-        if ((ushort)id == 0 || !Enum.IsDefined(typeof(SqlClientAgent), id))
+        if (!IsInRange(id) || !Enum.IsDefined(typeof(SqlClientAgent), id))
         {
             throw SQL.InvalidSqlClientAgent(id.ToString(), nameof(id));
         }
     }
+
+    /// <summary>
+    ///   Whether the given agent falls within the identifier space reported on
+    ///   the wire.
+    /// </summary>
+    /// <remarks>
+    ///   Identifiers are 16-bit and positive.  Zero is reserved to mean "no
+    ///   agent registered".
+    /// </remarks>
+    /// <param name="id">The agent to test.</param>
+    /// <returns>True if the agent is in range, false otherwise.</returns>
+    private static bool IsInRange(SqlClientAgent id) =>
+        (int)id > 0 && (int)id <= ushort.MaxValue;
 
     /// <summary>
     ///   <para>
@@ -170,14 +182,30 @@ internal static class SqlClientAgentRegistration
     ///   The configured agent identifier, or 0 when no valid agent is
     ///   configured.
     /// </returns>
-    private static int LoadFromAppConfig()
+    private static int LoadFromAppConfig() =>
+        LoadAgent(() => ConfigurationManager.GetSection(SqlClientAgentConfigurationSection.Name));
+
+    /// <summary>
+    ///   <para>
+    ///     Read the agent from the section returned by the given loader.
+    ///   </para>
+    ///   <para>All known exceptions are consumed.</para>
+    /// </summary>
+    /// <param name="getSection">
+    ///   Returns the configuration section, or null when it is absent.
+    /// </param>
+    /// <returns>
+    ///   The configured agent identifier, or 0 when no valid agent is
+    ///   configured.
+    /// </returns>
+    internal static int LoadAgent(Func<object?> getSection)
     {
         // This runs during static initialization on the login path, so any
         // escaping exception would surface as a TypeInitializationException on
         // every connection attempt.  Telemetry must never break connections.
         try
         {
-            object section = ConfigurationManager.GetSection(SqlClientAgentConfigurationSection.Name);
+            object? section = getSection();
             if (section is null)
             {
                 return 0;
@@ -185,7 +213,7 @@ internal static class SqlClientAgentRegistration
 
             if (section is SqlClientAgentConfigurationSection configurationSection)
             {
-                return (ushort)Parse(configurationSection.Id);
+                return (int)Parse(configurationSection.Id);
             }
 
             SqlClientEventSource.Log.TryTraceEvent(

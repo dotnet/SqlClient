@@ -33,10 +33,15 @@ internal static class UserAgent
     ///     never larger than 256 characters.
     ///   </para>
     ///   <para>
-    ///     The format is pipe ('|') delimited into 7 parts, plus an optional
-    ///     8th part:
+    ///     The format is pipe ('|') delimited into 7 parts:
     ///
-    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}[|{Agent Id}]</code>
+    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
+    ///   </para>
+    ///   <para>
+    ///     This is the base value, and never carries an agent identifier.  The
+    ///     payload actually sent at login may append an optional 8th
+    ///     <c>{Agent Id}</c> part; see
+    ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Version}</c> part is the version of the driver,
@@ -79,14 +84,12 @@ internal static class UserAgent
     ///     Maximum length is 44 characters.
     ///   </para>
     ///   <para>
-    ///     The <c>{Agent Id}</c> part is optional and is appended only when an
+    ///     The <c>{Agent Id}</c> part is never present in this value.  It is
+    ///     appended by <see cref="GetUcs2Bytes">GetUcs2Bytes</see> when an
     ///     agent has been registered via
     ///     <see cref="SqlConnection.RegisterSqlClientAgent">
     ///       RegisterSqlClientAgent
     ///     </see>.
-    ///     When no agent is registered, the payload ends after
-    ///     <c>{Runtime Info}</c>.  See
-    ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
     ///     Maximum length is 8 characters.
     ///   </para>
     ///   <para>
@@ -146,6 +149,8 @@ internal static class UserAgent
         // An agent is registered at most once per process, so a single cached
         // entry serves every login.  The pair is cached behind one reference so
         // readers never observe a torn ReadOnlyMemory<byte>.
+        //
+        // The identifier space is 16-bit, enforced when the agent is registered.
         ushort agentId = (ushort)agent.Value;
         AgentPayload? cached = Volatile.Read(ref s_agentPayload);
         if (cached is not null && cached.AgentId == agentId)

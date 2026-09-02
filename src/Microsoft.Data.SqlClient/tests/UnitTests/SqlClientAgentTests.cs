@@ -18,25 +18,25 @@ public class SqlClientAgentTests
     [Fact]
     public void KnownAgentIdentifiers_AreStable()
     {
-        Assert.Equal((ushort)1, (ushort)SqlClientAgent.EntityFramework);
-        Assert.Equal((ushort)2, (ushort)SqlClientAgent.SemanticKernel);
-        Assert.Equal((ushort)3, (ushort)SqlClientAgent.ManagementStudio);
-        Assert.Equal((ushort)4, (ushort)SqlClientAgent.SqlManagementObjects);
-        Assert.Equal((ushort)5, (ushort)SqlClientAgent.DataTierApplicationFramework);
-        Assert.Equal((ushort)6, (ushort)SqlClientAgent.SqlToolsService);
-        Assert.Equal((ushort)7, (ushort)SqlClientAgent.AspNetCoreDistributedSqlServerCache);
-        Assert.Equal((ushort)8, (ushort)SqlClientAgent.EntityFramework6);
-        Assert.Equal((ushort)9, (ushort)SqlClientAgent.AzureFunctionsSqlExtension);
-        Assert.Equal((ushort)10, (ushort)SqlClientAgent.OrleansAdoNet);
-        Assert.Equal((ushort)11, (ushort)SqlClientAgent.DurableTaskSqlServer);
+        Assert.Equal(1, (int)SqlClientAgent.EntityFramework);
+        Assert.Equal(2, (int)SqlClientAgent.SemanticKernel);
+        Assert.Equal(3, (int)SqlClientAgent.ManagementStudio);
+        Assert.Equal(4, (int)SqlClientAgent.SqlManagementObjects);
+        Assert.Equal(5, (int)SqlClientAgent.DataTierApplicationFramework);
+        Assert.Equal(6, (int)SqlClientAgent.SqlToolsService);
+        Assert.Equal(7, (int)SqlClientAgent.AspNetCoreDistributedSqlServerCache);
+        Assert.Equal(8, (int)SqlClientAgent.EntityFramework6);
+        Assert.Equal(9, (int)SqlClientAgent.AzureFunctionsSqlExtension);
+        Assert.Equal(10, (int)SqlClientAgent.OrleansAdoNet);
+        Assert.Equal(11, (int)SqlClientAgent.DurableTaskSqlServer);
     }
 
     /// <summary>Verifies configuration accepts enum names and forward-compatible numeric identifiers.</summary>
     [Theory]
     [InlineData("SqlToolsService", 6)]
     [InlineData("42", 42)]
-    public void Parse_AcceptsNamedAndNumericIdentifiers(string value, ushort expected)
-        => Assert.Equal(expected, (ushort)SqlClientAgentRegistration.Parse(value));
+    public void Parse_AcceptsNamedAndNumericIdentifiers(string value, int expected)
+        => Assert.Equal(expected, (int)SqlClientAgentRegistration.Parse(value));
 
     /// <summary>Verifies invalid and zero identifiers are rejected.</summary>
     [Theory]
@@ -46,6 +46,9 @@ public class SqlClientAgentTests
     // Enum.TryParse would otherwise combine these into an unrelated agent.
     [InlineData("EntityFramework,SemanticKernel")]
     [InlineData("1,2")]
+    // Identifiers are 16-bit and positive.
+    [InlineData("-1")]
+    [InlineData("70000")]
     public void Parse_RejectsInvalidIdentifiers(string value)
         => Assert.ThrowsAny<ArgumentException>(() => SqlClientAgentRegistration.Parse(value));
 
@@ -53,7 +56,8 @@ public class SqlClientAgentTests
     [Theory]
     [InlineData(0)]
     [InlineData(42)]
-    public void Register_RejectsUndeclaredIdentifiers(ushort id)
+    [InlineData(-1)]
+    public void Register_RejectsUndeclaredIdentifiers(int id)
         => Assert.Throws<ArgumentOutOfRangeException>(
             () => SqlConnection.RegisterSqlClientAgent((SqlClientAgent)id));
 
@@ -68,11 +72,11 @@ public class SqlClientAgentTests
     [InlineData("EntityFramework", 1)]
     [InlineData("managementstudio", 3)]
     [InlineData("42", 42)]
-    public void ConfigurationSection_YieldsAgent(string id, ushort expected)
+    public void ConfigurationSection_YieldsAgent(string id, int expected)
     {
         SqlClientAgentConfigurationSection section = LoadSection(id);
 
-        Assert.Equal(expected, (ushort)SqlClientAgentRegistration.Parse(section.Id));
+        Assert.Equal(expected, (int)SqlClientAgentRegistration.Parse(section.Id));
     }
 
     /// <summary>
@@ -87,13 +91,58 @@ public class SqlClientAgentTests
     }
 
     /// <summary>
+    /// Verifies a malformed configuration file is consumed rather than escaping as a
+    /// TypeInitializationException on the login path.
+    /// </summary>
+    [Fact]
+    public void LoadAgent_MalformedConfigurationFile_YieldsNoAgent()
+    {
+        string path = WriteConfig("<configuration><SqlClientAgent id=");
+
+        try
+        {
+            Assert.Equal(0, SqlClientAgentRegistration.LoadAgent(() => OpenSection(path)));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    /// <summary>Verifies an invalid configured identifier is consumed and yields no agent.</summary>
+    [Fact]
+    public void LoadAgent_InvalidId_YieldsNoAgent()
+        => Assert.Equal(0, SqlClientAgentRegistration.LoadAgent(() => LoadSection("not-an-agent")));
+
+    /// <summary>Verifies a valid configured identifier is loaded.</summary>
+    [Fact]
+    public void LoadAgent_ValidId_YieldsAgent()
+        => Assert.Equal(6, SqlClientAgentRegistration.LoadAgent(() => LoadSection("SqlToolsService")));
+
+    /// <summary>Verifies an absent section yields no agent.</summary>
+    [Fact]
+    public void LoadAgent_NoSection_YieldsNoAgent()
+        => Assert.Equal(0, SqlClientAgentRegistration.LoadAgent(() => null));
+
+    /// <summary>Verifies a section of an unexpected type is consumed and yields no agent.</summary>
+    [Fact]
+    public void LoadAgent_UnexpectedSectionType_YieldsNoAgent()
+        => Assert.Equal(0, SqlClientAgentRegistration.LoadAgent(() => "not-a-section"));
+
+    /// <summary>Verifies a throwing section loader is consumed and yields no agent.</summary>
+    [Fact]
+    public void LoadAgent_ThrowingLoader_YieldsNoAgent()
+        => Assert.Equal(
+            0,
+            SqlClientAgentRegistration.LoadAgent(
+                () => throw new ConfigurationErrorsException("bad configuration")));
+
+    /// <summary>
     /// Load the SqlClientAgent section from a temporary configuration file containing the given id.
     /// </summary>
     private static SqlClientAgentConfigurationSection LoadSection(string id)
     {
-        string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.config");
-        File.WriteAllText(
-            path,
+        string path = WriteConfig(
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
             "<configuration>" +
             "<configSections>" +
@@ -105,16 +154,33 @@ public class SqlClientAgentTests
 
         try
         {
-            Configuration configuration = ConfigurationManager.OpenMappedExeConfiguration(
-                new ExeConfigurationFileMap { ExeConfigFilename = path },
-                ConfigurationUserLevel.None);
-
-            return Assert.IsType<SqlClientAgentConfigurationSection>(
-                configuration.GetSection(SqlClientAgentConfigurationSection.Name));
+            return Assert.IsType<SqlClientAgentConfigurationSection>(OpenSection(path));
         }
         finally
         {
             File.Delete(path);
         }
     }
+
+    /// <summary>
+    /// Write the given content to a temporary configuration file and return its path.
+    /// </summary>
+    private static string WriteConfig(string content)
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.config");
+        File.WriteAllText(path, content);
+        return path;
+    }
+
+    /// <summary>
+    /// Read the SqlClientAgent section from the configuration file at the given path.
+    ///
+    /// The host configuration file cannot be exercised here because the test host substitutes its
+    /// own, so a mapped configuration file is used instead.
+    /// </summary>
+    private static object OpenSection(string path)
+        => ConfigurationManager.OpenMappedExeConfiguration(
+                new ExeConfigurationFileMap { ExeConfigFilename = path },
+                ConfigurationUserLevel.None)
+            .GetSection(SqlClientAgentConfigurationSection.Name);
 }

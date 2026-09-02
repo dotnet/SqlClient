@@ -595,8 +595,7 @@ public class SqlClientLogger
 /// <summary>
 /// Identifies known middleware agents that use Microsoft.Data.SqlClient.
 /// </summary>
-[System.CLSCompliantAttribute(false)]
-public enum SqlClientAgent : ushort
+public enum SqlClientAgent
 {
     /// <summary>The Microsoft Entity Framework Core SQL Server provider.</summary>
     EntityFramework = 1,
@@ -1041,7 +1040,6 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterSqlClientAgent/*' />
-    [System.CLSCompliantAttribute(false)]
     public static void RegisterSqlClientAgent(Microsoft.Data.SqlClient.SqlClientAgent id) { }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
