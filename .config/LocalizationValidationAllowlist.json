@@ -1,0 +1,106 @@
+{
+  "AllowedEnglishValueMatches": {
+    "Strings.cs.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_Data",
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SqlMisc_NullString"
+    ],
+    "Strings.de.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_Pooling",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId"
+    ],
+    "Strings.es.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass"
+    ],
+    "Strings.fr.resx": [
+      "DataCategory_InfoMessage",
+      "DataCategory_Notification",
+      "DataCategory_Source",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SqlMisc_NullString"
+    ],
+    "Strings.it.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_InfoMessage",
+      "DataCategory_Pooling",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass",
+      "SqlMisc_NullString"
+    ],
+    "Strings.ja.resx": [
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId"
+    ],
+    "Strings.ko.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass",
+      "SqlMisc_NullString"
+    ],
+    "Strings.pl.resx": [
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SqlMisc_NullString"
+    ],
+    "Strings.pt-BR.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_InfoMessage",
+      "DataCategory_Pooling",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass"
+    ],
+    "Strings.ru.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExOriginalClientConnectionId"
+    ],
+    "Strings.tr.resx": [
+      "ADP_InvalidMultipartName",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SqlMisc_NullString"
+    ],
+    "Strings.zh-Hans.resx": [
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass",
+      "SqlMisc_NullString"
+    ],
+    "Strings.zh-Hant.resx": [
+      "DataCategory_InfoMessage",
+      "DataCategory_StatementCompleted",
+      "DataCategory_Xml",
+      "SQL_ExClientConnectionId",
+      "SQL_ExErrorNumberStateClass",
+      "SqlMisc_NullString"
+    ]
+  }
+}

@@ -99,4 +99,57 @@ Describe 'validate-localization.ps1' {
         { & $scriptPath -ResourcesDirectory $resources } |
             Should -Throw '*contains a <data> element without a name or value*'
     }
+
+    It 'accepts an approved English-value match from the allowlist' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Greeting') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Not -Throw
+    }
+
+    It 'does not allowlist a missing localized key' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello'; Farewell = 'Goodbye' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Farewell') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
+    }
+
+    It 'rejects allowlist for unknown resource keys' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Unknown') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*unknown or empty resource key*Unknown*'
+    }
+
+    It 'scopes approved English-value matches to one localized file' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.de.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.de.resx' = @('Greeting') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
+    }
 }

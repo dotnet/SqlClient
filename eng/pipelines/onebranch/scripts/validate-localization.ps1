@@ -1,6 +1,12 @@
 <#
 .SYNOPSIS
     Validates localized Strings.*.resx files against Strings.resx.
+
+.PARAMETER ResourcesDirectory
+    Directory containing the English and localized Strings.resx files.
+
+.PARAMETER AllowlistPath
+    Optional JSON file containing approved English-value matches grouped by localized filename.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -11,7 +17,9 @@
 param(
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
-    [string]$ResourcesDirectory
+    [string]$ResourcesDirectory,
+
+    [string]$AllowlistPath
 )
 
 Set-StrictMode -Version Latest
@@ -49,7 +57,43 @@ if ($localizedFiles.Count -eq 0) {
 }
 
 $englishStrings = Get-ResourceStrings -Path $englishPath
+$localizedFilesByName = [System.Collections.Generic.Dictionary[string, System.IO.FileInfo]]::new([System.StringComparer]::Ordinal)
+foreach ($localizedFile in $localizedFiles) {
+    $localizedFilesByName.Add($localizedFile.Name, $localizedFile)
+}
+
+$allowedEnglishMatches = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new([System.StringComparer]::Ordinal)
+if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
+    if (-not (Test-Path -LiteralPath $AllowlistPath -PathType Leaf)) {
+        throw "Localization allowlist file '$AllowlistPath' was not found."
+    }
+
+    $configuration = Get-Content -LiteralPath $AllowlistPath -Raw | ConvertFrom-Json
+    $englishValueMatchesProperty = $configuration.PSObject.Properties['AllowedEnglishValueMatches']
+    if ($null -eq $englishValueMatchesProperty) {
+        throw "Localization allowlist file '$AllowlistPath' must define 'AllowedEnglishValueMatches'."
+    }
+
+    foreach ($fileProperty in $englishValueMatchesProperty.Value.PSObject.Properties) {
+        if (-not $localizedFilesByName.ContainsKey($fileProperty.Name)) {
+            throw "Localization allowlist file references unknown resource file '$($fileProperty.Name)'."
+        }
+
+        $keys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($key in @($fileProperty.Value)) {
+            if ([string]::IsNullOrWhiteSpace($key) -or -not $englishStrings.ContainsKey($key)) {
+                throw "Localization allowlist file references unknown or empty resource key '$key' for '$($fileProperty.Name)'."
+            }
+            if (-not $keys.Add($key)) {
+                throw "Localization allowlist file contains duplicate key '$key' for '$($fileProperty.Name)'."
+            }
+        }
+        $allowedEnglishMatches.Add($fileProperty.Name, $keys)
+    }
+}
+
 $failures = [System.Collections.Generic.List[string]]::new()
+$allowedMatchCount = 0
 foreach ($localizedFile in $localizedFiles) {
     $localizedStrings = Get-ResourceStrings -Path $localizedFile.FullName
     $missingOrEmptyKeys = [System.Collections.Generic.List[string]]::new()
@@ -62,7 +106,13 @@ foreach ($localizedFile in $localizedFiles) {
         }
         elseif (-not [string]::IsNullOrEmpty($entry.Value) -and
             [System.StringComparer]::Ordinal.Equals($entry.Value, $localizedStrings[$entry.Key])) {
-            $englishMatches.Add($entry.Key)
+            if ($allowedEnglishMatches.ContainsKey($localizedFile.Name) -and
+                $allowedEnglishMatches[$localizedFile.Name].Contains($entry.Key)) {
+                $allowedMatchCount++
+            }
+            else {
+                $englishMatches.Add($entry.Key)
+            }
         }
     }
 
@@ -85,4 +135,4 @@ if ($failures.Count -gt 0) {
 }
 
 $fileNoun = if ($localizedFiles.Count -eq 1) { 'file' } else { 'files' }
-Write-Host "Localization validation passed for $($localizedFiles.Count) localized $fileNoun. Resource keys checked: $($englishStrings.Count); no non-empty values match Strings.resx."
+Write-Host "Localization validation passed for $($localizedFiles.Count) localized $fileNoun. Resource keys checked: $($englishStrings.Count); approved English-value matches allowlisted: $allowedMatchCount."

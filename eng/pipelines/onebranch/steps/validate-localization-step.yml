@@ -13,3 +13,4 @@ steps:
       filePath: $(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/validate-localization.ps1
       arguments: >-
         -ResourcesDirectory "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Resources"
+        -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"

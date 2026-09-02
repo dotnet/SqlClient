@@ -28,7 +28,7 @@ Respect this graph when modifying build stages:
 
 ## Localization Validation
 
-The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver.
+The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
 
 ## Build Stages
 
