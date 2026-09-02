@@ -37,9 +37,11 @@ function Get-ResourceStrings {
             throw "Resource file '$Path' contains a <data> element without a name or value."
         }
 
-        if (-not $strings.TryAdd($name.Value, $value.Value)) {
+        if ($strings.ContainsKey($name.Value)) {
             throw "Resource file '$Path' contains duplicate key '$($name.Value)'."
         }
+
+        $strings.Add($name.Value, $value.Value)
     }
 
     return $strings
@@ -84,6 +86,9 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
             if ([string]::IsNullOrWhiteSpace($key) -or -not $englishStrings.ContainsKey($key)) {
                 throw "Localization allowlist file references unknown or empty resource key '$key' for '$($fileProperty.Name)'."
             }
+            if ([string]::IsNullOrEmpty($englishStrings[$key])) {
+                throw "Localization allowlist key '$key' for '$($fileProperty.Name)' does not have a non-empty English value."
+            }
             if (-not $keys.Add($key)) {
                 throw "Localization allowlist file contains duplicate key '$key' for '$($fileProperty.Name)'."
             }
@@ -97,7 +102,16 @@ $allowedMatchCount = 0
 foreach ($localizedFile in $localizedFiles) {
     $localizedStrings = Get-ResourceStrings -Path $localizedFile.FullName
     $missingOrEmptyKeys = [System.Collections.Generic.List[string]]::new()
+    $localizedOnlyKeys = [System.Collections.Generic.List[string]]::new()
     $englishMatches = [System.Collections.Generic.List[string]]::new()
+    $staleAllowlistKeys = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($localizedKey in $localizedStrings.Keys) {
+        if (-not $englishStrings.ContainsKey($localizedKey)) {
+            $localizedOnlyKeys.Add($localizedKey)
+        }
+    }
+
     foreach ($entry in $englishStrings.GetEnumerator()) {
         if (-not $localizedStrings.ContainsKey($entry.Key) -or
             (-not [string]::IsNullOrEmpty($entry.Value) -and
@@ -114,15 +128,27 @@ foreach ($localizedFile in $localizedFiles) {
                 $englishMatches.Add($entry.Key)
             }
         }
+        elseif ($allowedEnglishMatches.ContainsKey($localizedFile.Name) -and
+            $allowedEnglishMatches[$localizedFile.Name].Contains($entry.Key)) {
+            $staleAllowlistKeys.Add($entry.Key)
+        }
     }
 
     if ($missingOrEmptyKeys.Count -gt 0) {
         $missingOrEmptyKeys.Sort([System.StringComparer]::Ordinal)
         $failures.Add("$($localizedFile.Name): missing keys or empty values: $($missingOrEmptyKeys -join ', ')")
     }
+    if ($localizedOnlyKeys.Count -gt 0) {
+        $localizedOnlyKeys.Sort([System.StringComparer]::Ordinal)
+        $failures.Add("$($localizedFile.Name): keys not found in Strings.resx: $($localizedOnlyKeys -join ', ')")
+    }
     if ($englishMatches.Count -gt 0) {
         $englishMatches.Sort([System.StringComparer]::Ordinal)
         $failures.Add("$($localizedFile.Name): untranslated values match Strings.resx: $($englishMatches -join ', ')")
+    }
+    if ($staleAllowlistKeys.Count -gt 0) {
+        $staleAllowlistKeys.Sort([System.StringComparer]::Ordinal)
+        $failures.Add("$($localizedFile.Name): allowlist entries no longer match Strings.resx: $($staleAllowlistKeys -join ', ')")
     }
 }
 

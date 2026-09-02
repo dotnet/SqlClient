@@ -152,4 +152,39 @@ Describe 'validate-localization.ps1' {
         { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
             Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
     }
+
+    It 'fails when a localized file contains a key absent from Strings.resx' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour'; Obsolete = 'Ancien' }
+
+        { & $scriptPath -ResourcesDirectory $resources } |
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
+    }
+
+    It 'rejects an allowlist entry after the localized value is translated' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Greeting') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
+    }
+
+    It 'rejects allowlist entries for empty English values' {
+        $resources = New-ResourcesDirectory
+        $allowlist = Join-Path $resources 'allowlist.json'
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Unused = '' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Unused = '' }
+        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Unused') } } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*does not have a non-empty English value*'
+    }
 }
