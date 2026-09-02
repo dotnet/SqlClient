@@ -82,7 +82,7 @@ parameters:
     type: string
 
   # The pool VM image to use, which must exist in the specified pool.
-  - name: vmImage
+  - name: poolImage
     type: string
 
 jobs:
@@ -167,11 +167,11 @@ jobs:
 
       # Images provided by Azure Pipelines must be selected using 'vmImage'.
       ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
+        vmImage: ${{ parameters.poolImage }}
       # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
         demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+          - imageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 

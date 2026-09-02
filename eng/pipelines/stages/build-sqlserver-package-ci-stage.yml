@@ -86,6 +86,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self
         parameters:
           poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}

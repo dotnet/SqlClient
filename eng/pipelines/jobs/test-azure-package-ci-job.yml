@@ -132,7 +132,7 @@ parameters:
     default: false
 
   # The pool VM image to use.
-  - name: vmImage
+  - name: poolImage
     type: string
 
 jobs:
@@ -144,11 +144,11 @@ jobs:
 
       # Images provided by Azure Pipelines must be selected using 'vmImage'.
       ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
+        vmImage: ${{ parameters.poolImage }}
       # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
         demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+          - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
 
@@ -256,7 +256,7 @@ jobs:
           AADServicePrincipalId: $(AADServicePrincipalId)
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
-          ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
+          ManagedIdentitySupported: ${{ not(eq(parameters.poolImage, 'macos-latest')) }}
           SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)

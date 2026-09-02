@@ -47,7 +47,7 @@ parameters:
     type: string
 
   # The name of the VM image to run on, within the pool.
-  - name: vmImage
+  - name: poolImage
     type: string
 
 stages:
@@ -63,7 +63,7 @@ stages:
           name: ${{ parameters.poolName }}
 
           demands:
-            - imageOverride -equals ${{ parameters.vmImage }}
+            - imageOverride -equals ${{ parameters.poolImage }}
 
         steps:
           # Install dotnet
@@ -147,7 +147,3 @@ stages:
             artifact: ${{ parameters.packArtifactBaseName }}_attempt$(System.JobAttempt)
             displayName: Publish Build Output
             condition: succeededOrFailed()
-
-
-
-
