@@ -18,13 +18,17 @@
 #
 #     <major>.<minor>.<patch>  ->  release/<major>.<minor>
 #
-# Whether that branch already exists determines where the work belongs:
+# Release branches and open milestones determine where the work belongs:
 #
 #   * The branch EXISTS  -> that version has already forked off the default
 #     branch and is in servicing. Changes for it go to release/<major>.<minor>.
 #
-#   * The branch DOES NOT exist -> that version is still in development on the
-#     default branch. Changes for it go to the default branch.
+#   * The branch DOES NOT exist, and this is the earliest open milestone series
+#     without a release branch -> that version is in development on the default
+#     branch. Changes for it go to the default branch.
+#
+#   * An earlier open milestone series has no release branch -> the requested
+#     version is not active yet and cannot target the default branch.
 #
 # This rule is self-maintaining: no hard-coded version list needs updating when
 # a new release branch is cut.
@@ -35,7 +39,8 @@
 #   -----------------------  -----------------------  ----------------------
 #   release/<major>.<minor>  n/a (it is the target)   pass
 #   another release/*        n/a                      fail (mismatch)
-#   default branch           no                       pass
+#   default branch           no, earliest open line   pass
+#   default branch           no, later open line      fail (not active yet)
 #   default branch           yes                      fail (needs servicing branch)
 #   anything else            n/a                      skipped (integration branch)
 #
@@ -130,6 +135,43 @@ fi
 
 if grep -qxF "refs/heads/${RELEASE_BRANCH}" <<< "${RELEASE_REFS}"; then
   echo "::error::Milestone '${MILESTONE_TITLE}' is a servicing release owned by '${RELEASE_BRANCH}', but this PR targets '${DEFAULT_BRANCH}'. Either retarget the PR to '${RELEASE_BRANCH}', or assign an in-development milestone and add the 'Hotfix ${MAJOR}.${MINOR}.${PATCH}' label so the change is cherry-picked after merge."
+  exit 1
+fi
+
+if ! OPEN_MILESTONES=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/milestones?state=open&per_page=100" \
+    --jq '.[].title' 2>&1); then
+  echo "::error::Unable to list open milestones for '${GITHUB_REPOSITORY}': ${OPEN_MILESTONES}"
+  exit 1
+fi
+
+ACTIVE_MAJOR=""
+ACTIVE_MINOR=""
+ACTIVE_MILESTONE=""
+while IFS= read -r milestone; do
+  if [[ ! "${milestone}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+].*)?$ ]]; then
+    continue
+  fi
+
+  candidate_major="${BASH_REMATCH[1]}"
+  candidate_minor="${BASH_REMATCH[2]}"
+  candidate_branch="release/${candidate_major}.${candidate_minor}"
+  if grep -qxF "refs/heads/${candidate_branch}" <<< "${RELEASE_REFS}"; then
+    continue
+  fi
+
+  if [[ -z "${ACTIVE_MAJOR}" ]] ||
+      (( 10#${candidate_major} < 10#${ACTIVE_MAJOR} )) ||
+      (( 10#${candidate_major} == 10#${ACTIVE_MAJOR} && 10#${candidate_minor} < 10#${ACTIVE_MINOR} )); then
+    ACTIVE_MAJOR="${candidate_major}"
+    ACTIVE_MINOR="${candidate_minor}"
+    ACTIVE_MILESTONE="${milestone}"
+  fi
+done <<< "${OPEN_MILESTONES}"
+
+if [[ -n "${ACTIVE_MAJOR}" ]] &&
+    { (( 10#${MAJOR} > 10#${ACTIVE_MAJOR} )) ||
+      (( 10#${MAJOR} == 10#${ACTIVE_MAJOR} && 10#${MINOR} > 10#${ACTIVE_MINOR} )); }; then
+  echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but '${ACTIVE_MILESTONE}' remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
   exit 1
 fi
 

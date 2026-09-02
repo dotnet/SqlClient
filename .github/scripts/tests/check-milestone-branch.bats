@@ -28,6 +28,7 @@ setup() {
   export DEFAULT_BRANCH="main"
   export GITHUB_REPOSITORY="dotnet/SqlClient"
   export GH_TOKEN="fake-token"
+  export MOCK_OPEN_MILESTONES=$'7.1.0\n8.0.0-preview1\n8.0.0-preview2\n8.0.0'
 
   mock_release_branches "release/6.1" "release/7.0"
 }
@@ -47,7 +48,11 @@ mock_release_branches() {
   cat > "${STUB_DIR}/gh" <<MOCK
 #!/usr/bin/env bash
 echo "GH: \$*" >> "${STUB_DIR}/gh.log"
-printf '%s' '${refs}'
+if [[ "\$*" == *"/milestones"* ]]; then
+  printf '%s' "\${MOCK_OPEN_MILESTONES}"
+else
+  printf '%s' '${refs}'
+fi
 MOCK
   chmod +x "${STUB_DIR}/gh"
 }
@@ -59,6 +64,22 @@ mock_gh_failure() {
 echo "GH: \$*" >> "${STUB_DIR}/gh.log"
 echo "HTTP 403: rate limit exceeded" >&2
 exit 1
+MOCK
+  chmod +x "${STUB_DIR}/gh"
+}
+
+# Install a 'gh' mock that lists branches but fails when milestones are queried.
+mock_milestone_failure() {
+  cat > "${STUB_DIR}/gh" <<MOCK
+#!/usr/bin/env bash
+echo "GH: \$*" >> "${STUB_DIR}/gh.log"
+if [[ "\$*" == *"/milestones"* ]]; then
+  echo "HTTP 403: resource not accessible by integration" >&2
+  exit 1
+fi
+printf '%s' 'refs/heads/release/6.1
+refs/heads/release/7.0
+'
 MOCK
   chmod +x "${STUB_DIR}/gh"
 }
@@ -119,7 +140,17 @@ MOCK
   [[ "$output" == *"still in development"* ]]
 }
 
-@test "passes when a preview milestone targets the default branch" {
+@test "fails when a later milestone targets the default branch before the active release branch is cut" {
+  export MILESTONE_TITLE="8.0.0-preview1"
+  export BASE_REF="main"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"7.1.0"* ]]
+  [[ "$output" == *"release/7.1"* ]]
+}
+
+@test "passes when a later milestone targets the default branch after the active release branch is cut" {
+  mock_release_branches "release/6.1" "release/7.0" "release/7.1"
   export MILESTONE_TITLE="8.0.0-preview1"
   export BASE_REF="main"
   run bash "${SCRIPT}"
@@ -154,6 +185,7 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   grep -qF "GH: api repos/dotnet/SqlClient/git/matching-refs/heads/release/ --jq .[].ref" "${STUB_DIR}/gh.log"
+  grep -qF "GH: api --paginate repos/dotnet/SqlClient/milestones?state=open&per_page=100 --jq .[].title" "${STUB_DIR}/gh.log"
 }
 
 @test "does not call the API when the PR targets a release branch" {
@@ -244,4 +276,13 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
   [[ "$output" == *"Unable to list release branches"* ]]
+}
+
+@test "fails when the milestone listing API call fails" {
+  mock_milestone_failure
+  export MILESTONE_TITLE="7.1.0"
+  export BASE_REF="main"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unable to list open milestones"* ]]
 }
