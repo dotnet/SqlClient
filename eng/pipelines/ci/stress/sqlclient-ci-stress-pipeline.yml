@@ -93,13 +93,13 @@ stages:
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
-      poolName: $(ci_var_defaultPoolName)
+      poolName: $(general_purpose_pool_name)
       poolImage: ADO-UB24
 
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
     parameters:
-      poolName: $(ci_var_defaultPoolName)
+      poolName: $(general_purpose_pool_name)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       warnOnTestFailure: ${{ parameters.warnOnTestFailure }}

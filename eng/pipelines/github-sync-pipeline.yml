@@ -64,7 +64,7 @@ jobs:
   - job: SyncGitHub
     displayName: Sync GitHub to ADO
     pool:
-      name: $(ci_var_defaultPoolName)
+      name: $(general_purpose_pool_name)
       demands:
         - imageOverride -equals ADO-UB24
 
