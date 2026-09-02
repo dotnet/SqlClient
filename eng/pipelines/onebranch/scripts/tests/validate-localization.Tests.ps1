@@ -50,7 +50,7 @@ Describe 'validate-localization.ps1' {
         Set-ResourceFile (Join-Path $resources 'Strings.de.resx') @{ Greeting = 'Hallo' }
 
         { & $scriptPath -ResourcesDirectory $resources } |
-            Should -Throw '*Strings.de.resx: missing keys: Farewell*'
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
     }
 
     It 'fails when a localized value matches a non-empty English value' {
@@ -59,7 +59,7 @@ Describe 'validate-localization.ps1' {
         Set-ResourceFile (Join-Path $resources 'Strings.ja.resx') @{ Greeting = 'Hello'; Unused = '' }
 
         { & $scriptPath -ResourcesDirectory $resources } |
-            Should -Throw '*Strings.ja.resx: values match English: Greeting*'
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
     }
 
     It 'fails when no localized resource files exist' {
@@ -68,5 +68,35 @@ Describe 'validate-localization.ps1' {
 
         { & $scriptPath -ResourcesDirectory $resources } |
             Should -Throw '*No localized Strings.*.resx files were found*'
+    }
+
+    It 'fails when a non-empty English string has an empty localized value' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.es.resx') @{ Greeting = ' ' }
+
+        { & $scriptPath -ResourcesDirectory $resources } |
+            Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
+    }
+
+    It 'accepts empty localized values when the English value is also empty' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Unused = '' }
+        Set-ResourceFile (Join-Path $resources 'Strings.ko.resx') @{ Unused = '' }
+
+        { & $scriptPath -ResourcesDirectory $resources } | Should -Not -Throw
+    }
+
+    It 'fails when a resource data element has no value' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        [xml]$localized = Get-Content -LiteralPath (Join-Path $resources 'Strings.fr.resx')
+        $valueNode = $localized.SelectSingleNode('/root/data/value')
+        $null = $valueNode.ParentNode.RemoveChild($valueNode)
+        $localized.Save((Join-Path $resources 'Strings.fr.resx'))
+
+        { & $scriptPath -ResourcesDirectory $resources } |
+            Should -Throw '*contains a <data> element without a name or value*'
     }
 }

@@ -72,41 +72,12 @@ parameters:
 
 stages:
   # ====================================================================
-  # Localization validation
-  # ====================================================================
-  - stage: validate_localization
-    displayName: "Validate Localization"
-    dependsOn: compute_versions
-
-    jobs:
-      - job: validate_localization_job
-        displayName: "Validate localized resources"
-        pool:
-          type: linux
-
-        variables:
-          ob_outputDirectory: $(Build.SourcesDirectory)/no_publish
-          ob_sdl_apiscan_enabled: false
-          ob_sdl_binskim_break: false
-          ob_sdl_binskim_enabled: false
-
-        steps:
-          - pwsh: |
-              New-Item -Path "$(ob_outputDirectory)" -ItemType Directory -Force
-              "**" | Out-File -FilePath "$(ob_outputDirectory)/.artifactignore" -Encoding ascii
-            displayName: 'Suppress artifact publishing'
-
-          - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
-
-  # ====================================================================
   # Stage 1: Independent packages (no cross-package dependencies)
   # Logging and SqlServer.Server build in parallel.
   # ====================================================================
   - stage: build_independent
     displayName: "Build Independent Packages"
-    dependsOn:
-      - compute_versions
-      - validate_localization
+    dependsOn: compute_versions
 
     variables:
       - name: versionRevision

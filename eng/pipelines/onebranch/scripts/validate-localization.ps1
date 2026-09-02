@@ -26,7 +26,7 @@ function Get-ResourceStrings {
         $name = $data.Attribute('name')
         $value = $data.Element('value')
         if ($null -eq $name -or $null -eq $value) {
-            continue
+            throw "Resource file '$Path' contains a <data> element without a name or value."
         }
 
         if (-not $strings.TryAdd($name.Value, $value.Value)) {
@@ -52,11 +52,13 @@ $englishStrings = Get-ResourceStrings -Path $englishPath
 $failures = [System.Collections.Generic.List[string]]::new()
 foreach ($localizedFile in $localizedFiles) {
     $localizedStrings = Get-ResourceStrings -Path $localizedFile.FullName
-    $missingKeys = [System.Collections.Generic.List[string]]::new()
+    $missingOrEmptyKeys = [System.Collections.Generic.List[string]]::new()
     $englishMatches = [System.Collections.Generic.List[string]]::new()
     foreach ($entry in $englishStrings.GetEnumerator()) {
-        if (-not $localizedStrings.ContainsKey($entry.Key)) {
-            $missingKeys.Add($entry.Key)
+        if (-not $localizedStrings.ContainsKey($entry.Key) -or
+            (-not [string]::IsNullOrEmpty($entry.Value) -and
+                [string]::IsNullOrWhiteSpace($localizedStrings[$entry.Key]))) {
+            $missingOrEmptyKeys.Add($entry.Key)
         }
         elseif (-not [string]::IsNullOrEmpty($entry.Value) -and
             [System.StringComparer]::Ordinal.Equals($entry.Value, $localizedStrings[$entry.Key])) {
@@ -64,13 +66,13 @@ foreach ($localizedFile in $localizedFiles) {
         }
     }
 
-    if ($missingKeys.Count -gt 0) {
-        $missingKeys.Sort([System.StringComparer]::Ordinal)
-        $failures.Add("$($localizedFile.Name): missing keys: $($missingKeys -join ', ')")
+    if ($missingOrEmptyKeys.Count -gt 0) {
+        $missingOrEmptyKeys.Sort([System.StringComparer]::Ordinal)
+        $failures.Add("$($localizedFile.Name): missing keys or empty values: $($missingOrEmptyKeys -join ', ')")
     }
     if ($englishMatches.Count -gt 0) {
         $englishMatches.Sort([System.StringComparer]::Ordinal)
-        $failures.Add("$($localizedFile.Name): values match English: $($englishMatches -join ', ')")
+        $failures.Add("$($localizedFile.Name): untranslated values match Strings.resx: $($englishMatches -join ', ')")
     }
 }
 
@@ -78,7 +80,9 @@ if ($failures.Count -gt 0) {
     foreach ($failure in $failures) {
         Write-Host "##vso[task.logissue type=error]$failure"
     }
-    throw "Localization validation failed:`n$($failures -join "`n")"
+    $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
+    throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
 }
 
-Write-Host "Validated $($localizedFiles.Count) localized resource files against $($englishStrings.Count) English strings."
+$fileNoun = if ($localizedFiles.Count -eq 1) { 'file' } else { 'files' }
+Write-Host "Localization validation passed for $($localizedFiles.Count) localized $fileNoun. Resource keys checked: $($englishStrings.Count); no non-empty values match Strings.resx."
