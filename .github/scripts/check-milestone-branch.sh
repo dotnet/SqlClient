@@ -18,17 +18,17 @@
 #
 #     <major>.<minor>.<patch>  ->  release/<major>.<minor>
 #
-# Release branches and open milestones determine where the work belongs:
+# Release branches and configured milestones determine where the work belongs:
 #
 #   * The branch EXISTS  -> that version has already forked off the default
 #     branch and is in servicing. Changes for it go to release/<major>.<minor>.
 #
-#   * The branch DOES NOT exist, and this is the earliest open milestone series
-#     without a release branch -> that version is in development on the default
-#     branch. Changes for it go to the default branch.
+#   * The branch DOES NOT exist, and this is the earliest configured milestone
+#     series without a release branch -> that version is in development on the
+#     default branch. Changes for it go to the default branch.
 #
-#   * An earlier open milestone series has no release branch -> the requested
-#     version is not active yet and cannot target the default branch.
+#   * An earlier configured milestone series has no release branch -> the
+#     requested version is not active yet and cannot target the default branch.
 #
 # This rule is self-maintaining: no hard-coded version list needs updating when
 # a new release branch is cut.
@@ -39,8 +39,8 @@
 #   -----------------------  -----------------------  ----------------------
 #   release/<major>.<minor>  n/a (it is the target)   pass
 #   another release/*        n/a                      fail (mismatch)
-#   default branch           no, earliest open line   pass
-#   default branch           no, later open line      fail (not active yet)
+#   default branch           no, earliest configured line  pass
+#   default branch           no, later configured line     fail (not active yet)
 #   default branch           yes                      fail (needs servicing branch)
 #   anything else            n/a                      skipped (integration branch)
 #
@@ -138,15 +138,31 @@ if grep -qxF "refs/heads/${RELEASE_BRANCH}" <<< "${RELEASE_REFS}"; then
   exit 1
 fi
 
-if ! OPEN_MILESTONES=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/milestones?state=open&per_page=100" \
+if ! MILESTONES=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/milestones?state=all&per_page=100" \
     --jq '.[].title' 2>&1); then
-  echo "::error::Unable to list open milestones for '${GITHUB_REPOSITORY}': ${OPEN_MILESTONES}"
+  echo "::error::Unable to list milestones for '${GITHUB_REPOSITORY}': ${MILESTONES}"
   exit 1
 fi
 
 ACTIVE_MAJOR=""
 ACTIVE_MINOR=""
-ACTIVE_MILESTONE=""
+LATEST_RELEASE_MAJOR=""
+LATEST_RELEASE_MINOR=""
+while IFS= read -r release_ref; do
+  if [[ ! "${release_ref}" =~ ^refs/heads/release/([0-9]+)\.([0-9]+)$ ]]; then
+    continue
+  fi
+
+  release_major="${BASH_REMATCH[1]}"
+  release_minor="${BASH_REMATCH[2]}"
+  if [[ -z "${LATEST_RELEASE_MAJOR}" ]] ||
+      (( 10#${release_major} > 10#${LATEST_RELEASE_MAJOR} )) ||
+      (( 10#${release_major} == 10#${LATEST_RELEASE_MAJOR} && 10#${release_minor} > 10#${LATEST_RELEASE_MINOR} )); then
+    LATEST_RELEASE_MAJOR="${release_major}"
+    LATEST_RELEASE_MINOR="${release_minor}"
+  fi
+done <<< "${RELEASE_REFS}"
+
 while IFS= read -r milestone; do
   if [[ ! "${milestone}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+].*)?$ ]]; then
     continue
@@ -159,19 +175,24 @@ while IFS= read -r milestone; do
     continue
   fi
 
+  if [[ -n "${LATEST_RELEASE_MAJOR}" ]] &&
+      { (( 10#${candidate_major} < 10#${LATEST_RELEASE_MAJOR} )) ||
+        (( 10#${candidate_major} == 10#${LATEST_RELEASE_MAJOR} && 10#${candidate_minor} <= 10#${LATEST_RELEASE_MINOR} )); }; then
+    continue
+  fi
+
   if [[ -z "${ACTIVE_MAJOR}" ]] ||
       (( 10#${candidate_major} < 10#${ACTIVE_MAJOR} )) ||
       (( 10#${candidate_major} == 10#${ACTIVE_MAJOR} && 10#${candidate_minor} < 10#${ACTIVE_MINOR} )); then
     ACTIVE_MAJOR="${candidate_major}"
     ACTIVE_MINOR="${candidate_minor}"
-    ACTIVE_MILESTONE="${milestone}"
   fi
-done <<< "${OPEN_MILESTONES}"
+done <<< "${MILESTONES}"
 
 if [[ -n "${ACTIVE_MAJOR}" ]] &&
     { (( 10#${MAJOR} > 10#${ACTIVE_MAJOR} )) ||
       (( 10#${MAJOR} == 10#${ACTIVE_MAJOR} && 10#${MINOR} > 10#${ACTIVE_MINOR} )); }; then
-  echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but '${ACTIVE_MILESTONE}' remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
+  echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but the ${ACTIVE_MAJOR}.${ACTIVE_MINOR} milestone series remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
   exit 1
 fi
 

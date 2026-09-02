@@ -12,7 +12,10 @@
 # Milestones map to release branches by major.minor:
 #
 #   * "7.0.3" -> release/7.0 exists -> the PR must target release/7.0.
-#   * "7.1.0" -> release/7.1 does not exist yet -> the PR must target main.
+#   * "7.1.0" -> release/7.1 does not exist and it is the earliest configured
+#     unbranched series -> the PR must target main.
+#   * "8.0.0-preview1" -> release/8.0 does not exist, but 7.1 is still the
+#     active unbranched series -> the PR cannot target main yet.
 #
 # See .github/scripts/check-milestone-branch.sh for the full rule set.
 #

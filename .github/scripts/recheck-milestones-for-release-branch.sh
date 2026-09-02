@@ -7,20 +7,20 @@
 #
 # recheck-milestones-for-release-branch.sh
 #
-# Re-runs the milestone check for open pull requests that are invalidated by the
-# creation of a release branch.
+# Re-runs the milestone check for open pull requests whose result can change
+# when a release branch is created.
 #
 # OVERVIEW
 # --------
 # check-milestone-branch.sh decides where a milestone belongs by asking whether
-# release/<major>.<minor> exists. Cutting that branch therefore flips the
-# expected target for every X.Y.* milestone from the default branch to the new
-# release branch.
+# release/<major>.<minor> exists and which configured milestone series is the
+# earliest one without a release branch. Cutting a branch therefore moves its
+# X.Y.* milestones into servicing and can make the next series active.
 #
 # Creating a branch emits no pull request activity, so an already-open PR keeps
-# whatever result it last recorded. This script closes that gap: it finds the
-# open PRs whose milestone now belongs to the new release branch and re-runs
-# their most recent milestone check.
+# whatever result it last recorded. This script closes that gap by re-running
+# every semantic-version-milestoned PR targeting the default branch. That covers
+# both the newly serviced series and any later series whose eligibility changes.
 #
 # Re-running is enough because check-milestone-branch.sh queries the live list
 # of release branches. The replayed event payload still carries the correct
@@ -83,15 +83,12 @@ fi
 : "${WORKFLOW_FILE:?WORKFLOW_FILE environment variable is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
-if [[ "${RELEASE_BRANCH}" =~ ^release/([0-9]+)\.([0-9]+)$ ]]; then
-  MAJOR="${BASH_REMATCH[1]}"
-  MINOR="${BASH_REMATCH[2]}"
-else
+if [[ ! "${RELEASE_BRANCH}" =~ ^release/[0-9]+\.[0-9]+$ ]]; then
   echo "::notice::'${RELEASE_BRANCH}' is not a 'release/<major>.<minor>' branch; nothing to reconcile."
   exit 0
 fi
 
-# -- Find the open PRs the new branch invalidates ------------------------------
+# -- Find open PRs whose result can change -------------------------------------
 if ! OPEN_PRS=$(gh pr list --repo "${GITHUB_REPOSITORY}" --base "${DEFAULT_BRANCH}" \
     --state open --limit 500 --json number,headRefOid,milestone \
     --jq '.[] | select(.milestone != null) | "\(.number) \(.headRefOid) \(.milestone.title)"' 2>&1); then
@@ -106,8 +103,7 @@ while read -r NUMBER HEAD_SHA MILESTONE_TITLE; do
   [[ -n "${NUMBER}" ]] || continue
 
   # Same milestone grammar as check-milestone-branch.sh.
-  [[ "${MILESTONE_TITLE}" =~ ^([0-9]+)\.([0-9]+)\.[0-9]+([-+].*)?$ ]] || continue
-  [[ "${BASH_REMATCH[1]}" == "${MAJOR}" && "${BASH_REMATCH[2]}" == "${MINOR}" ]] || continue
+  [[ "${MILESTONE_TITLE}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+].*)?$ ]] || continue
 
   MATCHED=$((MATCHED + 1))
 
@@ -142,7 +138,7 @@ while read -r NUMBER HEAD_SHA MILESTONE_TITLE; do
 done <<< "${OPEN_PRS}"
 
 if [[ "${MATCHED}" -eq 0 ]]; then
-  echo "::notice::No open PR targeting '${DEFAULT_BRANCH}' carries a ${MAJOR}.${MINOR}.* milestone."
+  echo "::notice::No open PR targeting '${DEFAULT_BRANCH}' carries a semantic-version milestone."
   exit 0
 fi
 

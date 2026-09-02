@@ -9,10 +9,10 @@
 # Reconciles open pull requests when a release branch is cut.
 #
 # check-milestone.yml decides where a milestone belongs by asking whether
-# release/<major>.<minor> exists, so creating that branch flips the expected
-# target for every X.Y.* milestone from the default branch to the new release
-# branch. Branch creation emits no pull request activity, so an already open PR
-# would otherwise keep the verdict it last recorded.
+# release/<major>.<minor> exists and which milestone series is active on the
+# default branch. Creating a release branch can invalidate X.Y.* pull requests
+# and make the next series eligible, but emits no pull request activity, so
+# already open pull requests would otherwise keep their previous verdicts.
 #
 # This lives in its own workflow so that check-milestone.yml stays purely pull
 # request scoped, and so the elevated 'actions: write' permission needed to

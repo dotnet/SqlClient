@@ -142,13 +142,13 @@ MOCK
 
 # ── Matching and re-running ──────────────────────────────────────────────────
 
-@test "re-runs only the PRs whose milestone matches the new branch" {
+@test "re-runs all semver-milestoned PRs affected by active-line transitions" {
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"PR #100"* ]]
   [[ "$output" == *"PR #102"* ]]
-  [[ "$output" != *"PR #101"* ]]
-  [[ "$output" == *"Re-checked 2 pull request(s)"* ]]
+  [[ "$output" == *"PR #101"* ]]
+  [[ "$output" == *"Re-checked 3 pull request(s)"* ]]
 }
 
 @test "queries open PRs against the default branch" {
@@ -190,9 +190,10 @@ MOCK
 
 @test "reports when no open PR carries a matching milestone" {
   export RELEASE_BRANCH="release/6.1"
+  mock_gh "200 ddd444 vNext"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"No open PR targeting 'main' carries a 6.1.* milestone"* ]]
+  [[ "$output" == *"No open PR targeting 'main' carries a semantic-version milestone"* ]]
 }
 
 @test "ignores PRs whose milestone is not major.minor.patch" {
@@ -209,7 +210,7 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
   [[ "$output" == *"has no milestone check run to re-run"* ]]
-  [[ "$output" == *"2 of 2 affected pull requests"* ]]
+  [[ "$output" == *"3 of 3 affected pull requests"* ]]
 }
 
 @test "warns and fails when a re-run cannot be started" {

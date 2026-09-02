@@ -28,7 +28,7 @@ setup() {
   export DEFAULT_BRANCH="main"
   export GITHUB_REPOSITORY="dotnet/SqlClient"
   export GH_TOKEN="fake-token"
-  export MOCK_OPEN_MILESTONES=$'7.1.0\n8.0.0-preview1\n8.0.0-preview2\n8.0.0'
+  export MOCK_MILESTONES=$'1.0.0\n2.0.1\n7.1.0\n8.0.0-preview1\n8.0.0-preview2\n8.0.0'
 
   mock_release_branches "release/6.1" "release/7.0"
 }
@@ -49,7 +49,7 @@ mock_release_branches() {
 #!/usr/bin/env bash
 echo "GH: \$*" >> "${STUB_DIR}/gh.log"
 if [[ "\$*" == *"/milestones"* ]]; then
-  printf '%s' "\${MOCK_OPEN_MILESTONES}"
+  printf '%s' "\${MOCK_MILESTONES}"
 else
   printf '%s' '${refs}'
 fi
@@ -145,8 +145,18 @@ MOCK
   export BASE_REF="main"
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"7.1.0"* ]]
+  [[ "$output" == *"7.1 milestone series"* ]]
   [[ "$output" == *"release/7.1"* ]]
+}
+
+@test "closed milestone state does not change the active development line" {
+  export MILESTONE_TITLE="8.0.0-preview1"
+  export BASE_REF="main"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"7.1 milestone series"* ]]
+  [[ "$output" != *"1.0.0"* ]]
+  grep -qF "milestones?state=all" "${STUB_DIR}/gh.log"
 }
 
 @test "passes when a later milestone targets the default branch after the active release branch is cut" {
@@ -185,7 +195,7 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   grep -qF "GH: api repos/dotnet/SqlClient/git/matching-refs/heads/release/ --jq .[].ref" "${STUB_DIR}/gh.log"
-  grep -qF "GH: api --paginate repos/dotnet/SqlClient/milestones?state=open&per_page=100 --jq .[].title" "${STUB_DIR}/gh.log"
+  grep -qF "GH: api --paginate repos/dotnet/SqlClient/milestones?state=all&per_page=100 --jq .[].title" "${STUB_DIR}/gh.log"
 }
 
 @test "does not call the API when the PR targets a release branch" {
@@ -284,5 +294,5 @@ MOCK
   export BASE_REF="main"
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Unable to list open milestones"* ]]
+  [[ "$output" == *"Unable to list milestones"* ]]
 }
