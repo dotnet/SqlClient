@@ -43,6 +43,7 @@
 #   default branch           no, active line               pass
 #   default branch           no, later configured line     fail (not active yet)
 #   default branch           no, earlier configured line   fail (no longer in development)
+#   default branch           no active line configured     fail (milestone missing)
 #   default branch           yes                      fail (needs servicing branch)
 #   anything else            n/a                      skipped (integration branch)
 #
@@ -191,8 +192,12 @@ while IFS= read -r milestone; do
   fi
 done <<< "${MILESTONES}"
 
-if [[ -n "${ACTIVE_MAJOR}" ]] &&
-    (( 10#${MAJOR} != 10#${ACTIVE_MAJOR} || 10#${MINOR} != 10#${ACTIVE_MINOR} )); then
+if [[ -z "${ACTIVE_MAJOR}" ]]; then
+  echo "::error::No configured milestone series is newer than the newest release branch, so no development line is active on '${DEFAULT_BRANCH}'. Create the milestone for the next version before targeting '${DEFAULT_BRANCH}' with '${MILESTONE_TITLE}'."
+  exit 1
+fi
+
+if (( 10#${MAJOR} != 10#${ACTIVE_MAJOR} || 10#${MINOR} != 10#${ACTIVE_MINOR} )); then
   if (( 10#${MAJOR} > 10#${ACTIVE_MAJOR} ||
         (10#${MAJOR} == 10#${ACTIVE_MAJOR} && 10#${MINOR} > 10#${ACTIVE_MINOR}) )); then
     echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but the ${ACTIVE_MAJOR}.${ACTIVE_MINOR} milestone series remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
