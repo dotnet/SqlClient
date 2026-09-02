@@ -4,6 +4,11 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+parameters:
+  # False for scheduled builds that may run before OneLoc handback completes.
+  - name: enforce
+    type: boolean
+
 steps:
   - task: PowerShell@2
     displayName: 'Validate localized resources'
@@ -14,3 +19,4 @@ steps:
       arguments: >-
         -ResourcesDirectory "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Resources"
         -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"
+        -Enforce $${{ parameters.enforce }}

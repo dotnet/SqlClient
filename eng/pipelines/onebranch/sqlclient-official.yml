@@ -37,6 +37,13 @@ parameters:
     type: boolean
     default: false
 
+  # Scheduled builds may run before OneLoc handback completes. Keep them warning-only by default;
+  # SqlClient release runs always enforce validation regardless of this setting.
+  - name: enforceLocalizationValidation
+    displayName: Fail the build on localization validation issues
+    type: boolean
+    default: false
+
   # Append the Build.BuildId revision to package and file versions.
   - name: addRevision
     displayName: Use the build ID as the revision version
@@ -264,6 +271,7 @@ extends:
         parameters:
           isOfficial: true # This is an official pipeline.
           buildSqlServer: ${{ parameters.buildSqlServer }}
+          enforceLocalizationValidation: ${{ or(parameters.releaseSqlClient, parameters.enforceLocalizationValidation) }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'

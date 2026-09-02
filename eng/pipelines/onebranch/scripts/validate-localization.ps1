@@ -7,6 +7,9 @@
 
 .PARAMETER AllowlistPath
     Optional JSON file containing approved English-value matches grouped by localized filename.
+
+.PARAMETER Enforce
+    Whether validation findings fail the build. When false, findings are logged as warnings.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -19,7 +22,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ResourcesDirectory,
 
-    [string]$AllowlistPath
+    [string]$AllowlistPath,
+
+    [bool]$Enforce = $true
 )
 
 Set-StrictMode -Version Latest
@@ -153,11 +158,19 @@ foreach ($localizedFile in $localizedFiles) {
 }
 
 if ($failures.Count -gt 0) {
+    $issueType = if ($Enforce) { 'error' } else { 'warning' }
     foreach ($failure in $failures) {
-        Write-Host "##vso[task.logissue type=error]$failure"
+        Write-Host "##vso[task.logissue type=$issueType]$failure"
     }
-    $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
-    throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
+
+    if ($Enforce) {
+        $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
+        throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
+    }
+
+    $issueNoun = if ($failures.Count -eq 1) { 'issue' } else { 'issues' }
+    Write-Host "Localization validation found $($failures.Count) $issueNoun. Enforcement is disabled for this build; review the preceding warnings."
+    return
 }
 
 $fileNoun = if ($localizedFiles.Count -eq 1) { 'file' } else { 'files' }

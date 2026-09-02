@@ -28,6 +28,12 @@ parameters:
     type: boolean
     default: false
 
+  # Non-official runs are manual, so localization validation is enforced by default.
+  - name: enforceLocalizationValidation
+    displayName: Fail the build on localization validation issues
+    type: boolean
+    default: true
+
   # Append the Build.BuildId revision to package and file versions to reduce collisions when
   # repeatedly publishing tests to symbol servers or the NuGet test feed.
   - name: addRevision
@@ -254,6 +260,7 @@ extends:
         parameters:
           isOfficial: false # This is a non-official pipeline.
           buildSqlServer: ${{ parameters.buildSqlServer }}
+          enforceLocalizationValidation: ${{ or(parameters.releaseSqlClient, parameters.enforceLocalizationValidation) }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
