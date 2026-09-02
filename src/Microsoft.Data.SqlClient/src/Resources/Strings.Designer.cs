@@ -10272,6 +10272,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The certificate file specified by the &apos;ServerCertificate&apos; option could not be loaded or parsed: &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_ServerCertificateFileLoadFailed {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateFileLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &apos;ServerCertificate&apos; option was specified, but the server did not present a certificate that could be compared against it..
+        /// </summary>
+        internal static string SQL_ServerCertificateNotAvailable {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
         /// </summary>
         internal static string SQL_SettingCredentialWithDeviceFlow {
