@@ -15,33 +15,64 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 internal class TdsTypeInfo
 {
     [Flags]
-    private enum SqlMetaDataPrivFlags : byte
+    private enum TdsTypeInfoFlags : byte
     {
         None = 0,
         IsNullable = 1 << 1,
         IsMultiValued = 1 << 2
     }
 
-
-
-    internal byte precision = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
-    internal byte scale = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
-    private SqlMetaDataPrivFlags flags;
-    internal int length;
+    /// <summary>
+    /// Represents the collation settings associated with character-based SQL Server types.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
     internal SqlCollation collation;
-    internal int codePage;
-    internal Encoding encoding;
-    internal bool isEncrypted; // TCE encrypted?
-    internal TdsTypeInfo baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
-    internal SqlCipherMetadata cipherMD; // Cipher related metadata for encrypted columns.
 
-    internal MetaType metaType; // cached metaType
-    public SqlMetaDataUdt udt;
-    public SqlMetaDataXmlSchemaCollection xmlSchemaCollection;
+
+    /// <summary>
+    /// Represents the length property associated with SQL Server type information. Used for
+    /// defining the size or limit of a data type within the TDS protocol.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
+    internal int length;
+
+
+    /// <summary>
+    /// Specifies the numeric precision for a numeric SQL Server data type. Defaults to
+    /// UNKNOWN_PRECISION_SCALE when not explicitly set.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
+    internal byte precision = TdsEnums.UNKNOWN_PRECISION_SCALE;
+
+
+    /// <summary>
+    /// Specifies the scale component of a numeric SQL Server type. Defaults to
+    /// UNKNOWN_PRECISION_SCALE when not explicitly set.
+    /// </summary>
+    // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
+    internal byte scale = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
+
+    private TdsTypeInfoFlags flags;
 
     internal TdsTypeInfo()
     {
     }
+
+    /// <summary>
+    /// Gets or sets the plaintext type information for the column if the column is encrypted.
+    /// </summary>
+    internal TdsTypeInfo BaseTypeInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the encryption-related metadata associated with the SQL Server TDS data type.
+    /// </summary>
+    internal SqlCipherMetadata CipherMetadata { get; set; }
+
+    /// <summary>
+    /// Gets or sets the code page used for character encoding associated with the TDS data type
+    /// instance.
+    /// </summary>
+    internal int CodePage { get; set; }
 
     /// <summary>
     /// Represents the database type of the current instance.
@@ -49,62 +80,64 @@ internal class TdsTypeInfo
     internal SqlDbType DbType { get; set; }
 
     /// <summary>
+    /// Gets or sets the character encoding used for string data representation.
+    /// </summary>
+    internal Encoding Encoding { get; set; }
+
+    /// <summary>
+    /// Is the algorithm handle for the cipher encryption initialized?
+    /// </summary>
+    internal bool IsAlgorithmInitialized() => CipherMetadata?.IsAlgorithmInitialized() ?? false;
+
+    /// <summary>
+    /// Gets or sets whether the type described by the current instance is TCE encrypted.
+    /// </summary>
+    internal bool IsEncrypted { get; set; }
+
+    /// <summary>
+    /// Indicates whether the associated SQL Server TDS data type supports multiple values.
+    /// </summary>
+    public bool IsMultiValued
+    {
+        get => HasFlag(TdsTypeInfoFlags.IsMultiValued);
+        set => Set(TdsTypeInfoFlags.IsMultiValued, value);
+    }
+
+    /// <summary>
+    /// Indicates whether the associated database column allows null values.
+    /// </summary>
+    public bool IsNullable
+    {
+        get => HasFlag(TdsTypeInfoFlags.IsNullable);
+        set => Set(TdsTypeInfoFlags.IsNullable, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the cached MetaType information associated with the current instance.
+    /// </summary>
+    internal MetaType MetaType { get; set; }
+
+    /// <summary>
+    /// Returns the normalization rule version byte.
+    /// </summary>
+    internal byte NormalizationRuleVersion => CipherMetadata?.NormalizationRuleVersion ?? 0x00;
+
+    /// <summary>
     /// Gets or sets the TDS (Tabular Data Stream) type of the instance.
     /// </summary>
     internal byte TdsType { get; set; }
 
     /// <summary>
-    /// Is the algorithm handle for the cipher encryption initialized?
+    /// Gets or sets the UDT metadata associated with this object.
     /// </summary>
-    internal bool IsAlgorithmInitialized()
-    {
-        if (cipherMD != null)
-        {
-            return cipherMD.IsAlgorithmInitialized();
-        }
-
-        return false;
-    }
-
-    public bool IsNullable
-    {
-        get => HasFlag(SqlMetaDataPrivFlags.IsNullable);
-        set => Set(SqlMetaDataPrivFlags.IsNullable, value);
-    }
-
-    public bool IsMultiValued
-    {
-        get => HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
-        set => Set(SqlMetaDataPrivFlags.IsMultiValued, value);
-    }
+    public SqlMetaDataUdt Udt { get; set; }
 
     /// <summary>
-    /// Returns the normalization rule version byte.
+    /// Gets or sets the metadata for the XML schema collection associated with this data type.
     /// </summary>
-    /// <returns></returns>
-    internal byte NormalizationRuleVersion
-    {
-        get
-        {
-            if (cipherMD != null)
-            {
-                return cipherMD.NormalizationRuleVersion;
-            }
+    public SqlMetaDataXmlSchemaCollection XmlSchemaCollection { get; set; }
 
-            return 0x00;
-        }
-    }
-
-    private bool HasFlag(SqlMetaDataPrivFlags flag)
-    {
-        return (flags & flag) != 0;
-    }
-
-    private void Set(SqlMetaDataPrivFlags flag, bool value)
-    {
-        flags = value ? flags | flag : flags & ~flag;
-    }
-
+    // @TODO: Can this be converted to Clone like all the other token types do?
     internal virtual void CopyFrom(TdsTypeInfo original)
     {
         this.DbType = original.DbType;
@@ -113,25 +146,35 @@ internal class TdsTypeInfo
         this.scale = original.scale;
         this.length = original.length;
         this.collation = original.collation;
-        this.codePage = original.codePage;
-        this.encoding = original.encoding;
-        this.metaType = original.metaType;
+        this.CodePage = original.CodePage;
+        this.Encoding = original.Encoding;
+        this.MetaType = original.MetaType;
         this.flags = original.flags;
 
-        if (original.udt != null)
+        if (original.Udt != null)
         {
-            udt = new SqlMetaDataUdt();
-            udt.CopyFrom(original.udt);
+            Udt = new SqlMetaDataUdt();
+            Udt.CopyFrom(original.Udt);
         }
 
-        if (original.xmlSchemaCollection != null)
+        if (original.XmlSchemaCollection != null)
         {
-            xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-            xmlSchemaCollection.CopyFrom(original.xmlSchemaCollection);
+            XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+            XmlSchemaCollection.CopyFrom(original.XmlSchemaCollection);
         }
 
-        this.isEncrypted = original.isEncrypted;
-        this.baseTI = original.baseTI;
-        this.cipherMD = original.cipherMD;
+        this.IsEncrypted = original.IsEncrypted;
+        this.BaseTypeInfo = original.BaseTypeInfo;
+        this.CipherMetadata = original.CipherMetadata;
+    }
+
+    private bool HasFlag(TdsTypeInfoFlags flag)
+    {
+        return (flags & flag) != 0;
+    }
+
+    private void Set(TdsTypeInfoFlags flag, bool value)
+    {
+        flags = value ? flags | flag : flags & ~flag;
     }
 }
