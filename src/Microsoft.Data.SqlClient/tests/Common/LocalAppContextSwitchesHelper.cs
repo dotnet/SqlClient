@@ -280,6 +280,17 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
     }
 
+    #if NET
+    /// <summary>
+    /// Get or set the UseLegacyRetryLogicAssemblyResolution switch value.
+    /// </summary>
+    public bool? UseLegacyRetryLogicAssemblyResolution
+    {
+        get => GetSwitchPropertyValue(nameof(UseLegacyRetryLogicAssemblyResolution));
+        set => SetSwitchValue("s_useLegacyRetryLogicAssemblyResolution", value);
+    }
+    #endif
+
     /// <summary>
     /// Get or set the LegacyRowVersionNullBehavior switch value.
     /// </summary>

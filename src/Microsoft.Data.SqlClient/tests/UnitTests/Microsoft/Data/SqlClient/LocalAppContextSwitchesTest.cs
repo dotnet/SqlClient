@@ -46,6 +46,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.GlobalizationInvariantMode = null;
+        switchesHelper.UseLegacyRetryLogicAssemblyResolution = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             switchesHelper.UseManagedNetworking = null;
@@ -71,6 +72,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
+        Assert.False(switchesHelper.UseLegacyRetryLogicAssemblyResolution);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             Assert.False(switchesHelper.UseManagedNetworking);

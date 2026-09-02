@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -23,6 +24,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// That silently changes assembly loading behaviour for code that never opted in to this
 /// feature, and can serve unrelated assemblies out of this component's probing directory.
 /// </remarks>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class SqlConfigurableRetryLogicLoaderTest
 {
     /// <summary>
@@ -88,6 +90,109 @@ public class SqlConfigurableRetryLogicLoaderTest
     [Fact]
     public void Constructor_WithResolvableRetryLogicType_DoesNotLeaveAssemblyProbingEnabled()
     {
+        RunWithProbedRetryLogicFactory(loader =>
+        {
+            Assert.NotNull(loader.ConnectionProvider);
+            AssertNoAssemblyProbingHandlerInstalled();
+        });
+    }
+
+    /// <summary>
+    /// The probing handler must stay subscribed until the configured provider has been fully
+    /// constructed, not just until the type has been resolved.
+    /// </summary>
+    /// <remarks>
+    /// Instantiating the configured type and invoking its retry method can trigger loads of that
+    /// assembly's private dependencies, and those loads happen after type resolution has already
+    /// returned. Unsubscribing too early would break providers that depend on that behaviour. The
+    /// factory method records the state of the handler at the moment it runs, which is inside the
+    /// window that has to remain open.
+    /// </remarks>
+    [Fact]
+    public void RetryLogicTypeResolution_KeepsAssemblyProbingEnabledWhileProviderIsConstructed()
+    {
+        string probeAssemblyName = NewProbeAssemblyName();
+        string plantedFile = PlantProbeFile(probeAssemblyName);
+
+        ProbedRetryLogicFactory.ProbeAssemblyName = probeAssemblyName;
+        ProbedRetryLogicFactory.ProbingHandlerInstalledDuringInvocation = null;
+
+        try
+        {
+            RunWithProbedRetryLogicFactory(loader =>
+            {
+                Assert.NotNull(loader.ConnectionProvider);
+
+                Assert.True(
+                    ProbedRetryLogicFactory.ProbingHandlerInstalledDuringInvocation,
+                    "The assembly probing handler was not subscribed while the configured retry " +
+                    "logic provider was being constructed.");
+            });
+
+            // ...and it must be gone again afterwards.
+            AssertNoAssemblyProbingHandlerInstalled();
+        }
+        finally
+        {
+            ProbedRetryLogicFactory.ProbeAssemblyName = null;
+            ProbedRetryLogicFactory.ProbingHandlerInstalledDuringInvocation = null;
+            DeleteProbeFile(plantedFile);
+        }
+    }
+
+    /// <summary>
+    /// The UseLegacyRetryLogicAssemblyResolution switch restores the previous behaviour, where the
+    /// probing handler stays subscribed for the lifetime of the process.
+    /// </summary>
+    /// <remarks>
+    /// This exists as a compatibility escape hatch for providers that load private dependencies
+    /// after the provider has been constructed. Note that the probing directory is the application
+    /// base directory either way: the switch restores the handler's lifetime, never the working
+    /// directory it used to probe.
+    /// </remarks>
+    [Fact]
+    public void Constructor_WithLegacySwitch_LeavesAssemblyProbingEnabled()
+    {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseLegacyRetryLogicAssemblyResolution = true;
+
+        try
+        {
+            RunWithProbedRetryLogicFactory(loader =>
+            {
+                Assert.NotNull(loader.ConnectionProvider);
+
+                string probeAssemblyName = NewProbeAssemblyName();
+                string plantedFile = PlantProbeFile(probeAssemblyName);
+
+                try
+                {
+                    Assert.True(
+                        IsProbingHandlerInstalled(probeAssemblyName),
+                        "The legacy switch was set, but the assembly probing handler was not left " +
+                        "subscribed to the default assembly load context.");
+                }
+                finally
+                {
+                    DeleteProbeFile(plantedFile);
+                }
+            });
+        }
+        finally
+        {
+            // Turn the switch off first so the loader's own unsubscribe path actually runs.
+            switchesHelper.UseLegacyRetryLogicAssemblyResolution = false;
+            RemoveLegacyProbingHandler();
+        }
+    }
+
+    /// <summary>
+    /// Builds a configuration that resolves <see cref="ProbedRetryLogicFactory"/> out of this test
+    /// assembly through the loader's probing directory, constructs a loader from it, and hands the
+    /// loader to <paramref name="assert"/>.
+    /// </summary>
+    private static void RunWithProbedRetryLogicFactory(Action<SqlConfigurableRetryLogicLoader> assert)
+    {
         Assembly testAssembly = typeof(SqlConfigurableRetryLogicLoaderTest).Assembly;
         string assemblySimpleName = testAssembly.GetName().Name!;
 
@@ -112,8 +217,8 @@ public class SqlConfigurableRetryLogicLoaderTest
             SqlConfigurableRetryLogicLoader loader = new(section, null);
 
             Assert.Equal(1, ProbedRetryLogicFactory.InvocationCount);
-            Assert.NotNull(loader.ConnectionProvider);
-            AssertNoAssemblyProbingHandlerInstalled();
+
+            assert(loader);
         }
         finally
         {
@@ -122,6 +227,33 @@ public class SqlConfigurableRetryLogicLoaderTest
                 DeleteProbeFile(probePath);
             }
         }
+    }
+
+    /// <summary>
+    /// Unsubscribes the process-lifetime probing handler installed under the legacy switch, and
+    /// resets the loader's guard so a later test can install it again.
+    /// </summary>
+    /// <remarks>
+    /// The handler is deliberately private, and under the legacy switch the loader never removes it
+    /// itself. The loader's own unsubscribe path is invoked so that the delegate being removed is
+    /// created exactly the way the loader created it; the caller is responsible for turning the
+    /// switch off first, otherwise that path deliberately does nothing.
+    /// </remarks>
+    private static void RemoveLegacyProbingHandler()
+    {
+        Type loaderType = typeof(SqlConfigurableRetryLogicLoader);
+
+        MethodInfo? unsubscribe = loaderType.GetMethod(
+            "UnsubscribeAssemblyResolving",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(unsubscribe);
+        unsubscribe!.Invoke(null, null);
+
+        FieldInfo? installed = loaderType.GetField(
+            "s_legacyResolvingHandlerInstalled",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(installed);
+        installed!.SetValue(null, 0);
     }
 
     private static TestRetryConnectionSection CreateSection(string? retryLogicType) =>
@@ -179,7 +311,7 @@ public class SqlConfigurableRetryLogicLoaderTest
     /// handler subscribed the runtime never looks in that directory and reports the assembly as
     /// simply not found.
     /// </remarks>
-    private static bool IsProbingHandlerInstalled(string assemblySimpleName)
+    internal static bool IsProbingHandlerInstalled(string assemblySimpleName)
     {
         try
         {
@@ -269,9 +401,27 @@ public static class ProbedRetryLogicFactory
 {
     internal static int InvocationCount;
 
+    /// <summary>
+    /// When set to the simple name of a planted probe assembly, the factory method records whether
+    /// the loader's probing handler was subscribed at the moment it ran.
+    /// </summary>
+    internal static string? ProbeAssemblyName;
+
+    /// <summary>
+    /// The state of the loader's probing handler at the moment the factory method last ran, or null
+    /// if it was not recorded.
+    /// </summary>
+    internal static bool? ProbingHandlerInstalledDuringInvocation;
+
     public static SqlRetryLogicBaseProvider CreateProbedRetryProvider(SqlRetryLogicOption option)
     {
         InvocationCount++;
+
+        if (ProbeAssemblyName is not null)
+        {
+            ProbingHandlerInstalledDuringInvocation =
+                SqlConfigurableRetryLogicLoaderTest.IsProbingHandlerInstalled(ProbeAssemblyName);
+        }
 
         return SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
     }

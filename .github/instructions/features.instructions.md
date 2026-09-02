@@ -247,6 +247,7 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
 | `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` | `false` | Restores legacy `LoginWithFailover` alternation for login-phase SQL errors when parser state is not `Closed` |
+| `Switch.Microsoft.Data.SqlClient.UseLegacyRetryLogicAssemblyResolution` | `false` | Restores the legacy process-lifetime assembly `Resolving` handler used to load a configured `retryLogicType`. Restores lifetime only — the probing directory remains `AppContext.BaseDirectory` |
 | `Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior` | `false` | Restores legacy null handling for rowversion columns |
 | `Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour` | `false` | Restores legacy zero-scale behavior for time/datetime2/datetimeoffset |
 | `Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking` | `false` | Makes ReadAsync behave synchronously (legacy compat) |

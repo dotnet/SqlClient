@@ -65,6 +65,17 @@ internal static class LocalAppContextSwitches
     private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
 
+    #if NET
+    /// <summary>
+    /// The name of the app context switch that controls whether the assembly
+    /// resolving handler used to load a configurable retry logic type remains
+    /// subscribed to the default AssemblyLoadContext for the lifetime of the
+    /// process.
+    /// </summary>
+    private const string UseLegacyRetryLogicAssemblyResolutionString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyRetryLogicAssemblyResolution";
+    #endif
+
     /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
@@ -207,6 +218,13 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
     private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    #if NET
+    /// <summary>
+    /// The cached value of the UseLegacyRetryLogicAssemblyResolution switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyRetryLogicAssemblyResolution = SwitchValue.None;
+    #endif
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -457,6 +475,35 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    #if NET
+    /// <summary>
+    /// When a configurable retry logic type is loaded from the application's
+    /// configuration, Microsoft.Data.SqlClient temporarily subscribes an
+    /// assembly resolving handler to the default AssemblyLoadContext so that
+    /// the configured assembly and its dependencies can be located in the
+    /// application base directory. That handler is unsubscribed as soon as the
+    /// retry logic provider has been constructed.
+    ///
+    /// Prior to this behavior the handler remained subscribed for the lifetime
+    /// of the process, which allowed dependencies loaded lazily by the provider
+    /// to be resolved at any later time, but also allowed the probing directory
+    /// to satisfy unrelated assembly loads across the whole application.
+    ///
+    /// When set to true, the handler remains subscribed for the lifetime of the
+    /// process, restoring the previous behavior. This is intended only as a
+    /// compatibility escape hatch for providers with private dependencies that
+    /// are loaded after the provider has been constructed. Note that the
+    /// probing directory is the application base directory in both cases.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyRetryLogicAssemblyResolution =>
+        AcquireAndReturn(
+            UseLegacyRetryLogicAssemblyResolutionString,
+            defaultValue: false,
+            ref s_useLegacyRetryLogicAssemblyResolution);
+    #endif
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
