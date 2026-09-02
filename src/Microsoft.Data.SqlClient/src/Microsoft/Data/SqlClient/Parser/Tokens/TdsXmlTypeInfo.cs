@@ -4,13 +4,13 @@
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal sealed class SqlMetaDataXmlSchemaCollection
+internal sealed class TdsXmlTypeInfo
 {
     internal string Database;
     internal string OwningSchema;
     internal string Name;
 
-    public void CopyFrom(SqlMetaDataXmlSchemaCollection original)
+    public void CopyFrom(TdsXmlTypeInfo original)
     {
         if (original != null)
         {
