@@ -14,6 +14,13 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// </summary>
 public class SqlClientAgentTests
 {
+    /// <summary>
+    /// Ensures the published underlying type stays Int32, which keeps the enum CLS-compliant.
+    /// </summary>
+    [Fact]
+    public void UnderlyingType_IsInt32()
+        => Assert.Equal(typeof(int), Enum.GetUnderlyingType(typeof(SqlClientAgent)));
+
     /// <summary>Ensures published Microsoft agent identifiers remain stable.</summary>
     [Fact]
     public void KnownAgentIdentifiers_AreStable()

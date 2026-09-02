@@ -595,6 +595,11 @@ public class SqlClientLogger
 /// <summary>
 /// Identifies known middleware agents that use Microsoft.Data.SqlClient.
 /// </summary>
+/// <remarks>
+/// Identifiers are positive and fit in 16 bits.  The underlying type is
+/// <see cref="int" /> so the enum stays CLS-compliant; the range is enforced
+/// when an agent is registered.
+/// </remarks>
 public enum SqlClientAgent
 {
     /// <summary>The Microsoft Entity Framework Core SQL Server provider.</summary>
