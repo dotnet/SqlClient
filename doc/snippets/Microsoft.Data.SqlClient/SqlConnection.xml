@@ -2294,6 +2294,47 @@ The following sample tries to open a connection to an invalid database to simula
         </para>
       </remarks>
     </System.ICloneable.Clone>
+    <RegisterSqlClientAgent>
+      <summary>
+        Globally registers the middleware agent for physical connections opened by Microsoft.Data.SqlClient.
+      </summary>
+      <param name="id">The positive numeric identifier assigned to the middleware agent.</param>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The numeric value of <paramref name="id" /> is zero.
+      </exception>
+      <exception cref="T:System.InvalidOperationException">
+        An agent was already registered programmatically or through application configuration.
+      </exception>
+      <example>
+        [!code-csharp[Register an agent](~/../sqlclient/doc/samples/SqlConnection_RegisterSqlClientAgent.cs)]
+      </example>
+      <remarks>
+        <para>
+          This API is intended only for approved middleware partners. Applications should not call it directly.
+        </para>
+        <para>
+          Register the agent once during application startup, before opening any connections. The first registration
+          applies process-wide and cannot be replaced. Existing physical connections are not updated after registration.
+        </para>
+        <para>
+          An agent can instead be registered from an application configuration file. Configuration is loaded before
+          programmatic registration and therefore takes precedence:
+        </para>
+        <code language="xml">
+          &lt;configuration&gt;
+            &lt;configSections&gt;
+              &lt;section name="SqlClientAgent"
+                       type="Microsoft.Data.SqlClient.SqlClientAgentConfigurationSection,Microsoft.Data.SqlClient" /&gt;
+            &lt;/configSections&gt;
+            &lt;SqlClientAgent id="EntityFramework" /&gt;
+          &lt;/configuration&gt;
+        </code>
+        <para>
+          The <c>id</c> value can be an enum member name or a positive numeric value. Numeric values not declared by
+          <see cref="T:Microsoft.Data.SqlClient.SqlClientAgent" /> are accepted for forward compatibility.
+        </para>
+      </remarks>
+    </RegisterSqlClientAgent>
     <WorkstationId>
       <summary>
         Gets a string that identifies the database client.

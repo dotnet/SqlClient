@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 #nullable enable
 
@@ -31,9 +33,10 @@ internal static class UserAgent
     ///     never larger than 256 characters.
     ///   </para>
     ///   <para>
-    ///     The format is pipe ('|') delimited into 7 parts:
+    ///     The format is pipe ('|') delimited into 7 parts, plus an optional
+    ///     8th part:
     ///
-    ///     <code>1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
+    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}[|{Agent Id}]</code>
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Version}</c> part is the version of the driver,
@@ -76,6 +79,17 @@ internal static class UserAgent
     ///     Maximum length is 44 characters.
     ///   </para>
     ///   <para>
+    ///     The <c>{Agent Id}</c> part is optional and is appended only when an
+    ///     agent has been registered via
+    ///     <see cref="SqlConnection.RegisterSqlClientAgent">
+    ///       RegisterSqlClientAgent
+    ///     </see>.
+    ///     When no agent is registered, the payload ends after
+    ///     <c>{Runtime Info}</c>.  See
+    ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
+    ///     Maximum length is 8 characters.
+    ///   </para>
+    ///   <para>
     ///     Any characters from the sourced values that are not one of the
     ///     following are replaced with underscore ('_'):
     ///     <list type="bullet">
@@ -109,6 +123,63 @@ internal static class UserAgent
     #region Helpers
 
     /// <summary>
+    ///   <para>
+    ///     Returns <see cref="Ucs2Bytes"/> with the registered agent
+    ///     identifier appended as an additional part.
+    ///   </para>
+    ///   <para>
+    ///     When <paramref name="agent"/> is null, <see cref="Ucs2Bytes"/> is
+    ///     returned unchanged, with no additional part appended.
+    ///   </para>
+    /// </summary>
+    /// <param name="agent">
+    ///   The registered agent, or null if no agent has been registered.
+    /// </param>
+    /// <returns>The UCS-2 encoded payload bytes.</returns>
+    internal static ReadOnlyMemory<byte> GetUcs2Bytes(SqlClientAgent? agent)
+    {
+        if (agent is null)
+        {
+            return Ucs2Bytes;
+        }
+
+        // An agent is registered at most once per process, so a single cached
+        // entry serves every login.  The pair is cached behind one reference so
+        // readers never observe a torn ReadOnlyMemory<byte>.
+        ushort agentId = (ushort)agent.Value;
+        AgentPayload? cached = Volatile.Read(ref s_agentPayload);
+        if (cached is not null && cached.AgentId == agentId)
+        {
+            return cached.Ucs2Bytes;
+        }
+
+        ReadOnlyMemory<byte> bytes = Encoding.Unicode.GetBytes(BuildPayload(agentId));
+        Volatile.Write(ref s_agentPayload, new AgentPayload(agentId, bytes));
+
+        return bytes;
+    }
+
+    /// <summary>
+    ///   Build the payload string from the current runtime environment,
+    ///   appending the given agent id when one is supplied.
+    /// </summary>
+    /// <param name="agentId">
+    ///   The agent id to append, or null to omit the Agent Id part.
+    /// </param>
+    /// <returns>The payload string value.</returns>
+    private static string BuildPayload(ushort? agentId) =>
+        Build(
+            MaxLenOverall,
+            PayloadVersion,
+            DriverName,
+            ThisAssembly.PackageVersion,
+            RuntimeInformation.ProcessArchitecture,
+            s_osType,
+            RuntimeInformation.OSDescription,
+            RuntimeInformation.FrameworkDescription,
+            agentId);
+
+    /// <summary>
     ///   Static construction builds the Client Interface Name.  All known
     ///   exceptions are consumed.
     /// </summary>
@@ -139,16 +210,11 @@ internal static class UserAgent
         }
 #endif
 
+        // Remember it for agent payloads built later.
+        s_osType = osType;
+
         // Build it!
-        Value = Build(
-            MaxLenOverall,
-            PayloadVersion,
-            DriverName,
-            ThisAssembly.PackageVersion,
-            RuntimeInformation.ProcessArchitecture,
-            osType,
-            RuntimeInformation.OSDescription,
-            RuntimeInformation.FrameworkDescription);
+        Value = BuildPayload(agentId: null);
 
         // Convert it to UCS-2 bytes.
         //
@@ -189,6 +255,10 @@ internal static class UserAgent
     /// <param name="runtimeInfo">
     ///   The value of the Runtime Info part.
     /// </param>
+    /// <param name="agentId">
+    ///   The value of the optional Agent Id part.  When null, no Agent Id part
+    ///   is appended.
+    /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
     ///   than <paramref name="maxLen"/>.
@@ -201,7 +271,8 @@ internal static class UserAgent
         Architecture arch,
         string osType,
         string osInfo,
-        string runtimeInfo)
+        string runtimeInfo,
+        ushort? agentId = null)
     {
         string result;
 
@@ -244,6 +315,16 @@ internal static class UserAgent
 
             // Add the Runtime Info, truncating to its max length.
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
+
+            // Add the Agent Id only when an agent has been registered.
+            if (agentId.HasValue)
+            {
+                name.Append('|');
+                name.Append(
+                    Truncate(
+                        Clean(agentId.Value.ToString(CultureInfo.InvariantCulture)),
+                        MaxLenAgentId));
+            }
 
             // Remember the name we've built up.
             result = name.ToString();
@@ -398,7 +479,9 @@ internal static class UserAgent
     #region Private Fields
 
     // Our payload format version.
-    private const string PayloadVersion = "1";
+    //
+    // Version 2 adds the optional Agent Id part.
+    private const string PayloadVersion = "2";
 
     // Our well-known .NET driver name.
     private const string DriverName = "MS-MDS";
@@ -414,6 +497,7 @@ internal static class UserAgent
     private const ushort MaxLenOsType = 10;
     private const ushort MaxLenOsInfo = 44;
     private const ushort MaxLenRuntimeInfo = 44;
+    private const ushort MaxLenAgentId = 8;
 
     // The OS Type values we promise in our API.
     private const string Windows = "Windows";
@@ -427,6 +511,29 @@ internal static class UserAgent
     // A fallback value for parts of the client interface name that are
     // unknown, invalid, or when errors occur.
     private const string Unknown = "Unknown";
+
+    // The OS Type resolved during static construction, retained so agent
+    // payloads are built from the same value as Value.
+    private static readonly string s_osType;
+
+    // The payload for the registered agent, built on first use.
+    private static AgentPayload? s_agentPayload;
+
+    /// <summary>
+    ///   Pairs a payload with the agent identifier it was built for.
+    /// </summary>
+    private sealed class AgentPayload
+    {
+        internal AgentPayload(ushort agentId, ReadOnlyMemory<byte> ucs2Bytes)
+        {
+            AgentId = agentId;
+            Ucs2Bytes = ucs2Bytes;
+        }
+
+        internal ushort AgentId { get; }
+
+        internal ReadOnlyMemory<byte> Ucs2Bytes { get; }
+    }
 
     #endregion Private Fields
 }

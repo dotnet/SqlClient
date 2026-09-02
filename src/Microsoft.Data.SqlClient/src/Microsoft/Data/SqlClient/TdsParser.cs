@@ -1361,7 +1361,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    UserAgent.GetUcs2Bytes(SqlClientAgentRegistration.Agent),
                     useFeatureExt,
                     length
                     );
@@ -9521,7 +9521,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    UserAgent.GetUcs2Bytes(SqlClientAgentRegistration.Agent),
                     useFeatureExt,
                     length,
                     true

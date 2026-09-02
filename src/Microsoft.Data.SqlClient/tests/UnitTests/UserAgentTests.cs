@@ -72,11 +72,11 @@ public sealed class UserAgentTests
         //
         // The format should be:
         //
-        // 1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}
+        // 2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}
         //
         var parts = value.Split('|');
         Assert.Equal(7, parts.Length);
-        Assert.Equal("1", parts[0]);
+        Assert.Equal("2", parts[0]);
         Assert.Equal("MS-MDS", parts[1]);
         Assert.Equal(ThisAssembly.PackageVersion, parts[2]);
 
@@ -148,6 +148,82 @@ public sealed class UserAgentTests
 
         Assert.Equal(UserAgent.Value, value);
     }
+
+    /// <summary>
+    /// Test that no agent part is appended when no agent is registered.
+    /// </summary>
+    [Fact]
+    public void GetUcs2Bytes_No_Agent_Returns_Value()
+    {
+        var bytes = UserAgent.GetUcs2Bytes(agent: null);
+
+        Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), bytes.ToArray());
+        Assert.Equal(7, Decode(bytes).Split('|').Length);
+    }
+
+    /// <summary>
+    /// Test that a registered agent is appended as an additional part, leaving
+    /// the other parts unchanged.
+    /// </summary>
+    [Fact]
+    public void GetUcs2Bytes_Agent_Appends_Agent_Id()
+    {
+        string value = Decode(UserAgent.GetUcs2Bytes(SqlClientAgent.SemanticKernel));
+
+        _output.WriteLine($"UserAgent with agent: {value}");
+
+        Assert.Equal($"{UserAgent.Value}|2", value);
+
+        var parts = value.Split('|');
+        Assert.Equal(8, parts.Length);
+        Assert.Equal("2", parts[7]);
+    }
+
+    /// <summary>
+    /// Test that the agent payload is built once and reused across logins.
+    /// </summary>
+    [Fact]
+    public void GetUcs2Bytes_Agent_Reuses_Payload()
+    {
+        Assert.True(
+            UserAgent.GetUcs2Bytes(SqlClientAgent.ManagementStudio).Span.Overlaps(
+                UserAgent.GetUcs2Bytes(SqlClientAgent.ManagementStudio).Span));
+    }
+
+    /// <summary>
+    /// Test that the Build() function appends the agent id and truncates it to
+    /// its max length.
+    /// </summary>
+    [Theory]
+    [InlineData(null, "2|A|B|X64|C|D|E")]
+    [InlineData((ushort)0, "2|A|B|X64|C|D|E|0")]
+    [InlineData((ushort)7, "2|A|B|X64|C|D|E|7")]
+    [InlineData(ushort.MaxValue, "2|A|B|X64|C|D|E|65535")]
+    public void Build_Agent_Id(ushort? agentId, string expected)
+    {
+        Assert.Equal(
+            expected,
+            UserAgent.Build(
+                maxLen: 256,
+                payloadVersion: "2",
+                driverName: "A",
+                driverVersion: "B",
+                Architecture.X64,
+                osType: "C",
+                osInfo: "D",
+                runtimeInfo: "E",
+                agentId: agentId));
+    }
+
+    /// <summary>
+    /// Decode a UCS-2 encoded payload back to its string form.
+    /// </summary>
+    private static string Decode(ReadOnlyMemory<byte> bytes) =>
+        #if NET
+        Encoding.Unicode.GetString(bytes.Span);
+        #else
+        Encoding.Unicode.GetString(bytes.ToArray());
+        #endif
 
     /// <summary>
     /// Test the Build() function when it truncates the overall length.

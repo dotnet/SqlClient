@@ -592,6 +592,36 @@ public class SqlClientLogger
     public void LogInfo(string type, string method, string message) { }
 }
 
+/// <summary>
+/// Identifies known middleware agents that use Microsoft.Data.SqlClient.
+/// </summary>
+[System.CLSCompliantAttribute(false)]
+public enum SqlClientAgent : ushort
+{
+    /// <summary>The Microsoft Entity Framework Core SQL Server provider.</summary>
+    EntityFramework = 1,
+    /// <summary>Microsoft Semantic Kernel.</summary>
+    SemanticKernel = 2,
+    /// <summary>Microsoft SQL Server Management Studio.</summary>
+    ManagementStudio = 3,
+    /// <summary>Microsoft SQL Server Management Objects.</summary>
+    SqlManagementObjects = 4,
+    /// <summary>Microsoft SQL Server Data-Tier Application Framework.</summary>
+    DataTierApplicationFramework = 5,
+    /// <summary>Microsoft SQL Tools Service.</summary>
+    SqlToolsService = 6,
+    /// <summary>Microsoft ASP.NET Core distributed SQL Server cache.</summary>
+    AspNetCoreDistributedSqlServerCache = 7,
+    /// <summary>Microsoft Entity Framework 6 SQL Server provider.</summary>
+    EntityFramework6 = 8,
+    /// <summary>Microsoft Azure Functions SQL extension.</summary>
+    AzureFunctionsSqlExtension = 9,
+    /// <summary>Microsoft Orleans ADO.NET providers.</summary>
+    OrleansAdoNet = 10,
+    /// <summary>Microsoft Durable Task SQL Server provider.</summary>
+    DurableTaskSqlServer = 11
+}
+
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
 public static class SqlClientMetaDataCollectionNames
 {
@@ -1010,6 +1040,9 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public SqlConnection(string connectionString) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterSqlClientAgent/*' />
+    [System.CLSCompliantAttribute(false)]
+    public static void RegisterSqlClientAgent(Microsoft.Data.SqlClient.SqlClientAgent id) { }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]

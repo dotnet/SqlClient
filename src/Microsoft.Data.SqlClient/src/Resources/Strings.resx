@@ -2199,6 +2199,12 @@
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
     <value>Cannot transition from state '{0}' to '{1}'.</value>
   </data>
+  <data name="SQL_SqlClientAgentAlreadyRegistered" xml:space="preserve">
+    <value>A SqlClient agent can only be registered once.</value>
+  </data>
+  <data name="SQL_InvalidSqlClientAgent" xml:space="preserve">
+    <value>The SqlClient agent identifier '{0}' is invalid.</value>
+  </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
     <value>Unsupported state: '{0}'.</value>
   </data>

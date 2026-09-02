@@ -1856,6 +1856,16 @@ namespace Microsoft.Data.SqlClient
 
         #endregion Always Encrypted Errors
 
+        internal static Exception SqlClientAgentAlreadyRegistered()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SqlClientAgentAlreadyRegistered));
+        }
+
+        internal static Exception InvalidSqlClientAgent(string value, string parameterName)
+        {
+            return ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQL_InvalidSqlClientAgent, value), parameterName);
+        }
+
         //
         // Merged Provider
         //
