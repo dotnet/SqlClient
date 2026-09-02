@@ -4720,18 +4720,18 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             rec.metaType = MetaType.GetSqlDataType(tdsType, userType, tdsLen);
-            rec.type = rec.metaType.SqlDbType;
+            rec.DbType = rec.metaType.SqlDbType;
 
             // always use the nullable type for parameters if 2005 or later
             // older servers sometimes send fixed length return values
-            rec.tdsType = rec.metaType.NullableType;
+            rec.TdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)
             {
                 rec.metaType = MetaType.GetMaxMetaTypeFromMetaType(rec.metaType);
             }
 
-            if (rec.type == SqlDbType.Decimal)
+            if (rec.DbType == SqlDbType.Decimal)
             {
                 result = stateObj.TryReadByte(out rec.precision);
                 if (result != TdsOperationStatus.Done)
@@ -4756,7 +4756,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
             if (tdsType == TdsEnums.SQLUDT)
             {
-                result = TryProcessUDTMetaData((SqlMetaDataPriv)rec, stateObj);
+                result = TryProcessUDTMetaData((TdsTypeInfo)rec, stateObj);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -4772,7 +4772,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            if (rec.type == SqlDbType.Xml)
+            if (rec.DbType == SqlDbType.Xml)
             {
                 // Read schema info
                 byte schemapresent;
@@ -4899,7 +4899,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 intlen = (int)valLen;
             }
 
-            if (rec.type == SqlDbTypeExtensions.Vector)
+            if (rec.DbType == SqlDbTypeExtensions.Vector)
             {
                 rec.length = tdsLen;
             }
@@ -4924,7 +4924,7 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         internal TdsOperationStatus TryProcessTceCryptoMetadata(TdsParserStateObject stateObj,
-            SqlMetaDataPriv col,
+            TdsTypeInfo col,
             SqlTceCipherInfoTable cipherTable,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting,
             bool isReturnValue)
@@ -4961,7 +4961,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             // Read the base TypeInfo
-            col.baseTI = new SqlMetaDataPriv();
+            col.baseTI = new TdsTypeInfo();
             result = TryProcessTypeInfo(stateObj, col.baseTI, userType);
             if (result != TdsOperationStatus.Done)
             {
@@ -5476,7 +5476,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         private bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
 
-        private TdsOperationStatus TryProcessTypeInfo(TdsParserStateObject stateObj, SqlMetaDataPriv col, UInt32 userType)
+        private TdsOperationStatus TryProcessTypeInfo(TdsParserStateObject stateObj, TdsTypeInfo col, UInt32 userType)
         {
             byte byteLen;
             byte tdsType;
@@ -5508,8 +5508,8 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
-            col.type = col.metaType.SqlDbType;
-            col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
+            col.DbType = col.metaType.SqlDbType;
+            col.TdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
 
             if (TdsEnums.SQLUDT == tdsType)
             {
@@ -5592,7 +5592,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            if (col.type == SqlDbType.Decimal)
+            if (col.DbType == SqlDbType.Decimal)
             {
                 result = stateObj.TryReadByte(out col.precision);
                 if (result != TdsOperationStatus.Done)
@@ -5668,7 +5668,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            if (col.type == SqlDbTypeExtensions.Vector)
+            if (col.DbType == SqlDbTypeExtensions.Vector)
             {
                 result = stateObj.TryReadByte(out col.scale);
                 if (result != TdsOperationStatus.Done)
@@ -5768,7 +5768,7 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsOperationStatus.Done;
         }
 
-        private TdsOperationStatus TryProcessUDTMetaData(SqlMetaDataPriv metaData, TdsParserStateObject stateObj)
+        private TdsOperationStatus TryProcessUDTMetaData(TdsTypeInfo metaData, TdsParserStateObject stateObj)
         {
             ushort shortLength;
             byte byteLength;
@@ -6088,7 +6088,7 @@ namespace Microsoft.Data.SqlClient.Parser
         // for long columns, reads off textptrs, reads length, check nullability
         // for other columns, reads length, checks nullability
         // returns length and nullability
-        internal TdsOperationStatus TryProcessColumnHeader(SqlMetaDataPriv col, TdsParserStateObject stateObj, int columnOrdinal, out bool isNull, out ulong length)
+        internal TdsOperationStatus TryProcessColumnHeader(TdsTypeInfo col, TdsParserStateObject stateObj, int columnOrdinal, out bool isNull, out ulong length)
         {
             // query NBC row information first
             if (stateObj.IsNullCompressionBitSet(columnOrdinal))
@@ -6102,7 +6102,7 @@ namespace Microsoft.Data.SqlClient.Parser
             return TryProcessColumnHeaderNoNBC(col, stateObj, out isNull, out length);
         }
 
-        private TdsOperationStatus TryProcessColumnHeaderNoNBC(SqlMetaDataPriv col, TdsParserStateObject stateObj, out bool isNull, out ulong length)
+        private TdsOperationStatus TryProcessColumnHeaderNoNBC(TdsTypeInfo col, TdsParserStateObject stateObj, out bool isNull, out ulong length)
         {
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
@@ -6281,17 +6281,17 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         internal static object GetNullSqlValue(SqlBuffer nullVal,
-            SqlMetaDataPriv md,
+            TdsTypeInfo md,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting,
             SqlConnectionInternal connection)
         {
-            SqlDbType type = md.type;
+            SqlDbType type = md.DbType;
 
             if (type == SqlDbType.VarBinary && // if its a varbinary
                 md.isEncrypted &&// and encrypted
                 ShouldHonorTceForRead(columnEncryptionSetting, connection))
             {
-                type = md.baseTI.type; // the use the actual (plaintext) type
+                type = md.baseTI.DbType; // the use the actual (plaintext) type
             }
 
             switch (type)
@@ -6400,7 +6400,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     break;
 
                 default:
-                    Debug.Fail("unknown null sqlType!" + md.type.ToString());
+                    Debug.Fail("unknown null sqlType!" + md.DbType.ToString());
                     break;
             }
 
@@ -6430,7 +6430,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// <summary>
         /// This method skips bytes of a single column value from the media. It supports NBCROW and handles all types of values, including PLP and long
         /// </summary>
-        internal TdsOperationStatus TrySkipValue(SqlMetaDataPriv md, int columnOrdinal, TdsParserStateObject stateObj)
+        internal TdsOperationStatus TrySkipValue(TdsTypeInfo md, int columnOrdinal, TdsParserStateObject stateObj)
         {
             if (stateObj.IsNullCompressionBitSet(columnOrdinal))
             {
@@ -6466,7 +6466,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     }
 
                     int length;
-                    result = TryGetTokenLength(md.tdsType, stateObj, out length);
+                    result = TryGetTokenLength(md.TdsType, stateObj, out length);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -6481,7 +6481,7 @@ namespace Microsoft.Data.SqlClient.Parser
             else
             {
                 int length;
-                result = TryGetTokenLength(md.tdsType, stateObj, out length);
+                result = TryGetTokenLength(md.TdsType, stateObj, out length);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -6606,14 +6606,14 @@ namespace Microsoft.Data.SqlClient.Parser
         /// <summary>
         /// Deserializes the unencrypted bytes into a value based on the target type info.
         /// </summary>
-        internal bool DeserializeUnencryptedValue(SqlBuffer value, byte[] unencryptedBytes, SqlMetaDataPriv md, TdsParserStateObject stateObj, byte normalizationVersion)
+        internal bool DeserializeUnencryptedValue(SqlBuffer value, byte[] unencryptedBytes, TdsTypeInfo md, TdsParserStateObject stateObj, byte normalizationVersion)
         {
             if (normalizationVersion != 0x01)
             {
                 throw SQL.UnsupportedNormalizationVersion(normalizationVersion);
             }
 
-            byte tdsType = md.baseTI.tdsType;
+            byte tdsType = md.baseTI.TdsType;
             int length = unencryptedBytes.Length;
 
             // For normalized types, the length and scale of the actual type might be different than the value's.
@@ -6901,7 +6901,7 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         internal TdsOperationStatus TryReadSqlValue(SqlBuffer value,
-            SqlMetaDataPriv md,
+            TdsTypeInfo md,
             int length,
             TdsParserStateObject stateObj,
             SqlCommandColumnEncryptionSetting columnEncryptionOverride,
@@ -6909,7 +6909,7 @@ namespace Microsoft.Data.SqlClient.Parser
             SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
-            byte tdsType = md.tdsType;
+            byte tdsType = md.TdsType;
             TdsOperationStatus result;
 
             Debug.Assert(isPlp || !IsNull(md.metaType, (ulong)length), "null value should not get here!");
@@ -8637,25 +8637,25 @@ namespace Microsoft.Data.SqlClient.Parser
         // Returns the data stream length of the data identified by tds type or SqlMetaData returns
         // Returns either the total size or the size of the first chunk for partially length prefixed types.
         //
-        internal TdsOperationStatus TryGetDataLength(SqlMetaDataPriv colmeta, TdsParserStateObject stateObj, out ulong length)
+        internal TdsOperationStatus TryGetDataLength(TdsTypeInfo colmeta, TdsParserStateObject stateObj, out ulong length)
         {
             // Handle 2005 specific tokens
             if (colmeta.metaType.IsPlp)
             {
-                Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
-                             colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
-                             colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
-                             colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
-                             colmeta.tdsType == TdsEnums.SQLJSON ||
+                Debug.Assert(colmeta.TdsType == TdsEnums.SQLXMLTYPE ||
+                             colmeta.TdsType == TdsEnums.SQLBIGVARCHAR ||
+                             colmeta.TdsType == TdsEnums.SQLBIGVARBINARY ||
+                             colmeta.TdsType == TdsEnums.SQLNVARCHAR ||
+                             colmeta.TdsType == TdsEnums.SQLJSON ||
                              // Large UDTs is WinFS-only
-                             colmeta.tdsType == TdsEnums.SQLUDT,
+                             colmeta.TdsType == TdsEnums.SQLUDT,
                              "GetDataLength:Invalid streaming datatype");
                 return stateObj.TryReadPlpLength(true, out length);
             }
             else
             {
                 int intLength;
-                TdsOperationStatus result = TryGetTokenLength(colmeta.tdsType, stateObj, out intLength);
+                TdsOperationStatus result = TryGetTokenLength(colmeta.TdsType, stateObj, out intLength);
                 if (result != TdsOperationStatus.Done)
                 {
                     length = 0;
@@ -11473,20 +11473,20 @@ namespace Microsoft.Data.SqlClient.Parser
         /// Writes the UserType and TYPE_INFO values for CryptoMetadata (for bulk copy).
         /// </summary>
         /// <returns></returns>
-        internal void WriteTceUserTypeAndTypeInfo(SqlMetaDataPriv mdPriv, TdsParserStateObject stateObj)
+        internal void WriteTceUserTypeAndTypeInfo(TdsTypeInfo mdPriv, TdsParserStateObject stateObj)
         {
             // Write the UserType (4 byte value)
             WriteInt(0x0, stateObj); // TODO: fix this- timestamp columns have 0x50 value here
 
-            Debug.Assert(SqlDbType.Xml != mdPriv.type);
-            Debug.Assert(SqlDbType.Udt != mdPriv.type);
+            Debug.Assert(SqlDbType.Xml != mdPriv.DbType);
+            Debug.Assert(SqlDbType.Udt != mdPriv.DbType);
 
-            stateObj.WriteByte(mdPriv.tdsType);
+            stateObj.WriteByte(mdPriv.TdsType);
 
-            switch (mdPriv.type)
+            switch (mdPriv.DbType)
             {
                 case SqlDbType.Decimal:
-                    WriteTokenLength(mdPriv.tdsType, mdPriv.length, stateObj);
+                    WriteTokenLength(mdPriv.TdsType, mdPriv.length, stateObj);
                     stateObj.WriteByte(mdPriv.precision);
                     stateObj.WriteByte(mdPriv.scale);
                     break;
@@ -11499,7 +11499,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     stateObj.WriteByte(mdPriv.scale);
                     break;
                 default:
-                    WriteTokenLength(mdPriv.tdsType, mdPriv.length, stateObj);
+                    WriteTokenLength(mdPriv.TdsType, mdPriv.length, stateObj);
                     if (mdPriv.metaType.IsCharType)
                     {
                         WriteUnsignedInt(mdPriv.collation._info, stateObj);
@@ -11590,11 +11590,11 @@ namespace Microsoft.Data.SqlClient.Parser
                     // discuss ...
                     // xml datatype does not have token length in its metadata. So it should be a noop.
 
-                    switch (md.type)
+                    switch (md.DbType)
                     {
                         case SqlDbType.Decimal:
-                            stateObj.WriteByte(md.tdsType);
-                            WriteTokenLength(md.tdsType, md.length, stateObj);
+                            stateObj.WriteByte(md.TdsType);
+                            WriteTokenLength(md.TdsType, md.length, stateObj);
                             stateObj.WriteByte(md.precision);
                             stateObj.WriteByte(md.scale);
                             break;
@@ -11607,25 +11607,25 @@ namespace Microsoft.Data.SqlClient.Parser
                             WriteTokenLength(TdsEnums.SQLBIGVARBINARY, md.length, stateObj);
                             break;
                         case SqlDbType.Date:
-                            stateObj.WriteByte(md.tdsType);
+                            stateObj.WriteByte(md.TdsType);
                             break;
                         case SqlDbType.Time:
                         case SqlDbType.DateTime2:
                         case SqlDbType.DateTimeOffset:
-                            stateObj.WriteByte(md.tdsType);
+                            stateObj.WriteByte(md.TdsType);
                             stateObj.WriteByte(md.scale);
                             break;
                         case SqlDbTypeExtensions.Json:
                             stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbTypeExtensions.Vector:
-                            stateObj.WriteByte(md.tdsType);
-                            WriteTokenLength(md.tdsType, md.length, stateObj);
+                            stateObj.WriteByte(md.TdsType);
+                            WriteTokenLength(md.TdsType, md.length, stateObj);
                             stateObj.WriteByte(md.scale);
                             break;
                         default:
-                            stateObj.WriteByte(md.tdsType);
-                            WriteTokenLength(md.tdsType, md.length, stateObj);
+                            stateObj.WriteByte(md.TdsType);
+                            WriteTokenLength(md.TdsType, md.length, stateObj);
                             if (md.metaType.IsCharType)
                             {
                                 WriteUnsignedInt(md.collation._info, stateObj);
@@ -11668,7 +11668,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// Encrypts a column value (for SqlBulkCopy)
         /// </summary>
         /// <returns></returns>
-        internal object EncryptColumnValue(object value, SqlMetaDataPriv metadata, string column, TdsParserStateObject stateObj, bool isDataFeed, bool isSqlType)
+        internal object EncryptColumnValue(object value, TdsTypeInfo metadata, string column, TdsParserStateObject stateObj, bool isDataFeed, bool isSqlType)
         {
             Debug.Assert(IsColumnEncryptionSupported, "Server doesn't support encryption, yet we received encryption metadata");
             Debug.Assert(ShouldEncryptValuesForBulkCopy(), "Encryption attempted when not requested");
@@ -11773,7 +11773,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     null);
         }
 
-        internal Task WriteBulkCopyValue(object value, SqlMetaDataPriv metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)
+        internal Task WriteBulkCopyValue(object value, TdsTypeInfo metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)
         {
             Debug.Assert(!isSqlType || value is INullable, "isSqlType is true, but value can not be type cast to an INullable");
             Debug.Assert(!isDataFeed ^ value is DataFeed, "Incorrect value for isDataFeed");
@@ -11908,7 +11908,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         case SqlDbType.NText:
                         case SqlDbType.Image:
                             stateObj.WriteByteArray(s_longDataHeader, s_longDataHeader.Length, 0);
-                            WriteTokenLength(metadata.tdsType, ccbStringBytes == 0 ? ccb : ccbStringBytes, stateObj);
+                            WriteTokenLength(metadata.TdsType, ccbStringBytes == 0 ? ccb : ccbStringBytes, stateObj);
                             break;
 
                         case SqlDbType.VarChar:
@@ -11924,7 +11924,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
                 else
                 {
-                    WriteTokenLength(metadata.tdsType, ccbStringBytes == 0 ? ccb : ccbStringBytes, stateObj);
+                    WriteTokenLength(metadata.TdsType, ccbStringBytes == 0 ? ccb : ccbStringBytes, stateObj);
                 }
 
                 if (isSqlType)
@@ -14101,7 +14101,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
         }
 
-        internal int ReadPlpAnsiChars(ref char[] buff, int offst, int len, SqlMetaDataPriv metadata, TdsParserStateObject stateObj)
+        internal int ReadPlpAnsiChars(ref char[] buff, int offst, int len, TdsTypeInfo metadata, TdsParserStateObject stateObj)
         {
             int charsRead = 0;
             int charsLeft = 0;

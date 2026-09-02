@@ -197,8 +197,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Verify that cloning preserves baseTI, which represents the plaintext
             // TYPE_INFO for encrypted columns. WriteCryptoMetadata calls
             // WriteTceUserTypeAndTypeInfo(md.baseTI) to send the unencrypted type info.
-            SqlMetaDataPriv baseTI = new SqlMetaDataPriv();
-            baseTI.type = System.Data.SqlDbType.NVarChar;
+            TdsTypeInfo baseTI = new TdsTypeInfo();
+            baseTI.DbType = System.Data.SqlDbType.NVarChar;
             baseTI.length = 100;
             baseTI.precision = 0;
             baseTI.scale = 0;
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotNull(clone[0].baseTI);
-            Assert.Equal(System.Data.SqlDbType.NVarChar, clone[0].baseTI.type);
+            Assert.Equal(System.Data.SqlDbType.NVarChar, clone[0].baseTI.DbType);
             Assert.Equal(100, clone[0].baseTI.length);
         }
 
@@ -235,8 +235,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 normalizationRuleVersion: 1
             );
 
-            SqlMetaDataPriv baseTI = new SqlMetaDataPriv();
-            baseTI.type = System.Data.SqlDbType.Int;
+            TdsTypeInfo baseTI = new TdsTypeInfo();
+            baseTI.DbType = System.Data.SqlDbType.Int;
 
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(2, cekTable);
             original[0].column = "id";
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.True(clone[1].isEncrypted);
             Assert.NotNull(clone[1].cipherMD);
             Assert.NotNull(clone[1].baseTI);
-            Assert.Equal(System.Data.SqlDbType.Int, clone[1].baseTI.type);
+            Assert.Equal(System.Data.SqlDbType.Int, clone[1].baseTI.DbType);
 
             // The cekTable must be preserved on the clone
             Assert.NotNull(clone.CekTable);
