@@ -329,7 +329,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     // Generate a query with a large number of results.
-                    using (var command = new SqlCommand("select @P from sys.objects a cross join sys.objects b cross join sys.objects c cross join sys.objects d cross join sys.objects e cross join sys.objects f", connection))
+                    // NOLOCK keeps the catalog scan from taking shared locks, so a
+                    // concurrent DDL on the shared test database cannot deadlock it.
+                    using (var command = new SqlCommand("select @P from sys.objects a with (nolock) cross join sys.objects b with (nolock) cross join sys.objects c with (nolock) cross join sys.objects d with (nolock) cross join sys.objects e with (nolock) cross join sys.objects f with (nolock)", connection))
                     {
                         command.Parameters.Add(new SqlParameter("@P", SqlDbType.Int) { Value = expectedValue });
                         connection.Open();
