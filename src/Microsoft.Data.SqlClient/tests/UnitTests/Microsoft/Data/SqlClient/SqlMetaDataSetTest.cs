@@ -154,11 +154,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // If lost, encrypted columns are sent as plaintext.
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
-            original[0].isEncrypted = true;
+            original[0].IsEncrypted = true;
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.True(clone[0].isEncrypted);
+            Assert.True(clone[0].IsEncrypted);
         }
 
         [Fact]
@@ -179,16 +179,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
-            original[0].isEncrypted = true;
-            original[0].cipherMD = cipherMD;
+            original[0].IsEncrypted = true;
+            original[0].CipherMetadata = cipherMD;
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.NotNull(clone[0].cipherMD);
-            Assert.Equal(2, clone[0].cipherMD.CipherAlgorithmId);
-            Assert.Equal("AEAD_AES_256_CBC_HMAC_SHA256", clone[0].cipherMD.CipherAlgorithmName);
-            Assert.Equal(1, clone[0].cipherMD.EncryptionType);
-            Assert.Equal(1, clone[0].cipherMD.NormalizationRuleVersion);
+            Assert.NotNull(clone[0].CipherMetadata);
+            Assert.Equal(2, clone[0].CipherMetadata.CipherAlgorithmId);
+            Assert.Equal("AEAD_AES_256_CBC_HMAC_SHA256", clone[0].CipherMetadata.CipherAlgorithmName);
+            Assert.Equal(1, clone[0].CipherMetadata.EncryptionType);
+            Assert.Equal(1, clone[0].CipherMetadata.NormalizationRuleVersion);
         }
 
         [Fact]
@@ -205,14 +205,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
             original[0].column = "encrypted_col";
-            original[0].isEncrypted = true;
-            original[0].baseTI = baseTI;
+            original[0].IsEncrypted = true;
+            original[0].BaseTypeInfo = baseTI;
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.NotNull(clone[0].baseTI);
-            Assert.Equal(System.Data.SqlDbType.NVarChar, clone[0].baseTI.DbType);
-            Assert.Equal(100, clone[0].baseTI.length);
+            Assert.NotNull(clone[0].BaseTypeInfo);
+            Assert.Equal(System.Data.SqlDbType.NVarChar, clone[0].BaseTypeInfo.DbType);
+            Assert.Equal(100, clone[0].BaseTypeInfo.length);
         }
 
         [Fact]
@@ -241,9 +241,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(2, cekTable);
             original[0].column = "id";
             original[1].column = "secret";
-            original[1].isEncrypted = true;
-            original[1].cipherMD = cipherMD;
-            original[1].baseTI = baseTI;
+            original[1].IsEncrypted = true;
+            original[1].CipherMetadata = cipherMD;
+            original[1].BaseTypeInfo = baseTI;
 
             // Clone and prune column 0 (simulating mapping only the encrypted column)
             TdsColumnMetadataToken clone = original.Clone();
@@ -251,10 +251,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // The pruning must not affect the encrypted column's metadata
             Assert.NotNull(clone[1]);
-            Assert.True(clone[1].isEncrypted);
-            Assert.NotNull(clone[1].cipherMD);
-            Assert.NotNull(clone[1].baseTI);
-            Assert.Equal(System.Data.SqlDbType.Int, clone[1].baseTI.DbType);
+            Assert.True(clone[1].IsEncrypted);
+            Assert.NotNull(clone[1].CipherMetadata);
+            Assert.NotNull(clone[1].BaseTypeInfo);
+            Assert.Equal(System.Data.SqlDbType.Int, clone[1].BaseTypeInfo.DbType);
 
             // The cekTable must be preserved on the clone
             Assert.NotNull(clone.CekTable);
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.NotNull(original[0]);
             Assert.NotNull(original[1]);
             Assert.NotNull(original.CekTable);
-            Assert.True(original[1].isEncrypted);
+            Assert.True(original[1].IsEncrypted);
         }
     }
 }

@@ -3063,16 +3063,16 @@ namespace Microsoft.Data.SqlClient
 
         internal void CheckGetExtendedUDTInfo(TdsTypeInfo metaData, bool fThrow)
         {
-            if (metaData.udt?.Type == null)
+            if (metaData.Udt?.Type == null)
             { // If null, we have not obtained extended info.
-                Debug.Assert(!string.IsNullOrEmpty(metaData.udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
+                Debug.Assert(!string.IsNullOrEmpty(metaData.Udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
                 // Parameter throwOnError determines whether exception from Assembly.Load is thrown.
-                metaData.udt.Type =
-                    Type.GetType(typeName: metaData.udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
+                metaData.Udt.Type =
+                    Type.GetType(typeName: metaData.Udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
 
-                if (fThrow && metaData.udt.Type == null)
+                if (fThrow && metaData.Udt.Type == null)
                 {
-                    throw SQL.UDTUnexpectedResult(metaData.udt.AssemblyQualifiedName);
+                    throw SQL.UDTUnexpectedResult(metaData.Udt.AssemblyQualifiedName);
                 }
             }
         }
@@ -3089,7 +3089,7 @@ namespace Microsoft.Data.SqlClient
             // Since the serializer doesn't handle nulls...
             if (ADP.IsNull(value))
             {
-                Type t = metaData.udt?.Type;
+                Type t = metaData.Udt?.Type;
                 Debug.Assert(t != null, "Unexpected null of udtType on GetUdtValue!");
                 o = t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, Array.Empty<object>(), CultureInfo.InvariantCulture);
                 Debug.Assert(o != null);
@@ -3100,7 +3100,7 @@ namespace Microsoft.Data.SqlClient
 
                 MemoryStream stm = new MemoryStream((byte[])value);
 
-                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
+                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.Udt?.Type);
 
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;

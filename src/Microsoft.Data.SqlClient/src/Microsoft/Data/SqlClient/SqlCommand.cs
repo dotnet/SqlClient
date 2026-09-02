@@ -1703,7 +1703,7 @@ namespace Microsoft.Data.SqlClient
                 // If the parameter's direction is InputOutput, Output, or ReturnValue and it needs
                 // to be transparently encrypted/decrypted, then simply decrypt, deserialize, and
                 // set the value.
-                if (returnValue.cipherMD is not null &&
+                if (returnValue.CipherMetadata is not null &&
                     thisParam.CipherMetadata is not null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                      thisParam.Direction == ParameterDirection.InputOutput ||
@@ -1711,11 +1711,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // @TODO: make this a separate method
                     // Validate type of the return value is valid for encryption
-                    if (returnValue.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (returnValue.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
                         throw SQL.InvalidDataTypeForEncryptedParameter(
                             thisParam.GetPrefixedParameterName(),
-                            returnValue.tdsType,
+                            returnValue.TdsType,
                             expectedDataType: TdsEnums.SQLBIGVARBINARY);
                     }
 
@@ -1733,10 +1733,10 @@ namespace Microsoft.Data.SqlClient
                             Debug.Assert(_activeConnection is not null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            returnValue.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
                             byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
                                 returnValue.Value.ByteArray,
-                                returnValue.cipherMD,
+                                returnValue.CipherMetadata,
                                 _activeConnection,
                                 this);
 
@@ -1816,9 +1816,9 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.DbType, isMultiValued: false);
 
-                    if (returnValue.type is SqlDbType.Decimal)
+                    if (returnValue.DbType is SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                         thisParam.PrecisionInternal = returnValue.precision;
@@ -1827,7 +1827,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                     }
-                    else if (returnValue.type is SqlDbType.Xml)
+                    else if (returnValue.DbType is SqlDbType.Xml)
                     {
                         if (thisParam.Value is SqlCachedBuffer cachedBuffer)
                         {
