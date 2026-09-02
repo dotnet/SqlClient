@@ -47,20 +47,18 @@ internal sealed class TdsUdtTypeInfo
     internal Type Type { get; set; }
 
     /// <summary>
-    /// Copies the information from the provided <see cref="TdsUdtTypeInfo"/> instance to the current instance.
+    /// Creates a new instance of <see cref="TdsUdtTypeInfo"/> and initializes it with the values
+    /// of the current instance.
     /// </summary>
-    /// <param name="original">
-    /// The <see cref="TdsUdtTypeInfo"/> instance from which to copy the information.
-    /// </param>
-    public void CopyFrom(TdsUdtTypeInfo original)
+    internal TdsUdtTypeInfo Clone()
     {
-        if (original != null)
+        return new TdsUdtTypeInfo
         {
-            Type = original.Type;
-            DatabaseName = original.DatabaseName;
-            SchemaName = original.SchemaName;
-            TypeName = original.TypeName;
-            AssemblyQualifiedName = original.AssemblyQualifiedName;
-        }
+            AssemblyQualifiedName = AssemblyQualifiedName,
+            DatabaseName = DatabaseName,
+            SchemaName = SchemaName,
+            Type = Type,
+            TypeName = TypeName
+        };
     }
 }
