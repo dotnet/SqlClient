@@ -27,8 +27,9 @@
 #     series without a release branch -> that version is in development on the
 #     default branch. Changes for it go to the default branch.
 #
-#   * An earlier configured milestone series has no release branch -> the
-#     requested version is not active yet and cannot target the default branch.
+#   * Any other series -> the default branch carries exactly one development
+#     line, so a later series is not active yet and an earlier series is no
+#     longer in development. Neither may target the default branch.
 #
 # This rule is self-maintaining: no hard-coded version list needs updating when
 # a new release branch is cut.
@@ -39,8 +40,9 @@
 #   -----------------------  -----------------------  ----------------------
 #   release/<major>.<minor>  n/a (it is the target)   pass
 #   another release/*        n/a                      fail (mismatch)
-#   default branch           no, earliest configured line  pass
+#   default branch           no, active line               pass
 #   default branch           no, later configured line     fail (not active yet)
+#   default branch           no, earlier configured line   fail (no longer in development)
 #   default branch           yes                      fail (needs servicing branch)
 #   anything else            n/a                      skipped (integration branch)
 #
@@ -190,9 +192,13 @@ while IFS= read -r milestone; do
 done <<< "${MILESTONES}"
 
 if [[ -n "${ACTIVE_MAJOR}" ]] &&
-    { (( 10#${MAJOR} > 10#${ACTIVE_MAJOR} )) ||
-      (( 10#${MAJOR} == 10#${ACTIVE_MAJOR} && 10#${MINOR} > 10#${ACTIVE_MINOR} )); }; then
-  echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but the ${ACTIVE_MAJOR}.${ACTIVE_MINOR} milestone series remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
+    (( 10#${MAJOR} != 10#${ACTIVE_MAJOR} || 10#${MINOR} != 10#${ACTIVE_MINOR} )); then
+  if (( 10#${MAJOR} > 10#${ACTIVE_MAJOR} ||
+        (10#${MAJOR} == 10#${ACTIVE_MAJOR} && 10#${MINOR} > 10#${ACTIVE_MINOR}) )); then
+    echo "::error::Milestone '${MILESTONE_TITLE}' is for a later development line, but the ${ACTIVE_MAJOR}.${ACTIVE_MINOR} milestone series remains active on '${DEFAULT_BRANCH}' until 'release/${ACTIVE_MAJOR}.${ACTIVE_MINOR}' is cut. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
+  else
+    echo "::error::Milestone '${MILESTONE_TITLE}' is for the ${MAJOR}.${MINOR} line, which is no longer in development on '${DEFAULT_BRANCH}'; the active line is ${ACTIVE_MAJOR}.${ACTIVE_MINOR}. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
+  fi
   exit 1
 fi
 

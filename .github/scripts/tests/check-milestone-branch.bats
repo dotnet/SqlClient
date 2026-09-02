@@ -159,6 +159,15 @@ MOCK
   grep -qF "milestones?state=all" "${STUB_DIR}/gh.log"
 }
 
+@test "fails when an earlier milestone series targets the default branch" {
+  export MILESTONE_TITLE="1.0.0"
+  export BASE_REF="main"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no longer in development"* ]]
+  [[ "$output" == *"active line is 7.1"* ]]
+}
+
 @test "passes when a later milestone targets the default branch after the active release branch is cut" {
   mock_release_branches "release/6.1" "release/7.0" "release/7.1"
   export MILESTONE_TITLE="8.0.0-preview1"

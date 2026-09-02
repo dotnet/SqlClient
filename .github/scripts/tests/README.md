@@ -116,7 +116,7 @@ bats --formatter pretty .github/scripts/tests/
 | ---- | ----- | ------ |
 | `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
 | `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
-| `check-milestone-branch.bats` | 24 | Milestone version parsing, state-independent active development-line selection, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
+| `check-milestone-branch.bats` | 25 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
 | `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
 
 ## How the Tests Work
