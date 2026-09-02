@@ -25,19 +25,16 @@ internal sealed class TdsXmlTypeInfo
     internal string OwningSchema;
 
     /// <summary>
-    /// Copies the properties of the specified <see cref="TdsXmlTypeInfo"/> instance
-    /// to the current instance.
+    /// Creates a new instance of <see cref="TdsXmlTypeInfo"/> and initializes it with the
+    /// properties of the current instance.
     /// </summary>
-    /// <param name="original">
-    /// The <see cref="TdsXmlTypeInfo"/> instance from which to copy properties.
-    /// </param>
-    public void CopyFrom(TdsXmlTypeInfo original)
+    internal TdsXmlTypeInfo Clone()
     {
-        if (original != null)
+        return new TdsXmlTypeInfo
         {
-            Database = original.Database;
-            OwningSchema = original.OwningSchema;
-            Name = original.Name;
-        }
+            Database = Database,
+            Name = Name,
+            OwningSchema = OwningSchema
+        };
     }
 }
