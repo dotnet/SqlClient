@@ -47,6 +47,7 @@ public class SqlConfigurableRetryLogicLoaderTest
     [Theory]
     [InlineData(null)]
     [InlineData("")]
+    [InlineData("   ")]
     public void Constructor_WithoutRetryLogicType_DoesNotLeaveAssemblyProbingEnabled(string? retryLogicType)
     {
         TestRetryConnectionSection section = CreateSection(retryLogicType);

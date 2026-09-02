@@ -113,7 +113,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             Type type;
-            bool customRetryTypeConfigured = !string.IsNullOrEmpty(configurableRetryType);
+
+            // Whitespace is treated the same as unset: there is no type to resolve, so the
+            // resolving handler must not be installed for it.
+            bool customRetryTypeConfigured = !string.IsNullOrWhiteSpace(configurableRetryType);
 
             // Only install the assembly resolving handler when a custom retry logic type has
             // actually been configured. Callers who did not opt in to loading a custom type must
