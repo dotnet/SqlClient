@@ -7,6 +7,10 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    /// <summary>
+    /// Verifies that an agent registered in the application configuration file consumes the single
+    /// process-wide registration.
+    /// </summary>
     public class SqlClientAgentConfigurationTests
     {
         // The FunctionalTests project employs a .NET Framework app.config file

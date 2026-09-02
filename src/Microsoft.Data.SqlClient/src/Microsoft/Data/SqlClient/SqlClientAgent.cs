@@ -91,7 +91,7 @@ internal static class SqlClientAgentRegistration
     /// </summary>
     /// <param name="id">The agent to register.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///   <paramref name="id"/> is not a valid agent identifier.
+    ///   <paramref name="id"/> is not a declared agent identifier.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     ///   An agent has already been registered.
@@ -140,15 +140,21 @@ internal static class SqlClientAgentRegistration
     }
 
     /// <summary>
-    ///   Throw if the given agent is not a valid agent identifier.
+    ///   Throw if the given agent is not a declared agent identifier.
     /// </summary>
+    /// <remarks>
+    ///   The public registration API is a closed enum, so an undeclared value
+    ///   is always a caller mistake.  Undeclared numeric identifiers remain
+    ///   valid in <see cref="Parse"/>, where they let an agent assigned an
+    ///   identifier after this driver shipped still be configured.
+    /// </remarks>
     /// <param name="id">The agent to validate.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///   <paramref name="id"/> is not a valid agent identifier.
+    ///   <paramref name="id"/> is not a declared agent identifier.
     /// </exception>
     private static void Validate(SqlClientAgent id)
     {
-        if ((ushort)id == 0)
+        if ((ushort)id == 0 || !Enum.IsDefined(typeof(SqlClientAgent), id))
         {
             throw SQL.InvalidSqlClientAgent(id.ToString(), nameof(id));
         }

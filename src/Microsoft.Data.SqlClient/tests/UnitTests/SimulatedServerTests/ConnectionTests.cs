@@ -25,6 +25,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
         private static readonly Lazy<bool> s_sqlClientAgentRegistered = new(() =>

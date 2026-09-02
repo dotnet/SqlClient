@@ -2300,7 +2300,7 @@ The following sample tries to open a connection to an invalid database to simula
       </summary>
       <param name="id">The positive numeric identifier assigned to the middleware agent.</param>
       <exception cref="T:System.ArgumentOutOfRangeException">
-        The numeric value of <paramref name="id" /> is zero.
+        <paramref name="id" /> is not a declared <see cref="T:Microsoft.Data.SqlClient.SqlClientAgent" /> value.
       </exception>
       <exception cref="T:System.InvalidOperationException">
         An agent was already registered programmatically or through application configuration.

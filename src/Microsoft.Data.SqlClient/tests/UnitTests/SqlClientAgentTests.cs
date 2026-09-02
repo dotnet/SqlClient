@@ -49,6 +49,14 @@ public class SqlClientAgentTests
     public void Parse_RejectsInvalidIdentifiers(string value)
         => Assert.ThrowsAny<ArgumentException>(() => SqlClientAgentRegistration.Parse(value));
 
+    /// <summary>Verifies undeclared identifiers are rejected by the public registration API.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(42)]
+    public void Register_RejectsUndeclaredIdentifiers(ushort id)
+        => Assert.Throws<ArgumentOutOfRangeException>(
+            () => SqlConnection.RegisterSqlClientAgent((SqlClientAgent)id));
+
     /// <summary>
     /// Verifies the SqlClientAgent configuration section is declared correctly and yields the
     /// expected agent.
