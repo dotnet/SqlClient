@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 public class SqlConnectionInternalResetTransactionTests
 {
     /// <summary>
-    /// Exhaustively pins the predicate over every combination of its four inputs.
+    /// Exhaustively pins the predicate over all sixteen combinations of its four boolean inputs.
     ///
     /// The expectations encode three rules:
     /// <list type="number">
@@ -46,11 +46,16 @@ public class SqlConnectionInternalResetTransactionTests
     /// </list>
     /// </summary>
     [Theory]
-    // Not pooled: never preserve, regardless of any other state.
+    // Not pooled: never preserve, regardless of any other state. All eight combinations of the
+    // remaining inputs are enumerated so that rule 1 is pinned unconditionally.
     [InlineData(false, false, false, false, false)]
-    [InlineData(false, true, true, true, false)]
-    [InlineData(false, true, true, false, false)]
+    [InlineData(false, false, false, true, false)]
+    [InlineData(false, false, true, false, false)]
     [InlineData(false, false, true, true, false)]
+    [InlineData(false, true, false, false, false)]
+    [InlineData(false, true, false, true, false)]
+    [InlineData(false, true, true, false, false)]
+    [InlineData(false, true, true, true, false)]
     // Pooled, no transaction of any kind: nothing to preserve.
     [InlineData(true, false, true, false, false)]
     [InlineData(true, false, false, false, false)]

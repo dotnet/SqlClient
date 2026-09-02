@@ -299,7 +299,7 @@ mutation-tested:
 | `hasEnlistedTransaction` (#3019) | **#4001** | ❌ 2 failed |
 | `isTransactionRoot && is2008OrNewer` (pre-#3019) | **#2970** | ❌ 4 failed |
 | Union without the 2008 guard | pre-2008 regression | ❌ 2 failed |
-| The shipped condition | none | ✅ 15 passed |
+| The shipped condition | none | ✅ 19 passed |
 
 This satisfies "fails before the change, passes after" for **both** regressions, and
 does so deterministically and without a server.
