@@ -72,7 +72,7 @@ parameters:
   # NOTE: This value is evaluated at template-expansion (compile) time to select the pool image, so
   # it must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
   # $[...] runtime expressions).
-  - name: vmImage
+  - name: poolImage
     type: string
 
 jobs:
@@ -93,7 +93,7 @@ jobs:
     pool:
       name: Managed-Instance-pool
       demands:
-        - imageOverride -equals ${{ parameters.vmImage }}
+        - imageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 

@@ -298,4 +298,4 @@ stages:
           # must be named explicitly. Use a minimal Linux image because merging
           # coverage does not require SQL Server.
           poolName: ADO-Trusted-Linux-WestUS2
-          vmImage: ADO-UB24
+          poolImage: ADO-UB24

@@ -119,7 +119,7 @@ stages:
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.poolName }}
-          vmImage: ADO-UB24
+          poolImage: ADO-UB24
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -134,7 +134,7 @@ stages:
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
           poolName: ${{ parameters.poolName }}
-          vmImage: ADO-Win25
+          poolImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -151,7 +151,7 @@ stages:
           # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
           # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
-          vmImage: macos-latest
+          poolImage: macos-latest
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -159,6 +159,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
           poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           # The version is computed by this stage (see the packageVersion variable above).
           packageVersion: $(packageVersion)

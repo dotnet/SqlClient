@@ -106,7 +106,7 @@ stages:
                   referenceType: ${{ parameters.referenceType }}
                   timeout: ${{ parameters.testJobTimeout }}
                   poolName: ${{ config.value.pool }}
-                  image: ${{ image.value }}
+                  poolImage: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
                   abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
@@ -136,7 +136,7 @@ stages:
                     referenceType: ${{ parameters.referenceType }}
                     timeout: ${{ parameters.testJobTimeout }}
                     poolName: ${{ config.value.pool }}
-                    image: ${{ image.value }}
+                    poolImage: ${{ image.value }}
                     ${{if eq(usemanagedSNI, 'true') }}:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'ManagedSNI', testSet) }}
                     ${{ else }}:

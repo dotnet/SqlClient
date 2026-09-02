@@ -174,12 +174,14 @@ stages:
   - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      poolImage: ADO-UB24
       buildSuffix: ${{ parameters.buildSuffix }}
 
   # Generate secrets used throughout the pipeline.
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      poolImage: ADO-UB24
       debug: ${{ parameters.debug }}
 
   # Build the SqlServer package, and publish it to the pipeline artifacts
@@ -276,6 +278,7 @@ stages:
   - template: /eng/pipelines/stages/verify-nuget-packages-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      poolImage: ADO-Win25
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
@@ -324,6 +327,7 @@ stages:
             parameters:
               debug: ${{ parameters.debug }}
               poolName: ${{ parameters.defaultPoolName }}
+              poolImage: ADO-UB24
               # We only want to upload coverage results to CodeCov from certain
               # pipelines.  We use the pipeline name (Build.DefinitionName) to
               # choose.  This is a predefined variable that is available at

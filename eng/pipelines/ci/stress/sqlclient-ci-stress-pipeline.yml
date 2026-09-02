@@ -94,7 +94,7 @@ stages:
     parameters:
       debug: ${{ parameters.debug }}
       poolName: $(ci_var_defaultPoolName)
-      vmImage: ADO-UB24
+      poolImage: ADO-UB24
 
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self

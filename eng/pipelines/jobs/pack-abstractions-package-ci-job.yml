@@ -76,9 +76,8 @@ parameters:
     type: string
 
   # The name of the VM image to run on, within the pool.
-  - name: vmImage
+  - name: poolImage
     type: string
-    default: ADO-UB24
 
 jobs:
 
@@ -91,7 +90,7 @@ jobs:
       name: ${{ parameters.poolName }}
 
       demands:
-        - imageOverride -equals ${{ parameters.vmImage }}
+        - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
 

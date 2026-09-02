@@ -27,10 +27,9 @@ parameters:
   - name: poolName
     type: string
 
-  # The imageOverride capability required from the 1ES pool.
-  - name: imageOverride
+  # The name of the VM image to run on, within the pool.
+  - name: poolImage
     type: string
-    default: ADO-Win25
 
   # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
@@ -86,7 +85,7 @@ jobs:
   pool:
     name: ${{parameters.poolName }}
     demands:
-    - imageOverride -equals ${{ parameters.imageOverride }}
+    - imageOverride -equals ${{ parameters.poolImage }}
 
   variables:
     - template: /eng/pipelines/libraries/ci-build-variables.yml@self
