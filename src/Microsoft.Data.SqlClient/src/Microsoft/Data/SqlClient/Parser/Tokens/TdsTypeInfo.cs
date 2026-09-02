@@ -157,11 +157,7 @@ internal class TdsTypeInfo
             UdtTypeInfo.CopyFrom(original.UdtTypeInfo);
         }
 
-        if (original.XmlTypeInfo != null)
-        {
-            XmlTypeInfo = new TdsXmlTypeInfo();
-            XmlTypeInfo.CopyFrom(original.XmlTypeInfo);
-        }
+        this.XmlTypeInfo = original.XmlTypeInfo?.Clone();
 
         this.IsEncrypted = original.IsEncrypted;
         this.BaseTypeInfo = original.BaseTypeInfo;
