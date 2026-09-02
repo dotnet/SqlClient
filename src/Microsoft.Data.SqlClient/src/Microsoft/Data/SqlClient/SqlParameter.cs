@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType _metaType;
         private SqlCollation _collation;
-        private SqlMetaDataXmlSchemaCollection _xmlSchemaCollection;
+        private TdsXmlTypeInfo _xmlTypeInfo;
         private string _udtTypeName;
         private string _typeName;
         private Exception _udtLoadError;
@@ -353,9 +353,9 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
             {
                 EnsureXmlSchemaCollection();
-                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
-                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
-                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+                _xmlTypeInfo.Database = xmlSchemaCollectionDatabase;
+                _xmlTypeInfo.OwningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlTypeInfo.Name = xmlSchemaCollectionName;
             }
         }
 
@@ -431,7 +431,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollection?.Database ?? string.Empty;
+            get => _xmlTypeInfo?.Database ?? string.Empty;
             set => EnsureXmlSchemaCollection().Database = value;
         }
 
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
+            get => _xmlTypeInfo?.OwningSchema ?? string.Empty;
             set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollection?.Name ?? string.Empty;
+            get => _xmlTypeInfo?.Name ?? string.Empty;
             set => EnsureXmlSchemaCollection().Name = value;
         }
 
@@ -1131,9 +1131,9 @@ namespace Microsoft.Data.SqlClient
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
-            if (_xmlSchemaCollection != null)
+            if (_xmlTypeInfo != null)
             {
-                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlSchemaCollection);
+                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlTypeInfo);
             }
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
@@ -1168,13 +1168,13 @@ namespace Microsoft.Data.SqlClient
             return parent;
         }
 
-        private SqlMetaDataXmlSchemaCollection EnsureXmlSchemaCollection()
+        private TdsXmlTypeInfo EnsureXmlSchemaCollection()
         {
-            if (_xmlSchemaCollection is null)
+            if (_xmlTypeInfo is null)
             {
-                _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                _xmlTypeInfo = new TdsXmlTypeInfo();
             }
-            return _xmlSchemaCollection;
+            return _xmlTypeInfo;
         }
 
         internal void FixStreamDataForNonPLP()
