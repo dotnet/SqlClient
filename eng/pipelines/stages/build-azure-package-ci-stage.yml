@@ -162,7 +162,7 @@ stages:
             - template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
               parameters:
                 saPassword: $(saPassword)
-          vmImage: ADO-UB24-SQL25
+          poolImage: ADO-UB24-SQL25
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -200,7 +200,7 @@ stages:
           # The ADO-MMS25-SQL25 image includes a local SQL Server that supports
           # integrated security.
           supportsIntegratedSecurity: true
-          vmImage: ADO-MMS25-SQL25
+          poolImage: ADO-MMS25-SQL25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -225,7 +225,7 @@ stages:
           # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
-          vmImage: macos-latest
+          poolImage: macos-latest
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -233,6 +233,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
           poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           packageVersion: $(packageVersion)
           azureArtifactsName: ${{ parameters.azureArtifactsName }}

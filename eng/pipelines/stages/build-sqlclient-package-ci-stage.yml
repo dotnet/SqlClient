@@ -93,6 +93,7 @@ stages:
     - template: /eng/pipelines/common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         poolName: ${{ parameters.poolName }}
+        poolImage: ADO-Win25
         buildConfiguration: ${{ parameters.buildConfiguration }}
         referenceType: ${{ parameters.referenceType }}
         abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}

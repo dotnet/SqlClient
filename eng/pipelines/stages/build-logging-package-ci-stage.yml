@@ -93,6 +93,7 @@ stages:
       - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
         parameters:
           poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           # The version is computed by this stage (see the packageVersion variable above).
           packageVersion: $(packageVersion)

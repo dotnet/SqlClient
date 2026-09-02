@@ -28,9 +28,8 @@ parameters:
     type: string
 
   # The name of the VM image to run on, within the pool.
-  - name: vmImage
+  - name: poolImage
     type: string
-    default: ADO-UB24
 
   # Build suffix appended to prerelease tag (e.g. 'ci' or 'pr').
   - name: buildSuffix
@@ -47,7 +46,7 @@ stages:
         pool:
           name: ${{ parameters.poolName }}
           demands:
-            - imageOverride -equals ${{ parameters.vmImage }}
+            - imageOverride -equals ${{ parameters.poolImage }}
 
         steps:
           # Install the global.json-pinned .NET SDK before running any dotnet build, so this stage
