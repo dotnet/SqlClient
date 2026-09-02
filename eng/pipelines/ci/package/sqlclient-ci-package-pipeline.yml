@@ -79,6 +79,9 @@ parameters:
       - diagnostic
 
 variables:
+  # Provides 'general_purpose_pool_name', the 1ES pool that hosts most jobs in this project.
+  - group: sqlclient_pipeline_config
+
   # Whether this is an internal (ADO.Net project) or public (Public project) build.
   - name: isInternalBuild
     value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
@@ -96,10 +99,7 @@ jobs:
     displayName: Build NuGet Packages
 
     pool:
-      ${{ if eq(variables.isInternalBuild, true) }}:
-        name: ADO-1ES-Pool
-      ${{ else }}:
-        name: ADO-CI-1ES-Pool
+      name: $(general_purpose_pool_name)
       demands:
         - ImageOverride -equals ${{ parameters.poolImage }}
 

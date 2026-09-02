@@ -94,21 +94,21 @@ parameters:
       - Debug
       - Release
 
-  # The name of the 1ES pool that all CI jobs run in.
+  # The name of the general-purpose 1ES pool that all CI jobs run in.
   #
   # This is the single place in the CI pipelines where the pool name is read
   # from a variable group; every stage and job below receives it as a
   # parameter so that the value flows down from here.
   #
-  # 'ci_var_defaultPoolName' is defined in the 'ADO Build properties' variable
-  # group (see /eng/pipelines/libraries/ci-build-variables.yml), for both the
-  # Public and ADO.Net projects.  The PR pipelines are configured from a
-  # different variable group and use '$(PoolNameDefault)' instead; see
-  # /eng/pipelines/pr/sqlclient-pr-pipeline.yml.
+  # 'general_purpose_pool_name' is defined in the 'sqlclient_pipeline_config'
+  # variable group (see /eng/pipelines/libraries/ci-build-variables.yml), for
+  # both the Public and ADO.Net projects, and names each project's own pool.
+  # Special-purpose pools, such as the Always Encrypted and ARM64 pools used
+  # below, are still named directly.
   #
   - name: defaultPoolName
     type: string
-    default: $(ci_var_defaultPoolName)
+    default: $(general_purpose_pool_name)
 
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
