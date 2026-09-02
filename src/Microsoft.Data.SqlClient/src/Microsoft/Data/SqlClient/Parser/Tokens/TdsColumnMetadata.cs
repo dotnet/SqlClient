@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 /// Represents metadata information for a specific column in a TDS stream. Corresponds with a
 /// single column withing a SQLCOLMETADATA/SQLALTMETADATA token.
 /// </summary>
-internal sealed class TdsColumnMetadata : SqlMetaDataPriv
+internal sealed class TdsColumnMetadata : TdsTypeInfo
 {
     [Flags]
     private enum MetadataFlags
@@ -76,7 +76,7 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
     internal string CatalogName => tableName.CatalogName;
 
 
-    internal bool Is2008DateTimeType => type is SqlDbType.Date
+    internal bool Is2008DateTimeType => DbType is SqlDbType.Date
                                              or SqlDbType.Time
                                              or SqlDbType.DateTime2
                                              or SqlDbType.DateTimeOffset;
@@ -140,7 +140,7 @@ internal sealed class TdsColumnMetadata : SqlMetaDataPriv
     /// <summary>
     /// Indicates whether the column is a large UDT with the maximum allowable length.
     /// </summary>
-    internal bool IsLargeUdt => type == SqlDbType.Udt && length == int.MaxValue;
+    internal bool IsLargeUdt => DbType == SqlDbType.Udt && length == int.MaxValue;
 
     /// <summary>
     /// Indicates whether the column is read-only in the context of the data source.

@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
         /// </summary>
-        internal static TdsOperationStatus TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
+        internal static TdsOperationStatus TryCreate(TdsTypeInfo metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
             buffer = null;
 
