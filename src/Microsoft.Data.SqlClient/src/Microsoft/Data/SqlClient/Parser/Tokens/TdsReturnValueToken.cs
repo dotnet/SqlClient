@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 /// associated with parameters in TDS responses. It contains metadata describing the parameter and
 /// its value.
 /// </remarks>
-internal sealed class TdsReturnValueToken : SqlMetaDataPriv
+internal sealed class TdsReturnValueToken : TdsTypeInfo
 {
     /// <summary>
     /// Gets or sets the name of the parameter associated with a returned value.
