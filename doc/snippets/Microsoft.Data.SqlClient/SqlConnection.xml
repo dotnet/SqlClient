@@ -2306,7 +2306,20 @@ The following sample tries to open a connection to an invalid database to simula
         An agent was already registered programmatically or through application configuration.
       </exception>
       <example>
-        [!code-csharp[Register an agent](~/../sqlclient/doc/samples/SqlConnection_RegisterSqlClientAgent.cs)]
+        <para>
+          Register the agent once during application startup:
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+
+          internal static class MiddlewareRegistration
+          {
+              internal static void Register()
+              {
+                  SqlConnection.RegisterSqlClientAgent(SqlClientAgent.EntityFramework);
+              }
+          }
+        </code>
       </example>
       <remarks>
         <para>
