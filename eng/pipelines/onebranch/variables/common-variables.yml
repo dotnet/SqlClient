@@ -66,15 +66,15 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: abstractionsPackageVersion
-    value: '7.0.2'
+    value: '7.0.3'
 
   # The NuGet package version for preview releases.
   - name: abstractionsPackagePreviewVersion
-    value: 7.0.2-preview1.$(Build.BuildNumber)
+    value: 7.0.3-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the Abstractions package.
   - name: abstractionsAssemblyFileVersion
-    value: 7.0.2.$(assemblyBuildNumber)
+    value: 7.0.3.$(assemblyBuildNumber)
 
   # ----------------------------------------------------------------------------
   # MDS Package Versions
@@ -84,7 +84,7 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: mdsPackageVersion
-    value: '7.0.2'
+    value: '7.0.3'
 
   # The NuGet package version for preview releases.
   #
@@ -93,11 +93,11 @@ variables:
   # maintain this variable such that these testing preview builds receive newer version numbers
   # than previous builds.
   - name: mdsPackagePreviewVersion
-    value: 7.0.2-preview1.$(Build.BuildNumber)
+    value: 7.0.3-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the MDS package.
   - name: mdsAssemblyFileVersion
-    value: 7.0.2.$(assemblyBuildNumber)
+    value: 7.0.3.$(assemblyBuildNumber)
 
   # The path to the NuGet packaging specification file used to generate the MDS NuGet package.
   - name: nuspecPath
@@ -111,15 +111,15 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: loggingPackageVersion
-    value: '7.0.2'
+    value: '7.0.3'
 
   # The NuGet package version for preview releases.
   - name: loggingPackagePreviewVersion
-    value: 7.0.2-preview1.$(Build.BuildNumber)
+    value: 7.0.3-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the Logging package.
   - name: loggingAssemblyFileVersion
-    value: 7.0.2.$(assemblyBuildNumber)
+    value: 7.0.3.$(assemblyBuildNumber)
 
   # ----------------------------------------------------------------------------
   # Azure Package Versions
@@ -129,15 +129,15 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: azurePackageVersion
-    value: '7.0.2'
+    value: '7.0.3'
 
   # The NuGet package version for preview releases.
   - name: azurePackagePreviewVersion
-    value: 7.0.2-preview1.$(Build.BuildNumber)
+    value: 7.0.3-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the Azure package.
   - name: azureAssemblyFileVersion
-    value: 7.0.2.$(assemblyBuildNumber)
+    value: 7.0.3.$(assemblyBuildNumber)
 
   # ----------------------------------------------------------------------------
   # SqlServer.Server Package Versions
@@ -165,15 +165,15 @@ variables:
 
   # The NuGet package version for GA releases (non-preview).
   - name: akvPackageVersion
-    value: '7.0.2'
+    value: '7.0.3'
 
   # The NuGet package version for preview releases.
   - name: akvPackagePreviewVersion
-    value: 7.0.2-preview1.$(Build.BuildNumber)
+    value: 7.0.3-preview1.$(Build.BuildNumber)
 
   # The AssemblyFileVersion for all assemblies in the AKV Provider package.
   - name: akvAssemblyFileVersion
-    value: 7.0.2.$(assemblyBuildNumber)
+    value: 7.0.3.$(assemblyBuildNumber)
 
   # ----------------------------------------------------------------------------
   # MDS Symbols Publishing
