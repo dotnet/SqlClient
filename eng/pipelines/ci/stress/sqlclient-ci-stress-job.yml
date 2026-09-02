@@ -76,8 +76,8 @@ parameters:
   # Supplied by the caller so that the pool name flows down from the pipeline root.
   #
   # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
-  # and an imageOverride demand, so the hosted pool must be passed as the literal 'Azure Pipelines'
-  # rather than via a $(...) macro or $[...] runtime expression.
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 

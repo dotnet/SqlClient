@@ -30,7 +30,7 @@ parameters:
   # Supplied by the caller so that the pool name flows down from the pipeline
   # root, rather than being read from a variable group at this depth.
   #
-  - name: adoPoolName
+  - name: poolName
     type: string
 
   # Additional stages we depend on, if any.
@@ -85,7 +85,7 @@ stages:
     jobs:
       - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self
         parameters:
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}

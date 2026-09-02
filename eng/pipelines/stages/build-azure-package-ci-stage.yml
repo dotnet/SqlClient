@@ -49,7 +49,7 @@ parameters:
   #   - ADO-MMS25-SQL25
   #   - ADO-UB24-SQL25
   #
-  - name: adoPoolName
+  - name: poolName
     type: string
 
   # The name of the pipeline artifacts to publish.
@@ -154,7 +154,7 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           referenceType: ${{ parameters.referenceType }}
           saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
@@ -183,7 +183,7 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           referenceType: ${{ parameters.referenceType }}
           saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
@@ -221,7 +221,8 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          # Our 1ES pools do not offer macOS images, so this job runs on the hosted pool.
+          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+          # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
           vmImage: macos-latest
@@ -231,7 +232,7 @@ stages:
 
       - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           packageVersion: $(packageVersion)
           azureArtifactsName: ${{ parameters.azureArtifactsName }}

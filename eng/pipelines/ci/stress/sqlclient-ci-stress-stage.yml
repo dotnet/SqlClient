@@ -23,7 +23,7 @@ parameters:
   # The name of the pool to use for jobs that require customized VM images.
   #
   # Supplied by the caller so that the pool name flows down from the pipeline root.
-  - name: adoPoolName
+  - name: poolName
     type: string
 
   # The type of build to produce (Debug or Release)
@@ -95,7 +95,7 @@ stages:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
           parameters:
             saPassword: $(saPassword)
-        poolName: ${{ parameters.adoPoolName }}
+        poolName: ${{ parameters.poolName }}
         vmImage: ADO-UB24-SQL25
 
     # ----------------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ stages:
             saPassword: $(saPassword)
         # The Windows images include a suitable .NET Framework runtime, so we don't have to install
         # one explicitly.
-        poolName: ${{ parameters.adoPoolName }}
+        poolName: ${{ parameters.poolName }}
         vmImage: ADO-MMS25-SQL25
 
     # ----------------------------------------------------------------------------------------------
@@ -141,6 +141,7 @@ stages:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
           parameters:
             saPassword: $(saPassword)
-        # Our 1ES pools do not offer macOS images, so this job runs on the hosted pool.
+        # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+        # 'Azure Pipelines' pool.
         poolName: Azure Pipelines
         vmImage: macos-latest

@@ -45,7 +45,7 @@ parameters:
   #   - ADO-Win25
   #   - ADO-UB24
   #
-  - name: adoPoolName
+  - name: poolName
     type: string
 
   # The type of build to produce (Release or Debug)
@@ -118,7 +118,7 @@ stages:
           jobNameSuffix: linux
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           vmImage: ADO-UB24
 
       # ------------------------------------------------------------------------
@@ -133,7 +133,7 @@ stages:
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           vmImage: ADO-Win25
 
       # ------------------------------------------------------------------------
@@ -148,7 +148,8 @@ stages:
           jobNameSuffix: macos
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          # Our 1ES pools do not offer macOS images, so this job runs on the hosted pool.
+          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+          # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
           vmImage: macos-latest
 
@@ -157,7 +158,7 @@ stages:
 
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           # The version is computed by this stage (see the packageVersion variable above).
           packageVersion: $(packageVersion)

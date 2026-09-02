@@ -30,7 +30,7 @@ parameters:
   # Supplied by the caller so that the pool name flows down from the pipeline
   # root, rather than being read from a variable group at this depth.
   #
-  - name: adoPoolName
+  - name: poolName
     type: string
 
   # Additional stages we depend on, if any.
@@ -92,7 +92,7 @@ stages:
 
       - template: /eng/pipelines/jobs/pack-logging-package-ci-job.yml@self
         parameters:
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           # The version is computed by this stage (see the packageVersion variable above).
           packageVersion: $(packageVersion)

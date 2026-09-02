@@ -187,7 +187,7 @@ stages:
   # generation stage since it has no package dependencies.
   - template: /eng/pipelines/stages/build-sqlserver-package-ci-stage.yml@self
     parameters:
-      adoPoolName: ${{ parameters.defaultPoolName }}
+      poolName: ${{ parameters.defaultPoolName }}
       sqlServerArtifactsName: $(sqlServerArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -198,7 +198,7 @@ stages:
   # generation stage since it has no package dependencies.
   - template: /eng/pipelines/stages/build-logging-package-ci-stage.yml@self
     parameters:
-      adoPoolName: ${{ parameters.defaultPoolName }}
+      poolName: ${{ parameters.defaultPoolName }}
       loggingArtifactsName: $(loggingArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -211,7 +211,7 @@ stages:
   # Abstractions has a package dependency on Logging.
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
-      adoPoolName: ${{ parameters.defaultPoolName }}
+      poolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -230,7 +230,7 @@ stages:
   #
   - template: /eng/pipelines/stages/build-sqlclient-package-ci-stage.yml@self
     parameters:
-      adoPoolName: ${{ parameters.defaultPoolName }}
+      poolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       loggingArtifactsName: $(loggingArtifactsName)
@@ -251,7 +251,7 @@ stages:
   # given artifact name.
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
-      adoPoolName: ${{ parameters.defaultPoolName }}
+      poolName: ${{ parameters.defaultPoolName }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
