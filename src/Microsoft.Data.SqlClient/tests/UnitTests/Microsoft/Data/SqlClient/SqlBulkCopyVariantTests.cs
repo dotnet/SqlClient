@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlBuffer buffer = new SqlBuffer();
             TdsTypeInfo metadata = new TdsTypeInfo
             {
-                baseTI = new TdsTypeInfo { TdsType = (byte)tdsType, length = length }
+                BaseTypeInfo = new TdsTypeInfo { TdsType = (byte)tdsType, length = length }
             };
             // Always Encrypted normalizes both subtypes to eight bytes. This encodes -1.2345;
             // the original type/length, including nullable SQLMONEYN, must determine the subtype.
