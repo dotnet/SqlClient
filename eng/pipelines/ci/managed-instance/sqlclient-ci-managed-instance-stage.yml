@@ -68,7 +68,7 @@ stages:
           operatingSystem: Windows
           runtime: ${{ runtime }}
           useManagedSNI: false
-          vmImage: ADO-MMS25-SQL25
+          vmImage: ADO-Win25
 
     - ${{ each runtime in parameters.netTestRuntimes }}:
       - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
@@ -81,7 +81,7 @@ stages:
           operatingSystem: Windows
           runtime: ${{ runtime }}
           useManagedSNI: false
-          vmImage: ADO-MMS25-SQL25
+          vmImage: ADO-Win25
 
       - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-job.yml@self
         parameters:
@@ -93,7 +93,7 @@ stages:
           operatingSystem: Windows
           runtime: ${{ runtime }}
           useManagedSNI: true
-          vmImage: ADO-MMS25-SQL25
+          vmImage: ADO-Win25
 
     # ----------------------------------------------------------------------------------------------
     # Linux: one job per .NET runtime (managed SNI is always used on non-Windows).
@@ -108,4 +108,4 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           operatingSystem: Linux
           runtime: ${{ runtime }}
-          vmImage: ADO-UB24-SQL25
+          vmImage: ADO-UB24

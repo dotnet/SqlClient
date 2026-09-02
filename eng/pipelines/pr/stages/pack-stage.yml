@@ -42,6 +42,14 @@ parameters:
   - name: packArtifactBaseName
     type: string
 
+  # The name of the 1ES pool to run in.
+  - name: poolName
+    type: string
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+
 stages:
   - stage: ${{ parameters.stageName }}
     displayName: Build and Pack Projects
@@ -52,7 +60,10 @@ stages:
         displayName: Build and Pack Projects
 
         pool:
-          vmImage: 'ubuntu-latest'
+          name: ${{ parameters.poolName }}
+
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         steps:
           # Install dotnet

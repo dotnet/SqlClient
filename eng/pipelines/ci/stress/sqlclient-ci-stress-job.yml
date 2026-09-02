@@ -71,12 +71,17 @@ parameters:
   - name: sqlSetupStep
     type: step
 
-  # The pool VM image to use.  Both the internal (ADO-1ES-Pool) and public (ADO-CI-1ES-Pool) pools
-  # must provide an image with this name.
+  # The name of the pool to run in.
   #
-  # NOTE: This value is evaluated at template-expansion (compile) time to select the pool, so it
-  # must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
-  # $[...] runtime expressions).
+  # Supplied by the caller so that the pool name flows down from the pipeline root.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
+  - name: poolName
+    type: string
+
+  # The pool VM image to use, which must exist in the specified pool.
   - name: vmImage
     type: string
 
@@ -88,11 +93,6 @@ jobs:
       clean: all
 
     variables:
-
-      # Whether this is an internal (ADO.Net project) or public (Public project) build.  Evaluated
-      # at compile time so it can drive template expressions below.
-      - name: isInternalBuild
-        value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
       # Import the variable group that provides SQL Server build properties used by the
       # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
@@ -162,18 +162,14 @@ jobs:
       - name: stressTestOpts
         value: --assembly SqlClient.Stress.Tests --console
 
-    # Select the pool based on the requested image:
-    #   - macOS images run on the Microsoft-hosted 'Azure Pipelines' pool (no 1ES macOS images).
-    #   - All other images run on the 1ES pool for the current ADO project, matched via imageOverride.
     pool:
-      ${{ if startsWith(parameters.vmImage, 'macos') }}:
-        name: 'Azure Pipelines'
+      name: ${{ parameters.poolName }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
         vmImage: ${{ parameters.vmImage }}
+      # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
-        ${{ if eq(variables.isInternalBuild, true) }}:
-          name: ADO-1ES-Pool
-        ${{ else }}:
-          name: ADO-CI-1ES-Pool
         demands:
           - imageOverride -equals ${{ parameters.vmImage }}
 
