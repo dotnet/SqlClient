@@ -48,15 +48,6 @@ parameters:
   - name: adoPoolName
     type: string
 
-  # The name of the general Azure pool to use for jobs that don't require
-  # customized VM images.
-  #
-  # This is only used for macOS jobs, since our 1ES pools do not offer macOS
-  # images.  All other jobs run on 'adoPoolName'.
-  - name: azurePoolName
-    type: string
-    default: Azure Pipelines
-
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     type: string
@@ -157,7 +148,8 @@ stages:
           jobNameSuffix: macos
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
+          # Our 1ES pools do not offer macOS images, so this job runs on the hosted pool.
+          poolName: Azure Pipelines
           vmImage: macos-latest
 
       # ------------------------------------------------------------------------

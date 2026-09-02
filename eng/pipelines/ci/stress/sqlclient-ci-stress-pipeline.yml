@@ -99,6 +99,7 @@ stages:
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
     parameters:
+      adoPoolName: $(ci_var_defaultPoolName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       warnOnTestFailure: ${{ parameters.warnOnTestFailure }}

@@ -56,12 +56,6 @@ parameters:
     type: boolean
     default: false
 
-  # True if this job will run in a generic Azure Pipelines hosted pool; false to run in a custom 1ES
-  # pool.
-  - name: hostedPool
-    type: boolean
-    default: false
-
   # The VM image to use, which must exist in the specified pool.
   - name: image
     type: string
@@ -157,8 +151,11 @@ jobs:
 
   pool:
     name: '${{ parameters.poolName }}'
-    ${{ if eq(parameters.hostedPool, true) }}:
+
+    # Images provided by Azure Pipelines must be selected using 'vmImage'.
+    ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
       vmImage: ${{ parameters.image }}
+    # Images provided by 1ES must be selected using a demand.
     ${{ else }}:
       demands:
       - imageOverride -equals ${{ parameters.image }}
