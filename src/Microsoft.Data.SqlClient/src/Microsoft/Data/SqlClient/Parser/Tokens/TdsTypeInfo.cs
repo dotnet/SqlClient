@@ -8,7 +8,11 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
-internal class SqlMetaDataPriv
+/// <summary>
+/// Represents metadata information for a SQL Server TDS data type, including type properties and
+/// encoding settings. Provides functionality for handling encryption and normalization details.
+/// </summary>
+internal class TdsTypeInfo
 {
     [Flags]
     private enum SqlMetaDataPrivFlags : byte
@@ -18,8 +22,8 @@ internal class SqlMetaDataPriv
         IsMultiValued = 1 << 2
     }
 
-    internal SqlDbType type;    // SqlDbType enum value
-    internal byte tdsType; // underlying tds type
+
+
     internal byte precision = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
     internal byte scale = TdsEnums.UNKNOWN_PRECISION_SCALE; // give default of unknown (-1)
     private SqlMetaDataPrivFlags flags;
@@ -28,16 +32,26 @@ internal class SqlMetaDataPriv
     internal int codePage;
     internal Encoding encoding;
     internal bool isEncrypted; // TCE encrypted?
-    internal SqlMetaDataPriv baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
+    internal TdsTypeInfo baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
     internal SqlCipherMetadata cipherMD; // Cipher related metadata for encrypted columns.
 
     internal MetaType metaType; // cached metaType
     public SqlMetaDataUdt udt;
     public SqlMetaDataXmlSchemaCollection xmlSchemaCollection;
 
-    internal SqlMetaDataPriv()
+    internal TdsTypeInfo()
     {
     }
+
+    /// <summary>
+    /// Represents the database type of the current instance.
+    /// </summary>
+    internal SqlDbType DbType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the TDS (Tabular Data Stream) type of the instance.
+    /// </summary>
+    internal byte TdsType { get; set; }
 
     /// <summary>
     /// Is the algorithm handle for the cipher encryption initialized?
@@ -91,10 +105,10 @@ internal class SqlMetaDataPriv
         flags = value ? flags | flag : flags & ~flag;
     }
 
-    internal virtual void CopyFrom(SqlMetaDataPriv original)
+    internal virtual void CopyFrom(TdsTypeInfo original)
     {
-        this.type = original.type;
-        this.tdsType = original.tdsType;
+        this.DbType = original.DbType;
+        this.TdsType = original.TdsType;
         this.precision = original.precision;
         this.scale = original.scale;
         this.length = original.length;
