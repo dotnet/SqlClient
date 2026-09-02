@@ -60,6 +60,39 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             // Assert
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
         }
+
+        [Theory]
+        [InlineData("my.test.server", false, null, false)]
+        [InlineData("my.test.server", true, null, true)]
+        [InlineData("test.database.windows.net", false, null, true)]
+        [InlineData("test.database.windows.net", true, null, true)]
+        [InlineData("my.test.server", true, true, false)]
+        [InlineData("test.database.windows.net", true, true, false)]
+        [InlineData("test.database.windows.net", false, true, false)]
+        [InlineData("my.test.server", true, false, false)]
+        [InlineData("my.test.server", false, false, false)]
+        [InlineData("test.database.windows.net", true, false, false)]
+        [InlineData("test.database.windows.net", false, false, false)]
+        public void TestShouldDisableTnirWithCallerSuppliedToken(
+            string dataSource,
+            bool isAccessTokenProvided,
+            bool? tnirInConnectionString,
+            bool expectedValue)
+        {
+            SqlConnectionStringBuilder builder = new() { DataSource = dataSource };
+            if (tnirInConnectionString.HasValue)
+            {
+                builder.TransparentNetworkIPResolution = tnirInConnectionString.Value;
+            }
+
+            SqlConnectionString connectionOptions = new(builder.ConnectionString);
+
+            Assert.Equal(
+                expectedValue,
+                global::Microsoft.Data.SqlClient.SqlInternalConnectionTds.ShouldDisableTnir(
+                    connectionOptions,
+                    isAccessTokenProvided));
+        }
         #endif
 
         /// <summary>
