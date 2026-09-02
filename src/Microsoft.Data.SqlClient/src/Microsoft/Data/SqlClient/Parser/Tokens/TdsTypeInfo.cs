@@ -130,12 +130,12 @@ internal class TdsTypeInfo
     /// <summary>
     /// Gets or sets the UDT metadata associated with this object.
     /// </summary>
-    public TdsUdtTypeInfo Udt { get; set; }
+    public TdsUdtTypeInfo UdtTypeInfo { get; set; }
 
     /// <summary>
     /// Gets or sets the metadata for the XML schema collection associated with this data type.
     /// </summary>
-    public SqlMetaDataXmlSchemaCollection XmlSchemaCollection { get; set; }
+    public TdsXmlTypeInfo XmlTypeInfo { get; set; }
 
     // @TODO: Can this be converted to Clone like all the other token types do?
     internal virtual void CopyFrom(TdsTypeInfo original)
@@ -151,16 +151,16 @@ internal class TdsTypeInfo
         this.MetaType = original.MetaType;
         this.flags = original.flags;
 
-        if (original.Udt != null)
+        if (original.UdtTypeInfo != null)
         {
-            Udt = new TdsUdtTypeInfo();
-            Udt.CopyFrom(original.Udt);
+            UdtTypeInfo = new TdsUdtTypeInfo();
+            UdtTypeInfo.CopyFrom(original.UdtTypeInfo);
         }
 
-        if (original.XmlSchemaCollection != null)
+        if (original.XmlTypeInfo != null)
         {
-            XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-            XmlSchemaCollection.CopyFrom(original.XmlSchemaCollection);
+            XmlTypeInfo = new TdsXmlTypeInfo();
+            XmlTypeInfo.CopyFrom(original.XmlTypeInfo);
         }
 
         this.IsEncrypted = original.IsEncrypted;
