@@ -103,7 +103,7 @@ variables:
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
 
 stages:
-  # NOTE: '$(general_purpose_pool_name)' comes from the 'sqlclient_pipeline_config'
+  # NOTE: '$(general_purpose_pool_name)' comes from the 'sqlclient-pipeline-config-v1'
   # variable group, which is imported by
   # /eng/pipelines/pr/variables/pr-variables.yml (included above).  It is
   # referenced here, at the pipeline root, and passed down to every stage as a
