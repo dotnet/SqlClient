@@ -130,7 +130,7 @@ internal class TdsTypeInfo
     /// <summary>
     /// Gets or sets the UDT metadata associated with this object.
     /// </summary>
-    public SqlMetaDataUdt Udt { get; set; }
+    public TdsUdtTypeInfo Udt { get; set; }
 
     /// <summary>
     /// Gets or sets the metadata for the XML schema collection associated with this data type.
@@ -153,7 +153,7 @@ internal class TdsTypeInfo
 
         if (original.Udt != null)
         {
-            Udt = new SqlMetaDataUdt();
+            Udt = new TdsUdtTypeInfo();
             Udt.CopyFrom(original.Udt);
         }
 
