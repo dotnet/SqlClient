@@ -100,7 +100,7 @@ parameters:
   # from a variable group; every stage and job below receives it as a
   # parameter so that the value flows down from here.
   #
-  # 'general_purpose_pool_name' is defined in the 'sqlclient_pipeline_config'
+  # 'general_purpose_pool_name' is defined in the 'sqlclient-pipeline-config-v1'
   # variable group (see /eng/pipelines/libraries/ci-build-variables.yml), for
   # both the Public and ADO.Net projects, and names each project's own pool.
   # Special-purpose pools, such as the Always Encrypted and ARM64 pools used

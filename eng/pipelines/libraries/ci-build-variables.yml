@@ -9,7 +9,7 @@
 # The buildSuffix itself is set by each pipeline via the core template parameter.
 
 variables:
-  - group: sqlclient_pipeline_config
+  - group: sqlclient-pipeline-config-v1
   - group: ADO Build properties
   - group: ADO Test Configuration Properties
 
