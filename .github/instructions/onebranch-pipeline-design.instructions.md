@@ -28,7 +28,7 @@ Respect this graph when modifying build stages:
 
 ## Localization Validation
 
-The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Validation always fails the build for missing, obsolete, empty, or untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
+The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Validation always fails the build for missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
 
 ## Build Stages
 
