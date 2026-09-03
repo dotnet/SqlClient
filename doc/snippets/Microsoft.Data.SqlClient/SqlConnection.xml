@@ -2299,11 +2299,12 @@ The following sample tries to open a connection to an invalid database to simula
         Globally registers the middleware agent for physical connections opened by Microsoft.Data.SqlClient.
       </summary>
       <param name="id">The positive numeric identifier assigned to the middleware agent.</param>
+      <returns>
+        <see langword="true" /> if this call registered <paramref name="id" />; otherwise <see langword="false" />,
+        meaning an agent was already registered and that registration is left unchanged.
+      </returns>
       <exception cref="T:System.ArgumentOutOfRangeException">
         <paramref name="id" /> is not a declared <see cref="T:Microsoft.Data.SqlClient.SqlClientAgent" /> value.
-      </exception>
-      <exception cref="T:System.InvalidOperationException">
-        An agent was already registered programmatically or through application configuration.
       </exception>
       <example>
         <para>
@@ -2328,6 +2329,10 @@ The following sample tries to open a connection to an invalid database to simula
         <para>
           Register the agent once during application startup, before opening any connections. The first registration
           applies process-wide and cannot be replaced. Existing physical connections are not updated after registration.
+        </para>
+        <para>
+          Losing the race is not an error. An application may load several middleware libraries that each register
+          themselves, and only the first can win, so this method reports the outcome instead of throwing.
         </para>
         <para>
           An agent can instead be registered from an application configuration file. Configuration is loaded before

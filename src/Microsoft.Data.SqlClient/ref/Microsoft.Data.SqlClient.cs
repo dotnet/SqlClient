@@ -1045,7 +1045,7 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterSqlClientAgent/*' />
-    public static void RegisterSqlClientAgent(Microsoft.Data.SqlClient.SqlClientAgent id) { }
+    public static bool RegisterSqlClientAgent(Microsoft.Data.SqlClient.SqlClientAgent id) { throw null; }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]

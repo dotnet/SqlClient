@@ -24,8 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public void AppConfigAgent_PreventsProgrammaticRegistration()
         {
-            Assert.Throws<InvalidOperationException>(
-                () => SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
+            Assert.False(SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
         }
     }
 }

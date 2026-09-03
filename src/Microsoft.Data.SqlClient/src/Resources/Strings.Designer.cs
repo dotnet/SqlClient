@@ -2815,15 +2815,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A SqlClient agent can only be registered once..
-        /// </summary>
-        internal static string SQL_SqlClientAgentAlreadyRegistered {
-            get {
-                return ResourceManager.GetString("SQL_SqlClientAgentAlreadyRegistered", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to The SqlClient agent identifier &apos;{0}&apos; is invalid..
         /// </summary>
         internal static string SQL_InvalidSqlClientAgent {

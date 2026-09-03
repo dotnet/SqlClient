@@ -94,19 +94,24 @@ internal static class SqlClientAgentRegistration
     ///   Register the given agent for the lifetime of the process.
     /// </summary>
     /// <param name="id">The agent to register.</param>
+    /// <returns>
+    ///   <see langword="true"/> if this call registered <paramref name="id"/>;
+    ///   otherwise <see langword="false"/>, meaning an agent was already
+    ///   registered and that registration is left unchanged.
+    /// </returns>
+    /// <remarks>
+    ///   Losing the race is not an error.  An application may load several
+    ///   middleware libraries that each register themselves, and only the first
+    ///   can win; reporting that through the return value keeps the others from
+    ///   having to guard the call.
+    /// </remarks>
     /// <exception cref="ArgumentOutOfRangeException">
     ///   <paramref name="id"/> is not a declared agent identifier.
     /// </exception>
-    /// <exception cref="InvalidOperationException">
-    ///   An agent has already been registered.
-    /// </exception>
-    internal static void Register(SqlClientAgent id)
+    internal static bool Register(SqlClientAgent id)
     {
         Validate(id);
-        if (Interlocked.CompareExchange(ref s_agentId, (int)id, 0) != 0)
-        {
-            throw SQL.SqlClientAgentAlreadyRegistered();
-        }
+        return Interlocked.CompareExchange(ref s_agentId, (int)id, 0) == 0;
     }
 
     /// <summary>

@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterSqlClientAgent/*' />
-        public static void RegisterSqlClientAgent(SqlClientAgent id)
+        public static bool RegisterSqlClientAgent(SqlClientAgent id)
             => SqlClientAgentRegistration.Register(id);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />

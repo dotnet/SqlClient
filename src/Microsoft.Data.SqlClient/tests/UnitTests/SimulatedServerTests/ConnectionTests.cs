@@ -29,10 +29,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public class ConnectionTests
     {
         private static readonly Lazy<bool> s_sqlClientAgentRegistered = new(() =>
-        {
-            SqlConnection.RegisterSqlClientAgent(SqlClientAgent.EntityFramework);
-            return true;
-        });
+            SqlConnection.RegisterSqlClientAgent(SqlClientAgent.EntityFramework));
 
         [Fact]
         public void ConnectionTest()
@@ -1240,7 +1237,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Throws<InvalidOperationException>(() => SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
+            // A second registration loses to the first and leaves it in place.
+            Assert.False(SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
 
             // Verify client did offer UserAgent and captured conditions hold
             Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");

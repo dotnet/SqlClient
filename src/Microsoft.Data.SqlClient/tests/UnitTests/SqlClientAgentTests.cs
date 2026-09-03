@@ -69,6 +69,31 @@ public class SqlClientAgentTests
             () => SqlConnection.RegisterSqlClientAgent((SqlClientAgent)id));
 
     /// <summary>
+    /// Verifies registration reports whether it won, so a second middleware that registers after
+    /// the first does not fault the application.
+    /// </summary>
+    [Fact]
+    public void Register_ReportsWhetherItWon()
+    {
+        // The first caller to register in this process wins; every later caller loses and leaves
+        // the winning registration in place. Which of the two happens here depends on whether
+        // another test in this assembly already registered, so accept either and assert that the
+        // registration is single-valued afterwards.
+        bool won = SqlConnection.RegisterSqlClientAgent(SqlClientAgent.EntityFramework);
+        SqlClientAgent? registered = SqlClientAgentRegistration.Agent;
+
+        Assert.NotNull(registered);
+        if (won)
+        {
+            Assert.Equal(SqlClientAgent.EntityFramework, registered);
+        }
+
+        // Whoever won, a subsequent registration always loses and cannot replace the agent.
+        Assert.False(SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
+        Assert.Equal(registered, SqlClientAgentRegistration.Agent);
+    }
+
+    /// <summary>
     /// Verifies the SqlClientAgent configuration section is declared correctly and yields the
     /// expected agent.
     ///
