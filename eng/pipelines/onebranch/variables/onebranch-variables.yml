@@ -54,10 +54,25 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # Keep this as a runtime variable reference in globalSdl.apiscan.versionNumber. Passing the
-  # quoted value directly through an Azure template expression perturbs '6.10' to the number 6.1.
-  - name: ApiScanSoftwareVersion
-    value: '6.10'
+  # APIScan registration versions.  Each package is registered with APIScan under its own
+  # name/version pair, and the version tracks the major.minor of the package's NuGet version.  A
+  # pair must already be registered before a build can report it, so every time we release a new
+  # major.minor of a package we must first register the new pair.  See:
+  #
+  # https://eng.ms/docs/products/apiscan/onboard/requirements/registersoftware
+  #
+  # Keep these as runtime variable references rather than literals passed through template
+  # expressions: an Azure template expression perturbs a quoted version to a number, which turns
+  # '1.0' into 1 (and previously turned '6.10' into 6.1), neither of which matches a registration.
+
+  # Used by every package in the SqlClient family, which all version in lockstep.  This branch
+  # targets the 7.1.0 release.
+  - name: ApiScanVersionSqlClient
+    value: '7.1'
+
+  # Microsoft.SqlServer.Server versions independently of the SqlClient family.
+  - name: ApiScanVersionSqlServer
+    value: '1.0'
 
   # OneBranch supplies a variety of container images we must use for our jobs.
 

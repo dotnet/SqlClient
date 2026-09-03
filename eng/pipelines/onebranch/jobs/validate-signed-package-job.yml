@@ -48,6 +48,11 @@ jobs:
 
     variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
 
+      # This job installs and inspects an already-built package rather than producing assemblies,
+      # so it has no APIScan software name/version to report. The build jobs scan those assemblies.
+      - name: ob_sdl_apiscan_enabled
+        value: false
+
       # Path within the downloaded artifact where NuGet packages are located.
       - name: artifactPath
         value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'

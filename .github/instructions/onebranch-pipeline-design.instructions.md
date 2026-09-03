@@ -128,8 +128,11 @@ Variable groups:
 ## SDL and Compliance
 
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
-- ApiScan: enabled in both; currently `break: false` pending package registration
-- Each build job sets `ob_sdl_apiscan_softwareFolder` to `$(JOB_OUTPUT)/assemblies` and `ob_sdl_apiscan_symbolsFolder` to `$(JOB_OUTPUT)/symbols`
+- ApiScan: enabled in both; `break` follows the `breakOnSdlError` parameter
+- Each package is registered with APIScan under its own name/version pair, so the `globalSdl.apiscan` blocks deliberately omit `softwareName`/`versionNumber`. `build-buildproj-job.yml` is the single place they are set, via `ob_sdl_apiscan_softwareName` (the package's `packageFullName`) and `ob_sdl_apiscan_versionNumber` (the `apiScanSoftwareVersion` parameter)
+- Registration versions live in `variables/onebranch-variables.yml` as `ApiScanVersionSqlClient` and `ApiScanVersionSqlServer`. They track the major.minor of each package's NuGet version, so a new pair must be registered with APIScan before releasing a new major.minor. They must stay runtime `$(...)` references — a template expression coerces the quoted value to a number (`'1.0'` becomes `1`)
+- Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version
+- Each build job also sets `ob_sdl_apiscan_softwareFolder` and `ob_sdl_apiscan_symbolsFolder` to its per-package `apiScan/<package>/dlls` and `apiScan/<package>/pdbs` paths
 - CodeQL, SBOM, Policheck (`break: true`): enabled in both pipelines
 - asyncSdl `enabled: false` in both; individual sub-tools (CredScan, BinSkim, Armory, Roslyn) configured underneath
 - Policheck exclusions: `$(REPO_ROOT)\.config\PolicheckExclusions.xml`
