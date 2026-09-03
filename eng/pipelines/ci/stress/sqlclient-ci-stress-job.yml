@@ -141,7 +141,7 @@ jobs:
         value: >-
           -p:ReferenceType=Package
           -p:SqlClientPackageVersion=$(sqlClientPackageVersion)
-          -p:AzurePackageVersion=$(azurePackageVersion)
+          -p:AzurePackageVersion=$(sqlClientPackageVersion)
 
       # dotnet CLI options for build.
       - name: dotnetBuildOpts
@@ -205,14 +205,8 @@ jobs:
 
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
       # pipeline, stage them into the local NuGet feed, and resolve their exact versions.  The
-      # sqlClientPackageVersion and azurePackageVersion variables are consumed by the referenceArgs
-      # variable above.
-      #
-      # sqlServerVersionOverride pins Microsoft.SqlServer.Server to the released stable 1.0.0 to
-      # avoid an NU1605 downgrade against the >= 1.0.0 dependency from Microsoft.SqlServer.Types.
+      # sqlClientPackageVersion variable is consumed by the referenceArgs variable above.
       - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
-        parameters:
-          sqlServerVersionOverride: 1.0.0
 
       # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
       # fetched through the ADO Artifacts feed.
