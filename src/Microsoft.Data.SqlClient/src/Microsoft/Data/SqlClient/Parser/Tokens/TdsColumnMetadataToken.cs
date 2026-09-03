@@ -59,7 +59,7 @@ internal sealed class TdsColumnMetadataToken
             _metadataArray = new TdsColumnMetadata[original._metadataArray.Length];
             for (int idx = 0; idx < _metadataArray.Length; idx++)
             {
-                _metadataArray[idx] = (TdsColumnMetadata)original._metadataArray[idx].Clone();
+                _metadataArray[idx] = original._metadataArray[idx].Clone();
             }
         }
     }
