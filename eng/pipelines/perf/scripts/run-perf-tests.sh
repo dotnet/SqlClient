@@ -264,9 +264,17 @@ find_sqlcmd() {
 }
 
 echo "Ensuring database [${DB_NAME}] exists on ${SQL_SERVER} ..."
+
+# Pass the 'sa' password to sqlcmd via SQLCMDPASSWORD rather than -P.  Arguments are visible to every
+# user on the box through /proc/<pid>/cmdline (ps, top, auditd, container tooling), so -P leaks the
+# password for the lifetime of each sqlcmd invocation.  The environment of another user's process is
+# not readable, so SQLCMDPASSWORD - which sqlcmd supports natively - keeps it out of the process
+# table.  Exported once here and consumed by every sqlcmd call below.
+export SQLCMDPASSWORD="${SQL_PASSWORD}"
+
 if SQLCMD="$(find_sqlcmd)"; then
     # -C trusts the server certificate (mssql-tools18 requires encryption by default).
-    "${SQLCMD}" -S "${SQL_SERVER}" -U sa -P "${SQL_PASSWORD}" -C -b -l 30 \
+    "${SQLCMD}" -S "${SQL_SERVER}" -U sa -C -b -l 30 \
         -Q "IF DB_ID('${DB_NAME}') IS NULL CREATE DATABASE [${DB_NAME}];"
     echo "Database [${DB_NAME}] is ready."
 else
@@ -299,8 +307,14 @@ export MALLOC_TRIM_THRESHOLD_="${MALLOC_TRIM_THRESHOLD_:--1}"          # never t
 # widen the range and allow TIME_WAIT reuse so socket setup latency stays stable.  'sudo -n' keeps
 # this non-interactive: on a VM without passwordless sudo it fails immediately instead of blocking
 # on a password prompt, then we fall back to a non-sudo sysctl (and finally give up quietly).
+#
+# The low bound is 10000, NOT 1024: SQL Server and sshd live on this same VM, so a range starting at
+# 1024 lets an outbound connection grab 1433 or 22 as its EPHEMERAL SOURCE port.  Once that happens
+# the listener cannot rebind (or a later connection to the real service collides), which shows up as
+# an intermittent, benchmark-corrupting connection failure that looks like a perf anomaly.  Starting
+# above the well-known/registered range keeps the churn benches away from the services under test.
 if command -v sysctl >/dev/null 2>&1; then
-    for kv in "net.ipv4.ip_local_port_range=1024 65535" "net.ipv4.tcp_tw_reuse=1"; do
+    for kv in "net.ipv4.ip_local_port_range=10000 65535" "net.ipv4.tcp_tw_reuse=1"; do
         sudo -n sysctl -w "${kv}" >/dev/null 2>&1 || sysctl -w "${kv}" >/dev/null 2>&1 || true
     done
 fi
@@ -309,7 +323,7 @@ fi
 { command -v lscpu >/dev/null 2>&1 && lscpu; } > "${DIAG_DIR}/cpu-info.txt" 2>&1 || true
 
 # --- §2.11 Capture the SQL instance configuration (confirm the lab tuning actually took effect) ---
-"${SQLCMD}" -S "${SQL_SERVER}" -U sa -P "${SQL_PASSWORD}" -C -b -l 30 -h -1 -W \
+"${SQLCMD}" -S "${SQL_SERVER}" -U sa -C -b -l 30 -h -1 -W \
     -Q "SET NOCOUNT ON;
         SELECT name, value_in_use FROM sys.configurations
           WHERE name IN ('max degree of parallelism','cost threshold for parallelism',
@@ -325,7 +339,7 @@ fi
 # A benchmark suite that "skips" when the server is down produces an empty comparison that reads
 # green; verify connectivity up front and touch the target DB so the first measured benchmark is not
 # paying cold-cache costs.
-if ! "${SQLCMD}" -S "${SQL_SERVER}" -U sa -P "${SQL_PASSWORD}" -C -b -l 15 \
+if ! "${SQLCMD}" -S "${SQL_SERVER}" -U sa -C -b -l 15 \
         -Q "SET NOCOUNT ON; USE [${DB_NAME}]; SELECT 1;" >/dev/null 2>&1; then
     echo "ERROR: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is unreachable; refusing to run so an empty perf comparison cannot be reported as a pass." >&2
     exit 1
