@@ -33,20 +33,29 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private const int s_accountPwCacheTtlInHours = 2;
 
     // SqlClient's first-party Entra ID application id. When the provider is constructed without
-    // a caller-supplied application id (or with this id explicitly), WAM broker mode is forced on
-    // because the corresponding app registration is configured for the WAM broker redirect URI.
+    // a caller-supplied application id (or with this id explicitly), broker mode is forced on
+    // because the corresponding app registration is configured for the broker redirect URI.
     private const string s_sqlClientApplicationId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
 
-    // MSAL redirect URI used when WAM brokered authentication is in effect on Windows. MSAL
-    // expects the suffix to match the client id of the registered application.
+    // Redirect URI used by the Windows Account Manager broker. MSAL expects the suffix to match
+    // the client id of the registered application.
     private const string s_wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
 
-    // Non-broker redirect URI used on .NET Framework when WAM is not in use (legacy embedded
-    // WebView path).
-    private const string s_windowsNativeRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
+    // Redirect URI required by the Linux broker, and used on .NET Framework when the broker is
+    // not in use (legacy embedded WebView path).
+    private const string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
 
-    // Loopback redirect URI used by MSAL's system browser flow on non-Windows platforms and on
-    // .NET (non-framework) Windows without WAM.
+    // Redirect URI the macOS broker expects from a bundled application. The host application's
+    // bundle identifier goes between the prefix and the suffix.
+    private const string s_macBrokerRedirectUriPrefix = "msauth.";
+    private const string s_macBrokerRedirectUriSuffix = "://auth";
+
+    // Redirect URI the macOS broker expects from an unsigned, non-bundled executable or script.
+    // Unlike the bundled form this is a fixed value, so it can be registered up front.
+    private const string s_macUnsignedAppRedirectUri = "msauth.com.msauth.unsignedapp://auth";
+
+    // Loopback redirect URI used by MSAL's system browser flow on .NET when the broker is not in
+    // use.
     private const string s_systemBrowserRedirectUri = "http://localhost";
 
     // Suffix MSAL requires on Entra ID resource scopes (e.g. "https://database.windows.net/.default").
@@ -57,9 +66,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     // single-string overload.
     private readonly string _applicationClientId = s_sqlClientApplicationId;
 
-    // True when this provider should enable the Windows Account Manager (WAM) broker for
-    // interactive Entra ID flows on Windows. Always true for the SqlClient first-party app id;
-    // for caller-supplied app ids, opt-in via the Options-pattern constructor.
+    // True when this provider should enable the native authentication broker (Windows Account
+    // Manager on Windows, msalruntime broker on Linux and macOS) for interactive Entra ID flows.
+    // Always true for the SqlClient first-party app id; for caller-supplied app ids, opt-in via
+    // the Options-pattern constructor.
     private readonly bool _useWamBroker = false;
 
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
@@ -106,22 +116,26 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             _applicationClientId = options.ApplicationClientId;
         }
-        // WAM broker mode is always enabled for the SqlClient first-party application id (its
-        // app registration is configured for the WAM broker redirect URI). For a caller-supplied
-        // application id, WAM is opt-in via ProviderOptions.UseWamBroker.
+        // Broker mode is always enabled for the SqlClient first-party application id (its app
+        // registration is configured for the broker redirect URI). For a caller-supplied
+        // application id, the broker is opt-in via ProviderOptions.UseWamBroker.
         _useWamBroker = _applicationClientId == s_sqlClientApplicationId || options.UseWamBroker;
     }
 
     /// <summary>
-    /// Indicates whether this provider instance has the Windows Account Manager (WAM) broker
-    /// enabled for interactive Entra ID flows on Windows. Exposed as <c>internal</c> for tests.
+    /// Indicates whether this provider instance has the native authentication broker enabled for
+    /// interactive Entra ID flows. Exposed as <c>internal</c> for tests.
     /// </summary>
+    /// <remarks>
+    /// This reflects the caller's intent only. Use <see cref="IsBrokerEnabledOnCurrentPlatform"/>
+    /// to know whether the broker is actually usable on the current runtime.
+    /// </remarks>
     internal bool UseWamBroker => _useWamBroker;
 
     /// <summary>
     /// The Entra ID application client id used by this provider instance. Exposed as <c>internal</c> for tests.
-    /// The client id is used in the redirect URI when WAM broker mode is enabled, so it must match the client id configured
-    /// in the app registration for the Entra ID application to successfully broker with WAM on Windows.
+    /// The client id is used in the redirect URI when broker mode is enabled, so it must match the client id configured
+    /// in the app registration for the Entra ID application to successfully broker authentication.
     /// </summary>
     internal string ApplicationClientId => _applicationClientId;
 
@@ -306,21 +320,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 * For the remaining Active Directory authentication methods, we use MSAL.NET to acquire tokens.
                 * To do that, we need to construct a PublicClientApplication instance.
                 *
-                * With WAM broker support in MSAL enabled, on Windows we use a fixed redirect URI in the format
-                * "ms-appx-web://microsoft.aad.brokerplugin/{clientId}" where {clientId} is the client ID configured for this provider
-                * (by default SqlClient's first-party app id, but it can be overridden via the constructor).
-                * This is required for MSAL to correctly route the authentication request to the WAM broker and for WAM to route the response back to MSAL.
+                * The redirect URI depends on which broker, if any, is in play: the WAM URI on
+                * Windows, the native client URI on Linux, and a bundle-derived URI on macOS. See
+                * GetRedirectUri for details.
                 *
-                * This means the Entra ID app registration for that client ID must include the above redirect URI to use WAM brokered authentication on Windows.
+                * The Entra ID app registration for the configured client id must list the
+                * resulting redirect URI for brokered authentication to succeed.
             */
-            string redirectUri = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                ? (_useWamBroker ? s_wamBrokerRedirectUriPrefix + _applicationClientId
-                #if NETFRAMEWORK
-                    : s_windowsNativeRedirectUri)
-                #else
-                    : s_systemBrowserRedirectUri)
-                #endif
-                : s_systemBrowserRedirectUri;
+            string redirectUri = GetRedirectUri(parameters.AuthenticationMethod);
 
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
@@ -533,9 +540,11 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 $"Azure.Identity error: {ex.Message}",
                 ex);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not Extensions.Azure.AuthenticationException)
         {
-            // These errors aren't retryable.
+            // These errors aren't retryable. AuthenticationException is excluded because it is
+            // already the shape we want to surface; re-wrapping it would bury its message behind
+            // "Unexpected error" and reset its failure code to "Unknown".
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
                 failureCode: "Unknown",
@@ -902,16 +911,23 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
+        if (IsBrokerEnabledOnCurrentPlatform)
+        {
+            // Enable the native authentication broker for all supported authentication modes:
+            // the Windows Account Manager (WAM) on Windows, and the msalruntime broker on Linux
+            // and macOS. The broker provides enhanced security by enabling device-based
+            // Conditional Access policies.
+            //
+            // MSAL only degrades to a browser flow when the broker is unusable on Windows. On
+            // Linux and macOS it surfaces the broker failure to the caller instead, so
+            // s_brokerOperatingSystem is already restricted to runtimes where msalruntime loads.
+            // Whether the OS broker itself is present (the microsoft-identity-broker package on
+            // Linux, the Company Portal on macOS) can only be determined at request time.
+            builder.WithBroker(new BrokerOptions(s_brokerOperatingSystem.Value));
+        }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            if (_useWamBroker)
-            {
-                // Enable WAM broker on Windows for all supported authentication modes.
-                // The broker provides enhanced security by enabling device-based Conditional Access
-                // policies through the Windows Account Manager (WAM).
-                builder.WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows));
-            }
-
             // Set the parent window handle for broker UI.
             // On .NET Framework, prefer the IWin32WindowFunc if provided by the caller.
             #if NETFRAMEWORK
@@ -929,9 +945,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         else
         {
-            // Non-Windows (Android / iOS / MAUI on .NET). Forward the caller-supplied callback
-            // to MSAL so interactive flows can parent their UI to the host Activity /
-            // UIViewController. WAM broker remains Windows-only and is intentionally skipped.
+            // Non-Windows (Linux / macOS / Android / iOS / MAUI on .NET). Forward the
+            // caller-supplied callback to MSAL so interactive flows can parent their UI to the
+            // host Activity / UIViewController. MSAL currently ignores the parent handle when the
+            // Linux or macOS broker is in effect, so the broker dialog is centered on screen.
             // The callback is snapshotted at PCA build time; callers who update the callback
             // after the PCA is cached must invoke ClearUserTokenCache() to pick up the change.
             Func<object>? parentActivityOrWindowFunc = _parentActivityOrWindowFunc;
