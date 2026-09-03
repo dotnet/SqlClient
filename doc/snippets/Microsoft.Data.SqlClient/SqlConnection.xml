@@ -2317,11 +2317,19 @@ The following sample tries to open a connection to an invalid database to simula
       <exception cref="T:System.ArgumentOutOfRangeException">
         The value is outside the range 0 to 65535.
       </exception>
+      <exception cref="T:System.InvalidOperationException">
+        The connection is opening or open. The identity is reported during login, so it must be set beforehand.
+      </exception>
       <remarks>
         <para>
           This API is intended for registered applications that reserve an identifier in
           <see cref="T:Microsoft.Data.SqlClient.SqlClientApp" />. An unregistered identifier may be reported by casting
           a value to that type, provided it is within the 16-bit range the protocol allows.
+        </para>
+        <para>
+          This value is telemetry. It is supplied entirely by the client, which may report any identifier in range,
+          so it is not an authenticated identity and must not be used for authorization or any other security
+          decision.
         </para>
         <para>
           The identity is sent once, during login, so it must be set before the connection is opened.
