@@ -774,7 +774,8 @@ namespace Microsoft.Data.SqlClient
                 pool,
                 key.AccessTokenCallback,
                 key.SspiContextProvider,
-                metrics: Metrics);
+                metrics: Metrics,
+                sqlClientAppId: sqlOwningConnection?.SqlClientAppId ?? SqlClientApp.Unknown);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)

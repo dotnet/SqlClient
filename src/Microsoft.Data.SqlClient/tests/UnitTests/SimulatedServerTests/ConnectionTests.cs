@@ -28,9 +28,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
-        private static readonly Lazy<bool> s_sqlClientAgentRegistered = new(() =>
-            SqlConnection.RegisterSqlClientAgent(SqlClientAgent.EntityFramework));
-
         [Fact]
         public void ConnectionTest()
         {
@@ -1175,8 +1172,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Verifies that LOGIN7 sends the USERAGENT payload with the globally registered agent
-        /// identifier appended, regardless of whether the server acknowledges the extension.
+        /// Verifies that LOGIN7 sends the USERAGENT payload carrying the connection's application
+        /// identity, regardless of whether the server acknowledges the extension.
         /// </summary>
         [Theory]
         // Allow the server to ack.
@@ -1231,21 +1228,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // No pooling needed; avoids leaking a pooled connection to this ephemeral port
             }.ConnectionString;
 
-            _ = s_sqlClientAgentRegistered.Value;
             using var connection = new SqlConnection(connStr);
+            connection.SqlClientAppId = SqlClientApp.EntityFramework;
             connection.Open();
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
-            // A second registration loses to the first and leaves it in place.
-            Assert.False(SqlConnection.RegisterSqlClientAgent(SqlClientAgent.SemanticKernel));
 
             // Verify client did offer UserAgent and captured conditions hold
             Assert.True(loginFound, "Expected UserAgent extension in LOGIN7");
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
-            Assert.Equal(UserAgent.GetUcs2Bytes(SqlClientAgent.EntityFramework).ToArray(), observedPayload);
+            Assert.Equal(UserAgent.GetUcs2Bytes(SqlClientApp.EntityFramework).ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }

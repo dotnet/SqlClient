@@ -2815,14 +2815,14 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The SqlClient agent identifier &apos;{0}&apos; is invalid..
+        ///   Looks up a localized string similar to The SqlClient application identifier &apos;{0}&apos; is outside the supported range of 0 to 65535..
         /// </summary>
-        internal static string SQL_InvalidSqlClientAgent {
+        internal static string SQL_InvalidSqlClientAppId {
             get {
-                return ResourceManager.GetString("SQL_InvalidSqlClientAgent", resourceCulture);
+                return ResourceManager.GetString("SQL_InvalidSqlClientAppId", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Unsupported state: &apos;{0}&apos;..
         /// </summary>

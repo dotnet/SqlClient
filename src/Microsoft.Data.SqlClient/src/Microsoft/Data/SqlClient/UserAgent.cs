@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -33,14 +34,14 @@ internal static class UserAgent
     ///     never larger than 256 characters.
     ///   </para>
     ///   <para>
-    ///     The format is pipe ('|') delimited into 7 parts:
+    ///     The format is pipe ('|') delimited into 9 parts:
     ///
-    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
+    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}|{App Id}|{Driver Properties}</code>
     ///   </para>
     ///   <para>
-    ///     This is the base value, and never carries an agent identifier.  The
-    ///     payload actually sent at login may append an optional 8th
-    ///     <c>{Agent Id}</c> part; see
+    ///     This is the base value, whose <c>{App Id}</c> part is always
+    ///     <c>0000</c>.  The payload actually sent at login carries the
+    ///     identifier set on the connection; see
     ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
     ///   </para>
     ///   <para>
@@ -84,13 +85,17 @@ internal static class UserAgent
     ///     Maximum length is 44 characters.
     ///   </para>
     ///   <para>
-    ///     The <c>{Agent Id}</c> part is never present in this value.  It is
-    ///     appended by <see cref="GetUcs2Bytes">GetUcs2Bytes</see> when an
-    ///     agent has been registered via
-    ///     <see cref="SqlConnection.RegisterSqlClientAgent">
-    ///       RegisterSqlClientAgent
-    ///     </see>.
-    ///     Maximum length is 8 characters.
+    ///     The <c>{App Id}</c> part is the identifier of the application
+    ///     middleware using the driver, serialized as exactly four uppercase
+    ///     hexadecimal characters, zero-padded.  It is always present;
+    ///     <c>0000</c> means no application identity was reported.  Maximum
+    ///     length is 4 characters.
+    ///   </para>
+    ///   <para>
+    ///     The <c>{Driver Properties}</c> part is a driver-owned feature flag
+    ///     value, serialized as exactly four uppercase hexadecimal characters,
+    ///     zero-padded.  It is always present.  Maximum length is 4
+    ///     characters.
     ///   </para>
     ///   <para>
     ///     Any characters from the sourced values that are not one of the
@@ -127,52 +132,48 @@ internal static class UserAgent
 
     /// <summary>
     ///   <para>
-    ///     Returns <see cref="Ucs2Bytes"/> with the registered agent
-    ///     identifier appended as an additional part.
+    ///     Returns the UCS-2 encoded payload reporting the given application
+    ///     identifier.
     ///   </para>
     ///   <para>
-    ///     When <paramref name="agent"/> is null, <see cref="Ucs2Bytes"/> is
-    ///     returned unchanged, with no additional part appended.
+    ///     When <paramref name="app"/> is
+    ///     <see cref="SqlClientApp.Unknown"/>, <see cref="Ucs2Bytes"/> is
+    ///     returned, whose App Id part is <c>0000</c>.
     ///   </para>
     /// </summary>
-    /// <param name="agent">
-    ///   The registered agent, or null if no agent has been registered.
+    /// <param name="app">
+    ///   The application identifier set on the connection being logged in.
     /// </param>
     /// <returns>The UCS-2 encoded payload bytes.</returns>
-    internal static ReadOnlyMemory<byte> GetUcs2Bytes(SqlClientAgent? agent)
+    internal static ReadOnlyMemory<byte> GetUcs2Bytes(SqlClientApp app)
     {
-        if (agent is null)
+        if (app == SqlClientApp.Unknown)
         {
             return Ucs2Bytes;
         }
 
-        // An agent is registered at most once per process, so a single cached
-        // entry serves every login.  The pair is cached behind one reference so
-        // readers never observe a torn ReadOnlyMemory<byte>.
-        //
-        // The identifier space is 16-bit, enforced when the agent is registered.
-        ushort agentId = (ushort)agent.Value;
-        AgentPayload? cached = Volatile.Read(ref s_agentPayload);
-        if (cached is not null && cached.AgentId == agentId)
+        // Most processes report a single application identifier, so a single
+        // cached entry serves every login.  The pair is cached behind one
+        // reference so readers never observe a torn ReadOnlyMemory<byte>.
+        AppPayload? cached = Volatile.Read(ref s_appPayload);
+        if (cached is not null && cached.App == app)
         {
             return cached.Ucs2Bytes;
         }
 
-        ReadOnlyMemory<byte> bytes = Encoding.Unicode.GetBytes(BuildPayload(agentId));
-        Volatile.Write(ref s_agentPayload, new AgentPayload(agentId, bytes));
+        ReadOnlyMemory<byte> bytes = Encoding.Unicode.GetBytes(BuildPayload(app));
+        Volatile.Write(ref s_appPayload, new AppPayload(app, bytes));
 
         return bytes;
     }
 
     /// <summary>
     ///   Build the payload string from the current runtime environment,
-    ///   appending the given agent id when one is supplied.
+    ///   reporting the given application identifier.
     /// </summary>
-    /// <param name="agentId">
-    ///   The agent id to append, or null to omit the Agent Id part.
-    /// </param>
+    /// <param name="app">The application identifier to report.</param>
     /// <returns>The payload string value.</returns>
-    private static string BuildPayload(ushort? agentId) =>
+    private static string BuildPayload(SqlClientApp app) =>
         Build(
             MaxLenOverall,
             PayloadVersion,
@@ -182,7 +183,24 @@ internal static class UserAgent
             s_osType,
             RuntimeInformation.OSDescription,
             RuntimeInformation.FrameworkDescription,
-            agentId);
+            ToAppId(app),
+            (ushort)SqlClientDriverPropertiesResolver.Current);
+
+    /// <summary>
+    ///   Narrow an application identifier to the 16 bits the payload reports.
+    /// </summary>
+    /// <remarks>
+    ///   <see cref="SqlConnection.SqlClientAppId"/> rejects values outside the
+    ///   16-bit range, so this conversion is always lossless.
+    /// </remarks>
+    /// <param name="app">The application identifier to narrow.</param>
+    /// <returns>The narrowed application identifier.</returns>
+    private static ushort ToAppId(SqlClientApp app)
+    {
+        Debug.Assert((int)app >= 0 && (int)app <= ushort.MaxValue);
+
+        return (ushort)app;
+    }
 
     /// <summary>
     ///   Static construction builds the Client Interface Name.  All known
@@ -219,7 +237,7 @@ internal static class UserAgent
         s_osType = osType;
 
         // Build it!
-        Value = BuildPayload(agentId: null);
+        Value = BuildPayload(SqlClientApp.Unknown);
 
         // Convert it to UCS-2 bytes.
         //
@@ -260,9 +278,13 @@ internal static class UserAgent
     /// <param name="runtimeInfo">
     ///   The value of the Runtime Info part.
     /// </param>
-    /// <param name="agentId">
-    ///   The value of the optional Agent Id part.  When null, no Agent Id part
-    ///   is appended.
+    /// <param name="appId">
+    ///   The value of the App Id part, serialized as four uppercase
+    ///   hexadecimal characters.
+    /// </param>
+    /// <param name="driverProperties">
+    ///   The value of the Driver Properties part, serialized as four uppercase
+    ///   hexadecimal characters.
     /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
@@ -277,7 +299,8 @@ internal static class UserAgent
         string osType,
         string osInfo,
         string runtimeInfo,
-        ushort? agentId = null)
+        ushort appId = 0,
+        ushort driverProperties = 0)
     {
         string result;
 
@@ -320,16 +343,19 @@ internal static class UserAgent
 
             // Add the Runtime Info, truncating to its max length.
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
+            name.Append('|');
 
-            // Add the Agent Id only when an agent has been registered.
-            if (agentId.HasValue)
-            {
-                name.Append('|');
-                name.Append(
-                    Truncate(
-                        Clean(agentId.Value.ToString(CultureInfo.InvariantCulture)),
-                        MaxLenAgentId));
-            }
+            // Add the App Id.  It is fixed-width hexadecimal, so it can never
+            // exceed its maximum length and needs no cleaning.
+            string appIdPart = FormatHex(appId);
+            Debug.Assert(appIdPart.Length == MaxLenAppId);
+            name.Append(appIdPart);
+            name.Append('|');
+
+            // Add the Driver Properties, on the same terms as the App Id.
+            string driverPropertiesPart = FormatHex(driverProperties);
+            Debug.Assert(driverPropertiesPart.Length == MaxLenDriverProperties);
+            name.Append(driverPropertiesPart);
 
             // Remember the name we've built up.
             result = name.ToString();
@@ -340,7 +366,8 @@ internal static class UserAgent
             // value.
             result =
                 $"{payloadVersion}|{driverName}|{Unknown}|{Unknown}|" +
-                $"{Unknown}|{Unknown}|{Unknown}";
+                $"{Unknown}|{Unknown}|{Unknown}|{FormatHex(appId)}|" +
+                $"{FormatHex(driverProperties)}";
         }
 
         // Truncate to our max length if necessary.
@@ -458,6 +485,20 @@ internal static class UserAgent
     }
 
     /// <summary>
+    ///   Format the given value as exactly four uppercase hexadecimal
+    ///   characters, zero-padded.
+    /// </summary>
+    /// <remarks>
+    ///   A <see cref="ushort"/> never needs more than four hexadecimal
+    ///   characters, so the result is always exactly
+    ///   <see cref="MaxLenAppId"/> characters and can never be truncated.
+    /// </remarks>
+    /// <param name="value">The value to format.</param>
+    /// <returns>The formatted value.</returns>
+    internal static string FormatHex(ushort value) =>
+        value.ToString("X4", CultureInfo.InvariantCulture);
+
+    /// <summary>
     ///   Truncate the given value to the given max length, and return the
     ///   result.
     /// </summary>
@@ -502,7 +543,8 @@ internal static class UserAgent
     private const ushort MaxLenOsType = 10;
     private const ushort MaxLenOsInfo = 44;
     private const ushort MaxLenRuntimeInfo = 44;
-    private const ushort MaxLenAgentId = 8;
+    private const ushort MaxLenAppId = 4;
+    private const ushort MaxLenDriverProperties = 4;
 
     // The OS Type values we promise in our API.
     private const string Windows = "Windows";
@@ -517,25 +559,26 @@ internal static class UserAgent
     // unknown, invalid, or when errors occur.
     private const string Unknown = "Unknown";
 
-    // The OS Type resolved during static construction, retained so agent
-    // payloads are built from the same value as Value.
+    // The OS Type resolved during static construction, retained so payloads
+    // built later use the same value as Value.
     private static readonly string s_osType;
 
-    // The payload for the registered agent, built on first use.
-    private static AgentPayload? s_agentPayload;
+    // The payload for the most recently requested application identifier,
+    // built on first use.
+    private static AppPayload? s_appPayload;
 
     /// <summary>
-    ///   Pairs a payload with the agent identifier it was built for.
+    ///   Pairs a payload with the application identifier it was built for.
     /// </summary>
-    private sealed class AgentPayload
+    private sealed class AppPayload
     {
-        internal AgentPayload(ushort agentId, ReadOnlyMemory<byte> ucs2Bytes)
+        internal AppPayload(SqlClientApp app, ReadOnlyMemory<byte> ucs2Bytes)
         {
-            AgentId = agentId;
+            App = app;
             Ucs2Bytes = ucs2Bytes;
         }
 
-        internal ushort AgentId { get; }
+        internal SqlClientApp App { get; }
 
         internal ReadOnlyMemory<byte> Ucs2Bytes { get; }
     }

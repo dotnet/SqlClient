@@ -592,38 +592,33 @@ public class SqlClientLogger
     public void LogInfo(string type, string method, string message) { }
 }
 
-/// <summary>
-/// Identifies known middleware agents that use Microsoft.Data.SqlClient.
-/// </summary>
-/// <remarks>
-/// Identifiers are positive and fit in 16 bits.  The underlying type is
-/// <see cref="int" /> so the enum stays CLS-compliant; the range is enforced
-/// when an agent is registered.
-/// </remarks>
-public enum SqlClientAgent
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlClientApp/*' />
+public enum SqlClientApp
 {
-    /// <summary>The Microsoft Entity Framework Core SQL Server provider.</summary>
-    EntityFramework = 1,
-    /// <summary>Microsoft Semantic Kernel.</summary>
-    SemanticKernel = 2,
-    /// <summary>Microsoft SQL Server Management Studio.</summary>
-    ManagementStudio = 3,
-    /// <summary>Microsoft SQL Server Management Objects.</summary>
-    SqlManagementObjects = 4,
-    /// <summary>Microsoft SQL Server Data-Tier Application Framework.</summary>
-    DataTierApplicationFramework = 5,
-    /// <summary>Microsoft SQL Tools Service.</summary>
-    SqlToolsService = 6,
-    /// <summary>Microsoft ASP.NET Core distributed SQL Server cache.</summary>
-    AspNetCoreDistributedSqlServerCache = 7,
-    /// <summary>Microsoft Entity Framework 6 SQL Server provider.</summary>
-    EntityFramework6 = 8,
-    /// <summary>Microsoft Azure Functions SQL extension.</summary>
-    AzureFunctionsSqlExtension = 9,
-    /// <summary>Microsoft Orleans ADO.NET providers.</summary>
-    OrleansAdoNet = 10,
-    /// <summary>Microsoft Durable Task SQL Server provider.</summary>
-    DurableTaskSqlServer = 11
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/Unknown/*' />
+    Unknown = 0x0000,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFramework/*' />
+    EntityFramework = 0x0001,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SemanticKernel/*' />
+    SemanticKernel = 0x0002,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/ManagementStudio/*' />
+    ManagementStudio = 0x0003,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlManagementObjects/*' />
+    SqlManagementObjects = 0x0004,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DataTierApplicationFramework/*' />
+    DataTierApplicationFramework = 0x0005,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlToolsService/*' />
+    SqlToolsService = 0x0006,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AspNetCoreDistributedSqlServerCache/*' />
+    AspNetCoreDistributedSqlServerCache = 0x0007,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFramework6/*' />
+    EntityFramework6 = 0x0008,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AzureFunctionsSqlExtension/*' />
+    AzureFunctionsSqlExtension = 0x0009,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/OrleansAdoNet/*' />
+    OrleansAdoNet = 0x000A,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DurableTaskSqlServer/*' />
+    DurableTaskSqlServer = 0x000B
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
@@ -1044,8 +1039,8 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public SqlConnection(string connectionString) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterSqlClientAgent/*' />
-    public static bool RegisterSqlClientAgent(Microsoft.Data.SqlClient.SqlClientAgent id) { throw null; }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlClientAppId/*' />
+    public Microsoft.Data.SqlClient.SqlClientApp SqlClientAppId { get { throw null; } set { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
