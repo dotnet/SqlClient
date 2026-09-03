@@ -63,9 +63,11 @@ steps:
       Get-ChildItem -Filter "*.coverage" -Recurse
     displayName: '[Debug] List test result coverage files'
 
+# System.JobId is stable across attempts of the same job, so the attempt number is required to
+# avoid "Artifact ... already exists for build" when re-running a failed leg.
 - task: PublishPipelineArtifact@1
   displayName: 'Publish Test Artifacts'
   inputs:
     targetPath: TestResults
-    artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'
+    artifact: '${{ parameters.targetFramework }}_${{ parameters.operatingSystem }}_job$(System.JobId)_attempt$(System.JobAttempt)'
   condition: succeededOrFailed()

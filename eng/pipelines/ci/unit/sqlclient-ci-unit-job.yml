@@ -166,8 +166,6 @@ jobs:
             -p:ReferenceType=Package
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:UseManagedSniOnWindows=${{ parameters.useManagedSni }}
-            -p:PackageVersionAbstractions=$(abstractionsPackageVersion)
-            -p:PackageVersionLogging=$(loggingPackageVersion)
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)
             -p:TestResultsFolderPath=TestResults
