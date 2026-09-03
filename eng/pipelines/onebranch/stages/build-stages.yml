@@ -30,10 +30,6 @@ parameters:
   - name: buildSqlServer
     type: boolean
 
-  # Whether localization findings fail the SqlClient build job.
-  - name: enforceLocalizationValidation
-    type: boolean
-
   # Package Parameters -----------------------------------------------------
 
   - name: abstractionsArtifactsName
@@ -201,7 +197,6 @@ stages:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
           shouldSignPackage: ${{ parameters.isOfficial }}
-          enforceLocalizationValidation: ${{ parameters.enforceLocalizationValidation }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'

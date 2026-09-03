@@ -23,11 +23,6 @@ parameters:
   - name: shouldSignPackage
     type: boolean
 
-  # Whether localization findings fail the SqlClient build job.
-  - name: enforceLocalizationValidation
-    type: boolean
-    default: true
-
   # Signing Parameters -----------------------------------------------------
   # @TODO: Signing Parameters Object
 
@@ -125,11 +120,9 @@ jobs:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
       # Localized resources ship with the SqlClient driver. Validate them before analysis and
-      # building so release builds cannot ship missing or untranslated strings.
+      # building so missing or untranslated strings fail every SqlClient build.
       - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
-          parameters:
-            enforce: ${{ parameters.enforceLocalizationValidation }}
 
       - ${{ each package in parameters.dependencies }}:
           # Build the dependency version arguments passed to the build/pack/analysis steps.  The

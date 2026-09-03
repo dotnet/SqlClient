@@ -1,4 +1,8 @@
 {
+  "_comment": [
+    "These culture/key pairs intentionally match the English source text.",
+    "Each pair was verified in the internal LCL source as localized (Stat=Loc, Orig=New). Remove an entry when its localized value changes."
+  ],
   "AllowedEnglishValueMatches": {
     "Strings.cs.resx": [
       "ADP_InvalidMultipartName",

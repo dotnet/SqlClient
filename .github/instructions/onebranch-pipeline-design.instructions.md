@@ -28,7 +28,7 @@ Respect this graph when modifying build stages:
 
 ## Localization Validation
 
-The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`. Scheduled Official builds report findings as warnings because OneLoc handback may lag English changes. SqlClient release runs always enforce validation; manual Official runs can opt in with `enforceLocalizationValidation`. Non-Official runs enforce validation by default.
+The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Validation always fails the build for missing, obsolete, empty, or untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
 
 ## Build Stages
 
@@ -93,7 +93,6 @@ When adding a new package to the OneBranch flow:
 
 Build parameters:
 - `debug` — enable debug output (default `false`)
-- `enforceLocalizationValidation` — fail on localization findings (default `false` for scheduled Official builds and `true` for manual Non-Official builds; always enabled for SqlClient releases)
 - `isPreview` — use preview version numbers (default `false`)
 - `publishSymbols` — publish symbols to servers (default `false`)
 - `buildSqlServer` — build the Microsoft.SqlServer.Server package (default `true` in the non-official/nightly pipeline, `false` in the official pipeline). The SqlClient family is always built, so this is the only build toggle. It also drives the SqlServer dependency version the family uses (built/next vs published). Requesting `releaseSqlServer` without `buildSqlServer` fails template expansion.

@@ -62,19 +62,6 @@ Describe 'validate-localization.ps1' {
             Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
     }
 
-    It 'warns without failing when enforcement is disabled' {
-        $resources = New-ResourcesDirectory
-        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
-        Set-ResourceFile (Join-Path $resources 'Strings.ja.resx') @{ Greeting = 'Hello' }
-
-        $output = (& $scriptPath -ResourcesDirectory $resources -Enforce $false *>&1) -join [Environment]::NewLine
-
-        $output | Should -Match ([regex]::Escape(
-            '##vso[task.logissue type=warning]Strings.ja.resx: untranslated values match Strings.resx: Greeting'))
-        $output | Should -Match (
-            'Localization validation found 1 issue. Enforcement is disabled for this build; review the preceding warnings.')
-    }
-
     It 'fails when no localized resource files exist' {
         $resources = New-ResourcesDirectory
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
@@ -150,34 +137,6 @@ Describe 'validate-localization.ps1' {
 
         { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
             Should -Throw '*Localization validation failed with 1 error. Review the preceding errors.*'
-    }
-
-    It 'warns when an allowlist key is no longer in Strings.resx and enforcement is disabled' {
-        $resources = New-ResourcesDirectory
-        $allowlist = Join-Path $resources 'allowlist.json'
-        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
-        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Removed') } } |
-            ConvertTo-Json -Depth 5 |
-            Set-Content -LiteralPath $allowlist
-
-        $output = (& $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist -Enforce $false *>&1) -join [Environment]::NewLine
-
-        $output | Should -Match ([regex]::Escape(
-            "##vso[task.logissue type=warning]Localization allowlist file references unknown resource key 'Removed' for 'Strings.fr.resx'."))
-        $output | Should -Match (
-            'Localization validation found 1 issue. Enforcement is disabled for this build; review the preceding warnings.')
-    }
-
-    It 'still fails for malformed allowlist JSON when enforcement is disabled' {
-        $resources = New-ResourcesDirectory
-        $allowlist = Join-Path $resources 'allowlist.json'
-        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
-        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
-        Set-Content -LiteralPath $allowlist -Value '{'
-
-        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist -Enforce $false } |
-            Should -Throw
     }
 
     It 'scopes approved English-value matches to one localized file' {

@@ -7,9 +7,6 @@
 
 .PARAMETER AllowlistPath
     Optional JSON file containing approved English-value matches grouped by localized filename.
-
-.PARAMETER Enforce
-    Whether validation findings fail the build. When false, findings are logged as warnings.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -22,9 +19,7 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ResourcesDirectory,
 
-    [string]$AllowlistPath,
-
-    [bool]$Enforce = $true
+    [string]$AllowlistPath
 )
 
 Set-StrictMode -Version Latest
@@ -52,6 +47,8 @@ function Get-ResourceStrings {
     return $strings
 }
 
+# Discover the neutral English resource and every culture-specific resource. The English file is
+# the source of truth for the required key set and value-comparison checks below.
 $resourcesPath = (Resolve-Path -LiteralPath $ResourcesDirectory).Path
 $englishPath = Join-Path $resourcesPath 'Strings.resx'
 if (-not (Test-Path -LiteralPath $englishPath -PathType Leaf)) {
@@ -69,6 +66,9 @@ foreach ($localizedFile in $localizedFiles) {
     $localizedFilesByName.Add($localizedFile.Name, $localizedFile)
 }
 
+# Load culture/key-specific exceptions for translations intentionally identical to English. The
+# configuration is validated against the current resources so stale filenames and keys fail the
+# build instead of silently weakening future validation.
 $failures = [System.Collections.Generic.List[string]]::new()
 $allowedEnglishMatches = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new([System.StringComparer]::Ordinal)
 if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
@@ -111,6 +111,10 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
 $allowedMatchCount = 0
 foreach ($localizedFile in $localizedFiles) {
     $localizedStrings = Get-ResourceStrings -Path $localizedFile.FullName
+
+    # Validate the key sets in both directions, then compare every non-empty English value with
+    # its localized value. Empty neutral values may remain empty because they contain no text to
+    # translate.
     $missingOrEmptyKeys = [System.Collections.Generic.List[string]]::new()
     $localizedOnlyKeys = [System.Collections.Generic.List[string]]::new()
     $englishMatches = [System.Collections.Generic.List[string]]::new()
@@ -138,6 +142,8 @@ foreach ($localizedFile in $localizedFiles) {
                 $englishMatches.Add($entry.Key)
             }
         }
+        # An allowlist entry must be removed after its localized value changes; otherwise a future
+        # regression to the English value could be hidden by an obsolete exception.
         elseif ($allowedEnglishMatches.ContainsKey($localizedFile.Name) -and
             $allowedEnglishMatches[$localizedFile.Name].Contains($entry.Key)) {
             $staleAllowlistKeys.Add($entry.Key)
@@ -163,19 +169,11 @@ foreach ($localizedFile in $localizedFiles) {
 }
 
 if ($failures.Count -gt 0) {
-    $issueType = if ($Enforce) { 'error' } else { 'warning' }
     foreach ($failure in $failures) {
-        Write-Host "##vso[task.logissue type=$issueType]$failure"
+        Write-Host "##vso[task.logissue type=error]$failure"
     }
-
-    if ($Enforce) {
-        $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
-        throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
-    }
-
-    $issueNoun = if ($failures.Count -eq 1) { 'issue' } else { 'issues' }
-    Write-Host "Localization validation found $($failures.Count) $issueNoun. Enforcement is disabled for this build; review the preceding warnings."
-    return
+    $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
+    throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
 }
 
 $fileNoun = if ($localizedFiles.Count -eq 1) { 'file' } else { 'files' }
