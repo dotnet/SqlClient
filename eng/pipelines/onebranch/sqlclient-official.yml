@@ -207,16 +207,10 @@ extends:
         # Use release mode for official pipelines.
         modeType: release
 
-        # We have a single "name" registered with APIScan for all of our packages.
-        #
-        # https://eng.ms/docs/products/apiscan/onboard/requirements/registersoftware
-        #
-        softwareName: Microsoft.Data.SqlClient
-
-        # Similar to the software name, we have a single version registered as well.  This has
-        # nothing to do with the NuGet package version.  It is purely an APIScan registration
-        # value that points to our backend configuration.
-        versionNumber: $(ApiScanSoftwareVersion)
+        # The APIScan software name and version are NOT set here.  Each package is registered with
+        # APIScan under its own name/version pair, so every build job sets ob_sdl_apiscan_softwareName
+        # and ob_sdl_apiscan_versionNumber for the package it builds (see build-buildproj-job.yml).
+        # Jobs that produce no assemblies disable APIScan instead, via ob_sdl_apiscan_enabled.
 
         # We want the standard level of logging.
         verbosityLevel: standard
