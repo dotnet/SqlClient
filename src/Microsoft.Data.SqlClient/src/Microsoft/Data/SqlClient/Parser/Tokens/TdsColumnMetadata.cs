@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 /// Represents metadata information for a specific column in a TDS stream. Corresponds with a
 /// single column within a SQLCOLMETADATA/SQLALTMETADATA token.
 /// </summary>
+// @TODO: We have a mix of patterns here where some subtypes are contained within the types, while some are inherited. It seems this class would be better suited to contain the TdsTypeInfo rather than inherit from it.
 internal sealed class TdsColumnMetadata : TdsTypeInfo
 {
     [Flags]
@@ -70,6 +71,19 @@ internal sealed class TdsColumnMetadata : TdsTypeInfo
         Ordinal = ordinal;
     }
 
+    private TdsColumnMetadata(TdsColumnMetadata original) : base(original)
+    {
+        _flags = original._flags;
+
+        baseColumn = original.baseColumn;
+        column = original.column;
+        tableName = original.tableName;
+        tableNum = original.tableNum;
+        op = original.op;
+        Operand = original.Operand;
+        Ordinal = original.Ordinal;
+    }
+
     /// <summary>
     /// Gets the catalog name associated with the column's metadata.
     /// </summary>
@@ -77,9 +91,9 @@ internal sealed class TdsColumnMetadata : TdsTypeInfo
 
 
     internal bool Is2008DateTimeType => DbType is SqlDbType.Date
-                                             or SqlDbType.Time
-                                             or SqlDbType.DateTime2
-                                             or SqlDbType.DateTimeOffset;
+                                               or SqlDbType.Time
+                                               or SqlDbType.DateTime2
+                                               or SqlDbType.DateTimeOffset;
 
     /// <summary>
     /// Indicates whether the column is part of a sparse column set.
@@ -187,19 +201,8 @@ internal sealed class TdsColumnMetadata : TdsTypeInfo
     /// <returns>
     /// A new TdsColumnMetadata object that is a copy of the current instance.
     /// </returns>
-    public object Clone()
-    {
-        TdsColumnMetadata result = new TdsColumnMetadata(Ordinal);
-        result.CopyFrom(this);
-        result.column = column;
-        result.baseColumn = baseColumn;
-        result.tableName = tableName;
-        result.tableNum = tableNum;
-        result._flags = _flags;
-        result.op = op;
-        result.Operand = Operand;
-        return result;
-    }
+    internal new TdsColumnMetadata Clone() =>
+        new TdsColumnMetadata(this);
 
     private bool HasFlag(MetadataFlags flag)
     {
