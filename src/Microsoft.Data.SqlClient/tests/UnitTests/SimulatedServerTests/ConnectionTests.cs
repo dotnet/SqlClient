@@ -1244,5 +1244,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }
+
+        /// <summary>
+        /// Verifies the application identity cannot be changed once the connection is open, since
+        /// it is only reported during login and the getter would otherwise report a value that was
+        /// never sent.
+        /// </summary>
+        [Fact]
+        public void SqlClientAppId_CannotBeSet_WhenConnectionIsOpen()
+        {
+            using TdsServer server = new();
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using var connection = new SqlConnection(connStr);
+            connection.SqlClientAppId = SqlClientApp.EntityFramework;
+            connection.Open();
+
+            Assert.Throws<InvalidOperationException>(
+                () => connection.SqlClientAppId = SqlClientApp.SemanticKernel);
+
+            // The connection still reports the identity it logged in with.
+            Assert.Equal(SqlClientApp.EntityFramework, connection.SqlClientAppId);
+        }
     }
 }

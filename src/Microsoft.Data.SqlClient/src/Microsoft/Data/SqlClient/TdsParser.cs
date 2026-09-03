@@ -1357,8 +1357,7 @@ namespace Microsoft.Data.SqlClient
 
                 int feOffset = length;
                 // Capture the payload once so the length reserved below and the
-                // bytes written by WriteLoginData can never disagree, even if an
-                // agent is registered concurrently.
+                // bytes written by WriteLoginData can never disagree.
                 ReadOnlyMemory<byte> userAgent = UserAgent.GetUcs2Bytes(rec.appId);
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(

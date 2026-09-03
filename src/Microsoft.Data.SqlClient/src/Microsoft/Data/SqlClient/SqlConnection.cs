@@ -389,6 +389,14 @@ namespace Microsoft.Data.SqlClient
             get => _sqlClientAppId;
             set
             {
+                // The identity is only reported while logging in, so allowing it
+                // to change afterwards would let the getter report a value that
+                // was never sent.
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(SqlClientAppId), InnerConnection.State);
+                }
+
                 // Identifiers are carried in 16 bits, so anything outside that
                 // range cannot be reported and is rejected here rather than
                 // being silently truncated at login.

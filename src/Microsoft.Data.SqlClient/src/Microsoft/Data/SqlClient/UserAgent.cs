@@ -526,7 +526,7 @@ internal static class UserAgent
 
     // Our payload format version.
     //
-    // Version 2 adds the optional Agent Id part.
+    // Version 2 adds the App Id and Driver Properties parts.
     private const string PayloadVersion = "2";
 
     // Our well-known .NET driver name.

@@ -2199,6 +2199,9 @@
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
     <value>Impossible de passer de l'état « {0} » à l'état « {1} ».</value>
   </data>
+  <data name="SQL_InvalidSqlClientAppId" xml:space="preserve">
+    <value>The SqlClient application identifier '{0}' is outside the supported range of 0 to 65535.</value>
+  </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
     <value>État non pris en charge : '{0}'.</value>
   </data>
