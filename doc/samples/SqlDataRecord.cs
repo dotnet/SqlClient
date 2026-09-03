@@ -36,7 +36,7 @@ public static IEnumerable<SqlDataRecord> GetRecords()
     record.SetInt32(1, 42);
     record.SetDateTime(2, DateTime.Now);
 
-    // Set the fields of the first record and stream it to SQL Server.
+    // Stream the first record to SQL Server.
     yield return record;
 
     // Set the fields of the second record and stream it to SQL Server.

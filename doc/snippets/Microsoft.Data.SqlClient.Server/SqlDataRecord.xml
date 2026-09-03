@@ -6,10 +6,10 @@
       </summary>
       <remarks>
         <para>
-          This class describes a single row of a table-valued parameter. Construct one from an array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects which describe the column metadata of the record, populate it with the <b>Set&lt;Type&gt;</b> methods and assign it (or an <see cref="T:System.Collections.Generic.IEnumerable{Microsoft.Data.SqlClient.Server.SqlDataRecord}" /> for multiple rows) to <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
+          This class describes a single row of a table-valued parameter. Construct one from an array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects which describe the column metadata of the record, populate it with the <b>Set&lt;Type&gt;</b> methods and assign it (or an <c>IEnumerable&lt;SqlDataRecord&gt;</c> for multiple rows) to <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
         </para>
         <para>
-          For best performance when sending multiple rows, re-use a single <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance across an <see cref="T:System.Collections.Generic.IEnumerable{Microsoft.Data.SqlClient.Server.SqlDataRecord}" /> iterator: set new column values and <see langword="yield return" /> the same instance for each row. <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> will read each record before advancing to the next.
+          For best performance when sending multiple rows, re-use a single <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance across an <c>IEnumerable&lt;SqlDataRecord&gt;</c> iterator: set new column values and <see langword="yield return" /> the same instance for each row. <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> will read each record before advancing to the next.
         </para>
       </remarks>
       <example>
@@ -41,7 +41,7 @@
              record.SetInt32(1, 42);
              record.SetDateTime(2, DateTime.Now);
           
-             // Set the fields of the first record and stream it to SQL Server.
+             // Stream the first record to SQL Server.
              yield return record;
 
              // Set the fields of the second record and stream it to SQL Server.
