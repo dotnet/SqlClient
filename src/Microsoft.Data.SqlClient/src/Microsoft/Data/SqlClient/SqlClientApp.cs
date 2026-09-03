@@ -32,5 +32,7 @@ public enum SqlClientApp
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/OrleansAdoNet/*' />
     OrleansAdoNet = 0x000A,
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DurableTaskSqlServer/*' />
-    DurableTaskSqlServer = 0x000B
+    DurableTaskSqlServer = 0x000B,
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlPackage/*' />
+    SqlPackage = 0x000C
 }

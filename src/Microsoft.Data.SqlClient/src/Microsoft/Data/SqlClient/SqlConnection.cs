@@ -263,6 +263,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            _sqlClientAppId = connection._sqlClientAppId;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate

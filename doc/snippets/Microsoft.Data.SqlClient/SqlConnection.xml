@@ -2324,9 +2324,16 @@ The following sample tries to open a connection to an invalid database to simula
           a value to that type, provided it is within the 16-bit range the protocol allows.
         </para>
         <para>
-          The identity is sent once, during login, so it must be set before the connection is opened. When pooling is
-          enabled, the value is reported only when a new physical connection is established; a connection served from
-          the pool reports the identity of the connection that created it.
+          The identity is sent once, during login, so it must be set before the connection is opened.
+        </para>
+        <para>
+          When pooling is enabled the value is reported only while establishing a new physical connection, and it is
+          not part of the pool key. A connection served from the pool therefore reports the identity of whichever
+          connection caused that physical connection to be created, and physical connections opened in the background
+          to satisfy <c>Min Pool Size</c> report
+          <see cref="F:Microsoft.Data.SqlClient.SqlClientApp.Unknown" />. Applications that mix identities over one
+          connection string should treat this telemetry as indicative rather than exact, or disable pooling where an
+          exact attribution is required.
         </para>
       </remarks>
     </SqlClientAppId>

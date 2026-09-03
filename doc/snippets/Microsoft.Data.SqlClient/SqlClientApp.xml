@@ -125,5 +125,17 @@
         11
       </value>
     </DurableTaskSqlServer>
+    <SqlPackage>
+      <summary>
+        The <c>sqlpackage</c> command-line tool.
+      </summary>
+      <value>
+        12
+      </value>
+      <remarks>
+        <c>sqlpackage</c> is built on the Data-Tier Application Framework, but reports its own identifier so that
+        command-line use can be told apart from other callers of that framework.
+      </remarks>
+    </SqlPackage>
   </members>
 </docs>

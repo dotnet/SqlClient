@@ -49,6 +49,7 @@ public class SqlClientAppTests
     [InlineData(SqlClientApp.AzureFunctionsSqlExtension, 0x0009)]
     [InlineData(SqlClientApp.OrleansAdoNet, 0x000A)]
     [InlineData(SqlClientApp.DurableTaskSqlServer, 0x000B)]
+    [InlineData(SqlClientApp.SqlPackage, 0x000C)]
     public void Members_Have_Stable_Values(SqlClientApp app, int expected)
     {
         Assert.Equal(expected, (int)app);
@@ -121,5 +122,51 @@ public class SqlClientAppTests
         connection.SqlClientAppId = SqlClientApp.SemanticKernel;
 
         Assert.Equal(SqlClientApp.SemanticKernel, connection.SqlClientAppId);
+    }
+
+    /// <summary>
+    /// Verifies a cloned connection keeps the application identity of the
+    /// connection it was cloned from, so cloning does not silently drop the
+    /// identity back to <see cref="SqlClientApp.Unknown"/>.
+    /// </summary>
+    [Fact]
+    public void Clone_Preserves_SqlClientAppId()
+    {
+        using SqlConnection connection = new();
+        connection.SqlClientAppId = SqlClientApp.SqlPackage;
+
+        using SqlConnection clone = (SqlConnection)((ICloneable)connection).Clone();
+
+        Assert.Equal(SqlClientApp.SqlPackage, clone.SqlClientAppId);
+    }
+
+    /// <summary>
+    /// Verifies the driver properties part reports the connection pool V2 flag
+    /// when, and only when, that implementation is enabled.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DriverProperties_Reports_ConnectionPoolV2(bool useConnectionPoolV2)
+    {
+        SqlClientDriverProperties expected = useConnectionPoolV2
+            ? SqlClientDriverProperties.ConnectionPoolV2
+            : SqlClientDriverProperties.None;
+
+        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Resolve(useConnectionPoolV2));
+    }
+
+    /// <summary>
+    /// Verifies the flags reported for this process agree with the switch they
+    /// are derived from, so <see cref="SqlClientDriverPropertiesResolver.Current"/>
+    /// cannot drift from the mapping it delegates to.
+    /// </summary>
+    [Fact]
+    public void DriverProperties_Current_Matches_Switch()
+    {
+        SqlClientDriverProperties expected =
+            SqlClientDriverPropertiesResolver.Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+
+        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Current);
     }
 }

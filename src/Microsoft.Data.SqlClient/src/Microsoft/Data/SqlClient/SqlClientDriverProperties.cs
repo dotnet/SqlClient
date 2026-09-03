@@ -44,18 +44,32 @@ internal static class SqlClientDriverPropertiesResolver
     ///   The flags are sourced from process-wide switches, so this is stable
     ///   for the life of the process.
     /// </remarks>
-    internal static SqlClientDriverProperties Current
+    internal static SqlClientDriverProperties Current =>
+        Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+
+    /// <summary>
+    ///   Maps the process configuration to the flags that describe it.
+    /// </summary>
+    /// <param name="useConnectionPoolV2">
+    ///   Whether the connection pool V2 implementation is enabled.
+    /// </param>
+    /// <returns>
+    ///   The flags describing the supplied configuration.
+    /// </returns>
+    /// <remarks>
+    ///   The mapping is kept separate from <see cref="Current"/> because the
+    ///   switches it reads are cached for the life of the process, which makes
+    ///   them impractical to vary in a test.
+    /// </remarks>
+    internal static SqlClientDriverProperties Resolve(bool useConnectionPoolV2)
     {
-        get
+        SqlClientDriverProperties properties = SqlClientDriverProperties.None;
+
+        if (useConnectionPoolV2)
         {
-            SqlClientDriverProperties properties = SqlClientDriverProperties.None;
-
-            if (LocalAppContextSwitches.UseConnectionPoolV2)
-            {
-                properties |= SqlClientDriverProperties.ConnectionPoolV2;
-            }
-
-            return properties;
+            properties |= SqlClientDriverProperties.ConnectionPoolV2;
         }
+
+        return properties;
     }
 }
