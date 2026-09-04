@@ -38,6 +38,12 @@ namespace Microsoft.Data.ProviderBase
         private readonly int _objectId = Interlocked.Increment(ref _objectTypeCount);
 
         /// <summary>
+        /// UTC time at which this internal connection was most recently handed to an owning
+        /// <see cref="DbConnection"/>. Cleared when it returns to the pool.
+        /// </summary>
+        private DateTime _checkoutTime;
+
+        /// <summary>
         /// [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
         /// </summary>
         private readonly WeakReference<DbConnection> _owningObject = new WeakReference<DbConnection>(null, false);
@@ -118,6 +124,17 @@ namespace Microsoft.Data.ProviderBase
         /// The pool reads this value to decide whether the connection has sat idle longer than the configured idle timeout.
         /// </summary>
         internal DateTime ReturnedTime { get; set; }
+
+        /// <summary>
+        /// UTC timestamp of the current checkout, or <see cref="DateTime.MinValue"/> while the
+        /// connection is not owned by an application connection. The internal setter supports
+        /// deterministic timeout diagnostics tests.
+        /// </summary>
+        internal DateTime CheckoutTime
+        {
+            get => _checkoutTime;
+            set => _checkoutTime = value;
+        }
 
         /// <summary>
         /// The pool generation at the time this connection was created or added to the pool.
@@ -730,8 +747,10 @@ namespace Microsoft.Data.ProviderBase
             Pool = connectionPool;
         }
 
-        internal void PostPop(DbConnection newOwner)
+        internal void PostPop(DbConnection newOwner, DateTime checkoutTime)
         {
+            Debug.Assert(checkoutTime.Kind == DateTimeKind.Utc);
+
             // Called by IDbConnectionPool right after it pulls this from its pool, we take this
             // opportunity to ensure ownership and pool counts are legit.
             Debug.Assert(!IsEmancipated, "pooled object not in pool");
@@ -746,6 +765,7 @@ namespace Microsoft.Data.ProviderBase
 
             _owningObject.SetTarget(newOwner);
             _pooledCount--;
+            _checkoutTime = checkoutTime;
 
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
@@ -819,11 +839,59 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PrePush|RES|CPOOL> {0}, Preparing to push into pool, owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             _pooledCount++;
+            _checkoutTime = DateTime.MinValue;
 
             // NOTE: doing this and checking for InternalError.PooledObjectHasOwner degrades the
             //    close by 2%
             _owningObject.SetTarget(null);
         }
+
+        /// <summary>
+        /// Classifies the connection for a timeout-only pool diagnostics snapshot.
+        /// The caller must hold this connection's monitor.
+        /// </summary>
+        /// <param name="utcNow">Current UTC time used to calculate checkout duration.</param>
+        /// <param name="checkoutDuration">How long the current or abandoned checkout has lasted.</param>
+        /// <returns>The connection's current pool usage state.</returns>
+        internal PoolConnectionUsageState GetPoolUsageState(
+            DateTime utcNow,
+            out TimeSpan checkoutDuration)
+        {
+            Debug.Assert(Monitor.IsEntered(this));
+            Debug.Assert(utcNow.Kind == DateTimeKind.Utc);
+
+            checkoutDuration = TimeSpan.Zero;
+
+            if (IsTxRootWaitingForTxEnd ||
+                (IsInPool && EnlistedTransaction is not null))
+            {
+                return PoolConnectionUsageState.TransactionHeld;
+            }
+
+            if (IsInPool)
+            {
+                return PoolConnectionUsageState.Idle;
+            }
+
+            if (_owningObject.TryGetTarget(out _))
+            {
+                checkoutDuration = GetCheckoutDuration(utcNow);
+                return PoolConnectionUsageState.CheckedOut;
+            }
+
+            if (_checkoutTime != DateTime.MinValue && IsEmancipated)
+            {
+                checkoutDuration = GetCheckoutDuration(utcNow);
+                return PoolConnectionUsageState.Abandoned;
+            }
+
+            return PoolConnectionUsageState.Unclassified;
+        }
+
+        private TimeSpan GetCheckoutDuration(DateTime utcNow) =>
+            utcNow > _checkoutTime
+                ? utcNow - _checkoutTime
+                : TimeSpan.Zero;
 
         internal void RemoveWeakReference(object value) =>
             ReferenceCollection?.Remove(value);

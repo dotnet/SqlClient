@@ -1861,6 +1861,8 @@ public sealed class SqlException : System.Data.Common.DbException
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*'/>
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
     public Microsoft.Data.SqlClient.SqlErrorCollection Errors { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ConnectionOpenRetryFailures/*'/>
+    public System.Collections.Generic.IReadOnlyList<Microsoft.Data.SqlClient.SqlException> ConnectionOpenRetryFailures { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*'/>
     public int LineNumber { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Number/*'/>
