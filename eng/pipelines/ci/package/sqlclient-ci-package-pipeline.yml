@@ -7,17 +7,17 @@
 # This pipeline builds all packages using the build.proj Pack target with ReferenceType=Package,
 # then publishes the resulting .nupkg and .snupkg files as a single pipeline artifact.
 #
-# It runs nightly at 00:20 UTC on GitHub dotnet/SqlClient main and ADO.Net dotnet-sqlclient
-# internal/main.
+# It runs daily at 13:00 UTC on GitHub dotnet/SqlClient release/7.1 and at 21:00 UTC on ADO.Net
+# dotnet-sqlclient internal/release/7.1.
 #
-# On internal/main the strong-name signing key is downloaded and used to sign assemblies during the
-# build.
+# On internal/release/7.1 the strong-name signing key is downloaded and used to sign assemblies
+# during the build.
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO.NET CI.  We distinguish the two
 # via branch filters:
 #
-#   - Only the GitHub repo has a 'main' branch.
-#   - Only the ADO repo has an 'internal/main' branch.
+#   - Only the GitHub repo has a 'release/7.1' branch.
+#   - Only the ADO repo has an 'internal/release/7.1' branch.
 
 name: $(DayOfYear)$(Rev:rr)
 
@@ -25,14 +25,22 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Nightly schedule at 00:20 UTC.
+# Stagger the GitHub and ADO builds so their downstream completion-triggered pipelines do not start
+# at the same time.
 schedules:
-  - cron: '20 0 * * *'
-    displayName: Nightly Build
+  - cron: '0 13 * * *'
+    displayName: 7.1 GitHub Daily Package Build (13:00 UTC)
     branches:
       include:
-        - main
-        - internal/main
+        - release/7.1-staging
+
+    always: true
+
+  - cron: '0 21 * * *'
+    displayName: 7.1 ADO Daily Package Build (21:00 UTC)
+    branches:
+      include:
+        - internal/release/7.1-staging
     always: true
 
 # Pipeline parameters visible in the Azure DevOps UI.

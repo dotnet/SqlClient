@@ -64,7 +64,7 @@ parameters:
   - name: baselineSourceRef
     displayName: Baseline Source Ref (branch)
     type: string
-    default: main
+    default: release/7.1-staging
 
   # Remote used to obtain the baseline ref when it cannot be fetched from the VM copy of the
   # checkout's own 'origin' (e.g. the source tree reached the VM without its .git directory, or
