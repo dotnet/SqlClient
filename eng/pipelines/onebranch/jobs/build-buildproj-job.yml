@@ -17,9 +17,9 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
-  # The APIScan registration version for the package being built.  This tracks the major.minor of
-  # the package's NuGet version, but must be a pair already registered with APIScan, so pass one of
-  # the ApiScanVersion* variables from onebranch-variables.yml rather than a computed version.
+  # The APIScan registration version for the package being built. This is the major.minor value
+  # derived from the canonical package version by the compute_versions stage. The package's
+  # name/version pair must already be registered with APIScan before the build runs.
   - name: apiScanSoftwareVersion
     type: string
 

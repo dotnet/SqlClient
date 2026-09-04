@@ -78,6 +78,8 @@ Describe 'compute-versions.ps1 Effective Versions' {
 
         $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
         $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
+        $output | Should -Match 'SqlClientApiScanVersion;isOutput=true]7\.1'
+        $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]1\.1'
         $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
     }
 
@@ -93,6 +95,7 @@ Describe 'compute-versions.ps1 Effective Versions' {
 
         $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.42-preview3'
         $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0'
+        $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]1\.0'
         $output | Should -Not -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0\.42'
     }
 
