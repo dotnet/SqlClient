@@ -142,52 +142,6 @@ public class SqlConfigurableRetryLogicLoaderTest
     }
 
     /// <summary>
-    /// The UseLegacyRetryLogicAssemblyResolution switch restores the previous behaviour, where the
-    /// probing handler stays subscribed for the lifetime of the process.
-    /// </summary>
-    /// <remarks>
-    /// This exists as a compatibility escape hatch for providers that load private dependencies
-    /// after the provider has been constructed. Note that the probing directory is the application
-    /// base directory either way: the switch restores the handler's lifetime, never the working
-    /// directory it used to probe.
-    /// </remarks>
-    [Fact]
-    public void Constructor_WithLegacySwitch_LeavesAssemblyProbingEnabled()
-    {
-        using LocalAppContextSwitchesHelper switchesHelper = new();
-        switchesHelper.UseLegacyRetryLogicAssemblyResolution = true;
-
-        try
-        {
-            RunWithProbedRetryLogicFactory(loader =>
-            {
-                Assert.NotNull(loader.ConnectionProvider);
-
-                string probeAssemblyName = NewProbeAssemblyName();
-                string plantedFile = PlantProbeFile(probeAssemblyName);
-
-                try
-                {
-                    Assert.True(
-                        IsProbingHandlerInstalled(probeAssemblyName),
-                        "The legacy switch was set, but the assembly probing handler was not left " +
-                        "subscribed to the default assembly load context.");
-                }
-                finally
-                {
-                    DeleteProbeFile(plantedFile);
-                }
-            });
-        }
-        finally
-        {
-            // Turn the switch off first so the loader's own unsubscribe path actually runs.
-            switchesHelper.UseLegacyRetryLogicAssemblyResolution = false;
-            RemoveLegacyProbingHandler();
-        }
-    }
-
-    /// <summary>
     /// Builds a configuration that resolves <see cref="ProbedRetryLogicFactory"/> out of this test
     /// assembly through the loader's probing directory, constructs a loader from it, and hands the
     /// loader to <paramref name="assert"/>.
@@ -228,33 +182,6 @@ public class SqlConfigurableRetryLogicLoaderTest
                 DeleteProbeFile(probePath);
             }
         }
-    }
-
-    /// <summary>
-    /// Unsubscribes the process-lifetime probing handler installed under the legacy switch, and
-    /// resets the loader's guard so a later test can install it again.
-    /// </summary>
-    /// <remarks>
-    /// The handler is deliberately private, and under the legacy switch the loader never removes it
-    /// itself. The loader's own unsubscribe path is invoked so that the delegate being removed is
-    /// created exactly the way the loader created it; the caller is responsible for turning the
-    /// switch off first, otherwise that path deliberately does nothing.
-    /// </remarks>
-    private static void RemoveLegacyProbingHandler()
-    {
-        Type loaderType = typeof(SqlConfigurableRetryLogicLoader);
-
-        MethodInfo? unsubscribe = loaderType.GetMethod(
-            "UnsubscribeAssemblyResolving",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(unsubscribe);
-        unsubscribe!.Invoke(null, null);
-
-        FieldInfo? installed = loaderType.GetField(
-            "s_legacyResolvingHandlerInstalled",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(installed);
-        installed!.SetValue(null, 0);
     }
 
     private static TestRetryConnectionSection CreateSection(string? retryLogicType) =>

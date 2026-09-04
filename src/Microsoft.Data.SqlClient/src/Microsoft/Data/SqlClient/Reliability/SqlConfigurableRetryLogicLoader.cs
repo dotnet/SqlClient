@@ -12,7 +12,6 @@ using Microsoft.Data.SqlClient.Internal;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Loader;
-using System.Threading;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -367,14 +366,6 @@ namespace Microsoft.Data.SqlClient
         
         #region Type Resolution
 
-        #if NET
-        /// <summary>
-        /// Tracks whether the legacy process-lifetime resolving handler has already been installed,
-        /// so that repeated provider resolutions do not subscribe it more than once.
-        /// </summary>
-        private static int s_legacyResolvingHandlerInstalled;
-        #endif
-
         /// <summary>
         /// Subscribes the assembly resolving handler used to locate a configured retry logic
         /// assembly and its dependencies. This is a no-op on .NET Framework, which does not use
@@ -383,35 +374,18 @@ namespace Microsoft.Data.SqlClient
         private static void SubscribeAssemblyResolving()
         {
             #if NET
-            if (LocalAppContextSwitches.UseLegacyRetryLogicAssemblyResolution)
-            {
-                // Legacy behavior: leave the handler installed for the lifetime of the process so
-                // that dependencies loaded lazily by the provider can still be resolved later.
-                if (Interlocked.Exchange(ref s_legacyResolvingHandlerInstalled, 1) == 0)
-                {
-                    AssemblyLoadContext.Default.Resolving += Default_Resolving;
-                }
-
-                return;
-            }
-
             AssemblyLoadContext.Default.Resolving += Default_Resolving;
             #endif
         }
 
         /// <summary>
         /// Unsubscribes the assembly resolving handler subscribed by
-        /// <see cref="SubscribeAssemblyResolving"/>. This is a no-op on .NET Framework, and when the
-        /// legacy process-lifetime behavior has been requested.
+        /// <see cref="SubscribeAssemblyResolving"/>. This is a no-op on .NET Framework, which does
+        /// not use <c>AssemblyLoadContext</c> for this purpose.
         /// </summary>
         private static void UnsubscribeAssemblyResolving()
         {
             #if NET
-            if (LocalAppContextSwitches.UseLegacyRetryLogicAssemblyResolution)
-            {
-                return;
-            }
-
             AssemblyLoadContext.Default.Resolving -= Default_Resolving;
             #endif
         }
@@ -447,10 +421,6 @@ namespace Microsoft.Data.SqlClient
         /// resolved and constructed, and only when a custom retry logic type has been configured.
         /// It must not remain subscribed to <see cref="AssemblyLoadContext.Default"/> after that,
         /// because doing so changes assembly resolution behavior for the entire application.
-        /// The
-        /// <c>Switch.Microsoft.Data.SqlClient.UseLegacyRetryLogicAssemblyResolution</c> app context
-        /// switch restores the previous, process-lifetime behavior for applications whose provider
-        /// loads private dependencies after it has been constructed.
         /// </remarks>
         private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
