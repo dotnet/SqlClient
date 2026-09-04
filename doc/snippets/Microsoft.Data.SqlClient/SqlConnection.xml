@@ -262,8 +262,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         </para>
         <para>
           This property is mutually exclusive with the
-          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
-          property, among others.
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />,
+          and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" />
+          properties.
         </para>
       </remarks>
     </AccessToken>
