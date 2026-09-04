@@ -7747,7 +7747,16 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLTIME:
                     stateObj.WriteByte(mt.Scale); //propbytes: scale
-                    WriteTime((TimeSpan)value, mt.Scale, length, stateObj);
+#if NET
+                    if (value is TimeOnly timeOnly)
+                    {
+                        WriteTime(timeOnly.ToTimeSpan(), mt.Scale, length, stateObj);
+                    }
+                    else
+#endif
+                    {
+                        WriteTime((TimeSpan)value, mt.Scale, length, stateObj);
+                    }
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
@@ -7923,7 +7932,16 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     WriteSqlVariantHeader(8, metatype.TDSType, metatype.PropBytes, stateObj);
                     stateObj.WriteByte(metatype.Scale); //propbytes: scale
-                    WriteTime((TimeSpan)value, metatype.Scale, 5, stateObj);
+#if NET
+                    if (value is TimeOnly timeOnly)
+                    {
+                        WriteTime(timeOnly.ToTimeSpan(), metatype.Scale, 5, stateObj);
+                    }
+                    else
+#endif
+                    {
+                        WriteTime((TimeSpan)value, metatype.Scale, 5, stateObj);
+                    }
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
