@@ -121,12 +121,6 @@ parameters:
     type: stepList
     default: []
 
-  # True if the VM image includes a local SQL Server that supports connections
-  # via integrated security.
-  - name: supportsIntegratedSecurity
-    type: boolean
-    default: false
-
   # The pool VM image to use.
   - name: vmImage
     type: string
@@ -253,7 +247,6 @@ jobs:
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
-          SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)

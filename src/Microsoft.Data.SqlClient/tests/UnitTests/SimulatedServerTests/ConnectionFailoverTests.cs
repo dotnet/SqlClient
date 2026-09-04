@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_NoFailover_DoesNotClearPool(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 72
         //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
         //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnection.Open(SqlConnectionOverrides overrides)
         //        at Microsoft.Data.SqlClient.SqlConnection.Open()
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner() in ConnectionFailoverTests.cs:line 304
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
@@ -813,7 +813,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 777
         //      at InvokeStub_ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(Object, Span`1)
         //      at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]

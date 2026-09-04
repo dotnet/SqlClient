@@ -242,9 +242,6 @@ stages:
                 # group.
                 fileStreamDirectory: $(FileStreamDirectory)
                 SQLRootPath: $(SQL25RootPath)
-          # The ADO-MMS25-SQL25 image includes a local SQL Server that supports
-          # integrated security.
-          supportsIntegratedSecurity: true
           vmImage: ADO-MMS25-SQL25
 
       # ------------------------------------------------------------------------
