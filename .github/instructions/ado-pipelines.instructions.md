@@ -70,14 +70,14 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 ## PR vs CI Pipeline Differences
 
 PR pipelines:
-- Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
+- Trigger on PRs targeting `release/7.1`; path filters vary by pipeline
 - Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
 - Timeout: 90 minutes
 - Package-ref PR disables Always Encrypted tests in Debug config and also disables legacy SQL Server test legs to keep validation fast
 
 CI pipelines:
-- Trigger on push to `main` (GitHub) and `internal/main` (ADO) with `batch: true`
-- Scheduled weekday builds (see individual pipeline files for cron times)
+- Trigger on push to `release/7.1` (GitHub) and `internal/release/7.1` (ADO) with `batch: true`
+- Scheduled daily builds are staggered to avoid main and other release-branch schedules (see individual pipeline files for cron times)
 - Full TFM matrix including net10.0 test legs and legacy SQL Server manual-test coverage
 
 ## Test Configuration
