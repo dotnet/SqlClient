@@ -3980,7 +3980,6 @@ namespace Microsoft.Data.SqlClient.Connection
                 _parser.PrepareResetConnection(ShouldPreserveTransactionOnReset(
                     isPooled: Pool is not null,
                     isTransactionRoot: IsTransactionRoot,
-                    is2008OrNewer: Is2008OrNewer,
                     hasEnlistedTransaction: EnlistedTransaction is not null));
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
@@ -3998,11 +3997,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <param name="isTransactionRoot">
         /// Whether this connection is the root of a delegated transaction, i.e.
         /// <see cref="IsTransactionRoot"/>.
-        /// </param>
-        /// <param name="is2008OrNewer">
-        /// Whether the server is SQL Server 2008 or newer. Older servers cannot preserve a
-        /// delegated transaction across a reset, so such connections must not be recycled with
-        /// the transaction still attached.
         /// </param>
         /// <param name="hasEnlistedTransaction">
         /// Whether this connection has a non-null <see cref="DbConnectionInternal.EnlistedTransaction"/>.
@@ -4034,11 +4028,20 @@ namespace Microsoft.Data.SqlClient.Connection
         /// delegated transaction can still report itself as active. That transient half-state is
         /// root-only, and it is exactly the state issue #4001 reproduces in.
         /// </para>
+        /// <para>
+        /// There is deliberately no server-version guard here. Before
+        /// https://github.com/dotnet/SqlClient/pull/3019, a delegated root on a pre-2008 server
+        /// was excluded via <c>IsNonPoolableTransactionRoot</c>, but that property also routed
+        /// such connections into stasis rather than back into the pool, which is what made
+        /// suppressing the preserve bit safe. #3019 removed the property, and neither pool puts a
+        /// poolable root into stasis today, so a version guard would now return the connection to
+        /// the general pool with its transaction silently reset. That is issue #4001 again.
+        /// SQL Server 2005 is also outside the supported matrix.
+        /// </para>
         /// </remarks>
         internal static bool ShouldPreserveTransactionOnReset(
             bool isPooled,
             bool isTransactionRoot,
-            bool is2008OrNewer,
             bool hasEnlistedTransaction)
         {
             // A connection with no pool is not recycled, so there is nothing to preserve for.
@@ -4047,8 +4050,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 return false;
             }
 
-            // Delegated transaction roots can only be preserved on 2008+ servers.
-            return (isTransactionRoot && is2008OrNewer) || hasEnlistedTransaction;
+            return isTransactionRoot || hasEnlistedTransaction;
         }
 
         private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionOptions options)

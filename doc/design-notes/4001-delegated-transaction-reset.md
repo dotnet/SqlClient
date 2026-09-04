@@ -119,10 +119,22 @@ Substituting, the pre-#3019 condition was:
 IsTransactionRoot && Is2008OrNewer && Pool != null
 ```
 
-The `Is2008OrNewer` term is not vestigial. `AdapterUtil.ValidateTdsVersion` still accepts
-`TdsEnums.SQL2005_VERSION`, and `ConnectionCapabilities.Is2008R2OrNewer` returns `false`
-for it. A pre-2008 server cannot carry a delegated transaction across a reset, so such a
-connection must not be recycled with one attached.
+The `Is2008OrNewer` term is **deliberately not carried forward**, for two reasons.
+
+First, it is outside the support matrix. The term is `false` for exactly one server
+version — SQL Server 2005 — and the driver's supported floor is SQL Server 2012.
+
+Second, and more importantly, **it was never safe on its own.** `IsNonPoolableTransactionRoot`
+had two jobs, not one. Besides suppressing the preserve bit, it also drove pool routing:
+`DbConnectionPool` sent any connection it flagged into *stasis* rather than back into the
+pool. Being parked is what made a plain reset harmless — the connection was never handed
+to another caller. #3019 deleted the property entirely, and today's pools route on
+`EnlistedTransaction` alone. A delegated root with a `null` `EnlistedTransaction` now goes
+straight back to the **general** pool.
+
+Reinstating only the suppression half would therefore reset a live delegated transaction
+*and* hand the connection out again — #4001 exactly, just narrowed to SQL Server 2005.
+Half of a retired safety mechanism is worse than none of it.
 
 So the two conditions were:
 
@@ -147,7 +159,6 @@ The predicate is extracted into a helper so it can be tested directly:
 internal static bool ShouldPreserveTransactionOnReset(
     bool isPooled,
     bool isTransactionRoot,
-    bool is2008OrNewer,
     bool hasEnlistedTransaction)
 {
     if (!isPooled)
@@ -155,12 +166,12 @@ internal static bool ShouldPreserveTransactionOnReset(
         return false;
     }
 
-    return (isTransactionRoot && is2008OrNewer) || hasEnlistedTransaction;
+    return isTransactionRoot || hasEnlistedTransaction;
 }
 ```
 
-This is exactly `OLD || NEW`, with both prior conditions preserved verbatim — including
-the `Is2008OrNewer` guard that only ever applied to the delegated-root arm.
+This is `OLD || NEW`: each arm answers one of the two questions from section 1, so the
+predicate is `true` wherever either predecessor was.
 
 ---
 
@@ -169,13 +180,12 @@ the `Is2008OrNewer` guard that only ever applied to the delegated-root arm.
 This is the question that matters most, and it is answerable by inspection rather than
 by testing. Every reachable state, for a pooled connection:
 
-| `IsTransactionRoot` | `Is2008OrNewer` | `EnlistedTransaction` | Pre-#3019 | #3019 | **This fix** |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| `false` | `true` | `null` | `false` | `false` | `false` |
-| **`true`** | **`true`** | **`null`** | ✅ `true` | ❌ `false` ← **#4001** | ✅ **`true`** |
-| `true` | `false` | `null` | `false` | `false` | `false` |
-| **`false`** | any | **set** | ❌ `false` ← **#2970** | ✅ `true` | ✅ **`true`** |
-| `true` | any | set | see above | `true` | `true` |
+| `IsTransactionRoot` | `EnlistedTransaction` | Pre-#3019 | #3019 | **This fix** |
+|:---:|:---:|:---:|:---:|:---:|
+| `false` | `null` | `false` | `false` | `false` |
+| **`true`** | **`null`** | ✅ `true` | ❌ `false` ← **#4001** | ✅ **`true`** |
+| **`false`** | **set** | ❌ `false` ← **#2970** | ✅ `true` | ✅ **`true`** |
+| `true` | set | `true` | `true` | `true` |
 
 Read the **#2970 row**. That is the row PR #3019 was created to fix, and this fix still
 evaluates `true` there. It is untouched.
@@ -297,9 +307,8 @@ mutation-tested:
 | Condition compiled into the helper | Bug it contains | New tests |
 |---|---|---|
 | `hasEnlistedTransaction` (#3019) | **#4001** | ❌ 2 failed |
-| `isTransactionRoot && is2008OrNewer` (pre-#3019) | **#2970** | ❌ 4 failed |
-| Union without the 2008 guard | pre-2008 regression | ❌ 2 failed |
-| The shipped condition | none | ✅ 19 passed |
+| `isTransactionRoot` (pre-#3019) | **#2970** | ❌ 2 failed |
+| The shipped condition | none | ✅ 11 passed |
 
 This satisfies "fails before the change, passes after" for **both** regressions, and
 does so deterministically and without a server.
