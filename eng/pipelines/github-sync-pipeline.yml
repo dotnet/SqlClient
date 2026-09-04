@@ -4,14 +4,14 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This pipeline synchronizes the GitHub dotnet/SqlClient repository's main
+# This pipeline synchronizes the GitHub dotnet/SqlClient repository's release/7.1
 # branch into the internal ADO repository by:
 #
-#   1. Fetching the latest commits from GitHub main.
-#   2. Pushing them to a dev/autosync/github-main branch in ADO.
-#   3. Creating (or updating) a pull request targeting internal/main.
+#   1. Fetching the latest commits from GitHub release/7.1.
+#   2. Pushing them to a dev/autosync/github-release-7.1 branch in ADO.
+#   3. Creating (or updating) a pull request targeting internal/release/7.1.
 #
-# It runs on a daily schedule at 02:00 UTC and can also be triggered manually.
+# It runs on a daily schedule at 15:00 UTC and can also be triggered manually.
 # The pipeline does not auto-complete the PR — changes must be reviewed and
 # merged manually.
 #
@@ -35,11 +35,11 @@ pr: none
 
 # Trigger this pipeline on a daily schedule.
 schedules:
-  - cron: '0 2 * * *'
-    displayName: Daily GitHub Sync (02:00 UTC)
+  - cron: '0 15 * * *'
+    displayName: 7.1 Daily GitHub Sync (15:00 UTC)
     branches:
       include:
-        - internal/main
+        - internal/release/7.1-staging
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.
@@ -49,17 +49,17 @@ parameters:
   - name: githubBranch
     displayName: GitHub Branch
     type: string
-    default: main
+    default: release/7.1-staging
 
   # The ADO target branch to create the PR against.
   - name: targetBranch
     displayName: ADO Target Branch
     type: string
-    default: internal/main
+    default: internal/release/7.1-staging
 
 jobs:
   - job: SyncGitHub
-    displayName: Sync GitHub to ADO
+    displayName: Sync GitHub release/7.1 to ADO internal/release/7.1
     pool:
       vmImage: 'ubuntu-latest'
 
@@ -71,14 +71,14 @@ jobs:
 
       # Run the sync script.
       - task: PowerShell@2
-        displayName: Sync GitHub main to ADO
+        displayName: Sync GitHub release/7.1 to ADO
         inputs:
           filePath: $(Build.SourcesDirectory)/eng/pipelines/scripts/Sync-GitHubToAdo.ps1
           arguments: >-
             -GitHubRepoUrl "https://github.com/dotnet/SqlClient.git"
             -GitHubBranch "${{ parameters.githubBranch }}"
             -TargetBranch "${{ parameters.targetBranch }}"
-            -SyncBranchName "dev/autosync/github-${{ parameters.githubBranch }}"
+            -SyncBranchName "dev/autosync/github-${{ replace(parameters.githubBranch, '/', '-') }}"
             -AdoOrgUrl "$(System.CollectionUri)"
             -AdoProject "$(System.TeamProject)"
             -AdoRepoName "$(Build.Repository.Name)"
