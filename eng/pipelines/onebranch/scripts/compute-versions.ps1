@@ -30,7 +30,10 @@
       - SqlClientPackageVersion
       - SqlClientFileVersion
       - SqlServerPackageVersion
+<<<<<<< HEAD
       - SqlServerFileVersion
+=======
+>>>>>>> c0e03dd46 (Derive APIScan versions from package versions)
       - SqlClientApiScanVersion
       - SqlServerApiScanVersion
 
@@ -158,6 +161,28 @@ function Get-CanonicalVersions {
         FileVersion = $fileVersion
         PublishedVersion = $publishedVersion
     }
+}
+
+<#
+.SYNOPSIS
+    Extracts the major.minor components from a package version.
+
+.PARAMETER Version
+    Package version beginning with a numeric major.minor pair.
+
+.OUTPUTS
+    The major.minor version pair.
+#>
+function Get-MajorMinorVersion {
+    param(
+        [string]$Version
+    )
+
+    if ($Version -notmatch "^(\d+)\.(\d+)(?:\.|-|$)") {
+        throw "Unable to derive a major.minor version from package version '$Version'."
+    }
+
+    return "$($Matches[1]).$($Matches[2])"
 }
 
 <#
