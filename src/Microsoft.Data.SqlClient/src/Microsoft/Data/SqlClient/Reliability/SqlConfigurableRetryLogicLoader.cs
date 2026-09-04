@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -54,13 +54,23 @@ namespace Microsoft.Data.SqlClient
             // Just only one subscription to this event is required.
             // This class isn't supposed to be called more than one time;
             // SqlConfigurableRetryLogicManager manages a single instance of this class.
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving -= Default_Resolving;
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += Default_Resolving;
+            AssemblyLoadContext currentAlc = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
+
+            currentAlc.Resolving -= AssemblyLoadContext_Resolving;
+            currentAlc.Resolving += AssemblyLoadContext_Resolving;
+            currentAlc.Unloading += AssemblyLoadContext_Unloading;
             #endif
             
             AssignProviders(connectionRetryConfigs == null ? null : CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
                             commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
         }
+
+        #if NET
+        private static void AssemblyLoadContext_Unloading(AssemblyLoadContext alc)
+        {
+            alc.Resolving -= AssemblyLoadContext_Resolving;
+        }
+        #endif
 
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
         {
@@ -344,15 +354,15 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
                 , TypeName, methodName, arg, fullPath);
 
-            return fullPath == null ? null : AssemblyLoadContext.Default.LoadFromAssemblyPath(fullPath);
+            return fullPath == null ? null : AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).LoadFromAssemblyPath(fullPath);
         }
         
         /// <summary>
         /// Load assemblies on request.
         /// </summary>
-        private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
+        private static Assembly AssemblyLoadContext_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
-            string methodName = nameof(Default_Resolving);
+            string methodName = nameof(AssemblyLoadContext_Resolving);
 
             string target = MakeFullPath(Environment.CurrentDirectory, arg2.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly that is requested by '{3}' ALC from '{4}' path."
