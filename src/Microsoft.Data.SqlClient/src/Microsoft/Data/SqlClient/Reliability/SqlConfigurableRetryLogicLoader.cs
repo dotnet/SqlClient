@@ -117,20 +117,10 @@ namespace Microsoft.Data.SqlClient
             // resolving handler must not be installed for it.
             bool customRetryTypeConfigured = !string.IsNullOrWhiteSpace(configurableRetryType);
 
-            // Only install the assembly resolving handler when a custom retry logic type has
-            // actually been configured. Callers who did not opt in to loading a custom type must
-            // never have assembly resolution behavior changed on their behalf.
-            //
-            // The handler is kept subscribed across both the type resolution below and the
-            // provider construction that follows it. Invoking the configured type's constructor
-            // and its retry method can trigger loads of that assembly's private dependencies, and
-            // those loads happen after LoadType has already returned.
-            if (customRetryTypeConfigured)
-            {
-                SubscribeAssemblyResolving();
-            }
-
-            try
+            // Keep the handler subscribed across both type resolution and provider construction.
+            // Invoking the configured type's constructor and retry method can load that assembly's
+            // private dependencies after LoadType has returned.
+            using (AssemblyResolutionSubscription subscription = new(customRetryTypeConfigured))
             {
                 if (!customRetryTypeConfigured)
                 {
@@ -150,6 +140,10 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (Exception e)
                     {
+                        // The custom type will not be constructed, so the built-in fallback no
+                        // longer needs the custom assembly resolution handler.
+                        subscription.Dispose();
+
                         // Try to use 'SqlConfigurableRetryFactory' as a default type to discover retry methods
                         // if there is a problem, resolve using the 'configurableRetryType' type.
                         type = typeof(SqlConfigurableRetryFactory);
@@ -180,13 +174,6 @@ namespace Microsoft.Data.SqlClient
                     // runs the application to the `TargetInvocationException`.
                     // And using an isolated zone like a specific AppDomain results in an infinite loop.
                     throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_RetryMethodException, type.FullName, retryMethod), e);
-                }
-            }
-            finally
-            {
-                if (customRetryTypeConfigured)
-                {
-                    UnsubscribeAssemblyResolving();
                 }
             }
 
@@ -366,28 +353,33 @@ namespace Microsoft.Data.SqlClient
         
         #region Type Resolution
 
-        /// <summary>
-        /// Subscribes the assembly resolving handler used to locate a configured retry logic
-        /// assembly and its dependencies. This is a no-op on .NET Framework, which does not use
-        /// <c>AssemblyLoadContext</c> for this purpose.
-        /// </summary>
-        private static void SubscribeAssemblyResolving()
+        internal sealed class AssemblyResolutionSubscription : IDisposable
         {
             #if NET
-            AssemblyLoadContext.Default.Resolving += Default_Resolving;
+            private bool _isSubscribed;
             #endif
-        }
 
-        /// <summary>
-        /// Unsubscribes the assembly resolving handler subscribed by
-        /// <see cref="SubscribeAssemblyResolving"/>. This is a no-op on .NET Framework, which does
-        /// not use <c>AssemblyLoadContext</c> for this purpose.
-        /// </summary>
-        private static void UnsubscribeAssemblyResolving()
-        {
+            internal AssemblyResolutionSubscription(bool subscribe)
+            {
             #if NET
-            AssemblyLoadContext.Default.Resolving -= Default_Resolving;
+                if (subscribe)
+                {
+                    AssemblyLoadContext.Default.Resolving += Default_Resolving;
+                    _isSubscribed = true;
+                }
             #endif
+            }
+
+            public void Dispose()
+            {
+            #if NET
+                if (_isSubscribed)
+                {
+                    AssemblyLoadContext.Default.Resolving -= Default_Resolving;
+                    _isSubscribed = false;
+                }
+            #endif
+            }
         }
 
         #if NET

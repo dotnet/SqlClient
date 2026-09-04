@@ -142,6 +142,36 @@ public class SqlConfigurableRetryLogicLoaderTest
     }
 
     /// <summary>
+    /// Disposing an <see cref="SqlConfigurableRetryLogicLoader.AssemblyResolutionSubscription"/>
+    /// removes its handler from the default assembly load context.
+    /// </summary>
+    [Fact]
+    public void AssemblyResolutionSubscription_DisposeRemovesAssemblyProbingHandler()
+    {
+        string subscribedProbeName = NewProbeAssemblyName();
+        string subscribedProbeFile = PlantProbeFile(subscribedProbeName);
+        string disposedProbeName = NewProbeAssemblyName();
+        string disposedProbeFile = PlantProbeFile(disposedProbeName);
+
+        try
+        {
+            using SqlConfigurableRetryLogicLoader.AssemblyResolutionSubscription subscription =
+                new(subscribe: true);
+
+            Assert.True(IsProbingHandlerInstalled(subscribedProbeName));
+
+            subscription.Dispose();
+
+            Assert.False(IsProbingHandlerInstalled(disposedProbeName));
+        }
+        finally
+        {
+            DeleteProbeFile(subscribedProbeFile);
+            DeleteProbeFile(disposedProbeFile);
+        }
+    }
+
+    /// <summary>
     /// Builds a configuration that resolves <see cref="ProbedRetryLogicFactory"/> out of this test
     /// assembly through the loader's probing directory, constructs a loader from it, and hands the
     /// loader to <paramref name="assert"/>.
