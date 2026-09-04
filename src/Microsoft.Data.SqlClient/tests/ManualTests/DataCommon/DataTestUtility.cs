@@ -616,6 +616,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Synapse: UDT Test Database not compatible with Azure Synapse.
         public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
 
+        // True only when the driver under test exposes SqlCommand's DEBUG-only
+        // _forceInternalEndQuery hook. Gating on this makes dependent tests report as skipped
+        // against a Release driver instead of silently passing.
+        public static bool IsForceInternalEndQuerySupported() =>
+            SystemDataInternals.CommandHelper.IsForceInternalEndQuerySupported();
+
         /// <summary>
         /// Returns whether the primary connection strings required by the ManualTests configuration
         /// are available. Most environments provide both TCP and Named Pipes connection strings.
