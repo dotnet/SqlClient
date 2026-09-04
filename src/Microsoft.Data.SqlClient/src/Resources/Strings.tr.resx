@@ -4444,7 +4444,7 @@
     <value>Kapanım raporunun imza doğrulaması başarısız oldu. Rapor imzası, HGS kök sertifikası kullanılarak hesaplanan imzayla eşleşmiyor. Uç nokta için DNS eşlemesini doğrulayın - daha fazla için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>İmzalı kapanım raporu oturum oluşturulurken kullanılan kapanım ortak anahtarına bağlanmadığı için, kapanım kanıtlaması başarısız oldu. Kapanım ortak anahtarı, imzalı rapor tarafından işlenen değerle eşleşmelidir - diğer ayrıntılar için bkz. see https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa, Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server'dan alınan kapanım raporu doğru biçimde değil. Müşteri Destek Hizmetleri'ne başvurun.</value>
@@ -4664,6 +4664,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Sunucu tarafından sağlanan sertifika, ServerCertificate seçeneği tarafından sağlanan sertifikayla eşleşmiyor.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>'ServerCertificate' seçeneğiyle belirtilen sertifika dosyası yüklenemedi veya ayrıştırılamadı: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>'ServerCertificate' seçeneği belirtildi, ancak sunucu bununla karşılaştırılabilecek bir sertifika sunmadı.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>
