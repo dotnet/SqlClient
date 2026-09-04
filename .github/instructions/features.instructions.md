@@ -257,6 +257,78 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+| `Switch.Microsoft.Data.SqlClient.UseLegacyUdtAssemblyLoad` | `false` | Restores the pre-policy behavior of loading any assembly named by a server-supplied UDT assembly-qualified name, and of skipping the `[SqlUserDefinedType]` check |
+
+### UDT Assembly Load Policy
+
+A server-supplied UDT assembly-qualified name reaches `Assembly.Load`, so the
+driver applies a deny-by-default policy before handing the name to the loader.
+There is a single enforcing behavior, which permits:
+
+| Permitted | Notes |
+|-----------|-------|
+| `Microsoft.SqlServer.Types` | Identity pinned: the version is normalized to the connection's negotiated type system version, and the public key token to the one Microsoft signs with |
+| Assemblies on the allow list | The application explicitly naming what it is willing to have loaded |
+| Assemblies already loaded into the process | Resolved to the instance the process already holds; the server-supplied version and public key token are discarded |
+
+Everything else is refused. In particular, an assembly that is only *statically
+referenced* by a loaded assembly is **not** permitted, because loading it is a
+genuinely new load — precisely what this policy keeps under the application's
+control rather than the server's.
+
+Setting `UseLegacyUdtAssemblyLoad` disables the policy entirely and restores the
+pre-policy behavior. It is a temporary compatibility escape hatch, not a
+supported configuration.
+
+Applications that use custom UDTs whose assemblies are loaded on demand must name
+them explicitly through the `Microsoft.Data.SqlClient.UdtAssemblyAllowList`
+AppContext data element, a semicolon-separated list of assembly names:
+
+```csharp
+AppDomain.CurrentDomain.SetData(
+    "Microsoft.Data.SqlClient.UdtAssemblyAllowList",
+    "Contoso.Udts;Fabrikam.Udts, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+```
+
+Each entry is matched only on the components it specifies, so a simple name
+permits any version, culture, and public key token, while a fully-qualified name
+must match exactly.
+
+Independently of the assembly policy, a resolved type that is not annotated with
+`SqlUserDefinedTypeAttribute` is rejected before any of its code runs (except
+under `UseLegacyUdtAssemblyLoad`). This is the gate that actually prevents
+foreign code execution: on CoreCLR, neither `Assembly.Load`, nor resolving a type
+from the assembly, nor reading that type's custom attributes runs anything from
+it — a module initializer or static constructor runs on first real member access,
+which is what `GetUdtValue` would otherwise perform.
+
+#### Compatibility impact
+
+This policy is a behavior change for applications that use **custom** UDTs. The
+built-in spatial types (`SqlGeography`, `SqlGeometry`, `SqlHierarchyId`) are
+unaffected, since `Microsoft.SqlServer.Types` is permitted by identity.
+
+An application is affected when the custom UDT's assembly is not yet loaded at
+the moment the value is read. That is common whenever the *driver* materializes
+the value and the application never names the type in its own code — generic data
+access layers, micro-ORMs, `DataTable.Load`, and schema discovery. In those cases
+the driver's own `Assembly.Load` was previously the thing that pulled the
+assembly in, and it is now refused.
+
+The symptom depends on the API:
+
+| API | Symptom |
+|-----|---------|
+| `reader[i]`, `GetValue`, UDT output parameters | `SqlException` naming the assembly and the allow list |
+| `GetFieldType`, `GetSchemaTable`, `GetColumnSchema` | Returns `null` for the UDT column's type rather than throwing |
+
+The second row is the harder one to diagnose, because `GetFieldType` does not
+normally return `null`; a caller that dereferences the result sees an unrelated
+`NullReferenceException`. A denial is always traced through
+`SqlClientEventSource` regardless of which path was taken, so enabling event
+source tracing will identify the assembly.
+
+The remedy in every case is to name the assembly on the allow list.
 
 ### Usage Example
 ```csharp
