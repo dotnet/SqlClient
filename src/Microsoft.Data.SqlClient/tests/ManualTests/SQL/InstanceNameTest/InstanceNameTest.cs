@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -30,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool proceed = !string.IsNullOrWhiteSpace(hostname) && IsBrowserAlive(hostname);
             if (proceed)
             {
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
                 connection.Open();
                 connection.Close();
 
@@ -43,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     IPAddress[] addresses = Dns.GetHostAddresses(hostname);
                     builder.DataSource = builder.DataSource.Replace(hostname, addresses[0].ToString());
                     builder.TrustServerCertificate = true;
-                    using SqlConnection connection2 = new(builder.ConnectionString);
+                    using SqlConnection connection2 = DataTestUtility.CreateConnection(builder.ConnectionString);
                     connection2.Open();
                     connection2.Close();
                 }
@@ -68,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
                 connection.Open();
             }
 
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 builder.DataSource = hostname + "\\" + instanceName;
 
-                using SqlConnection connection = new(builder.ConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);
             }
@@ -116,7 +117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsIntegratedSecuritySetup())
             {
                 string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection" };
-                connectionString = DataTestUtility.RemoveKeysInConnStr(connectionString, removeKeys) + $"Integrated Security=true";
+                connectionString = connectionString.RemoveKeysInConnStr(removeKeys) + $"Integrated Security=true";
             }
 
             SqlConnectionStringBuilder builder = new(connectionString);
@@ -129,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(string.IsNullOrEmpty(hostname), "Hostname must be included in the data source.");
             Assert.False(string.IsNullOrEmpty(instanceName), "Instance name must be included in the data source.");
 
-            using (SqlConnection connection = new(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 connection.Open();
 
