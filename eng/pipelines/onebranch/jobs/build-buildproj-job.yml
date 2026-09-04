@@ -119,6 +119,11 @@ jobs:
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
+      # Localized resources ship with the SqlClient driver. Validate them before analysis and
+      # building so missing or untranslated strings fail every SqlClient build.
+      - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
+
       - ${{ each package in parameters.dependencies }}:
           # Build the dependency version arguments passed to the build/pack/analysis steps.  The
           # SqlClient family shares a single version via Central Package Management, and those steps
