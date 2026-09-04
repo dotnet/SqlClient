@@ -108,7 +108,8 @@ When `isPreview` is true, pipeline resolves `effective*Version` variables to pre
 
 - Variable chain: pipeline YAML → `variables/onebranch-variables.yml` → `variables/common-variables.yml`
 - All package versions (GA, preview, assembly file) centralized in `variables/common-variables.yml`
-- `effective*Version` pipeline variables map to selected version set based on `isPreview`
+- The `compute_versions` stage reads canonical versions from MSBuild and publishes effective package,
+  file-build, and APIScan registration versions for downstream stages
 - Artifact name variables defined in `variables/onebranch-variables.yml` following `drop_<stageName>_<jobName>` pattern
 - `assemblyBuildNumber` derived from first segment of `Build.BuildNumber` only (16-bit limit)
 - When adding a new package, add GA version, preview version, and assembly file version entries
@@ -130,7 +131,7 @@ Variable groups:
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
 - ApiScan: enabled in both; `break` follows the `breakOnSdlError` parameter
 - Each package is registered with APIScan under its own name/version pair, so the `globalSdl.apiscan` blocks deliberately omit `softwareName`/`versionNumber`. `build-buildproj-job.yml` is the single place they are set, via `ob_sdl_apiscan_softwareName` (the package's `packageFullName`) and `ob_sdl_apiscan_versionNumber` (the `apiScanSoftwareVersion` parameter)
-- Registration versions live in `variables/onebranch-variables.yml` as `ApiScanVersionSqlClient` and `ApiScanVersionSqlServer`. They track the major.minor of each package's NuGet version, so a new pair must be registered with APIScan before releasing a new major.minor. They must stay runtime `$(...)` references — a template expression coerces the quoted value to a number (`'1.0'` becomes `1`)
+- `compute-versions.ps1` derives APIScan registration versions as major.minor from the effective canonical package versions and publishes them as stage outputs. A package name/version pair must still be registered with APIScan before releasing a new major.minor. Consume these as runtime `$(...)` references so values such as `1.0` remain strings rather than being coerced to numbers by template expressions
 - Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version
 - Each build job also sets `ob_sdl_apiscan_softwareFolder` and `ob_sdl_apiscan_symbolsFolder` to its per-package `apiScan/<package>/dlls` and `apiScan/<package>/pdbs` paths
 - CodeQL, SBOM, Policheck (`break: true`): enabled in both pipelines
