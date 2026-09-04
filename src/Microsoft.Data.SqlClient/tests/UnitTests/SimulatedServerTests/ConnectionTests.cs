@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
@@ -40,6 +41,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
             connection.Open();
+        }
+
+        /// <summary>
+        /// Verifies that Enlist=false prevents automatic enlistment when a public connection is
+        /// opened within an ambient transaction, for both synchronous and asynchronous opens.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Open_WithEnlistDisabled_DoesNotEnlistInAmbientTransaction(bool async)
+        {
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            string connectionString = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Enlist = false,
+                Pooling = true,
+            }.ConnectionString;
+            using SqlConnection connection = new(connectionString);
+
+            try
+            {
+                using TransactionScope scope = new(TransactionScopeAsyncFlowOption.Enabled);
+                Assert.NotNull(Transaction.Current);
+
+                if (async)
+                {
+                    await connection.OpenAsync();
+                }
+                else
+                {
+                    connection.Open();
+                }
+
+                Assert.Equal(ConnectionState.Open, connection.State);
+                Assert.Null(connection.InnerConnection.EnlistedTransaction);
+                scope.Complete();
+            }
+            finally
+            {
+                SqlConnection.ClearPool(connection);
+            }
         }
 
         [Fact]
