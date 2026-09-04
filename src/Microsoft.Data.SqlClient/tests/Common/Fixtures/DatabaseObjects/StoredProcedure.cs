@@ -21,9 +21,29 @@ public sealed class StoredProcedure : DatabaseObject
     /// <param name="prefix">The stored procedure name. Can begin with '#' or '##' to indicate a temporary procedure.</param>
     /// <param name="definition">The SQL definition of the stored procedure.</param>
     public StoredProcedure(SqlConnection connection, string prefix, string definition)
-        : base(connection, GenerateLongName(prefix), definition, shouldCreate: true, shouldDrop: true)
+        : base(connection, GenerateLongName(prefix), definition)
     {
     }
+
+    private StoredProcedure(SqlConnection connection, string name, string definition, NameIsVerbatim _)
+        : base(connection, name, definition)
+    {
+    }
+
+    /// <summary>
+    /// Creates a stored procedure using the caller-supplied name verbatim, instead of generating one.
+    /// </summary>
+    /// <remarks>
+    /// Prefer the prefix-based constructor: generated names embed a GUID and so cannot collide
+    /// between concurrent test runs against a shared database. This overload exists for the
+    /// minority of tests that must control the name exactly, for example because the same
+    /// procedure has to be created and addressed over several different connections.
+    /// </remarks>
+    /// <param name="connection">The SQL connection used to interact with the database.</param>
+    /// <param name="name">The procedure name, already quoted/escaped by the caller if it needs to be.</param>
+    /// <param name="definition">The SQL definition of the stored procedure.</param>
+    public static StoredProcedure WithName(SqlConnection connection, string name, string definition)
+        => new(connection, name, definition, NameIsVerbatim.Yes);
 
     protected override void CreateObject(string definition)
     {

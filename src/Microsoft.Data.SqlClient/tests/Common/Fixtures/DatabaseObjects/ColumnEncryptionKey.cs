@@ -27,7 +27,7 @@ public sealed class ColumnEncryptionKey : DatabaseObject<ColumnMasterKey>
     /// <param name="cmkOrigin">The column master key which backs this encryption key.</param>
     public ColumnEncryptionKey(SqlConnection connection, string namePrefix, ColumnMasterKey cmkOrigin)
         : base(connection, GenerateLongName(namePrefix), definition: DefinitionTemplate,
-            state: cmkOrigin, shouldCreate: true, shouldDrop: true)
+            state: cmkOrigin)
     {
     }
 

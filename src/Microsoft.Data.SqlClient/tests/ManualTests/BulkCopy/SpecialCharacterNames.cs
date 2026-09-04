@@ -1,8 +1,9 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -28,36 +29,30 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             dstTable = EscapeIdentifier(dstTable);
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
-                try
-                {
-                    Helpers.TryExecute(dstCmd, "create schema " + dstschema);
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (orderid int, customerid nchar(5))");
+                // The table is not currently created inside the schema, but it is declared second so
+                // that it is dropped first regardless: a schema cannot be dropped while it still
+                // contains objects.
+                using Schema schema = Schema.WithName(dstConn, dstschema);
+                using Table table = Table.WithName(dstConn, dstTable, "(orderid int, customerid nchar(5))");
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select top 2 orderid, customerid from orders", srcConn))
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select top 2 orderid, customerid from orders", srcConn))
+                {
+                    srcConn.Open();
+
+                    using (SqlDataReader srcreader = srcCmd.ExecuteReader())
                     {
-                        srcConn.Open();
-
-                        using (SqlDataReader srcreader = srcCmd.ExecuteReader())
+                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                         {
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                            {
-                                bulkcopy.DestinationTableName = dstTable;
+                            bulkcopy.DestinationTableName = dstTable;
 
-                                bulkcopy.WriteToServer(srcreader);
-                            }
+                            bulkcopy.WriteToServer(srcreader);
                         }
-                        Helpers.VerifyResults(dstConn, dstTable, 2, 2);
                     }
-                }
-                finally
-                {
-                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
-                    Helpers.TryExecute(dstCmd, "drop schema " + dstschema);
+                    Helpers.VerifyResults(dstConn, dstTable, 2, 2);
                 }
             }
         }

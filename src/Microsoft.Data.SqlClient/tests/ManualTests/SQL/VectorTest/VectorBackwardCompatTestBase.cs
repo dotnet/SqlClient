@@ -47,15 +47,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         {
             Output = output;
             _connection = new SqlConnection(s_connectionString);
-            _connection.Open();
 
-            _vectorTable = new Table(_connection, namePrefix + "TestTable",
-                $"(Id INT PRIMARY KEY IDENTITY, VectorData {columnDefinition} NULL)");
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so the connection and the
+            //   objects created so far (each with a GUID-based name) would be left behind permanently.
+            //   Opening the connection is inside the try for the same reason: a failed Open still
+            //   leaves a SqlConnection instance that nothing else will ever dispose.
+            try
+            {
+                _connection.Open();
 
-            _bulkCopySrcTable = new Table(_connection, namePrefix + "BulkCopyTestTable",
-                "(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)");
+                _vectorTable = new Table(_connection, namePrefix + "TestTable",
+                    $"(Id INT PRIMARY KEY IDENTITY, VectorData {columnDefinition} NULL)");
 
-            string storedProcBody = $@"
+                _bulkCopySrcTable = new Table(_connection, namePrefix + "BulkCopyTestTable",
+                    "(Id INT PRIMARY KEY IDENTITY, VectorData varchar(max) NULL)");
+
+                string storedProcBody = $@"
                 @InputVectorJson VARCHAR(MAX),   -- Input: Serialized float[] as JSON string
                 @OutputVectorJson VARCHAR(MAX) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
@@ -72,7 +79,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 ORDER BY Id DESC;
                 END;";
 
-            _storedProc = new StoredProcedure(_connection, namePrefix + "AsVarcharSp", storedProcBody);
+                _storedProc = new StoredProcedure(_connection, namePrefix + "AsVarcharSp", storedProcBody);
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
 
             _selectCmdString = $"SELECT VectorData FROM {_vectorTable.Name} ORDER BY Id DESC";
             _insertCmdString = $"INSERT INTO {_vectorTable.Name} (VectorData) VALUES (@VectorData)";
@@ -80,11 +93,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public void Dispose()
         {
-            // RAII objects drop themselves on Dispose in reverse order.
-            _storedProc?.Dispose();
-            _bulkCopySrcTable?.Dispose();
-            _vectorTable?.Dispose();
+            // RAII objects drop themselves on Dispose in reverse order. Each drop is best-effort so
+            // that one failure cannot leak the remaining objects.
+            DisposeSafely(_storedProc);
+            DisposeSafely(_bulkCopySrcTable);
+            DisposeSafely(_vectorTable);
             _connection?.Dispose();
+        }
+
+        // NOTE: This file is not in a nullable annotations context, so the parameter is annotated
+        //   under a scoped `#nullable enable`. The nullability is not incidental: on the
+        //   constructor-failure path Dispose runs with some of these fields still null, so accepting
+        //   null is the contract rather than a defensive afterthought.
+#nullable enable
+        private static void DisposeSafely(IDisposable? disposable)
+#nullable restore
+        {
+            try
+            {
+                disposable?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(VectorBackwardCompatTestBase)}: cleanup failed: {ex.Message}");
+            }
         }
 
         #region Shared Helpers
