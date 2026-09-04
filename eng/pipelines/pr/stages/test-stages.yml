@@ -276,7 +276,8 @@ stages:
               localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               supportsIntegratedSecurity: false
-              testSet: "123"
+              testFilters: $(azureSqlConnectionAndBulkCopyTestsFilter)
+              testSet: "2"
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - Localhost Always Encrypted

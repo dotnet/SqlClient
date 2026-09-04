@@ -116,6 +116,11 @@ parameters:
   - name: testSet
     type: string
 
+  # VSTest expression used to select manual tests.
+  - name: testFilters
+    type: string
+    default: 'category!=failing&category!=flaky&category!=interactive'
+
   # Whether integrated security is supported by this test configuration.
   - name: supportsIntegratedSecurity
     type: boolean
@@ -221,6 +226,7 @@ jobs:
             -p:BuildNumber='$(Build.BuildNumber)'
             -p:BuildSuffix='${{ parameters.buildSuffix }}'
             -p:TestFramework=${{ parameters.platformDotnet }}
+            -p:TestFilters="${{ parameters.testFilters }}"
             -p:TestSet=${{ parameters.testSet }}
             -p:TestResultsFolderPath=${{ variables.testResultsPath }}
 

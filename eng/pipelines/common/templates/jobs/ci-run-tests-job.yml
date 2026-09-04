@@ -70,6 +70,15 @@ parameters:
   - name: jobDisplayName
     type: string
 
+  # VSTest expressions used for regular and quarantined manual-test runs.
+  - name: manualTestFilters
+    type: string
+    default: 'category!=failing&category!=flaky&category!=interactive'
+
+  - name: flakyManualTestFilters
+    type: string
+    default: 'category=flaky'
+
   # The name of the SqlClient pipeline artifacts to download.
   - name: mdsArtifactsName
     type: string
@@ -358,6 +367,8 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        manualTestFilters: ${{ parameters.manualTestFilters }}
+        flakyManualTestFilters: ${{ parameters.flakyManualTestFilters }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
@@ -372,6 +383,8 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        manualTestFilters: ${{ parameters.manualTestFilters }}
+        flakyManualTestFilters: ${{ parameters.flakyManualTestFilters }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:
