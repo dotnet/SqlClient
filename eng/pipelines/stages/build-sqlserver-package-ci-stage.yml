@@ -59,6 +59,19 @@ parameters:
     - detailed
     - diagnostic
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+
 stages:
 
   - stage: build_sqlserver_package_stage
@@ -83,3 +96,5 @@ stages:
           # The version is computed by this stage (see the sqlServerPackageVersion variable above).
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          referenceType: ${{ parameters.referenceType }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}

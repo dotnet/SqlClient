@@ -205,3 +205,4 @@ extends:
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    isInternalBuild: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
