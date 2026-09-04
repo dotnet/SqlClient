@@ -3,7 +3,6 @@
     <RootNamespace>Microsoft.SqlServer.TDS.EndPoint</RootNamespace>
     <AssemblyName>Microsoft.SqlServer.TDS.EndPoint</AssemblyName>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
   </PropertyGroup>
 
   <!-- Sign when a test key is provided so signed test assemblies can reference this. -->

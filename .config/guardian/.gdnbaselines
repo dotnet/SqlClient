@@ -8,7 +8,7 @@
     "default": {
       "name": "default",
       "createdDate": "2026-07-23 11:29:23Z",
-      "lastUpdatedDate": "2026-07-23 11:29:23Z"
+      "lastUpdatedDate": "2026-08-28 14:33:24Z"
     }
   },
   "results": {
@@ -103,10 +103,15 @@
         "0d5b851e97bdb0eb8931e6f326718a657f9cd46092eb8a2a2d414be2147a797c",
         "e6c0cd6ef2433a42c95a2939cce740019ecda3fcfde64a3a0f21661e6ff27f71"
       ],
+      "target": "src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1",
+      "line": 145,
+      "uriBaseId": "file:///D:/a/_work/1/s/",
       "memberOf": [
         "default"
       ],
-      "createdDate": "2026-07-23 11:29:23Z"
+      "tool": "psscriptanalyzer",
+      "ruleId": "PSAvoidUsingConvertToSecureStringWithPlainText",
+      "createdDate": "2026-08-28 12:58:19Z"
     },
     "27cf35f7df3f630fab489573ec19318f563e042424ca30625e9fe08407d74bdf": {
       "signature": "27cf35f7df3f630fab489573ec19318f563e042424ca30625e9fe08407d74bdf",
@@ -119,6 +124,664 @@
         "default"
       ],
       "createdDate": "2026-07-23 11:29:23Z"
+    },
+    "1e0989a7cdd65afb10dd3787a2ed33e9f737e6dd049524edbf76ba1daadf6ef8": {
+      "signature": "1e0989a7cdd65afb10dd3787a2ed33e9f737e6dd049524edbf76ba1daadf6ef8",
+      "alternativeSignatures": [
+        "47067564034219f2cf40604fcd1beadb34ebe1b960cc75600796c8a0f4565604"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Utils.cs",
+      "line": 72,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 14:17:20Z"
+    },
+    "e5cd66384b36741191c98844947e6b857140c09b2c352b180664f8b4829c3e4c": {
+      "signature": "e5cd66384b36741191c98844947e6b857140c09b2c352b180664f8b4829c3e4c",
+      "alternativeSignatures": [
+        "07fc741e29b6f1d01d84d3290b8c53dc7f22036a8313d1f41acdca253aa3e254"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Resources/StringsHelper.cs",
+      "line": 90,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "281a106076dd3d70aefcd230a90cef542f52488fb3ce164c94b213ededa12da5": {
+      "signature": "281a106076dd3d70aefcd230a90cef542f52488fb3ce164c94b213ededa12da5",
+      "alternativeSignatures": [
+        "42cf7833cc5d63447162200f8926b57746ad3f6f2bd43318f0e606f022933c3e"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/AzureAttestationBasedEnclaveProvider.cs",
+      "line": 215,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "fcda2db01b63d59f5a4aa73cb780405887f4616f26f9e23dfae52195cab4994e": {
+      "signature": "fcda2db01b63d59f5a4aa73cb780405887f4616f26f9e23dfae52195cab4994e",
+      "alternativeSignatures": [
+        "9134dead4de902cc02f5f2e7785d84b422f31847f237ba6bcbaeb823e228fd7d"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/EnclaveProviderBase.cs",
+      "line": 170,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "4ff2eb551fd17b4d3239b89cf97bfb09507cdfb631cb4787adc3a4f195e8bac7": {
+      "signature": "4ff2eb551fd17b4d3239b89cf97bfb09507cdfb631cb4787adc3a4f195e8bac7",
+      "alternativeSignatures": [
+        "3b7985cbb5123ba5b91edc3e36a952d1f9d579943820f3c3e870095c7e264cc4"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/NoneAttestationEnclaveProvider.cs",
+      "line": 43,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "8f3e9755a800f590583d9e7ea2028c5d23ee2008450af7d55daea17d5fbecfa5": {
+      "signature": "8f3e9755a800f590583d9e7ea2028c5d23ee2008450af7d55daea17d5fbecfa5",
+      "alternativeSignatures": [
+        "4531f356921a98edacfca7c32eb389b459c02014ea3db2d2d899ce65a87d52ca"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlAeadAes256CbcHmac256EncryptionKey.cs",
+      "line": 94,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "6ba87c464ec17dc52c0304f5cee224f8d3233507a79211916901a7b9d0d0908c": {
+      "signature": "6ba87c464ec17dc52c0304f5cee224f8d3233507a79211916901a7b9d0d0908c",
+      "alternativeSignatures": [
+        "fcd1d28e2fe4772861caa303138474dc79869cc77079f79b55eda1612a4c4693"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlAuthenticationProviderManager.cs",
+      "line": 353,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "ffe242f34f321ccf4d2e727c9812baaf006e4ad122d314e02dd287f388b5b176": {
+      "signature": "ffe242f34f321ccf4d2e727c9812baaf006e4ad122d314e02dd287f388b5b176",
+      "alternativeSignatures": [
+        "ca2f6e8136bafc65dc12eb6236123ee0877de7a1b48e810c36b7feae643b9654"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlBulkCopy.cs",
+      "line": 1049,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "b73abd622849352bbe6c5188f106d4a2f9a1c4f650b7d2ba8f383653909a9479": {
+      "signature": "b73abd622849352bbe6c5188f106d4a2f9a1c4f650b7d2ba8f383653909a9479",
+      "alternativeSignatures": [
+        "636e8fa98391919cfbd7f27792cac5c7806dbd7ec3ab0506b27fbbe52ee9cd8b"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlClientPermission.netfx.cs",
+      "line": 144,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "cdbeec94358c58eb2960ea291f7f804e5d24e15807bc5b4a5ce259782727cd9a": {
+      "signature": "cdbeec94358c58eb2960ea291f7f804e5d24e15807bc5b4a5ce259782727cd9a",
+      "alternativeSignatures": [
+        "8fa2f809347c794dbb3659a25cb2ea3a15df3a64a86f5a78f72b39c63f6b8319"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlCommand.cs",
+      "line": 2336,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "01c8d80a7268d44c7d8e478f887e804d8819cc2382ad1d845a415d97ead39d2e": {
+      "signature": "01c8d80a7268d44c7d8e478f887e804d8819cc2382ad1d845a415d97ead39d2e",
+      "alternativeSignatures": [
+        "00aae68e847dfaed6240e67d9f0d1f5f64b9a0343c185c69f7dae148ebf2dc35"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionEncryptOption.cs",
+      "line": 57,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1304",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "5ef60ae6fdf13d9fcebe7631af27f7ea23d3f198215a19c8752bf5f8cdee8dc9": {
+      "signature": "5ef60ae6fdf13d9fcebe7631af27f7ea23d3f198215a19c8752bf5f8cdee8dc9",
+      "alternativeSignatures": [
+        "17d62daf6be556a78b7a342be79f5038d7f1831851722a69398b996cecd57bd8"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionEncryptOption.cs",
+      "line": 108,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "f99754da199aaa7a5e510552f0b4e851029c149dced1d5196eba374b03f0450d": {
+      "signature": "f99754da199aaa7a5e510552f0b4e851029c149dced1d5196eba374b03f0450d",
+      "alternativeSignatures": [
+        "2852f83af1a5eacc738153cae383e7e216179f3573e9082879dddb48e32a260c"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionOptions.cs",
+      "line": 1638,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "3dc0ef1e00dd1aed1bd9b6a2e9c06c4f8b24bf368419a2928feaab51252a3b47": {
+      "signature": "3dc0ef1e00dd1aed1bd9b6a2e9c06c4f8b24bf368419a2928feaab51252a3b47",
+      "alternativeSignatures": [
+        "6a46ad5f8328cb647c28327bb4260335dab6e381ee816f60e371f3f3c4f348b0"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionOptions.cs",
+      "line": 1640,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "d0e489f06819d4a2e78e99be8aedb5d683f8c787cfc07d5c25689bc4e4e3f5f6": {
+      "signature": "d0e489f06819d4a2e78e99be8aedb5d683f8c787cfc07d5c25689bc4e4e3f5f6",
+      "alternativeSignatures": [
+        "524203b79cc017dc30443712f932710574a9a39d5f7251a4c9354f3cdd21b36b"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionOptions.Debug.cs",
+      "line": 59,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "6d1f24e834de7bf17aa69abdd0fe79751a4afcc083253e84b577c813a19f46fb": {
+      "signature": "6d1f24e834de7bf17aa69abdd0fe79751a4afcc083253e84b577c813a19f46fb",
+      "alternativeSignatures": [
+        "9b805fc1d43486b21ec75d68dd2e4b19d5e7af7c954c546389307bd689a2930b"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlConnectionOptions.Debug.cs",
+      "line": 59,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1304",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "d245c0ad54d0229b6ea7a194bd42c40011b734ee5ef92dfce42c9a40096c906d": {
+      "signature": "d245c0ad54d0229b6ea7a194bd42c40011b734ee5ef92dfce42c9a40096c906d",
+      "alternativeSignatures": [
+        "472b266989720cacdc2666a97234830e954f84346ba13ee028d9f0dbac3d5d82"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlDataReader.cs",
+      "line": 2801,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "68fc925a125fdb6381d42edaaae658cb5c23c5bbef262cbb569215d839e3a9b3": {
+      "signature": "68fc925a125fdb6381d42edaaae658cb5c23c5bbef262cbb569215d839e3a9b3",
+      "alternativeSignatures": [
+        "1a6475a1a8210fd0e0d4807a4c5d4e1017da257dbfa97b17c8e3382c1684a34a"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlDependency.cs",
+      "line": 644,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA2219",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "df9958d713606f4b2d800a8f5b33e4839cde7d9e7514f732e0b999f4e7df0cb0": {
+      "signature": "df9958d713606f4b2d800a8f5b33e4839cde7d9e7514f732e0b999f4e7df0cb0",
+      "alternativeSignatures": [
+        "b44a5e32ae614b1bdda97a1a634dad5a4ab4ede29b463dd3196f309db10e1d15"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlDependency.cs",
+      "line": 1222,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "e318e84cf65f756c454457b437010a21fac2f27f2fa7378c3befc809b97369be": {
+      "signature": "e318e84cf65f756c454457b437010a21fac2f27f2fa7378c3befc809b97369be",
+      "alternativeSignatures": [
+        "d8118425a1409e87f5983a840ac22cc663a7ab494bb914b312f7b32adb84d5f5"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlEnums.cs",
+      "line": 1134,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "467568c2128c495889d899ef783ccca652f3b355aa8fe815d4da1b55b6deab95": {
+      "signature": "467568c2128c495889d899ef783ccca652f3b355aa8fe815d4da1b55b6deab95",
+      "alternativeSignatures": [
+        "8962958e2e5e468cc56038a04d02476e352bf6f1d48104f51c13990d364b0c64"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlException.cs",
+      "line": 164,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "727c936839845e9a68ff00fbc69abb5a132769506d3cfe87692612a2addac855": {
+      "signature": "727c936839845e9a68ff00fbc69abb5a132769506d3cfe87692612a2addac855",
+      "alternativeSignatures": [
+        "2450ed8367a7fac65b41524a145bf097f2dee5794752124fefa3a635057946bd"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlMetaDataFactory.cs",
+      "line": 114,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "8c6b44ec1f44fbe00469a48beb3f9eee61c8e31e237c53ba372a1abfc5ea481f": {
+      "signature": "8c6b44ec1f44fbe00469a48beb3f9eee61c8e31e237c53ba372a1abfc5ea481f",
+      "alternativeSignatures": [
+        "7a3c05145c302720ca6feadabcacbb11303442b2289fb06796e21b713fd63717"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlMetaDataFactory.cs",
+      "line": 572,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "8a5592e024f45a9bdce3315e108cccfafe99b184dbcb4e50d59d783fa3db3942": {
+      "signature": "8a5592e024f45a9bdce3315e108cccfafe99b184dbcb4e50d59d783fa3db3942",
+      "alternativeSignatures": [
+        "929389afe5818dcc5113299f0e0263eca26ef989785742ac7e46b088d5cae598"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlParameter.cs",
+      "line": 2364,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "770e1d8ef5a06c9b4b552dc9c8bf000f572d633bf11ded7e749b3ac9c07d208b": {
+      "signature": "770e1d8ef5a06c9b4b552dc9c8bf000f572d633bf11ded7e749b3ac9c07d208b",
+      "alternativeSignatures": [
+        "4cd0e3d7087eaa0eaf05bec58d32fd71b660033f7bf3984392998d0b9946fb47"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlSecurityUtility.cs",
+      "line": 389,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "8502b61241cdbfac98f7c84b8c16d4d4ec0ea2185018d9fce710e2bac445e8b0": {
+      "signature": "8502b61241cdbfac98f7c84b8c16d4d4ec0ea2185018d9fce710e2bac445e8b0",
+      "alternativeSignatures": [
+        "afed061c02d7b602c516f09952197b58c6c1cdfa0e07ee3625af48287869b2c5"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlUtil.cs",
+      "line": 1749,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "a83b0d426733a42a34b4569643e60513b598035d6807fa8cda6f4a3501084929": {
+      "signature": "a83b0d426733a42a34b4569643e60513b598035d6807fa8cda6f4a3501084929",
+      "alternativeSignatures": [
+        "3614422f0f09ab4fff1a0195a4f40acd53bf55e4781153ced9d736a801fc6aa4"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/SqlUtil.cs",
+      "line": 1875,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "d36be8dd5189d09c4b5db9176bda7628839f0ba608f31ba449f1203ca9c30c09": {
+      "signature": "d36be8dd5189d09c4b5db9176bda7628839f0ba608f31ba449f1203ca9c30c09",
+      "alternativeSignatures": [
+        "fcf7dc6efdfecd535087f2361d43cfa599cbe83b52717beb36c052dadbbc5a5d"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParser.cs",
+      "line": 2309,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "b19ca78715cc12a2051b38a495f41c060259e46d893be38e6dba447e8a87cc02": {
+      "signature": "b19ca78715cc12a2051b38a495f41c060259e46d893be38e6dba447e8a87cc02",
+      "alternativeSignatures": [
+        "efc4d3f86b80b0d8392e7fa74b15ca51411078ed8f249b0f30911036530bc0b4"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParser.cs",
+      "line": 3918,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1304",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "119b9514aeb84d5e34b5d7b1520378d4a2d017902d7d1bd572404f1b3186c59c": {
+      "signature": "119b9514aeb84d5e34b5d7b1520378d4a2d017902d7d1bd572404f1b3186c59c",
+      "alternativeSignatures": [
+        "57389b1211c68b1c8ed21fb3439d1dd9bd8a8e25677ed63b1db38ff7bd3b0c6b"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParserStateObject.cs",
+      "line": 4403,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "533d9dc25ef8183859aeed955b720d435e3035702b3b7c10d12204170815ec04": {
+      "signature": "533d9dc25ef8183859aeed955b720d435e3035702b3b7c10d12204170815ec04",
+      "alternativeSignatures": [
+        "55c532f39c15ec069c540c661f1ccb7371ee8c03f74fad4515d9cd94db8bcca1"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParserStateObjectNative.cs",
+      "line": 100,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "90dd8eeec55b68eaf94f971d1af06723d22efc0f7cb5fd15870765e6e6602ff9": {
+      "signature": "90dd8eeec55b68eaf94f971d1af06723d22efc0f7cb5fd15870765e6e6602ff9",
+      "alternativeSignatures": [
+        "ac02e05713e85c6086fc30c51a7083a159329f0a222c9d0be513e6da9fda0300"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/VirtualSecureModeEnclaveProvider.cs",
+      "line": 84,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "f1c711a9df14d19ac6682356d6648111a1e3c2ae051812e8f04a7466df045aa4": {
+      "signature": "f1c711a9df14d19ac6682356d6648111a1e3c2ae051812e8f04a7466df045aa4",
+      "alternativeSignatures": [
+        "1e752a5b4246f05f58da2adde778eb3eb46238ad51a6a2013d3fd9d80aaf5422"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/VirtualSecureModeEnclaveProviderBase.cs",
+      "line": 488,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "d159ab04bf10a650f1f43064602246acfa671e4f1f7ba07faf5620ab13043926": {
+      "signature": "d159ab04bf10a650f1f43064602246acfa671e4f1f7ba07faf5620ab13043926",
+      "alternativeSignatures": [
+        "74e1a9e9972040959e4176eb8dc981d8394545eaf86f30e059f9814f545bea67"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/Common/ConnectionString/DbConnectionString.netfx.cs",
+      "line": 374,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "761ae24086cbfbeb9667e20ab45b174613bd156d0dc7bde56a37571db11cd779": {
+      "signature": "761ae24086cbfbeb9667e20ab45b174613bd156d0dc7bde56a37571db11cd779",
+      "alternativeSignatures": [
+        "1793d6a0e1d5ee495ced5ce18af4bb1c6f1635ce89d6dfe9d840b84673ccbe7a"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Connection/SqlConnectionInternal.cs",
+      "line": 4130,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "92759af0d8bc9a56339a09bfb5ae1e0adbe2c0aa7697911d0f14941ba65a1e67": {
+      "signature": "92759af0d8bc9a56339a09bfb5ae1e0adbe2c0aa7697911d0f14941ba65a1e67",
+      "alternativeSignatures": [
+        "f20cbad7a6ed702f47f5d26f6e56844ce9f1e5a7d03152361b1818d4aef03058"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ConnectionPool/DbConnectionPoolAuthenticationContextKey.cs",
+      "line": 83,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "8409f840dce0e042b55250ce12045afaabc1e2e48f443e43ec0e493517e3e38d": {
+      "signature": "8409f840dce0e042b55250ce12045afaabc1e2e48f443e43ec0e493517e3e38d",
+      "alternativeSignatures": [
+        "b607bb6c9aded6c9d9d1da95e9f49b9a17ec42880fe59156cfca1d2f088fec35"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ManagedSni/SniCommon.netcore.cs",
+      "line": 148,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "1152991aab5d089b6b086e389b075de228b319c82a577dae0afe850956202b12": {
+      "signature": "1152991aab5d089b6b086e389b075de228b319c82a577dae0afe850956202b12",
+      "alternativeSignatures": [
+        "95a2b83edbb49524b5834cba58e1c1670ad5397cca2bc8ed4912f02c7b885acd"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ManagedSni/SniProxy.netcore.cs",
+      "line": 150,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "66052c0cd9b0dade1d5d86703650fa9c8d46f7977b60148aea67f371393e32b3": {
+      "signature": "66052c0cd9b0dade1d5d86703650fa9c8d46f7977b60148aea67f371393e32b3",
+      "alternativeSignatures": [
+        "d67c06a92599b72202abeed718e385e4621947195fc3affc730a1066b55f5cb6"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ManagedSni/SniProxy.netcore.cs",
+      "line": 731,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "f236b2c674fc8574908a9b254e10d9a78f4df86278d9cfe52f5b4d072689829b": {
+      "signature": "f236b2c674fc8574908a9b254e10d9a78f4df86278d9cfe52f5b4d072689829b",
+      "alternativeSignatures": [
+        "fabdb2e276df6d043b029af9a40c831c8f9f7131dec81706dd664cd5d913f32e"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ManagedSni/SniTcpHandle.netcore.cs",
+      "line": 658,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "424ec1510b6c1352e0731f19bd7a6c03f1da3bab869fa520046b0080cb7b5d70": {
+      "signature": "424ec1510b6c1352e0731f19bd7a6c03f1da3bab869fa520046b0080cb7b5d70",
+      "alternativeSignatures": [
+        "4dac74c5b9483f0a4b1f7e76f91002aa485fd1b83b19d5823169b0c15eaace8b"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ManagedSni/SsrpClient.netcore.cs",
+      "line": 80,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "76482116b8cae39bdad9b92782ab216ff958f6578405f93879733326a4283bfe": {
+      "signature": "76482116b8cae39bdad9b92782ab216ff958f6578405f93879733326a4283bfe",
+      "alternativeSignatures": [
+        "a815e32ff0ad176d42719f84cb015df61c89e9539fecbf58da169993e789b682"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Reliability/SqlConfigurableRetryLogicLoader.cs",
+      "line": 308,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:55:54Z"
+    },
+    "dd455bea13e4bd70696d1b0f4c890ca1ea42e18643bbe6b572989d84ac188f06": {
+      "signature": "dd455bea13e4bd70696d1b0f4c890ca1ea42e18643bbe6b572989d84ac188f06",
+      "alternativeSignatures": [
+        "0444dab1ebebce0b0e0bfb453d8513e9e8108aad22055bd038c873a8a8bc1f0e"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient.Extensions/Azure/src/ActiveDirectoryAuthenticationProvider.cs",
+      "line": 629,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1309",
+      "createdDate": "2026-08-28 13:36:06Z"
+    },
+    "09526af76b9a6ad21a4841ea50bb51e72925789c5f0f733650ac946cc44060a9": {
+      "signature": "09526af76b9a6ad21a4841ea50bb51e72925789c5f0f733650ac946cc44060a9",
+      "alternativeSignatures": [
+        "2a3fb00242d533ee3253b91c42ba7882b9c35ada1635e3470c481c6b43baa0e6"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.SqlServer.Server/SqlUserDefinedAggregateAttribute.netstandard.cs",
+      "line": 61,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:10:07Z"
+    },
+    "6fec84f5f9e3087c484965319896c91b033557b8bcef7761b0ae74e1baf0ad7d": {
+      "signature": "6fec84f5f9e3087c484965319896c91b033557b8bcef7761b0ae74e1baf0ad7d",
+      "alternativeSignatures": [
+        "efa9c07656c41d1d2367a89a7146fda28f3b584e2654693b4954d40bfafecb8f"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.SqlServer.Server/SqlUserDefinedTypeAttribute.netstandard.cs",
+      "line": 73,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:10:07Z"
+    },
+    "1de5740b9e122c2d8bda4bfe66c94764a6192376f753a7234bac91e1fc28e5f6": {
+      "signature": "1de5740b9e122c2d8bda4bfe66c94764a6192376f753a7234bac91e1fc28e5f6",
+      "alternativeSignatures": [
+        "14c7177139597c2ab94cf632b76bc03c4f2c252691b30a7ba69957e047b400c4"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.SqlServer.Server/StringsHelper.netstandard.cs",
+      "line": 130,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:10:07Z"
+    },
+    "0ca59be802da38e82370950b24300deae99834aa9a3cee38e064d1f17c5942a9": {
+      "signature": "0ca59be802da38e82370950b24300deae99834aa9a3cee38e064d1f17c5942a9",
+      "alternativeSignatures": [
+        "26425ecc80bd3289865ce79ae6471c4ab21cde25acc1cf2067717fbf6d600a6a"
+      ],
+      "target": "file:///C:/__w/1/s/src/Microsoft.Data.SqlClient.Internal/Logging/src/SqlClientEventSource.cs",
+      "line": 1995,
+      "memberOf": [
+        "default"
+      ],
+      "tool": "roslynanalyzers",
+      "ruleId": "CA1305",
+      "createdDate": "2026-08-28 13:09:32Z"
     }
   }
 }
