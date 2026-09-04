@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Impossible de définir la propriété AccessTokenCallback si le mot clé de chaîne de connexion « Sécurité intégrée » a été défini sur « true » ou « SSPI ».</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Nous ne pouvons pas définir la propriété AccessToken ou AccessTokenCallback si la propriété SspiContextProvider a déjà été définie.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Nous ne pouvons pas définir la propriété SspiContextProvider si la propriété AccessToken ou AccessTokenCallback a déjà été définie.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Impossible de définir la propriété AccessTokenCallback si 'Authentication=Active Directory Default' a été spécifié dans la chaîne de connexion.</value>
