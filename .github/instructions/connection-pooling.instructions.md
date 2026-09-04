@@ -124,13 +124,6 @@ private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
 await _idleConnectionReader.WaitToReadAsync(token);
 ```
 
-### Sync Over Async Protection
-```csharp
-// Prevent thread pool starvation
-private static SemaphoreSlim _syncOverAsyncSemaphore = 
-    new(Math.Max(1, Environment.ProcessorCount / 2));
-```
-
 ## Best Practices
 
 ### Application Design

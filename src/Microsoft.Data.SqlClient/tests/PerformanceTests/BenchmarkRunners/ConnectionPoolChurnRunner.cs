@@ -20,6 +20,22 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// concern for the new ChannelDbConnectionPool, which aims to avoid extra allocations
     /// on the hot path (issue #3356).
     ///
+    /// This overlaps <see cref="ConnectionPoolStressRunner.RapidFireOpenCloseAsync"/> in shape —
+    /// the inner loop is identical — but not in purpose, and the two are not
+    /// interchangeable. Being single-threaded, this runner has no scheduling or wake-up
+    /// component, which makes it far more sensitive: its sync and async variants have
+    /// agreed to within 0.3 percentage points, whereas the concurrent runner's own
+    /// duplicate-workload parameter pairs have disagreed by around 20. Use this one to
+    /// decide whether per-checkout cost or allocation moved, and the concurrent runner to
+    /// decide whether hand-off between threads moved. A regression there with a flat result
+    /// here points at scheduling rather than at the checkout path.
+    ///
+    /// Adding a Parallelism=1 case to that runner would not replace this one. Its
+    /// <c>[Params]</c> are class-wide, so a single-threaded row would also be generated for
+    /// benchmarks it makes meaningless (<c>MixedSyncAsyncContention</c> would have no sync
+    /// worker left to mix in), and this runner's higher operation count and separate
+    /// iteration settings are what keep the signal clean.
+    ///
     /// The pool implementation (legacy vs V2) is a process-level choice — see the remarks
     /// on <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2 false
     /// then true) to compare.
@@ -36,6 +52,27 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Params(1000)]
         public int OpsPerInvocation { get; set; }
 
+        /// <summary>
+        /// How many idle connections the pool holds while the single caller churns against it.
+        /// </summary>
+        /// <remarks>
+        /// This is not a redundant axis, because the two pools order idle connections
+        /// differently: the legacy pool pops from a <c>ConcurrentStack</c> (LIFO) while the V2
+        /// pool reads from an unbounded <c>Channel</c> (FIFO). At depth 1 that difference is
+        /// invisible, since both hand back the only connection there is. At a realistic depth
+        /// the legacy pool keeps returning the connection just released — one hot object — while
+        /// the V2 pool cycles through every idle connection in turn, touching all of their
+        /// buffers and parser state. Depth is therefore the axis that exposes reuse locality,
+        /// and measuring only depth 1 would hide it entirely.
+        ///
+        /// The middle depth is what makes the axis diagnostic rather than merely directional.
+        /// Depths 1 and 100 alone show only that reuse locality degrades somewhere in between;
+        /// they cannot distinguish a threshold (cost appears once the pool exceeds some working
+        /// set) from a gradient (cost grows smoothly with depth). Those imply different fixes.
+        /// </remarks>
+        [Params(1, 10, 100)]
+        public int PoolDepth { get; set; }
+
         private string _connectionString;
 
         [GlobalSetup]
@@ -51,16 +88,48 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 Pooling = true,
                 MaxPoolSize = 100,
-                // Pre-warm a single connection so the very first checkout is served from
-                // the pool rather than establishing a physical connection.
-                MinPoolSize = 1
+                // Pin the floor at the requested depth so pruning cannot shrink the pool back
+                // down mid-run and change what the benchmark is measuring.
+                MinPoolSize = PoolDepth,
+                // Matches ConnectionPoolStressRunner. At the larger PoolDepth, setup establishes
+                // a hundred physical connections back to back, and the default 15s is tight for
+                // that against a loaded remote server.
+                ConnectTimeout = 60
             };
             _connectionString = builder.ConnectionString;
 
-            // Force the pool to exist and hold at least one idle connection.
-            using var warm = new SqlConnection(_connectionString);
-            warm.Open();
-            warm.Close();
+            PrewarmPool();
+        }
+
+        /// <summary>
+        /// Fills the pool with <see cref="PoolDepth"/> idle connections before measurement, so
+        /// every measured open is a pure checkout.
+        /// </summary>
+        /// <remarks>
+        /// All connections are opened before any is released. Releasing as we go would let the
+        /// pool hand the same idle connection straight back and create only one, which would
+        /// silently collapse every depth to 1. <c>MinPoolSize</c> alone is not enough either:
+        /// both pools backfill it on a background task, so the first measured iteration would
+        /// otherwise still be racing that warm-up.
+        /// </remarks>
+        private void PrewarmPool()
+        {
+            var warm = new SqlConnection[PoolDepth];
+            try
+            {
+                for (int i = 0; i < warm.Length; i++)
+                {
+                    warm[i] = new SqlConnection(_connectionString);
+                    warm[i].Open();
+                }
+            }
+            finally
+            {
+                foreach (var conn in warm)
+                {
+                    conn?.Dispose();
+                }
+            }
         }
 
         [GlobalCleanup]

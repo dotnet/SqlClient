@@ -173,6 +173,24 @@
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
+        },
+        "ConnectionPoolRampRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 15,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
+        // Measures tail latency from threadpool starvation, so it needs more iterations
+        // than the others: a stall shows up in the distribution, not in the median.
+        "ConnectionPoolThreadPoolPressureRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 25,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
         }
     }
 }
