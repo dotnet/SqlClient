@@ -14,18 +14,17 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to GitHub main and release/* branches
-#   - Commits to ADO internal/main and internal/release/* branches
-#   - Daily at 03:00 UTC on GitHub main
-#   - Daily at 07:00 UTC on ADO internal/main
+#   - Commits to the GitHub release/7.1 branch
+#   - Commits to the ADO internal/release/7.1 branch
+#   - Daily at 11:00 UTC on GitHub release/7.1
+#   - Daily at 19:00 UTC on ADO internal/release/7.1
 #
 # GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
 # able to define different triggers and schedules using branch filters:
 #
-#   - Only the GitHub repo has a 'main' branch, so its presence indicates that
-#     the pipeline run was triggered via GitHub.
+#   - The GitHub registration uses the release/7.1 branch filters.
 #
-#   - Only the ADO repo has an 'internal/main' branch.
+#   - The ADO registration uses the internal/release/7.1 branch filters.
 #
 # Changes are batched together to ensure that the pipline never runs
 # concurrently.
@@ -58,31 +57,29 @@ trigger:
 
   branches:
     include:
-      # GitHub main and release branches.
-      - main
-      - release/*
+      # GitHub release branch.
+      - release/7.1-staging
 
-      # ADO main and release branches.
-      - internal/main
-      - internal/release/*
+      # ADO release branch.
+      - internal/release/7.1-staging
 
 # Trigger this pipeline on a schedule.
 schedules:
 
-  # GitHub main daily.
-  - cron: '0 3 * * *'
-    displayName: Daily Run (Release Config)
+  # GitHub release/7.1 daily.
+  - cron: '0 11 * * *'
+    displayName: 7.1 GitHub Package-Reference Daily Run (11:00 UTC)
     branches:
       include:
-      - main
+      - release/7.1-staging
     always: true
 
-  # ADO internal/main daily.
-  - cron: '0 7 * * *'
-    displayName: Daily Run (Release Config)
+  # ADO internal/release/7.1 daily.
+  - cron: '0 19 * * *'
+    displayName: 7.1 ADO Package-Reference Daily Run (19:00 UTC)
     branches:
       include:
-      - internal/main
+      - internal/release/7.1-staging
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.

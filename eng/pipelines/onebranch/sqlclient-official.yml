@@ -13,11 +13,11 @@ trigger: none
 
 # We run this pipeline on a daily schedule.
 schedules:
-  - cron: "30 4 * * *"
-    displayName: Daily 04:30 UTC Build
+  - cron: "0 23 * * *"
+    displayName: 7.1 Daily Official Build (23:00 UTC)
     branches:
       include:
-        - internal/main
+        - internal/release/7.1-staging
     always: true
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.

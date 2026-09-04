@@ -11,9 +11,7 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and
-# release/* branches in GitHub.  The dev/* pattern includes dev/automation/*
-# branches created by AI agents.
+# It is triggered by pushes to PRs that target the release/7.1 branch in GitHub.
 #
 # It maps to the "PR-SqlClient-Project" pipeline in the Public project:
 #
@@ -34,10 +32,7 @@ pr:
   branches:
     include:
       # GitHub repo branch targets that will trigger PR validation builds.
-      - dev/*
-      - feat/*
-      - main
-      - release/*
+      - release/7.1-staging
 
   paths:
     include:
