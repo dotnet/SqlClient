@@ -712,7 +712,8 @@ namespace Microsoft.Data.SqlClient
                         redirectedUserInstance: false,
                         applyTransientFaultHandling: applyTransientFaultHandling,
                         sspiContextProvider: key.SspiContextProvider,
-                        metrics: Metrics);
+                        metrics: Metrics,
+                        sqlClientAppId: sqlOwningConnection?.SqlClientAppId ?? SqlClientApp.Unknown);
                     using (sseConnection)
                     {
                         // NOTE: Retrieve <UserInstanceName> here. This user instance name will be
@@ -774,7 +775,8 @@ namespace Microsoft.Data.SqlClient
                 pool,
                 key.AccessTokenCallback,
                 key.SspiContextProvider,
-                metrics: Metrics);
+                metrics: Metrics,
+                sqlClientAppId: sqlOwningConnection?.SqlClientAppId ?? SqlClientApp.Unknown);
         }
 
         private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionOptions connectionOptions)

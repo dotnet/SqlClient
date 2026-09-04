@@ -124,6 +124,7 @@ namespace Microsoft.Data.SqlClient
         internal bool readOnlyIntent = false;                            // read-only intent
         internal SqlCredential credential;                               // user id and password in SecureString
         internal SecureString newSecurePassword;
+        internal SqlClientApp appId = SqlClientApp.Unknown;              // middleware application identity
     }
 
     #nullable enable

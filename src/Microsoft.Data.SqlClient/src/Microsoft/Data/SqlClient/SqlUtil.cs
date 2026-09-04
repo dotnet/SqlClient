@@ -1856,6 +1856,15 @@ namespace Microsoft.Data.SqlClient
 
         #endregion Always Encrypted Errors
 
+        internal static Exception InvalidSqlClientAppId(SqlClientApp value, string parameterName)
+        {
+            return ADP.ArgumentOutOfRange(
+                StringsHelper.GetString(
+                    Strings.SQL_InvalidSqlClientAppId,
+                    ((int)value).ToString(CultureInfo.InvariantCulture)),
+                parameterName);
+        }
+
         //
         // Merged Provider
         //

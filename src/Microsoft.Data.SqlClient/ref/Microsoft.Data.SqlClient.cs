@@ -592,6 +592,37 @@ public class SqlClientLogger
     public void LogInfo(string type, string method, string message) { }
 }
 
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlClientApp/*' />
+public enum SqlClientApp
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/Unknown/*' />
+    Unknown = 0x0000,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFramework/*' />
+    EntityFramework = 0x0001,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SemanticKernel/*' />
+    SemanticKernel = 0x0002,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/ManagementStudio/*' />
+    ManagementStudio = 0x0003,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlManagementObjects/*' />
+    SqlManagementObjects = 0x0004,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DataTierApplicationFramework/*' />
+    DataTierApplicationFramework = 0x0005,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlToolsService/*' />
+    SqlToolsService = 0x0006,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AspNetCoreDistributedSqlServerCache/*' />
+    AspNetCoreDistributedSqlServerCache = 0x0007,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFramework6/*' />
+    EntityFramework6 = 0x0008,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AzureFunctionsSqlExtension/*' />
+    AzureFunctionsSqlExtension = 0x0009,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/OrleansAdoNet/*' />
+    OrleansAdoNet = 0x000A,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DurableTaskSqlServer/*' />
+    DurableTaskSqlServer = 0x000B,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlPackage/*' />
+    SqlPackage = 0x000C
+}
+
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
 public static class SqlClientMetaDataCollectionNames
 {
@@ -1010,6 +1041,8 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public SqlConnection(string connectionString) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlClientAppId/*' />
+    public Microsoft.Data.SqlClient.SqlClientApp SqlClientAppId { get { throw null; } set { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
