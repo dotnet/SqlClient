@@ -40,6 +40,12 @@ namespace Microsoft.Data.SqlClient
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
 
+        /// <summary>
+        /// The version negotiated via the VECTORSUPPORT feature extension, which decides
+        /// whether a vector type is reported in the DataTypes collection.
+        /// </summary>
+        private readonly byte _vectorVersion;
+
         public SqlMetaDataFactory(Stream xmlStream, ConnectionCapabilities connectionCapabilities)
         {
             ADP.CheckArgumentNull(xmlStream, nameof(xmlStream));
@@ -47,6 +53,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
             _serverVersion = connectionCapabilities.ServerVersion;
+            _vectorVersion = connectionCapabilities.VectorVersion;
 
             _collectionDataSet = LoadDataSetFromXml(xmlStream);
         }
@@ -711,7 +718,7 @@ namespace Microsoft.Data.SqlClient
                 Locale = CultureInfo.InvariantCulture
             };
 
-            LoadDataTypesDataTables(metaDataCollectionsDataSet);
+            LoadDataTypesDataTables(metaDataCollectionsDataSet, _vectorVersion);
 
             XmlReaderSettings settings = new()
             {

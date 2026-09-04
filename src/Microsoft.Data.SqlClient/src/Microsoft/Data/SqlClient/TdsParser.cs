@@ -84,6 +84,17 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCollation _defaultCollation;                         // default collation from the server
 
+        /// <summary>
+        /// The default collation reported by the server, used for a column whose destination
+        /// type carries no collation of its own but which is sent as character data.
+        /// </summary>
+        internal SqlCollation DefaultCollation => _defaultCollation;
+
+        /// <summary>
+        /// The code page which corresponds to <see cref="DefaultCollation"/>.
+        /// </summary>
+        internal int DefaultCodePage => _defaultCodePage;
+
         private int _defaultCodePage;
 
         private int _defaultLCID;
@@ -9179,7 +9190,12 @@ namespace Microsoft.Data.SqlClient
                 // Feature Data Length
                 WriteInt(1, _physicalStateObj);
 
-                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                // The version the connection asks for, rather than the highest this client
+                // understands, so that an application opts in to a newer representation
+                // rather than receiving it on upgrade.
+                _physicalStateObj.WriteByte(
+                    VectorTypeSupportUtilities.ToFeatureExtensionVersion(
+                        _connHandler.ConnectionOptions.VectorTypeSupport));
             }
 
             return len;

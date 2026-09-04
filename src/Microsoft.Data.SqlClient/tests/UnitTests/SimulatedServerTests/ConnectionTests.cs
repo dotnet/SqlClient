@@ -1083,11 +1083,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         // Test to verify that the server and client negotiate
         // the common feature extension version.
-        // MDS currently supports vector feature ext version 0x1.
+        // The connection requests the version configured by the Vector Type Support
+        // keyword, which defaults to v1. These cases opt in to v2, which adds the
+        // float16 base type to the float32 support in v1.
         [Theory]
-        [InlineData(true, 0x2, 0x1)]
-        [InlineData(false, 0x0, 0x0)]
+        // A server which supports the same version as the client negotiates that version.
+        [InlineData(true, 0x2, 0x2)]
+        // A server which supports a later version than the client is capped by the test
+        // harness, so the client still sees its own version on the wire. The client's own
+        // ceiling is exercised by TestConnRejectsVectorFeatExtVersionAboveClientCeiling.
+        [InlineData(true, 0x3, 0x2)]
+        // A server which supports only the earlier version negotiates that instead.
         [InlineData(true, 0x1, 0x1)]
+        // A server which reports no support at all is rejected.
+        [InlineData(false, 0x0, 0x0)]
+        // A server which does not acknowledge the feature at all leaves it unnegotiated.
         [InlineData(true, 0xFF, 0x0)]
         public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
@@ -1098,7 +1108,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.EnableVectorFeatureExt = serverVersion == 0xFF ? false : true;
 
             byte expectedLoginReqFeatureExtId = (byte)TDSFeatureID.VectorSupport;
-            byte expectedLoginReqFeatureExtVersion = 0x1;
+            byte expectedLoginReqFeatureExtVersion = 0x2;
             byte actualLoginReqFeatureExtId = 0;
             byte actualLoginReqFeatureExtVersion = 0;
             byte actualFeatureExtAckId = 0;
@@ -1150,6 +1160,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so an expected failure does not poison a shared pool
+                // The keyword defaults to v1, so opt in to the version under test.
+                VectorTypeSupport = SqlVectorTypeSupport.V2,
             }.ConnectionString;
             using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
@@ -1176,6 +1188,115 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
+        }
+
+        // Test that the driver refuses a vector feature extension ack whose version it
+        // cannot interpret. The server here acknowledges its own version rather than
+        // capping it to the client's, which is what a future server supporting a later
+        // layout would do.
+        [Theory]
+        // One past the client's ceiling.
+        [InlineData(0x3)]
+        // Well past it.
+        [InlineData(0xF)]
+        public void TestConnRejectsVectorFeatExtVersionAboveClientCeiling(byte serverVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
+            server.AcknowledgeRawVectorFeatureExtVersion = true;
+
+            byte acknowledgedVersion = 0;
+
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                TDSFeatureExtAckGenericOption option = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault()?
+                    .Options
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    acknowledgedVersion = option.FeatureAckData[0];
+                }
+            };
+
+            string connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+                // The ceiling being tested is the client's, so request the highest version
+                // the client understands.
+                VectorTypeSupport = SqlVectorTypeSupport.V2,
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connStr);
+
+            Assert.Throws<InvalidOperationException>(() => connection.Open());
+
+            // Confirms the harness really did send the unsupported version, so the failure
+            // above is the client's ceiling rather than an unrelated connection problem.
+            Assert.Equal(serverVersion, acknowledgedVersion);
+        }
+
+        // Test that the vector feature extension version requested at login follows the
+        // Vector Type Support keyword, and that the request is omitted entirely when the
+        // keyword asks for no vector support.
+        [Theory]
+        // The keyword defaults to v1, so an application which says nothing keeps the
+        // representation it had before float16 existed.
+        [InlineData(null, true, 0x1)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2)]
+        // Off omits the feature request, leaving vector columns as varchar(max).
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0)]
+        public void TestVectorFeatExtVersionFollowsConnectionString(
+            SqlVectorTypeSupport? setting,
+            bool expectRequest,
+            byte expectedRequestedVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = 0x2;
+
+            bool requestSeen = false;
+            byte requestedVersion = 0;
+
+            server.OnLogin7Validated = loginToken =>
+            {
+                TDSLogin7GenericOptionToken option = loginToken.FeatureExt?
+                    .OfType<TDSLogin7GenericOptionToken>()
+                    .FirstOrDefault(t => t.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    requestSeen = true;
+                    requestedVersion = option.Data[0];
+                }
+            };
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+
+            if (setting.HasValue)
+            {
+                builder.VectorTypeSupport = setting.Value;
+            }
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            Assert.Equal(expectRequest, requestSeen);
+            Assert.Equal(expectedRequestedVersion, requestedVersion);
         }
 
         // Test that the driver sends the UserAgent feature extension when

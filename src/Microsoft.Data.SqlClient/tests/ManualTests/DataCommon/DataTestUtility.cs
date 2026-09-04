@@ -192,6 +192,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IsSqlVectorSupported &&
                 CheckVectorFloat16Supported();
 
+        /// <summary>
+        /// A TCP connection string which opts in to the vector feature extension version that
+        /// covers the <c>float16</c> base type.
+        /// </summary>
+        /// <remarks>
+        /// The <c>Vector Type Support</c> keyword defaults to <c>v1</c>, so a float16 column is
+        /// returned as a <c>varchar(max)</c> containing a JSON array unless a connection asks
+        /// for <c>v2</c>. Tests which exercise the native float16 representation must use this.
+        /// </remarks>
+        public static string VectorFloat16ConnectionString =>
+            new SqlConnectionStringBuilder(TCPConnectionString)
+            {
+                VectorTypeSupport = SqlVectorTypeSupport.V2
+            }.ConnectionString;
+
         public static bool IsDebugBuild
         {
             get
