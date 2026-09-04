@@ -4551,6 +4551,9 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Nie można ustawić właściwości AccessTokenCallback, jeśli słowo kluczowe parametrów połączenia „Integrated Security” ma wartość „true” lub „SSPI”.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Nie można ustawić właściwości AccessTokenCallback, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Default”.</value>
   </data>

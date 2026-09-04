@@ -4551,6 +4551,9 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' 연결 문자열 키워드가 'true' 또는 'SSPI'로 설정된 경우 AccessTokenCallback 속성을 설정할 수 없습니다.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>연결 문자열에 'Authentication=Active Directory Default'가 지정된 경우 AccessTokenCallback 속성을 설정할 수 없습니다.</value>
   </data>
