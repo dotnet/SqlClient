@@ -50,14 +50,6 @@ namespace Microsoft.Data.SqlClient
             string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
             string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
         {
-            #if NET
-            // Just only one subscription to this event is required.
-            // This class isn't supposed to be called more than one time;
-            // SqlConfigurableRetryLogicManager manages a single instance of this class.
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving -= Default_Resolving;
-            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += Default_Resolving;
-            #endif
-            
             AssignProviders(connectionRetryConfigs == null ? null : CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
                             commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
         }
@@ -119,44 +111,70 @@ namespace Microsoft.Data.SqlClient
                 throw new ArgumentNullException(nameof(retryMethod), StringsHelper.GetString(Strings.SQLCR_RetryMethodNullOrEmpty));
             }
 
-            Type type = null;
-            try
-            {
-                // Resolve a Type object from the given type name
-                // Different implementation in .NET Framework & .NET Core
-                type = LoadType(configurableRetryType);
-            }
-            catch (Exception e)
-            {
-                // Try to use 'SqlConfigurableRetryFactory' as a default type to discover retry methods
-                // if there is a problem, resolve using the 'configurableRetryType' type.
-                type = typeof(SqlConfigurableRetryFactory);
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to load the '{2}' type; Trying to use the internal `{3}` type: {4}",
-                                                       TypeName, methodName, configurableRetryType, type.FullName, e);
-            }
+            Type type;
 
-            // Run the function by using the resolved values to get the SqlRetryLogicBaseProvider object
-            try
-            {
-                // Create an instance from the discovered type by its default constructor
-                object result = CreateInstance(type, retryMethod, option);
+            // Whitespace is treated the same as unset: there is no type to resolve, so the
+            // resolving handler must not be installed for it.
+            bool customRetryTypeConfigured = !string.IsNullOrWhiteSpace(configurableRetryType);
 
-                if (result is SqlRetryLogicBaseProvider provider)
+            // Keep the handler subscribed across both type resolution and provider construction.
+            // Invoking the configured type's constructor and retry method can load that assembly's
+            // private dependencies after LoadType has returned.
+            using (AssemblyResolutionSubscription subscription = new(customRetryTypeConfigured))
+            {
+                if (!customRetryTypeConfigured)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The created instace is a {2} type.",
-                                                           TypeName, methodName, typeof(SqlRetryLogicBaseProvider).FullName);
-                    provider.Retrying += OnRetryingEvent;
-                    return provider;
+                    // No custom retry logic type was configured, so there is nothing to resolve and
+                    // the built-in factory is used to discover the requested retry method.
+                    type = typeof(SqlConfigurableRetryFactory);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> No custom retry logic type is configured; Using the internal `{2}` type.",
+                                                           TypeName, methodName, type.FullName);
                 }
-            }
-            catch (Exception e)
-            {
-                // In order to invoke a function dynamically, any type of exception can occur here;
-                // The main exception and its stack trace will be accessible through the inner exception.
-                // i.e: Opening a connection or executing a command while invoking a function 
-                // runs the application to the `TargetInvocationException`.
-                // And using an isolated zone like a specific AppDomain results in an infinite loop.
-                throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_RetryMethodException, type.FullName, retryMethod), e);
+                else
+                {
+                    try
+                    {
+                        // Resolve a Type object from the given type name
+                        // Different implementation in .NET Framework & .NET Core
+                        type = LoadType(configurableRetryType);
+                    }
+                    catch (Exception e)
+                    {
+                        // The custom type will not be constructed, so the built-in fallback no
+                        // longer needs the custom assembly resolution handler.
+                        subscription.Dispose();
+
+                        // Try to use 'SqlConfigurableRetryFactory' as a default type to discover retry methods
+                        // if there is a problem, resolve using the 'configurableRetryType' type.
+                        type = typeof(SqlConfigurableRetryFactory);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to load the '{2}' type; Trying to use the internal `{3}` type: {4}",
+                                                               TypeName, methodName, configurableRetryType, type.FullName, e);
+                    }
+                }
+
+                // Run the function by using the resolved values to get the SqlRetryLogicBaseProvider object
+                try
+                {
+                    // Create an instance from the discovered type by its default constructor
+                    object result = CreateInstance(type, retryMethod, option);
+
+                    if (result is SqlRetryLogicBaseProvider provider)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The created instace is a {2} type.",
+                                                               TypeName, methodName, typeof(SqlRetryLogicBaseProvider).FullName);
+                        provider.Retrying += OnRetryingEvent;
+                        return provider;
+                    }
+                }
+                catch (Exception e)
+                {
+                    // In order to invoke a function dynamically, any type of exception can occur here;
+                    // The main exception and its stack trace will be accessible through the inner exception.
+                    // i.e: Opening a connection or executing a command while invoking a function 
+                    // runs the application to the `TargetInvocationException`.
+                    // And using an isolated zone like a specific AppDomain results in an infinite loop.
+                    throw new InvalidOperationException(StringsHelper.GetString(Strings.SQLCR_RetryMethodException, type.FullName, retryMethod), e);
+                }
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to resolve a valid provider; Returns `null`.", TypeName, methodName);
@@ -334,13 +352,53 @@ namespace Microsoft.Data.SqlClient
         }
         
         #region Type Resolution
-        
+
+        internal sealed class AssemblyResolutionSubscription : IDisposable
+        {
+            #if NET
+            private bool _isSubscribed;
+            #endif
+
+            internal AssemblyResolutionSubscription(bool subscribe)
+            {
+            #if NET
+                if (subscribe)
+                {
+                    AssemblyLoadContext.Default.Resolving += Default_Resolving;
+                    _isSubscribed = true;
+                }
+            #endif
+            }
+
+            public void Dispose()
+            {
+            #if NET
+                if (_isSubscribed)
+                {
+                    AssemblyLoadContext.Default.Resolving -= Default_Resolving;
+                    _isSubscribed = false;
+                }
+            #endif
+            }
+        }
+
         #if NET
+        /// <summary>
+        /// The directory that user-supplied configurable retry logic assemblies are probed from.
+        /// </summary>
+        /// <remarks>
+        /// This is deliberately the application base directory rather than the current working
+        /// directory. The working directory is ambient process state that can be changed at any
+        /// time and is not necessarily related to where the application's binaries live, so
+        /// probing it can load assemblies from an unintended and untrusted location.
+        /// </remarks>
+        private static string ProbingDirectory => AppContext.BaseDirectory;
+
         private static Assembly AssemblyResolver(AssemblyName arg)
         {
             string methodName = nameof(AssemblyResolver);
 
-            string fullPath = MakeFullPath(Environment.CurrentDirectory, arg.Name);
+            string fullPath = MakeFullPath(ProbingDirectory, arg.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
                 , TypeName, methodName, arg, fullPath);
 
@@ -348,13 +406,19 @@ namespace Microsoft.Data.SqlClient
         }
         
         /// <summary>
-        /// Load assemblies on request.
+        /// Load dependencies of a user-supplied configurable retry logic assembly on request.
         /// </summary>
+        /// <remarks>
+        /// This handler is only subscribed while a configured retry logic provider is being
+        /// resolved and constructed, and only when a custom retry logic type has been configured.
+        /// It must not remain subscribed to <see cref="AssemblyLoadContext.Default"/> after that,
+        /// because doing so changes assembly resolution behavior for the entire application.
+        /// </remarks>
         private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
             string methodName = nameof(Default_Resolving);
 
-            string target = MakeFullPath(Environment.CurrentDirectory, arg2.Name);
+            string target = MakeFullPath(ProbingDirectory, arg2.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly that is requested by '{3}' ALC from '{4}' path."
                 , TypeName, methodName, arg2, arg1, target);
 
@@ -371,7 +435,10 @@ namespace Microsoft.Data.SqlClient
             string methodName = nameof(LoadType);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
-            var result = Type.GetType(fullyQualifiedName, AssemblyResolver, TypeResolver);
+            Type result;
+
+            result = Type.GetType(fullyQualifiedName, AssemblyResolver, TypeResolver);
+
             if (result != null)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved.",
