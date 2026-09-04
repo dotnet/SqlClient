@@ -14,7 +14,7 @@
 # It runs via CI push triggers and schedules and uses the Release build
 # configuration:
 #
-#   - Commits to the GitHub release/7.1 branch
+#   - GitHub CI push trigger disabled due to limited resources
 #   - Commits to the ADO internal/release/7.1 branch
 #   - Daily at 11:00 UTC on GitHub release/7.1
 #   - Daily at 19:00 UTC on ADO internal/release/7.1
@@ -58,7 +58,9 @@ trigger:
   branches:
     include:
       # GitHub release branch.
-      - release/7.1-staging
+      #
+      # GOTCHA: Currently disabled due to limited resources.
+      #- release/7.1-staging
 
       # ADO release branch.
       - internal/release/7.1-staging
