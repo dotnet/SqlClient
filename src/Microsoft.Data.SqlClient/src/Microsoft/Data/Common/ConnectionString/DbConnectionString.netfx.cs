@@ -507,7 +507,7 @@ namespace Microsoft.Data.Common
                 int startPosition = nextStartPosition;
 
                 string keyname; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
-                nextStartPosition = SqlConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
+                nextStartPosition = SqlConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, out keyname, out _);
                 if (!string.IsNullOrEmpty(keyname))
                 {
 #if DEBUG
