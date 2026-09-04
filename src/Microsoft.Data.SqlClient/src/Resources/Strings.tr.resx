@@ -2199,9 +2199,6 @@
   <data name="SQL_ActiveDirectoryInvalidStateTransition" xml:space="preserve">
     <value>‘{0}’ durumundan ‘{1}’ durumuna geçilemiyor.</value>
   </data>
-  <data name="SQL_InvalidSqlClientAppId" xml:space="preserve">
-    <value>The SqlClient application identifier '{0}' is outside the supported range of 0 to 65535.</value>
-  </data>
   <data name="SQL_ActiveDirectoryUnsupportedState" xml:space="preserve">
     <value>Desteklenmeyen durum: ‘{0}’.</value>
   </data>
