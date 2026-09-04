@@ -63,11 +63,6 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # Keep this as a runtime variable reference in globalSdl.apiscan.versionNumber. Passing the
-  # quoted value directly through an Azure template expression perturbs '6.10' to the number 6.1.
-  - name: ApiScanSoftwareVersion
-    value: '6.10'
-
   # OneBranch supplies a variety of container images we must use for our jobs.
   #
   # https://eng.ms/docs/products/onebranch/infrastructureandimages/containerimages/containerimages

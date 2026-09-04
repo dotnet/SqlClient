@@ -86,6 +86,10 @@ stages:
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlClientApiScanVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientApiScanVersion'] ]
+      - name: sqlServerApiScanVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerApiScanVersion'] ]
 
     jobs:
       # Build Microsoft.Data.SqlClient.Internal.Logging
@@ -93,6 +97,7 @@ stages:
         parameters:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/pdbs'
+          apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -115,6 +120,7 @@ stages:
           parameters:
             apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.SqlServer.Server/dlls'
             apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.SqlServer.Server/pdbs'
+            apiScanSoftwareVersion: '$(sqlServerApiScanVersion)'
             shouldSignPackage: ${{ parameters.isOfficial }}
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
             signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -146,6 +152,8 @@ stages:
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.VersionRevision'] ]
       - name: sqlClientPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: sqlClientApiScanVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientApiScanVersion'] ]
 
     jobs:
       # Build Microsoft.Data.SqlClient.Extensions.Abstractions
@@ -153,6 +161,7 @@ stages:
         parameters:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/pdbs'
+          apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -189,6 +198,8 @@ stages:
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlClientApiScanVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientApiScanVersion'] ]
 
     jobs:
       # Build Microsoft.Data.SqlClient
@@ -196,6 +207,7 @@ stages:
         parameters:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
+          apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -233,6 +245,7 @@ stages:
         parameters:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/pdbs'
+          apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
@@ -271,12 +284,15 @@ stages:
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlClientApiScanVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientApiScanVersion'] ]
 
     jobs:
       - template: /eng/pipelines/onebranch/jobs/build-buildproj-job.yml@self
         parameters:
           apiScanDllPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/dlls'
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/pdbs'
+          apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
