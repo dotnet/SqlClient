@@ -59,7 +59,9 @@ trigger:
   branches:
     include:
       # GitHub main and release branches.
-      - main
+      #
+      # GOTCHA: Currently disabled on main due to limited resources.
+      #- main
       - release/*
 
       # ADO main and release branches.
