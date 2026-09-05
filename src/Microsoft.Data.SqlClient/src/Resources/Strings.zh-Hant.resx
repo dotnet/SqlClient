@@ -4554,6 +4554,9 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>如果 'Integrated Security' 連接字串關鍵字已設定為 'true' 或 'SSPI'，就不能設定 AccessTokenCallback 屬性。</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果已在連接字串中指定 'Authentication=Active Directory Default'，就不能設定 AccessTokenCallback 屬性。</value>
   </data>
