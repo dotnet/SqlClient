@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Аттестация анклава завершилась сбоем, так как подписанный отчет анклава не был привязан к открытому ключу анклава, использованному для установления сеанса. Открытый ключ анклава должен совпадать со значением, зафиксированным в подписанном отчете; подробнее см. по ссылке https://go.microsoft.com/fwlink/?linkid=2160553. Если это верно, обратитесь в службу поддержки клиентов.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Полученный с SQL Server отчет анклава имеет неправильный формат. Обратитесь в службу поддержки пользователей.</value>
   </data>
@@ -4649,6 +4652,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить или проанализировать файл сертификата, указанный параметром "ServerCertificate": "{0}".</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>Параметр "ServerCertificate" был указан, но сервер не представил сертификат, с которым можно было бы его сравнить.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>

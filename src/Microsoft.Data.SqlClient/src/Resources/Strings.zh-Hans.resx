@@ -4431,6 +4431,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>无法验证 enclave 报告的签名。报告签名与使用 HGS 根证书计算出的签名不匹配。请验证终结点的 DNS 映射 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553。如果正确，请联系客户支持服务。</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Enclave 证明失败，因为已签名的 enclave 报表未绑定到用于建立会话的 enclave 公钥。Enclave 公钥必须与该签名报表提交的值匹配 - 有关详细信息，请参阅 https://go.microsoft.com/fwlink/?linkid=2160553。如果正确，请联系客户支持服务。</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>从 SQL Server 收到的 enclave 报告的格式不正确。请联系客户支持服务。</value>
   </data>
@@ -4649,6 +4652,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>服务器提供的证书与 ServerCertificate 选项提供的证书不匹配。</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>无法加载或解析 "ServerCertificate" 选项指定的证书文件: "{0}"。</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>已指定 "ServerCertificate" 选项，但服务器未提供可与其比较的证书。</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在列 ‘{0}’ 上获取 JsonDocument 的尝试无效。只有 json 类型的列支持 JsonDocument。</value>
