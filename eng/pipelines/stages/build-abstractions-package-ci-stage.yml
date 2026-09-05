@@ -35,6 +35,19 @@ parameters:
     type: object
     default: []
 
+  # The name of the pool to use for jobs that require customized VM images.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  # Any pool specified here must contain images with the following names:
+  #
+  #   - ADO-Win25
+  #   - ADO-UB24
+  #
+  - name: poolName
+    type: string
+
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
     type: string
@@ -105,8 +118,8 @@ stages:
           jobNameSuffix: linux
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: ubuntu-latest
+          poolName: ${{ parameters.poolName }}
+          vmImage: ADO-UB24
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -120,8 +133,8 @@ stages:
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: windows-latest
+          poolName: ${{ parameters.poolName }}
+          vmImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -135,6 +148,8 @@ stages:
           jobNameSuffix: macos
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
+          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+          # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
           vmImage: macos-latest
 
@@ -143,6 +158,7 @@ stages:
 
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.poolName }}
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           # The version is computed by this stage (see the packageVersion variable above).
           packageVersion: $(packageVersion)

@@ -40,28 +40,22 @@ parameters:
     default: []
 
   # The name of the pool to use for jobs that require customized VM images.
-  - name: adoPoolName
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  # Any pool specified here must contain images with the following names:
+  #
+  #   - ADO-MMS25-SQL25
+  #   - ADO-UB24-SQL25
+  #
+  - name: poolName
     type: string
-    # This variable should be defined in AzureDevOps Library variable groups,
-    # for both the Public and ADO.Net projects.
-    #
-    # Any pool specified here must contain images with the following names:
-    #
-    #   - ADO-MMS25-SQL25
-    #   - ADO-UB24-SQL25
-    #
-    default: $(ci_var_defaultPoolName)
 
   # The name of the pipeline artifacts to publish.
   - name: azureArtifactsName
     type: string
     default: Azure.Artifacts
-
-  # The name of the general Azure pool to use for jobs that don't require
-  # customized VM images.
-  - name: azurePoolName
-    type: string
-    default: Azure Pipelines
 
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
@@ -144,25 +138,6 @@ stages:
       # ------------------------------------------------------------------------
       # Build and test on Linux.
 
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          packageVersion: $(packageVersion)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: Linux
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: linux
-          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
-          referenceType: ${{ parameters.referenceType }}
-          vmImage: ubuntu-latest
-
       # Use our 1ES ADO pool for comprehensive testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
         parameters:
@@ -179,7 +154,7 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           referenceType: ${{ parameters.referenceType }}
           saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
@@ -191,26 +166,6 @@ stages:
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
-
-      # Use the Azure Pipelines pool for basic testing.
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          packageVersion: $(packageVersion)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: Win
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: windows
-          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
-          referenceType: ${{ parameters.referenceType }}
-          vmImage: windows-latest
 
       # Use our 1ES ADO pool for comprehensive testing.
       - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
@@ -228,7 +183,7 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: [net462]
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.adoPoolName }}
+          poolName: ${{ parameters.poolName }}
           referenceType: ${{ parameters.referenceType }}
           saPassword: $(saPassword)
           # The image includes a SQL Server instance that we must configure.
@@ -266,17 +221,18 @@ stages:
           sqlServerPackageVersion: $(sqlServerPackageVersion)
           netFrameworkRuntimes: []
           netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
+          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+          # 'Azure Pipelines' pool.
+          poolName: Azure Pipelines
           referenceType: ${{ parameters.referenceType }}
           vmImage: macos-latest
-
-      # We do not currently have any images in our 1ES ADO pools for macOS.
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
       - template: /eng/pipelines/jobs/pack-azure-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.poolName }}
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
           packageVersion: $(packageVersion)
           azureArtifactsName: ${{ parameters.azureArtifactsName }}
@@ -285,9 +241,7 @@ stages:
           dependsOn:
             # We depend on all of the test jobs to ensure the tests pass before
             # producing the NuGet package.
-            - test_azure_package_job_linux
             - test_azure_package_job_linux_integration
-            - test_azure_package_job_windows
             - test_azure_package_job_windows_integration
             - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

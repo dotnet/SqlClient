@@ -58,6 +58,10 @@ parameters:
     default: []
 
   # The name of the Azure Pipelines pool to use.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 
