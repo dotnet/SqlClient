@@ -41,5 +41,6 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
-- Version tests mock `dotnet`, so they do not invoke MSBuild or require a restored repository.
+- Script-level version tests mock `dotnet`; package-composition tests invoke the real MSBuild
+  `GetVersionsSqlClient` and `GetVersionsSqlServer` targets.
 - Tests validate scripts in the parent directory relative to this directory.

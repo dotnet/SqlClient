@@ -5,6 +5,7 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '..' 'compute-versions.ps1'
+    $buildProjectPath = Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..' '..' '..' 'build.proj')
     $projectPath = Join-Path $TestDrive 'build.proj'
     Set-Content -LiteralPath $projectPath -Value '<Project />'
 
@@ -61,6 +62,41 @@ BeforeAll {
     function Set-SuccessfulDotnetMock {
         Set-DotnetMock
     }
+
+    function Invoke-VersionTarget {
+        param(
+            [Parameter(Mandatory)]
+            [string]$Target,
+
+            [Parameter(Mandatory)]
+            [string]$NextVersionProperty,
+
+            [Parameter(Mandatory)]
+            [string]$BaseVersion,
+
+            [string]$BuildSuffix
+        )
+
+        $arguments = @(
+            'build'
+            $buildProjectPath
+            "-t:$Target"
+            '-v:m'
+            '-nologo'
+            "-p:BuildNumber=$script:testBuildNumber"
+            "-p:$NextVersionProperty=$BaseVersion"
+        )
+        if ($BuildSuffix) {
+            $arguments += "-p:BuildSuffix=$BuildSuffix"
+        }
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Target failed with exit code ${LASTEXITCODE}:`n$output"
+        }
+
+        $output
+    }
 }
 
 AfterAll {
@@ -109,6 +145,60 @@ Describe 'compute-versions.ps1 Effective Versions' {
         # The file version is still stamped so every build produces a date-encoded file version even
         # for non-preview releases.
         $output | Should -Match 'SqlClientFileVersion;isOutput=true]7\.1\.0\.26238'
+    }
+}
+
+Describe 'GetVersions target package composition' {
+    It '<Target> composes <Case> package and file versions' -ForEach @(
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0'; BuildSuffix = ''; ExpectedPackageVersion = '7.1.0'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a stable base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0'; BuildSuffix = 'ci'; ExpectedPackageVersion = '7.1.0-ci.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a stable base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0-preview3'; BuildSuffix = ''; ExpectedPackageVersion = '7.1.0-preview3.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a prerelease base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0-preview3'; BuildSuffix = 'ci'; ExpectedPackageVersion = '7.1.0-preview3-ci.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a prerelease base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0'; BuildSuffix = ''; ExpectedPackageVersion = '1.1.0'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a stable base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0'; BuildSuffix = 'ci'; ExpectedPackageVersion = '1.1.0-ci.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a stable base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0-preview1'; BuildSuffix = ''; ExpectedPackageVersion = '1.1.0-preview1.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a prerelease base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0-preview1'; BuildSuffix = 'ci'; ExpectedPackageVersion = '1.1.0-preview1-ci.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a prerelease base with a suffix'
+        }
+    ) {
+        $output = Invoke-VersionTarget `
+            -Target $Target `
+            -NextVersionProperty $NextVersionProperty `
+            -BaseVersion $BaseVersion `
+            -BuildSuffix $BuildSuffix
+
+        $output | Should -Match "PackageVersion:\s+$([regex]::Escape($ExpectedPackageVersion))(\r?\n|$)"
+        $output | Should -Match "FileVersion:\s+$([regex]::Escape($ExpectedFileVersion))(\r?\n|$)"
     }
 }
 

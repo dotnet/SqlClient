@@ -97,6 +97,21 @@
     -->
 
     <!--
+      SqlClientNextVersion
+      Applies to:     GetVersionsSqlClient
+      Description:    Overrides the source-declared base version used to calculate the SqlClient
+                      family package and file versions. BuildNumber and BuildSuffix are applied to
+                      this value by Versions.props. An explicit PackageVersionSqlClient remains
+                      higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.Data.SqlClient/Versions.props
+      Example:        7.1.0-preview3
+    -->
+    <SqlClientNextVersion Condition="'$(SqlClientNextVersion)' == ''" />
+    <SqlClientNextVersionArgument Condition="'$(SqlClientNextVersion)' != ''">
+      -p:SqlClientNextVersion=$(SqlClientNextVersion)
+    </SqlClientNextVersionArgument>
+
+    <!--
       PackageVersionSqlClient
       Applies to:
         Build:        BuildSqlClient*, BuildLogging, BuildAbstractions, BuildAzure, BuildAkvProvider
@@ -134,6 +149,21 @@
     <FileVersionSqlClientArgument Condition="'$(FileVersionSqlClient)' != ''">
       -p:SqlClientFileVersion=$(FileVersionSqlClient)
     </FileVersionSqlClientArgument>
+
+    <!--
+      SqlServerNextVersion
+      Applies to:     GetVersionsSqlServer
+      Description:    Overrides the source-declared base version used to calculate the
+                      Microsoft.SqlServer.Server package and file versions. BuildNumber and
+                      BuildSuffix are applied to this value by Versions.props. An explicit
+                      PackageVersionSqlServer remains higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.SqlServer.Server/Versions.props
+      Example:        1.1.0-preview1
+    -->
+    <SqlServerNextVersion Condition="'$(SqlServerNextVersion)' == ''" />
+    <SqlServerNextVersionArgument Condition="'$(SqlServerNextVersion)' != ''">
+      -p:SqlServerNextVersion=$(SqlServerNextVersion)
+    </SqlServerNextVersionArgument>
 
     <!--
       PackageVersionSqlServer
@@ -486,14 +516,14 @@
 
   <Target Name="GetVersionsSqlClient">
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
     </Exec>
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
@@ -505,7 +535,7 @@
 
   <Target Name="GetVersionsSqlServer">
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
@@ -515,7 +545,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
     </Exec>
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
