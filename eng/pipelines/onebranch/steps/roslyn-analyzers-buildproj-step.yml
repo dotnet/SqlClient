@@ -129,11 +129,8 @@ parameters:
       - SqlClient
       - SqlServer
 
-  # The three parameters below mirror build-buildproj-step.yml so the analysis build resolves the
-  # same package versions as the real build.
-  #
-  # Version revision translated to build.proj's BuildNumber property at this boundary.
-  - name: revision
+  # Pre-computed assembly file version, translated to build.proj's FileVersion* property here.
+  - name: fileVersion
     type: string
 
   #  Suffix appended to "PackageVersion" to form the build.proj msbuild property that stamps this
@@ -165,7 +162,7 @@ steps:
         -p:Configuration=Release
         -p:ReferenceType=Package
         -p:SkipDependencyPack=true
-        -p:BuildNumber="${{ parameters.revision }}"
+        -p:FileVersion${{ parameters.versionPropertySuffix }}="${{ parameters.fileVersion }}"
         -p:PackageVersion${{ parameters.versionPropertySuffix }}="${{ parameters.packageVersion }}"
         -p:IsolatedBuildPath="$(Agent.TempDirectory)/roslyn"
         -p:EnableAnalyzers=true

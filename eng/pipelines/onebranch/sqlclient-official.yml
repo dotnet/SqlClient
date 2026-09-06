@@ -37,12 +37,6 @@ parameters:
     type: boolean
     default: false
 
-  # Append the Build.BuildId revision to package and file versions.
-  - name: addRevision
-    displayName: Use the build ID as the revision version
-    type: boolean
-    default: false
-
   # True to publish symbols to private and public servers.
   - name: publishSymbols
     displayName: Publish symbols
@@ -270,8 +264,12 @@ extends:
 
       sbom:
         enabled: true
-        packageName: 'Microsoft.Data.SqlClient'
-        packageVersion: '$(Build.BuildNumber)'
+        # OneBranch resolves these from globalSdl only -- there is no per-job form -- so they
+        # indirect through variables that each build job sets to the package it produces.  Jobs
+        # that publish no packages disable SBOM via ob_sdl_sbom_enabled rather than defaulting
+        # these.  See build-buildproj-job.yml.
+        packageName: '$(sbomPackageName)'
+        packageVersion: '$(sbomPackageVersion)'
 
       tsa:
         # TSA (Trust Services Automation) files SDL analysis findings as Azure DevOps bug work
@@ -306,7 +304,6 @@ extends:
 
       - template: /eng/pipelines/onebranch/stages/compute-versions-stage.yml@self
         parameters:
-          addRevision: ${{ parameters.addRevision }}
           buildSqlServer: ${{ parameters.buildSqlServer }}
 
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self

@@ -121,6 +121,21 @@
     </PackageVersionSqlClientArgument>
 
     <!--
+      FileVersionSqlClient
+      Applies to:     The same targets as PackageVersionSqlClient.
+      Description:    Specifies the assembly file version stamped on the SqlClient *family*.  When
+                      omitted, Versions.props derives it from the package version and BuildNumber.
+                      Supply it to stamp a pre-computed value instead, so no consumer has to
+                      re-derive it.  The assembly version is always derived from this value.
+      Default value:  [blank]
+      Example:        7.1.0.26238
+    -->
+    <FileVersionSqlClient Condition="'$(FileVersionSqlClient)' == ''" />
+    <FileVersionSqlClientArgument Condition="'$(FileVersionSqlClient)' != ''">
+      -p:SqlClientFileVersion=$(FileVersionSqlClient)
+    </FileVersionSqlClientArgument>
+
+    <!--
       PackageVersionSqlServer
       Applies to:
         Build:        BuildSqlServer and BuildSqlClient* in Package reference mode
@@ -136,6 +151,20 @@
     <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
       -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
     </PackageVersionSqlServerArgument>
+
+    <!--
+      FileVersionSqlServer
+      Applies to:     The same targets as PackageVersionSqlServer.
+      Description:    Specifies the assembly file version stamped on Microsoft.SqlServer.Server.
+                      When omitted, Versions.props derives it from the package version and
+                      BuildNumber.  Supply it to stamp a pre-computed value instead.
+      Default value:  [blank]
+      Example:        1.1.0.26238
+    -->
+    <FileVersionSqlServer Condition="'$(FileVersionSqlServer)' == ''" />
+    <FileVersionSqlServerArgument Condition="'$(FileVersionSqlServer)' != ''">
+      -p:SqlServerFileVersion=$(FileVersionSqlServer)
+    </FileVersionSqlServerArgument>
 
     <!--
       ReferenceType
@@ -574,6 +603,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -605,6 +635,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -636,6 +667,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -679,6 +711,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -839,6 +872,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -866,6 +900,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -946,6 +981,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -972,6 +1008,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1051,6 +1088,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -1077,6 +1115,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1153,6 +1192,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1176,6 +1216,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1219,6 +1260,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1242,6 +1284,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>

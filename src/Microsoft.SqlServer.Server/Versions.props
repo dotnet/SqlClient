@@ -45,13 +45,8 @@
           not valid in a file version. Start with the suffix-free package base and append the
           configured file-version build number, which converts a three-part package version such as
           1.2.3-preview1 to 1.2.3.42.
-
-          A revision-enabled pipeline supplies a four-part package base such as 1.2.3.42. That base
-          is already a complete file version, so the following conditional assignment overrides the
-          fallback instead of producing an invalid five-part version.
         -->
         <SqlServerFileVersion>$(SqlServerPackageVersionBase).$(FileVersionBuildNumber)</SqlServerFileVersion>
-        <SqlServerFileVersion Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlServerPackageVersionBase)', '^\d+\.\d+\.\d+\.\d+$'))">$(SqlServerPackageVersionBase)</SqlServerFileVersion>
       </PropertyGroup>
     </When>
 
@@ -60,18 +55,24 @@
         When a build number is provided, the default version is used as the base of the package and
         file versions.
 
-        If a build suffix is provided, this is appended to the package version. This is meant to be
-        used by automated pre-release systems to indicate the source of the build.
+        If a build suffix is provided, it is appended as a prerelease tag. This is meant to be used
+        by automated pre-release systems to indicate the source of the build.
 
-        If a build suffix is not provided, no pre-release tag will be added to package version. If
-        the default version already has a pre-release tag added to it (eg, "7.0.0-preview1") this
-        will be retained for the package version, but will be stripped off for the file version
-        (letters are not allowed in file/assembly versions). This is meant to be used by official
-        build pipelines to generate production-ready builds.
+        The build number is then appended to any version carrying a prerelease tag — whether that
+        tag came from the declared version or from the build suffix — so every automated run
+        produces a distinct package version (eg, "1.1.0-preview1" becomes
+        "1.1.0-preview1.26238.3"). A version with no prerelease tag is left exactly as declared,
+        because released packages are not stamped with a build number. The tag is always stripped
+        for the file version (letters are not allowed in file/assembly versions). This is meant to
+        be used by official build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlServerPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlServerNextVersion)-$(BuildSuffix)$(BuildNumber)</SqlServerPackageVersion>
-        <SqlServerPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlServerNextVersion)</SqlServerPackageVersion>
+        <_SqlServerCandidateVersion>$(SqlServerNextVersion)</_SqlServerCandidateVersion>
+        <_SqlServerCandidateVersion Condition="'$(BuildSuffix)' != ''">$(SqlServerNextVersion)-$(BuildSuffix)</_SqlServerCandidateVersion>
+
+        <!-- A dash means a prerelease tag is present, from either source. -->
+        <SqlServerPackageVersion Condition="$(_SqlServerCandidateVersion.Contains('-'))">$(_SqlServerCandidateVersion).$(BuildNumber)</SqlServerPackageVersion>
+        <SqlServerPackageVersion Condition="!$(_SqlServerCandidateVersion.Contains('-'))">$(_SqlServerCandidateVersion)</SqlServerPackageVersion>
 
         <SqlServerFileVersion>$(SqlServerNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlServerFileVersion>
       </PropertyGroup>
