@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlMetaData">
     <SqlMetaData>
       <summary>
@@ -1490,6 +1490,22 @@
         The <paramref name="value" /> is <see langword="null" />.
       </exception>
     </InferFromValue>
+    <IsComputed>
+      <summary>
+        Indicates if this column is computed by the server.
+      </summary>
+      <value>
+        A <see cref="T:System.Boolean" /> value.
+      </value>
+      <remarks>
+        <para>
+          The default is <see langword="false" />.
+        </para>
+        <para>
+          This property can only be set from an object initializer immediately after construction of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> instance.
+        </para>
+      </remarks>
+    </IsComputed>
     <IsUniqueKey>
       <summary>
         Indicates if the column in the table-valued parameter is unique.
