@@ -373,8 +373,15 @@ Write-Host "Effective versions:"
 Write-Host "  SqlClient (family): $sqlClientPackageVersion"
 Write-Host "  SqlServer:          $sqlServerPackageVersion"
 
+$sqlClientApiScanVersion = Get-MajorMinorVersion -Version $sqlClientPackageVersion
+$sqlServerApiScanVersion = Get-MajorMinorVersion -Version $sqlServerPackageVersion
+
+Write-Host "APIScan registration versions:"
+Write-Host "  SqlClient (family): $sqlClientApiScanVersion"
+Write-Host "  SqlServer:          $sqlServerApiScanVersion"
+
 Set-PipelineOutputVariable -Name "SqlClientPackageVersion" -Value $sqlClientPackageVersion
 Set-PipelineOutputVariable -Name "SqlServerPackageVersion" -Value $sqlServerPackageVersion
-Set-PipelineOutputVariable -Name "SqlClientApiScanVersion" -Value (Get-MajorMinorVersion -Version $sqlClientPackageVersion)
-Set-PipelineOutputVariable -Name "SqlServerApiScanVersion" -Value (Get-MajorMinorVersion -Version $sqlServerPackageVersion)
+Set-PipelineOutputVariable -Name "SqlClientApiScanVersion" -Value $sqlClientApiScanVersion
+Set-PipelineOutputVariable -Name "SqlServerApiScanVersion" -Value $sqlServerApiScanVersion
 Set-PipelineOutputVariable -Name "VersionRevision" -Value $fileVersionBuildNumber

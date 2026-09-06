@@ -80,6 +80,7 @@ Describe 'compute-versions.ps1 Effective Versions' {
         $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
         $output | Should -Match 'SqlClientApiScanVersion;isOutput=true]7\.1'
         $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]1\.1'
+        $output | Should -Match 'APIScan registration versions:\s+SqlClient \(family\): 7\.1\s+SqlServer:\s+1\.1'
         $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
     }
 
