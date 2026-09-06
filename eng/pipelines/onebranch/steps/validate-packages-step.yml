@@ -1,0 +1,79 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Builds and runs tools/PackageValidator over a directory of produced NuGet packages.
+#
+# The validator is invoked once for the whole directory rather than once per package, because its
+# most valuable checks are cross-package: it confirms that every package in the SqlClient family
+# carries the same version and that their inter-package dependency ranges agree.  Running it per
+# package would silently skip all of those findings.
+#
+# Two invocations are made over the same inputs.  The first writes a machine-readable report and
+# never fails, so the artifact exists even for a failing run.  The second renders the
+# human-readable report and applies the gate, so a failed build shows the findings in its own log.
+
+parameters:
+  # Directory scanned recursively for .nupkg files.  Sibling .snupkg files must sit beside their
+  # .nupkg for symbol matching to resolve, which is how the build jobs publish them.
+  - name: packagesPath
+    type: string
+
+  # Path of the JSON report to write.
+  - name: reportPath
+    type: string
+
+  # Expected versions shared by the whole SqlClient family (Logging, Abstractions, SqlClient,
+  # Azure, AkvProvider), applied as wildcard expectations.  Pointing every package at the same
+  # value is what proves they agree, and also catches every package being consistently wrong.
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlClientFileVersion
+    type: string
+
+  # Expected versions for the separately-versioned Microsoft.SqlServer.Server, applied as a per-id
+  # override of the family wildcard.  Left empty when SqlServer is not built this run: its package
+  # is then absent from the drop, and the validator rejects an expectation with an empty value.
+  - name: sqlServerPackageVersion
+    type: string
+    default: ''
+
+  - name: sqlServerFileVersion
+    type: string
+    default: ''
+
+  # Finding severities and/or categories that fail the build.  Run the validator with --help to
+  # see the full set of categories.
+  - name: failOn
+    type: object
+    default:
+      - error
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'build.proj - BuildPackageValidator'
+    inputs:
+      command: build
+      projects: '$(REPO_ROOT)/build.proj'
+      arguments: >-
+        -t:BuildPackageValidator
+        -p:Configuration=Release
+
+  - task: PowerShell@2
+    displayName: 'Validate NuGet packages'
+    inputs:
+      targetType: filePath
+      pwsh: true
+      filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-packages.ps1
+      arguments: >-
+        -ValidatorPath "$(REPO_ROOT)/tools/PackageValidator/src/bin/Release/net10.0/PackageValidator.dll"
+        -PackagesPath "${{ parameters.packagesPath }}"
+        -ReportPath "${{ parameters.reportPath }}"
+        -SqlClientPackageVersion "${{ parameters.sqlClientPackageVersion }}"
+        -SqlClientFileVersion "${{ parameters.sqlClientFileVersion }}"
+        -SqlServerPackageVersion "${{ parameters.sqlServerPackageVersion }}"
+        -SqlServerFileVersion "${{ parameters.sqlServerFileVersion }}"
+        -FailOn ${{ join(',', parameters.failOn) }}

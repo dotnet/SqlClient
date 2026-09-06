@@ -1,0 +1,189 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Validates every NuGet package produced by this run.
+#
+# All packages are downloaded into a single tree and validated together in one job, rather than one
+# job per package, so that PackageValidator can apply its cross-package rules: the SqlClient family
+# must share a single version, and their inter-package dependency ranges must agree.
+#
+# The job runs on Windows because Authenticode verification has no equivalent on the Linux agents.
+# PackageValidator itself is cross-platform, so only the signature checks are OS-bound.
+
+parameters:
+  # Package Parameters -----------------------------------------------------
+
+  - name: abstractionsArtifactsName
+    type: string
+
+  - name: akvProviderArtifactsName
+    type: string
+
+  - name: azureArtifactsName
+    type: string
+
+  - name: loggingArtifactsName
+    type: string
+
+  - name: sqlClientArtifactsName
+    type: string
+
+  - name: sqlServerArtifactsName
+    type: string
+
+  # Version Parameters -----------------------------------------------------
+  # Pre-computed by the compute-versions stage.  Validation asserts the produced packages carry
+  # exactly these versions, so nothing here is re-derived.
+
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlClientFileVersion
+    type: string
+
+  - name: sqlServerPackageVersion
+    type: string
+
+  - name: sqlServerFileVersion
+    type: string
+
+  # Behaviour Parameters ---------------------------------------------------
+
+  # Whether Microsoft.SqlServer.Server was built this run.  When false there is no SqlServer
+  # artifact to download and no SqlServer package in the drop to validate.
+  - name: buildSqlServer
+    type: boolean
+
+  # True for official builds, which sign their packages and assemblies.  Signature verification is
+  # skipped otherwise, because non-official runs deliberately produce unsigned output.
+  - name: isOfficial
+    type: boolean
+
+jobs:
+  - job: validate_packages
+    displayName: 'Validate Packages'
+
+    pool:
+      type: windows
+
+    variables:
+      - name: ob_outputDirectory
+        value: '$(JOB_OUTPUT)'
+
+      # This job inspects already-built packages and produces no assemblies, so it has nothing for
+      # APIScan or BinSkim to scan and no shipping component to describe in an SBOM.  The build
+      # jobs cover all three for the packages they produce.
+      - name: ob_sdl_apiscan_enabled
+        value: false
+      - name: ob_sdl_binskim_enabled
+        value: false
+      - name: ob_sdl_sbom_enabled
+        value: false
+
+      # Every package artifact is downloaded beneath this root, each into its own subdirectory so
+      # that identically-named files from different packages cannot collide.
+      - name: packagesRoot
+        value: '$(Pipeline.Workspace)/validate-packages'
+
+      - name: extractRoot
+        value: '$(Pipeline.Workspace)/validate-extract'
+
+    steps:
+      - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
+
+      # Only the packages themselves are needed, not the full build output each artifact carries.
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Packages - Logging'
+        inputs:
+          artifactName: '${{ parameters.loggingArtifactsName }}'
+          targetPath: '$(packagesRoot)/Logging'
+          patterns: '**/*.*nupkg'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Packages - Abstractions'
+        inputs:
+          artifactName: '${{ parameters.abstractionsArtifactsName }}'
+          targetPath: '$(packagesRoot)/Abstractions'
+          patterns: '**/*.*nupkg'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Packages - SqlClient'
+        inputs:
+          artifactName: '${{ parameters.sqlClientArtifactsName }}'
+          targetPath: '$(packagesRoot)/SqlClient'
+          patterns: '**/*.*nupkg'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Packages - Azure'
+        inputs:
+          artifactName: '${{ parameters.azureArtifactsName }}'
+          targetPath: '$(packagesRoot)/Azure'
+          patterns: '**/*.*nupkg'
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download Packages - AkvProvider'
+        inputs:
+          artifactName: '${{ parameters.akvProviderArtifactsName }}'
+          targetPath: '$(packagesRoot)/AkvProvider'
+          patterns: '**/*.*nupkg'
+
+      - ${{ if eq(parameters.buildSqlServer, true) }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Download Packages - SqlServer'
+          inputs:
+            artifactName: '${{ parameters.sqlServerArtifactsName }}'
+            targetPath: '$(packagesRoot)/SqlServer'
+            patterns: '**/*.*nupkg'
+
+      # PackageValidator targets net10.0, which the repo's global.json already pins.
+      - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+      - template: /eng/pipelines/onebranch/steps/validate-packages-step.yml@self
+        parameters:
+          packagesPath: '$(packagesRoot)'
+          reportPath: '$(JOB_OUTPUT)/validation/package-validation.json'
+          sqlClientPackageVersion: '${{ parameters.sqlClientPackageVersion }}'
+          sqlClientFileVersion: '${{ parameters.sqlClientFileVersion }}'
+          # Omitted when SqlServer is not built: its package is absent from the drop, and the
+          # validator rejects an expectation with an empty value.
+          ${{ if eq(parameters.buildSqlServer, true) }}:
+            sqlServerPackageVersion: '${{ parameters.sqlServerPackageVersion }}'
+            sqlServerFileVersion: '${{ parameters.sqlServerFileVersion }}'
+          # missing-symbols is a warning and package-unsigned is info, so neither is covered by the
+          # error severity and both must be named explicitly.  Signing only happens on official
+          # runs, so package-unsigned would fire on every non-official build.
+          ${{ if eq(parameters.isOfficial, true) }}:
+            failOn:
+              - error
+              - missing-symbols
+              - package-unsigned
+          ${{ else }}:
+            failOn:
+              - error
+              - missing-symbols
+
+      # Signature verification, official builds only.  PackageValidator reports strong-name and
+      # NuGet signature *presence* cross-platform; these steps additionally verify that the
+      # signatures are trusted, which requires the Windows trust store.
+      - ${{ if eq(parameters.isOfficial, true) }}:
+        - task: PowerShell@2
+          displayName: 'Verify NuGet package signatures'
+          inputs:
+            targetType: filePath
+            pwsh: true
+            filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/verify-package-signatures.ps1
+            arguments: >-
+              -PackagesPath "$(packagesRoot)"
+
+        - task: PowerShell@2
+          displayName: 'Verify assembly Authenticode signatures'
+          inputs:
+            targetType: filePath
+            pwsh: true
+            filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/verify-assembly-signatures.ps1
+            arguments: >-
+              -PackagesPath "$(packagesRoot)"
+              -ExtractPath "$(extractRoot)"

@@ -34,7 +34,7 @@ Defined in `stages/build-stages.yml`. Four build stages plus validation, ordered
 - **`build_abstractions`** (Stage 2) — Abstractions; `dependsOn: build_independent`; downloads Logging artifact
 - **`build_dependent`** (Stage 3) — SqlClient and Extensions.Azure in parallel; `dependsOn: build_abstractions`; downloads Abstractions + Logging artifacts
 - **`build_addons`** (Stage 4) — AKV Provider; `dependsOn: build_dependent`; downloads SqlClient + Abstractions + Logging artifacts
-- **`sqlclient_package_validation`** — Validates signed SqlClient package; `dependsOn: build_dependent`; runs in parallel with Stage 4
+- **`package_validation`** (Stage 5) — Validates every package produced by the run; `dependsOn` all four build stages plus `compute_versions`
 
 Each build job copies PDB files into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published pipeline artifact alongside the NuGet packages in `$(JOB_OUTPUT)/packages/`.
 
@@ -46,7 +46,7 @@ Stage conditional rules:
 ## Job Templates
 
 - **`build-buildproj-job.yml`** — Shared build.proj-driven package job used for all shipped packages. Flow: build via `build.proj` → optional ESRP DLL signing → pack via `build.proj` → optional ESRP NuGet signing → copy outputs for APIScan/artifacts
-- **`validate-signed-package-job.yml`** — Validates signed MDS package (signature, strong names, folder structure, target frameworks)
+- **`validate-packages-job.yml`** — Validates every package produced by the run. Downloads all package artifacts into one tree and validates them together, so `tools/PackageValidator` can apply its cross-package rules (the SqlClient family must share one version, and inter-package dependency ranges must agree); validating per package would silently skip those findings. Runs on Windows because Authenticode verification has no Linux equivalent
 - **`publish-nuget-package-job.yml`** — Reusable release job using OneBranch `templateContext.type: releaseJob` with `inputs` for artifact download; pushes via `NuGetCommand@2`
 - **`publish-symbols-job.yml`** — Reusable symbols job: downloads a build artifact, locates PDBs under `symbols/`, and invokes `publish-symbols-step.yml`
 
@@ -55,6 +55,19 @@ When adding a new package to the OneBranch flow:
 - Add or update the corresponding build/pack targets in `build.proj`
 - Add version variables to `variables/common-variables.yml`
 - Add artifact name variables to `variables/onebranch-variables.yml`
+
+## Package Validation Stage
+
+- Defined in `stages/build-stages.yml`; produces stage `package_validation`
+- Consumes the package and file versions published by `compute_versions` and asserts the produced packages carry exactly those values, so nothing is re-derived
+- All packages are validated together in one job so `tools/PackageValidator` can apply cross-package rules; the SqlServer artifact and its expectations are conditional on `buildSqlServer`
+- Expectations use the validator's `[id=]value` form: the SqlClient family version is applied as a wildcard (proving the family agrees, and catching the case where all packages are consistently wrong), with `Microsoft.SqlServer.Server` as a per-id override
+- When SqlServer is not built its expectations are **omitted entirely** rather than passed empty — the validator rejects an expectation with an empty value
+- Gate categories are derived from `isOfficial`: `error` and `missing-symbols` always, plus `package-unsigned` on official runs only. `missing-symbols` is a warning and `package-unsigned` is info, so neither is covered by the `error` severity and both must be named explicitly; non-official runs are deliberately unsigned, so gating them on `package-unsigned` would always fail
+- The validator runs twice: once with `--json` and no gate so the report exists even for a failing run, then once human-readable with the gate so failures appear in the job log
+- Signature verification (`dotnet nuget verify --all`, Authenticode) runs on official builds only, and verifies that signatures are *trusted* — PackageValidator reports only their presence, from metadata
+- The release stage `dependsOn: package_validation`, so a package that fails validation is never published
+- Step and job logic lives in `scripts/validate-packages.ps1`, `scripts/verify-package-signatures.ps1`, and `scripts/verify-assembly-signatures.ps1`, each with Pester tests under `scripts/tests/`
 
 ## Symbols Publishing Stage
 
