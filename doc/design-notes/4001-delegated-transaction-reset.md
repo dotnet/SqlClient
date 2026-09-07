@@ -306,9 +306,9 @@ mutation-tested:
 
 | Condition compiled into the helper | Bug it contains | New tests |
 |---|---|---|
-| `hasEnlistedTransaction` (#3019) | **#4001** | ❌ 2 failed |
-| `isTransactionRoot` (pre-#3019) | **#2970** | ❌ 2 failed |
-| The shipped condition | none | ✅ 11 passed |
+| `hasEnlistedTransaction` (#3019) | **#4001** | ❌ 1 failed |
+| `isTransactionRoot` (pre-#3019) | **#2970** | ❌ 1 failed |
+| The shipped condition | none | ✅ 8 passed |
 
 This satisfies "fails before the change, passes after" for **both** regressions, and
 does so deterministically and without a server.

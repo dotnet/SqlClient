@@ -43,19 +43,20 @@ public class SqlConnectionInternalResetTransactionTests
     /// </list>
     /// </summary>
     [Theory]
-    // Not pooled: never preserve, regardless of any other state.
+    // An unpooled connection is destroyed rather than recycled, so there is no subsequent use to
+    // protect and its transaction must not be preserved, regardless of any other state.
     [InlineData(false, false, false, false)]
     [InlineData(false, false, true, false)]
     [InlineData(false, true, false, false)]
     [InlineData(false, true, true, false)]
     // Pooled, no transaction of any kind: nothing to preserve.
     [InlineData(true, false, false, false)]
-    // Pooled connection enlisted in someone else's transaction (not the root). This is the
-    // issue #2970 case.
+    // Regression guard for #2970: an implementation keyed only on IsTransactionRoot returns false
+    // for a pooled connection enlisted in a transaction it does not own.
     [InlineData(true, false, true, true)]
-    // Pooled delegated transaction root with no EnlistedTransaction. This is the transient
-    // half-state behind issue #4001: DetachCurrentTransactionIfEnded has already cleared
-    // EnlistedTransaction while the delegated transaction still reports itself as active.
+    // Regression guard for #4001: an implementation keyed only on EnlistedTransaction returns
+    // false in this transient half-state, after the enlistment is detached but while the delegated
+    // transaction still reports itself as active.
     [InlineData(true, true, false, true)]
     // Pooled connection that is both a delegated root and has an EnlistedTransaction. This is
     // the common state immediately after enlistment, since enlistment sets EnlistedTransaction
@@ -77,49 +78,4 @@ public class SqlConnectionInternalResetTransactionTests
         Assert.Equal(expected, actual);
     }
 
-    /// <summary>
-    /// Regression guard for https://github.com/dotnet/SqlClient/issues/4001.
-    ///
-    /// A pooled delegated transaction root must preserve its transaction even though
-    /// <c>EnlistedTransaction</c> has already been detached. An implementation that keys only off
-    /// <c>EnlistedTransaction</c> returns <see langword="false"/> here and corrupts the pooled
-    /// connection.
-    /// </summary>
-    [Fact]
-    public void ShouldPreserveTransactionOnReset_DelegatedRootWithoutEnlistedTransaction_IsPreserved()
-    {
-        Assert.True(SqlConnectionInternal.ShouldPreserveTransactionOnReset(
-            isPooled: true,
-            isTransactionRoot: true,
-            hasEnlistedTransaction: false));
-    }
-
-    /// <summary>
-    /// Regression guard for https://github.com/dotnet/SqlClient/issues/2970.
-    ///
-    /// A pooled connection that enlisted in a transaction it does not own must preserve that
-    /// transaction. An implementation that keys only off <c>IsTransactionRoot</c> returns
-    /// <see langword="false"/> here, and the connection silently continues in auto-commit mode.
-    /// </summary>
-    [Fact]
-    public void ShouldPreserveTransactionOnReset_EnlistedNonRoot_IsPreserved()
-    {
-        Assert.True(SqlConnectionInternal.ShouldPreserveTransactionOnReset(
-            isPooled: true,
-            isTransactionRoot: false,
-            hasEnlistedTransaction: true));
-    }
-
-    /// <summary>
-    /// An unpooled connection is destroyed rather than recycled, so there is no subsequent use to
-    /// protect and the transaction must not be preserved.
-    /// </summary>
-    [Fact]
-    public void ShouldPreserveTransactionOnReset_NotPooled_IsNotPreserved()
-    {
-        Assert.False(SqlConnectionInternal.ShouldPreserveTransactionOnReset(
-            isPooled: false,
-            isTransactionRoot: true,
-            hasEnlistedTransaction: true));
-    }
 }
