@@ -4,8 +4,9 @@
 #>
 
 BeforeAll {
+    $script:repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..' '..' '..')
     $scriptPath = Join-Path $PSScriptRoot '..' 'compute-versions.ps1'
-    $buildProjectPath = Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..' '..' '..' 'build.proj')
+    $buildProjectPath = Resolve-Path (Join-Path $script:repoRoot 'build.proj')
     $projectPath = Join-Path $TestDrive 'build.proj'
     Set-Content -LiteralPath $projectPath -Value '<Project />'
 
@@ -96,6 +97,35 @@ BeforeAll {
         }
 
         $output
+    }
+
+    # Drives PrepareForBuild rather than the validation target directly, because the hook point is
+    # itself the thing under test: a check wired after the compile would pass a direct invocation.
+    # An explicit target framework is required, as PrepareForBuild is not valid on the outer
+    # cross-targeting build.
+    function Invoke-VersionValidation {
+        param(
+            [Parameter(Mandatory)]
+            [string]$ProjectPath,
+
+            [Parameter(Mandatory)]
+            [string]$TargetFramework,
+
+            [string[]]$Properties = @()
+        )
+
+        $arguments = @(
+            'build'
+            $ProjectPath
+            '-f'
+            $TargetFramework
+            '-t:PrepareForBuild'
+            '-v:m'
+            '-nologo'
+        ) + $Properties
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
     }
 }
 
@@ -199,6 +229,67 @@ Describe 'GetVersions target package composition' {
 
         $output | Should -Match "PackageVersion:\s+$([regex]::Escape($ExpectedPackageVersion))(\r?\n|$)"
         $output | Should -Match "FileVersion:\s+$([regex]::Escape($ExpectedFileVersion))(\r?\n|$)"
+    }
+}
+
+Describe 'File version component validation' {
+    It 'rejects a four-part <Property>' -ForEach @(
+        @{
+            Product = 'SqlClient'; Property = 'SqlClientPackageVersion'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            Properties = @('-p:SqlClientPackageVersion=7.1.0.123')
+            ExpectedFileVersion = '7.1.0.123.0'
+        }
+        @{
+            Product = 'SqlClient'; Property = 'SqlClientNextVersion'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            Properties = @('-p:SqlClientNextVersion=7.1.0.123', '-p:BuildNumber=1234')
+            ExpectedFileVersion = '7.1.0.123.1234'
+        }
+        @{
+            Product = 'SqlServer'; Property = 'SqlServerPackageVersion'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            Properties = @('-p:SqlServerPackageVersion=1.1.0.123')
+            ExpectedFileVersion = '1.1.0.123.0'
+        }
+        @{
+            Product = 'SqlServer'; Property = 'SqlServerNextVersion'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            Properties = @('-p:SqlServerNextVersion=1.1.0.123', '-p:BuildNumber=1234')
+            ExpectedFileVersion = '1.1.0.123.1234'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties $Properties
+
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$ExpectedFileVersion' has more than four components"))
+    }
+
+    It 'accepts the declared <Product> version' -ForEach @(
+        @{
+            Product = 'SqlClient'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+        }
+        @{
+            Product = 'SqlServer'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties @("-p:BuildNumber=$script:testBuildNumber")
+
+        $result.ExitCode | Should -Be 0
     }
 }
 
