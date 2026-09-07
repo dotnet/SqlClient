@@ -5,22 +5,23 @@
 using System;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
-    /// Verifies that an elevated session isolation level does not survive a trip through the
-    /// connection pool.
+    /// Verifies the opt-in behavior that prevents an elevated session isolation level from
+    /// surviving a trip through the connection pool.
     /// </summary>
     /// <remarks>
     /// <para>
     /// sp_reset_connection does not reset the session isolation level, so before this fix a
     /// connection returned to the pool after a Serializable SqlTransaction or TransactionScope kept
     /// that level, and the next caller to be handed the same physical connection silently inherited
-    /// it. The driver now resets the session to READ COMMITTED when the connection is taken back out
-    /// of the pool.
+    /// it. When <c>EnableTransactionIsolationLevelReset</c> is enabled, the driver resets the
+    /// session to READ COMMITTED when the connection is taken back out of the pool.
     /// </para>
     /// <para>
     /// Every test pins MaxPoolSize to 1 and asserts on @@SPID so that pool reuse is proven rather
@@ -93,13 +94,11 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// pool handed back the same physical connection.
         /// </summary>
         /// <param name="connection">An open connection.</param>
-        /// <param name="async">When true, uses ExecuteScalarAsync; otherwise uses ExecuteScalar.</param>
         /// <returns>The value of @@SPID for the current session.</returns>
-        private static async Task<int> GetSpid(SqlConnection connection, bool async)
+        private static int GetSpid(SqlConnection connection)
         {
             using SqlCommand command = new SqlCommand("SELECT @@SPID;", connection);
-            object spid = async ? await command.ExecuteScalarAsync() : command.ExecuteScalar();
-            return Convert.ToInt32(spid);
+            return Convert.ToInt32(command.ExecuteScalar());
         }
 
         /// <summary>
@@ -107,51 +106,58 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// sys.dm_exec_sessions rather than by driver state, so the assertion reflects the server.
         /// </summary>
         /// <param name="connection">An open connection.</param>
-        /// <param name="async">When true, uses ExecuteScalarAsync; otherwise uses ExecuteScalar.</param>
         /// <param name="transaction">
         /// Transaction to run the query under. Required when the connection has an active
         /// SqlTransaction, because SqlCommand rejects a command that omits it.
         /// </param>
         /// <returns>The session isolation level name, for example "ReadCommitted".</returns>
-        private static async Task<string> GetIso(
-            SqlConnection connection,
-            bool async,
-            SqlTransaction transaction = null)
+        private static string GetIso(SqlConnection connection, SqlTransaction transaction = null)
         {
             using SqlCommand command = new SqlCommand(GetIsoSql, connection, transaction);
-            object level = async ? await command.ExecuteScalarAsync() : command.ExecuteScalar();
-            return (string)level;
+            return (string)command.ExecuteScalar();
         }
 
         /// <summary>
-        /// Verifies that a Serializable SqlTransaction does not leave the session at Serializable
-        /// once the connection has been returned to the pool and handed out again.
+        /// Verifies that a non-default SqlTransaction isolation level does not survive after the
+        /// connection has been returned to the pool and handed out again.
         /// </summary>
         /// <param name="async">When true, exercises the asynchronous API surface.</param>
+        /// <param name="isolationLevel">The non-default isolation level applied to the session.</param>
+        /// <param name="expectedName">The server-reported name of the applied isolation level.</param>
         [ConditionalTheory(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureSynapse))]
-        [InlineData(false)]
-        [InlineData(true)]
-        public static async Task SqlTransaction_SerializableDoesNotLeakAcrossPool(bool async)
+        [InlineData(false, IsolationLevel.ReadUncommitted, "ReadUncommitted")]
+        [InlineData(true, IsolationLevel.ReadUncommitted, "ReadUncommitted")]
+        [InlineData(false, IsolationLevel.RepeatableRead, "RepeatableRead")]
+        [InlineData(true, IsolationLevel.RepeatableRead, "RepeatableRead")]
+        [InlineData(false, IsolationLevel.Serializable, "Serializable")]
+        [InlineData(true, IsolationLevel.Serializable, "Serializable")]
+        public static async Task SqlTransaction_NonDefaultIsolationLevelDoesNotLeakAcrossPool(
+            bool async,
+            IsolationLevel isolationLevel,
+            string expectedName)
         {
-            string cs = BuildPooledConnString($"IsoLeakTest-SqlTx-{async}");
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableTransactionIsolationLevelReset = true;
+
+            string cs = BuildPooledConnString($"IsoLeakTest-SqlTx-{async}-{isolationLevel}");
             int spid1;
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                spid1 = await GetSpid(c, async);
-                using SqlTransaction tx = c.BeginTransaction(IsolationLevel.Serializable);
-                Assert.Equal("Serializable", await GetIso(c, async, tx));
+                spid1 = GetSpid(c);
+                using SqlTransaction tx = c.BeginTransaction(isolationLevel);
+                Assert.Equal(expectedName, GetIso(c, tx));
                 tx.Rollback();
             }
 
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                Assert.Equal(spid1, await GetSpid(c, async)); // pool reuse
-                Assert.Equal("ReadCommitted", await GetIso(c, async));
+                Assert.Equal(spid1, GetSpid(c)); // pool reuse
+                Assert.Equal("ReadCommitted", GetIso(c));
             }
         }
 
@@ -168,6 +174,9 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true)]
         public static async Task TransactionScope_SerializableDoesNotLeakAcrossPool(bool async)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableTransactionIsolationLevelReset = true;
+
             string cs = BuildPooledConnString($"IsoLeakTest-TxScope-{async}");
             int spid1;
             using (var scope = new TransactionScope(
@@ -177,16 +186,16 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                spid1 = await GetSpid(c, async);
-                Assert.Equal("Serializable", await GetIso(c, async));
+                spid1 = GetSpid(c);
+                Assert.Equal("Serializable", GetIso(c));
                 scope.Complete();
             }
 
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                Assert.Equal(spid1, await GetSpid(c, async));
-                Assert.Equal("ReadCommitted", await GetIso(c, async));
+                Assert.Equal(spid1, GetSpid(c));
+                Assert.Equal("ReadCommitted", GetIso(c));
             }
         }
 
@@ -217,6 +226,9 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true)]
         public static async Task TransactionScope_SecondConnectionInSameScopeKeepsIsolationLevel(bool async)
         {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableTransactionIsolationLevelReset = true;
+
             string cs = BuildPooledConnString($"IsoLeakTest-TxScopeReuse-{async}");
             try
             {
@@ -229,19 +241,63 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     using (SqlConnection c = new SqlConnection(cs))
                     {
                         await OpenConnection(c, async);
-                        spid1 = await GetSpid(c, async);
-                        Assert.Equal("Serializable", await GetIso(c, async));
+                        spid1 = GetSpid(c);
+                        Assert.Equal("Serializable", GetIso(c));
                     }
 
                     // Same scope, connection returned to the transacted pool and vended again.
                     using (SqlConnection c = new SqlConnection(cs))
                     {
                         await OpenConnection(c, async);
-                        Assert.Equal(spid1, await GetSpid(c, async));
-                        Assert.Equal("Serializable", await GetIso(c, async));
+                        Assert.Equal(spid1, GetSpid(c));
+                        Assert.Equal("Serializable", GetIso(c));
                     }
 
                     scope.Complete();
+                }
+            }
+            finally
+            {
+                SqlConnection.ClearAllPools();
+            }
+        }
+
+        /// <summary>
+        /// Verifies that the default-off switch preserves the shipped behavior for compatibility:
+        /// a changed isolation level remains on a pooled session until the reset is explicitly
+        /// enabled.
+        /// </summary>
+        /// <param name="async">When true, exercises the asynchronous API surface.</param>
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task DefaultBehavior_PreservesIsolationLevelAcrossPool(bool async)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableTransactionIsolationLevelReset = false;
+
+            string cs = BuildPooledConnString($"IsoLeakTest-Default-{async}");
+            try
+            {
+                int spid1;
+                using (SqlConnection c = new SqlConnection(cs))
+                {
+                    await OpenConnection(c, async);
+                    spid1 = GetSpid(c);
+                    using SqlTransaction tx = c.BeginTransaction(IsolationLevel.Serializable);
+                    Assert.Equal("Serializable", GetIso(c, tx));
+                    tx.Rollback();
+                }
+
+                using (SqlConnection c = new SqlConnection(cs))
+                {
+                    await OpenConnection(c, async);
+                    Assert.Equal(spid1, GetSpid(c));
+                    Assert.Equal("Serializable", GetIso(c));
                 }
             }
             finally

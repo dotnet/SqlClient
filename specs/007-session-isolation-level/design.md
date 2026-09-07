@@ -5,8 +5,7 @@
 
 This is a design-rationale note, not a feature specification. It explains why two
 superficially identical bugs — both described as "TransactionScope + connection pooling +
-wrong isolation level" — are in fact **opposite failures** that require two separate,
-independently switchable fixes.
+wrong isolation level" — are in fact **opposite failures** that require two separate fixes.
 
 ---
 
@@ -69,7 +68,8 @@ since 2017 with production impact.
 | Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
 | Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is not enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** stale session state on the way out of the pool |
-| Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
+| App context switch | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` (default `false`; the fix is initially opt-in) |
+| Error handling | Synapse dedicated pools are skipped up front; any reset failure dooms the connection so an unknown isolation level is never handed to the caller |
 | Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
 
 ---
@@ -124,7 +124,6 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Code path | `SqlConnectionInternal.Enlist()` — the **re-enlistment / checkout** path (the `else if` on the equality short-circuit) |
 | Mechanism | When a reset is pending, re-issue `SET TRANSACTION ISOLATION LEVEL <ambient>` mapped from `Transaction.IsolationLevel` |
 | Direction | **Re-assert** session state on the way back out of the pool |
-| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyTransactionScopeIsolationBehavior` |
 | Special case | `Snapshot` is intentionally **not** re-asserted — switching to `SNAPSHOT` while a transaction is open causes SQL Server to fail and roll back the transaction, and the delegated transaction was already begun under snapshot isolation by the TM request |
 | Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends |
 
@@ -143,6 +142,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Code path | `Activate()` (pool **checkout**, not enlisted) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
+| Activation | Opt-in via `EnableTransactionIsolationLevelReset` | Independent of the #96 switch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
 | `Snapshot` handling | Reset to `READ COMMITTED` like any other level | Deliberately **skipped** |
 
@@ -171,25 +171,23 @@ place:
 
 Both now sit on the checkout side of the pooling lifecycle, but they are distinguished by
 enlistment state and require different values written, different trigger conditions, and
-different `Snapshot` semantics. Merging them would also mean a single app context switch
-governing two unrelated behavior changes, preventing an application from opting into one
-without the other.
+different `Snapshot` semantics. The #96 reset is independently gated so applications can opt
+into that behavior without changing the #146 path.
 
 ---
 
 ## 6. Why the two PRs should still be reviewed together
 
-- They touch the same file (`SqlConnectionInternal.cs`), use the same helper pattern, add tests
-  to the same folder (`tests/ManualTests/SQL/TransactionTest/`), and both extend
-  `LocalAppContextSwitches` and its test helper — so they **will conflict textually** and should
-  be sequenced.
+- They touch the same file (`SqlConnectionInternal.cs`) and add tests to the same folder
+  (`tests/ManualTests/SQL/TransactionTest/`), so they **will conflict textually** and should be
+  sequenced.
 - Both rest on the same `sp_reset_connection` premise, which a reviewer need only validate once.
 - With both merged the end-to-end behavior becomes coherent:
   - inside a live scope, the ambient level is honored on every open (#4335);
   - once the transaction ends and the connection is vended again, the stale level is scrubbed
     (#4330).
-- Two separate switches is the correct granularity: an application can opt out of the extra
-  round trip introduced by either PR while keeping the other's fix.
+- The #96 switch controls only its stale-session scrub; opting in does not alter the #146
+  re-enlistment behavior.
 
 ### A note on cost
 
