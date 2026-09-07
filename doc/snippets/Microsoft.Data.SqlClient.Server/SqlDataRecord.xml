@@ -6,7 +6,7 @@
       </summary>
       <remarks>
         <para>
-          This class describes a single row of a table-valued parameter. Construct one from an array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects which describe the column metadata of the record, populate it with the <b>Set&lt;Type&gt;</b> methods and assign it (or an <c>IEnumerable&lt;SqlDataRecord&gt;</c> for multiple rows) to <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
+          This class describes a single row of a table-valued parameter. Construct one from an array of <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> objects which describe the column metadata of the record, populate it with the <b>Set&lt;Type&gt;</b> methods, include it in an <c>IEnumerable&lt;SqlDataRecord&gt;</c> and assign that <c>IEnumerable&lt;SqlDataRecord&gt;</c> to <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" />.
         </para>
         <para>
           For best performance when sending multiple rows, re-use a single <see cref="T:Microsoft.Data.SqlClient.Server.SqlDataRecord" /> instance across an <c>IEnumerable&lt;SqlDataRecord&gt;</c> iterator: set new column values and <see langword="yield return" /> the same instance for each row. <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> will read each record before advancing to the next.
