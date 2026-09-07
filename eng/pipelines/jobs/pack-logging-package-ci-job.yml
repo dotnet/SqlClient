@@ -53,7 +53,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -63,7 +62,6 @@ parameters:
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 jobs:
 
@@ -110,17 +108,11 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
-      # Download the assembly signing key for internal Package-mode builds.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
-        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
+      # Create the NuGet packages.  Internal Package-mode builds strong-name sign the assemblies
+      # with the driver key.
+      - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
+        - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
 
-      # Create the NuGet packages.
-      #
-      # BuildNumber supplies the revision component of FileVersion
-      # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
-      # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
-      # inconsistent with the MDS/AKV packages that pass it.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
           inputs:
@@ -129,7 +121,10 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber);SigningKeyPath=$(driverKeyFile.secureFilePath)
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber);SigningKeyPath="$(driverKeyFile.secureFilePath)"
 
       - ${{ else }}:
         - task: DotNetCoreCLI@2
@@ -140,6 +135,9 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
             buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.

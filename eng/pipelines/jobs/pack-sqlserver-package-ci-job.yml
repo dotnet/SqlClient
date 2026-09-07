@@ -109,7 +109,7 @@ jobs:
 
       # Create the NuGet packages.  Internal Package-mode builds strong-name sign the assemblies
       # with the driver key.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+      - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
         - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
 
         - task: DotNetCoreCLI@2
