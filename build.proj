@@ -510,7 +510,7 @@
        Usage:
          dotnet build build.proj -t:GetVersionsSqlClient -v:m -nologo -p:BuildNumber=1234
          # stdout contains:
-         #   PackageVersion: 7.1.0-preview1
+         #   PackageVersion: 7.1.0-preview1.1234
          #   FileVersion: 7.1.0.1234
   -->
 
