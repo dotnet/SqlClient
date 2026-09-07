@@ -69,6 +69,13 @@ jobs:
     pool:
       type: windows
 
+    # 1ES auto-injects Roslyn into any job holding a DotNetCoreCLI build task, which here is only
+    # the PackageValidator tool build -- never shipped, so out of SDL scope.
+    templateContext:
+      sdl:
+        roslyn:
+          enabled: false
+
     variables:
       - name: ob_outputDirectory
         value: '$(JOB_OUTPUT)'
