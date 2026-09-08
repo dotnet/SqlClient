@@ -4444,7 +4444,7 @@
     <value>A verificação da assinatura do relatório do enclave falhou. A assinatura do relatório não corresponde à assinatura calculada usando o certificado raiz HGS. Verifique o mapeamento DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>O atestado do enclave falhou porque o relatório assinado do enclave não se vinculou à chave pública do enclave usada para estabelecer a sessão. A chave pública do enclave deve corresponder ao valor registrado no relatório assinado - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes. Se correto, entre em contato com os Serviços de Atendimento ao Cliente.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>O relatório de enclave recebido do SQL Server não está no formato correto. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
@@ -4664,6 +4664,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>O certificado fornecido pelo servidor não corresponde ao certificado fornecido pela opção ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>O arquivo de certificado especificado pela opção ''ServerCertificate'' não pôde ser carregado ou analisado: ''{0}''.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>A opção ''ServerCertificate'' foi especificada, mas o servidor não apresentou um certificado que pudesse ser comparado com ele.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativa inválida de obter JsonDocument na coluna ''{0}''. Só há suporte para JsonDocument em colunas do tipo json.</value>

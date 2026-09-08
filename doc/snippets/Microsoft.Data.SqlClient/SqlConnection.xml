@@ -262,10 +262,11 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         </para>
         <para>
           This property is mutually exclusive with the
-          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />,
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" />,
           and
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
-          properties, among others. Setting this property when
+          properties. Setting this property when
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
           is already set throws
           <see cref="T:System.InvalidOperationException" />, because SSPI is an
