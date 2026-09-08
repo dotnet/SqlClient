@@ -45,6 +45,8 @@
       - VersionRevision
       - SqlClientPackageVersion
       - SqlServerPackageVersion
+      - SqlClientApiScanVersion
+      - SqlServerApiScanVersion
 
 .PARAMETER ProjectPath
     Absolute or relative path to the repository build.proj file.
@@ -275,6 +277,28 @@ function Add-VersionBuildNumber {
 
 <#
 .SYNOPSIS
+    Extracts the major.minor components from a package version.
+
+.PARAMETER Version
+    Package version beginning with a numeric major.minor pair.
+
+.OUTPUTS
+    The major.minor version pair.
+#>
+function Get-MajorMinorVersion {
+    param(
+        [string]$Version
+    )
+
+    if ($Version -notmatch "^(\d+)\.(\d+)(?:\.|-|$)") {
+        throw "Unable to derive a major.minor version from package version '$Version'."
+    }
+
+    return "$($Matches[1]).$($Matches[2])"
+}
+
+<#
+.SYNOPSIS
     Emits an Azure DevOps job output variable for consumption by downstream stages.
 
 .PARAMETER Name
@@ -349,6 +373,15 @@ Write-Host "Effective versions:"
 Write-Host "  SqlClient (family): $sqlClientPackageVersion"
 Write-Host "  SqlServer:          $sqlServerPackageVersion"
 
+$sqlClientApiScanVersion = Get-MajorMinorVersion -Version $sqlClientPackageVersion
+$sqlServerApiScanVersion = Get-MajorMinorVersion -Version $sqlServerPackageVersion
+
+Write-Host "APIScan registration versions:"
+Write-Host "  SqlClient (family): $sqlClientApiScanVersion"
+Write-Host "  SqlServer:          $sqlServerApiScanVersion"
+
 Set-PipelineOutputVariable -Name "SqlClientPackageVersion" -Value $sqlClientPackageVersion
 Set-PipelineOutputVariable -Name "SqlServerPackageVersion" -Value $sqlServerPackageVersion
+Set-PipelineOutputVariable -Name "SqlClientApiScanVersion" -Value $sqlClientApiScanVersion
+Set-PipelineOutputVariable -Name "SqlServerApiScanVersion" -Value $sqlServerApiScanVersion
 Set-PipelineOutputVariable -Name "VersionRevision" -Value $fileVersionBuildNumber

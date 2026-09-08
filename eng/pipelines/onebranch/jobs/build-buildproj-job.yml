@@ -17,6 +17,12 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
+  # The APIScan registration version for the package being built. This is the major.minor value
+  # derived from the canonical package version by the compute_versions stage. The package's
+  # name/version pair must already be registered with APIScan before the build runs.
+  - name: apiScanSoftwareVersion
+    type: string
+
   # True to enable ESRP malware scanning and code signing steps, which should not be run on
   # non-official pipelines as they access production resources. If true, Signing* parameters must
   # be provided.
@@ -112,9 +118,13 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
-      # APIScan per-job configuration for the DLL and PDB folders.
+      # APIScan per-job configuration.  This job template is the single place where the APIScan
+      # software name and version are set; the pipelines' globalSdl blocks deliberately leave them
+      # unset so that every scan is attributed to the package it actually covers.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwareName: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
