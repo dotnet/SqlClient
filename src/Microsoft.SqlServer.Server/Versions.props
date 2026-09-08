@@ -102,10 +102,10 @@
     <SqlServerAssemblyVersion>$(SqlServerFileVersion.Split('.')[0]).0.0.0</SqlServerAssemblyVersion>
   </PropertyGroup>
 
-  <!-- Any version input with a four-part core pushes this past four components, failing later as CS7035. -->
+  <!-- FileVersionSqlServer overrides everything computed above, so validate the final value. -->
   <Target Name="ValidateSqlServerFileVersion" BeforeTargets="PrepareForBuild">
     <Error
-      Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlServerFileVersion)', '^\d+\.\d+\.\d+\.\d+\.'))"
-      Text="SqlServerFileVersion '$(SqlServerFileVersion)' has more than four components. SqlServerPackageVersion ('$(SqlServerPackageVersion)') and SqlServerNextVersion ('$(SqlServerNextVersion)') must use a three-part core (major.minor.patch)." />
+      Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlServerFileVersion)', '^\d+\.\d+\.\d+\.\d+$'))"
+      Text="SqlServerFileVersion '$(SqlServerFileVersion)' is not a four-part numeric version (major.minor.build.revision). Check FileVersionSqlServer, SqlServerPackageVersion ('$(SqlServerPackageVersion)') and SqlServerNextVersion ('$(SqlServerNextVersion)')." />
   </Target>
 </Project>

@@ -127,6 +127,26 @@ BeforeAll {
         $output = & dotnet @arguments 2>&1 | Out-String
         [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
     }
+
+    function Invoke-BuildProjTarget {
+        param(
+            [Parameter(Mandatory)]
+            [string]$Target,
+
+            [string[]]$Properties = @()
+        )
+
+        $arguments = @(
+            'build'
+            $buildProjectPath
+            "-t:$Target"
+            '-v:m'
+            '-nologo'
+        ) + $Properties
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+    }
 }
 
 AfterAll {
@@ -269,7 +289,42 @@ Describe 'File version component validation' {
             -Properties $Properties
 
         $result.ExitCode | Should -Not -Be 0
-        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$ExpectedFileVersion' has more than four components"))
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$ExpectedFileVersion' is not a four-part numeric version"))
+    }
+
+    It 'rejects an externally supplied <Description> file version for <Product>' -ForEach @(
+        @{
+            Product = 'SqlClient'; Description = 'short'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            FileVersion = '1.2'
+        }
+        @{
+            Product = 'SqlClient'; Description = 'non-numeric'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            FileVersion = 'abc'
+        }
+        @{
+            Product = 'SqlServer'; Description = 'short'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            FileVersion = '1.2'
+        }
+        @{
+            Product = 'SqlServer'; Description = 'non-numeric'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            FileVersion = 'abc'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties @("-p:${Product}FileVersion=$FileVersion")
+
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$FileVersion' is not a four-part numeric version"))
     }
 
     It 'accepts the declared <Product> version' -ForEach @(
@@ -290,6 +345,20 @@ Describe 'File version component validation' {
             -Properties @("-p:BuildNumber=$script:testBuildNumber")
 
         $result.ExitCode | Should -Be 0
+    }
+}
+
+Describe 'build.proj file version wrappers' {
+    # A malformed value is used so the leaf project reports it by name, which proves the wrapper
+    # forwarded it verbatim without paying for a full compile.
+    It 'forwards <Wrapper> through <Target>' -ForEach @(
+        @{ Product = 'SqlClient'; Wrapper = 'FileVersionSqlClient'; Target = 'BuildLogging' }
+        @{ Product = 'SqlServer'; Wrapper = 'FileVersionSqlServer'; Target = 'BuildSqlServer' }
+    ) {
+        $result = Invoke-BuildProjTarget -Target $Target -Properties @("-p:$Wrapper=1.2")
+
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '1.2' is not a four-part numeric version"))
     }
 }
 

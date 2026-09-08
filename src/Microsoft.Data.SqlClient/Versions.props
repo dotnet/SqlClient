@@ -106,10 +106,10 @@
     <SqlClientAssemblyVersion>$(SqlClientFileVersion.Split('.')[0]).0.0.0</SqlClientAssemblyVersion>
   </PropertyGroup>
 
-  <!-- Any version input with a four-part core pushes this past four components, failing later as CS7035. -->
+  <!-- FileVersionSqlClient overrides everything computed above, so validate the final value. -->
   <Target Name="ValidateSqlClientFileVersion" BeforeTargets="PrepareForBuild">
     <Error
-      Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlClientFileVersion)', '^\d+\.\d+\.\d+\.\d+\.'))"
-      Text="SqlClientFileVersion '$(SqlClientFileVersion)' has more than four components. SqlClientPackageVersion ('$(SqlClientPackageVersion)') and SqlClientNextVersion ('$(SqlClientNextVersion)') must use a three-part core (major.minor.patch)." />
+      Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlClientFileVersion)', '^\d+\.\d+\.\d+\.\d+$'))"
+      Text="SqlClientFileVersion '$(SqlClientFileVersion)' is not a four-part numeric version (major.minor.build.revision). Check FileVersionSqlClient, SqlClientPackageVersion ('$(SqlClientPackageVersion)') and SqlClientNextVersion ('$(SqlClientNextVersion)')." />
   </Target>
 </Project>
