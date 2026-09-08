@@ -41,16 +41,19 @@ BeforeAll {
     }
 
     # Captures the arguments of each invocation so tests can assert on what the validator was
-    # asked to do, and controls the exit code of the gating (second) run.
+    # asked to do, and controls the exit code of each run.
     function Set-DotnetMock {
-        param([int]$GateExitCode = 0)
+        param(
+            [int]$GateExitCode = 0,
+            [int]$ReportExitCode = 0
+        )
 
         $global:validatePackagesInvocations = @()
         Mock -CommandName 'dotnet' -MockWith {
             $global:validatePackagesInvocations += , @($args)
             # The first run carries --json and never gates; the second applies the gate.
             if ($args -contains '--json') {
-                $global:LASTEXITCODE = 0
+                $global:LASTEXITCODE = $ReportExitCode
                 return '{ "packages": [], "summary": {} }'
             }
 
@@ -102,6 +105,16 @@ Describe 'validate-packages.ps1 Expectations' {
         $joined | Should -Match '--fail-on package-unsigned'
     }
 
+    It 'splits a single comma-separated gate token, as an Azure Pipelines argument line supplies it' {
+        Invoke-ValidatePackages -FailOn 'error, missing-symbols' | Out-Null
+
+        $gateArgs = $global:validatePackagesInvocations | Where-Object { $_ -notcontains '--json' } | Select-Object -First 1
+        $joined = $gateArgs -join ' '
+        $joined | Should -Match '--fail-on error'
+        $joined | Should -Match '--fail-on missing-symbols'
+        $joined | Should -Not -Match 'error,'
+    }
+
     It 'writes the JSON report before applying the gate' {
         Invoke-ValidatePackages | Out-Null
 
@@ -138,6 +151,15 @@ Describe 'validate-packages.ps1 Exit Codes' {
         Set-DotnetMock -GateExitCode 1
 
         { Invoke-ValidatePackages } | Should -Throw '*exited unexpectedly with code 1*'
+    }
+
+    It 'fails the reporting run before gating so the real cause is not obscured' {
+        Set-DotnetMock -ReportExitCode 1
+
+        { Invoke-ValidatePackages } | Should -Throw '*failed while writing the JSON report (exit code 1)*'
+
+        # The gating run must not have been reached.
+        $global:validatePackagesInvocations.Count | Should -Be 1
     }
 }
 

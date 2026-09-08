@@ -52,6 +52,9 @@
     the available categories. Note that missing-symbols is a warning and package-unsigned is info,
     so neither is covered by the error severity and both must be named explicitly.
 
+    Accepts either an array or a single comma-separated string, because an Azure Pipelines task
+    argument line collapses to one token and PowerShell's -File mode does not split it.
+
 .PARAMETER DotnetPath
     dotnet executable to invoke. Defaults to the dotnet command resolved from PATH. This parameter
     primarily supports isolated testing.
@@ -118,6 +121,12 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# Split on commas so a single "error,missing-symbols" token behaves like a two-element array.
+$failOnTokens = @($FailOn -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+if ($failOnTokens.Count -eq 0) {
+    throw "FailOn must name at least one severity or category."
+}
+
 Write-Host "=== Validate Packages Parameters ==="
 Write-Host "ValidatorPath:           ${ValidatorPath}"
 Write-Host "PackagesPath:            ${PackagesPath}"
@@ -126,7 +135,7 @@ Write-Host "SqlClientPackageVersion: ${SqlClientPackageVersion}"
 Write-Host "SqlClientFileVersion:    ${SqlClientFileVersion}"
 Write-Host "SqlServerPackageVersion: ${SqlServerPackageVersion}"
 Write-Host "SqlServerFileVersion:    ${SqlServerFileVersion}"
-Write-Host "FailOn:                  $($FailOn -join ', ')"
+Write-Host "FailOn:                  $($failOnTokens -join ', ')"
 Write-Host "===================================="
 
 if (-not (Test-Path -LiteralPath $ValidatorPath)) {
@@ -162,7 +171,7 @@ if ($hasSqlServerPackageVersion) {
 }
 
 $gate = @()
-foreach ($token in $FailOn) {
+foreach ($token in $failOnTokens) {
     $gate += @("--fail-on", $token)
 }
 
@@ -177,6 +186,14 @@ if ($reportDirectory) {
 # Reported before gating so the JSON exists even for a failing run.
 & $DotnetPath $ValidatorPath $PackagesPath --json @expectations |
     Set-Content -LiteralPath $ReportPath -Encoding utf8
+$reportExitCode = $LASTEXITCODE
+
+# This run is ungated, so any non-zero code means the validator itself failed and the report it
+# produced cannot be trusted.  Fail here rather than let the gated run obscure the real cause.
+if ($reportExitCode -ne 0) {
+    throw "PackageValidator failed while writing the JSON report (exit code ${reportExitCode})."
+}
+
 Write-Host "Wrote JSON report to ${ReportPath}"
 
 Write-Host ""
@@ -189,7 +206,7 @@ if ($exitCode -eq 0) {
     Write-Host "Package validation passed."
 }
 elseif ($exitCode -eq 2) {
-    throw "Package validation failed: one or more findings matched the gate ($($FailOn -join ', '))."
+    throw "Package validation failed: one or more findings matched the gate ($($failOnTokens -join ', '))."
 }
 else {
     throw "PackageValidator exited unexpectedly with code ${exitCode}."

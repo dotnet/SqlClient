@@ -76,4 +76,4 @@ steps:
         -SqlClientFileVersion "${{ parameters.sqlClientFileVersion }}"
         -SqlServerPackageVersion "${{ parameters.sqlServerPackageVersion }}"
         -SqlServerFileVersion "${{ parameters.sqlServerFileVersion }}"
-        -FailOn ${{ join(',', parameters.failOn) }}
+        -FailOn "${{ join(',', parameters.failOn) }}"
