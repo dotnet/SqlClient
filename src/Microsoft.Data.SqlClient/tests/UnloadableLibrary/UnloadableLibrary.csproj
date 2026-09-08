@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>UnloadableLibrary</AssemblyName>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- References ====================================================== -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'"  />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+  </ItemGroup>
+</Project>
