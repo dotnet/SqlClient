@@ -38,6 +38,14 @@ parameters:
       - Linux
       - Windows
 
+  # The pool VM image to use.  The pool named by poolName must provide an image with this name.
+  #
+  # NOTE: This value is evaluated at template-expansion (compile) time to select the pool image, so
+  # it must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
+  # $[...] runtime expressions).
+  - name: poolImage
+    type: string
+
   - name: poolName
     type: string
 
@@ -47,9 +55,6 @@ parameters:
   - name: useManagedSNI
     type: boolean
     default: false
-
-  - name: vmImage
-    type: string
 
 jobs:
   - job: kerberos_tests_job_${{ parameters.jobNameSuffix }}
@@ -62,7 +67,7 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
       demands:
-        - ImageOverride -equals ${{ parameters.vmImage }}
+        - ImageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 
