@@ -131,6 +131,21 @@ Describe 'Install-DockerCli.macos.ps1' -Skip:([System.Runtime.InteropServices.Ru
             Get-TarMember | Should -Be 'docker/29.7.2/bin/docker'
         }
 
+        It 'Keeps scanning past a long run of arm64-only versions' {
+            # Homebrew has stopped publishing Intel bottles, so the newest usable
+            # version sinks further down the list with every docker release. A
+            # fixed scan window would eventually stop reaching it.
+            $global:tags = @('29.7.2') + (0..19 | ForEach-Object { "30.$_.0" })
+            $global:refsByVersion = @{ '29.7.2' = @('29.7.2.sonoma') }
+            foreach ($i in 0..19) {
+                $global:refsByVersion["30.$i.0"] = @("30.$i.0.arm64_sequoia", "30.$i.0.x86_64_linux")
+            }
+
+            & $global:scriptPath -DestinationPath $global:destination
+
+            Get-TarMember | Should -Be 'docker/29.7.2/bin/docker'
+        }
+
         It 'Ranks a revision build above its base version' {
             $global:tags = @('29.7.2', '29.7.2-1')
             $global:refsByVersion = @{

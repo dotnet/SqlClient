@@ -44,10 +44,6 @@ $RegistryRepository = 'homebrew/core/docker'
 # any of these work on the current agents.
 $PreferredCodenames = @('sequoia', 'sonoma', 'ventura')
 
-# Each version costs a registry round-trip and the answer is always in the
-# newest few.
-$MaxVersionsScanned = 15
-
 #region Helper Functions
 
 function Get-RegistryToken {
@@ -149,7 +145,7 @@ function Find-Bottle {
         }
     }
 
-    throw "No Intel macOS docker bottle in the newest $MaxVersionsScanned versions."
+    throw "No Intel macOS docker bottle in any of the $($Version.Count) published versions."
 }
 
 function Save-BottleBlob {
@@ -196,7 +192,10 @@ if ($architecture -ne 'X64') {
 }
 
 $token = Get-RegistryToken
-$versions = @(Get-BottleVersion -Token $token | Select-Object -First $MaxVersionsScanned)
+# Every version scanned costs a registry round-trip (~0.2s), but the whole list
+# is walked rather than a fixed window: Homebrew has stopped publishing Intel
+# bottles, so the newest usable version sinks further down the list over time.
+$versions = @(Get-BottleVersion -Token $token)
 $bottle = Find-Bottle -Token $token -Version $versions
 
 $archive = Join-Path ([System.IO.Path]::GetTempPath()) "docker-bottle-$([guid]::NewGuid().ToString('n')).tar.gz"
