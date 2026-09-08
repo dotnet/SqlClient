@@ -77,18 +77,18 @@ parameters:
   - name: poolName
     type: string
 
-  # True when building on the internal ADO.Net project.  When set, assemblies
-  # are signed with the driver key and tests are signed with the test key.
+  # True when building on the internal ADO.Net project.  When set, the Abstractions assembly is
+  # strong-name signed with the driver key and the test assembly with the test key.
   - name: isInternalBuild
     type: boolean
-    default: false
 
   # The C# project reference type to use when building.
   - name: referenceType
     type: string
-    default: Project
     values:
+      # Reference sibling packages as NuGet packages.
       - Package
+      # Reference sibling packages as C# projects.
       - Project
 
   # The pool VM image to use.
@@ -126,12 +126,12 @@ jobs:
           -p:SqlClientPackageVersion=${{ parameters.packageVersion }}
           --verbosity ${{ parameters.dotnetVerbosity }}
 
-      # Signing arguments — only set for internal Package-mode builds.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+      # Strong-name signing arguments — only set for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
         - name: signingArguments
           value: >-
-            -p:SigningKeyPath=$(driverKeyFile.secureFilePath)
-            -p:TestSigningKeyPath=$(testKeyFile.secureFilePath)
+            -p:SigningKeyPath="$(driverKeyFile.secureFilePath)"
+            -p:TestSigningKeyPath="$(testKeyFile.secureFilePath)"
       - ${{ else }}:
         - name: signingArguments
           value: ''
@@ -163,12 +163,10 @@ jobs:
         - pwsh: 'Get-ChildItem Env: | Sort-Object Name'
           displayName: '[Debug] Print Environment Variables'
 
-      # Download the assembly signing keys for internal Package-mode builds.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
-        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
-        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
-          parameters:
-            isTest: true
+      # Download the driver and test strong-name signing keys for internal Package-mode builds.
+      - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
+        - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
+        - template: /eng/pipelines/common/steps/download-test-signing-key-step.yml@self
 
       # For Package reference builds, download the Logging dependency into packages/.
       - ${{ if eq(parameters.referenceType, 'Package') }}:
