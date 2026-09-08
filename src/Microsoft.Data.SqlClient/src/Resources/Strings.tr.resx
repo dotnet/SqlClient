@@ -2083,7 +2083,7 @@
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
-    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
+    <value>AccessToken, AccessTokenCallback veya SspiContextProvider özelliklerinden birden fazlası ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Bağlantı dizesinde 'Authentication=Active Directory Default' belirtilmişse AccessTokenCallback özelliği ayarlanamaz.</value>
