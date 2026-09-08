@@ -159,16 +159,15 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
 
-      # Download the assembly signing key for internal Package-mode builds.
-      - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
-        - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
-
-      # Create the NuGet packages.
+      # Create the NuGet packages.  Internal Package-mode builds strong-name sign the assemblies
+      # with the driver key.
       #
       # When referenceType is Package, we must pass ReferenceType and the
       # dependency versions so that Directory.Packages.props applies version
       # ranges to sibling package dependencies.
-      - ${{ if and(eq(parameters.referenceType, 'Package'), eq(parameters.isInternalBuild, true)) }}:
+      - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
+        - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
+
         - task: DotNetCoreCLI@2
           displayName: Create NuGet Package
           inputs:
@@ -177,9 +176,10 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            # BuildNumber supplies the revision component of FileVersion; without
-            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
-            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber);SigningKeyPath=$(driverKeyFile.secureFilePath)
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
+            buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber);SigningKeyPath="$(driverKeyFile.secureFilePath)"
 
       - ${{ elseif eq(parameters.referenceType, 'Package') }}:
         - task: DotNetCoreCLI@2
@@ -190,8 +190,9 @@ jobs:
             configurationToPack: ${{ parameters.buildConfiguration }}
             packDirectory: $(dotnetPackagesDir)
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
-            # BuildNumber supplies the revision component of FileVersion; without
-            # it the assembly is stamped Major.Minor.Patch.0 (see Project branch).
+            # BuildNumber supplies the revision component of FileVersion
+            # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
             buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};ReferenceType=Package;BuildNumber=$(Build.BuildNumber)
 
       - ${{ else }}:
@@ -205,8 +206,7 @@ jobs:
             verbosityToPack: ${{ parameters.dotnetVerbosity }}
             # BuildNumber supplies the revision component of FileVersion
             # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
-            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
-            # inconsistent with the MDS/AKV packages that pass it.
+            # defaults to 0 and the assembly is stamped Major.Minor.Patch.0.
             buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
