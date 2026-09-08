@@ -57,6 +57,9 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Opens a connection through the requested synchronous or asynchronous API.
     /// </summary>
+    /// <param name="connection">The connection to open.</param>
+    /// <param name="async">Whether to use the asynchronous API.</param>
+    /// <returns>A task representing the open operation.</returns>
     private static async Task OpenConnection(SqlConnection connection, bool async)
     {
         if (async)
@@ -72,6 +75,10 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Inserts the bidi samples through explicitly typed Unicode parameters.
     /// </summary>
+    /// <param name="connection">The open connection used to insert the samples.</param>
+    /// <param name="tableName">The table that receives the samples.</param>
+    /// <param name="async">Whether to use asynchronous command execution.</param>
+    /// <returns>A task representing the insert operations.</returns>
     private static async Task InsertValues(SqlConnection connection, string tableName, bool async)
     {
         using SqlCommand command = new($"INSERT INTO {tableName} (Id, Value) VALUES (@id, @value)", connection);
@@ -97,6 +104,10 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Reads complete strings through ordinary reader accessors and compares their UTF-16 content.
     /// </summary>
+    /// <param name="connection">The open connection used to read the samples.</param>
+    /// <param name="tableName">The table containing the samples.</param>
+    /// <param name="async">Whether to use asynchronous reader APIs.</param>
+    /// <returns>A task representing the verification operation.</returns>
     private static async Task VerifyOrdinaryReader(SqlConnection connection, string tableName, bool async)
     {
         using SqlCommand command = new($"SELECT Id, Value FROM {tableName} ORDER BY Id", connection);
@@ -110,7 +121,10 @@ public sealed class DirectionalityTest
             Assert.True(hasRow);
             Assert.Equal(index, reader.GetInt32(0));
             AssertOrdinalEqual(s_bidiText[index], reader.GetString(1));
-            AssertOrdinalEqual(s_bidiText[index], reader.GetFieldValue<string>(1));
+            string fieldValue = async
+                ? await reader.GetFieldValueAsync<string>(1)
+                : reader.GetFieldValue<string>(1);
+            AssertOrdinalEqual(s_bidiText[index], fieldValue);
         }
 
         Assert.False(async ? await reader.ReadAsync() : reader.Read());
@@ -119,6 +133,10 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Reads one UTF-16 code unit at a time to cover direction and surrogate boundaries in GetChars.
     /// </summary>
+    /// <param name="connection">The open connection used to read the samples.</param>
+    /// <param name="tableName">The table containing the samples.</param>
+    /// <param name="async">Whether to use asynchronous reader execution.</param>
+    /// <returns>A task representing the verification operation.</returns>
     private static async Task VerifyGetChars(SqlConnection connection, string tableName, bool async)
     {
         using SqlCommand command = new($"SELECT Value FROM {tableName} ORDER BY Id", connection);
@@ -150,6 +168,10 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Reads bidi text through the sequential TextReader using small sync or async buffer operations.
     /// </summary>
+    /// <param name="connection">The open connection used to read the samples.</param>
+    /// <param name="tableName">The table containing the samples.</param>
+    /// <param name="async">Whether to use asynchronous reader and text operations.</param>
+    /// <returns>A task representing the verification operation.</returns>
     private static async Task VerifyTextReader(SqlConnection connection, string tableName, bool async)
     {
         using SqlCommand command = new($"SELECT Value FROM {tableName} ORDER BY Id", connection);
@@ -182,6 +204,10 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Copies the Unicode rows through streaming SqlBulkCopy using the requested execution mode.
     /// </summary>
+    /// <param name="sourceTableName">The table containing the source rows.</param>
+    /// <param name="destinationTableName">The table receiving the copied rows.</param>
+    /// <param name="async">Whether to use asynchronous reader and bulk-copy APIs.</param>
+    /// <returns>A task representing the copy operation.</returns>
     private static async Task CopyValues(string sourceTableName, string destinationTableName, bool async)
     {
         using SqlConnection sourceConnection = new(DataTestUtility.TCPConnectionString);
@@ -214,6 +240,8 @@ public sealed class DirectionalityTest
     /// <summary>
     /// Compares strings ordinally so the assertion checks logical storage rather than visual rendering.
     /// </summary>
+    /// <param name="expected">The original UTF-16 string.</param>
+    /// <param name="actual">The round-tripped UTF-16 string.</param>
     private static void AssertOrdinalEqual(string expected, string actual)
     {
         Assert.True(
