@@ -41,6 +41,7 @@ if: |
    ))
 
 engine: copilot
+model: gpt-5-mini
 
 environment: issue-triage
 
@@ -50,6 +51,7 @@ permissions:
   pull-requests: read
 
 tools:
+  bash: [cat, find, grep]
   github:
     min-integrity: none
 
