@@ -67,7 +67,6 @@ parameters:
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 stages:
 

@@ -58,8 +58,8 @@ parameters:
     type: string
     default: $(sqlServerPackageVersion)
 
-  # Path to the assembly signing key file.  When non-empty, passed as -p:SigningKeyPath="" to the
-  # build.  The calling job is responsible for providing the key.
+  # Path to the driver strong-name signing key file.  When non-empty, passed as SigningKeyPath to
+  # the build.  The calling job is responsible for downloading the key.
   - name: signingKeyPath
     type: string
     default: ''
