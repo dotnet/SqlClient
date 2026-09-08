@@ -41,7 +41,7 @@ if: |
    ))
 
 engine: copilot
-model: gpt-5-mini
+model: auto
 
 environment: issue-triage
 
