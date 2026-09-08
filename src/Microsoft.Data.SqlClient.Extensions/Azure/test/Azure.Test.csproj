@@ -25,6 +25,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <!-- Global Usings =================================================== -->
   <ItemGroup>
     <Using Include="Xunit" />
