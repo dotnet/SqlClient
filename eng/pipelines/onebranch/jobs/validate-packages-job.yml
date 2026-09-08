@@ -159,18 +159,26 @@ jobs:
           ${{ if eq(parameters.buildSqlServer, true) }}:
             sqlServerPackageVersion: '${{ parameters.sqlServerPackageVersion }}'
             sqlServerFileVersion: '${{ parameters.sqlServerFileVersion }}'
-          # missing-symbols is a warning and package-unsigned is info, so neither is covered by the
-          # error severity and both must be named explicitly.  Signing only happens on official
-          # runs, so package-unsigned would fire on every non-official build.
+          # The error severity covers only error-severity findings, so every warning/info category
+          # this job relies on must be named explicitly: missing-symbols and
+          # dependency-inconsistency are warnings, delay-signed is a warning, and unsigned and
+          # package-unsigned are info.
+          #
+          # Signing only happens on official runs.  Non-official builds are deliberately unsigned
+          # and delay-signed, so gating those three categories anywhere else would fail every run.
           ${{ if eq(parameters.isOfficial, true) }}:
             failOn:
               - error
               - missing-symbols
+              - dependency-inconsistency
+              - delay-signed
+              - unsigned
               - package-unsigned
           ${{ else }}:
             failOn:
               - error
               - missing-symbols
+              - dependency-inconsistency
 
       # Signature verification, official builds only.  PackageValidator reports strong-name and
       # NuGet signature *presence* cross-platform; these steps additionally verify that the
