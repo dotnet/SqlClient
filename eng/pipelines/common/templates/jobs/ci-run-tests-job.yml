@@ -149,7 +149,6 @@ parameters:
   # True when building on the internal ADO.Net project.
   - name: isInternalBuild
     type: boolean
-    default: false
 
 jobs:
 - job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.poolImage, 'unknown_image')) }}
@@ -211,12 +210,10 @@ jobs:
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-  # Download the assembly signing keys for internal Package-mode builds.
-  - ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
-    - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
-    - template: /eng/pipelines/common/steps/download-assembly-signing-key.yml@self
-      parameters:
-        isTest: true
+  # Download the driver and test strong-name signing keys for internal Package-mode builds.
+  - ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
+    - template: /eng/pipelines/common/steps/download-driver-signing-key-step.yml@self
+    - template: /eng/pipelines/common/steps/download-test-signing-key-step.yml@self
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -371,7 +368,7 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
           signingKeyPath: $(driverKeyFile.secureFilePath)
           testSigningKeyPath: $(testKeyFile.secureFilePath)
 
@@ -388,7 +385,7 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
-        ${{ if and(eq(parameters.isInternalBuild, true), ne(parameters.referenceType, 'Project')) }}:
+        ${{ if and(eq(parameters.isInternalBuild, true), eq(parameters.referenceType, 'Package')) }}:
           signingKeyPath: $(driverKeyFile.secureFilePath)
           testSigningKeyPath: $(testKeyFile.secureFilePath)
 

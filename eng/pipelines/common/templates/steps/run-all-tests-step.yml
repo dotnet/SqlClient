@@ -68,14 +68,16 @@ parameters:
     type: number
     default: 2
 
-  # Path to the assembly signing key file.  When non-empty, passed to build.proj so that the
-  # test-filter logic can include category=signed tests.
+  # Path to the driver strong-name signing key file.  When non-empty, passed to build.proj so that
+  # the driver assemblies built for the test run are strong named.  The calling job is responsible
+  # for downloading the key.
   - name: signingKeyPath
     type: string
     default: ''
 
-  # Path to the test assembly signing key file.  When non-empty, passed to build.proj so that test
-  # assemblies are signed and can satisfy InternalsVisibleTo grants from signed source assemblies.
+  # Path to the test strong-name signing key file.  When non-empty, passed to build.proj so that
+  # test assemblies are strong named and can satisfy InternalsVisibleTo grants from signed driver
+  # assemblies.  The calling job is responsible for downloading the key.
   - name: testSigningKeyPath
     type: string
     default: ''
