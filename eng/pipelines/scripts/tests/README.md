@@ -24,6 +24,7 @@ Add `-Output Detailed` to see per-test results.
 | File | Covers |
 | ---- | ------ |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
+| `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 
-`git` and `Invoke-RestMethod` are mocked, so the tests never touch the network
-or a real repository.
+`git`, `tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, so the
+tests never touch the network or a real repository.
