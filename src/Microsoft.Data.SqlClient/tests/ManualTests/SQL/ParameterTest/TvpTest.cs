@@ -295,26 +295,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     continue;
                 }
 
-                // Send list of SqlDataRecords as value
-                Console.WriteLine("------IEnumerable<SqlDataRecord>---------");
+                // NOTE: The server objects created above (a table type and a stored procedure) must be
+                //   dropped even when the body below throws. Their names are unique per permutation,
+                //   so anything left behind stays in the shared test database forever.
                 try
                 {
-                    param.Value = CreateListOfRecords(tvpPerm, baseValues);
-                    ExecuteAndVerify(cmd, tvpPerm, baseValues, null);
-                }
-                catch (ArgumentException ae)
-                {
-                    // some argument exceptions expected and should be swallowed
-                    Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
-                }
-
-                if (!runOnlyDataRecordTest)
-                {
-                    // send DbDataReader
-                    Console.WriteLine("------DbDataReader---------");
+                    // Send list of SqlDataRecords as value
+                    Console.WriteLine("------IEnumerable<SqlDataRecord>---------");
                     try
                     {
-                        param.Value = new TvpRestartableReader(CreateListOfRecords(tvpPerm, baseValues));
+                        param.Value = CreateListOfRecords(tvpPerm, baseValues);
                         ExecuteAndVerify(cmd, tvpPerm, baseValues, null);
                     }
                     catch (ArgumentException ae)
@@ -323,17 +313,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
                     }
 
-                    // send datasets
-                    Console.WriteLine("------DataTables---------");
-                    foreach (DataTable d in dtList)
+                    if (!runOnlyDataRecordTest)
                     {
-                        param.Value = d;
-                        ExecuteAndVerify(cmd, tvpPerm, null, d);
+                        // send DbDataReader
+                        Console.WriteLine("------DbDataReader---------");
+                        try
+                        {
+                            param.Value = new TvpRestartableReader(CreateListOfRecords(tvpPerm, baseValues));
+                            ExecuteAndVerify(cmd, tvpPerm, baseValues, null);
+                        }
+                        catch (ArgumentException ae)
+                        {
+                            // some argument exceptions expected and should be swallowed
+                            Console.WriteLine("Argument exception in value setup: {0}", ae.Message);
+                        }
+
+                        // send datasets
+                        Console.WriteLine("------DataTables---------");
+                        foreach (DataTable d in dtList)
+                        {
+                            param.Value = d;
+                            ExecuteAndVerify(cmd, tvpPerm, null, d);
+                        }
                     }
                 }
-
-                // And clean up
-                DropServerObjects(tvpPerm);
+                finally
+                {
+                    // And clean up
+                    DropServerObjects(tvpPerm);
+                }
 
                 iter++;
             }
@@ -892,11 +900,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void DropServerObjects(StePermutation tvpPerm)
         {
-            string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
             using SqlConnection conn = new(_connStr);
             conn.Open();
 
-            SqlCommand cmd = new(dropText, conn);
+            // NOTE: The procedure and the type are dropped by separate, individually guarded commands.
+            //   Previously both drops shared a single batch, so when the procedure did not exist (the
+            //   CREATE PROC step failed after CREATE TYPE succeeded) the batch aborted on the first
+            //   statement and the table type was leaked into the shared test database.
+            DropServerObject(conn, "DROP PROC IF EXISTS " + GetProcName(tvpPerm));
+            DropServerObject(conn, "DROP TYPE IF EXISTS " + GetTypeName(tvpPerm));
+        }
+
+        private static void DropServerObject(SqlConnection conn, string dropText)
+        {
+            using SqlCommand cmd = new(dropText, conn);
             try
             {
                 cmd.ExecuteNonQuery();

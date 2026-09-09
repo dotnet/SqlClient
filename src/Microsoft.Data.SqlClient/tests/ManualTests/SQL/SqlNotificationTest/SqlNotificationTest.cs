@@ -31,7 +31,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             _schemaQueue = $"[{_queueName}]";
 
-            Setup();
+            // NOTE: If setup fails part way through (for example the queue is created but the service
+            //   is not), this constructor never returns, so xUnit never calls Dispose and the objects
+            //   created so far would be leaked. Their names embed a GUID and xUnit creates one
+            //   instance per test method, so those leaks accumulate quickly.
+            try
+            {
+                Setup();
+            }
+            catch
+            {
+                Cleanup();
+                throw;
+            }
         }
 
         public void Dispose()
@@ -310,10 +322,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string[] CreateSqlCleanupStatements(string tableName, string queueName, string serviceName)
         {
+            // NOTE: Every statement is guarded so that cleanup is idempotent and so that a failure to
+            //   remove one object does not leave the others (in particular the Service Broker queue
+            //   and service) behind in the shared test database.
             return new string[] {
-                string.Format("DROP TABLE {0}", tableName),
-                string.Format("DROP SERVICE [{0}]", serviceName),
-                string.Format("DROP QUEUE {0}", queueName)
+                string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", tableName),
+                string.Format("IF EXISTS (SELECT 1 FROM sys.services WHERE name = '{0}') DROP SERVICE [{0}]", serviceName),
+                string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP QUEUE {0}", queueName)
             };
         }
 
@@ -324,7 +339,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void Cleanup()
         {
-            RunSQL(CreateSqlCleanupStatements(_tableName, _schemaQueue, _serviceName));
+            // Each statement is executed independently: one failure must not prevent the remaining
+            // objects from being dropped.
+            foreach (string statement in CreateSqlCleanupStatements(_tableName, _schemaQueue, _serviceName))
+            {
+                try
+                {
+                    RunSQL(statement);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(SqlNotificationTest)}: cleanup statement failed ({statement}): {ex.Message}");
+                }
+            }
         }
 
         private int RunSQL(params string[] stmts)

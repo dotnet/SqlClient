@@ -1,9 +1,10 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -19,50 +20,37 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string srctable = "[" + dstTable + " src]";
             dstTable = "[" + dstTable + "]";
 
-            string[] epilogue = {
-                "create table " + srctable + "([col 1] int primary key, [col 2] text)",
-                "insert into " + srctable + " values (33, 'Michael')",
-                "create table " + dstTable + "([col 1] int primary key, [col 2] text)",
-            };
-            string[] prologue = {
-                "drop table  " + srctable,
-                "drop table  " + dstTable,
-            };
-
             using (SqlConnection dstConn = new SqlConnection(constr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
-                try
-                {
-                    Helpers.ProcessCommandBatch(typeof(SqlConnection), constr, epilogue);
 
-                    using (SqlConnection srcConn = new SqlConnection(constr))
-                    using (SqlCommand srcCmd = new SqlCommand(string.Format("select * from {0} ", srctable), srcConn))
+                using Table srcTableObject = Table.WithName(dstConn, srctable, "([col 1] int primary key, [col 2] text)");
+                using Table dstTableObject = Table.WithName(dstConn, dstTable, "([col 1] int primary key, [col 2] text)");
+
+                Helpers.TryExecute(dstCmd, "insert into " + srctable + " values (33, 'Michael')");
+
+                using (SqlConnection srcConn = new SqlConnection(constr))
+                using (SqlCommand srcCmd = new SqlCommand(string.Format("select * from {0} ", srctable), srcConn))
+                {
+                    srcConn.Open();
+
+                    using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
-                        srcConn.Open();
-
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
+                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                         {
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                            {
-                                bulkcopy.DestinationTableName = dstTable;
+                            bulkcopy.DestinationTableName = dstTable;
 
-                                SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-                                ColumnMappings.Add("[col 1]", "col 1");
-                                ColumnMappings.Add("col 2", "[col 2]");
+                            SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                            ColumnMappings.Add("[col 1]", "col 1");
+                            ColumnMappings.Add("col 2", "[col 2]");
 
-                                bulkcopy.WriteToServer(reader);
+                            bulkcopy.WriteToServer(reader);
 
-                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
-                            }
-                            Helpers.VerifyResults(dstConn, dstTable, 2, 1);
+                            DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 1, "Unexpected number of rows.");
                         }
+                        Helpers.VerifyResults(dstConn, dstTable, 2, 1);
                     }
-                }
-                finally
-                {
-                    Helpers.ProcessCommandBatch(typeof(SqlConnection), constr, prologue);
                 }
             }
         }

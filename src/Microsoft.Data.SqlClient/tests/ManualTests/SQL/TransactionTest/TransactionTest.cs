@@ -174,10 +174,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (var conn = new SqlConnection(_connectionString))
                 {
-                    SqlCommand command = new SqlCommand(
-                            string.Format("DROP TABLE [{0}]; DROP TABLE [{1}]", _tempTableName1, _tempTableName2), conn);
                     conn.Open();
+
+                    // NOTE: The drops are guarded and issued separately. Previously they shared a
+                    //   single unguarded batch, so a failure to drop the first table also leaked
+                    //   the second one.
+                    DropTempTable(conn, _tempTableName1);
+                    DropTempTable(conn, _tempTableName2);
+                }
+            }
+
+            private static void DropTempTable(SqlConnection connection, string tableName)
+            {
+                try
+                {
+                    using SqlCommand command = new SqlCommand(
+                        string.Format("IF (OBJECT_ID('[{0}]') IS NOT NULL) DROP TABLE [{0}]", tableName), connection);
                     command.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"TransactionTest: failed to drop table '{tableName}': {ex.Message}");
                 }
             }
 

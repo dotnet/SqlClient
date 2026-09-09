@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
 
             // create SQL table with one int field, similar to the above DataTable
-            SqlCommand cmd = conn.CreateCommand();
+            using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "CREATE TABLE [" + tableName + "] (IntVal int)";
             cmd.ExecuteNonQuery();
 
@@ -145,10 +145,18 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
             finally
             {
-                // delete the table
-                cmd = conn.CreateCommand();
-                cmd.CommandText = "DROP TABLE [" + tableName + "]";
-                cmd.ExecuteNonQuery();
+                // Best-effort: this runs while a test failure may already be propagating, so a
+                // failed drop must not surface in its place. The table is named instead.
+                try
+                {
+                    using SqlCommand dropCmd = conn.CreateCommand();
+                    dropCmd.CommandText = "IF (OBJECT_ID('[" + tableName + "]') IS NOT NULL) DROP TABLE [" + tableName + "]";
+                    dropCmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to drop table '{tableName}'; it may be orphaned in the test database. {ex}");
+                }
             }
         }
     }

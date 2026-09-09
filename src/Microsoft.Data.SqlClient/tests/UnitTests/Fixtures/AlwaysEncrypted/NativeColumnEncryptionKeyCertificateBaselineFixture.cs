@@ -51,15 +51,28 @@ public sealed class NativeColumnEncryptionKeyCertificateBaselineFixture : Certif
         : base()
     {
         byte[] nativeCertificateBaseline = Resources.AlwaysEncrypted_NativeColumnEncryptionKeyBaseline_Certificate;
+
+        // NOTE: The certificate is deliberately not disposed here. It is owned by the base fixture, which
+        //   removes it from the store on cleanup - and a disposed certificate cannot be matched against a
+        //   store, so disposing it early left it behind in the current user's store permanently.
 #if NET9_0_OR_GREATER
-        using X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12(nativeCertificateBaseline, NativeCertificatePassword,
+        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12(nativeCertificateBaseline, NativeCertificatePassword,
             keyStorageFlags: X509KeyStorageFlags.PersistKeySet);
 #else
-        using X509Certificate2 certificate = new(nativeCertificateBaseline, NativeCertificatePassword,
+        X509Certificate2 certificate = new(nativeCertificateBaseline, NativeCertificatePassword,
             X509KeyStorageFlags.PersistKeySet);
 #endif
 
-        Thumbprint = certificate.Thumbprint;
-        AddToStore(certificate, StoreLocation.CurrentUser, StoreName.My);
+        try
+        {
+            Thumbprint = certificate.Thumbprint;
+            AddToStore(certificate, StoreLocation.CurrentUser, StoreName.My);
+        }
+        catch
+        {
+            Dispose();
+            certificate.Dispose();
+            throw;
+        }
     }
 }

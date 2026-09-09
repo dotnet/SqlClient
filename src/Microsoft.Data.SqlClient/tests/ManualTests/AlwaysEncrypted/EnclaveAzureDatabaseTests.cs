@@ -50,13 +50,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connStrings.Add(connString1.ToString());
                 connStrings.Add(connString2.ToString());
 
-                foreach (string connString in connStrings)
+                // NOTE: If creation fails part way through (for example on the second database), this
+                //   constructor never returns, so xUnit never calls Dispose and the keys created so far
+                //   would be leaked. Their names embed a GUID, so nothing would ever reclaim them.
+                try
                 {
-                    using (SqlConnection connection = new SqlConnection(connString))
+                    foreach (string connString in connStrings)
                     {
-                        connection.Open();
-                        databaseObjects.ForEach(o => o.Create(connection));
+                        using (SqlConnection connection = new SqlConnection(connString))
+                        {
+                            connection.Open();
+                            databaseObjects.ForEach(o => o.Create(connection));
+                        }
                     }
+                }
+                catch
+                {
+                    Dispose();
+                    throw;
                 }
             }
         }
@@ -162,13 +173,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
-                databaseObjects.Reverse();
+                // NOTE: Reverse a copy - reversing the field in place would restore creation order if
+                //   this ever ran twice, dropping the master key before the encryption key that depends
+                //   on it. Every drop is best-effort so that one failure cannot leak the rest.
+                List<DbObject> objectsToDrop = new List<DbObject>(databaseObjects);
+                objectsToDrop.Reverse();
+
                 foreach (string connStr in connStrings)
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(connStr))
+                    try
                     {
-                        sqlConnection.Open();
-                        databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                        using (SqlConnection sqlConnection = new SqlConnection(connStr))
+                        {
+                            sqlConnection.Open();
+
+                            foreach (DbObject databaseObject in objectsToDrop)
+                            {
+                                try
+                                {
+                                    databaseObject.Drop(sqlConnection);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"{nameof(EnclaveAzureDatabaseTests)}: failed to drop '{databaseObject.Name}': {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"{nameof(EnclaveAzureDatabaseTests)}: cleanup connection failed: {ex.Message}");
                     }
                 }
             }
