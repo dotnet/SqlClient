@@ -112,7 +112,8 @@ When `isPreview` is true, pipeline resolves `effective*Version` variables to pre
 
 - Variable chain: pipeline YAML → `variables/onebranch-variables.yml` → `variables/common-variables.yml`
 - All package versions (GA, preview, assembly file) centralized in `variables/common-variables.yml`
-- `effective*Version` pipeline variables map to selected version set based on `isPreview`
+- The `compute_versions` stage reads canonical versions from MSBuild and publishes effective package,
+  file-build, and APIScan registration versions for downstream stages
 - Artifact name variables defined in `variables/onebranch-variables.yml` following `drop_<stageName>_<jobName>` pattern
 - `assemblyBuildNumber` derived from first segment of `Build.BuildNumber` only (16-bit limit)
 - When adding a new package, add GA version, preview version, and assembly file version entries
@@ -132,9 +133,13 @@ Variable groups:
 ## SDL and Compliance
 
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
-- ApiScan: enabled in both; currently `break: false` pending package registration
-- Each build job sets `ob_sdl_apiscan_softwareFolder` to `$(JOB_OUTPUT)/assemblies` and `ob_sdl_apiscan_symbolsFolder` to `$(JOB_OUTPUT)/symbols`
+- ApiScan: enabled in both; `break` follows the `breakOnSdlError` parameter
+- Each package is registered with APIScan under its own name/version pair, so the `globalSdl.apiscan` blocks deliberately omit `softwareName`/`versionNumber`. `build-buildproj-job.yml` is the single place they are set, via `ob_sdl_apiscan_softwareName` (the package's `packageFullName`) and `ob_sdl_apiscan_versionNumber` (the `apiScanSoftwareVersion` parameter)
+- `compute-versions.ps1` derives APIScan registration versions as major.minor from the effective canonical package versions and publishes them as stage outputs. A package name/version pair must still be registered with APIScan before releasing a new major.minor. Consume these as runtime `$(...)` references so values such as `1.0` remain strings rather than being coerced to numbers by template expressions
+- Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version
+- Each build job also sets `ob_sdl_apiscan_softwareFolder` and `ob_sdl_apiscan_symbolsFolder` to its per-package `apiScan/<package>/dlls` and `apiScan/<package>/pdbs` paths
 - CodeQL, SBOM, Policheck (`break: true`): enabled in both pipelines
+- SBOM package name/version are resolvable **only** from the pipeline's `globalSdl.sbom` block — OneBranch's artifact-publishing path reads `globalSdl.sbom.packageName`/`packageVersion` directly and has no per-job equivalent (the `templateContext.sdl.sbom` override only applies to the native 1ES Stages entry point, which this repo does not use). Because the pipeline produces six differently-named and independently-versioned packages, `globalSdl.sbom` indirects through the `$(sbomPackageName)` / `$(sbomPackageVersion)` variables, which each build job sets to its own `packageFullName` and computed `packageVersion`. Jobs that publish no packages (version computation, symbol publishing) set `ob_sdl_sbom_enabled: false` alongside their existing APIScan/BinSkim opt-outs, so the variables never need pipeline-level defaults
 - asyncSdl `enabled: false` in both; individual sub-tools (CredScan, BinSkim, Armory, Roslyn) configured underneath
 - Policheck exclusions: `$(REPO_ROOT)\.config\PolicheckExclusions.xml`
 - CredScan suppressions: `$(REPO_ROOT)/.config/CredScanSuppressions.json`

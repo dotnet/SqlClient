@@ -4,14 +4,12 @@
 
 .DESCRIPTION
     Copies the .nupkg and .snupkg files downloaded from an upstream SqlClient package artifact into
-    a local NuGet feed. It then resolves package versions from the .nupkg filenames and emits Azure
-    Pipelines logging commands that create these job-scoped variables for downstream tasks:
+    a local NuGet feed. It resolves package versions from the .nupkg filenames, verifies that all
+    required SqlClient-family packages share one version, and emits Azure Pipelines logging commands
+    that create these job-scoped variables for downstream tasks:
 
-      sqlClientPackageVersion     Microsoft.Data.SqlClient
-      sqlServerPackageVersion     Microsoft.SqlServer.Server
-      abstractionsPackageVersion  Microsoft.Data.SqlClient.Extensions.Abstractions
-      loggingPackageVersion       Microsoft.Data.SqlClient.Internal.Logging
-      azurePackageVersion         Microsoft.Data.SqlClient.Extensions.Azure
+      sqlClientPackageVersion  SqlClient family
+      sqlServerPackageVersion  Microsoft.SqlServer.Server
 
     Every required .nupkg must be present in ArtifactDirectory. Symbol packages are optional. The
     script stops on missing required packages, copy failures, and ambiguous filesystem errors.
@@ -24,24 +22,12 @@
     Directory containing the .nupkg files downloaded from the upstream pipeline artifact. Optional
     .snupkg files in this directory are copied when present.
 
-.PARAMETER SqlServerVersionOverride
-    Optional version to expose as sqlServerPackageVersion instead of resolving the version from the
-    Microsoft.SqlServer.Server .nupkg filename. The package itself is still required and staged.
-
 .EXAMPLE
     ./download-driver-packages.ps1 `
         -FeedPath 'C:\agent\_work\1\s\packages' `
         -ArtifactDirectory 'C:\agent\_work\1\sqlclient-ci-package\SqlClient-Driver-Packages'
 
     Stages all driver packages and resolves every version from its package filename.
-
-.EXAMPLE
-    ./download-driver-packages.ps1 `
-        -FeedPath '/agent/_work/1/s/packages' `
-        -ArtifactDirectory '/agent/_work/1/sqlclient-ci-package/SqlClient-Driver-Packages' `
-        -SqlServerVersionOverride '1.0.0'
-
-    Stages all packages but exposes 1.0.0 as sqlServerPackageVersion.
 
 .OUTPUTS
     None. Results are emitted as Azure Pipelines task.setvariable logging commands.
@@ -61,9 +47,7 @@ param(
     [string]$FeedPath,
 
     [Parameter(Mandatory)]
-    [string]$ArtifactDirectory,
-
-    [string]$SqlServerVersionOverride = ''
+    [string]$ArtifactDirectory
 )
 
 Set-StrictMode -Version Latest
@@ -94,47 +78,51 @@ function Resolve-PackageVersion {
     return [regex]::Match($packages[0].Name, $Pattern).Groups[1].Value
 }
 
-# Patterns are anchored so the Microsoft.Data.SqlClient package does not also match extension
-# packages whose IDs begin with Microsoft.Data.SqlClient.
-$packages = @(
+# Patterns are anchored so Microsoft.Data.SqlClient does not also match family packages whose IDs
+# begin with Microsoft.Data.SqlClient.
+$sqlClientFamilyPackages = @(
     @{
-        Variable = 'sqlClientPackageVersion'
         Name = 'Microsoft.Data.SqlClient'
         Pattern = '^Microsoft\.Data\.SqlClient\.(\d[^\/]*)\.nupkg$'
     },
     @{
-        Variable = 'sqlServerPackageVersion'
-        Name = 'Microsoft.SqlServer.Server'
-        Pattern = '^Microsoft\.SqlServer\.Server\.(\d[^\/]*)\.nupkg$'
-    },
-    @{
-        Variable = 'abstractionsPackageVersion'
         Name = 'Microsoft.Data.SqlClient.Extensions.Abstractions'
         Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Abstractions\.(\d[^\/]*)\.nupkg$'
     },
     @{
-        Variable = 'loggingPackageVersion'
         Name = 'Microsoft.Data.SqlClient.Internal.Logging'
         Pattern = '^Microsoft\.Data\.SqlClient\.Internal\.Logging\.(\d[^\/]*)\.nupkg$'
     },
     @{
-        Variable = 'azurePackageVersion'
         Name = 'Microsoft.Data.SqlClient.Extensions.Azure'
         Pattern = '^Microsoft\.Data\.SqlClient\.Extensions\.Azure\.(\d[^\/]*)\.nupkg$'
+    },
+    @{
+        Name = 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+        Pattern = '^Microsoft\.Data\.SqlClient\.AlwaysEncrypted\.AzureKeyVaultProvider\.(\d[^\/]*)\.nupkg$'
     }
 )
 
-foreach ($package in $packages) {
-    $artifactVersion = Resolve-PackageVersion $ArtifactDirectory $package.Pattern $package.Name
+$sqlClientPackageVersion = Resolve-PackageVersion `
+    $ArtifactDirectory `
+    $sqlClientFamilyPackages[0].Pattern `
+    $sqlClientFamilyPackages[0].Name
 
-    if ($package.Variable -eq 'sqlServerPackageVersion' -and
-        -not [string]::IsNullOrWhiteSpace($SqlServerVersionOverride)) {
-        $version = $SqlServerVersionOverride
-        Write-Host "Overriding $($package.Name) version from $artifactVersion to $version"
-    } else {
-        $version = $artifactVersion
-        Write-Host "Resolved $($package.Name) version: $version"
+foreach ($package in $sqlClientFamilyPackages) {
+    $version = Resolve-PackageVersion $ArtifactDirectory $package.Pattern $package.Name
+
+    if ($version -ne $sqlClientPackageVersion) {
+        throw "$($package.Name) version $version does not match SqlClient family version $sqlClientPackageVersion"
     }
 
-    Write-Host "##vso[task.setvariable variable=$($package.Variable)]$version"
+    Write-Host "Validated $($package.Name) version: $version"
 }
+
+$sqlServerPackageVersion = Resolve-PackageVersion `
+    $ArtifactDirectory `
+    '^Microsoft\.SqlServer\.Server\.(\d[^\/]*)\.nupkg$' `
+    'Microsoft.SqlServer.Server'
+
+Write-Host "Resolved Microsoft.SqlServer.Server version: $sqlServerPackageVersion"
+Write-Host "##vso[task.setvariable variable=sqlClientPackageVersion]$sqlClientPackageVersion"
+Write-Host "##vso[task.setvariable variable=sqlServerPackageVersion]$sqlServerPackageVersion"

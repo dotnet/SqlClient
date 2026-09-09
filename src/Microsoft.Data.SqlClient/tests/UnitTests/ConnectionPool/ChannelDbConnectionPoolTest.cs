@@ -236,6 +236,101 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies that an asynchronous request satisfied by an already-idle connection is
+        /// completed inline on the caller's thread, rather than being dispatched to the thread pool.
+        /// </summary>
+        /// <remarks>
+        /// The fast path must report completion by returning true with the connection, exactly as
+        /// WaitHandleDbConnectionPool does on its inline hit. Completing the TaskCompletionSource
+        /// and returning false would look equivalent but is not: it sends
+        /// SqlConnection.InternalOpenAsync down its asynchronous branch, which allocates an
+        /// OpenAsyncRetry and schedules ContinueWith(..., TaskScheduler.Default), costing a thread
+        /// pool dispatch even though the result is already available. Asserting that the
+        /// TaskCompletionSource is left untouched is what pins that down.
+        /// </remarks>
+        [Fact]
+        public void GetConnectionAsync_WithIdleConnection_ShouldCompleteInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            SqlConnection secondOwner = new();
+            var completed = pool.TryGetConnection(
+                secondOwner,
+                taskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert: the request is reported as completed and the connection is handed back
+            // directly, matching WaitHandleDbConnectionPool's inline hit. This is what lets
+            // SqlConnection.InternalOpenAsync take its synchronous branch and skip the
+            // OpenAsyncRetry allocation and the ContinueWith thread pool dispatch.
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+
+            // The fast path must also activate the connection and assign ownership, exactly as the
+            // full path does. Without this the pool would hand back an unowned, unactivated
+            // connection and the assertions above would still pass.
+            Assert.Same(secondOwner, internalConnection!.Owner);
+
+            // The TaskCompletionSource must be left alone; the caller abandons it on a
+            // synchronous completion.
+            Assert.False(taskCompletionSource.Task.IsCompleted);
+
+            // The idle connection was reused rather than a second one being opened.
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that a synchronous request satisfied by an already-idle connection returns that
+        /// connection inline.
+        /// </summary>
+        [Fact]
+        public void GetConnection_WithIdleConnection_ShouldReturnInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            SqlConnection secondOwner = new();
+            var completed = pool.TryGetConnection(
+                secondOwner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+            Assert.Same(secondOwner, internalConnection!.Owner);
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
         /// Verifies that a waiting synchronous caller reuses a connection that is returned to an
         /// exhausted pool instead of creating a new physical connection.
         /// </summary>
@@ -652,10 +747,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                         TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
-                    internalConnection = await taskCompletionSource.Task;
-                    pool.ReturnInternalConnection(internalConnection, owningObject);
+
+                    // A request satisfied from the pool's existing connections completes inline,
+                    // returning the connection directly and leaving the TaskCompletionSource
+                    // untouched. Only fall back to awaiting it when the request was handed off.
+                    // This mirrors how the pool's callers consume TryGetConnection.
+                    if (!completed)
+                    {
+                        internalConnection = await taskCompletionSource.Task;
+                    }
 
                     Assert.NotNull(internalConnection);
+
+                    pool.ReturnInternalConnection(internalConnection, owningObject);
                 });
                 tasks.Add(t);
             }
@@ -2278,6 +2382,94 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
                 return new StubDbConnectionInternal();
             }
+        }
+
+        #endregion
+
+        #region Saturated Sync Wait Tests
+
+        /// <summary>
+        /// Verifies that the saturated synchronous checkout path makes forward progress when every
+        /// waiter is blocked in <c>ReadChannelSyncOverAsync</c> on a threadpool thread. This is the
+        /// net462 guard for that path, where the wake-up gets no cooperative-blocking notification;
+        /// it asserts liveness only, since the frameworks legitimately differ on latency.
+        /// </summary>
+        [Fact]
+        public void SyncCheckout_WhenSaturatedOnThreadPoolThreads_AllWaitersMakeProgress()
+        {
+            // Arrange
+            const int MaxPoolSize = 4;
+            ThreadPool.GetMinThreads(out int minWorker, out _);
+
+            // More blocked waiters than the pool can serve AND than the threadpool floor, so the
+            // wake path is exercised rather than every worker simply getting its own thread.
+            // Deliberately uncapped: any ceiling would silently stop saturating on a host whose
+            // floor already exceeds it, turning this into a no-op exactly where it matters most.
+            int workerCount = minWorker + MaxPoolSize + 8;
+
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: MaxPoolSize,
+                // Generous: a healthy run finishes far inside this, while a genuinely stuck wake
+                // path still fails the test rather than hanging the suite forever.
+                creationTimeout: 60,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            using var startGate = new ManualResetEventSlim(initialState: false);
+            var acquired = new ConcurrentBag<bool>();
+            var failures = new ConcurrentBag<Exception>();
+            var workers = new Task[workerCount];
+
+            // Act: release every worker at once so they pile onto the pool together.
+            for (int i = 0; i < workerCount; i++)
+            {
+                workers[i] = Task.Factory.StartNew(
+                    () =>
+                    {
+                        try
+                        {
+                            startGate.Wait();
+                            bool got = pool.TryGetConnection(
+                                new SqlConnection(),
+                                taskCompletionSource: null,
+                                TimeoutTimer.StartNew(TimeSpan.FromSeconds(60)),
+                                out DbConnectionInternal? connection);
+
+                            acquired.Add(got && connection is not null);
+
+                            // Return promptly: with MaxPoolSize connections shared by every worker,
+                            // each return is what wakes the next waiter.
+                            if (connection is not null)
+                            {
+                                pool.ReturnInternalConnection(connection, connection.Owner);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failures.Add(ex);
+                        }
+                    },
+                    CancellationToken.None,
+                    // LongRunning would hand each worker a dedicated thread, which is precisely the
+                    // starvation this test needs to reproduce. Keep them on threadpool threads.
+                    TaskCreationOptions.None,
+                    TaskScheduler.Default);
+            }
+
+            startGate.Set();
+
+            // Assert
+            Assert.True(
+                Task.WaitAll(workers, TimeSpan.FromSeconds(120)),
+                $"Saturated sync checkout did not drain: {acquired.Count} of {workerCount} workers " +
+                "finished. The waiter wake path is not making progress on this framework.");
+            Assert.Empty(failures);
+            Assert.Equal(workerCount, acquired.Count);
+            Assert.DoesNotContain(false, acquired);
         }
 
         #endregion

@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Pokud je klíčové slovo Integrated Security připojovacího řetězce nastavené na hodnotu true nebo SSPI, nejde nastavit vlastnost AccessTokenCallback.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Vlastnost AccessToken nebo AccessTokenCallback nelze nastavit, pokud je nastavená vlastnost SspiContextProvider.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Vlastnost SspiContextProvider nelze nastavit, pokud je nastavená vlastnost AccessToken nebo AccessTokenCallback.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Default, nejde nastavit vlastnost AccessTokenCallback.</value>

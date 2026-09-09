@@ -4,8 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This step configures an existing SQL Server running on the local Linux host. For example, our 1ES
-# Hosted Pool has images like ADO-UB24-SQL25 that come with SQL Server 2025 pre-installed and
+# This step configures an existing SQL Server running on the local Linux host.  For example, our
+# 1ES pools have images like ADO-UB24-SQL25 that come with SQL Server 2025 pre-installed and
 # running.
 
 parameters:

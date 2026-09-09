@@ -38,6 +38,19 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
+  # The name of the 1ES pool to run in.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  - name: poolName
+    type: string
+
+  # The name of the VM image to run on, within the pool.
+  - name: vmImage
+    type: string
+    default: ADO-Win25
+
 stages:
 
   - stage: verify_nuget_packages_stage
@@ -55,8 +68,10 @@ stages:
         displayName: Verify NuGet Package Metadata
 
         pool:
-          name: Azure Pipelines
-          vmImage: windows-latest
+          name: ${{ parameters.poolName }}
+
+          demands:
+            - imageOverride -equals ${{ parameters.vmImage }}
 
         variables:
           # The directory where all package artifacts will be downloaded.

@@ -31,7 +31,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 
 | Area                  | What's tested                                                    |
 | --------------------- | ---------------------------------------------------------------- |
-| Version computation   | Canonical output parsing, revisions, wrapping, effective package selection, and failures |
+| Version computation   | Canonical output parsing, effective package selection, target version composition, and failures |
 | Localization validation | Missing, obsolete, or empty strings, English-value matches, and culture-specific allowlisting |
 | Parameter validation  | Empty strings rejected for all mandatory parameters              |
 | URL construction      | Base URL, register URL, request URL built from parameters        |
@@ -42,5 +42,6 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
-- Version tests mock `dotnet`, so they do not invoke MSBuild or require a restored repository.
+- Script-level version tests mock `dotnet`; package-composition tests invoke the real MSBuild
+  `GetVersionsSqlClient` and `GetVersionsSqlServer` targets.
 - Tests validate scripts in the parent directory relative to this directory.

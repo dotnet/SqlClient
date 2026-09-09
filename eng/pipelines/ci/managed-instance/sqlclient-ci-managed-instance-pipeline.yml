@@ -22,7 +22,9 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Trigger this pipeline after successful runs of the sqlclient-ci-package pipeline.
+# The resource branch filter limits completion triggers to the intended upstream branch. Because
+# both pipelines use the same repository, an eligible run executes this YAML from the triggering
+# package run's branch and commit, preserving branch-specific pipeline definitions.
 resources:
   pipelines:
 
@@ -37,7 +39,10 @@ resources:
     # added to the project, this resource will fail to resolve and the folder path must be added.
     - pipeline: sqlclient-ci-package
       source: sqlclient-ci-package
-      trigger: true
+      trigger:
+        branches:
+          include:
+            - internal/main
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
@@ -76,9 +81,9 @@ parameters:
 # The stages to run.
 stages:
 
-  # Run the Managed Instance tests. The .NET and .NET Framework runtimes are defaulted by the stage
+  # Run the Managed Instance tests. The .NET and .NET Framework runtimes are defaulted by the stages
   # template, which runs both native and managed SNI for .NET on Windows.
-  - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-stage.yml@self
+  - template: /eng/pipelines/ci/managed-instance/sqlclient-ci-managed-instance-stages.yml@self
     parameters:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}

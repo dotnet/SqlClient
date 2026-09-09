@@ -1199,7 +1199,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_sspiContextProvider != null)
             {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndSspiContextProvider();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 
@@ -1226,7 +1226,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_sspiContextProvider != null)
             {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndSspiContextProvider();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 
@@ -1238,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_accessToken != null || _accessTokenCallback != null)
             {
-                throw ADP.InvalidMixedUsageOfSspiContextProviderAndAccessToken();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 

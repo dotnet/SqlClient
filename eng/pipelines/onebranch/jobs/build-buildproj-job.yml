@@ -17,6 +17,12 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
+  # The APIScan registration version for the package being built. This is the major.minor value
+  # derived from the canonical package version by the compute_versions stage. The package's
+  # name/version pair must already be registered with APIScan before the build runs.
+  - name: apiScanSoftwareVersion
+    type: string
+
   # True to enable ESRP malware scanning and code signing steps, which should not be run on
   # non-official pipelines as they access production resources. If true, Signing* parameters must
   # be provided.
@@ -60,8 +66,9 @@ parameters:
     type: object
     default: []
 
-  # Positive unsigned 16-bit revision used by build.proj to derive assembly file versions.
-  - name: revision
+  # Assembly file version to stamp (required). Pre-computed by the compute-versions stage so no
+  # build job re-derives it. The assembly version is derived from this by Versions.props.
+  - name: fileVersion
     type: string
 
   # The full name of the package. This is used in the job name, and to form DLL and PDB filenames
@@ -112,9 +119,20 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
-      # APIScan per-job configuration for the DLL and PDB folders.
+      # APIScan per-job configuration.  This job template is the single place where the APIScan
+      # software name and version are set; the pipelines' globalSdl blocks deliberately leave them
+      # unset so that every scan is attributed to the package it actually covers.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwareName: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
+
+      # SBOM identity for this job's artifact.  OneBranch reads the SBOM package name/version only
+      # from the pipeline's globalSdl block, which has no per-job form, so that block indirects
+      # through these variables and each build job supplies its own values.  Jobs that publish no
+      # packages set ob_sdl_sbom_enabled to false instead.
+      sbomPackageName: ${{ parameters.packageFullName }}
+      sbomPackageVersion: ${{ parameters.packageVersion }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
@@ -154,12 +172,14 @@ jobs:
       # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-      # Perform Roslyn analysis before building, since this step will clobber build output.
+      # Run Roslyn analysis. This step is self-contained: it performs its own build into an
+      # isolated output location, so it can run at any point in the job without clobbering the
+      # real build output below.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
@@ -169,7 +189,7 @@ jobs:
           buildConfiguration: Release
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
@@ -217,7 +237,7 @@ jobs:
           dependencyArguments: $(sqlServerVersionArgument)
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
