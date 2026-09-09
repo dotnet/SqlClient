@@ -188,6 +188,8 @@
       <Platform Solution="*|x86" Project="x86" />
     </Project>
     <Project Path="Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ConnectionPoolRampStress/ConnectionPoolRampStress.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/ConnectionPoolRampStress.Tests/ConnectionPoolRampStress.Tests.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj">
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="*|x86" Project="x86" />

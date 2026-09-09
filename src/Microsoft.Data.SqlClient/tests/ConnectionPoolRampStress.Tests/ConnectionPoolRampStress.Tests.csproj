@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ConnectionPoolRampStress/ConnectionPoolRampStress.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="CopyChildRuntimeFiles" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
+    <ItemGroup>
+      <ChildRuntimeFile Include="../ConnectionPoolRampStress/bin/$(Configuration)/$(TargetFramework)/ConnectionPoolRampStress.runtimeconfig.json" />
+      <ChildRuntimeFile Include="../ConnectionPoolRampStress/bin/$(Configuration)/$(TargetFramework)/ConnectionPoolRampStress.deps.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ChildRuntimeFile)" DestinationFolder="$(TargetDir)" />
+  </Target>
+</Project>
