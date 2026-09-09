@@ -53,6 +53,10 @@ jobs:
       - name: ob_sdl_apiscan_enabled
         value: false
 
+      # Likewise it produces no package, and sets no sbomPackage* values for globalSdl to resolve.
+      - name: ob_sdl_sbom_enabled
+        value: false
+
       # Path within the downloaded artifact where NuGet packages are located.
       - name: artifactPath
         value: '$(Pipeline.Workspace)\${{ parameters.artifactName }}'

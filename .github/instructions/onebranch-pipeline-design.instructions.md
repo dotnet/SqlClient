@@ -135,6 +135,7 @@ Variable groups:
 - Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version
 - Each build job also sets `ob_sdl_apiscan_softwareFolder` and `ob_sdl_apiscan_symbolsFolder` to its per-package `apiScan/<package>/dlls` and `apiScan/<package>/pdbs` paths
 - CodeQL, SBOM, Policheck (`break: true`): enabled in both pipelines
+- SBOM package name/version are resolvable **only** from the pipeline's `globalSdl.sbom` block — OneBranch's artifact-publishing path reads `globalSdl.sbom.packageName`/`packageVersion` directly and has no per-job equivalent (the `templateContext.sdl.sbom` override only applies to the native 1ES Stages entry point, which this repo does not use). Because the pipeline produces six differently-named and independently-versioned packages, `globalSdl.sbom` indirects through the `$(sbomPackageName)` / `$(sbomPackageVersion)` variables, which each build job sets to its own `packageFullName` and computed `packageVersion`. Jobs that publish no packages (version computation, symbol publishing) set `ob_sdl_sbom_enabled: false` alongside their existing APIScan/BinSkim opt-outs, so the variables never need pipeline-level defaults
 - asyncSdl `enabled: false` in both; individual sub-tools (CredScan, BinSkim, Armory, Roslyn) configured underneath
 - Policheck exclusions: `$(REPO_ROOT)\.config\PolicheckExclusions.xml`
 - CredScan suppressions: `$(REPO_ROOT)/.config/CredScanSuppressions.json`

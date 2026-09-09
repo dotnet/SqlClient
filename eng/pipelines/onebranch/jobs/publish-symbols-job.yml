@@ -64,6 +64,9 @@ jobs:
         value: false
       - name: ob_sdl_binskim_enabled
         value: false
+      # No packages are published here, so there is nothing to describe in an SBOM.
+      - name: ob_sdl_sbom_enabled
+        value: false
       # Path where the downloaded artifact will be placed.
       - name: artifactPath
         value: '$(Pipeline.Workspace)/${{ parameters.packageFullName }}'

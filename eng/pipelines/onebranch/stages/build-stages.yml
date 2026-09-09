@@ -80,8 +80,10 @@ stages:
     dependsOn: compute_versions
 
     variables:
-      - name: versionRevision
-        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.VersionRevision'] ]
+      - name: sqlClientFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
+      - name: sqlServerFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerFileVersion'] ]
       - name: sqlClientPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
@@ -107,7 +109,7 @@ stages:
           signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
           dependencies: []
-          revision: '$(versionRevision)'
+          fileVersion: '$(sqlClientFileVersion)'
           packageFullName: 'Microsoft.Data.SqlClient.Internal.Logging'
           packageShortName: 'Logging'
           versionPropertySuffix: 'SqlClient'
@@ -130,7 +132,7 @@ stages:
             signingEsrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
             dependencies: []
-            revision: '$(versionRevision)'
+            fileVersion: '$(sqlServerFileVersion)'
             packageFullName: 'Microsoft.SqlServer.Server'
             packageShortName: 'SqlServer'
             versionPropertySuffix: 'SqlServer'
@@ -148,8 +150,8 @@ stages:
       - build_independent
 
     variables:
-      - name: versionRevision
-        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.VersionRevision'] ]
+      - name: sqlClientFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
       - name: sqlClientPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlClientApiScanVersion
@@ -174,7 +176,7 @@ stages:
             - artifactName: '${{ parameters.loggingArtifactsName }}'
               shortName: 'Logging'
               version: '$(sqlClientPackageVersion)'
-          revision: '$(versionRevision)'
+          fileVersion: '$(sqlClientFileVersion)'
           packageFullName: 'Microsoft.Data.SqlClient.Extensions.Abstractions'
           packageShortName: 'Abstractions'
           versionPropertySuffix: 'SqlClient'
@@ -192,8 +194,8 @@ stages:
       - build_abstractions
 
     variables:
-      - name: versionRevision
-        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.VersionRevision'] ]
+      - name: sqlClientFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
       - name: sqlClientPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
@@ -234,7 +236,7 @@ stages:
               - artifactName: ''
                 shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
-          revision: '$(versionRevision)'
+          fileVersion: '$(sqlClientFileVersion)'
           packageFullName: 'Microsoft.Data.SqlClient'
           packageShortName: 'SqlClient'
           versionPropertySuffix: 'SqlClient'
@@ -261,7 +263,7 @@ stages:
             - artifactName: '${{ parameters.loggingArtifactsName }}'
               shortName: 'Logging'
               version: '$(sqlClientPackageVersion)'
-          revision: '$(versionRevision)'
+          fileVersion: '$(sqlClientFileVersion)'
           packageFullName: 'Microsoft.Data.SqlClient.Extensions.Azure'
           packageShortName: 'Azure'
           versionPropertySuffix: 'SqlClient'
@@ -278,8 +280,8 @@ stages:
       - build_dependent
 
     variables:
-      - name: versionRevision
-        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.VersionRevision'] ]
+      - name: sqlClientFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
       - name: sqlClientPackageVersion
         value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
       - name: sqlServerPackageVersion
@@ -322,7 +324,7 @@ stages:
               - artifactName: ''
                 shortName: 'SqlServer'
                 version: '$(sqlServerPackageVersion)'
-          revision: '$(versionRevision)'
+          fileVersion: '$(sqlClientFileVersion)'
           packageFullName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
           packageShortName: 'AkvProvider'
           versionPropertySuffix: 'SqlClient'
