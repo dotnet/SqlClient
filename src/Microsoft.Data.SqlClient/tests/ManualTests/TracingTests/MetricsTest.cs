@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TransactedConnectionPool_VerifyActiveConnectionCounters()
         {
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         public void ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();

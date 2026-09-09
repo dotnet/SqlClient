@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

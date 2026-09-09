@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         public void Test_SingleDependency_AllDefaults_SqlAuth()
         {
             Assert.True(SqlDependency.Start(_startConnectionString), "Failed to start listener.");
