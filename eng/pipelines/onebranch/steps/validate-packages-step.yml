@@ -11,8 +11,9 @@
 # carries the same version and that their inter-package dependency ranges agree.  Running it per
 # package would silently skip all of those findings.
 #
-# Two invocations are made over the same inputs.  The first writes a machine-readable report and
-# never fails, so the artifact exists even for a failing run.  The second renders the
+# Two invocations are made over the same inputs.  The first writes a machine-readable report and is
+# ungated, so the artifact exists even for a failing run.  It still fails the step if the validator
+# itself errors, because the report it produced could not then be trusted.  The second renders the
 # human-readable report and applies the gate, so a failed build shows the findings in its own log.
 
 parameters:
