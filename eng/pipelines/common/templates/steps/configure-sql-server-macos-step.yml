@@ -141,84 +141,143 @@ steps:
       # Password for the SA user (required)
       MSSQL_SA_PW="${{ parameters.saPassword }}"
 
-      # Start the container and fail fast (with diagnostics) if it does not launch,
-      # rather than silently falling through to the connection-wait loop.
-      if ! docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest; then
-        echo "ERROR: Failed to start the sql1 container."
-        docker ps -a --filter "name=^/sql1$"
-        exit 1
-      fi
-
-      sleep 10
-
-      docker ps -a
-
-      # Connect to the SQL Server container and get its version.
+      # Collect everything needed to diagnose a container that crashed or never
+      # became ready.
       #
-      # With Rosetta 2 emulation, SQL Server starts much faster than under full
-      # QEMU emulation, but it can still take a minute or two.  We allow up to
-      # 6 minutes (72 attempts × 5 seconds) as a generous upper bound.
+      # The mssql dump collector (paldumper) writes hundreds of
+      # "find: '/proc/N/...': Permission denied" lines to the container's stderr
+      # whenever sqlservr faults.  That noise used to fill the entire captured
+      # window and hide the actual SQL Server error, so it is filtered out here
+      # and both the head and the tail of the log are printed.
+      dumpSqlDiagnostics()
+      {
+        set +x
 
-      # Wait 5 seconds between attempts.
-      delay=5
+        echo "--- Container status ---"
+        docker ps -a --filter "name=^/sql1$" || true
 
-      # Try up to 72 times (~6 minutes) to connect.
-      maxAttempts=72
+        echo "--- Container state ---"
+        docker inspect sql1 --format 'ExitCode={{.State.ExitCode}} OOMKilled={{.State.OOMKilled}} Error="{{.State.Error}}" StartedAt={{.State.StartedAt}} FinishedAt={{.State.FinishedAt}}' || true
 
-      # Attempt counter.
-      attempt=1
+        echo "--- SQL Server errorlog (last 80 lines) ---"
+        # docker cp works against a stopped container, so this survives a crash.
+        if docker cp sql1:/var/opt/mssql/log/errorlog "$SQL_ERRORLOG" 2>/dev/null; then
+          tail -80 "$SQL_ERRORLOG"
+        else
+          echo "(errorlog not available)"
+        fi
 
-      # Flag to indicate when SQL Server is ready to accept connections.
-      ready=0
+        echo "--- Container logs, dump-collector noise filtered (first 60 lines) ---"
+        docker logs sql1 2>&1 | grep -vE "^(find|dmesg|timeout): " | head -60 || true
+        echo "--- Container logs, dump-collector noise filtered (last 40 lines) ---"
+        docker logs sql1 2>&1 | grep -vE "^(find|dmesg|timeout): " | tail -40 || true
 
-      while [ $attempt -le $maxAttempts ]
+        echo "--- sqlcmd errors ---"
+        cat "$SQLCMD_ERRORS" 2>/dev/null || echo "(none)"
+
+        echo "--- Host capacity ---"
+        echo "hw.ncpu=$(sysctl -n hw.ncpu 2>/dev/null) hw.memsize=$(sysctl -n hw.memsize 2>/dev/null)"
+        vm_stat || true
+
+        echo "--- Guest capacity ---"
+        colima ssh -- free -m || true
+
+        set -x
+      }
+
+      SQL_ERRORLOG=$(Agent.TempDirectory)/mssql_errorlog
+
+      # Start SQL Server, retrying the whole container lifecycle.  sqlservr
+      # intermittently core dumps within a minute or two of starting on these
+      # agents (the container goes to "Exited (1)" while the readiness loop is
+      # still polling), which previously failed the entire step on the first
+      # occurrence.  Colima startup and the image pull already retry; the
+      # container did not.
+      runAttempts=3
+      sqlReady=0
+
+      for ((r=1; r<=runAttempts; r++))
       do
+        echo "Starting SQL Server container (attempt #$r of $runAttempts)..."
 
-        echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
+        # Clear any container and sqlcmd output left behind by a prior attempt.
+        docker rm -f sql1 >/dev/null 2>&1 || true
+        : > "$SQLCMD_ERRORS"
 
-        # -C trusts the self-signed certificate inside the container.
-        sqlcmd -S 127.0.0.1 -No -C -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" >> $SQLCMD_ERRORS 2>&1
+        if ! docker run --platform linux/amd64 -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest; then
+          echo "ERROR: Failed to start the sql1 container (attempt #$r of $runAttempts)."
+          dumpSqlDiagnostics
+          continue
+        fi
 
-        # If the command was successful, then the SQL Server is ready.
-        if [ $? -eq 0 ]; then
-          ready=1
+        sleep 10
+
+        docker ps -a
+
+        # Connect to the SQL Server container and get its version.
+        #
+        # With Rosetta 2 emulation, SQL Server starts much faster than under full
+        # QEMU emulation, but it can still take a minute or two.  We allow up to
+        # 6 minutes (72 attempts × 5 seconds) as a generous upper bound.
+
+        # Wait 5 seconds between attempts.
+        delay=5
+
+        # Try up to 72 times (~6 minutes) to connect.
+        maxAttempts=72
+
+        # Attempt counter.
+        attempt=1
+
+        # Set when the container died before SQL Server accepted connections.
+        crashed=0
+
+        while [ $attempt -le $maxAttempts ]
+        do
+
+          echo "Waiting for SQL Server to start (attempt #$attempt of $maxAttempts)..."
+
+          # -C trusts the self-signed certificate inside the container.
+          if sqlcmd -S 127.0.0.1 -No -C -U sa -P "$MSSQL_SA_PW" -Q "SELECT @@VERSION" >> "$SQLCMD_ERRORS" 2>&1; then
+            sqlReady=1
+            break
+          fi
+
+          # Verify the container is still running; no point retrying if it crashed.
+          if ! docker ps --filter "name=^/sql1$" --filter "status=running" --format '{{.Names}}' | grep -Fxq 'sql1'; then
+            echo "ERROR: sql1 container is no longer running (attempt #$r of $runAttempts)."
+            crashed=1
+            break
+          fi
+
+          # Increment the attempt counter.
+          ((attempt++))
+
+          # Wait before trying again.
+          sleep $delay
+
+        done
+
+        if [ $sqlReady -eq 1 ]; then
           break
         fi
 
-        # Verify the container is still running; no point retrying if it crashed.
-        if ! docker ps --filter "name=^/sql1$" --filter "status=running" --format '{{.Names}}' | grep -Fxq 'sql1'; then
-          echo "ERROR: sql1 container is no longer running."
-          docker ps -a --filter "name=^/sql1$"
-          echo "--- Container logs ---"
-          docker logs sql1 2>&1 | tail -50
-          rm -f $SQLCMD_ERRORS
-          exit 1
+        if [ $crashed -ne 1 ]; then
+          echo "ERROR: Cannot connect to SQL Server after $maxAttempts attempts (attempt #$r of $runAttempts)."
         fi
 
-        # Increment the attempt counter.
-        ((attempt++))
-
-        # Wait before trying again.
-        sleep $delay
-
+        dumpSqlDiagnostics
       done
 
       # Is the SQL Server ready?
-      if [ $ready -eq 0 ]
+      if [ $sqlReady -ne 1 ]
       then
-        # No, so report the error(s) and exit.
-        echo "Cannot connect to SQL Server after $maxAttempts attempts; installation aborted."
-        echo "--- sqlcmd errors ---"
-        cat $SQLCMD_ERRORS
-        echo "--- Container status ---"
-        docker ps -a --filter "name=^/sql1$"
-        echo "--- Container logs (last 80 lines) ---"
-        docker logs sql1 2>&1 | tail -80
-        rm -f $SQLCMD_ERRORS
+        echo "ERROR: SQL Server did not become ready after $runAttempts container attempts; installation aborted."
+        rm -f "$SQLCMD_ERRORS" "$SQL_ERRORLOG"
         exit 1
       fi
 
-      rm -f $SQLCMD_ERRORS
+      rm -f "$SQLCMD_ERRORS" "$SQL_ERRORLOG"
 
       echo "Use sqlcmd to show which IP addresses are being listened on..."
       echo 0.0.0.0
@@ -247,5 +306,6 @@ steps:
     # boot fails here instead of consuming the whole test job.  Measured worst
     # case is ~24 minutes: Colima boot ~6, the SQL image pull ~10 (7 of which is
     # extraction inside the VM), and up to 6 more waiting for SQL to accept
-    # connections.
-    timeoutInMinutes: 40
+    # connections.  The container is now started up to 3 times, so the readiness
+    # wait can cost 18 minutes rather than 6 in the pathological case.
+    timeoutInMinutes: 55
