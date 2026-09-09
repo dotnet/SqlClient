@@ -17,20 +17,14 @@
 #   - Microsoft.SqlServer.Server is versioned separately: it uses its "next" version when it is
 #     being built this run, or its "published" (last shipped to NuGet) version when it is not built
 #     (so the SqlClient family depends on the most recently published SqlServer package).
-#   - Runs use their "next" version from Versions.props. By default the pipeline build number is
-#     appended to prerelease package versions (7.1.0-preview3.26238.3) and its date segment becomes
-#     the file-version build number (7.1.0.26238), matching the shape shipped by earlier previews.
-#     Runs can instead append the Build.BuildId revision, reducing collisions when repeatedly
-#     publishing the same base version for testing.
+#   - Runs use their "next" version from Versions.props. The pipeline build number is appended to
+#     prerelease package versions (7.1.0-preview3.26238.3) and its date segment becomes the
+#     file-version build number (7.1.0.26238), matching the shape shipped by earlier previews.
 #   - Versions are extracted via build.proj GetVersions* targets by parsing stdout.
 #
 # This stage MUST run before all build stages so they can consume computed versions.
 
 parameters:
-  # Whether to append the Build.BuildId revision to package and file versions.
-  - name: addRevision
-    type: boolean
-
   # Whether Microsoft.SqlServer.Server is being built this run.  This drives the SqlServer version
   # selection (next when built, published when not); the SqlClient family always uses its next
   # version.  When SqlServer is not built, the SqlClient family depends on the published SqlServer
@@ -54,6 +48,8 @@ stages:
           ob_sdl_apiscan_enabled: false
           ob_sdl_binskim_break: false
           ob_sdl_binskim_enabled: false
+          # No packages are published here, so there is nothing to describe in an SBOM.
+          ob_sdl_sbom_enabled: false
 
         steps:
           - pwsh: |
@@ -69,8 +65,8 @@ stages:
           # may run during the GetVersions* evaluation.
           - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-          # Extract canonical versions, resolve the effective built/published values, optionally
-          # add the run revision, and publish the downstream stage output variables.
+          # Extract canonical versions, resolve the effective built/published values, and publish
+          # the downstream stage output variables.
           - task: PowerShell@2
             displayName: "Compute Effective Versions"
             name: "versions"
@@ -80,7 +76,5 @@ stages:
               filePath: $(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/compute-versions.ps1
               arguments: >-
                 -ProjectPath "$(Build.SourcesDirectory)/build.proj"
-                -Revision "$(Build.BuildId)"
                 -BuildNumber "$(Build.BuildNumber)"
                 -BuildSqlServer $${{ parameters.buildSqlServer }}
-                -AddRevision $${{ parameters.addRevision }}

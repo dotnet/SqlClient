@@ -66,8 +66,9 @@ parameters:
     type: object
     default: []
 
-  # Positive unsigned 16-bit revision used by build.proj to derive assembly file versions.
-  - name: revision
+  # Assembly file version to stamp (required). Pre-computed by the compute-versions stage so no
+  # build job re-derives it. The assembly version is derived from this by Versions.props.
+  - name: fileVersion
     type: string
 
   # The full name of the package. This is used in the job name, and to form DLL and PDB filenames
@@ -126,6 +127,13 @@ jobs:
       ob_sdl_apiscan_softwareName: ${{ parameters.packageFullName }}
       ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
 
+      # SBOM identity for this job's artifact.  OneBranch reads the SBOM package name/version only
+      # from the pipeline's globalSdl block, which has no per-job form, so that block indirects
+      # through these variables and each build job supplies its own values.  Jobs that publish no
+      # packages set ob_sdl_sbom_enabled to false instead.
+      sbomPackageName: ${{ parameters.packageFullName }}
+      sbomPackageVersion: ${{ parameters.packageVersion }}
+
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
@@ -166,7 +174,7 @@ jobs:
         parameters:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
@@ -176,7 +184,7 @@ jobs:
           buildConfiguration: Release
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
@@ -224,7 +232,7 @@ jobs:
           dependencyArguments: $(sqlServerVersionArgument)
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 

@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         public static void BasicConnectionPoolingTest(string connectionString)
         {
             SqlConnection.ClearAllPools();

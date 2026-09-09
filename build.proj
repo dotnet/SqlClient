@@ -97,6 +97,21 @@
     -->
 
     <!--
+      SqlClientNextVersion
+      Applies to:     GetVersionsSqlClient
+      Description:    Overrides the source-declared base version used to calculate the SqlClient
+                      family package and file versions. BuildNumber and BuildSuffix are applied to
+                      this value by Versions.props. An explicit PackageVersionSqlClient remains
+                      higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.Data.SqlClient/Versions.props
+      Example:        7.1.0-preview3
+    -->
+    <SqlClientNextVersion Condition="'$(SqlClientNextVersion)' == ''" />
+    <SqlClientNextVersionArgument Condition="'$(SqlClientNextVersion)' != ''">
+      -p:SqlClientNextVersion=$(SqlClientNextVersion)
+    </SqlClientNextVersionArgument>
+
+    <!--
       PackageVersionSqlClient
       Applies to:
         Build:        BuildSqlClient*, BuildLogging, BuildAbstractions, BuildAzure, BuildAkvProvider
@@ -121,6 +136,36 @@
     </PackageVersionSqlClientArgument>
 
     <!--
+      FileVersionSqlClient
+      Applies to:     The same targets as PackageVersionSqlClient.
+      Description:    Specifies the assembly file version stamped on the SqlClient *family*.  When
+                      omitted, Versions.props derives it from the package version and BuildNumber.
+                      Supply it to stamp a pre-computed value instead, so no consumer has to
+                      re-derive it.  The assembly version is always derived from this value.
+      Default value:  [blank]
+      Example:        7.1.0.26238
+    -->
+    <FileVersionSqlClient Condition="'$(FileVersionSqlClient)' == ''" />
+    <FileVersionSqlClientArgument Condition="'$(FileVersionSqlClient)' != ''">
+      -p:SqlClientFileVersion=$(FileVersionSqlClient)
+    </FileVersionSqlClientArgument>
+
+    <!--
+      SqlServerNextVersion
+      Applies to:     GetVersionsSqlServer
+      Description:    Overrides the source-declared base version used to calculate the
+                      Microsoft.SqlServer.Server package and file versions. BuildNumber and
+                      BuildSuffix are applied to this value by Versions.props. An explicit
+                      PackageVersionSqlServer remains higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.SqlServer.Server/Versions.props
+      Example:        1.1.0-preview1
+    -->
+    <SqlServerNextVersion Condition="'$(SqlServerNextVersion)' == ''" />
+    <SqlServerNextVersionArgument Condition="'$(SqlServerNextVersion)' != ''">
+      -p:SqlServerNextVersion=$(SqlServerNextVersion)
+    </SqlServerNextVersionArgument>
+
+    <!--
       PackageVersionSqlServer
       Applies to:
         Build:        BuildSqlServer and BuildSqlClient* in Package reference mode
@@ -136,6 +181,20 @@
     <PackageVersionSqlServerArgument Condition="'$(PackageVersionSqlServer)' != ''">
       -p:SqlServerPackageVersion=$(PackageVersionSqlServer)
     </PackageVersionSqlServerArgument>
+
+    <!--
+      FileVersionSqlServer
+      Applies to:     The same targets as PackageVersionSqlServer.
+      Description:    Specifies the assembly file version stamped on Microsoft.SqlServer.Server.
+                      When omitted, Versions.props derives it from the package version and
+                      BuildNumber.  Supply it to stamp a pre-computed value instead.
+      Default value:  [blank]
+      Example:        1.1.0.26238
+    -->
+    <FileVersionSqlServer Condition="'$(FileVersionSqlServer)' == ''" />
+    <FileVersionSqlServerArgument Condition="'$(FileVersionSqlServer)' != ''">
+      -p:SqlServerFileVersion=$(FileVersionSqlServer)
+    </FileVersionSqlServerArgument>
 
     <!--
       ReferenceType
@@ -342,6 +401,26 @@
     </TestCodeCoverageArgument>
 
     <!--
+      ============================================================================================
+      TRAIT CASING CONVENTION - read this before adding a trait or a filter anywhere in the repo.
+
+      Always use a lower-case "category" key AND lower-case values, both in [Trait(...)] attributes
+      in test code and in every filter expression (here and under eng/pipelines).
+
+      Why it matters: xunit.runner.visualstudio (2.8.2) resolves the filter's *property name*
+      against the set of trait keys discovered in the assembly using a case-SENSITIVE lookup, but
+      only on the execution path.  Test discovery (the "list tests" path) is case-INSENSITIVE.  So a
+      casing mismatch lists correctly and then silently misbehaves when the tests actually run:
+      "category!=x" matches everything and "category=x" matches nothing.  Trait *values* are always
+      compared case-insensitively, so only the key casing is dangerous.
+
+      The failure is per-assembly, which is why it hid for so long: it only surfaces when no test in
+      that assembly declares a lower-case "category" key.  Microsoft.DotNet.XUnitExtensions injects
+      one via [ActiveIssue], [OuterLoop], [PlatformSpecific] and friends, which masked the problem
+      in most of our test assemblies until Azure.Test - which uses none of those attributes - ran
+      its excluded "interactive" test in CI.
+      ============================================================================================
+
       TestFilters
       Applies to:     Test* targets
       Description:    Filter to use to include or exclude any tests. If not specified, this defaults
@@ -451,20 +530,20 @@
        Usage:
          dotnet build build.proj -t:GetVersionsSqlClient -v:m -nologo -p:BuildNumber=1234
          # stdout contains:
-         #   PackageVersion: 7.1.0-preview1
+         #   PackageVersion: 7.1.0-preview1.1234
          #   FileVersion: 7.1.0.1234
   -->
 
   <Target Name="GetVersionsSqlClient">
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
     </Exec>
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
@@ -476,7 +555,7 @@
 
   <Target Name="GetVersionsSqlServer">
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
@@ -486,7 +565,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
     </Exec>
     <PropertyGroup>
-      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument)</_Cmd>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
       <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
@@ -574,6 +653,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -605,6 +685,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -636,6 +717,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -679,6 +761,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -839,6 +922,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -866,6 +950,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -946,6 +1031,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -972,6 +1058,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1051,6 +1138,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
@@ -1077,6 +1165,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1153,6 +1242,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1176,6 +1266,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1219,6 +1310,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1242,6 +1334,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
