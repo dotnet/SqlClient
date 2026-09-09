@@ -29,21 +29,33 @@ steps:
       export PS4='+ [$(date "+%Y-%m-%d %H:%M:%S")] '
       set -x
 
-      # Install Docker CLI (not Desktop — Colima provides the daemon) and SQLCMD tools.
+      # Install Colima (which provides the Docker daemon, since Docker Desktop is
+      # not available here), the docker CLI, and sqlcmd.
       brew install colima
-      brew install docker
-      brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
-      brew update
-      # Homebrew 5.2+ requires explicit trust for third-party taps.  Run this
-      # after 'brew update' so the trust command is available even if the runner
-      # image shipped an older Homebrew version.
-      brew trust microsoft/mssql-release
-      HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
 
-      # Fail fast if sqlcmd was not installed (e.g. tap-trust or formula error).
-      # Without this check the script would loop for ~6 minutes trying to connect.
+      # Homebrew ships no Intel macOS bottle for the current docker formula, so
+      # 'brew install docker' compiles the CLI (and builds Go to do it), which
+      # takes minutes and often exhausts the step timeout.  Install the newest
+      # bottled version directly instead.
+      DOCKER_CLI_DIR="$HOME/.docker-cli/bin"
+      if ! pwsh -NoProfile -File "$(Build.SourcesDirectory)/eng/pipelines/scripts/Install-DockerCli.macos.ps1" -DestinationPath "$DOCKER_CLI_DIR"; then
+        echo "ERROR: Failed to install the docker CLI."
+        exit 1
+      fi
+      # prependpath only affects later steps, so fix PATH for this one as well.
+      export PATH="$DOCKER_CLI_DIR:$PATH"
+
+      # go-sqlcmd, rather than mssql-tools18 from the microsoft/mssql-release
+      # tap.  That tap pins an openssl@3 formula that has no Intel bottle, so
+      # installing it compiled openssl from source and cost 12.5 minutes of the
+      # step budget.  go-sqlcmd is a single bottled Go binary with no openssl
+      # dependency, and accepts the same flags used below.
+      brew install sqlcmd
+
+      # Fail fast if sqlcmd was not installed.  Without this check the script
+      # would loop for ~6 minutes trying to connect.
       if ! command -v sqlcmd &>/dev/null; then
-        echo "ERROR: sqlcmd is not on PATH after brew install. Check the mssql-tools18 installation above."
+        echo "ERROR: sqlcmd is not on PATH after 'brew install sqlcmd'."
         exit 1
       fi
 
@@ -82,8 +94,8 @@ steps:
       fi
 
       # Point the docker CLI at Colima's daemon socket.  Colima normally sets an
-      # active docker context, but the standalone docker CLI (installed above via
-      # 'brew install docker') can default to unix:///var/run/docker.sock, which
+      # active docker context, but the standalone docker CLI installed above can
+      # default to unix:///var/run/docker.sock, which
       # does not exist on macOS without Docker Desktop.  This caused every
       # 'docker pull' to fail instantly with:
       #   failed to connect to the docker API at unix:///var/run/docker.sock
@@ -231,3 +243,9 @@ steps:
       fi
 
     displayName: 'Configure SQL Server [macOS]'
+    # Well above a healthy run, but low enough that a wedged install or Colima
+    # boot fails here instead of consuming the whole test job.  Measured worst
+    # case is ~24 minutes: Colima boot ~6, the SQL image pull ~10 (7 of which is
+    # extraction inside the VM), and up to 6 more waiting for SQL to accept
+    # connections.
+    timeoutInMinutes: 40
