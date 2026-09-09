@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -80,5 +82,49 @@ namespace Microsoft.Data.SqlClient.Tests
             option.AuthorizedSqlCondition = null;
             SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(option);
         }
+
+#if NET
+        /// <summary>
+        /// Regression test: triggering the configurable retry logic loader through its normal
+        /// entry points must not leave a process-wide
+        /// <see cref="System.Runtime.Loader.AssemblyLoadContext.Default"/> resolving handler
+        /// installed. Such a handler participates in resolution of every assembly the host
+        /// application fails to find, and serves them out of this component's probing directory,
+        /// which can load code from an unintended location.
+        /// </summary>
+        [Fact]
+        public void RetryLogicProviderDoesNotLeaveAssemblyProbingEnabled()
+        {
+            // Touch the default retry logic providers to force SqlConfigurableRetryLogicLoader
+            // construction via its normal code path.
+            Assert.NotNull(new SqlCommand().RetryLogicProvider);
+            Assert.NotNull(new SqlConnection().RetryLogicProvider);
+
+            // A file that is not a valid assembly, planted in the loader's probing directory
+            // under a name no other component could be asking for. If a handler is still
+            // subscribed it finds this file and fails with BadImageFormatException. With correct
+            // behavior the runtime never looks here and reports the assembly as simply not found.
+            string assemblySimpleName = "MdsProbeAssembly_" + Guid.NewGuid().ToString("N");
+            string plantedFile = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
+
+            File.WriteAllText(plantedFile, "not an assembly");
+            try
+            {
+                Assert.Throws<FileNotFoundException>(
+                    () => Assembly.Load(new AssemblyName(assemblySimpleName)));
+            }
+            finally
+            {
+                try
+                {
+                    File.Delete(plantedFile);
+                }
+                catch (IOException)
+                {
+                    // Best effort cleanup.
+                }
+            }
+        }
+#endif
     }
 }
