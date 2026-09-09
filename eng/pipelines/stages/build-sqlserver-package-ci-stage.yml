@@ -25,6 +25,14 @@
 
 parameters:
 
+  # The name of the 1ES pool to run in.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  - name: poolName
+    type: string
+
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -77,6 +85,7 @@ stages:
     jobs:
       - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.poolName }}
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}

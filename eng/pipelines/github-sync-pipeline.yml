@@ -57,11 +57,16 @@ parameters:
     type: string
     default: internal/main
 
+variables:
+  - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+
 jobs:
   - job: SyncGitHub
     displayName: Sync GitHub to ADO
     pool:
-      vmImage: 'ubuntu-latest'
+      name: $(ci_var_defaultPoolName)
+      demands:
+        - imageOverride -equals ADO-UB24
 
     steps:
       # Check out the ADO repo with full history so we can compare branches.

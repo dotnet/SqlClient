@@ -89,6 +89,9 @@ parameters:
       - detailed
       - diagnostic
 
+variables:
+  - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+
 # The stages to run.
 stages:
 
@@ -96,10 +99,13 @@ stages:
   - template: /eng/pipelines/stages/generate-secrets-ci-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
+      poolName: $(ci_var_defaultPoolName)
+      vmImage: ADO-UB24
 
   # Run the stress tests.
   - template: /eng/pipelines/ci/stress/sqlclient-ci-stress-stage.yml@self
     parameters:
+      poolName: $(ci_var_defaultPoolName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
       warnOnTestFailure: ${{ parameters.warnOnTestFailure }}

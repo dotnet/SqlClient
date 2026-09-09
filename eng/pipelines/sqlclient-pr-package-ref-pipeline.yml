@@ -145,6 +145,9 @@ extends:
     useManagedSNI: ${{ parameters.useManagedSNI }}
     # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
     runLegacySqlTests: false
+    # SQL Server 2022 coverage runs in CI only.  PR validation covers SQL
+    # Server 2019, 2025 and Azure SQL.
+    runSql22Tests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false
