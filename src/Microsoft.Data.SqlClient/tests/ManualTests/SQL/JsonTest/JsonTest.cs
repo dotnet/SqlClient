@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonWrite()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using Table jsonTable = new(connection, nameof(TestJsonWrite), "(data json)");
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonWriteAsync()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using Table jsonTable = new(connection, nameof(TestJsonWriteAsync), "(data json)");
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonRead()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using Table jsonTable = new(connection, nameof(TestJsonRead), "(data json)");
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonReadAsync()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using Table jsonTable = new(connection, nameof(TestJsonReadAsync), "(data json)");
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestNullJson()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using Table jsonTable = new(connection, nameof(TestNullJson), "(data json)");
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonAPIs()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using Table jsonTable = new(connection, nameof(TestJsonAPIs), "(data json)");
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void TestJsonWithMARS()
         {
             SqlConnectionStringBuilder csbMarsEnabledTcp = new(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true };
-            using SqlConnection connection = new(csbMarsEnabledTcp.ConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection(csbMarsEnabledTcp.ConnectionString);
             connection.Open();
 
             using Table jsonTable1 = new(connection, nameof(TestJsonWithMARS), "(Data json)");
@@ -344,7 +344,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonSPParams()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using Table jsonTable = new(connection, nameof(TestJsonSPParams), "(Id int, Data json)");

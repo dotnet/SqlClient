@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InitialCatalog = "master"
             };
-            using SqlConnection connection = new(builder.ConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
             HashSet<string> syncColumnNames = [];
             HashSet<string> asyncColumnNames = [];
 

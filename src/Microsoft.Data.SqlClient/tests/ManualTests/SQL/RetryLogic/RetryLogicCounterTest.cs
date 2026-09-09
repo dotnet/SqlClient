@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                using var connection = DataTestUtility.CreateConnection();
                 connection.Open();
 
                 using SqlCommand cmd = connection.CreateCommand();
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                using var connection = DataTestUtility.CreateConnection();
                 connection.Open();
 
                 using SqlCommand cmd = connection.CreateCommand();

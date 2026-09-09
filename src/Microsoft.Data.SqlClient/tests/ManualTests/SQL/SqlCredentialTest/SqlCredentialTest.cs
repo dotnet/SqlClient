@@ -187,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createUserCmd = $"CREATE LOGIN {username} WITH PASSWORD = '{password}', CHECK_POLICY=OFF;"
                                     + $"EXEC sp_adduser '{username}', '{username}', 'db_datareader';";
 
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             using (var cmd = new SqlCommand(createUserCmd, conn))
             {
                 conn.Open();
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Pool must be cleared to prevent DROP LOGIN failure.
             SqlConnection.ClearAllPools();
 
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             using (var cmd = new SqlCommand(dropUserCmd, conn))
             {
                 conn.Open();

@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     ConnectTimeout = 10000
                 };
                 Customer customer = new Customer(45, "Microsoft", "Corporation");
-                using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
+                using (SqlConnection sqlConn = DataTestUtility.CreateConnection(builder.ToString()))
                 {
                     sqlConn.Open();
 

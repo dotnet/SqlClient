@@ -2292,7 +2292,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             builder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
             builder.EnclaveAttestationUrl = string.Empty;
 
-            using (SqlConnection connection = new(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => connection.Open());
                 string expectedErrorMessage = string.Format(

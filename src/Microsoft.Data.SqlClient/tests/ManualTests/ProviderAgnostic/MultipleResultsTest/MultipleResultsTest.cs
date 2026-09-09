@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ExecuteNonQuery()
         {
-            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
             using SqlCommand command = connection.CreateCommand();
             ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
 
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ExecuteScalar()
         {
-            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
             using SqlCommand command = connection.CreateCommand();
             ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
 
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ExecuteReader()
         {
-            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
             using SqlCommand command = connection.CreateCommand();
             ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
 

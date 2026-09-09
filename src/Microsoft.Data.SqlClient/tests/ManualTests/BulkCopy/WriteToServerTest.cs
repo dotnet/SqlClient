@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         private void SetupTestTables()
         {
             // Create the source table and insert some data
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             DataTestUtility.DropTable(connection, _tableName1);
@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         private void RemoveTestTables()
         {
             // Simplify the using statement in a small block of code
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             DataTestUtility.DropTable(connection, _tableName1);

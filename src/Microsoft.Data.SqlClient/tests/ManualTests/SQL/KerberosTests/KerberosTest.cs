@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IntegratedSecurity = true
             };
 
-            using SqlConnection conn = new(builder.ConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString);
             conn.Open();
 
             using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.IntegratedSecurity = true;
             builder.ServerSPN = customSpn;
 
-            using SqlConnection conn = new(builder.ConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString);
             conn.Open();
 
             using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);

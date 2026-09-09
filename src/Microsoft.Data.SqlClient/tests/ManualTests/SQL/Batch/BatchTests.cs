@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingCommandTextThrows()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             using (var batch = new SqlBatch { Connection = connection, BatchCommands = { new SqlBatchCommand() } })
             {
                 connection.Open();
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task MissingCommandsThrows()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             using (var batch = new SqlBatch { Connection = connection })
             {
                 connection.Open();
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectionCanCreateBatch()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 #if NET
                 Assert.True(connection.CanCreateBatch);
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SqlBatchCanCreateParameter()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 #if NET
             using DbBatch batch = connection.CreateBatch();
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlRetryLogicOption rto = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(100), TransientErrors = new[] { 1205 } }; // Retry on 1205 / Deadlock
             SqlRetryLogicBaseProvider prov = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(rto);
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             using (var batch = new SqlBatch { Connection = connection, BatchCommands = { new SqlBatchCommand("sp_help", CommandType.StoredProcedure, new List<SqlParameter> { new("@objname", "sys.indexes") }) } })
             {
                 connection.RetryLogicProvider = prov;
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void CommandTextBatchSupported()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             using (var batch = new SqlBatch { Connection = connection, BatchCommands = { new SqlBatchCommand("select @@SPID", CommandType.Text) } })
             {
                 connection.Open();
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlRetryLogicOption rto = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(100), TransientErrors = new[] { 1205 } }; // Retry on 1205 / Deadlock
             SqlRetryLogicBaseProvider prov = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(rto);
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             using (var batch = new SqlBatch
                    {
                        Connection = connection,
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             #else
             SqlBatch batch = new SqlBatch();
             #endif
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int rowCount = 0;
 
             SqlException exception = null;
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ExceptionInBatchContainsBatch()
         {
             SqlException exception = null;
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ExceptionWithoutBatchContainsNoBatch()
         {
             SqlException exception = null;
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlParameter output = CreateParameter("@Output", SqlDbType.Int, DBNull.Value, ParameterDirection.Output);
             SqlParameter returned = CreateParameter("@RETURN_VALUE", SqlDbType.Int, DBNull.Value, ParameterDirection.ReturnValue);
 
-            using (SqlConnection conn = new(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (StoredProcedure spTestInAndOutParams = new(conn, "TestInAndOutParams", @"
 	@Input int, 
 	@InOut int OUTPUT,
@@ -451,7 +451,7 @@ END"))
                     }
                 }
             };
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -512,7 +512,7 @@ END"))
                     }
                 }
             };
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
                 using (var transaction = connection.BeginTransaction())
@@ -544,7 +544,7 @@ END"))
         {
             int value = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 conn.Open();
@@ -563,7 +563,7 @@ END"))
         {
             int value = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 await conn.OpenAsync();
@@ -583,7 +583,7 @@ END"))
             int resultSetCount = 0;
             int resultRowCount = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 conn.Open();
@@ -614,7 +614,7 @@ END"))
             int resultSetCount = 0;
             int resultRowCount = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 await conn.OpenAsync();
@@ -644,7 +644,7 @@ END"))
         {
             System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 conn.Open();
@@ -669,7 +669,7 @@ END"))
         {
             System.Collections.ObjectModel.ReadOnlyCollection<DbColumn> schema;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             await using (SqlBatch batch = new SqlBatch(conn))
             {
                 await conn.OpenAsync();
@@ -695,7 +695,7 @@ END"))
             int resultSetCount = 0;
             int resultRowCount = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             using (SqlBatch batch = new SqlBatch(conn))
             {
                 conn.Open();
@@ -728,7 +728,7 @@ END"))
             int resultSetCount = 0;
             int resultRowCount = 0;
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             await using (SqlBatch batch = new SqlBatch(conn))
             {
                 await conn.OpenAsync();

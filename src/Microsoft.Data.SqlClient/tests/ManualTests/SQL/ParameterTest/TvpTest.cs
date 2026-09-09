@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestConnectionIsSafeToReuse()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
 
             // Bad Scenario - exception expected.
             try
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             WraparoundRowEnumerator enumerator,
             CancellationToken cancellationToken)
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync(cancellationToken);
 
             using var cmd = connection.CreateCommand();
