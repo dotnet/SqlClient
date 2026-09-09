@@ -94,7 +94,7 @@ parameters:
       - Debug
       - Release
 
-  # The name of the general-purpose 1ES pool that all CI jobs run in.
+  # The name of the general-purpose 1ES pool that most CI jobs run in.
   #
   # This is the single place in the CI pipelines where the pool name is read
   # from a variable group; every stage and job below receives it as a
