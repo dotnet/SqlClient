@@ -1229,7 +1229,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.SqlClientAppId = SqlClientApp.EntityFramework;
+            connection.SqlClientApp = SqlClientApp.EntityFrameworkCore;
             connection.Open();
 
             // Verify the connection itself succeeded
@@ -1240,7 +1240,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
-            Assert.Equal(UserAgent.GetUcs2Bytes(SqlClientApp.EntityFramework).ToArray(), observedPayload);
+            Assert.Equal(UserAgent.GetUcs2Bytes(SqlClientApp.EntityFrameworkCore).ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }
@@ -1251,7 +1251,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// never sent.
         /// </summary>
         [Fact]
-        public void SqlClientAppId_CannotBeSet_WhenConnectionIsOpen()
+        public void SqlClientApp_CannotBeSet_WhenConnectionIsOpen()
         {
             using TdsServer server = new();
             server.Start();
@@ -1264,14 +1264,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.SqlClientAppId = SqlClientApp.EntityFramework;
+            connection.SqlClientApp = SqlClientApp.EntityFrameworkCore;
             connection.Open();
 
             Assert.Throws<InvalidOperationException>(
-                () => connection.SqlClientAppId = SqlClientApp.SemanticKernel);
+                () => connection.SqlClientApp = SqlClientApp.SemanticKernel);
 
             // The connection still reports the identity it logged in with.
-            Assert.Equal(SqlClientApp.EntityFramework, connection.SqlClientAppId);
+            Assert.Equal(SqlClientApp.EntityFrameworkCore, connection.SqlClientApp);
         }
     }
 }

@@ -14,13 +14,12 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 public class SqlClientAppTests
 {
     /// <summary>
-    /// Verifies the enum is CLS-compliant, so it is usable from every .NET
-    /// language.
+    /// Verifies the enum uses the 16-bit protocol width.
     /// </summary>
     [Fact]
-    public void UnderlyingType_Is_Int()
+    public void UnderlyingType_Is_UShort()
     {
-        Assert.Equal(typeof(int), Enum.GetUnderlyingType(typeof(SqlClientApp)));
+        Assert.Equal(typeof(ushort), Enum.GetUnderlyingType(typeof(SqlClientApp)));
     }
 
     /// <summary>
@@ -38,18 +37,19 @@ public class SqlClientAppTests
     /// changing one would silently re-map an application's telemetry.
     /// </summary>
     [Theory]
-    [InlineData(SqlClientApp.EntityFramework, 0x0001)]
-    [InlineData(SqlClientApp.SemanticKernel, 0x0002)]
-    [InlineData(SqlClientApp.ManagementStudio, 0x0003)]
-    [InlineData(SqlClientApp.SqlManagementObjects, 0x0004)]
-    [InlineData(SqlClientApp.DataTierApplicationFramework, 0x0005)]
-    [InlineData(SqlClientApp.SqlToolsService, 0x0006)]
-    [InlineData(SqlClientApp.AspNetCoreDistributedSqlServerCache, 0x0007)]
-    [InlineData(SqlClientApp.EntityFramework6, 0x0008)]
-    [InlineData(SqlClientApp.AzureFunctionsSqlExtension, 0x0009)]
-    [InlineData(SqlClientApp.OrleansAdoNet, 0x000A)]
-    [InlineData(SqlClientApp.DurableTaskSqlServer, 0x000B)]
-    [InlineData(SqlClientApp.SqlPackage, 0x000C)]
+    [InlineData(SqlClientApp.EntityFrameworkCore, 1)]
+    [InlineData(SqlClientApp.SemanticKernel, 2)]
+    [InlineData(SqlClientApp.ManagementStudio, 3)]
+    [InlineData(SqlClientApp.SqlManagementObjects, 4)]
+    [InlineData(SqlClientApp.DataTierApplicationFramework, 5)]
+    [InlineData(SqlClientApp.SqlToolsService, 6)]
+    [InlineData(SqlClientApp.AspNetCoreDistributedSqlServerCache, 7)]
+    [InlineData(SqlClientApp.EntityFramework, 8)]
+    [InlineData(SqlClientApp.AzureFunctionsSqlExtension, 9)]
+    [InlineData(SqlClientApp.OrleansAdoNet, 10)]
+    [InlineData(SqlClientApp.DurableTaskSqlServer, 11)]
+    [InlineData(SqlClientApp.SqlPackage, 12)]
+    [InlineData(SqlClientApp.DataApiBuilder, 13)]
     public void Members_Have_Stable_Values(SqlClientApp app, int expected)
     {
         Assert.Equal(expected, (int)app);
@@ -67,9 +67,9 @@ public class SqlClientAppTests
         Assert.False(Enum.IsDefined(typeof(SqlClientApp), app));
 
         using SqlConnection connection = new();
-        connection.SqlClientAppId = app;
+        connection.SqlClientApp = app;
 
-        Assert.Equal(app, connection.SqlClientAppId);
+        Assert.Equal(app, connection.SqlClientApp);
     }
 
     /// <summary>
@@ -83,29 +83,9 @@ public class SqlClientAppTests
     {
         using SqlConnection connection = new();
 
-        connection.SqlClientAppId = (SqlClientApp)value;
+        connection.SqlClientApp = (SqlClientApp)value;
 
-        Assert.Equal(value, (int)connection.SqlClientAppId);
-    }
-
-    /// <summary>
-    /// Verifies an identifier outside the 16-bit space is rejected rather than
-    /// silently truncated when the payload is built.
-    /// </summary>
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(ushort.MaxValue + 1)]
-    [InlineData(int.MaxValue)]
-    [InlineData(int.MinValue)]
-    public void Identifier_Out_Of_Range_Throws(int value)
-    {
-        using SqlConnection connection = new();
-
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => connection.SqlClientAppId = (SqlClientApp)value);
-
-        // The rejected value is not retained.
-        Assert.Equal(SqlClientApp.Unknown, connection.SqlClientAppId);
+        Assert.Equal(value, (int)connection.SqlClientApp);
     }
 
     /// <summary>
@@ -113,15 +93,15 @@ public class SqlClientAppTests
     /// assigned, and round-trips the value it is given.
     /// </summary>
     [Fact]
-    public void SqlConnection_SqlClientAppId_RoundTrips()
+    public void SqlConnection_SqlClientApp_RoundTrips()
     {
         using SqlConnection connection = new();
 
-        Assert.Equal(SqlClientApp.Unknown, connection.SqlClientAppId);
+        Assert.Equal(SqlClientApp.Unknown, connection.SqlClientApp);
 
-        connection.SqlClientAppId = SqlClientApp.SemanticKernel;
+        connection.SqlClientApp = SqlClientApp.SemanticKernel;
 
-        Assert.Equal(SqlClientApp.SemanticKernel, connection.SqlClientAppId);
+        Assert.Equal(SqlClientApp.SemanticKernel, connection.SqlClientApp);
     }
 
     /// <summary>
@@ -130,14 +110,14 @@ public class SqlClientAppTests
     /// identity back to <see cref="SqlClientApp.Unknown"/>.
     /// </summary>
     [Fact]
-    public void Clone_Preserves_SqlClientAppId()
+    public void Clone_Preserves_SqlClientApp()
     {
         using SqlConnection connection = new();
-        connection.SqlClientAppId = SqlClientApp.SqlPackage;
+        connection.SqlClientApp = SqlClientApp.SqlPackage;
 
         using SqlConnection clone = (SqlConnection)((ICloneable)connection).Clone();
 
-        Assert.Equal(SqlClientApp.SqlPackage, clone.SqlClientAppId);
+        Assert.Equal(SqlClientApp.SqlPackage, clone.SqlClientApp);
     }
 
     /// <summary>
@@ -154,6 +134,15 @@ public class SqlClientAppTests
             : SqlClientDriverProperties.None;
 
         Assert.Equal(expected, SqlClientDriverPropertiesResolver.Resolve(useConnectionPoolV2));
+    }
+
+    /// <summary>
+    /// Verifies driver properties reserve 64 bits for feature flags.
+    /// </summary>
+    [Fact]
+    public void DriverProperties_UnderlyingType_Is_ULong()
+    {
+        Assert.Equal(typeof(ulong), Enum.GetUnderlyingType(typeof(SqlClientDriverProperties)));
     }
 
     /// <summary>

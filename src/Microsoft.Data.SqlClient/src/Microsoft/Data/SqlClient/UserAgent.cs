@@ -40,7 +40,7 @@ internal static class UserAgent
     ///   </para>
     ///   <para>
     ///     This is the base value, whose <c>{App Id}</c> part is always
-    ///     <c>0000</c>.  The payload actually sent at login carries the
+    ///     <c>0</c>.  The payload actually sent at login carries the
     ///     identifier set on the connection; see
     ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
     ///   </para>
@@ -86,16 +86,14 @@ internal static class UserAgent
     ///   </para>
     ///   <para>
     ///     The <c>{App Id}</c> part is the identifier of the application
-    ///     middleware using the driver, serialized as exactly four uppercase
-    ///     hexadecimal characters, zero-padded.  It is always present;
-    ///     <c>0000</c> means no application identity was reported.  Maximum
-    ///     length is 4 characters.
+    ///     middleware using the driver, serialized as uppercase hexadecimal.
+    ///     It is always present; <c>0</c> means no application identity was
+    ///     reported. Maximum length is 4 characters.
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Properties}</c> part is a driver-owned feature flag
-    ///     value, serialized as exactly four uppercase hexadecimal characters,
-    ///     zero-padded.  It is always present.  Maximum length is 4
-    ///     characters.
+    ///     value, serialized as uppercase hexadecimal. It is always present.
+    ///     Maximum length is 16 characters.
     ///   </para>
     ///   <para>
     ///     Any characters from the sourced values that are not one of the
@@ -138,7 +136,7 @@ internal static class UserAgent
     ///   <para>
     ///     When <paramref name="app"/> is
     ///     <see cref="SqlClientApp.Unknown"/>, <see cref="Ucs2Bytes"/> is
-    ///     returned, whose App Id part is <c>0000</c>.
+    ///     returned, whose App Id part is <c>0</c>.
     ///   </para>
     /// </summary>
     /// <param name="app">
@@ -183,24 +181,8 @@ internal static class UserAgent
             s_osType,
             RuntimeInformation.OSDescription,
             RuntimeInformation.FrameworkDescription,
-            ToAppId(app),
-            (ushort)SqlClientDriverPropertiesResolver.Current);
-
-    /// <summary>
-    ///   Narrow an application identifier to the 16 bits the payload reports.
-    /// </summary>
-    /// <remarks>
-    ///   <see cref="SqlConnection.SqlClientAppId"/> rejects values outside the
-    ///   16-bit range, so this conversion is always lossless.
-    /// </remarks>
-    /// <param name="app">The application identifier to narrow.</param>
-    /// <returns>The narrowed application identifier.</returns>
-    private static ushort ToAppId(SqlClientApp app)
-    {
-        Debug.Assert((int)app >= 0 && (int)app <= ushort.MaxValue);
-
-        return (ushort)app;
-    }
+            (ushort)app,
+            (ulong)SqlClientDriverPropertiesResolver.Current);
 
     /// <summary>
     ///   Static construction builds the Client Interface Name.  All known
@@ -279,12 +261,11 @@ internal static class UserAgent
     ///   The value of the Runtime Info part.
     /// </param>
     /// <param name="appId">
-    ///   The value of the App Id part, serialized as four uppercase
-    ///   hexadecimal characters.
+    ///   The value of the App Id part, serialized as uppercase hexadecimal.
     /// </param>
     /// <param name="driverProperties">
-    ///   The value of the Driver Properties part, serialized as four uppercase
-    ///   hexadecimal characters.
+    ///   The value of the Driver Properties part, serialized as uppercase
+    ///   hexadecimal.
     /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
@@ -299,8 +280,8 @@ internal static class UserAgent
         string osType,
         string osInfo,
         string runtimeInfo,
-        ushort appId = 0,
-        ushort driverProperties = 0)
+        ushort appId,
+        ulong driverProperties)
     {
         string result;
 
@@ -345,17 +326,12 @@ internal static class UserAgent
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
             name.Append('|');
 
-            // Add the App Id.  It is fixed-width hexadecimal, so it can never
-            // exceed its maximum length and needs no cleaning.
-            string appIdPart = FormatHex(appId);
-            Debug.Assert(appIdPart.Length == MaxLenAppId);
-            name.Append(appIdPart);
+            // Add the App Id.
+            name.Append(FormatHex(appId));
             name.Append('|');
 
-            // Add the Driver Properties, on the same terms as the App Id.
-            string driverPropertiesPart = FormatHex(driverProperties);
-            Debug.Assert(driverPropertiesPart.Length == MaxLenDriverProperties);
-            name.Append(driverPropertiesPart);
+            // Add the Driver Properties.
+            name.Append(FormatHex(driverProperties));
 
             // Remember the name we've built up.
             result = name.ToString();
@@ -485,18 +461,12 @@ internal static class UserAgent
     }
 
     /// <summary>
-    ///   Format the given value as exactly four uppercase hexadecimal
-    ///   characters, zero-padded.
+    ///   Formats the given value as uppercase hexadecimal.
     /// </summary>
-    /// <remarks>
-    ///   A <see cref="ushort"/> never needs more than four hexadecimal
-    ///   characters, so the result is always exactly
-    ///   <see cref="MaxLenAppId"/> characters and can never be truncated.
-    /// </remarks>
     /// <param name="value">The value to format.</param>
     /// <returns>The formatted value.</returns>
-    internal static string FormatHex(ushort value) =>
-        value.ToString("X4", CultureInfo.InvariantCulture);
+    internal static string FormatHex(ulong value) =>
+        value.ToString("X", CultureInfo.InvariantCulture);
 
     /// <summary>
     ///   Truncate the given value to the given max length, and return the
@@ -543,8 +513,6 @@ internal static class UserAgent
     private const ushort MaxLenOsType = 10;
     private const ushort MaxLenOsInfo = 44;
     private const ushort MaxLenRuntimeInfo = 44;
-    private const ushort MaxLenAppId = 4;
-    private const ushort MaxLenDriverProperties = 4;
 
     // The OS Type values we promise in our API.
     private const string Windows = "Windows";

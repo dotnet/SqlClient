@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
         private string _connectionString;
         private int _connectRetryCount;
         private string _accessToken; // Access Token to be used for token based authentication
-        private SqlClientApp _sqlClientAppId = SqlClientApp.Unknown; // middleware application identity reported at login
+        private SqlClientApp _sqlClientApp = SqlClientApp.Unknown; // middleware application identity reported at login
 
         // connection resiliency
         private object _reconnectLock;
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
-            _sqlClientAppId = connection._sqlClientAppId;
+            _sqlClientApp = connection._sqlClientApp;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate
@@ -383,10 +383,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlClientAppId/*' />
-        public SqlClientApp SqlClientAppId
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlClientApp/*' />
+        [CLSCompliant(false)]
+        public SqlClientApp SqlClientApp
         {
-            get => _sqlClientAppId;
+            get => _sqlClientApp;
             set
             {
                 // The identity is only reported while logging in, so allowing it
@@ -394,18 +395,10 @@ namespace Microsoft.Data.SqlClient
                 // was never sent.
                 if (!InnerConnection.AllowSetConnectionString)
                 {
-                    throw ADP.OpenConnectionPropertySet(nameof(SqlClientAppId), InnerConnection.State);
+                    throw ADP.OpenConnectionPropertySet(nameof(SqlClientApp), InnerConnection.State);
                 }
 
-                // Identifiers are carried in 16 bits, so anything outside that
-                // range cannot be reported and is rejected here rather than
-                // being silently truncated at login.
-                if ((int)value < 0 || (int)value > ushort.MaxValue)
-                {
-                    throw SQL.InvalidSqlClientAppId(value, nameof(value));
-                }
-
-                _sqlClientAppId = value;
+                _sqlClientApp = value;
             }
         }
 

@@ -18,17 +18,17 @@ namespace Microsoft.Data.SqlClient;
 ///   drivers use the same part for their own purposes.
 /// </remarks>
 [Flags]
-internal enum SqlClientDriverProperties : ushort
+internal enum SqlClientDriverProperties : ulong
 {
     /// <summary>No tracked features are enabled.</summary>
-    None = 0x0000,
+    None = 0,
 
     /// <summary>
     ///   The connection pool V2 implementation
     ///   (<c>Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2</c>) is
     ///   enabled.
     /// </summary>
-    ConnectionPoolV2 = 0x0001
+    ConnectionPoolV2 = 1
 }
 
 /// <summary>

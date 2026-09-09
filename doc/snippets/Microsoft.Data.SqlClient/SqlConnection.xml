@@ -2294,7 +2294,7 @@ The following sample tries to open a connection to an invalid database to simula
         </para>
       </remarks>
     </System.ICloneable.Clone>
-    <SqlClientAppId>
+    <SqlClientApp>
       <summary>
         Gets or sets the middleware application identity reported to the server for this connection.
       </summary>
@@ -2309,22 +2309,21 @@ The following sample tries to open a connection to an invalid database to simula
         <code language="c#">
           using Microsoft.Data.SqlClient;
 
-          using var connection = new SqlConnection(connectionString);
-          connection.SqlClientAppId = SqlClientApp.EntityFramework;
+          using SqlConnection connection = new(connectionString)
+          {
+              SqlClientApp = SqlClientApp.EntityFrameworkCore
+          };
           connection.Open();
         </code>
       </example>
-      <exception cref="T:System.ArgumentOutOfRangeException">
-        The value is outside the range 0 to 65535.
-      </exception>
       <exception cref="T:System.InvalidOperationException">
         The connection is opening or open. The identity is reported during login, so it must be set beforehand.
       </exception>
       <remarks>
         <para>
           This API is intended for registered applications that reserve an identifier in
-          <see cref="T:Microsoft.Data.SqlClient.SqlClientApp" />. An unregistered identifier may be reported by casting
-          a value to that type, provided it is within the 16-bit range the protocol allows.
+          <see cref="T:Microsoft.Data.SqlClient.SqlClientApp" />. An unregistered identifier may be reported by
+          casting a value to that type.
         </para>
         <para>
           This value is telemetry. It is supplied entirely by the client, which may report any identifier in range,
@@ -2344,7 +2343,7 @@ The following sample tries to open a connection to an invalid database to simula
           exact attribution is required.
         </para>
       </remarks>
-    </SqlClientAppId>
+    </SqlClientApp>
     <WorkstationId>
       <summary>
         Gets a string that identifies the database client.

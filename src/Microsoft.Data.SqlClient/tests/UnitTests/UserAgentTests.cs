@@ -118,13 +118,12 @@ public sealed class UserAgentTests
         Assert.True(parts[6] == "Unknown" || parts[6].Length > 0);
         Assert.True(parts[6].Length <= 44);
 
-        // App Id defaults to Unknown, and is always four hexadecimal
-        // characters.
-        Assert.Equal("0000", parts[7]);
+        // App Id defaults to Unknown.
+        Assert.Equal("0", parts[7]);
 
-        // Driver Properties is always four hexadecimal characters.
-        Assert.Equal(4, parts[8].Length);
-        Assert.Matches("^[0-9A-F]{4}$", parts[8]);
+        // Driver Properties is an unpadded 64-bit hexadecimal value.
+        Assert.InRange(parts[8].Length, 1, 16);
+        Assert.Matches("^[0-9A-F]+$", parts[8]);
     }
 
     /// <summary>
@@ -184,7 +183,7 @@ public sealed class UserAgentTests
 
         var parts = value.Split('|');
         Assert.Equal(9, parts.Length);
-        Assert.Equal("0002", parts[7]);
+        Assert.Equal("2", parts[7]);
 
         // Every other part matches the default payload.
         var defaultParts = UserAgent.Value.Split('|');
@@ -210,22 +209,21 @@ public sealed class UserAgentTests
     }
 
     /// <summary>
-    /// Test that the Build() function emits the App Id and Driver Properties as
-    /// four uppercase hexadecimal characters.
+    /// Test that Build() emits unpadded uppercase hexadecimal values.
     /// </summary>
     [Theory]
-    [InlineData((ushort)0, (ushort)0, "2|A|B|X64|C|D|E|0000|0000")]
-    [InlineData((ushort)7, (ushort)1, "2|A|B|X64|C|D|E|0007|0001")]
-    [InlineData((ushort)0x00AB, (ushort)0, "2|A|B|X64|C|D|E|00AB|0000")]
-    [InlineData(ushort.MaxValue, ushort.MaxValue, "2|A|B|X64|C|D|E|FFFF|FFFF")]
+    [InlineData((ushort)0, (ulong)0, "2|A|B|X64|C|D|E|0|0")]
+    [InlineData((ushort)7, (ulong)1, "2|A|B|X64|C|D|E|7|1")]
+    [InlineData((ushort)0x00AB, (ulong)0, "2|A|B|X64|C|D|E|AB|0")]
+    [InlineData(ushort.MaxValue, (ulong)ushort.MaxValue, "2|A|B|X64|C|D|E|FFFF|FFFF")]
     public void Build_App_Id_And_Driver_Properties(
         ushort appId,
-        ushort driverProperties,
+        ulong driverProperties,
         string expected)
     {
         Assert.Equal(
             expected,
-            UserAgent.Build(
+            Build(
                 maxLen: 256,
                 payloadVersion: "2",
                 driverName: "A",
@@ -237,6 +235,32 @@ public sealed class UserAgentTests
                 appId: appId,
                 driverProperties: driverProperties));
     }
+
+    /// <summary>
+    /// Verifies all 64 driver-property bits are preserved.
+    /// </summary>
+    [Fact]
+    public void Build_Driver_Properties_Uses_64_Bits()
+    {
+        Assert.EndsWith("|FFFFFFFFFFFFFFFF", Build(
+            256, "2", "A", "B", Architecture.X64, "C", "D", "E", 0, ulong.MaxValue));
+    }
+
+    /// <inheritdoc cref="UserAgent.Build(ushort, string, string, string, Architecture, string, string, string, ushort, ulong)"/>
+    private static string Build(
+        ushort maxLen,
+        string payloadVersion,
+        string driverName,
+        string driverVersion,
+        Architecture architecture,
+        string osType,
+        string osInfo,
+        string runtimeInfo,
+        ushort appId = 0,
+        ulong driverProperties = 0) =>
+        UserAgent.Build(
+            maxLen, payloadVersion, driverName, driverVersion, architecture, osType, osInfo, runtimeInfo,
+            appId, driverProperties);
 
     /// <summary>
     /// Decode a UCS-2 encoded payload back to its string form.
@@ -271,13 +295,13 @@ public sealed class UserAgentTests
     [InlineData(14, "2|A|B|X64|C|D|")]
     [InlineData(15, "2|A|B|X64|C|D|E")]
     [InlineData(16, "2|A|B|X64|C|D|E|")]
-    [InlineData(20, "2|A|B|X64|C|D|E|0000")]
-    [InlineData(25, "2|A|B|X64|C|D|E|0000|0000")]
+    [InlineData(20, "2|A|B|X64|C|D|E|0|0")]
+    [InlineData(25, "2|A|B|X64|C|D|E|0|0")]
     public void Build_Truncate_Overall(ushort maxLen, string expected)
     {
         Assert.Equal(
             expected,
-            UserAgent.Build(
+            Build(
                 maxLen,
                 payloadVersion: "2",
                 driverName: "A",
@@ -297,13 +321,13 @@ public sealed class UserAgentTests
         // The payload version is longer than max length.
         Assert.Equal(
             "P",
-            UserAgent.Build(
+            Build(
                 1, "PV", "A", "B", Architecture.X64, "C", "D", "E"));
 
         // The payload version is longer than its per-field max length of 2.
         Assert.Equal(
-            "12|A|B|X64|C|D|E|0000|0000",
-            UserAgent.Build(
+            "12|A|B|X64|C|D|E|0|0",
+            Build(
                 128, "1234", "A", "B", Architecture.X64, "C", "D", "E"));
     }
 
@@ -316,13 +340,13 @@ public sealed class UserAgentTests
         // The driver name is longer than max length.
         Assert.Equal(
             "2|DriverNa",
-            UserAgent.Build(
+            Build(
                 10, "2", "DriverName", "B", Architecture.X64, "C", "D", "E"));
 
         // The driver name is longer than its per-field max length of 12.
         Assert.Equal(
-            "2|LongDriverNa|B|X64|C|D|E|0000|0000",
-            UserAgent.Build(
+            "2|LongDriverNa|B|X64|C|D|E|0|0",
+            Build(
                 128, "2", "LongDriverName", "B", Architecture.X64, "C",
                 "D", "E"));
     }
@@ -336,14 +360,14 @@ public sealed class UserAgentTests
         // The driver version is longer than max length.
         Assert.Equal(
             "2|A|DriverVe",
-            UserAgent.Build(
+            Build(
                 12, "2", "A", "DriverVersion", Architecture.X64, "C", "D",
                 "E"));
 
         // The driver version is longer than its per-field max length of 24.
         Assert.Equal(
-            "2|A|ReallyLongDriverVersionS|X64|C|D|E|0000|0000",
-            UserAgent.Build(
+            "2|A|ReallyLongDriverVersionS|X64|C|D|E|0|0",
+            Build(
                 128, "2", "A", "ReallyLongDriverVersionString",
                 Architecture.X64, "C", "D", "E"));
     }
@@ -357,7 +381,7 @@ public sealed class UserAgentTests
         // The Architecture puts the overall length over the max.
         Assert.Equal(
             "2|A|B|Arm6",
-            UserAgent.Build(
+            Build(
                 10, "2", "A", "B", Architecture.Arm64, "C", "D", "E"));
 
         // There are no Architecture enum values defined in .NET Framework
@@ -366,8 +390,8 @@ public sealed class UserAgentTests
         #if NET
         // The Architecture is longer than its per-field max length of 10.
         Assert.Equal(
-            "2|A|B|LoongArch6|C|D|E|0000|0000",
-            UserAgent.Build(
+            "2|A|B|LoongArch6|C|D|E|0|0",
+            Build(
                 128, "2", "A", "B", Architecture.LoongArch64, "C", "D", "E"));
         #endif
     }
@@ -381,13 +405,13 @@ public sealed class UserAgentTests
         // The OS Type puts the overall length over the max.
         Assert.Equal(
             "2|A|B|X64|LongOs",
-            UserAgent.Build(
+            Build(
                 16, "2", "A", "B", Architecture.X64, "LongOsName", "D", "E"));
 
         // The OS Type is longer than its per-field max length of 10.
         Assert.Equal(
-            "2|A|B|X64|VeryLongOs|D|E|0000|0000",
-            UserAgent.Build(
+            "2|A|B|X64|VeryLongOs|D|E|0|0",
+            Build(
                 128, "2", "A", "B", Architecture.X64, "VeryLongOsName", "D",
                 "E"));
     }
@@ -401,13 +425,13 @@ public sealed class UserAgentTests
         // The OS Info puts the overall length over the max.
         Assert.Equal(
             "2|A|B|X64|C|LongOsI",
-            UserAgent.Build(
+            Build(
                 19, "2", "A", "B", Architecture.X64, "C", "LongOsInfo", "E"));
 
         // The OS Type is longer than its per-field max length of 44.
         Assert.Equal(
-            "2|A|B|X64|C|01234567890123456789012345678901234567890123|E|0000|0000",
-            UserAgent.Build(
+            "2|A|B|X64|C|01234567890123456789012345678901234567890123|E|0|0",
+            Build(
                 128, "2", "A", "B", Architecture.X64, "C",
                 "01234567890123456789012345678901234567890123456789",
                 "E"));
@@ -422,14 +446,14 @@ public sealed class UserAgentTests
         // The Runtime Info puts the overall length over the max.
         Assert.Equal(
             "2|A|B|X64|C|D|LongRunt",
-            UserAgent.Build(
+            Build(
                 22, "2", "A", "B", Architecture.X64, "C", "D",
                 "LongRuntimeInfo"));
 
         // The Runtime Type is longer than its per-field max length of 44.
         Assert.Equal(
-            "2|A|B|X64|C|D|01234567890123456789012345678901234567890123|0000|0000",
-            UserAgent.Build(
+            "2|A|B|X64|C|D|01234567890123456789012345678901234567890123|0|0",
+            Build(
                 128, "2", "A", "B", Architecture.X64, "C", "D",
                 "01234567890123456789012345678901234567890123456789"));
     }
@@ -442,7 +466,7 @@ public sealed class UserAgentTests
     public void Build_Truncate_Most()
     {
         var name =
-            UserAgent.Build(
+            Build(
                 192,
                 // Payload version > 2 chars.
                 "1234",
@@ -459,7 +483,7 @@ public sealed class UserAgentTests
                 "D01234567890123456789012345678901234567890123456789",
                 // Runtime Info > 44 chars.
                 "E01234567890123456789012345678901234567890123456789");
-        Assert.Equal(155, name.Length);
+        Assert.Equal(149, name.Length);
         Assert.Equal(
             "12|" +
             "A01234567890|" +
@@ -468,7 +492,7 @@ public sealed class UserAgentTests
             "C012345678|" +
             "D0123456789012345678901234567890123456789012|" +
             "E0123456789012345678901234567890123456789012|" +
-            "0000|0000",
+            "0|0",
             name);
     }
 
@@ -483,7 +507,7 @@ public sealed class UserAgentTests
     public void Build_Truncate_All()
     {
         var name =
-            UserAgent.Build(
+            Build(
                 192,
                 // Payload version > 2 chars.
                 "1234",
@@ -499,7 +523,7 @@ public sealed class UserAgentTests
                 "D01234567890123456789012345678901234567890123456789",
                 // Runtime Info > 44 chars.
                 "E01234567890123456789012345678901234567890123456789");
-        Assert.Equal(162, name.Length);
+        Assert.Equal(156, name.Length);
         Assert.Equal(
             "12|" +
             "A01234567890|" +
@@ -508,7 +532,7 @@ public sealed class UserAgentTests
             "C012345678|" +
             "D0123456789012345678901234567890123456789012|" +
             "E0123456789012345678901234567890123456789012|" +
-            "0000|0000",
+            "0|0",
             name);
     }
     #endif
