@@ -331,17 +331,44 @@ stages:
           packageVersion: '$(sqlClientPackageVersion)'
 
   # ====================================================================
-  # Validation
-  # @TODO: Update validate-signed-package-job to compute expected versions from
-  # Versions.props (same as build jobs) instead of receiving them as parameters.
+  # Stage 5: Validation
+  # Validates every package produced by this run, together, so that
+  # cross-package rules (shared family version, dependency agreement)
+  # are actually exercised.  Depends on all build stages.
   # ====================================================================
-  # - stage: sqlclient_package_validation
-  #     displayName: "SqlClient Package Validation"
-  #     dependsOn: build_dependent
-  #     jobs:
-  #       - template: /eng/pipelines/onebranch/jobs/validate-signed-package-job.yml@self
-  #         parameters:
-  #           artifactName: '${{ parameters.sqlClientArtifactsName }}'
-  #           expectedFileVersion: <computed>
-  #           expectedPackageVersion: <computed>
-  #           isOfficial: ${{ parameters.isOfficial }}
+  - stage: package_validation
+    displayName: "Validate Packages"
+    dependsOn:
+      - compute_versions
+      - build_independent
+      - build_abstractions
+      - build_dependent
+      - build_addons
+
+    variables:
+      - name: sqlClientPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
+      - name: sqlClientFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlClientFileVersion'] ]
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
+      - name: sqlServerFileVersion
+        value: $[ stageDependencies.compute_versions.compute_versions_job.outputs['versions.SqlServerFileVersion'] ]
+
+    jobs:
+      - template: /eng/pipelines/onebranch/jobs/validate-packages-job.yml@self
+        parameters:
+          abstractionsArtifactsName: '${{ parameters.abstractionsArtifactsName }}'
+          akvProviderArtifactsName: '${{ parameters.akvProviderArtifactsName }}'
+          azureArtifactsName: '${{ parameters.azureArtifactsName }}'
+          loggingArtifactsName: '${{ parameters.loggingArtifactsName }}'
+          sqlClientArtifactsName: '${{ parameters.sqlClientArtifactsName }}'
+          sqlServerArtifactsName: '${{ parameters.sqlServerArtifactsName }}'
+
+          sqlClientPackageVersion: '$(sqlClientPackageVersion)'
+          sqlClientFileVersion: '$(sqlClientFileVersion)'
+          sqlServerPackageVersion: '$(sqlServerPackageVersion)'
+          sqlServerFileVersion: '$(sqlServerFileVersion)'
+
+          buildSqlServer: ${{ parameters.buildSqlServer }}
+          isOfficial: ${{ parameters.isOfficial }}
