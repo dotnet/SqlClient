@@ -1233,7 +1233,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.RegisteredApplication = SqlClientApplication.EntityFrameworkCore;
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
             if (useAsync)
             {
                 await connection.OpenAsync();
@@ -1251,7 +1251,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
-            Assert.Equal(UserAgent.GetUcs2Bytes(SqlClientApplication.EntityFrameworkCore).ToArray(), observedPayload);
+            Assert.Equal(UserAgent.GetUcs2Bytes(RegisteredApplication.EntityFrameworkCore).ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }
@@ -1275,14 +1275,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.RegisteredApplication = SqlClientApplication.EntityFrameworkCore;
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
             connection.Open();
 
             Assert.Throws<InvalidOperationException>(
-                () => connection.RegisteredApplication = SqlClientApplication.SemanticKernel);
+                () => connection.RegisteredApplication = RegisteredApplication.SemanticKernel);
 
             // The connection still reports the identity it logged in with.
-            Assert.Equal(SqlClientApplication.EntityFrameworkCore, connection.RegisteredApplication);
+            Assert.Equal(RegisteredApplication.EntityFrameworkCore, connection.RegisteredApplication);
         }
     }
 }

@@ -164,7 +164,7 @@ public sealed class UserAgentTests
     [Fact]
     public void GetUcs2Bytes_Unknown_App_Returns_Value()
     {
-        var bytes = UserAgent.GetUcs2Bytes(SqlClientApplication.Unknown);
+        var bytes = UserAgent.GetUcs2Bytes(RegisteredApplication.Unknown);
 
         Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), bytes.ToArray());
         Assert.Equal(9, Decode(bytes).Split('|').Length);
@@ -177,7 +177,7 @@ public sealed class UserAgentTests
     [Fact]
     public void GetUcs2Bytes_App_Sets_App_Id()
     {
-        string value = Decode(UserAgent.GetUcs2Bytes(SqlClientApplication.SemanticKernel));
+        string value = Decode(UserAgent.GetUcs2Bytes(RegisteredApplication.SemanticKernel));
 
         _output.WriteLine($"UserAgent with app: {value}");
 
@@ -204,8 +204,8 @@ public sealed class UserAgentTests
     public void GetUcs2Bytes_App_Reuses_Payload()
     {
         Assert.True(
-            UserAgent.GetUcs2Bytes(SqlClientApplication.ManagementStudio).Span.Overlaps(
-                UserAgent.GetUcs2Bytes(SqlClientApplication.ManagementStudio).Span));
+            UserAgent.GetUcs2Bytes(RegisteredApplication.ManagementStudio).Span.Overlaps(
+                UserAgent.GetUcs2Bytes(RegisteredApplication.ManagementStudio).Span));
     }
 
     /// <summary>

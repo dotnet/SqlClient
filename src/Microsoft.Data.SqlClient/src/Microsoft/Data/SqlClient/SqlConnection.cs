@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
         [CLSCompliant(false)]
-        public SqlClientApplication RegisteredApplication
+        public RegisteredApplication RegisteredApplication
         {
             get;
             set
