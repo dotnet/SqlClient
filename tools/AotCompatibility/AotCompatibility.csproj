@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+
+    <RootNamespace>Microsoft.Data.SqlClient.Tools.AotCompatibility</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- AOT Publishing -->
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <!-- Enable trim/AOT analyzers to surface warnings during build -->
+    <IsTrimmable>true</IsTrimmable>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+
+    <!--
+      Do not promote trim/AOT warnings to errors yet. The broader SqlClient codebase has
+      pre-existing warnings (DiagnosticListener, System.Configuration) unrelated to our
+      auth provider feature. This app validates that:
+        1. The feature switch properly guards reflection code.
+        2. Native AOT publish completes successfully.
+        3. Explicit provider registration works at runtime without reflection.
+    -->
+
+    <!-- Set to true to enable reflection-based discovery (produces trimmer warnings). -->
+    <EnableReflectionBasedAuthProviderDiscovery Condition="'$(EnableReflectionBasedAuthProviderDiscovery)' == ''">false</EnableReflectionBasedAuthProviderDiscovery>
+
+    <!-- Generate ILC map file for post-publish trimming verification -->
+    <IlcGenerateMapFile>true</IlcGenerateMapFile>
+  </PropertyGroup>
+
+  <!-- Feature switch: controls whether the trimmer eliminates the reflection code path -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption
+      Include="Microsoft.Data.SqlClient.EnableReflectionBasedAuthenticationProviderDiscovery"
+      Value="$(EnableReflectionBasedAuthProviderDiscovery)"
+      Trim="true" />
+  </ItemGroup>
+
+  <!-- Project References (uses local source, not NuGet packages) -->
+  <ItemGroup>
+    <ProjectReference Include="../../src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="../../src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />
+    <ProjectReference Include="../../src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+  </ItemGroup>
+
+</Project>
