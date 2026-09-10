@@ -4,6 +4,9 @@
 
 using System;
 using System.Configuration;
+#if NET
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.IO;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Internal;
@@ -74,8 +77,23 @@ namespace Microsoft.Data.SqlClient
         {
             Registry = registry;
 
-            LoadConfiguration();
-            LoadAzureExtensionProvider();
+            // Config-driven auth providers, initializers, and application client ID all use
+            // reflection (Type.GetType / Activator.CreateInstance) and are incompatible with AOT.
+            // Only read the config section and load the Azure extension when reflection-based
+            // discovery is enabled.
+            if (LocalAppContextSwitches.EnableReflectionBasedAuthenticationProviderDiscovery)
+            {
+                LoadConfiguration();
+                LoadAzureExtensionProvider();
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(
+                    nameof(AuthenticationBootstrapper),
+                    "Ctor",
+                    "Reflection-based provider discovery is disabled; skipping app.config " +
+                    "authentication provider configuration.");
+            }
         }
 
         /// <summary>
@@ -90,8 +108,17 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Reads the app.config configuration section and registers config-driven initializers and
-        /// authentication providers.  Uses reflection (Type.GetType / Activator.CreateInstance).
+        /// authentication providers.  Uses reflection (Type.GetType / Activator.CreateInstance) and
+        /// is not compatible with NativeAOT trimming.
         /// </summary>
+        #if NET
+        [RequiresUnreferencedCode(
+            "Config-driven auth providers and initializers use Type.GetType and Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        [RequiresDynamicCode(
+            "Config-driven auth providers and initializers use Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        #endif
         private void LoadConfiguration()
         {
             SqlClientEventSource.Log.TryTraceEvent("AuthenticationBootstrapper | Loading authentication provider configuration from app.config.");
@@ -218,8 +245,17 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Attempts to load the Azure extension authentication provider via
-        /// reflection. This method uses Assembly.Load and Activator.CreateInstance.
+        /// reflection. This method uses Assembly.Load and Activator.CreateInstance
+        /// and is not compatible with NativeAOT trimming.
         /// </summary>
+        #if NET
+        [RequiresUnreferencedCode(
+            "Azure extension provider discovery uses Assembly.Load and Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        [RequiresDynamicCode(
+            "Azure extension provider discovery uses Activator.CreateInstance. " +
+            "For AOT applications, register providers explicitly via SetProvider().")]
+        #endif
         private void LoadAzureExtensionProvider()
         {
             // The name of our Azure extension assembly.
