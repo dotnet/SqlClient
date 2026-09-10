@@ -122,7 +122,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             lock (_lock)
             {
                 _inElevatedState = true;
-                _cachedException = ex;
+                _cachedException = ex is SqlException sqlException
+                    ? sqlException.InternalClone(
+                        includeConnectionOpenRetryFailures: false)
+                    : ex;
                 wait = _nextWait;
 
                 ITimer newTimer = ADP.UnsafeCreateTimer(

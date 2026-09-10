@@ -62,17 +62,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
+            public PendingGetConnection(
+                long dueTime,
+                DbConnection owner,
+                TaskCompletionSource<DbConnectionInternal> completion,
+                TimeoutTimer timeout,
+                long reclaimedConnectionCountAtStart)
             {
                 DueTime = dueTime;
                 Owner = owner;
                 Completion = completion;
                 Timeout = timeout;
+                ReclaimedConnectionCountAtStart = reclaimedConnectionCountAtStart;
             }
             public long DueTime { get; private set; }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
             public TimeoutTimer Timeout { get; private set; }
+            public long ReclaimedConnectionCountAtStart { get; }
         }
 
         private sealed class PoolWaitHandles
@@ -187,6 +194,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private readonly ConcurrentQueue<PendingGetConnection> _pendingOpens = new ConcurrentQueue<PendingGetConnection>();
         private int _pendingOpensWaiting = 0;
+        private int _pendingConnectionOpenCount;
 
         private readonly WaitCallback _poolCreateRequest;
 
@@ -202,6 +210,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private readonly List<DbConnectionInternal> _objectList;
         private int _totalObjects;
+
+        /// <summary>
+        /// Number of abandoned connections this pool has reclaimed. Acquisition requests sample
+        /// this counter so a timeout can report reclamation that occurred while that request waited.
+        /// </summary>
+        private long _reclaimedConnectionCount;
 
         // only created by DbConnectionPoolGroup.GetConnectionPool
         internal WaitHandleDbConnectionPool(
@@ -537,6 +551,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
+            Interlocked.Increment(ref _pendingConnectionOpenCount);
 
             try
             {
@@ -590,6 +605,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _errorState.Enter(e);
 
                 throw;
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _pendingConnectionOpenCount);
             }
             return newObj;
         }
@@ -823,7 +842,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         else if (timeout)
                         {
-                            next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
+                            PoolAcquisitionDiagnostics diagnostics =
+                                CaptureAcquisitionDiagnostics(
+                                    next.ReclaimedConnectionCountAtStart,
+                                    Math.Max(1, Volatile.Read(ref _waitCount) + 1));
+                            next.Completion.TrySetException(
+                                ADP.ExceptionWithStackTrace(
+                                    ADP.PooledOpenTimeout(diagnostics)));
                         }
                         else
                         {
@@ -873,6 +898,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
+            long reclaimedConnectionCountAtStart =
+                Interlocked.Read(ref _reclaimedConnectionCount);
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
@@ -896,8 +923,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else if (taskCompletionSource == null)
             {
+                if (State is not Running)
+                {
+                    connection = null;
+                    return true;
+                }
+
                 // timed out on a sync call
-                return true;
+                PoolAcquisitionDiagnostics diagnostics =
+                    CaptureAcquisitionDiagnostics(
+                        reclaimedConnectionCountAtStart,
+                        waitingRequestCount: Math.Max(1, Volatile.Read(ref _waitCount) + 1));
+                throw ADP.PooledOpenTimeout(diagnostics);
             }
 
             // Shutdown short-circuit for the async path. The inner TryGetConnection returns false
@@ -935,7 +972,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     dueTime,
                     owningObject,
                     taskCompletionSource,
-                    timeout);
+                    timeout,
+                    reclaimedConnectionCountAtStart);
             _pendingOpens.Enqueue(pendingGetConnection);
 
             // it is better to StartNew too many times than not enough
@@ -1169,7 +1207,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             lock (obj)
             {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
-                obj.PostPop(owningObject);
+                obj.PostPop(
+                    owningObject,
+                    _timeProvider.GetUtcNow().UtcDateTime);
             }
             try
             {
@@ -1556,6 +1596,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.", Id, obj.ObjectID);
 
                 Metrics.ReclaimedConnectionRequest();
+                Interlocked.Increment(ref _reclaimedConnectionCount);
 
                 emancipatedObjectFound = true;
 
@@ -1563,6 +1604,74 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 DeactivateObject(obj);
             }
             return emancipatedObjectFound;
+        }
+
+        /// <summary>
+        /// Captures a best-effort pool snapshot on the timeout path.
+        /// </summary>
+        private PoolAcquisitionDiagnostics CaptureAcquisitionDiagnostics(
+            long reclaimedConnectionCountAtStart,
+            int waitingRequestCount)
+        {
+            var builder = new PoolAcquisitionDiagnosticsBuilder(
+                _timeProvider.GetUtcNow().UtcDateTime);
+            int connectionCount;
+
+            lock (_objectList)
+            {
+                connectionCount = _objectList.Count;
+                foreach (DbConnectionInternal connection in _objectList)
+                {
+                    bool locked = false;
+                    try
+                    {
+                        Monitor.TryEnter(connection, ref locked);
+                        if (locked)
+                        {
+                            builder.Observe(connection);
+                        }
+                        else
+                        {
+                            builder.ObserveLockContention();
+                        }
+                    }
+                    finally
+                    {
+                        if (locked)
+                        {
+                            Monitor.Exit(connection);
+                        }
+                    }
+                }
+            }
+
+            int pendingConnectionOpenCount =
+                Math.Max(0, Volatile.Read(ref _pendingConnectionOpenCount));
+            PoolAcquisitionWaitReason waitReason =
+                connectionCount >= MaxPoolSize
+                    ? PoolAcquisitionWaitReason.PoolFull
+                    : pendingConnectionOpenCount > 0
+                        ? PoolAcquisitionWaitReason.ConnectionCreationInProgress
+                        : PoolAcquisitionWaitReason.Unknown;
+            long reclaimedConnectionCount =
+                Math.Max(
+                    0,
+                    Interlocked.Read(ref _reclaimedConnectionCount) -
+                    reclaimedConnectionCountAtStart);
+
+            return new PoolAcquisitionDiagnostics(
+                waitReason,
+                MaxPoolSize,
+                connectionCount,
+                builder.IdleConnectionCount,
+                pendingConnectionOpenCount,
+                waitingRequestCount,
+                builder.CheckedOutConnectionCount,
+                builder.TransactionConnectionCount,
+                builder.AbandonedConnectionCount,
+                builder.UnclassifiedConnectionCount,
+                builder.LongestCheckoutDuration,
+                reclaimedConnectionCount);
         }
 
         public void Startup()
