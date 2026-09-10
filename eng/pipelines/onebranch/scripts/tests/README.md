@@ -32,6 +32,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Area                  | What's tested                                                    |
 | --------------------- | ---------------------------------------------------------------- |
 | Version computation   | Canonical output parsing, effective package selection, target version composition, and failures |
+| Localization validation | Missing, obsolete, or empty strings, English-value matches, and culture-specific allowlisting |
 | Parameter validation  | Empty strings rejected for all mandatory parameters              |
 | URL construction      | Base URL, register URL, request URL built from parameters        |
 | Request bodies        | Registration body, default publish flags, flag overrides         |

@@ -26,9 +26,13 @@ Respect this graph when modifying build stages:
 5. `Microsoft.Data.SqlClient.Extensions.Azure` — depends on Abstractions + Logging
 6. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` — depends on SqlClient + Abstractions + Logging
 
+## Localization Validation
+
+The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Validation always fails the build for missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
+
 ## Build Stages
 
-Defined in `stages/build-stages.yml`. Four build stages plus validation, ordered by dependency:
+Defined in `stages/build-stages.yml`. Four build stages plus package validation are ordered by dependency:
 
 - **`build_independent`** (Stage 1) — Logging and SqlServer.Server in parallel; no inter-package dependencies
 - **`build_abstractions`** (Stage 2) — Abstractions; `dependsOn: build_independent`; downloads Logging artifact
