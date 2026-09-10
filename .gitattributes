@@ -2,4 +2,4 @@
 * text=auto
 
 # Treat workflow lock files as generated
-.github/workflows/*.lock.yml linguist-generated=true merge=ours
+.github/workflows/*.lock.yml linguist-generated=true
