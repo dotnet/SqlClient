@@ -23,7 +23,7 @@ jobs:
       PR_REVIEWER_POOL: ${{ vars.PR_REVIEWER_POOL }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github/scripts/auto-assign-pr.js

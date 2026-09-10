@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -111,7 +111,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false
+                #pragma warning restore 618
 #endif
             };
 
@@ -231,7 +233,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -252,7 +254,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+                #pragma warning restore 618
 #endif
             };
 
@@ -290,7 +294,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -338,7 +344,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -894,33 +902,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
                 (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+            string expectedMessage = global::Microsoft.Data.StringsHelper.GetString(
+                global::System.Strings.ADP_InvalidMixedUsageOfAccessTokenProperties);
 
             // Token first, then provider.
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.AccessToken = "token";
-                Assert.Throws<InvalidOperationException>(
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                     () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.AccessTokenCallback = callback;
-                Assert.Throws<InvalidOperationException>(
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                     () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             // Provider first, then token.
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.SspiContextProvider = new TestSspiContextProvider();
-                Assert.Throws<InvalidOperationException>(() => conn.AccessToken = "token");
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessToken = "token");
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.SspiContextProvider = new TestSspiContextProvider();
-                Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = callback);
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessTokenCallback = callback);
+                Assert.Equal(expectedMessage, exception.Message);
             }
         }
 

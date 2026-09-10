@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>AccessToken veya AccessTokenCallback özelliği, SspiContextProvider özelliği ayarlanmışsa ayarlanamaz.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>SspiContextProvider özelliği, AccessToken veya AccessTokenCallback özelliği ayarlanmışsa ayarlanamaz.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>AccessToken, AccessTokenCallback veya SspiContextProvider özelliklerinden birden fazlası ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Bağlantı dizesinde 'Authentication=Active Directory Default' belirtilmişse AccessTokenCallback özelliği ayarlanamaz.</value>
@@ -2137,10 +2134,10 @@
     <value>Sunucu tarafından sağlanan sertifika, ServerCertificate seçeneği tarafından sağlanan sertifikayla eşleşmiyor.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>'ServerCertificate' seçeneğiyle belirtilen sertifika dosyası yüklenemedi veya ayrıştırılamadı: '{0}'.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>'ServerCertificate' seçeneği belirtildi, ancak sunucu bununla karşılaştırılabilecek bir sertifika sunmadı.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>

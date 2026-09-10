@@ -4,7 +4,9 @@
 #>
 
 BeforeAll {
+    $script:repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..' '..' '..')
     $scriptPath = Join-Path $PSScriptRoot '..' 'compute-versions.ps1'
+    $buildProjectPath = Resolve-Path (Join-Path $script:repoRoot 'build.proj')
     $projectPath = Join-Path $TestDrive 'build.proj'
     Set-Content -LiteralPath $projectPath -Value '<Project />'
 
@@ -19,26 +21,23 @@ BeforeAll {
 
     function Invoke-ComputeVersions {
         param(
-            [long]$Revision = 42,
-            [string]$BuildNumber = '',
-            [bool]$BuildSqlServer = $true,
-            [bool]$AddRevision = $true
+            [string]$BuildNumber = $script:testBuildNumber,
+            [bool]$BuildSqlServer = $true
         )
 
         & $scriptPath `
             -ProjectPath $projectPath `
-            -Revision $Revision `
             -BuildNumber $BuildNumber `
-            -BuildSqlServer $BuildSqlServer `
-            -AddRevision $AddRevision *>&1 | Out-String
+            -BuildSqlServer $BuildSqlServer *>&1 | Out-String
     }
 
     # Alternates between the SqlClient and SqlServer GetVersions targets, which the script always
-    # invokes in that order.
+    # invokes in that order.  The versions returned here are already stamped, because Versions.props
+    # applies the build number before the script ever sees them.
     function Set-DotnetMock {
         param(
-            [string]$SqlClientPackageVersion = '7.1.0-preview3',
-            [string]$SqlServerPackageVersion = '1.1.0-preview1'
+            [string]$SqlClientPackageVersion = "7.1.0-preview3.$script:testBuildNumber",
+            [string]$SqlServerPackageVersion = "1.1.0-preview1.$script:testBuildNumber"
         )
 
         $global:computeVersionsDotnetCallCount = 0
@@ -48,12 +47,14 @@ BeforeAll {
             if ($global:computeVersionsDotnetCallCount % 2 -eq 1) {
                 return @(
                     "  PackageVersion: $SqlClientPackageVersion"
+                    '  FileVersion: 7.1.0.26238'
                     '  PublishedVersion: 7.0.0'
                 )
             }
 
             return @(
                 "  PackageVersion: $SqlServerPackageVersion"
+                '  FileVersion: 1.1.0.26238'
                 '  PublishedVersion: 1.0.0'
             )
         }.GetNewClosure()
@@ -61,6 +62,90 @@ BeforeAll {
 
     function Set-SuccessfulDotnetMock {
         Set-DotnetMock
+    }
+
+    function Invoke-VersionTarget {
+        param(
+            [Parameter(Mandatory)]
+            [string]$Target,
+
+            [Parameter(Mandatory)]
+            [string]$NextVersionProperty,
+
+            [Parameter(Mandatory)]
+            [string]$BaseVersion,
+
+            [string]$BuildSuffix
+        )
+
+        $arguments = @(
+            'build'
+            $buildProjectPath
+            "-t:$Target"
+            '-v:m'
+            '-nologo'
+            "-p:BuildNumber=$script:testBuildNumber"
+            "-p:$NextVersionProperty=$BaseVersion"
+        )
+        if ($BuildSuffix) {
+            $arguments += "-p:BuildSuffix=$BuildSuffix"
+        }
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) {
+            throw "$Target failed with exit code ${LASTEXITCODE}:`n$output"
+        }
+
+        $output
+    }
+
+    # Drives PrepareForBuild rather than the validation target directly, because the hook point is
+    # itself the thing under test: a check wired after the compile would pass a direct invocation.
+    # An explicit target framework is required, as PrepareForBuild is not valid on the outer
+    # cross-targeting build.
+    function Invoke-VersionValidation {
+        param(
+            [Parameter(Mandatory)]
+            [string]$ProjectPath,
+
+            [Parameter(Mandatory)]
+            [string]$TargetFramework,
+
+            [string[]]$Properties = @()
+        )
+
+        $arguments = @(
+            'build'
+            $ProjectPath
+            '-f'
+            $TargetFramework
+            '-t:PrepareForBuild'
+            '-v:m'
+            '-nologo'
+        ) + $Properties
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+    }
+
+    function Invoke-BuildProjTarget {
+        param(
+            [Parameter(Mandatory)]
+            [string]$Target,
+
+            [string[]]$Properties = @()
+        )
+
+        $arguments = @(
+            'build'
+            $buildProjectPath
+            "-t:$Target"
+            '-v:m'
+            '-nologo'
+        ) + $Properties
+
+        $output = & dotnet @arguments 2>&1 | Out-String
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
     }
 }
 
@@ -73,97 +158,218 @@ Describe 'compute-versions.ps1 Effective Versions' {
         Set-SuccessfulDotnetMock
     }
 
-    It 'appends the build number after the prerelease suffix when package revisioning is disabled' {
-        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber $script:testBuildNumber
+    It 'forwards the stamped prerelease versions from Versions.props' {
+        $output = Invoke-ComputeVersions
 
         $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
         $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
-        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
-    }
-
-    It 'inserts the revision before prerelease suffixes for built packages' {
-        $output = Invoke-ComputeVersions
-
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.42-preview3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0\.42-preview1'
+        $output | Should -Match 'SqlClientApiScanVersion;isOutput=true]7\.1'
+        $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]1\.1'
+        $output | Should -Match 'APIScan registration versions:\s+SqlClient \(family\): 7\.1\s+SqlServer:\s+1\.1'
+        $output | Should -Match 'SqlClientFileVersion;isOutput=true]7\.1\.0\.26238'
+        $output | Should -Match 'SqlServerFileVersion;isOutput=true]1\.1\.0\.26238'
     }
 
     It 'retains the published SqlServer package when SqlServer is not built' {
         $output = Invoke-ComputeVersions -BuildSqlServer $false
 
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.42-preview3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0'
-        $output | Should -Not -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0\.42'
-    }
-
-    It 'wraps revisions above 65535 and logs the mapping as information' {
-        $output = Invoke-ComputeVersions -Revision 65536
-
-        $output | Should -Match 'Revision 65536.*wrapped to 1'
-        $output | Should -Not -Match 'task\.logissue type=warning'
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.1-preview3'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0\.1-preview1'
-        $output | Should -Match 'VersionRevision;isOutput=true]1'
-    }
-
-    It 'emits the build number rather than the wrapped revision when package revisioning is disabled' {
-        $output = Invoke-ComputeVersions -Revision 65536 -AddRevision $false -BuildNumber $script:testBuildNumber
-
-        $output | Should -Not -Match 'task\.logissue type=warning'
-        $output | Should -Not -Match 'wrapped to'
-        $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
-        $output | Should -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0-preview1\.$script:testBuildNumberPattern"
-        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
-    }
-
-    It 'retains the published SqlServer package unstamped when SqlServer is not built' {
-        $output = Invoke-ComputeVersions -BuildSqlServer $false -AddRevision $false -BuildNumber $script:testBuildNumber
-
         $output | Should -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0-preview3\.$script:testBuildNumberPattern"
         $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.0\.0'
-        $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.0\.0\.$script:testFileVersionBuildNumber"
+        $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]1\.0'
+        $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.0\.0[\.-]$script:testFileVersionBuildNumber"
+
+        # An unbuilt SqlServer is never stamped, so it has no effective file version.
+        $output | Should -Match 'SqlServerFileVersion;isOutput=true](\r?\n|$)'
     }
 
-    It 'omits the build number from non-preview package versions when package revisioning is disabled' {
+    It 'forwards unstamped non-preview package versions' {
         Set-DotnetMock -SqlClientPackageVersion '7.1.0' -SqlServerPackageVersion '1.1.0'
 
-        $output = Invoke-ComputeVersions -AddRevision $false -BuildNumber $script:testBuildNumber
+        $output = Invoke-ComputeVersions
 
         $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0(\r?\n|$)'
         $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0(\r?\n|$)'
         $output | Should -Not -Match "SqlClientPackageVersion;isOutput=true]7\.1\.0[\.-]$script:testFileVersionBuildNumber"
         $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.1\.0[\.-]$script:testFileVersionBuildNumber"
 
-        # The file version is still stamped so every build produces a distinct, date-encoded
-        # file version even for non-preview releases.
-        $output | Should -Match "VersionRevision;isOutput=true]$script:testFileVersionBuildNumber"
+        # The file version is still stamped so every build produces a date-encoded file version even
+        # for non-preview releases.
+        $output | Should -Match 'SqlClientFileVersion;isOutput=true]7\.1\.0\.26238'
+    }
+}
+
+Describe 'GetVersions target package composition' {
+    It '<Target> composes <Case> package and file versions' -ForEach @(
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0'; BuildSuffix = ''; ExpectedPackageVersion = '7.1.0'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a stable base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0'; BuildSuffix = 'ci'; ExpectedPackageVersion = '7.1.0-ci.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a stable base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0-preview3'; BuildSuffix = ''; ExpectedPackageVersion = '7.1.0-preview3.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a prerelease base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlClient'; NextVersionProperty = 'SqlClientNextVersion'
+            BaseVersion = '7.1.0-preview3'; BuildSuffix = 'ci'; ExpectedPackageVersion = '7.1.0-preview3-ci.26238.3'
+            ExpectedFileVersion = '7.1.0.26238'; Case = 'a prerelease base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0'; BuildSuffix = ''; ExpectedPackageVersion = '1.1.0'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a stable base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0'; BuildSuffix = 'ci'; ExpectedPackageVersion = '1.1.0-ci.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a stable base with a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0-preview1'; BuildSuffix = ''; ExpectedPackageVersion = '1.1.0-preview1.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a prerelease base without a suffix'
+        }
+        @{
+            Target = 'GetVersionsSqlServer'; NextVersionProperty = 'SqlServerNextVersion'
+            BaseVersion = '1.1.0-preview1'; BuildSuffix = 'ci'; ExpectedPackageVersion = '1.1.0-preview1-ci.26238.3'
+            ExpectedFileVersion = '1.1.0.26238'; Case = 'a prerelease base with a suffix'
+        }
+    ) {
+        $output = Invoke-VersionTarget `
+            -Target $Target `
+            -NextVersionProperty $NextVersionProperty `
+            -BaseVersion $BaseVersion `
+            -BuildSuffix $BuildSuffix
+
+        $output | Should -Match "PackageVersion:\s+$([regex]::Escape($ExpectedPackageVersion))(\r?\n|$)"
+        $output | Should -Match "FileVersion:\s+$([regex]::Escape($ExpectedFileVersion))(\r?\n|$)"
+    }
+}
+
+Describe 'File version component validation' {
+    It 'rejects a four-part <Property>' -ForEach @(
+        @{
+            Product = 'SqlClient'; Property = 'SqlClientPackageVersion'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            Properties = @('-p:SqlClientPackageVersion=7.1.0.123')
+            ExpectedFileVersion = '7.1.0.123.0'
+        }
+        @{
+            Product = 'SqlClient'; Property = 'SqlClientNextVersion'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            Properties = @('-p:SqlClientNextVersion=7.1.0.123', '-p:BuildNumber=1234')
+            ExpectedFileVersion = '7.1.0.123.1234'
+        }
+        @{
+            Product = 'SqlServer'; Property = 'SqlServerPackageVersion'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            Properties = @('-p:SqlServerPackageVersion=1.1.0.123')
+            ExpectedFileVersion = '1.1.0.123.0'
+        }
+        @{
+            Product = 'SqlServer'; Property = 'SqlServerNextVersion'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            Properties = @('-p:SqlServerNextVersion=1.1.0.123', '-p:BuildNumber=1234')
+            ExpectedFileVersion = '1.1.0.123.1234'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties $Properties
+
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$ExpectedFileVersion' is not a four-part numeric version"))
     }
 
-    It 'revises non-preview package versions when package revisioning is enabled' {
-        Set-DotnetMock -SqlClientPackageVersion '7.1.0' -SqlServerPackageVersion '1.1.0'
+    It 'rejects an externally supplied <Description> file version for <Product>' -ForEach @(
+        @{
+            Product = 'SqlClient'; Description = 'short'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            FileVersion = '1.2'
+        }
+        @{
+            Product = 'SqlClient'; Description = 'non-numeric'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+            FileVersion = 'abc'
+        }
+        @{
+            Product = 'SqlServer'; Description = 'short'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            FileVersion = '1.2'
+        }
+        @{
+            Product = 'SqlServer'; Description = 'non-numeric'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+            FileVersion = 'abc'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties @("-p:${Product}FileVersion=$FileVersion")
 
-        $output = Invoke-ComputeVersions
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '$FileVersion' is not a four-part numeric version"))
+    }
 
-        $output | Should -Match 'SqlClientPackageVersion;isOutput=true]7\.1\.0\.42'
-        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]1\.1\.0\.42'
-        $output | Should -Match 'VersionRevision;isOutput=true]42'
+    It 'accepts the declared <Product> version' -ForEach @(
+        @{
+            Product = 'SqlClient'
+            RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+            TargetFramework = 'net8.0'
+        }
+        @{
+            Product = 'SqlServer'
+            RelativeProject = 'src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            TargetFramework = 'netstandard2.0'
+        }
+    ) {
+        $result = Invoke-VersionValidation `
+            -ProjectPath (Join-Path $script:repoRoot $RelativeProject) `
+            -TargetFramework $TargetFramework `
+            -Properties @("-p:BuildNumber=$script:testBuildNumber")
+
+        $result.ExitCode | Should -Be 0
+    }
+}
+
+Describe 'build.proj file version wrappers' {
+    # A malformed value is used so the leaf project reports it by name, which proves the wrapper
+    # forwarded it verbatim without paying for a full compile.
+    It 'forwards <Wrapper> through <Target>' -ForEach @(
+        @{ Product = 'SqlClient'; Wrapper = 'FileVersionSqlClient'; Target = 'BuildLogging' }
+        @{ Product = 'SqlServer'; Wrapper = 'FileVersionSqlServer'; Target = 'BuildSqlServer' }
+    ) {
+        $result = Invoke-BuildProjTarget -Target $Target -Properties @("-p:$Wrapper=1.2")
+
+        $result.ExitCode | Should -Not -Be 0
+        $result.Output | Should -Match ([regex]::Escape("${Product}FileVersion '1.2' is not a four-part numeric version"))
     }
 }
 
 Describe 'compute-versions.ps1 Error Handling' {
-    It 'rejects a non-positive revision' {
-        { Invoke-ComputeVersions -Revision 0 } | Should -Throw
-    }
-
-    It 'requires a build number when package revisioning is disabled' {
-        Set-SuccessfulDotnetMock
-
-        { Invoke-ComputeVersions -AddRevision $false } |
-            Should -Throw '*BuildNumber is required when AddRevision is false*'
-    }
-
     It 'rejects a malformed build number' {
-        { Invoke-ComputeVersions -AddRevision $false -BuildNumber 'not-a-build-number' } | Should -Throw
+        { Invoke-ComputeVersions -BuildNumber 'not-a-build-number' } | Should -Throw
+    }
+
+    It 'requires a build number' {
+        # Bound as empty rather than omitted; omitting a mandatory parameter prompts interactively.
+        { Invoke-ComputeVersions -BuildNumber '' } | Should -Throw
     }
 
     It 'throws when a GetVersions target fails' {
@@ -184,18 +390,12 @@ Describe 'compute-versions.ps1 Error Handling' {
         { Invoke-ComputeVersions } | Should -Throw '*Failed to extract PackageVersion*'
     }
 
-    It 'throws when a revised package does not have a three-part numeric base' {
-        $global:computeVersionsDotnetCallCount = 0
+    It 'throws when a FileVersion label is absent' {
         Mock -CommandName 'dotnet' -MockWith {
             $global:LASTEXITCODE = 0
-            $global:computeVersionsDotnetCallCount++
-            if ($global:computeVersionsDotnetCallCount -eq 1) {
-                return @('PackageVersion: 7.1-preview3')
-            }
-
-            return @('PackageVersion: 1.1.0-preview1', 'PublishedVersion: 1.0.0')
+            return 'PackageVersion: 7.1.0-preview3.26238.3'
         }
 
-        { Invoke-ComputeVersions } | Should -Throw "*Expected a three-part numeric version base*"
+        { Invoke-ComputeVersions } | Should -Throw '*Failed to extract FileVersion*'
     }
 }

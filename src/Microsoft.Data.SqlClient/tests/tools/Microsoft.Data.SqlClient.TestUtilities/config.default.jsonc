@@ -19,6 +19,11 @@
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultTenantId": "",
+    // True if the environment supports Entra Integrated authentication.
+    "SupportsEntraIntegrated": false,
+    // True if the environment supports Windows Integrated authentication.
+    //
+    // TODO: Default values should be empty/false.
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
@@ -30,6 +35,7 @@
     "IsDNSCachingSupportedCR": false,
     "IsDNSCachingSupportedTR": false,
     "EnclaveAzureDatabaseConnString": "",
+    // TODO: Default values should be empty/false.
     "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",

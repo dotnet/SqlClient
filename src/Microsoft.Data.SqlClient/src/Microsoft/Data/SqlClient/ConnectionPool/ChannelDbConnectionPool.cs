@@ -62,12 +62,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool, IDisposable
     {
         #region Fields
-        // Limits synchronous operations which depend on async operations on managed
-        // threads from blocking on all available threads, which would stop async tasks
-        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
-        // between sync and async tasks.
-        private static SemaphoreSlim _syncOverAsyncSemaphore = new(Math.Max(1, Environment.ProcessorCount / 2));
-
         /// <summary>
         /// Tracks the number of instances of this class. Used to generate unique IDs for each instance.
         /// </summary>
@@ -939,11 +933,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (taskCompletionSource is null)
             {
                 // We're on the caller's thread, so the ambient transaction is directly observable.
+                Transaction? currentTransaction = ADP.GetCurrentTransaction();
+
+                // Fast path: when the pool can satisfy the request immediately, do it here rather
+                // than entering GetInternalConnection, which allocates a Task<DbConnectionInternal>
+                // and a timer-backed CancellationTokenSource before it knows whether it will ever
+                // need to wait. See TryGetPooledConnectionInline.
+                connection = TryGetPooledConnectionInline(owningObject, currentTransaction);
+                if (connection is not null)
+                {
+                    return true;
+                }
+
                 var task = GetInternalConnection(
                         owningObject,
                         async: false,
                         timeout,
-                        ADP.GetCurrentTransaction());
+                        currentTransaction);
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -975,28 +981,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
-            //
-            // We must not read Transaction.Current inside the Task.Run below. A
-            // TransactionScope created with TransactionScopeAsyncFlowOption.Enabled stores the
-            // transaction in an AsyncLocal, which does flow onto the pool's worker thread, so that
-            // would appear to work. But Enabled is not the default: a plain TransactionScope keeps
-            // the transaction in thread-static storage, which does not flow, and reading
-            // Transaction.Current on the worker would silently fail to enlist. The WaitHandle pool
-            // enlists correctly in that case, so this is also a compatibility requirement.
-            // AsyncState is correct under both options.
-            //
-            // This does not make the suppressed-flow pattern work -- the caller's own scope is
-            // still broken past the first await -- but it keeps the connection in the transaction
-            // the caller intended rather than silently running outside it.
-            //
-            // Note that we deliberately do not assign Transaction.Current on the thread pool
-            // thread either. That assignment writes to thread-static storage which is *not* unwound
-            // when the ExecutionContext is restored, so it would outlive this open and be observed
-            // by unrelated work later scheduled onto the same thread pool thread -- including the
-            // login-time auto-enlistment that non-pooled connections perform against
-            // Transaction.Current. The WaitHandle pool can get away with assigning it because it
-            // processes pending opens on a dedicated non-thread-pool thread.
+            // Do not read Transaction.Current in the Task.Run below: a plain TransactionScope keeps
+            // the transaction in thread-static storage, which does not flow to the worker, so the
+            // enlistment would silently be skipped. Do not assign Transaction.Current there either;
+            // that storage is not unwound afterwards and would leak into later work on that thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+
+            // Fast path: return true rather than completing the TaskCompletionSource, so
+            // InternalOpenAsync takes its sync branch and skips a thread pool dispatch.
+            DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
+            if (pooled is not null)
+            {
+                connection = pooled;
+                return true;
+            }
 
             Task.Run(async () =>
             {
@@ -1432,6 +1430,66 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Attempts to satisfy a connection request from connections the pool already holds,
+        /// without blocking, waiting, or opening a physical connection.
+        /// </summary>
+        /// <remarks>
+        /// The fast path shared by the sync and async entry points of
+        /// <see cref="TryGetConnection"/>: it tries the transacted store, then the idle channel, and
+        /// returns null if neither can satisfy the request. It is kept separate from
+        /// <see cref="GetInternalConnection"/> because that method allocates a
+        /// <see cref="Task{TResult}"/> and a timer-backed <see cref="CancellationTokenSource"/> even
+        /// when it completes synchronously. It never calls
+        /// <see cref="OpenNewInternalConnection"/>, which would block on network I/O.
+        /// </remarks>
+        /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
+        /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread,
+        /// or null when the caller is not inside a transaction.</param>
+        /// <returns>An activated connection ready to be handed to the caller, or null when the pool
+        /// cannot satisfy the request without waiting or opening.</returns>
+        /// <exception cref="Exception">
+        /// Propagates any exception from activating or enlisting the connection. The connection is
+        /// returned to the pool before the exception escapes (see <see cref="PrepareConnection"/>).
+        /// </exception>
+        private DbConnectionInternal? TryGetPooledConnectionInline(
+            DbConnection owningConnection,
+            Transaction? ambientTransaction)
+        {
+            // When automatic enlistment is disabled the connection must never be bound to the
+            // ambient transaction, so we neither consult the transacted store nor hand the
+            // transaction to activation. Mirrors GetInternalConnection.
+            Transaction? transaction = HasTransactionAffinity ? ambientTransaction : null;
+
+            DbConnectionInternal? connection = null;
+
+            // A connection already enlisted in our transaction is always preferred, since reusing
+            // it avoids promoting the transaction to a distributed one.
+            if (transaction is not null)
+            {
+                connection = GetFromTransactedPool(transaction);
+            }
+
+            // GetIdleConnection only returns connections that passed IsLiveConnection, and
+            // GetFromTransactedPool has already probed liveness, so no further validation is
+            // needed here. GetInternalConnection re-checks after its channel wait because that
+            // wait can hand back a connection that bypassed both filters.
+            connection ??= GetIdleConnection();
+
+            if (connection is null)
+            {
+                return null;
+            }
+
+            // Counted before activation for the same reason as GetInternalConnection: if
+            // PrepareConnection fails it returns the connection to the pool, which emits the
+            // matching soft disconnect. Counting after would leave that disconnect unpaired and
+            // drive the active-soft-connects gauge negative.
+            Metrics.SoftConnectRequest();
+            PrepareConnection(owningConnection, connection, transaction);
+            return connection;
+        }
+
+        /// <summary>
         /// Gets an internal connection from the pool, either by retrieving an idle connection or opening a new one.
         /// </summary>
         /// <param name="owningConnection">The DbConnection that will own this internal connection</param>
@@ -1681,30 +1739,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>The connection read from the channel.</returns>
         private DbConnectionInternal? ReadChannelSyncOverAsync(CancellationToken cancellationToken)
         {
-            // If there are no connections in the channel, then ReadAsync will block until one is available.
-            // Channels doesn't offer a sync API, so running ReadAsync synchronously on this thread may spawn
-            // additional new async work items in the managed thread pool if there are no items available in the
-            // channel. We need to ensure that we don't block all available managed threads with these child
-            // tasks or we could deadlock. Prefer to block the current user-owned thread, and limit throughput
-            // to the managed threadpool.
-
-            _syncOverAsyncSemaphore.Wait(cancellationToken);
-            try
-            {
-                ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
-                    _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
-                using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
-
-                // Cancellation happens through the ReadAsync call, which will complete the task.
-                // Even a failed task will complete and set the ManualResetEventSlim.
-                awaiter.UnsafeOnCompleted(() => mres.Set());
-                mres.Wait(CancellationToken.None);
-                return awaiter.GetResult();
-            }
-            finally
-            {
-                _syncOverAsyncSemaphore.Release();
-            }
+            // Channel has no blocking read. Block on the Task rather than an opaque primitive: the
+            // idle channel is created without AllowSynchronousContinuations, so the completing
+            // continuation is queued, and Task blocking lets the thread pool inject a worker to run it.
+            return _idleChannel.ReadAsync(cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
         /// <summary>

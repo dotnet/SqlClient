@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// Tests for DateTime variant parameters with different date/time types.
     /// </summary>
     [Trait("Set", "3")]
-    [Trait("Category", "flaky")]
+    [Trait("category", "flaky")]
     public class DateTimeVariantTests
     {
         private static void RunTest(

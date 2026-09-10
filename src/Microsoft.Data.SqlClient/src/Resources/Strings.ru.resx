@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Если ключевому слову строки подключения "Integrated Security" задано значение "true" или "SSPI", свойство "AccessTokenCallback" задать не удастся.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Если задано свойство SspiContextProvider, свойства AccessToken или AccessTokenCallback настроить невозможно.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Если заданы свойства AccessToken или AccessTokenCallback, свойство SspiContextProvider настроить невозможно.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Не удается установить несколько свойств AccessToken, AccessTokenCallback или SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Если в строке подключения указан параметр "Authentication=Active Directory Default", свойство AccessTokenCallback задать не удастся.</value>
@@ -2137,10 +2134,10 @@
     <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>Не удалось загрузить или проанализировать файл сертификата, указанный параметром "ServerCertificate": "{0}".</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>Параметр "ServerCertificate" был указан, но сервер не представил сертификат, с которым можно было бы его сравнить.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>

@@ -30,6 +30,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// remarks on <see cref="ConnectionPoolStressRunner"/>. Run twice (UseConnectionPoolV2
     /// false then true) to compare.
     ///
+    /// Each sync workload is measured twice, once on threadpool threads
+    /// (<see cref="SteadyStateOpenQueryClose"/>) and once on dedicated threads
+    /// (<see cref="SteadyStateOpenQueryCloseDedicatedThreads"/>). Threadpool threads are the
+    /// realistic case, since sync database calls in ASP.NET run on them, and they are the
+    /// only configuration that can expose a waiter wake path which depends on the
+    /// threadpool having a free thread. Dedicated threads isolate the pool's own cost. The
+    /// pair separates a pool regression from a scheduling one.
+    ///
     /// Related issues: #601, #979, #3356
     /// </summary>
     public class ConnectionPoolContentionRunner : BaseRunner
@@ -41,13 +49,24 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public int Parallelism { get; set; }
 
         /// <summary>
-        /// Maximum pool size, exercised across three regimes relative to
-        /// <see cref="Parallelism"/>: larger than the worker count (idle spare
-        /// connections, no contention), equal to it (fully subscribed, no contention), and
-        /// smaller than it (pool exhaustion forces workers to wait for a connection to be
-        /// returned — back-pressure).
+        /// Maximum pool size, exercised across the full demand/capacity ladder relative to
+        /// <see cref="Parallelism"/>: larger than the worker count (idle spare connections, no
+        /// contention), equal to it (fully subscribed, no contention), and progressively smaller
+        /// than it (pool exhaustion forces workers to wait for a connection to be returned —
+        /// back-pressure).
         /// </summary>
-        [Params(100, 50, 10)]
+        /// <remarks>
+        /// At <see cref="Parallelism"/> 50 these give demand/capacity ratios of 0.25, 0.5, 1, 2
+        /// and 5. The intermediate over-subscribed step (ratio 2) is deliberate: back-pressure
+        /// regressions show up only once demand exceeds capacity, and without a point between
+        /// "fully subscribed" and "five times over" there is no way to tell how quickly the cost
+        /// grows once the pool starts running dry.
+        ///
+        /// 200 is included because it is the most commonly configured explicit Max Pool Size in
+        /// production, so the least-contended row corresponds to a real deployment rather than
+        /// only to the driver default.
+        /// </remarks>
+        [Params(200, 100, 50, 25, 10)]
         public int MaxPoolSize { get; set; }
 
         /// <summary>
@@ -109,6 +128,50 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                         // Dispose returns the connection to the pool.
                     }
                 });
+            }
+
+            return Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// Same workload as <see cref="SteadyStateOpenQueryClose"/>, but driven by dedicated
+        /// threads instead of threadpool threads.
+        ///
+        /// Read the two together. A sync <c>Open()</c> that has to wait blocks whichever
+        /// thread it is running on. On threadpool threads that competes with the threadpool
+        /// itself, because a pool implementation whose waiter wake-up depends on a queued
+        /// continuation cannot make progress while every thread is blocked in a wait: the
+        /// wake-up is stuck behind thread injection. On the TFMs this project builds the
+        /// runtime notifies the pool of cooperative blocking and compensates quickly, so the
+        /// stall is tens to a few hundred milliseconds; that is the expectation measured here.
+        /// On net462 the Task wait never notifies the pool, so the wake-up waits on starvation
+        /// detection and hill climbing instead. That path is live, since the pool carries no
+        /// framework guards and the driver still ships net462, but this suite cannot measure it.
+        /// Dedicated threads remove that coupling, so this variant measures the pool's
+        /// intrinsic checkout/return cost with the scheduler taken out of the picture.
+        ///
+        /// A regression in both points at the pool itself. A regression only in the
+        /// threadpool variant points at the waiter wake path and shows up as tail latency
+        /// rather than a shifted median, so compare the distribution and not just the mean.
+        /// </summary>
+        [Benchmark]
+        public Task SteadyStateOpenQueryCloseDedicatedThreads()
+        {
+            var tasks = new Task[Parallelism];
+            for (int i = 0; i < Parallelism; i++)
+            {
+                tasks[i] = Task.Factory.StartNew(() =>
+                {
+                    for (int op = 0; op < OpsPerWorker; op++)
+                    {
+                        using var conn = new SqlConnection(_connectionString);
+                        conn.Open();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT 1";
+                        _ = cmd.ExecuteScalar();
+                        // Dispose returns the connection to the pool.
+                    }
+                }, TaskCreationOptions.LongRunning);
             }
 
             return Task.WhenAll(tasks);

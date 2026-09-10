@@ -3973,16 +3973,84 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (_fResetConnection)
             {
-                // Pooled connections that are enlisted in a transaction must have their transaction
-                // preserved when resetting the connection state. Otherwise, future uses of the connection
-                // from the pool will execute outside the transaction, in auto-commit mode.
-                // https://github.com/dotnet/SqlClient/issues/2970
-                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
+                // Pooled connections that are tied to a transaction must have that transaction
+                // preserved when resetting the connection state. Otherwise, future uses of the
+                // connection from the pool will execute outside the transaction, in auto-commit
+                // mode. See ShouldPreserveTransactionOnReset for the full rationale.
+                _parser.PrepareResetConnection(ShouldPreserveTransactionOnReset(
+                    isPooled: Pool is not null,
+                    isTransactionRoot: IsTransactionRoot,
+                    hasEnlistedTransaction: EnlistedTransaction is not null));
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
                 _currentLanguage = _originalLanguage;
             }
+        }
+
+        /// <summary>
+        /// Decides whether a connection reset must preserve the server-side transaction, i.e.
+        /// whether <c>ST_RESET_CONNECTION_PRESERVE_TRANSACTION</c> should be sent instead of a
+        /// plain <c>ST_RESET_CONNECTION</c>.
+        /// </summary>
+        /// <param name="isPooled">Whether this connection belongs to a pool.</param>
+        /// <param name="isTransactionRoot">
+        /// Whether this connection is the root of a delegated transaction, i.e.
+        /// <see cref="IsTransactionRoot"/>.
+        /// </param>
+        /// <param name="hasEnlistedTransaction">
+        /// Whether this connection has a non-null <see cref="DbConnectionInternal.EnlistedTransaction"/>.
+        /// </param>
+        /// <remarks>
+        /// <para>
+        /// A pooled connection can be tied to a transaction in two independent ways, and both
+        /// must be preserved across a reset:
+        /// </para>
+        /// <list type="bullet">
+        /// <item>
+        /// It is the <b>root of a delegated transaction</b>: the transaction was delegated to
+        /// this connection, so it lives on the server session this connection owns. Missing this
+        /// case resets the server-side transaction out from under System.Transactions, which
+        /// later breaks the connection while it is being recycled through the pool.
+        /// See https://github.com/dotnet/SqlClient/issues/4001.
+        /// </item>
+        /// <item>
+        /// It has <b>enlisted in a transaction</b>, so <c>EnlistedTransaction</c> is set. Missing
+        /// this case causes subsequent uses of the connection to run outside the transaction, in
+        /// auto-commit mode. See https://github.com/dotnet/SqlClient/issues/2970.
+        /// </item>
+        /// </list>
+        /// <para>
+        /// These two conditions overlap but neither implies the other. A freshly delegated root
+        /// has both flags set, because enlistment sets <c>EnlistedTransaction</c> unconditionally.
+        /// However, once the transaction is no longer <c>Active</c>,
+        /// <c>DetachCurrentTransactionIfEnded</c> clears <c>EnlistedTransaction</c> while the
+        /// delegated transaction can still report itself as active. That transient half-state is
+        /// root-only, and it is exactly the state issue #4001 reproduces in.
+        /// </para>
+        /// <para>
+        /// There is deliberately no server-version guard here. Before
+        /// https://github.com/dotnet/SqlClient/pull/3019, a delegated root on a pre-2008 server
+        /// was excluded via <c>IsNonPoolableTransactionRoot</c>, but that property also routed
+        /// such connections into stasis rather than back into the pool, which is what made
+        /// suppressing the preserve bit safe. #3019 removed the property, and neither pool puts a
+        /// poolable root into stasis today, so a version guard would now return the connection to
+        /// the general pool with its transaction silently reset. That is issue #4001 again.
+        /// SQL Server 2005 is also outside the supported matrix.
+        /// </para>
+        /// </remarks>
+        internal static bool ShouldPreserveTransactionOnReset(
+            bool isPooled,
+            bool isTransactionRoot,
+            bool hasEnlistedTransaction)
+        {
+            // A connection with no pool is not recycled, so there is nothing to preserve for.
+            if (!isPooled)
+            {
+                return false;
+            }
+
+            return isTransactionRoot || hasEnlistedTransaction;
         }
 
         private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionOptions options)

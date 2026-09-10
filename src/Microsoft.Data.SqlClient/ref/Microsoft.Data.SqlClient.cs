@@ -1492,6 +1492,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
 
     #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
+    [System.ObsoleteAttribute("TransparentNetworkIPResolution has been deprecated and is only supported on .NET Framework. Use MultiSubnetFailover instead.")]
     [System.ComponentModel.DisplayNameAttribute("Transparent Network IP Resolution")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public bool TransparentNetworkIPResolution { get { throw null; } set { } }

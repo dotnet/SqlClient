@@ -81,6 +81,16 @@ if [ ! -f "$runnerConfig" ]; then
     configArgs=(--runner-config "$runnerConfig" "${configOverrides[@]}")
 fi
 
+# Switch A/B runs publish the effective settings separately for each pass.
+currentConfigArgs=("${configArgs[@]}")
+baselineConfigArgs=("${configArgs[@]}")
+if [ -f "$resultsDir/runnerconfig-current.json" ]; then
+    currentConfigArgs=(--runner-config "$resultsDir/runnerconfig-current.json")
+fi
+if [ -f "$resultsDir/runnerconfig-baseline.json" ]; then
+    baselineConfigArgs=(--runner-config "$resultsDir/runnerconfig-baseline.json")
+fi
+
 # --- current (branch under test) ---
 python3 "$scriptsDir/perf_to_kusto.py" \
     --input-dir "$resultsDir/current" \
@@ -97,7 +107,7 @@ python3 "$scriptsDir/perf_to_kusto.py" \
     --version-string "$shortSha" \
     --commit-hash "$commitHash" \
     --commit-date "$commitDate" \
-    "${configArgs[@]}" \
+    "${currentConfigArgs[@]}" \
     --is-comparable-base false
 
 # --- baseline (released NuGet package), when a baseline pass ran ---
@@ -117,7 +127,7 @@ if [ -d "$resultsDir/baseline" ]; then
         --branch-name "refs/tags/v$baseVer" \
         --version-string "$baseVer" \
         --commit-hash "v$baseVer" \
-        "${configArgs[@]}" \
+        "${baselineConfigArgs[@]}" \
         --is-comparable-base true
 fi
 

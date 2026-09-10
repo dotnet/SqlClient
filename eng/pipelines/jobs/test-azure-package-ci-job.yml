@@ -98,6 +98,10 @@ parameters:
     default: []
 
   # The name of the Azure Pipelines pool to use.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 
@@ -121,14 +125,8 @@ parameters:
     type: stepList
     default: []
 
-  # True if the VM image includes a local SQL Server that supports connections
-  # via integrated security.
-  - name: supportsIntegratedSecurity
-    type: boolean
-    default: false
-
   # The pool VM image to use.
-  - name: vmImage
+  - name: poolImage
     type: string
 
 jobs:
@@ -140,11 +138,11 @@ jobs:
 
       # Images provided by Azure Pipelines must be selected using 'vmImage'.
       ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
+        vmImage: ${{ parameters.poolImage }}
       # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
         demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+          - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
 
@@ -252,8 +250,7 @@ jobs:
           AADServicePrincipalId: $(AADServicePrincipalId)
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
-          ManagedIdentitySupported: ${{ not(eq(parameters.vmImage, 'macos-latest')) }}
-          SupportsIntegratedSecurity: ${{ parameters.supportsIntegratedSecurity }}
+          ManagedIdentitySupported: ${{ not(eq(parameters.poolImage, 'macos-latest')) }}
           TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)

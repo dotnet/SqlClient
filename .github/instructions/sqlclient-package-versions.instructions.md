@@ -40,7 +40,7 @@ Each `Versions.props` uses a 3-tier `<Choose>` block:
 | Priority | Condition | PackageVersion | FileVersion |
 |----------|-----------|----------------|-------------|
 | 1 | `<Pkg>PackageVersion` explicitly provided | Used as-is | Strip prerelease + append BuildNumber |
-| 2 | `BuildNumber` provided (non-zero) | `NextVersion[-BuildSuffix+BuildNumber]` | `NextVersion.Split('-')[0].BuildNumber` |
+| 2 | `BuildNumber` provided (non-zero) | `NextVersion[-BuildSuffix]`, then `.BuildNumber` appended if that carries a prerelease tag | `NextVersion.Split('-')[0].BuildNumber` |
 | 3 | Nothing provided | `NextVersion-dev` | `NextVersion.Split('-')[0].0` |
 
 For every family package, `<Pkg>` is `SqlClient` (e.g. `-p:SqlClientPackageVersion=...`); for
@@ -79,7 +79,7 @@ Microsoft.SqlServer.Server it is `SqlServer`.
 
 - Versions computed in `compute-versions-ci-stage.yml` (runs `GetVersions*` targets with `-p:BuildSuffix=pr -p:BuildNumber=...`)
 - Falls into Priority 2 with BuildSuffix present.
-- **Result:** `7.1.0-preview1-pr15401` / FileVersion `7.1.0.15401`
+- **Result:** `7.1.0-preview1-pr.15401` / FileVersion `7.1.0.15401`
 - Dependencies are project references — all packages built together in-tree.
 
 **Mode:** Package (PR package-ref validation)
@@ -93,7 +93,7 @@ Microsoft.SqlServer.Server it is `SqlServer`.
 
 Same structure as PR but passes `buildSuffix: 'ci'` explicitly.
 
-- **Result:** `7.1.0-preview1-ci15401` / FileVersion `7.1.0.15401`
+- **Result:** `7.1.0-preview1-ci.15401` / FileVersion `7.1.0.15401`
 
 ### OneBranch Pipeline (official)
 
@@ -104,8 +104,8 @@ Uses the full `compute-versions-stage.yml` machinery:
 #### Step A: Compute Versions (dedicated early stage)
 
 1. Runs the `GetVersionsSqlClient` and `GetVersionsSqlServer` MSBuild targets against `build.proj`.
-2. Each target calls `dotnet build <project> -getProperty:<Pkg>PackageVersion` with `BuildNumber` but **no BuildSuffix**.
-3. Falls into Priority 2 without BuildSuffix → `PackageVersion = NextVersion` as-is (e.g. `7.1.0-preview1`).
+2. Each target calls `dotnet build <project> -getProperty:<Pkg>PackageVersion` and `-getProperty:<Pkg>FileVersion` with `BuildNumber` but **no BuildSuffix**.
+3. Falls into Priority 2 without BuildSuffix. `NextVersion` already carries a prerelease tag on `main`, so the build number is appended (e.g. `7.1.0-preview1.26238.3`); on a release branch the stable `NextVersion` is used as-is (e.g. `7.1.0`).
 4. `GetVersionsSqlServer` also extracts `SqlServerPublishedVersion` (the SqlClient family has no published version).
 
 #### Step B: Resolve Effective Versions
@@ -136,15 +136,12 @@ Each downstream build job receives:
 
 Since an explicit `<Pkg>PackageVersion` is provided, Versions.props hits Priority 1 — uses the value verbatim.
 
-#### Package Version Shapes: `addRevision`
+#### Package Version Shapes
 
-Both OneBranch pipelines expose `addRevision` (default `false`), which selects between two mutually
-exclusive package version shapes. Their human-readable run name is `$(Year:YY)$(DayOfYear)$(Rev:.r)`,
-and the compute stage receives both that run name (as `Build.BuildNumber`) and the globally unique
-`Build.BuildId` (as the revision).
-
-**Default path — `addRevision: false`.** The pipeline run name is appended after any prerelease
-suffix, reproducing the shape shipped by earlier previews. `Build.BuildId` is not used:
+Both OneBranch pipelines use the human-readable run name `$(Year:YY)$(DayOfYear)$(Rev:.r)`, which the
+compute stage receives as `Build.BuildNumber`. That run name drives the single supported package
+version shape: it is appended after any prerelease suffix, reproducing the shape shipped by earlier
+previews.
 
 - `1.2.3` stays `1.2.3` — non-preview releases are never stamped with a build number
 - `1.2.3-preview1` becomes `1.2.3-preview1.<build_number>`, e.g. `7.1.0-preview3.26238.3`
@@ -152,34 +149,15 @@ suffix, reproducing the shape shipped by earlier previews. `Build.BuildId` is no
 
 Note the asymmetry: the *package* version omits the build number for non-preview releases, but the
 *file* version always carries one in its fourth component. This keeps every shipped assembly
-date-encoded and traceable to the run that produced it, while preserving the released package
-version customers expect.
+date-encoded, while preserving the released package version customers expect.
 
-**Opt-in path — `addRevision: true`.** Version revisions come from `Build.BuildId` instead, which is
-mapped into the unsigned 16-bit file-version range before canonical file versions are evaluated:
+The file version's fourth component is only the *date* segment of the run name, because a four-part
+file version cannot hold the full `<date>.<run>` value. Repeated runs on the same day therefore share
+a file version even though their package versions differ.
 
-```text
-revision = ((Build.BuildId - 1) % 65535) + 1
-```
-
-Build IDs `1` through `65535` map directly; subsequent IDs wrap back through that range. The compute
-stage logs the mapping whenever wrapping occurs because the revision can then collide with an earlier
-run. The mapped value is inserted before any package prerelease suffix so package and file versions
-use the same revision:
-
-- `1.2.3` becomes `1.2.3.<revision>`
-- `1.2.3-preview1` becomes `1.2.3.<revision>-preview1`
-- The matching file version is `1.2.3.<revision>`
-
-This shape exists for repeated test publishes of the same base version, where each run needs a
-distinct package version. `Build.BuildNumber` is not used on this path.
-
-Only packages built in the current run are revised or stamped. When `buildSqlServer` is `false`, the
-effective SqlServer version remains `SqlServerPublishedVersion` so dependency restore continues to
-request the package that actually exists on NuGet.
-
-An explicit four-part package version is also treated as the complete file version base by both
-canonical Versions.props files; they do not append `FileVersionBuildNumber` as a fifth component.
+Only packages built in the current run are stamped. When `buildSqlServer` is `false`, the effective
+SqlServer version remains `SqlServerPublishedVersion` so dependency restore continues to request the
+package that actually exists on NuGet.
 
 #### Summary
 

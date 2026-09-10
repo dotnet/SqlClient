@@ -71,13 +71,18 @@ parameters:
   - name: sqlSetupStep
     type: step
 
-  # The pool VM image to use.  Both the internal (ADO-1ES-Pool) and public (ADO-CI-1ES-Pool) pools
-  # must provide an image with this name.
+  # The name of the pool to run in.
   #
-  # NOTE: This value is evaluated at template-expansion (compile) time to select the pool, so it
-  # must be a literal and must not contain any runtime expressions (e.g. $(...) macros or
-  # $[...] runtime expressions).
-  - name: vmImage
+  # Supplied by the caller so that the pool name flows down from the pipeline root.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
+  - name: poolName
+    type: string
+
+  # The pool VM image to use, which must exist in the specified pool.
+  - name: poolImage
     type: string
 
 jobs:
@@ -88,11 +93,6 @@ jobs:
       clean: all
 
     variables:
-
-      # Whether this is an internal (ADO.Net project) or public (Public project) build.  Evaluated
-      # at compile time so it can drive template expressions below.
-      - name: isInternalBuild
-        value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
 
       # Import the variable group that provides SQL Server build properties used by the
       # shared configure-sql-server-*-step.yml templates (e.g. x64AliasRegistryPath,
@@ -141,7 +141,7 @@ jobs:
         value: >-
           -p:ReferenceType=Package
           -p:SqlClientPackageVersion=$(sqlClientPackageVersion)
-          -p:AzurePackageVersion=$(azurePackageVersion)
+          -p:AzurePackageVersion=$(sqlClientPackageVersion)
 
       # dotnet CLI options for build.
       - name: dotnetBuildOpts
@@ -162,20 +162,16 @@ jobs:
       - name: stressTestOpts
         value: --assembly SqlClient.Stress.Tests --console
 
-    # Select the pool based on the requested image:
-    #   - macOS images run on the Microsoft-hosted 'Azure Pipelines' pool (no 1ES macOS images).
-    #   - All other images run on the 1ES pool for the current ADO project, matched via imageOverride.
     pool:
-      ${{ if startsWith(parameters.vmImage, 'macos') }}:
-        name: 'Azure Pipelines'
-        vmImage: ${{ parameters.vmImage }}
+      name: ${{ parameters.poolName }}
+
+      # Images provided by Azure Pipelines must be selected using 'vmImage'.
+      ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+        vmImage: ${{ parameters.poolImage }}
+      # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
-        ${{ if eq(variables.isInternalBuild, true) }}:
-          name: ADO-1ES-Pool
-        ${{ else }}:
-          name: ADO-CI-1ES-Pool
         demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+          - imageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 
@@ -209,14 +205,8 @@ jobs:
 
       # Download the SqlClient driver packages published by the triggering sqlclient-ci-package
       # pipeline, stage them into the local NuGet feed, and resolve their exact versions.  The
-      # sqlClientPackageVersion and azurePackageVersion variables are consumed by the referenceArgs
-      # variable above.
-      #
-      # sqlServerVersionOverride pins Microsoft.SqlServer.Server to the released stable 1.0.0 to
-      # avoid an NU1605 downgrade against the >= 1.0.0 dependency from Microsoft.SqlServer.Types.
+      # sqlClientPackageVersion variable is consumed by the referenceArgs variable above.
       - template: /eng/pipelines/common/steps/download-driver-packages-step.yml@self
-        parameters:
-          sqlServerVersionOverride: 1.0.0
 
       # Authenticate with NuGet feeds so that upstream packages (e.g. runtime host packs) can be
       # fetched through the ADO Artifacts feed.

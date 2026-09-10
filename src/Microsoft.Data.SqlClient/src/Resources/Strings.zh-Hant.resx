@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>如果 'Integrated Security' 連接字串關鍵字已設定為 'true' 或 'SSPI'，就不能設定 AccessTokenCallback 屬性。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>如果已設定 SspiContextProvider 屬性，就不能設定 AccessToken 或 AccessTokenCallback 屬性。</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>如果已設定 AccessToken 或 AccessTokenCallback 屬性，就不能設定 SspiContextProvider 屬性。</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>AccessToken、AccessTokenCallback 或 SspiContextProvider 這些屬性中，不能設定超過一個。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果已在連接字串中指定 'Authentication=Active Directory Default'，就不能設定 AccessTokenCallback 屬性。</value>
@@ -2137,10 +2134,10 @@
     <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>無法載入或剖析 'ServerCertificate' 選項所指定的憑證檔案: '{0}'。</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>已指定 'ServerCertificate' 選項，但伺服器未提供可與其比對的憑證。</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在資料行 '{0}' 上取得 JsonDocument 的嘗試無效。JsonDocument 僅支援 JSON 類型的資料行。</value>

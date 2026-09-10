@@ -49,7 +49,7 @@ parameters:
     type: string
 
   # Name of the image in the customized ADO pool to use to execute this job.
-  - name: platformImage
+  - name: poolImage
     type: string
 
   # General name of the operating system that will be used to execute the job.
@@ -132,7 +132,7 @@ jobs:
     pool:
       name: ${{ parameters.poolName }}
       demands:
-        - imageOverride -equals ${{ parameters.platformImage }}
+        - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
       # Bring the generated SA password from the secrets stage into scope for this test stage.

@@ -2082,11 +2082,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Não é possível definir a propriedade AccessTokenCallback se a palavra-chave da cadeia de conexão 'Integrated Security' tiver sido definida como 'true' ou 'SSPI'.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Não é possível definir a propriedade AccessToken ou AccessTokenCallback se a propriedade SspiContextProvider já tiver sido definida.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Não é possível definir a propriedade SspiContextProvider se a propriedade AccessToken ou AccessTokenCallback já tiver sido definida.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Não é possível definir mais de uma das propriedades AccessToken, AccessTokenCallback ou SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Não é possível definir a propriedade AccessTokenCallback se 'Authentication=Active Directory Default' tiver sido especificado na cadeia de conexão.</value>
@@ -2137,10 +2134,10 @@
     <value>O certificado fornecido pelo servidor não corresponde ao certificado fornecido pela opção ServerCertificate.</value>
   </data>
   <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
-    <value>The certificate file specified by the 'ServerCertificate' option could not be loaded or parsed: '{0}'.</value>
+    <value>O arquivo de certificado especificado pela opção ''ServerCertificate'' não pôde ser carregado ou analisado: ''{0}''.</value>
   </data>
   <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
-    <value>The 'ServerCertificate' option was specified, but the server did not present a certificate that could be compared against it.</value>
+    <value>A opção ''ServerCertificate'' foi especificada, mas o servidor não apresentou um certificado que pudesse ser comparado com ele.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativa inválida de obter JsonDocument na coluna ''{0}''. Só há suporte para JsonDocument em colunas do tipo json.</value>

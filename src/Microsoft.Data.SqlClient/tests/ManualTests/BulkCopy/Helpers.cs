@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -10,40 +10,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     public class Helpers
     {
-        internal static void ProcessCommandBatch(Type connType, string constr, string[] batch)
-        {
-            if (batch.Length > 0)
-            {
-                object[] activatorArgs = new object[1];
-                activatorArgs[0] = constr;
-                using (DbConnection conn = (DbConnection)Activator.CreateInstance(connType, activatorArgs))
-                {
-                    conn.Open();
-                    DbCommand cmd = conn.CreateCommand();
-
-                    ProcessCommandBatch(cmd, batch);
-                }
-            }
-        }
-
-        internal static void ProcessCommandBatch(DbCommand cmd, string[] batch)
-        {
-            foreach (string cmdtext in batch)
-            {
-                Helpers.TryExecute(cmd, cmdtext);
-            }
-        }
-
-        public static int TryDropTable(string dstConstr, string tableName)
-        {
-            using (SqlConnection dropConn = new SqlConnection(dstConstr))
-            using (SqlCommand dropCmd = dropConn.CreateCommand())
-            {
-                dropConn.Open();
-                return Helpers.TryExecute(dropCmd, "drop table " + tableName);
-            }
-        }
-
         public static int TryExecute(DbCommand cmd, string strText)
         {
             cmd.CommandText = strText;
