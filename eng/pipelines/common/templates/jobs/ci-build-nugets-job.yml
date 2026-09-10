@@ -87,9 +87,6 @@ jobs:
     demands:
     - imageOverride -equals ${{ parameters.poolImage }}
 
-  variables:
-    - template: /eng/pipelines/libraries/ci-build-variables.yml@self
-
   steps:
   - ${{ if eq(parameters.debug, true)}}:
     - powershell: |
