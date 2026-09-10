@@ -389,15 +389,24 @@ namespace Microsoft.Data.SqlClient
             get;
             set
             {
-                // The identity is only reported while logging in, so allowing it
-                // to change afterwards would let the getter report a value that
-                // was never sent.
-                if (!InnerConnection.AllowSetConnectionString)
+                DbConnectionInternal connectionInternal = InnerConnection;
+                bool canSet = connectionInternal.AllowSetConnectionString;
+                if (canSet)
                 {
-                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), InnerConnection.State);
+                    // Reserve the closed state so Open cannot read the old value while this setter
+                    // publishes the new one.
+                    canSet = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                    if (canSet)
+                    {
+                        field = value;
+                        SetInnerConnectionTo(connectionInternal);
+                    }
                 }
 
-                field = value;
+                if (!canSet)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), connectionInternal.State);
+                }
             }
         }
 
