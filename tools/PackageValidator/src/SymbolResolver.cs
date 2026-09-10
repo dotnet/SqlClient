@@ -169,7 +169,7 @@ internal static class SymbolResolver
         }
 
         // A package may legitimately ship the same assembly (identical debug GUID) at more than one
-        // path — e.g. .NET Framework SqlClient appears in both lib/net462 and
+        // path — e.g. older versions of .NET Framework SqlClient appeared in both lib/net462 and
         // runtimes/win/lib/net462, and the symbol package mirrors it with an identical PDB in each
         // spot. Only the first PDB per GUID is indexed above, so every co-located assembly resolves
         // to that single PDB and the identical duplicate is never consumed, which would misreport it
