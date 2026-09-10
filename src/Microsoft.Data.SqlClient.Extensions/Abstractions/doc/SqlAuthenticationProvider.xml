@@ -99,6 +99,8 @@ See the LICENSE file in the project root for more information.
       <remarks>
         Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
 
+        This method must be idempotent. It may be invoked more than once for the same provider instance, and more than once for a single <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProvider.SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod,Microsoft.Data.SqlClient.SqlAuthenticationProvider)" /> call, because registration uses a concurrent registry whose update logic may run multiple times under contention.
+
         This method must not throw.
       </remarks>
       <param name="authenticationMethod">The authentication method.</param>
@@ -107,6 +109,8 @@ See the LICENSE file in the project root for more information.
       <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
       <remarks>
         For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+
+        This method must be idempotent. It may be invoked more than once for the same provider instance, and more than once for a single <see cref="M:Microsoft.Data.SqlClient.SqlAuthenticationProvider.SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod,Microsoft.Data.SqlClient.SqlAuthenticationProvider)" /> call, because registration uses a concurrent registry whose update logic may run multiple times under contention.
 
         This method must not throw.
       </remarks>
@@ -130,6 +134,9 @@ See the LICENSE file in the project root for more information.
       <summary>Gets an authentication provider by method.</summary>
       <param name="authenticationMethod">The authentication method.</param>
       <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+      <remarks>
+        This is the canonical way to retrieve a registered authentication provider.
+      </remarks>
     </GetProvider>
     <SetProvider>
       <summary>Sets an authentication provider by method.</summary>
@@ -138,6 +145,9 @@ See the LICENSE file in the project root for more information.
       <returns>
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
+      <remarks>
+        This is the canonical way to register an authentication provider.
+      </remarks>
     </SetProvider>
   </members>
 </docs>

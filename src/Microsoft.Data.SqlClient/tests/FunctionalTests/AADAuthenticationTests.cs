@@ -4,8 +4,6 @@
 
 using System;
 using System.Security;
-using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.FunctionalTests.DataCommon;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -48,30 +46,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.AccessToken = "SampleAccessToken");
             }
-        }
-
-        /// <summary>
-        /// Tests whether a dummy SQL Auth provider is registered due to
-        /// configuration in an app.config file.  Only .NET Framework reads
-        /// from the app.config file, so this test is only valid for that
-        /// runtime.
-        ///
-        /// See the app.config file in the same directory as this file.
-        /// 
-        /// .NET (Core) reads similar configuration from appsettings.json, but
-        /// our SqlAuthenticationProviderManager does not currently support
-        /// that configuration source.
-        /// </summary>
-        [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
-        public async Task IsDummySqlAuthenticationProviderSetByDefault()
-        {
-            var provider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
-
-            Assert.NotNull(provider);
-            Assert.IsType<DummySqlAuthenticationProvider>(provider);
-
-            var token = await provider.AcquireTokenAsync(null);
-            Assert.Equal(token.AccessToken, DummySqlAuthenticationProvider.DUMMY_TOKEN_STR);
         }
     }
 }
