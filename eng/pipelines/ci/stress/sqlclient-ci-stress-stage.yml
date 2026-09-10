@@ -96,7 +96,7 @@ stages:
           parameters:
             saPassword: $(saPassword)
         poolName: ${{ parameters.poolName }}
-        vmImage: ADO-UB24-SQL25
+        poolImage: ADO-UB24-SQL25
 
     # ----------------------------------------------------------------------------------------------
     # Build and test on Windows
@@ -120,7 +120,7 @@ stages:
         # The Windows images include a suitable .NET Framework runtime, so we don't have to install
         # one explicitly.
         poolName: ${{ parameters.poolName }}
-        vmImage: ADO-MMS25-SQL25
+        poolImage: ADO-MMS25-SQL25
 
     # ----------------------------------------------------------------------------------------------
     # Build and test on macOS.
@@ -144,4 +144,4 @@ stages:
         # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
         # 'Azure Pipelines' pool.
         poolName: Azure Pipelines
-        vmImage: macos-latest
+        poolImage: macos-latest

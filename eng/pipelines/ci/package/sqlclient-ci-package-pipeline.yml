@@ -40,8 +40,11 @@ parameters:
 
   # The agent image to use for the build.  This must exist in both the ADO-1ES-Pool and
   # ADO-CI-1ES-Pool agent pools.
-  - name: agentImage
-    displayName: Agent Image
+  #
+  # This keeps a default so that manual runs can pick a Windows agent when that is what we
+  # want to validate.
+  - name: poolImage
+    displayName: Pool Image
     type: string
     default: ADO-UB24
     values:
@@ -98,7 +101,7 @@ jobs:
       ${{ else }}:
         name: ADO-CI-1ES-Pool
       demands:
-        - ImageOverride -equals ${{ parameters.agentImage }}
+        - ImageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 
