@@ -418,6 +418,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, replacing connection.", Id);
 
+            // A broken connection can be returned and removed from the pool before connection
+            // resiliency asks for its replacement. Its slot is already free, so acquire the
+            // replacement through the normal path instead of trying to swap a missing slot.
+            if (!ReferenceEquals(oldConnection.Pool, this))
+            {
+                return GetInternalConnection(
+                        owningObject,
+                        async: false,
+                        timeout,
+                        oldConnection.EnlistedTransaction)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+
             // First, prefer to get an idle connection from the pool. 
             // If one is available, we can avoid the cost of creating a new connection.
             DbConnectionInternal? newConnection = GetIdleConnection();

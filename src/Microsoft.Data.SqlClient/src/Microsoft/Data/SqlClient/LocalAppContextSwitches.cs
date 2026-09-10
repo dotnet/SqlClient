@@ -580,12 +580,12 @@ internal static class LocalAppContextSwitches
     /// pool implementation.  When set to false, the connection pool will use
     /// the legacy V1 implementation.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool UseConnectionPoolV2 =>
         AcquireAndReturn(
             UseConnectionPoolV2String,
-            defaultValue: false,
+            defaultValue: true,
             ref s_useConnectionPoolV2);
 
     /// <summary>
