@@ -1175,12 +1175,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Verifies that LOGIN7 sends the USERAGENT payload carrying the connection's application
         /// identity, regardless of whether the server acknowledges the extension.
         /// </summary>
+        /// <param name="sendAck">Whether the server acknowledges the USERAGENT extension.</param>
+        /// <param name="useAsync">Whether the connection opens asynchronously.</param>
         [Theory]
         // Allow the server to ack.
-        [InlineData(true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
         // Don't allow the server to send an ack.
-        [InlineData(false)]
-        public void TestConnWithUserAgentFeatureExtension(bool sendAck)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TestConnWithUserAgentFeatureExtension(bool sendAck, bool useAsync)
         {
             // Start the test server.
             using TdsServer server = new();
@@ -1229,8 +1233,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.SqlClientApp = SqlClientApp.EntityFrameworkCore;
-            connection.Open();
+            connection.RegisteredApplication = SqlClientApp.EntityFrameworkCore;
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -1251,7 +1262,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// never sent.
         /// </summary>
         [Fact]
-        public void SqlClientApp_CannotBeSet_WhenConnectionIsOpen()
+        public void RegisteredApplication_CannotBeSet_WhenConnectionIsOpen()
         {
             using TdsServer server = new();
             server.Start();
@@ -1264,14 +1275,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.SqlClientApp = SqlClientApp.EntityFrameworkCore;
+            connection.RegisteredApplication = SqlClientApp.EntityFrameworkCore;
             connection.Open();
 
             Assert.Throws<InvalidOperationException>(
-                () => connection.SqlClientApp = SqlClientApp.SemanticKernel);
+                () => connection.RegisteredApplication = SqlClientApp.SemanticKernel);
 
             // The connection still reports the identity it logged in with.
-            Assert.Equal(SqlClientApp.EntityFrameworkCore, connection.SqlClientApp);
+            Assert.Equal(SqlClientApp.EntityFrameworkCore, connection.RegisteredApplication);
         }
     }
 }

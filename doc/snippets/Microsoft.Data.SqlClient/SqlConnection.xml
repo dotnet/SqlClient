@@ -2294,7 +2294,7 @@ The following sample tries to open a connection to an invalid database to simula
         </para>
       </remarks>
     </System.ICloneable.Clone>
-    <SqlClientApp>
+    <RegisteredApplication>
       <summary>
         Gets or sets the middleware application identity reported to the server for this connection.
       </summary>
@@ -2311,7 +2311,7 @@ The following sample tries to open a connection to an invalid database to simula
 
           using SqlConnection connection = new(connectionString)
           {
-              SqlClientApp = SqlClientApp.EntityFrameworkCore
+              RegisteredApplication = SqlClientApp.EntityFrameworkCore
           };
           connection.Open();
         </code>
@@ -2343,7 +2343,7 @@ The following sample tries to open a connection to an invalid database to simula
           exact attribution is required.
         </para>
       </remarks>
-    </SqlClientApp>
+    </RegisteredApplication>
     <WorkstationId>
       <summary>
         Gets a string that identifies the database client.

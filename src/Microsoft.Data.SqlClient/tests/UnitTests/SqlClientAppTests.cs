@@ -67,9 +67,9 @@ public class SqlClientAppTests
         Assert.False(Enum.IsDefined(typeof(SqlClientApp), app));
 
         using SqlConnection connection = new();
-        connection.SqlClientApp = app;
+        connection.RegisteredApplication = app;
 
-        Assert.Equal(app, connection.SqlClientApp);
+        Assert.Equal(app, connection.RegisteredApplication);
     }
 
     /// <summary>
@@ -83,9 +83,9 @@ public class SqlClientAppTests
     {
         using SqlConnection connection = new();
 
-        connection.SqlClientApp = (SqlClientApp)value;
+        connection.RegisteredApplication = (SqlClientApp)value;
 
-        Assert.Equal(value, (int)connection.SqlClientApp);
+        Assert.Equal(value, (int)connection.RegisteredApplication);
     }
 
     /// <summary>
@@ -93,15 +93,15 @@ public class SqlClientAppTests
     /// assigned, and round-trips the value it is given.
     /// </summary>
     [Fact]
-    public void SqlConnection_SqlClientApp_RoundTrips()
+    public void SqlConnection_RegisteredApplication_RoundTrips()
     {
         using SqlConnection connection = new();
 
-        Assert.Equal(SqlClientApp.Unknown, connection.SqlClientApp);
+        Assert.Equal(SqlClientApp.Unknown, connection.RegisteredApplication);
 
-        connection.SqlClientApp = SqlClientApp.SemanticKernel;
+        connection.RegisteredApplication = SqlClientApp.SemanticKernel;
 
-        Assert.Equal(SqlClientApp.SemanticKernel, connection.SqlClientApp);
+        Assert.Equal(SqlClientApp.SemanticKernel, connection.RegisteredApplication);
     }
 
     /// <summary>
@@ -110,14 +110,14 @@ public class SqlClientAppTests
     /// identity back to <see cref="SqlClientApp.Unknown"/>.
     /// </summary>
     [Fact]
-    public void Clone_Preserves_SqlClientApp()
+    public void Clone_Preserves_RegisteredApplication()
     {
         using SqlConnection connection = new();
-        connection.SqlClientApp = SqlClientApp.SqlPackage;
+        connection.RegisteredApplication = SqlClientApp.SqlPackage;
 
         using SqlConnection clone = (SqlConnection)((ICloneable)connection).Clone();
 
-        Assert.Equal(SqlClientApp.SqlPackage, clone.SqlClientApp);
+        Assert.Equal(SqlClientApp.SqlPackage, clone.RegisteredApplication);
     }
 
     /// <summary>

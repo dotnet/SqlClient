@@ -215,7 +215,7 @@ public sealed class UserAgentTests
     [InlineData((ushort)0, (ulong)0, "2|A|B|X64|C|D|E|0|0")]
     [InlineData((ushort)7, (ulong)1, "2|A|B|X64|C|D|E|7|1")]
     [InlineData((ushort)0x00AB, (ulong)0, "2|A|B|X64|C|D|E|AB|0")]
-    [InlineData(ushort.MaxValue, (ulong)ushort.MaxValue, "2|A|B|X64|C|D|E|FFFF|FFFF")]
+    [InlineData(ushort.MaxValue, ulong.MaxValue, "2|A|B|X64|C|D|E|FFFF|FFFFFFFFFFFFFFFF")]
     public void Build_App_Id_And_Driver_Properties(
         ushort appId,
         ulong driverProperties,
@@ -237,16 +237,19 @@ public sealed class UserAgentTests
     }
 
     /// <summary>
-    /// Verifies all 64 driver-property bits are preserved.
+    /// Calls the payload builder with optional defaults for the version 2 fields.
     /// </summary>
-    [Fact]
-    public void Build_Driver_Properties_Uses_64_Bits()
-    {
-        Assert.EndsWith("|FFFFFFFFFFFFFFFF", Build(
-            256, "2", "A", "B", Architecture.X64, "C", "D", "E", 0, ulong.MaxValue));
-    }
-
-    /// <inheritdoc cref="UserAgent.Build(ushort, string, string, string, Architecture, string, string, string, ushort, ulong)"/>
+    /// <param name="maxLen">The maximum payload length.</param>
+    /// <param name="payloadVersion">The payload version.</param>
+    /// <param name="driverName">The driver name.</param>
+    /// <param name="driverVersion">The driver version.</param>
+    /// <param name="architecture">The process architecture.</param>
+    /// <param name="osType">The operating system type.</param>
+    /// <param name="osInfo">The operating system description.</param>
+    /// <param name="runtimeInfo">The runtime description.</param>
+    /// <param name="appId">The application identifier.</param>
+    /// <param name="driverProperties">The driver feature flags.</param>
+    /// <returns>The formatted payload.</returns>
     private static string Build(
         ushort maxLen,
         string payloadVersion,

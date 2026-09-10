@@ -75,7 +75,6 @@ namespace Microsoft.Data.SqlClient
         private string _connectionString;
         private int _connectRetryCount;
         private string _accessToken; // Access Token to be used for token based authentication
-        private SqlClientApp _sqlClientApp = SqlClientApp.Unknown; // middleware application identity reported at login
 
         // connection resiliency
         private object _reconnectLock;
@@ -263,7 +262,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
-            _sqlClientApp = connection._sqlClientApp;
+            RegisteredApplication = connection.RegisteredApplication;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate
@@ -383,11 +382,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlClientApp/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
         [CLSCompliant(false)]
-        public SqlClientApp SqlClientApp
+        public SqlClientApp RegisteredApplication
         {
-            get => _sqlClientApp;
+            get;
             set
             {
                 // The identity is only reported while logging in, so allowing it
@@ -395,10 +394,10 @@ namespace Microsoft.Data.SqlClient
                 // was never sent.
                 if (!InnerConnection.AllowSetConnectionString)
                 {
-                    throw ADP.OpenConnectionPropertySet(nameof(SqlClientApp), InnerConnection.State);
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), InnerConnection.State);
                 }
 
-                _sqlClientApp = value;
+                field = value;
             }
         }
 
