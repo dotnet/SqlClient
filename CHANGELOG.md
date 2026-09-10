@@ -6,6 +6,65 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.0.3] - 2026-09-10
+
+### Changed
+
+- Updated the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` dependencies to 6.0.3 (was 6.0.2).
+  ([#4599](https://github.com/dotnet/SqlClient/pull/4599))
+
+### Fixed
+
+- Fixed a `SqlBulkCopy` regression in environments where the application login cannot read `sys.all_columns`. Bulk copy now falls back to the earlier column-discovery behavior when that permission is unavailable. Support for hidden columns and SQL Graph column aliases still requires access to the metadata view.
+  ([#4370](https://github.com/dotnet/SqlClient/issues/4370), [#4306](https://github.com/dotnet/SqlClient/pull/4306), [#4402](https://github.com/dotnet/SqlClient/pull/4402))
+
+- Fixed a memory-allocation regression in connection and command operations caused by formatting diagnostic strings even when tracing was disabled. Also corrected trace messages that reported an incorrect object ID or could throw `FormatException` when traced values contained braces.
+  ([#4528](https://github.com/dotnet/SqlClient/pull/4528), [#4533](https://github.com/dotnet/SqlClient/pull/4533))
+
+- Fixed `ServerCertificate` validation on the managed SNI path so the configured certificate is compared against the server certificate even when the server certificate passes chain and host-name validation. When certificate validation is enabled, a missing, unreadable, or invalid certificate file, a certificate mismatch, or a missing server certificate now causes the TLS handshake to fail instead of bypassing the configured certificate check. (net8.0/net9.0 only)
+  ([#4445](https://github.com/dotnet/SqlClient/pull/4445), [#4583](https://github.com/dotnet/SqlClient/pull/4583))
+
+- Fixed Always Encrypted VSM/HGS enclave attestation to verify that the enclave public key used to establish a session matches the key committed to by the signed attestation report. Missing, malformed, or mismatched key-binding data now causes attestation to fail before the session secret is derived.
+  ([#4532](https://github.com/dotnet/SqlClient/pull/4532), [#4553](https://github.com/dotnet/SqlClient/pull/4553))
+
+- Fixed `SqlConnection.AccessTokenCallback` not disabling Transparent Network IP Resolution by default, making it consistent with `SqlConnection.AccessToken`. An explicitly configured `TransparentNetworkIPResolution` connection-string value still takes precedence. (net462 only)
+  ([#4520](https://github.com/dotnet/SqlClient/pull/4520), [#4561](https://github.com/dotnet/SqlClient/pull/4561))
+
+- Fixed authentication state handling so clearing `SqlConnection.AccessToken`, `AccessTokenCallback`, or `SspiContextProvider` preserves the other authentication values in the connection pool key. Cloning a connection or updating its credential also preserves its `SspiContextProvider`. Combining a non-null `SspiContextProvider` with `AccessToken` or `AccessTokenCallback` now throws `InvalidOperationException` instead of silently discarding authentication state; applications must use one authentication mechanism at a time.
+  ([#4520](https://github.com/dotnet/SqlClient/pull/4520), [#4561](https://github.com/dotnet/SqlClient/pull/4561), [#4644](https://github.com/dotnet/SqlClient/pull/4644))
+
+- Fixed configurable retry logic installing a permanent, process-wide assembly-resolution handler that could interfere with unrelated assembly loading. The handler is now active only while an explicitly configured custom retry provider is resolved and constructed, and probes `AppContext.BaseDirectory` instead of the current working directory. Place custom retry assemblies in the application base directory; dependencies loaded after provider construction must be resolvable through normal application dependency resolution or an application-provided handler. (net8.0/net9.0 only)
+  ([#2214](https://github.com/dotnet/SqlClient/issues/2214), [#4547](https://github.com/dotnet/SqlClient/pull/4547), [#4663](https://github.com/dotnet/SqlClient/pull/4663))
+
+### Companion packages
+
+- Released `Microsoft.Data.SqlClient.Extensions.Azure` 7.0.3 with the Entra ID authority parsing fix for Dataverse/Dynamics 365 connections. See [release notes](release-notes/Extensions/Azure/7.0/7.0.3.md).
+- Released version-aligned `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` 7.0.3 with no functional or API changes. See the [Azure Key Vault provider](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.3.md), [Abstractions](release-notes/Extensions/Abstractions/7.0/7.0.3.md), and [Logging](release-notes/Internal/Logging/7.0/7.0.3.md) release notes.
+
+## [Stable Release 6.1.7] - 2026-09-10
+
+### Changed
+
+- Updated the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` dependencies to 6.0.3 (was 6.0.2).
+  ([#4598](https://github.com/dotnet/SqlClient/pull/4598))
+
+### Fixed
+
+- Fixed `ServerCertificate` validation on the managed SNI path so the configured certificate is compared against the server certificate even when the server certificate passes chain and host-name validation. When certificate validation is enabled, a missing, unreadable, or invalid certificate file, a certificate mismatch, or a missing server certificate now causes the TLS handshake to fail instead of bypassing the configured certificate check. (net8.0/net9.0 only)
+  ([#4445](https://github.com/dotnet/SqlClient/pull/4445), [#4584](https://github.com/dotnet/SqlClient/pull/4584))
+
+- Fixed Always Encrypted VSM/HGS enclave attestation to verify that the enclave public key used to establish a session matches the key committed to by the signed attestation report. Missing, malformed, or mismatched key-binding data now causes attestation to fail before the session secret is derived.
+  ([#4532](https://github.com/dotnet/SqlClient/pull/4532), [#4552](https://github.com/dotnet/SqlClient/pull/4552))
+
+- Fixed `SqlConnection.AccessTokenCallback` not disabling Transparent Network IP Resolution by default, making it consistent with `SqlConnection.AccessToken`. An explicitly configured `TransparentNetworkIPResolution` connection-string value still takes precedence. (net462 only)
+  ([#4520](https://github.com/dotnet/SqlClient/pull/4520), [#4560](https://github.com/dotnet/SqlClient/pull/4560))
+
+- Fixed token authentication state handling so clearing `SqlConnection.AccessToken` preserves an existing `AccessTokenCallback` in the connection pool key, and clearing `AccessTokenCallback` preserves an existing `AccessToken`. Callback-based authentication now also follows the same prelogin server-certificate validation rules as an explicitly supplied access token.
+  ([#4520](https://github.com/dotnet/SqlClient/pull/4520), [#4560](https://github.com/dotnet/SqlClient/pull/4560))
+
+- Fixed configurable retry logic installing a permanent, process-wide assembly-resolution handler that could interfere with unrelated assembly loading. The handler is now active only while an explicitly configured custom retry provider is resolved and constructed, and probes `AppContext.BaseDirectory` instead of the current working directory. Place custom retry assemblies in the application base directory; dependencies loaded after provider construction must be resolvable through normal application dependency resolution or an application-provided handler. (net8.0/net9.0 only)
+  ([#2214](https://github.com/dotnet/SqlClient/issues/2214), [#4547](https://github.com/dotnet/SqlClient/pull/4547), [#4664](https://github.com/dotnet/SqlClient/pull/4664))
+
 ## [Preview Release 7.1.0-preview3] - 2026-08-26
 
 This update brings the following changes since the [7.1.0-preview2](release-notes/7.1/7.1.0-preview2.md) release.
