@@ -2484,11 +2484,19 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(!_internalEndExecuteInitiated);
                         _internalEndExecuteInitiated = true;
 
-                        // Lock on _stateObj prevents races with close/cancel
-                        lock (_stateObj)
-                        {
-                            endFunc(this, task, /*isInternal:*/ true, endMethod);
-                        }
+                        // Note: We intentionally do NOT lock on _stateObj here, for the same
+                        // reason as the user-facing EndExecute* methods. See GitHub issue #4424.
+                        //
+                        // This continuation does not run only after the full response is
+                        // buffered: localCompletion is completed by ReadSni, which resolves as
+                        // soon as a *packet* arrives. So when a batch flushes partial results
+                        // (e.g. RAISERROR ... WITH NOWAIT) and then blocks (e.g. WAITFOR),
+                        // endFunc runs while the server is still busy and performs a blocking
+                        // sync-over-async read in FinishExecuteReader's TryRun(UntilDone).
+                        // Holding the stateObj monitor across that read starves
+                        // TdsParserStateObject.Cancel(), which needs the same monitor to send
+                        // the TDS attention signal, so cancellation was silently dropped.
+                        endFunc(this, task, /*isInternal:*/ true, endMethod);
 
                         globalCompletion.TrySetResult(task.Result);
                     }
