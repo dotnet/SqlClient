@@ -29,6 +29,11 @@ parameters:
       - Mac
       - Windows
 
+  # Optional test run title. When empty, preserve the historical OS-based title.
+  - name: testRunTitle
+    type: string
+    default: ''
+
 steps:
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
@@ -37,13 +42,12 @@ steps:
     mergeTestResults: true
     buildPlatform: '${{parameters.platform }}'
     buildConfiguration: '${{parameters.buildConfiguration }}'
-    ${{ if eq(parameters.operatingSystem, 'Windows') }}:
-      testResultsFiles: 'TestResults/*.trx'
+    testResultsFiles: 'TestResults/*.trx'
+    ${{ if ne(parameters.testRunTitle, '') }}:
+      testRunTitle: '${{ parameters.testRunTitle }}'
+    ${{ elseif eq(parameters.operatingSystem, 'Windows') }}:
       testRunTitle: 'Windows Tests'
     ${{ else }}:
-      testResultsFiles: |
-        TestResults/*.trx
-        TestResults/**/*.coverage
       testRunTitle: 'Unix Tests'
   condition: succeededOrFailed()
 
@@ -59,9 +63,11 @@ steps:
       Get-ChildItem -Filter "*.coverage" -Recurse
     displayName: '[Debug] List test result coverage files'
 
+# System.JobId is stable across attempts of the same job, so the attempt number is required to
+# avoid "Artifact ... already exists for build" when re-running a failed leg.
 - task: PublishPipelineArtifact@1
   displayName: 'Publish Test Artifacts'
   inputs:
     targetPath: TestResults
-    artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'
+    artifact: '${{ parameters.targetFramework }}_${{ parameters.operatingSystem }}_job$(System.JobId)_attempt$(System.JobAttempt)'
   condition: succeededOrFailed()

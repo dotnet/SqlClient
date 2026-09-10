@@ -174,5 +174,6 @@ jobs:
         parameters:
           debug: ${{ parameters.debug }}
           targetFramework: ${{ parameters.runtime }}
+          testRunTitle: ${{ parameters.displayName }}
           operatingSystem: ${{ parameters.operatingSystem }}
           buildConfiguration: ${{ parameters.buildConfiguration }}

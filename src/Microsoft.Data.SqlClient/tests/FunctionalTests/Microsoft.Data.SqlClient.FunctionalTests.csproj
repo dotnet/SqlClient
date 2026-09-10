@@ -37,6 +37,12 @@
     </None>
   </ItemGroup>
 
+  <!-- SNI selection =================================================== -->
+  <!-- .NET Framework only supports native SNI, so the switch is never emitted for it. -->
+  <ItemGroup Condition="'$(UseManagedSniOnWindows)' == 'true' AND '$(TargetFramework)' != 'net462'">
+    <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows" Value="true" />
+  </ItemGroup>
+
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <ItemGroup>
