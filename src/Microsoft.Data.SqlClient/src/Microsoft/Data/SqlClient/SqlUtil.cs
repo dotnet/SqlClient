@@ -580,6 +580,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception UdtAssemblyNotAllowed(string assemblyName)
+        {
+            return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_AssemblyNotAllowed, assemblyName));
+        }
+
+        internal static Exception UdtTypeNotUserDefined(string assemblyQualifiedName)
+        {
+            return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_TypeNotUserDefined, assemblyQualifiedName));
+        }
+
         internal static Exception ConversionOverflow()
         {
             return new OverflowException(StringsHelper.GetString(Strings.SqlMisc_ConversionOverflowMessage));

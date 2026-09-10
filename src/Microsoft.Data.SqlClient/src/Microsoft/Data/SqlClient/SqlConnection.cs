@@ -3033,13 +3033,41 @@ namespace Microsoft.Data.SqlClient
         private Assembly ResolveTypeAssembly(AssemblyName asmRef, bool throwOnError)
         {
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
-            if (string.Equals(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase))
+
+            if (UdtAssemblyPolicy.IsSqlServerTypesAssembly(asmRef) &&
+                asmRef.Version != TypeSystemAssemblyVersion &&
+                SqlClientEventSource.Log.IsTraceEnabled())
             {
-                if (asmRef.Version != TypeSystemAssemblyVersion && SqlClientEventSource.Log.IsTraceEnabled())
+                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version, TypeSystemAssemblyVersion);
+            }
+
+            // The assembly name arrives from the server, so the driver must
+            // decide whether it is willing to bring this assembly into the
+            // process before it hands the name to the loader. This call also
+            // pins the identity (version and public key token) of the built-in
+            // SQL CLR types assembly, so that the built-in exemption cannot be
+            // satisfied by a same-named assembly that happens to sit on the
+            // probing path.
+            if (!UdtAssemblyPolicy.TryResolve(asmRef, TypeSystemAssemblyVersion, out Assembly alreadyLoaded))
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | ERR | UDT assembly '{0}' was not loaded because the UDT assembly load policy does not permit it.", asmRef.Name);
+
+                if (throwOnError)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | SQL CLR type version change: Server sent {0}, client will instantiate {1}", asmRef.Version, TypeSystemAssemblyVersion);
+                    throw SQL.UdtAssemblyNotAllowed(asmRef.Name);
                 }
-                asmRef.Version = TypeSystemAssemblyVersion;
+
+                return null;
+            }
+
+            // The policy permitted the reference because the process had already
+            // loaded an assembly of that simple name. Use that instance rather
+            // than binding the server-supplied version and public key token,
+            // which could otherwise resolve to a different assembly and cause
+            // the new load this policy exists to prevent.
+            if (alreadyLoaded != null)
+            {
+                return alreadyLoaded;
             }
 
             try
@@ -3067,6 +3095,50 @@ namespace Microsoft.Data.SqlClient
                 // Parameter throwOnError determines whether exception from Assembly.Load is thrown.
                 metaData.udt.Type =
                     Type.GetType(typeName: metaData.udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
+
+                // Nothing has executed any of the resolved type's code yet:
+                // reading its custom attributes does not run its static
+                // constructor. This is therefore the last point at which the
+                // driver can reject a type that the server named but that is not
+                // actually a user-defined type, and it must happen before
+                // GetUdtValue invokes anything on it.
+                //
+                // This check also backstops the assembly policy: a type name
+                // that carries no assembly part is resolved without ever
+                // consulting the assembly resolver, so this is the only gate a
+                // name such as "System.String" passes through.
+                if (metaData.udt.Type != null && !UdtAssemblyPolicy.LegacyBehaviorEnabled)
+                {
+                    bool isUserDefinedType;
+
+                    try
+                    {
+                        isUserDefinedType = SqlUdtInfo.TryGetFromType(metaData.udt.Type) != null;
+                    }
+                    catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+                    {
+                        // Reading custom attributes can fail if the attribute or
+                        // one of its arguments lives in an assembly that cannot
+                        // be loaded. Treat that as "not a user-defined type"
+                        // rather than letting it escape, so that callers that
+                        // pass fThrow: false keep tolerating an unusable type.
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Unable to read the attributes of type '{0}'.", metaData.udt.AssemblyQualifiedName);
+
+                        isUserDefinedType = false;
+                    }
+
+                    if (!isUserDefinedType)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Type '{0}' is not annotated with SqlUserDefinedTypeAttribute and will not be used.", metaData.udt.AssemblyQualifiedName);
+
+                        metaData.udt.Type = null;
+
+                        if (fThrow)
+                        {
+                            throw SQL.UdtTypeNotUserDefined(metaData.udt.AssemblyQualifiedName);
+                        }
+                    }
+                }
 
                 if (fThrow && metaData.udt.Type == null)
                 {
