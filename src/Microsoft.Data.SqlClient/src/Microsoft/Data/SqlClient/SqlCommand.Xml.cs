@@ -366,6 +366,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<XmlReader> source,
             Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -500,6 +502,8 @@ namespace Microsoft.Data.SqlClient
 
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
+
+            _asyncExecutionCancellationToken = cancellationToken;
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
