@@ -299,6 +299,14 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions (remove f prefix)
         private readonly bool _fResetConnection;
 
+        // Tracks whether a SQL Server session transaction isolation level
+        // change has been issued on this connection (via SqlTransaction or
+        // System.Transactions enlistment) but not yet undone. SQL Server's
+        // sp_reset_connection does not reset the session isolation level, so
+        // without compensation a pooled connection leaks the level to its
+        // next user.
+        private bool _isolationLevelDirty;
+
 
 
         // @TODO: Rename to match naming conventions
@@ -2080,6 +2088,36 @@ namespace Microsoft.Data.SqlClient.Connection
             FailoverPermissionDemand();
             #endif
 
+            // sp_reset_connection does not reset the session transaction isolation level, so when a
+            // previous Begin raised it we scrub it here, on checkout, when the opt-in switch is
+            // enabled.
+            //
+            // This runs on checkout rather than on pool return for two reasons:
+            //
+            //  - On return the connection may still be enlisted in a live TransactionScope, because
+            //    Close is routinely called inside the scope. Issuing SET there would downgrade the
+            //    isolation level for any further connection vended into that same scope from the
+            //    transacted pool, which is the defect tracked by #146.
+            //  - ResetConnection, the other pool-return hook, is also invoked from
+            //    PutObjectFromTransactedPool on the System.Transactions transaction-completion
+            //    callback thread while holding a lock on the connection. That path deliberately
+            //    avoids socket work on a thread it does not own.
+            //
+            // Activate always runs on the thread performing the checkout, and by then the previous
+            // transaction has ended, so neither constraint applies. It also means the cost is only
+            // paid by connections that are actually reused.
+            //
+            // EnlistedTransaction is non-null here only when the connection is being re-vended into
+            // a transaction it is already enlisted in; scrubbing then would hit the same #146
+            // problem, so it is skipped.
+            if (_isolationLevelDirty &&
+                LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
+                EnlistedTransaction is null &&
+                !IsConnectionDoomed)
+            {
+                ResetSessionIsolationLevel();
+            }
+
             // When we're required to automatically enlist in transactions and there is one we
             // enlist in it. On the other hand, if there isn't a transaction, and we are
             // currently enlisted in one, then we un-enlist from it.
@@ -2747,6 +2785,17 @@ namespace Microsoft.Data.SqlClient.Connection
                     internalTransaction,
                     stateObj,
                     isDelegateControlRequest);
+
+                // TdsExecuteTransactionManagerRequest throws if Begin fails, so reaching this point
+                // means a non-default isolation level was applied successfully. Dedicated Synapse
+                // pools cannot apply one and should never mark the connection dirty.
+                if (requestType == TdsEnums.TransactionManagerRequestType.Begin &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.Unspecified &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.ReadCommitted &&
+                    !ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+                {
+                    _isolationLevelDirty = true;
+                }
             }
             finally
             {
@@ -3982,6 +4031,61 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
                 _currentLanguage = _originalLanguage;
+            }
+        }
+
+        // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object so
+        // this user of the pooled connection observes the default session isolation level.
+        internal void ResetSessionIsolationLevel()
+        {
+            if (IsConnectionDoomed)
+            {
+                return;
+            }
+
+            // Consumed unconditionally: whether the statement succeeds, is skipped, or is rejected
+            // by the server, there is no point re-issuing it on every subsequent checkout of this
+            // connection. On the failure paths below the connection is doomed and destroyed, so the
+            // flag's value stops mattering.
+            _isolationLevelDirty = false;
+
+            // Azure Synapse Analytics dedicated SQL pools reject every isolation level except
+            // READ UNCOMMITTED with error 104409, so the session can never have been elevated away
+            // from that level and there is nothing to scrub. Skipping up front avoids spending a
+            // round trip on a statement that can only fail there.
+            if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+            {
+                Debug.Fail("A dedicated Synapse connection should never require an isolation level reset.");
+                return;
+            }
+
+            try
+            {
+                _parser.TdsExecuteSQLBatch(
+                    text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
+                    // Bounded by the connection's command timeout. Passing 0 here would map to
+                    // long.MaxValue in TdsParserStateObject.SetTimeoutMilliseconds, which would let
+                    // an unresponsive server block SqlConnection.Open indefinitely.
+                    timeout: ConnectionOptions.CommandTimeout,
+                    notificationRequest: null,
+                    stateObj: _parser._physicalStateObj,
+                    sync: true);
+                _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                // We could not confirm that the session isolation level was scrubbed. This covers a
+                // timeout, where an attention was sent and the batch may or may not have taken
+                // effect, as well as any other catchable failure. Because the state is unknown, the
+                // connection may still be carrying an elevated isolation level and is not safe to
+                // hand to the caller or to return to the pool.
+                //
+                // Doom it and rethrow. Both pool implementations wrap ActivateConnection in a
+                // try/catch that calls ReturnInternalConnection and rethrows, so the doomed
+                // connection is destroyed rather than pooled and the caller's Open observes the
+                // original error instead of receiving an unusable connection.
+                DoomThisConnection();
+                throw;
             }
         }
 
