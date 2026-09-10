@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// The middleware application identity of the <see cref="SqlConnection"/> that caused
         /// this physical connection to be created. Reported once, at login.
         /// </summary>
-        private readonly SqlClientApp _sqlClientApp;
+        private readonly SqlClientApplication _registeredApplication;
 
         private int _threadIdOwningParserLock = -1;
 
@@ -351,13 +351,13 @@ namespace Microsoft.Data.SqlClient.Connection
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
             SspiContextProvider sspiContextProvider = null,
             ISqlClientMetrics metrics = null,
-            SqlClientApp sqlClientApp = SqlClientApp.Unknown)
+            SqlClientApplication registeredApplication = SqlClientApplication.Unknown)
             : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
-            _sqlClientApp = sqlClientApp;
+            _registeredApplication = registeredApplication;
 
             #if DEBUG
             if (reconnectSessionData != null)
@@ -3071,7 +3071,7 @@ namespace Microsoft.Data.SqlClient.Connection
             login.password = ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
             login.language = _currentLanguage;
-            login.appId = _sqlClientApp;
+            login.appId = _registeredApplication;
 
             if (!login.userInstance)
             {

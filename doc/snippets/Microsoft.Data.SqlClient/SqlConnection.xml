@@ -2299,8 +2299,8 @@ The following sample tries to open a connection to an invalid database to simula
         Gets or sets the middleware application identity reported to the server for this connection.
       </summary>
       <value>
-        A <see cref="T:Microsoft.Data.SqlClient.SqlClientApp" /> value. The default is
-        <see cref="F:Microsoft.Data.SqlClient.SqlClientApp.Unknown" />.
+        A <see cref="T:Microsoft.Data.SqlClient.SqlClientApplication" /> value. The default is
+        <see cref="F:Microsoft.Data.SqlClient.SqlClientApplication.Unknown" />.
       </value>
       <example>
         <para>
@@ -2311,7 +2311,7 @@ The following sample tries to open a connection to an invalid database to simula
 
           using SqlConnection connection = new(connectionString)
           {
-              RegisteredApplication = SqlClientApp.EntityFrameworkCore
+              RegisteredApplication = SqlClientApplication.EntityFrameworkCore
           };
           connection.Open();
         </code>
@@ -2322,7 +2322,7 @@ The following sample tries to open a connection to an invalid database to simula
       <remarks>
         <para>
           This API is intended for registered applications that reserve an identifier in
-          <see cref="T:Microsoft.Data.SqlClient.SqlClientApp" />. An unregistered identifier may be reported by
+          <see cref="T:Microsoft.Data.SqlClient.SqlClientApplication" />. An unregistered identifier may be reported by
           casting a value to that type.
         </para>
         <para>
@@ -2338,7 +2338,7 @@ The following sample tries to open a connection to an invalid database to simula
           not part of the pool key. A connection served from the pool therefore reports the identity of whichever
           connection caused that physical connection to be created, and physical connections opened in the background
           to satisfy <c>Min Pool Size</c> report
-          <see cref="F:Microsoft.Data.SqlClient.SqlClientApp.Unknown" />. Applications that mix identities over one
+          <see cref="F:Microsoft.Data.SqlClient.SqlClientApplication.Unknown" />. Applications that mix identities over one
           connection string should treat this telemetry as indicative rather than exact, or disable pooling where an
           exact attribution is required.
         </para>

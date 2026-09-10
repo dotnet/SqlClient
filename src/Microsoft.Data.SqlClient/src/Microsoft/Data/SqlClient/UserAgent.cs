@@ -134,7 +134,7 @@ internal static class UserAgent
     ///   </para>
     ///   <para>
     ///     When <paramref name="app"/> is
-    ///     <see cref="SqlClientApp.Unknown"/>, <see cref="Ucs2Bytes"/> is
+    ///     <see cref="SqlClientApplication.Unknown"/>, <see cref="Ucs2Bytes"/> is
     ///     returned, whose App Id part is <c>0</c>.
     ///   </para>
     /// </summary>
@@ -142,9 +142,9 @@ internal static class UserAgent
     ///   The application identifier set on the connection being logged in.
     /// </param>
     /// <returns>The UCS-2 encoded payload bytes.</returns>
-    internal static ReadOnlyMemory<byte> GetUcs2Bytes(SqlClientApp app)
+    internal static ReadOnlyMemory<byte> GetUcs2Bytes(SqlClientApplication app)
     {
-        if (app == SqlClientApp.Unknown)
+        if (app == SqlClientApplication.Unknown)
         {
             return Ucs2Bytes;
         }
@@ -170,7 +170,7 @@ internal static class UserAgent
     /// </summary>
     /// <param name="app">The application identifier to report.</param>
     /// <returns>The payload string value.</returns>
-    private static string BuildPayload(SqlClientApp app) =>
+    private static string BuildPayload(SqlClientApplication app) =>
         Build(
             MaxLenOverall,
             PayloadVersion,
@@ -218,7 +218,7 @@ internal static class UserAgent
         s_osType = osType;
 
         // Build it!
-        Value = BuildPayload(SqlClientApp.Unknown);
+        Value = BuildPayload(SqlClientApplication.Unknown);
 
         // Convert it to UCS-2 bytes.
         //
@@ -539,13 +539,13 @@ internal static class UserAgent
     /// </summary>
     private sealed class AppPayload
     {
-        internal AppPayload(SqlClientApp app, ReadOnlyMemory<byte> ucs2Bytes)
+        internal AppPayload(SqlClientApplication app, ReadOnlyMemory<byte> ucs2Bytes)
         {
             App = app;
             Ucs2Bytes = ucs2Bytes;
         }
 
-        internal SqlClientApp App { get; }
+        internal SqlClientApplication App { get; }
 
         internal ReadOnlyMemory<byte> Ucs2Bytes { get; }
     }

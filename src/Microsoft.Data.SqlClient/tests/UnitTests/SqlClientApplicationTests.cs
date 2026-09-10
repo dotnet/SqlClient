@@ -9,9 +9,9 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Tests for the <see cref="SqlClientApp"/> application identifier registry.
+/// Tests for the <see cref="SqlClientApplication"/> application identifier registry.
 /// </summary>
-public class SqlClientAppTests
+public class SqlClientApplicationTests
 {
     /// <summary>
     /// Verifies the enum uses the 16-bit protocol width.
@@ -19,7 +19,7 @@ public class SqlClientAppTests
     [Fact]
     public void UnderlyingType_Is_UShort()
     {
-        Assert.Equal(typeof(ushort), Enum.GetUnderlyingType(typeof(SqlClientApp)));
+        Assert.Equal(typeof(ushort), Enum.GetUnderlyingType(typeof(SqlClientApplication)));
     }
 
     /// <summary>
@@ -28,8 +28,8 @@ public class SqlClientAppTests
     [Fact]
     public void Default_Is_Unknown()
     {
-        Assert.Equal(SqlClientApp.Unknown, default(SqlClientApp));
-        Assert.Equal(0, (int)SqlClientApp.Unknown);
+        Assert.Equal(SqlClientApplication.Unknown, default(SqlClientApplication));
+        Assert.Equal(0, (int)SqlClientApplication.Unknown);
     }
 
     /// <summary>
@@ -37,20 +37,20 @@ public class SqlClientAppTests
     /// changing one would silently re-map an application's telemetry.
     /// </summary>
     [Theory]
-    [InlineData(SqlClientApp.EntityFrameworkCore, 1)]
-    [InlineData(SqlClientApp.SemanticKernel, 2)]
-    [InlineData(SqlClientApp.ManagementStudio, 3)]
-    [InlineData(SqlClientApp.SqlManagementObjects, 4)]
-    [InlineData(SqlClientApp.DataTierApplicationFramework, 5)]
-    [InlineData(SqlClientApp.SqlToolsService, 6)]
-    [InlineData(SqlClientApp.AspNetCoreDistributedSqlServerCache, 7)]
-    [InlineData(SqlClientApp.EntityFramework, 8)]
-    [InlineData(SqlClientApp.AzureFunctionsSqlExtension, 9)]
-    [InlineData(SqlClientApp.OrleansAdoNet, 10)]
-    [InlineData(SqlClientApp.DurableTaskSqlServer, 11)]
-    [InlineData(SqlClientApp.SqlPackage, 12)]
-    [InlineData(SqlClientApp.DataApiBuilder, 13)]
-    public void Members_Have_Stable_Values(SqlClientApp app, int expected)
+    [InlineData(SqlClientApplication.EntityFrameworkCore, 1)]
+    [InlineData(SqlClientApplication.SemanticKernel, 2)]
+    [InlineData(SqlClientApplication.ManagementStudio, 3)]
+    [InlineData(SqlClientApplication.SqlManagementObjects, 4)]
+    [InlineData(SqlClientApplication.DataTierApplicationFramework, 5)]
+    [InlineData(SqlClientApplication.SqlToolsService, 6)]
+    [InlineData(SqlClientApplication.AspNetCoreDistributedSqlServerCache, 7)]
+    [InlineData(SqlClientApplication.EntityFramework, 8)]
+    [InlineData(SqlClientApplication.AzureFunctionsSqlExtension, 9)]
+    [InlineData(SqlClientApplication.OrleansAdoNet, 10)]
+    [InlineData(SqlClientApplication.DurableTaskSqlServer, 11)]
+    [InlineData(SqlClientApplication.SqlPackage, 12)]
+    [InlineData(SqlClientApplication.DataApiBuilder, 13)]
+    public void Members_Have_Stable_Values(SqlClientApplication app, int expected)
     {
         Assert.Equal(expected, (int)app);
     }
@@ -62,9 +62,9 @@ public class SqlClientAppTests
     [Fact]
     public void Unregistered_Identifier_Is_Accepted()
     {
-        SqlClientApp app = (SqlClientApp)0xC001;
+        SqlClientApplication app = (SqlClientApplication)0xC001;
 
-        Assert.False(Enum.IsDefined(typeof(SqlClientApp), app));
+        Assert.False(Enum.IsDefined(typeof(SqlClientApplication), app));
 
         using SqlConnection connection = new();
         connection.RegisteredApplication = app;
@@ -83,7 +83,7 @@ public class SqlClientAppTests
     {
         using SqlConnection connection = new();
 
-        connection.RegisteredApplication = (SqlClientApp)value;
+        connection.RegisteredApplication = (SqlClientApplication)value;
 
         Assert.Equal(value, (int)connection.RegisteredApplication);
     }
@@ -97,27 +97,27 @@ public class SqlClientAppTests
     {
         using SqlConnection connection = new();
 
-        Assert.Equal(SqlClientApp.Unknown, connection.RegisteredApplication);
+        Assert.Equal(SqlClientApplication.Unknown, connection.RegisteredApplication);
 
-        connection.RegisteredApplication = SqlClientApp.SemanticKernel;
+        connection.RegisteredApplication = SqlClientApplication.SemanticKernel;
 
-        Assert.Equal(SqlClientApp.SemanticKernel, connection.RegisteredApplication);
+        Assert.Equal(SqlClientApplication.SemanticKernel, connection.RegisteredApplication);
     }
 
     /// <summary>
     /// Verifies a cloned connection keeps the application identity of the
     /// connection it was cloned from, so cloning does not silently drop the
-    /// identity back to <see cref="SqlClientApp.Unknown"/>.
+    /// identity back to <see cref="SqlClientApplication.Unknown"/>.
     /// </summary>
     [Fact]
     public void Clone_Preserves_RegisteredApplication()
     {
         using SqlConnection connection = new();
-        connection.RegisteredApplication = SqlClientApp.SqlPackage;
+        connection.RegisteredApplication = SqlClientApplication.SqlPackage;
 
         using SqlConnection clone = (SqlConnection)((ICloneable)connection).Clone();
 
-        Assert.Equal(SqlClientApp.SqlPackage, clone.RegisteredApplication);
+        Assert.Equal(SqlClientApplication.SqlPackage, clone.RegisteredApplication);
     }
 
     /// <summary>

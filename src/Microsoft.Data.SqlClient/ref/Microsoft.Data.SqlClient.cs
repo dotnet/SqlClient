@@ -592,37 +592,37 @@ public class SqlClientLogger
     public void LogInfo(string type, string method, string message) { }
 }
 
-/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlClientApp/*' />
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/SqlClientApplication/*' />
 [System.CLSCompliantAttribute(false)]
-public enum SqlClientApp : ushort
+public enum SqlClientApplication : ushort
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/Unknown/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/Unknown/*' />
     Unknown = 0,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFrameworkCore/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/EntityFrameworkCore/*' />
     EntityFrameworkCore = 1,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SemanticKernel/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/SemanticKernel/*' />
     SemanticKernel = 2,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/ManagementStudio/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/ManagementStudio/*' />
     ManagementStudio = 3,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlManagementObjects/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/SqlManagementObjects/*' />
     SqlManagementObjects = 4,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DataTierApplicationFramework/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/DataTierApplicationFramework/*' />
     DataTierApplicationFramework = 5,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlToolsService/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/SqlToolsService/*' />
     SqlToolsService = 6,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AspNetCoreDistributedSqlServerCache/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/AspNetCoreDistributedSqlServerCache/*' />
     AspNetCoreDistributedSqlServerCache = 7,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/EntityFramework/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/EntityFramework/*' />
     EntityFramework = 8,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/AzureFunctionsSqlExtension/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/AzureFunctionsSqlExtension/*' />
     AzureFunctionsSqlExtension = 9,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/OrleansAdoNet/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/OrleansAdoNet/*' />
     OrleansAdoNet = 10,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DurableTaskSqlServer/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/DurableTaskSqlServer/*' />
     DurableTaskSqlServer = 11,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/SqlPackage/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/SqlPackage/*' />
     SqlPackage = 12,
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApp.xml' path='docs/members[@name="SqlClientApp"]/DataApiBuilder/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientApplication.xml' path='docs/members[@name="SqlClientApplication"]/DataApiBuilder/*' />
     DataApiBuilder = 13
 }
 
@@ -1046,7 +1046,7 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
     [System.CLSCompliantAttribute(false)]
-    public Microsoft.Data.SqlClient.SqlClientApp RegisteredApplication { get { throw null; } set { } }
+    public Microsoft.Data.SqlClient.SqlClientApplication RegisteredApplication { get { throw null; } set { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
