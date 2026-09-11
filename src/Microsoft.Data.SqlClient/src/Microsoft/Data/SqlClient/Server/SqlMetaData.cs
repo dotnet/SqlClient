@@ -536,6 +536,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Construction for all types that do not have variable attributes
         private void Construct(string name, SqlDbType dbType, bool useServerDefault, bool isUniqueKey, SortOrder columnSortOrder, int sortOrdinal)
         {
+            ValidateGlobalizationInvariantLcid(dbType);
             AssertNameIsValid(name);
 
             ValidateSortOrder(columnSortOrder, sortOrdinal);
@@ -586,6 +587,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Construction for all types that vary by user-specified length (not Udts)
         private void Construct(string name, SqlDbType dbType, long maxLength, bool useServerDefault, bool isUniqueKey, SortOrder columnSortOrder, int sortOrdinal)
         {
+            ValidateGlobalizationInvariantLcid(dbType);
             AssertNameIsValid(name);
 
             ValidateSortOrder(columnSortOrder, sortOrdinal);
@@ -926,6 +928,16 @@ namespace Microsoft.Data.SqlClient.Server
             if ((SortOrder.Unspecified == columnSortOrder) != (DefaultSortOrdinal == sortOrdinal))
             {
                 throw SQL.MustSpecifyBothSortOrderAndOrdinal(columnSortOrder, sortOrdinal);
+            }
+        }
+
+        private static void ValidateGlobalizationInvariantLcid(SqlDbType dbType)
+        {
+            if (LocalAppContextSwitches.GlobalizationInvariantMode &&
+                (dbType is SqlDbType.Char or SqlDbType.VarChar or SqlDbType.Text
+                    or SqlDbType.NChar or SqlDbType.NVarChar or SqlDbType.NText))
+            {
+                throw SQL.GlobalizationInvariantModeRequiresLcid();
             }
         }
 
