@@ -6,6 +6,7 @@
 #if NET
 
 using System;
+using Microsoft.Data.SqlClient.NativeSni;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
