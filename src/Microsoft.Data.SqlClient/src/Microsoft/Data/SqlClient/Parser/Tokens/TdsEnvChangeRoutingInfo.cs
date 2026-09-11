@@ -31,7 +31,7 @@ internal class TdsEnvChangeRoutingInfo
     internal ushort Port { get; private set; }
 
     /// <summary>
-    /// Represents the protocol used for routing in an EnhancedRouting ENVCHANGE token.
+    /// Represents the protocol used for routing in a Routing or EnhancedRouting ENVCHANGE token.
     /// </summary>
     // @TODO: Should this be an enum of protocol types?
     internal byte Protocol { get; private set; }
