@@ -132,7 +132,7 @@ Security issues and bugs should be reported privately, via email, to the Microso
 ## Submitting Pull Requests
 
 - **New features from community PRs must be driven by creating a GitHub issue first.** Discuss the proposal in the issue before starting implementation. This helps avoid wasted effort and ensures alignment with project goals.
-- **Community contributions must not derail the project roadmap.** We prioritize features and fixes according to our published milestones. PRs that conflict with or distract from active roadmap items may be deferred.
+- **Community contributions must align with project priorities.** We prioritize features and fixes according to our [published milestones](https://github.com/dotnet/SqlClient/milestones). PRs that conflict with or distract from active work may be deferred.
 - **Our maintainers reserve the right to reject PRs** that do not meet the required criteria to qualify for review. This includes PRs that:
   - Lack a corresponding approved issue (i.e., an issue that has been reviewed, acknowledged, and agreed upon by maintainers — typically indicated by the **`PM Approved`** field being set to **`Approved`** in the GitHub Project board)
   - Introduce breaking changes without prior discussion
@@ -171,7 +171,7 @@ Some important caveats:
 
 ## Contribution Standards
 
-Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](roadmap.md).
+Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](https://github.com/dotnet/SqlClient/wiki/Roadmap).
 
 ### Requirements
 
