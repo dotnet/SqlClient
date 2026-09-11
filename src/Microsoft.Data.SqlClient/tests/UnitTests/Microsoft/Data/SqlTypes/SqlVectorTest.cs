@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -233,9 +234,140 @@ public class SqlVectorTest
 
     #endregion
 
+    #region Float16 Tests
+
+    #if NET
+
+    [Fact]
+    public void Float16_Construct_Memory()
+    {
+        Half[] data = { (Half)1.5f, (Half)2.5f, (Half)3.5f };
+        var vec = new SqlVector<Half>(data);
+
+        Assert.False(vec.IsNull);
+        Assert.Equal(3, vec.Length);
+        Assert.Equal(data, vec.Memory.ToArray());
+
+        var ivec = vec as ISqlVector;
+        Assert.Equal(0x01, ivec.ElementType);
+        Assert.Equal(0x02, ivec.ElementSize);
+        Assert.Equal(TdsEnums.VECTOR_HEADER_SIZE + (3 * 2), ivec.Size);
+
+        // The base type is written into the header, and each element occupies two bytes.
+        Assert.Equal(0x01, ivec.VectorPayload[4]);
+        Assert.Equal(TdsEnums.VECTOR_HEADER_SIZE + (3 * 2), ivec.VectorPayload.Length);
+    }
+
+    [Fact]
+    public void Float16_Construct_Length()
+    {
+        var vec = SqlVector<Half>.CreateNull(5);
+
+        Assert.True(vec.IsNull);
+        Assert.Equal(5, vec.Length);
+        Assert.Equal(SQLMessage.NullString(), vec.GetString());
+
+        var ivec = vec as ISqlVector;
+        Assert.Equal(0x01, ivec.ElementType);
+        Assert.Equal(0x02, ivec.ElementSize);
+        Assert.Equal(TdsEnums.VECTOR_HEADER_SIZE + (5 * 2), ivec.Size);
+    }
+
+    [Fact]
+    public void Float16_Construct_Length_Exceeds_8000()
+    {
+        // A float16 vector holds twice as many elements as a float32 one before the
+        // payload exceeds the maximum size of a TDS packet.
+        SqlVector<Half>.CreateNull(3996);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<Half>.CreateNull(3997));
+    }
+
+    [Fact]
+    public void Float16_GetString_RendersExactValues()
+    {
+        // Serialising the elements as Half would instead produce the shortest string which
+        // round trips to the same Half, which renders 65504 as "65500".
+        var vec = new SqlVector<Half>(new[] { (Half)65504f, (Half)1.5f });
+
+        Assert.Equal("[65504,1.5]", vec.GetString());
+    }
+
+    [Fact]
+    public void Float16_GetString_MatchesFloat32Rendering()
+    {
+        // A value which both base types represent exactly renders identically, so callers
+        // cannot tell the two apart from the rendering alone.
+        Assert.Equal(
+            new SqlVector<float>(new[] { 1.5f, 2.5f }).GetString(),
+            new SqlVector<Half>(new[] { (Half)1.5f, (Half)2.5f }).GetString());
+    }
+
+    #endif
+
+    [Fact]
+    public void Float32_GetString_RendersJson()
+    {
+        Assert.Equal("[1.5,2.5]", new SqlVector<float>(new[] { 1.5f, 2.5f }).GetString());
+    }
+
+    [Fact]
+    public void GetString_Null_RendersNullString()
+    {
+        Assert.Equal(SQLMessage.NullString(), SqlVector<float>.CreateNull(3).GetString());
+    }
+
+    #endregion
+
+    #region Widening Read Tests
+
+    [Fact]
+    public void FromTdsPayload_WidensFloat16ToFloat32()
+    {
+        // This is how a float16 column is read on frameworks without System.Half.
+        byte[] payload = MakeFloat16Payload(new[] { 1.5f, 2.5f, 3.5f });
+
+        var vec = SqlVector<float>.FromTdsPayload(payload);
+
+        Assert.Equal(3, vec.Length);
+        Assert.Equal(new[] { 1.5f, 2.5f, 3.5f }, vec.Memory.ToArray());
+
+        // The widened vector reports float32, so its base type continues to be determined
+        // by its element type alone rather than by the payload it was read from.
+        Assert.Equal(0x00, ((ISqlVector)vec).ElementType);
+    }
+
+    [Fact]
+    public void FromTdsPayload_MatchingElementType_ReadsDirectly()
+    {
+        byte[] payload = ((ISqlVector)new SqlVector<float>(new[] { 1.5f, 2.5f })).VectorPayload;
+
+        var vec = SqlVector<float>.FromTdsPayload(payload);
+
+        Assert.Equal(new[] { 1.5f, 2.5f }, vec.Memory.ToArray());
+    }
+
+    #if NET
+
+    [Fact]
+    public void FromTdsPayload_NarrowingIsRejected()
+    {
+        // Narrowing loses information, so it is never performed implicitly on a read.
+        byte[] payload = ((ISqlVector)new SqlVector<float>(new[] { 1.5f })).VectorPayload;
+
+        Assert.Throws<NotSupportedException>(() => SqlVector<Half>.FromTdsPayload(payload));
+    }
+
+    #endif
+
+    #endregion
+
     #region Helpers
 
-    private byte[] MakeTdsPayload(byte[] header, ReadOnlyMemory<float> values)
+    private byte[] MakeTdsPayload(byte[] header, ReadOnlyMemory<float> values) =>
+        MakeTdsPayloadStatic(header, values);
+
+    private static byte[] MakeTdsPayloadStatic(byte[] header, ReadOnlyMemory<float> values)
     {
         int length = header.Length + (values.Length * sizeof(float));
         byte[] payload = new byte[length];
@@ -247,6 +379,28 @@ public class SqlVectorTest
         }
         return payload;
     }
-    
+
+    /// <summary>
+    /// Builds a float16 vector payload without using <c>System.Half</c>, so that tests
+    /// which need one can also run on .NET Framework.
+    /// </summary>
+    private static byte[] MakeFloat16Payload(float[] values)
+    {
+        byte[] payload = new byte[TdsEnums.VECTOR_HEADER_SIZE + (values.Length * 2)];
+
+        payload[0] = 0xA9;
+        payload[1] = 0x01;
+        BitConverter.GetBytes((ushort)values.Length).CopyTo(payload, 2);
+        payload[4] = (byte)MetaType.SqlVectorElementType.Float16;
+
+        for (int i = 0; i < values.Length; i++)
+        {
+            BitConverter.GetBytes(Float16Converter.FromSingle(values[i]))
+                .CopyTo(payload, TdsEnums.VECTOR_HEADER_SIZE + (i * 2));
+        }
+
+        return payload;
+    }
+
     #endregion
 }

@@ -69,7 +69,8 @@ namespace Microsoft.Data.SqlClient
         // in the TDS protocol.
         internal enum SqlVectorElementType : byte
         {
-            Float32 = 0x00
+            Float32 = 0x00,
+            Float16 = 0x01
         }
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
@@ -416,6 +417,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         return s_MetaVector;
                     }
+                    #if NET
+                    else if (dataType == typeof(SqlVector<Half>))
+                    {
+                        return s_MetaVector;
+                    }
+                    #endif
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -1127,9 +1134,14 @@ namespace Microsoft.Data.SqlClient
 
         internal static int GetVectorElementSize(byte type)
         {
-            switch (type)
+            switch ((SqlVectorElementType)type)
             {
-                case 0: return sizeof(float);
+                case SqlVectorElementType.Float32:
+                    return sizeof(float);
+                case SqlVectorElementType.Float16:
+                    // System.Half is not available on all target frameworks, so the
+                    // binary16 element size is stated explicitly.
+                    return 2;
                 default:
                     throw SQL.VectorTypeNotSupported(type.ToString());
             }

@@ -1016,6 +1016,23 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [InlineData("Vector Type Support = V2")]
+        [InlineData("VectorTypeSupport = V2")]
+        [InlineData("vectortypesupport = V2")]
+        [InlineData("VECTORTYPESUPPORT = V2")]
+        public void VectorTypeSupportSynonymsResolveCorrectly(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString);
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+
+            // A connection parses its keywords separately from the builder, so it is checked
+            // separately too. Constructing it rejects an unrecognised keyword, and the string
+            // it was given is preserved as written.
+            SqlConnection connection = new(connectionString);
+            Assert.Equal(connectionString, connection.ConnectionString);
+        }
+
+        [Theory]
         [InlineData("WorkstationID = myws")]
         [InlineData("workstationid = myws")]
         [InlineData("WORKSTATIONID = myws")]

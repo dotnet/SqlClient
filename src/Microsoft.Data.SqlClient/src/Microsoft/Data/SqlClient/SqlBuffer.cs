@@ -509,14 +509,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowIfNull();
                 if (_type == StorageType.Vector)
                 {
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return GetSqlVector<float>().GetString();
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
+                    return GetVectorString();
                 }
                 if (StorageType.String == _type || StorageType.Json == _type)
                 {
@@ -955,14 +948,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return new SqlString(GetSqlVector<float>().GetString());
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
+                    return new SqlString(GetVectorString());
                 }
                 // String and Json storage type are both strings.
                 if (_type is StorageType.String or StorageType.Json)
@@ -992,13 +978,96 @@ namespace Microsoft.Data.SqlClient
         {
             if (_type is StorageType.Vector)
             {
+                // The payload's base type may differ from T: a float16 column can be read as
+                // a vector of single precision values, which is the only strongly typed form
+                // available on .NET Framework. Validate the pairing before considering
+                // nullness, so that the outcome depends on the column's base type rather than
+                // on whether a particular row happens to be null.
+                SqlVector<T>.ThrowIfNotConvertibleFrom(_value._vectorInfo._elementType);
+
                 if (IsNull)
                 {
                     return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
                 }
-                return new SqlVector<T>(SqlBinary.Value);
+
+                return SqlVector<T>.FromTdsPayload(SqlBinary.Value);
             }
             return (SqlVector<T>)SqlValue;
+        }
+
+        /// <summary>
+        /// Renders a vector value as a JSON array.
+        /// </summary>
+        /// <remarks>
+        /// float16 vectors are widened to single precision on .NET Framework, where
+        /// <c>System.Half</c> is unavailable. Widening binary16 to binary32 is exact,
+        /// so both frameworks produce identical output.
+        /// </remarks>
+        private string GetVectorString()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>().GetString();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>().GetString();
+                    #else
+                    return GetSqlVector<float>().GetString();
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Returns a vector value as the type that best represents its base type on the
+        /// current framework.
+        /// </summary>
+        /// <remarks>
+        /// .NET Framework has no <c>System.Half</c>, so there is no faithful strongly
+        /// typed representation of a float16 vector there. Rather than silently
+        /// substituting a different base type, such values are surfaced as their JSON
+        /// rendering, which is how they are already presented when the server does not
+        /// negotiate float16 support. Callers that want a strongly typed value can
+        /// explicitly request one via <see cref="GetSqlVector{T}"/>.
+        /// </remarks>
+        internal object GetVectorValue()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>();
+                    #else
+                    return GetVectorString();
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The provider specific counterpart of <see cref="GetVectorValue"/>. It differs
+        /// only where a float16 vector is surfaced as its JSON rendering, which is returned
+        /// as a <see cref="SqlString"/> so that every provider specific value remains a
+        /// type from <c>System.Data.SqlTypes</c>.
+        /// </summary>
+        internal object GetVectorSqlValue()
+        {
+            #if NET
+            return GetVectorValue();
+            #else
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+
+            return elementType == MetaType.SqlVectorElementType.Float16
+                ? SqlString
+                : GetVectorValue();
+            #endif
         }
 
         internal object SqlValue
@@ -1036,14 +1105,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Json:
                         return SqlJson;
                     case StorageType.Vector:
-                        var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                        switch (elementType)
-                        {
-                            case MetaType.SqlVectorElementType.Float32:
-                                return GetSqlVector<float>();
-                            default:
-                                throw SQL.VectorTypeNotSupported(elementType.ToString());
-                        }
+                        return GetVectorSqlValue();
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
