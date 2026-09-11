@@ -118,8 +118,8 @@ internal sealed class TdsColumnMetadataToken
     }
 
     /// <summary>
-    /// Creates a new instance of TdsColumnMetadataToken that is a deep copy of the current
-    /// instance.
+    /// Creates a new instance with independently cloned column metadata entries. Cached schema data,
+    /// the CEK table, and nested encryption metadata remain shared with the current instance.
     /// </summary>
     public TdsColumnMetadataToken Clone()
     {
