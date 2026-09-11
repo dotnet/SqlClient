@@ -6,6 +6,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.NativeSni;
 
 #nullable enable
 

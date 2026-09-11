@@ -8,9 +8,10 @@ using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Parser.Login;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.NativeSni;
 
 internal sealed partial class SNILoadHandle : SafeHandle
     {

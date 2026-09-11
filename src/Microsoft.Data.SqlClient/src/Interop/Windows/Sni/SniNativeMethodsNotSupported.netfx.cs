@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.NativeSni;
 
 namespace Interop.Windows.Sni
 {
