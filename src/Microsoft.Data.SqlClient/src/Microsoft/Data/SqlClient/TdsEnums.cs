@@ -445,6 +445,7 @@ namespace Microsoft.Data.SqlClient
         public const byte TVP_ORDER_UNIQUE_TOKEN = 0x10;
 
         // TvpColumnMetaData flags
+        public const int TVP_COMPUTED_COLUMN = 0x20;
         public const int TVP_DEFAULT_COLUMN = 0x200;
 
         // TVP_ORDER_UNIQUE_TOKEN flags
