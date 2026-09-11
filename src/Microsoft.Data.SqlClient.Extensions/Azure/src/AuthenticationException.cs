@@ -19,7 +19,16 @@ internal class AuthenticationException : SqlAuthenticationProviderException
     internal AuthenticationException(
         SqlAuthenticationMethod method,
         string message)
-    : base($"Failed to acquire access token for {method}: {message}", null)
+    // Chains to the six-parameter base ctor rather than the two-parameter one so that Method is
+    // carried on the exception itself, not just interpolated into the message. ADP.CreateSqlException
+    // surfaces Method as SqlError.Procedure, which would otherwise read "NotSpecified".
+    : base(
+        method,
+        failureCode: "Unknown",
+        shouldRetry: false,
+        retryPeriod: 0,
+        $"Failed to acquire access token for {method}: {message}",
+        null)
     {
     }
 
