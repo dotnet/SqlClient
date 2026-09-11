@@ -23,6 +23,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     public sealed class SniReceiveTests
     {
         /// <summary>
+        /// Closing the connection invalidates an async reader's buffered-data estimate.
+        /// Its next network read must report closure rather than fail a debug assertion.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ReadNetworkPacket_AfterClose_ReportsClosedConnection(bool broken)
+        {
+            TdsParser parser = new(MARS: true, fAsynchronous: true);
+            TdsParserStateObjectManaged stateObject = new(parser);
+            try
+            {
+                parser.State = broken ? TdsParserState.Broken : TdsParserState.Closed;
+#if DEBUG
+                stateObject._shouldHaveEnoughData = true;
+#endif
+                Assert.Throws<InvalidOperationException>(() => stateObject.TryReadNetworkPacket());
+            }
+            finally
+            {
+                stateObject.Dispose();
+                parser._physicalStateObj.Dispose();
+            }
+        }
+
+        /// <summary>
         /// A receive started after disposal must report an SNI error, not throw into its caller.
         /// </summary>
         [Theory]
@@ -148,7 +174,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             connection.Handle.SetAsyncCallbacks(
                 (received, error) => completion.SetResult((received, error)), null);
             SniPacket? packet = null;
-            await connection.Peer.WriteAsync(new byte[] { 42 });
+            Task write = connection.Peer.WriteAsync(new byte[] { 42 }).AsTask();
             try
             {
                 uint result = async
@@ -165,6 +191,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 byte[] data = new byte[1];
                 Assert.Equal(1, packet.TakeData(data, 0, data.Length));
                 Assert.Equal(42, data[0]);
+                await write.WaitAsync(TimeSpan.FromSeconds(5));
             }
             finally
             {
@@ -247,8 +274,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
-        /// Re-arm failure after a complete ACK must reach every session's pending parser
-        /// callback, with the physical packet remaining valid throughout the broadcast.
+        /// Re-arm failure after a complete ACK must reach every pending parser callback
+        /// exactly once, including a task cleared during closure, without calling an idle session.
         /// </summary>
         [Theory]
         [InlineData(false)]
@@ -262,6 +289,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             {
                 new(parser),
                 new(parser),
+                new(parser),
+                new(parser),
             };
             SniPacket? packet = null;
             try
@@ -270,12 +299,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 for (int i = 0; i < callbacks.Length; i++)
                 {
                     callbacks[i].TimeoutTime = long.MaxValue;
-                    callbacks[i]._networkPacketTaskSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
-                    callbacks[i].IncrementPendingCallbacks();
+                    if (i > 0)
+                    {
+                        callbacks[i]._networkPacketTaskSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                        callbacks[i].IncrementPendingCallbacks();
+                    }
+                    byte[] syn = new byte[SniSmuxHeader.HEADER_LENGTH];
+                    using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
+                    // Consume the synchronous SYN write even when the pipe has no buffer space.
+                    Task readSyn = connection.Peer.ReadExactlyAsync(syn, timeout.Token).AsTask();
+                    using CancellationTokenRegistration abort = timeout.Token.Register(connection.Peer.Dispose);
                     sessions[i] = mars.CreateMarsSession(callbacks[i], async: true);
-                    SniPacket? pending = null;
-                    Assert.Equal(TdsEnums.SNI_SUCCESS_IO_PENDING, sessions[i].ReceiveAsync(ref pending));
-                    Assert.Null(pending);
+                    await readSyn;
+                    SniSmuxHeader synHeader = new();
+                    synHeader.Read(syn);
+                    Assert.Equal((byte)SniSmuxFlags.SMUX_SYN, synHeader.flags);
+                    Assert.Equal((ushort)i, synHeader.sessionId);
+                    if (i > 0)
+                    {
+                        SniPacket? pending = null;
+                        Assert.Equal(TdsEnums.SNI_SUCCESS_IO_PENDING, sessions[i].ReceiveAsync(ref pending));
+                        Assert.Null(pending);
+                    }
                 }
 
                 byte[] header = new byte[SniSmuxHeader.HEADER_LENGTH];
@@ -291,19 +336,39 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 packet.AppendData(header, header.Length);
 
                 parser.State = TdsParserState.Broken;
+                // Model a pending read whose task was already completed and cleared by teardown.
+                callbacks[1]._networkPacketTaskSource.SetCanceled();
+                await Assert.ThrowsAsync<TaskCanceledException>(() => callbacks[1]._networkPacketTaskSource.Task);
+                callbacks[1]._networkPacketTaskSource = null;
                 connection.Handle.Dispose();
                 mars.HandleReceiveComplete(packet, TdsEnums.SNI_SUCCESS);
                 SniError receiveError = SniLoadHandle.LastError;
                 Assert.IsType<ObjectDisposedException>(receiveError.exception);
                 Assert.True(packet.IsInvalid);
 
+                packet = connection.Handle.RentPacket(0, header.Length);
+                packet.SetAsyncIOCompletionCallback(mars.HandleReceiveComplete);
+                lock (mars.DemuxerSync)
+                {
+                    mars.HandleReceiveError(packet);
+                }
+                Assert.True(packet.IsInvalid);
+
                 for (int i = 0; i < sessions.Length; i++)
                 {
-                    await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                        callbacks[i]._networkPacketTaskSource.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+                    if (i > 1)
+                    {
+                        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                            callbacks[i]._networkPacketTaskSource.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+                    }
+                    else
+                    {
+                        Assert.Null(callbacks[i]._networkPacketTaskSource);
+                    }
                     Assert.Equal(TdsEnums.SNI_ERROR, sessions[i].Receive(out SniPacket? received, 1000));
                     Assert.Null(received);
                     Assert.Same(receiveError, SniLoadHandle.LastError);
+                    Assert.Equal(0, callbacks[i].DecrementPendingCallbacks(release: false));
                     Assert.Equal(TdsEnums.SNI_ERROR, sessions[i].ReceiveAsync(ref received));
                     Assert.Null(received);
                     Assert.Same(receiveError, SniLoadHandle.LastError);

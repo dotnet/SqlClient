@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
     /// Exercises GH#4679 with a streaming MARS session and a connection-terminating error
-    /// on a second session. Requires a test SQL Server and a sysadmin login; each iteration
+    /// on a second session. Requires a test SQL Server and a sysadmin login; each case
     /// writes a severity-20 error to the server log.
     /// </summary>
     [Trait("Set", "1")]
@@ -26,15 +26,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Physical teardown must report normal command errors rather than faulting an
         /// unobserved MARS receive continuation, with or without connection pooling.
+        /// Each delay is a separate case rather than a long-running stress loop.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsUsingManagedSNI),
             nameof(DataTestUtility.IsSysAdmin))]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public async Task FatalError_WhileMarsReaderStreams_DoesNotFaultReceivePump(bool async, bool pooling)
+        [InlineData(false, false, 1)]
+        [InlineData(false, true, 1)]
+        [InlineData(true, false, 1)]
+        [InlineData(true, true, 1)]
+        [InlineData(false, false, 29)]
+        [InlineData(false, true, 29)]
+        [InlineData(true, false, 29)]
+        [InlineData(true, true, 29)]
+        public async Task FatalError_WhileMarsReaderStreams_DoesNotFaultReceivePump(bool async, bool pooling, int delay)
         {
             string connectionString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
@@ -59,15 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TaskScheduler.UnobservedTaskException += handler;
             try
             {
-                Random random = new(4679);
-                for (int iteration = 0; iteration < 200 && unobserved.IsEmpty; iteration++)
-                {
-                    await TerminateStreamingConnection(connectionString, async, random.Next(1, 30));
-                    if (iteration % 25 == 24)
-                    {
-                        CollectReceiveContinuations();
-                    }
-                }
+                await TerminateStreamingConnection(connectionString, async, delay);
 
                 for (int attempt = 0; attempt < 10; attempt++)
                 {
