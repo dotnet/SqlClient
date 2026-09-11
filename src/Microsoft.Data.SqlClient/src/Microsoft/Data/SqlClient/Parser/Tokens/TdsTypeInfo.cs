@@ -58,6 +58,30 @@ internal class TdsTypeInfo
     {
     }
 
+    protected TdsTypeInfo(TdsTypeInfo original)
+    {
+        // @TODO: Some of these fields are not simple types, should they also be cloned?
+
+        collation = original.collation;
+        flags = original.flags;
+        length = original.length;
+        precision = original.precision;
+        scale = original.scale;
+
+        CodePage = original.CodePage;
+        DbType = original.DbType;
+        Encoding = original.Encoding;
+        MetaType = original.MetaType; // This is a cached instance, it should not be cloned.
+        TdsType = original.TdsType;
+
+        UdtTypeInfo = original.UdtTypeInfo?.Clone();
+        XmlTypeInfo = original.XmlTypeInfo?.Clone();
+
+        BaseTypeInfo = original.BaseTypeInfo;
+        CipherMetadata = original.CipherMetadata;
+        IsEncrypted = original.IsEncrypted;
+    }
+
     /// <summary>
     /// Gets or sets the plaintext type information for the column if the column is encrypted.
     /// </summary>
@@ -130,43 +154,21 @@ internal class TdsTypeInfo
     /// <summary>
     /// Gets or sets the UDT metadata associated with this object.
     /// </summary>
-    public SqlMetaDataUdt Udt { get; set; }
+    public TdsUdtTypeInfo UdtTypeInfo { get; set; }
 
     /// <summary>
     /// Gets or sets the metadata for the XML schema collection associated with this data type.
     /// </summary>
-    public SqlMetaDataXmlSchemaCollection XmlSchemaCollection { get; set; }
+    public TdsXmlTypeInfo XmlTypeInfo { get; set; }
 
-    // @TODO: Can this be converted to Clone like all the other token types do?
-    internal virtual void CopyFrom(TdsTypeInfo original)
-    {
-        this.DbType = original.DbType;
-        this.TdsType = original.TdsType;
-        this.precision = original.precision;
-        this.scale = original.scale;
-        this.length = original.length;
-        this.collation = original.collation;
-        this.CodePage = original.CodePage;
-        this.Encoding = original.Encoding;
-        this.MetaType = original.MetaType;
-        this.flags = original.flags;
-
-        if (original.Udt != null)
-        {
-            Udt = new SqlMetaDataUdt();
-            Udt.CopyFrom(original.Udt);
-        }
-
-        if (original.XmlSchemaCollection != null)
-        {
-            XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-            XmlSchemaCollection.CopyFrom(original.XmlSchemaCollection);
-        }
-
-        this.IsEncrypted = original.IsEncrypted;
-        this.BaseTypeInfo = original.BaseTypeInfo;
-        this.CipherMetadata = original.CipherMetadata;
-    }
+    /// <summary>
+    /// Creates a new instance of the TdsTypeInfo class that is a copy of the current instance.
+    /// </summary>
+    /// <returns>
+    /// A new TdsTypeInfo instance populated with the same values as the original.
+    /// </returns>
+    internal TdsTypeInfo Clone() =>
+        new TdsTypeInfo(this);
 
     private bool HasFlag(TdsTypeInfoFlags flag)
     {
