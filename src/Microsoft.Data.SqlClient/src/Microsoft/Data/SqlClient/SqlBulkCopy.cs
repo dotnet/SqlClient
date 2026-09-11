@@ -28,9 +28,9 @@ namespace Microsoft.Data.SqlClient
     internal sealed class _ColumnMapping
     {
         internal readonly int _sourceColumnOrdinal;
-        internal readonly _SqlMetaData _metadata;
+        internal readonly TdsColumnMetadata _metadata;
 
-        internal _ColumnMapping(int columnId, _SqlMetaData metadata)
+        internal _ColumnMapping(int columnId, TdsColumnMetadata metadata)
         {
             _sourceColumnOrdinal = columnId;
             _metadata = metadata;
@@ -54,10 +54,10 @@ namespace Microsoft.Data.SqlClient
     // The controlling class for one result (metadata + rows)
     internal sealed class Result
     {
-        private readonly _SqlMetaDataSet _metadata;
+        private readonly TdsColumnMetadataToken _metadata;
         private readonly List<Row> _rowset;
 
-        internal Result(_SqlMetaDataSet metadata)
+        internal Result(TdsColumnMetadataToken metadata)
         {
             _metadata = metadata;
             _rowset = new List<Row>();
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int Count => _rowset.Count;
 
-        internal _SqlMetaDataSet MetaData => _metadata;
+        internal TdsColumnMetadataToken MetaData => _metadata;
 
         internal Row this[int index] => _rowset[index];
 
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient
 
         // Callback function for the tdsparser
         // (note that setting the metadata adds a resultset)
-        internal void SetMetaData(_SqlMetaDataSet metadata)
+        internal void SetMetaData(TdsColumnMetadataToken metadata)
         {
             _resultSet = new Result(metadata);
             _results.Add(_resultSet);
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
-        private _SqlMetaDataSet _operationMetaData;
+        private TdsColumnMetadataToken _operationMetaData;
 
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
@@ -700,7 +700,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
         // caller can supply a clone, allowing this method to null-prune unmatched/rejected
         // columns freely without mutating the shared cache.
-        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, _SqlMetaDataSet metaDataSet)
+        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, TdsColumnMetadataToken metaDataSet)
         {
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
             Debug.Assert(metaDataSet != null, "metaDataSet must not be null");
@@ -797,7 +797,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
-                _SqlMetaData metadata = metaDataSet[i];
+                TdsColumnMetadata metadata = metaDataSet[i];
 
                 bool matched = false;
                 bool rejected = false;
@@ -809,7 +809,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     // Are we missing a mapping between the result column and
                     // this local column (by ordinal or name)?
-                    if (localColumn._destinationColumnOrdinal != metadata.ordinal
+                    if (localColumn._destinationColumnOrdinal != metadata.Ordinal
                         && UnquotedName(localColumn.MappedDestinationColumn) != metadata.column)
                     {
                         // Yes, so move on to the next local column.
@@ -827,7 +827,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     //
                     // We will not process timestamp or identity columns.
                     //
-                    if (metadata.type == SqlDbType.Timestamp
+                    if (metadata.DbType == SqlDbType.Timestamp
                         || (metadata.IsIdentity && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
                     {
                         rejected = true;
@@ -848,28 +848,28 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
 
                     // Some datatypes need special handling ...
-                    if (metadata.type == SqlDbType.Variant)
+                    if (metadata.DbType == SqlDbType.Variant)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
                     }
-                    else if (metadata.type == SqlDbType.Udt)
+                    else if (metadata.DbType == SqlDbType.Udt)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
                     }
-                    else if (metadata.type == SqlDbTypeExtensions.Json)
+                    else if (metadata.DbType == SqlDbTypeExtensions.Json)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
                     }
-                    else if (metadata.type == SqlDbTypeExtensions.Vector)
+                    else if (metadata.DbType == SqlDbTypeExtensions.Vector)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "vector");
                     }
                     else
                     {
-                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.DbType.ToString());
                     }
 
-                    switch (metadata.metaType.NullableType)
+                    switch (metadata.MetaType.NullableType)
                     {
                         case TdsEnums.SQLNUMERICN:
                         case TdsEnums.SQLDECIMALN:
@@ -898,10 +898,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         default:
                             {
                                 // For non-long non-fixed types we need to add the Size
-                                if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
+                                if (!metadata.MetaType.IsFixed && !metadata.MetaType.IsLong)
                                 {
                                     int size = metadata.length;
-                                    switch (metadata.metaType.NullableType)
+                                    switch (metadata.MetaType.NullableType)
                                     {
                                         case TdsEnums.SQLNCHAR:
                                         case TdsEnums.SQLNVARCHAR:
@@ -916,7 +916,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                     }
                                     updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                 }
-                                else if (metadata.metaType.IsPlp && !(metadata.metaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
+                                else if (metadata.MetaType.IsPlp && !(metadata.MetaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
                                 {
                                     // Partial length column prefix (max)
                                     updateBulkCommandText.Append("(max)");
@@ -930,7 +930,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     object rowvalue = rowset[i][CollationId];
 
                     bool shouldSendCollation;
-                    switch (metadata.type)
+                    switch (metadata.DbType)
                     {
                         case SqlDbType.Char:
                         case SqlDbType.NChar:
@@ -1090,7 +1090,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
+            TdsColumnMetadataToken metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
         }
@@ -1161,7 +1161,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // Unified method to read a value from the current row
         private object GetValueFromSourceRow(int destRowIndex, out bool isSqlType, out bool isDataFeed, out bool isNull)
         {
-            _SqlMetaData metadata = _sortedColumnMappings[destRowIndex]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[destRowIndex]._metadata;
             int sourceOrdinal = _sortedColumnMappings[destRowIndex]._sourceColumnOrdinal;
 
             switch (_rowSourceType)
@@ -1240,7 +1240,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                             object value = _sqlDataReaderRowSource.GetValue(sourceOrdinal);
                             isNull = ((value == null) || (value == DBNull.Value));
-                            if ((!isNull) && (metadata.type == SqlDbType.Udt))
+                            if ((!isNull) && (metadata.DbType == SqlDbType.Udt))
                             {
                                 var columnAsINullable = value as INullable;
                                 isNull = (columnAsINullable != null) && columnAsINullable.IsNull;
@@ -1437,14 +1437,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
-            _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[ordinal]._metadata;
 
             // Handle special Sql data types for SqlDataReader and DataTables
             ValueMethod method;
             bool isSqlType;
             bool isDataFeed;
 
-            if (((_sqlDataReaderRowSource != null) || (_dataTableSource != null)) && ((metadata.metaType.NullableType == TdsEnums.SQLDECIMALN) || (metadata.metaType.NullableType == TdsEnums.SQLNUMERICN)))
+            if (((_sqlDataReaderRowSource != null) || (_dataTableSource != null)) && ((metadata.MetaType.NullableType == TdsEnums.SQLDECIMALN) || (metadata.MetaType.NullableType == TdsEnums.SQLNUMERICN)))
             {
                 isDataFeed = false;
 
@@ -1487,28 +1487,28 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
             }
             // Check for data streams
-            else if (_enableStreaming && (metadata.length == MAX_LENGTH || metadata.metaType.SqlDbType == SqlDbTypeExtensions.Json))
+            else if (_enableStreaming && (metadata.length == MAX_LENGTH || metadata.MetaType.SqlDbType == SqlDbTypeExtensions.Json))
             {
                 isSqlType = false;
 
                 if (_sqlDataReaderRowSource != null)
                 {
                     // MetaData property is not set for SMI, but since streaming is disabled we do not need it
-                    MetaType mtSource = _sqlDataReaderRowSource.MetaData[sourceOrdinal].metaType;
+                    MetaType mtSource = _sqlDataReaderRowSource.MetaData[sourceOrdinal].MetaType;
 
                     // There is no memory gain for non-sequential access for binary
-                    if ((metadata.type == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    if ((metadata.DbType == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    else if ((metadata.type is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json) && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
+                    else if ((metadata.DbType is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json) && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
                     }
-                    else if ((metadata.type == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
+                    else if ((metadata.DbType == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedXml;
@@ -1521,12 +1521,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 else if (_dbDataReaderRowSource != null)
                 {
-                    if (metadata.type == SqlDbType.VarBinary)
+                    if (metadata.DbType == SqlDbType.VarBinary)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
-                    else if ((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar))
+                    else if ((metadata.DbType == SqlDbType.VarChar) || (metadata.DbType == SqlDbType.NVarChar))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -1754,7 +1754,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
-        private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
+        private object ConvertValue(object value, TdsColumnMetadata metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
         {
             coercedToDataFeed = false;
 
@@ -1767,7 +1767,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 return value;
             }
 
-            MetaType type = metadata.metaType;
+            MetaType type = metadata.MetaType;
             bool typeChanged = false;
 
             // If the column is encrypted then we are going to transparently encrypt this column
@@ -1777,13 +1777,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             byte scale = metadata.scale;
             byte precision = metadata.precision;
             int length = metadata.length;
-            if (metadata.isEncrypted)
+            if (metadata.IsEncrypted)
             {
                 Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                type = metadata.baseTI.metaType;
-                scale = metadata.baseTI.scale;
-                precision = metadata.baseTI.precision;
-                length = metadata.baseTI.length;
+                type = metadata.BaseTypeInfo.MetaType;
+                scale = metadata.BaseTypeInfo.scale;
+                precision = metadata.BaseTypeInfo.precision;
+                length = metadata.BaseTypeInfo.length;
             }
 
             try
@@ -1824,11 +1824,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
@@ -1874,7 +1874,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             int maxStringLength = length / 2;
                             if (str.Length > maxStringLength)
                             {
-                                if (metadata.isEncrypted)
+                                if (metadata.IsEncrypted)
                                 {
                                     str = "<encrypted>";
                                 }
@@ -1919,7 +1919,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1932,7 +1932,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.IsEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
@@ -2503,14 +2503,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             bool isNull;
             object value = GetValueFromSourceRow(col, out isSqlType, out isDataFeed, out isNull); //this will return Task/null in future: as rTask
 
-            _SqlMetaData metadata = _sortedColumnMappings[col]._metadata;
+            TdsColumnMetadata metadata = _sortedColumnMappings[col]._metadata;
             if (!isDataFeed)
             {
                 value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
 
                 // If column encryption is requested via connection string option, perform encryption here
                 if (!isNull && // if value is not NULL
-                    metadata.isEncrypted)
+                    metadata.IsEncrypted)
                 { // If we are transparently encrypting
                     Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
                     value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
@@ -2520,7 +2520,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             //write part
             Task writeTask = null;
-            if (metadata.type != SqlDbType.Variant)
+            if (metadata.DbType != SqlDbType.Variant)
             {
                 //this is the most common path
                 writeTask = _parser.WriteBulkCopyValue(value, metadata, _stateObj, isSqlType, isDataFeed, isNull); //returns Task/Null
@@ -2528,7 +2528,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             else
             {
                 // Target type shouldn't be encrypted
-                Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
+                Debug.Assert(!metadata.IsEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
                 if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
                 {
@@ -3093,7 +3093,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // CreateAndExecuteInitialQueryAsync). Clone the metadata set so that
                 // AnalyzeTargetAndCreateUpdateBulkCommand can null-prune unmatched/rejected
                 // columns without mutating the cache across WriteToServer calls.
-                _SqlMetaDataSet metaDataSet = CachedMetadata != null
+                TdsColumnMetadataToken metaDataSet = CachedMetadata != null
                     ? internalResults[MetaDataResultId].MetaData.Clone()
                     : internalResults[MetaDataResultId].MetaData;
                 updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults, metaDataSet);
