@@ -47,7 +47,7 @@ param(
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
-    # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
+    # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
     [ValidateSet("", "true", "false")]
     [string]$UseManagedSniOnWindows = "",
@@ -332,6 +332,8 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
+$ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
+$SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -353,15 +355,15 @@ function Set-CfgBool {
     }
 }
 
-# Write-RunnerConfig <dst> [switchName] [switchValue]
-# Writes one runner config (checked-in runnerconfig.jsonc + injected connection string + behaviour
+# Write-RunnerConfig <dst> <resultsDst> [switchName] [switchValue]
+# Writes one runner config (build-created runnerconfig.jsonc + injected connection string + behaviour
 # overrides) to <dst>. When <switchName> is given, that config key is forced to <switchValue>
 # ("true"/"false") regardless of the corresponding -Use* parameter -- used by -SwitchUnderTest, which
 # needs a different value for the same switch in each pass. With no switch name the config is built
 # purely from the -Use* parameters, exactly as before.
 function Write-RunnerConfig {
-    param([string]$Dst, [string]$SwitchName = "", [string]$SwitchValue = "")
-    $srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
+    param([string]$Dst, [string]$ResultsDst, [string]$SwitchName = "", [string]$SwitchValue = "")
+    $srcConfig = $SourceRunnerConfig
     $rawConfig = Get-Content $srcConfig -Raw
     # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
     $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
@@ -381,21 +383,26 @@ function Write-RunnerConfig {
     Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $asyncValue
     Set-CfgBool $cfg "UseConnectionPoolV2" $poolValue
     $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $Dst -Encoding UTF8
+    $cfg.ConnectionString = "<redacted>"
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $ResultsDst -Encoding UTF8
     Write-Host "Wrote runner config to $Dst (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
 }
 
-Write-RunnerConfig -Dst $RunnerConfig
+$RunnerConfigReady = $false
+$BaselineRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-baseline.json"
+$CurrentRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-current.json"
+function Prepare-RunnerConfig {
+    if ($script:RunnerConfigReady) { return }
+    if (-not (Test-Path $SourceRunnerConfig)) {
+        throw "Runner config was not created at $SourceRunnerConfig"
+    }
 
-# -SwitchUnderTest needs two DIFFERENT runner configs (baseline runs the switch off, current runs it
-# on), so stamp out two more copies here alongside the shared one above.  Everything else in them is
-# identical, so any measured delta is attributable to the switch alone.
-$BaselineRunnerConfig = ""
-$CurrentRunnerConfig = ""
-if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
-    $BaselineRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-baseline.json"
-    $CurrentRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-current.json"
-    Write-RunnerConfig -Dst $BaselineRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "false"
-    Write-RunnerConfig -Dst $CurrentRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "true"
+    Write-RunnerConfig -Dst $RunnerConfig -ResultsDst $ResultsRunnerConfig
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+        Write-RunnerConfig -Dst $BaselineRunnerConfig -ResultsDst (Join-Path $ResultsDir "runnerconfig-baseline.json") -SwitchName $SwitchUnderTest -SwitchValue "false"
+        Write-RunnerConfig -Dst $CurrentRunnerConfig -ResultsDst (Join-Path $ResultsDir "runnerconfig-current.json") -SwitchName $SwitchUnderTest -SwitchValue "true"
+    }
+    $script:RunnerConfigReady = $true
 }
 
 ####################################################################################################
@@ -637,6 +644,18 @@ print(total)
     return [int]($out.Trim())
 }
 
+$CurrentDefaultOutputBuilt = $false
+function Build-CurrentDefaultOutput {
+    if ($script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built current performance tests ($Configuration, $Framework)."
+        return
+    }
+
+    Write-Host "Building current performance tests ($Configuration, $Framework) ..."
+    Invoke-Native { dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal } "Build failed for current performance tests"
+    $script:CurrentDefaultOutputBuilt = $true
+}
+
 # Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) from $Project and collects its
 # artifacts into results\<label>. $ExtraArgs are appended to both the build and run invocations.
 # $Project is the candidate's perf project for every pass except a source-baseline pass, which
@@ -652,8 +671,17 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
     Write-Host "   Extra args: $($ExtraArgs -join ' ')"
     Write-Host "------------------------------------------------------------------"
 
-    Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
-    Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+    if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0) -and $script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built performance tests ($Configuration, $Framework) for '$Label'."
+    } else {
+        Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
+        Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+        if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0)) {
+            $script:CurrentDefaultOutputBuilt = $true
+        }
+    }
+
+    Prepare-RunnerConfig
 
     Push-Location $runDir
     try {
@@ -789,6 +817,8 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         $currentExeDir = Build-Variant "current" $PerfProject @()
     }
 
+    Prepare-RunnerConfig
+
     $interleaveArgs = @(
         "--baseline-exe-dir", $baselineExeDir,
         "--current-exe-dir", $currentExeDir,
@@ -814,6 +844,10 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    if ((-not [string]::IsNullOrEmpty($BaselineSourceRef)) -or (-not [string]::IsNullOrEmpty($SwitchUnderTest))) {
+        Build-CurrentDefaultOutput
+        Prepare-RunnerConfig
+    }
     # -SwitchUnderTest needs a different RUNNER_CONFIG per pass; every other baseline flavour
     # keeps using the single ambient RUNNER_CONFIG set above (unchanged behaviour).
     if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $BaselineRunnerConfig }

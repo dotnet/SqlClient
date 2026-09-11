@@ -1,4 +1,4 @@
-﻿{
+{
     "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
     // Enable this flag to enable managed SNI on Windows.
     "UseManagedSniOnWindows": false,
