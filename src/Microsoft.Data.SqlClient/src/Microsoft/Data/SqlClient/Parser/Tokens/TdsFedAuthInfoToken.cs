@@ -33,8 +33,7 @@ internal sealed class TdsFedAuthInfoToken
 
     /// <summary>
     /// Gets the Service Principal Name (SPN) associated with the federated authentication token.
-    /// The SPN is used in authentication processes to uniquely identify a service instance
-    /// in the context of Kerberos-based security mechanisms.
+    /// The server-provided SPN is passed to the authentication provider as the token resource.
     /// </summary>
     internal string Spn { get; }
 
