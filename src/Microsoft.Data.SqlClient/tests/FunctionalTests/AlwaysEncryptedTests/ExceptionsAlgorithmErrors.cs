@@ -17,8 +17,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
     {
         // Reflection
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
-        public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
-        public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
+        public static Type symmetricKey = systemData.GetType("Microsoft.Data.SqlClient.AlwaysEncrypted.SymmetricKey");
+        public static ConstructorInfo sqlColumnEncryptionKeyConstructor = symmetricKey.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
 
         private readonly ColumnEncryptionCertificateFixture _fixture;
         private readonly byte[] _cek;

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -27,17 +27,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// System.Data assembly.
         /// </summary>
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
-        public static Type SqlSymmetricKeyCache = systemData.GetType("Microsoft.Data.SqlClient.SqlSymmetricKeyCache");
-        public static MethodInfo SqlSymmetricKeyCacheGetInstance = SqlSymmetricKeyCache.GetMethod("GetInstance", BindingFlags.Static | BindingFlags.NonPublic);
-        public static FieldInfo SqlSymmetricKeyCacheFieldCache = SqlSymmetricKeyCache.GetField("_cache", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static Type SymmetricKeyCache = systemData.GetType("Microsoft.Data.SqlClient.AlwaysEncrypted.SymmetricKeyCache");
+        public static PropertyInfo SymmetricKeyCacheInstance = SymmetricKeyCache.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
+        public static FieldInfo SymmetricKeyCacheFieldCache = SymmetricKeyCache.GetField("_cache", BindingFlags.Instance | BindingFlags.NonPublic);
 
         /// <summary>
         /// Through reflection, clear the SqlClient cache
         /// </summary>
         internal static void CleanSqlClientCache()
         {
-            object sqlSymmetricKeyCache = SqlSymmetricKeyCacheGetInstance.Invoke(null, null);
-            MemoryCache cache = SqlSymmetricKeyCacheFieldCache.GetValue(sqlSymmetricKeyCache) as MemoryCache;
+            object sqlSymmetricKeyCache = SymmetricKeyCacheInstance.GetValue(null);
+            MemoryCache cache = SymmetricKeyCacheFieldCache.GetValue(sqlSymmetricKeyCache) as MemoryCache;
             ClearCache(cache);
         }
 
