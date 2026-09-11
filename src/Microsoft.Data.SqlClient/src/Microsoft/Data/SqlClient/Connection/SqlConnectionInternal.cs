@@ -4096,7 +4096,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         // Verify LocalHost for |DataDirectory| usage
                         SqlConnectionOptions.VerifyLocalHostAndFixup(
                             ref host,
-                            enforceLocalHost: true,
                             fixup: true);
                     }
                 }
