@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     try
                     {
                         packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                        packet.ReadFromStream(_stream);
+                        packet.ReadFromStream(_stream ?? throw new ObjectDisposedException(nameof(SniNpHandle)));
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
 
                         if (packet.Length == 0)
@@ -235,7 +235,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
                 {
-                    packet.ReadFromStreamAsync(_stream);
+                    // Capture once: Dispose can clear the field while a MARS receive is re-armed.
+                    Stream stream = _stream ?? throw new ObjectDisposedException(nameof(SniNpHandle));
+                    packet.ReadFromStreamAsync(stream);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }

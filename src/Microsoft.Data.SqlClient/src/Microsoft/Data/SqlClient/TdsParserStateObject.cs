@@ -3408,7 +3408,10 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryReadNetworkPacket()
         {
 #if DEBUG
-            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
+            // Teardown can invalidate the reader's buffered-data estimate before this call.
+            Debug.Assert(!_shouldHaveEnoughData || _attentionSent ||
+                _parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken,
+                "Caller said there should be enough data, but we are currently reading a packet");
 #endif
             TdsOperationStatus result = TdsOperationStatus.InvalidData;
             if (_snapshot != null)
@@ -3635,7 +3638,14 @@ namespace Microsoft.Data.SqlClient
             try
             {
 #if NET
-                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+                // Closing a MARS connection can complete and clear a session's task before
+                // its pending error callback arrives. It must still retire the callback count.
+                Debug.Assert(
+                    (packet.Type == 0 && PartialPacketContainsCompletePacket()) ||
+                    (CheckPacket(packet, source) && source != null) ||
+                    (source == null && error != 0 && _parser.MARSOn &&
+                        (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)),
+                    "AsyncResult null on callback");
 #else
                 Debug.Assert(CheckPacket(packet, source), "AsyncResult null on callback");
 #endif
