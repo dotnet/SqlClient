@@ -4,6 +4,7 @@
 
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -203,7 +204,7 @@ namespace Microsoft.Data.SqlClient
         {
             uint info = 0;
             byte sortId = 0;
-            
+
             Debug.Assert((sqlCompareOptions & SqlTypeWorkarounds.SqlStringValidSqlCompareOptionMask) == sqlCompareOptions, "invalid set_SqlCompareOptions value");
             uint compare = 0;
             if ((sqlCompareOptions & SqlCompareOptions.IgnoreCase) == SqlCompareOptions.IgnoreCase)
@@ -227,7 +228,7 @@ namespace Microsoft.Data.SqlClient
                 compare |= BinarySort;
             }
             info = (info & MaskLcid) | compare;
-            
+
             int lcidValue = lcid & (int)MaskLcid;
             Debug.Assert(lcidValue == lcid, "invalid set_LCID value");
 
@@ -238,7 +239,7 @@ namespace Microsoft.Data.SqlClient
 
             // combine the current compare options with the new locale ID and its first supported version
             info = (info & MaskCompareOpt) | unchecked((uint)lcidValue) | unchecked((uint)versionBits);
-            
+
             return new SqlCollation(info, sortId);
         }
     }

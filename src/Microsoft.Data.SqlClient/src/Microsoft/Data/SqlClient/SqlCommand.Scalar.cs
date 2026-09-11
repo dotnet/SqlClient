@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -24,11 +25,11 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
             #endif
-            
+
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-            
+
             using var diagnosticScope = s_diagnosticListener.CreateCommandScope(this, _transaction);
 
             using var eventScope = SqlClientEventScope.Create($"SqlCommand.ExecuteScalar | API | Object Id {ObjectID}");
@@ -42,7 +43,7 @@ namespace Microsoft.Data.SqlClient
                 ActivityCorrelator.Current,
                 _activeConnection?.ClientConnectionId,
                 CommandText);
-            
+
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -85,12 +86,12 @@ namespace Microsoft.Data.SqlClient
             // Do not use retry logic here as ExecuteReaderAsyncInternal handles retry logic
             return ExecuteScalarAsyncInternal(cancellationToken);
         }
-        
+
         internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
         {
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             _parentOperationStarted = true;
-            
+
             // @TODO: This code is almost identical to ExecuteScalarAsyncInternal - we can definitely refactor it!
             return ExecuteReaderAsync(cancellationToken).ContinueWith(executeTask =>
             {
@@ -170,9 +171,9 @@ namespace Microsoft.Data.SqlClient
             },
             TaskScheduler.Default).Unwrap();
         }
-        
+
         #endregion
-        
+
         #region Private Methods
 
         private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
@@ -222,7 +223,7 @@ namespace Microsoft.Data.SqlClient
 
             return result;
         }
-        
+
         private Task<object> ExecuteScalarAsyncInternal(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
@@ -263,20 +264,20 @@ namespace Microsoft.Data.SqlClient
                         this,
                         _transaction,
                         executeTask.Exception.InnerException);
-                    
+
                     source.SetException(executeTask.Exception.InnerException);
                 }
                 else
                 {
                     SqlDataReader reader = executeTask.Result;
-                    
+
                     // @TODO: Use continue with state?
                     reader.ReadAsync(cancellationToken).ContinueWith(async readTask =>
                     {
                         // @TODO: This seems a bit confusing with unnecessary extra dispose calls and try/finally blocks
                         try
                         {
-                            
+
                             if (readTask.IsCanceled)
                             {
                                 reader.Dispose();
@@ -285,13 +286,13 @@ namespace Microsoft.Data.SqlClient
                             else if (readTask.IsFaulted)
                             {
                                 reader.Dispose();
-                                
+
                                 s_diagnosticListener.WriteCommandError(
                                     operationId,
                                     this,
                                     _transaction,
                                     readTask.Exception.InnerException);
-                                
+
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
@@ -327,13 +328,13 @@ namespace Microsoft.Data.SqlClient
                                 if (exception is not null)
                                 {
                                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                                    
+
                                     source.SetException(exception);
                                 }
                                 else
                                 {
                                     s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                                    
+
                                     source.SetResult(result);
                                 }
                             }
@@ -348,12 +349,12 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _parentOperationStarted = false;
-                
+
                 return source.Task;
             },
             TaskScheduler.Default).Unwrap();
         }
-        
+
         #endregion
     }
 }

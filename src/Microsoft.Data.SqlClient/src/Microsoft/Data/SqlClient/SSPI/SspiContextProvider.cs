@@ -7,6 +7,7 @@ using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 
