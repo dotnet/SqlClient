@@ -11,6 +11,18 @@ namespace Microsoft.Data.SqlClient
     // @TODO: There's a good question here - should this be a separate type of SqlCommand?
     public sealed partial class SqlCommand
     {
+        #region Internal Properties
+
+        /// <summary>
+        /// The commands of the <see cref="SqlBatch"/> this command is executing on behalf of, or
+        /// <see langword="null" /> when it is not executing on behalf of a batch. Set by
+        /// <see cref="SqlBatch"/> before each execution and surfaced on the command diagnostic
+        /// payloads.
+        /// </summary>
+        internal IReadOnlyList<SqlBatchCommand> BatchCommands { get; set; }
+
+        #endregion
+
         #region Internal Methods
 
         internal void AddBatchCommand(SqlBatchCommand batchCommand)

@@ -23,6 +23,8 @@ public sealed class SqlClientCommandAfter : System.Collections.Generic.IReadOnly
     public SqlCommand Command => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Statistics/*'/>
     public System.Collections.IDictionary Statistics => throw null;
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/BatchCommands/*'/>
+    public System.Collections.Generic.IReadOnlyList<SqlBatchCommand> BatchCommands => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
     public int Count => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
@@ -50,6 +52,8 @@ public sealed class SqlClientCommandBefore : System.Collections.Generic.IReadOnl
     public long? TransactionId => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/Command/*'/>
     public SqlCommand Command => throw null;
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/BatchCommands/*'/>
+    public System.Collections.Generic.IReadOnlyList<SqlBatchCommand> BatchCommands => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
     public int Count => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
@@ -79,6 +83,8 @@ public sealed class SqlClientCommandError : System.Collections.Generic.IReadOnly
     public SqlCommand Command => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/Exception/*'/>
     public System.Exception Exception { get; }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/BatchCommands/*'/>
+    public System.Collections.Generic.IReadOnlyList<SqlBatchCommand> BatchCommands => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
     public int Count => throw null;
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
