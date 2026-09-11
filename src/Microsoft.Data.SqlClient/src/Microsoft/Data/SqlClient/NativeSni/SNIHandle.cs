@@ -5,8 +5,9 @@
 using System;
 using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient.Parser;
+namespace Microsoft.Data.SqlClient.NativeSni;
 
 internal sealed class SNIHandle : SafeHandle
     {

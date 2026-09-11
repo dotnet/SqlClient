@@ -5,6 +5,8 @@
 // @TODO: Merge with other implementations (and/or introduce polymorphism to handle this indirection)
 #if NETFRAMEWORK
 
+using Microsoft.Data.SqlClient.NativeSni;
+
 namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
