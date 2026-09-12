@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient
 
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
+        private readonly bool _jsonTypeSupported;
 
         public SqlMetaDataFactory(Stream xmlStream, ConnectionCapabilities connectionCapabilities)
         {
@@ -47,6 +48,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
             _serverVersion = connectionCapabilities.ServerVersion;
+            _jsonTypeSupported = connectionCapabilities.JsonType;
 
             _collectionDataSet = LoadDataSetFromXml(xmlStream);
         }
@@ -711,7 +713,7 @@ namespace Microsoft.Data.SqlClient
                 Locale = CultureInfo.InvariantCulture
             };
 
-            LoadDataTypesDataTables(metaDataCollectionsDataSet);
+            LoadDataTypesDataTables(metaDataCollectionsDataSet, _jsonTypeSupported);
 
             XmlReaderSettings settings = new()
             {
