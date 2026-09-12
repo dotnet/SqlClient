@@ -2563,70 +2563,43 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         }
 
         // Runs a loop to copy all columns of a single row.
-        // Maintains a state by remembering #columns copied so far (int col).
-        // Returned Task could be null in two cases: (1) _isAsyncBulkCopy == false, (2) _isAsyncBulkCopy == true but all async writes finished synchronously.
-        private Task CopyColumnsAsync(int col, TaskCompletionSource<object> source = null)
+        // Returns null when every column write completed synchronously (either
+        // sync bulk copy, or async writes that did not pend); otherwise returns a
+        // Task that completes when the rest of the row has been written.
+        private Task CopyColumnsAsync(int col)
         {
-            Task resultTask = null, task = null;
-            int i;
-            try
+            for (int i = col; i < _sortedColumnMappings.Count; i++)
             {
-                for (i = col; i < _sortedColumnMappings.Count; i++)
-                {
-                    task = ReadWriteColumnValueAsync(i); //First reads and then writes one cell value. Task 'task' is completed when reading task and writing task both are complete.
-                    if (task != null)
-                    {
-                        break; //task != null means we have a pending read/write Task.
-                    }
-                }
+                // First reads and then writes one cell value. A non-null Task means
+                // the write pended on I/O.
+                Task task = ReadWriteColumnValueAsync(i);
                 if (task != null)
                 {
-                    if (source == null)
-                    {
-                        source = new TaskCompletionSource<object>();
-                        resultTask = source.Task;
-                    }
-                    CopyColumnsAsyncSetupContinuation(source, task, i);
-                    return resultTask; //associated task will be completed when all columns (i.e. the entire row) is written
-                }
-                if (source != null)
-                {
-                    source.SetResult(null);
+                    // A write pended. Finish the remaining columns via an awaiting
+                    // continuation. The fully-synchronous path never reaches here and
+                    // so never allocates a Task.
+                    return CopyColumnsAsyncContinued(task, i);
                 }
             }
-            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
-            {
-                if (source != null)
-                {
-                    source.TrySetException(ex);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return resultTask;
+            return null;
         }
 
-        // This is in its own method to avoid always allocating the lambda in CopyColumnsAsync
-        private void CopyColumnsAsyncSetupContinuation(TaskCompletionSource<object> source, Task task, int i)
+        // Awaits the pending write for column i, then copies the remaining columns
+        // of the row. Any subsequent per-column write that pends is awaited inline;
+        // writes that complete synchronously (WriteBulkCopyValue returns null) are
+        // not awaited, preserving the synchronous fast path within the loop.
+        private async Task CopyColumnsAsyncContinued(Task pendingWrite, int i)
         {
-            AsyncHelper.ContinueTaskWithState(
-                task,
-                source,
-                state: this,
-                onSuccess: (object state) =>
+            await pendingWrite.ConfigureAwait(false);
+
+            for (int col = i + 1; col < _sortedColumnMappings.Count; col++)
+            {
+                Task task = ReadWriteColumnValueAsync(col);
+                if (task != null)
                 {
-                    SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                    if (i + 1 < sqlBulkCopy._sortedColumnMappings.Count)
-                    {
-                        sqlBulkCopy.CopyColumnsAsync(i + 1, source); //continue from the next column
-                    }
-                    else
-                    {
-                        source.SetResult(null);
-                    }
-                });
+                    await task.ConfigureAwait(false);
+                }
+            }
         }
 
         // The notification logic.
