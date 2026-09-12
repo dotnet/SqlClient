@@ -1362,18 +1362,21 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             if (_isAsyncBulkCopy && _dbDataReaderRowSource != null)
             {
                 // This will call ReadAsync for DbDataReader (for SqlDataReader it will be truly async read; for non-SqlDataReader it may block.)
-                return _dbDataReaderRowSource.ReadAsync(cts).ContinueWith(
-                    static (Task<bool> task, object state) =>
-                    {
-                        if (task.Status == TaskStatus.RanToCompletion)
-                        {
-                            ((SqlBulkCopy)state)._hasMoreRowToCopy = task.Result;
-                        }
-                        return task;
-                    },
-                    state: this,
-                    scheduler: TaskScheduler.Default
-                ).Unwrap();
+                Task<bool> readTask = _dbDataReaderRowSource.ReadAsync(cts);
+
+                // Fast path: the read completed synchronously and successfully.
+                // Update state inline and report "ran synchronously" by returning
+                // null, so the caller does not pay for a continuation.
+                if (readTask.Status == TaskStatus.RanToCompletion)
+                {
+                    _hasMoreRowToCopy = readTask.Result;
+                    return null;
+                }
+
+                // The read pended (or faulted/cancelled): await it via a small async
+                // helper instead of ReadAsync(...).ContinueWith(...).Unwrap(), which
+                // allocated an extra continuation + wrapper Task per row.
+                return AwaitReadFromDbDataReaderAsync(readTask);
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
@@ -1397,6 +1400,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 return null;
             }
+        }
+
+        // Awaits a pended DbDataReader.ReadAsync and records whether more rows
+        // remain. Only reached when the read did not complete synchronously.
+        private async Task AwaitReadFromDbDataReaderAsync(Task<bool> readTask)
+        {
+            _hasMoreRowToCopy = await readTask.ConfigureAwait(false);
         }
 
         private bool ReadFromRowSource()
@@ -2676,118 +2686,103 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
-        // Checks for cancellation. If cancel requested, cancels the task and returns the cancelled task
-        private Task CheckForCancellation(CancellationToken cts, TaskCompletionSource<object> tcs)
-        {
-            if (cts.IsCancellationRequested)
-            {
-                if (tcs == null)
-                {
-                    tcs = new TaskCompletionSource<object>();
-                }
-                tcs.SetCanceled();
-                return tcs.Task;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         // Copies all the rows in a batch.
-        // Maintains state machine with state variable: rowSoFar.
-        // Returned Task could be null in two cases: (1) _isAsyncBulkCopy == false, or (2) _isAsyncBulkCopy == true but all async writes finished synchronously.
-        private Task CopyRowsAsync(int rowsSoFar, int totalRows, CancellationToken cts, TaskCompletionSource<object> source = null)
+        // Returns null when the whole batch was copied synchronously (sync bulk
+        // copy, or async writes/reads that never pended); otherwise returns a Task
+        // that completes when the batch has been copied (or faults/cancels).
+        private Task CopyRowsAsync(int rowsSoFar, int totalRows, CancellationToken cts)
         {
-            Task resultTask = null;
-            Task task = null;
-            int i;
             try
             {
                 // totalRows is batchsize which is 0 by default. In that case, we keep copying till the end (until _hasMoreRowToCopy == false).
-                for (i = rowsSoFar; (totalRows <= 0 || i < totalRows) && _hasMoreRowToCopy == true; i++)
+                for (int i = rowsSoFar; (totalRows <= 0 || i < totalRows) && _hasMoreRowToCopy == true; i++)
                 {
-                    if (_isAsyncBulkCopy == true)
+                    if (_isAsyncBulkCopy && cts.IsCancellationRequested)
                     {
-                        resultTask = CheckForCancellation(cts, source);
-                        if (resultTask != null)
-                        {
-                            return resultTask; // Task got cancelled!
-                        }
+                        return Task.FromCanceled(cts);
                     }
 
                     _stateObj.WriteByte(TdsEnums.SQLROW);
 
-                    task = CopyColumnsAsync(0); // Copy 1 row
-
-                    if (task == null)
-                    {   // Task is done.
-                        CheckAndRaiseNotification(); // Check notification logic after copying the row
-
-                        // Now we will read the next row.
-                        Task readTask = ReadFromRowSourceAsync(cts); // Read the next row. Caution: more is only valid if the task returns null. Otherwise, we wait for Task.Result
-                        if (readTask != null)
-                        {
-                            if (source == null)
-                            {
-                                source = new TaskCompletionSource<object>();
-                            }
-                            resultTask = source.Task;
-
-                            AsyncHelper.ContinueTaskWithState(
-                                readTask,
-                                source,
-                                state: this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source));
-                            return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
-                        }
+                    Task writeTask = CopyColumnsAsync(0); // Copy 1 row
+                    if (writeTask != null)
+                    {
+                        // The row write pended: finish this row and the rest of the
+                        // batch on the async path.
+                        return CopyRowsAsyncContinued(writeTask, i, totalRows, cts);
                     }
-                    else
-                    {   // task != null, so add continuation for it.
-                        source = source ?? new TaskCompletionSource<object>();
-                        resultTask = source.Task;
 
-                        AsyncHelper.ContinueTaskWithState(task, source, this,
-                            onSuccess: (object state) =>
-                            {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                sqlBulkCopy.CheckAndRaiseNotification(); // Check for notification now as the current row copy is done at this moment.
+                    CheckAndRaiseNotification(); // Check notification logic after copying the row
 
-                                Task readTask = sqlBulkCopy.ReadFromRowSourceAsync(cts);
-                                if (readTask == null)
-                                {
-                                    sqlBulkCopy.CopyRowsAsync(i + 1, totalRows, cts, source);
-                                }
-                                else
-                                {
-                                    AsyncHelper.ContinueTaskWithState(
-                                        readTask,
-                                        source,
-                                        state: sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source));
-                                }
-                            });
-                        return resultTask;
+                    Task readTask = ReadFromRowSourceAsync(cts); // Read the next row. more is only valid when the task returns null.
+                    if (readTask != null)
+                    {
+                        // The read pended: continue the batch from the next row on the
+                        // async path once the read completes.
+                        return AwaitReadThenCopyRowsAsync(readTask, i + 1, totalRows, cts);
                     }
-                }
-
-                if (source != null)
-                {
-                    source.TrySetResult(null); // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
                 }
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
-                if (source != null)
+                if (_isAsyncBulkCopy)
                 {
-                    source.TrySetException(ex);
+                    return Task.FromException(ex);
                 }
-                else
+                throw;
+            }
+            return null;
+        }
+
+        // Async continuation of CopyRowsAsync entered after a per-row write pended.
+        // Awaits the pending write, then continues the batch loop, awaiting only the
+        // writes/reads that actually pend so synchronous steps stay allocation-free.
+        private async Task CopyRowsAsyncContinued(Task pendingWrite, int i, int totalRows, CancellationToken cts)
+        {
+            await pendingWrite.ConfigureAwait(false);
+            CheckAndRaiseNotification(); // current row copy is done at this moment
+
+            Task readTask = ReadFromRowSourceAsync(cts);
+            if (readTask != null)
+            {
+                await readTask.ConfigureAwait(false);
+            }
+
+            await CopyRowsLoopAsync(i + 1, totalRows, cts).ConfigureAwait(false);
+        }
+
+        // Async continuation of CopyRowsAsync entered after a next-row read pended.
+        private async Task AwaitReadThenCopyRowsAsync(Task pendingRead, int nextRow, int totalRows, CancellationToken cts)
+        {
+            await pendingRead.ConfigureAwait(false);
+            await CopyRowsLoopAsync(nextRow, totalRows, cts).ConfigureAwait(false);
+        }
+
+        // The batch copy loop expressed with async/await. Used once the batch has
+        // pended at least once; from here writes and reads are awaited inline when
+        // they pend and skipped (null) when they complete synchronously.
+        private async Task CopyRowsLoopAsync(int rowsSoFar, int totalRows, CancellationToken cts)
+        {
+            for (int i = rowsSoFar; (totalRows <= 0 || i < totalRows) && _hasMoreRowToCopy == true; i++)
+            {
+                cts.ThrowIfCancellationRequested();
+
+                _stateObj.WriteByte(TdsEnums.SQLROW);
+
+                Task writeTask = CopyColumnsAsync(0); // Copy 1 row
+                if (writeTask != null)
                 {
-                    throw;
+                    await writeTask.ConfigureAwait(false);
+                }
+
+                CheckAndRaiseNotification(); // Check notification logic after copying the row
+
+                Task readTask = ReadFromRowSourceAsync(cts); // Read the next row.
+                if (readTask != null)
+                {
+                    await readTask.ConfigureAwait(false);
                 }
             }
-            return resultTask;
         }
 
         // Copies all the batches in a loop. One iteration for one batch.
