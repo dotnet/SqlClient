@@ -2510,18 +2510,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             return writeTask;
         }
 
-        private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask)
-        {
-            SqlConnection connection = _connection;
-            if (connection == null)
-            {
-                // No connection
-                throw ADP.ClosedConnectionError();
-            }
-
-            return connection.RegisterForConnectionCloseNotification(outerTask, this, SqlReferenceCollection.BulkCopyTag);
-        }
-
         // Runs a loop to copy all columns of a single row.
         // Maintains a state by remembering #columns copied so far (int col).
         // Returned Task could be null in two cases: (1) _isAsyncBulkCopy == false, (2) _isAsyncBulkCopy == true but all async writes finished synchronously.
@@ -3340,7 +3328,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private async ValueTask WriteToServerInternalAsync(CancellationToken ctoken)
         {
             TaskCompletionSource<object> source = null;
-            Task<object> resultTask = null;
 
             if (_connection == null)
             {
@@ -3351,7 +3338,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             if (_isAsyncBulkCopy)
             {
                 source = new TaskCompletionSource<object>(); // Creating the completion source/Task that we pass to application
-                resultTask = RegisterForConnectionCloseNotification(source.Task);
             }
 
             if (_destinationTableName == null)
@@ -3373,12 +3359,22 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 return;
             }
 
-            // True, we have more rows.
-            WriteToServerInternalRestAsync(ctoken, source);
-
-            if (resultTask is not null)
+            try
             {
-                await resultTask.ConfigureAwait(false);
+                // True, we have more rows.
+                WriteToServerInternalRestAsync(ctoken, source);
+
+                if (source != null)
+                {
+                    await source.Task.ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                if (source != null)
+                {
+                    _connection.RemoveWeakReference(this);
+                }
             }
         }
 
