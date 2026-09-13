@@ -169,12 +169,15 @@ namespace Microsoft.Data.Sql
         private static bool ContainsInstance(DataTable dataTable, string serverName, string instanceName)
         {
             CompareInfo compareInfo = dataTable.Locale.CompareInfo;
+            CompareOptions options = dataTable.CaseSensitive
+                ? CompareOptions.None
+                : CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth;
 
             foreach (DataRow row in dataTable.Rows)
             {
-                if (EqualsInTable(compareInfo, row[ServerNameCol] as string, serverName) &&
+                if (EqualsInTable(compareInfo, options, row[ServerNameCol] as string, serverName) &&
                     // SQL BU DT 20006584: only match instanceName if present.
-                    (string.IsNullOrEmpty(instanceName) || EqualsInTable(compareInfo, row[InstanceNameCol] as string, instanceName)))
+                    (string.IsNullOrEmpty(instanceName) || EqualsInTable(compareInfo, options, row[InstanceNameCol] as string, instanceName)))
                 {
                     return true;
                 }
@@ -182,11 +185,11 @@ namespace Microsoft.Data.Sql
             return false;
         }
 
-        // Matches DataTable's string equality for a case-insensitive table.
-        private static bool EqualsInTable(CompareInfo compareInfo, string s1, string s2) =>
+        // Matches DataTable's string equality.
+        private static bool EqualsInTable(CompareInfo compareInfo, CompareOptions options, string s1, string s2) =>
             compareInfo.Compare(
                 s1?.TrimEnd(' ', '\u3000'),
                 s2?.TrimEnd(' ', '\u3000'),
-                CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth) == 0;
+                options) == 0;
     }
 }

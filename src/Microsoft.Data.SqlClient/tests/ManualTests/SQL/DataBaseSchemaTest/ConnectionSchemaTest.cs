@@ -176,7 +176,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return (syncTable, asyncTable);
         }
 
-        // SqlMetaDataFactory.AddColumn suppresses IL2072 on the basis that no schema column type is INullable.
+        /// <summary>
+        /// Verifies that no column of a schema collection has an <see cref="INullable"/> type, which
+        /// SqlMetaDataFactory.AddColumn relies on to suppress IL2072.
+        /// </summary>
+        /// <param name="schemaTable">The table returned for a schema collection.</param>
         private static void VerifyNoINullableColumns(DataTable schemaTable)
         {
             foreach (DataColumn column in schemaTable.Columns)
