@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NET
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
-            Justification = "Schema collection columns are built-in CLR types; DataColumn only reflects over INullable column types.")]
+            Justification = "DataColumn only reflects over INullable column types, and no schema collection columns are INullable.")]
 #endif
         private async ValueTask<DataTable> ExecuteCommandAsync(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {

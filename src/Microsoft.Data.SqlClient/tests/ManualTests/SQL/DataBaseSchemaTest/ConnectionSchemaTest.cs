@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Data.SqlTypes;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -170,7 +171,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.All(testColumnNames, column => Assert.Contains(column, syncColumnNames));
             Assert.All(testColumnNames, column => Assert.Contains(column, asyncColumnNames));
+            VerifyNoINullableColumns(syncTable);
+            VerifyNoINullableColumns(asyncTable);
             return (syncTable, asyncTable);
+        }
+
+        // SqlMetaDataFactory.ExecuteCommandAsync suppresses IL2072 on the basis that no schema column type is INullable.
+        private static void VerifyNoINullableColumns(DataTable schemaTable)
+        {
+            foreach (DataColumn column in schemaTable.Columns)
+            {
+                Assert.False(typeof(INullable).IsAssignableFrom(column.DataType),
+                    $"Column '{column.ColumnName}' of schema collection '{schemaTable.TableName}' has INullable type {column.DataType}.");
+            }
         }
 
         private static void VerifyDataTypesTable(DataTable dataTypesTable)
