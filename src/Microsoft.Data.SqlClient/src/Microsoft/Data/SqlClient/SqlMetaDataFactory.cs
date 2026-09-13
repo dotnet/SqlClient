@@ -372,10 +372,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-#if NET
-        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
-            Justification = "DataColumn only reflects over INullable column types, and no schema collection columns are INullable.")]
-#endif
         private async ValueTask<DataTable> ExecuteCommandAsync(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             Debug.Assert(requestedCollectionRow is not null);
@@ -448,7 +444,7 @@ namespace Microsoft.Data.SqlClient
 
                 foreach (DbColumn col in colSchema)
                 {
-                    resultTable.Columns.Add(col.ColumnName, col.DataType);
+                    AddColumn(resultTable, col);
                 }
 
                 if (firstResultAvailable)
@@ -467,6 +463,13 @@ namespace Microsoft.Data.SqlClient
             }
             return resultTable;
         }
+
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
+            Justification = "DataColumn only reflects over INullable column types, and no schema collection columns are INullable.")]
+#endif
+        private static void AddColumn(DataTable table, DbColumn column) =>
+            table.Columns.Add(column.ColumnName, column.DataType);
         #endregion
 
         #region GetSchema Helpers: PrepareCollection Population Method

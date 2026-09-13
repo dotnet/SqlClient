@@ -98,7 +98,7 @@ namespace Microsoft.Data.Sql
             return ParseServerEnumString(strbldr.ToString());
         }
 
-        private static DataTable ParseServerEnumString(string serverInstances)
+        internal static DataTable ParseServerEnumString(string serverInstances)
         {
             DataTable dataTable = PrepareDataTable();
             string serverName = null;
