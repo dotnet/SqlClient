@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
@@ -147,15 +148,8 @@ namespace Microsoft.Data.Sql
                     version = instance2.Substring(s_versionLength);
                 }
 
-                string query = "ServerName='" + serverName + "'";
-
-                if (!string.IsNullOrEmpty(instanceName))
-                { // SQL BU DT 20006584: only append instanceName if present.
-                    query += " AND InstanceName='" + instanceName + "'";
-                }
-
                 // SNI returns dupes - do not add them.  SQL BU DT 290323
-                if (dataTable.Select(query).Length == 0)
+                if (!ContainsInstance(dataTable, serverName, instanceName))
                 {
                     DataRow dataRow = dataTable.NewRow();
                     dataRow[0] = serverName;
@@ -171,5 +165,28 @@ namespace Microsoft.Data.Sql
             }
             return dataTable.SetColumnsReadOnly();
         }
+
+        private static bool ContainsInstance(DataTable dataTable, string serverName, string instanceName)
+        {
+            CompareInfo compareInfo = dataTable.Locale.CompareInfo;
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                if (EqualsInTable(compareInfo, row[ServerNameCol] as string, serverName) &&
+                    // SQL BU DT 20006584: only match instanceName if present.
+                    (string.IsNullOrEmpty(instanceName) || EqualsInTable(compareInfo, row[InstanceNameCol] as string, instanceName)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Matches DataTable's string equality for a case-insensitive table.
+        private static bool EqualsInTable(CompareInfo compareInfo, string s1, string s2) =>
+            compareInfo.Compare(
+                s1?.TrimEnd(' ', '\u3000'),
+                s2?.TrimEnd(' ', '\u3000'),
+                CompareOptions.IgnoreCase | CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth) == 0;
     }
 }

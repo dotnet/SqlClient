@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -371,6 +372,10 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
+            Justification = "Schema collection columns are built-in CLR types; DataColumn only reflects over INullable column types.")]
+#endif
         private async ValueTask<DataTable> ExecuteCommandAsync(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             Debug.Assert(requestedCollectionRow is not null);

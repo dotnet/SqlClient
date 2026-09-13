@@ -17,7 +17,12 @@ namespace Microsoft.Data.Common.ConnectionString
 
         static IpAddressPreferenceUtilities()
         {
-            foreach (SqlConnectionIPAddressPreference item in Enum.GetValues(typeof(SqlConnectionIPAddressPreference)))
+            foreach (SqlConnectionIPAddressPreference item in new[]
+                {
+                    SqlConnectionIPAddressPreference.IPv4First,
+                    SqlConnectionIPAddressPreference.IPv6First,
+                    SqlConnectionIPAddressPreference.UsePlatformDefault
+                })
             {
                 s_preferenceNames.Add(item.ToString(), item);
             }

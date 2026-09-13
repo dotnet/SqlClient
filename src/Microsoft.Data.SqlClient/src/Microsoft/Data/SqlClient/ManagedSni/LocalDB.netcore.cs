@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
 
                     // Set the delegate the invoke.
-                    localDBStartInstanceFunc = (LocalDBStartInstance)Marshal.GetDelegateForFunctionPointer(_startInstanceHandle, typeof(LocalDBStartInstance));
+                    localDBStartInstanceFunc = Marshal.GetDelegateForFunctionPointer<LocalDBStartInstance>(_startInstanceHandle);
 
                     if (localDBStartInstanceFunc == null)
                     {
