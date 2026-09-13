@@ -629,18 +629,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 """;
         }
 
-        // Creates and then executes initial query to get information about the targettable
-        // When __isAsyncBulkCopy == false (i.e. it is Sync copy): out result contains the resulset. Returns null.
-        // When __isAsyncBulkCopy == true (i.e. it is Async copy): This still uses the _parser.Run method synchronously and return Task<BulkCopySimpleResultSet>.
-        // We need to have a _parser.RunAsync to make it real async.
-        private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
+        // Creates and then executes initial query to get information about the target table
+        private async ValueTask<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync()
         {
             // Check if we have valid cached metadata for the current destination table
             if (IsCachedMetadataValid())
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
-                result = CachedMetadata;
-                return null;
+                return CachedMetadata;
             }
 
             string TDSCommand = CreateInitialQuery();
@@ -648,33 +644,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
-            if (executeTask == null)
-            {
-                result = new BulkCopySimpleResultSet();
-                RunParser(result);
-                CacheMetadataIfEnabled(result);
-                return null;
-            }
-            else
+            if (executeTask != null)
             {
                 Debug.Assert(_isAsyncBulkCopy, "Execution pended when not doing async bulk copy");
-                result = null;
-                return executeTask.ContinueWith<BulkCopySimpleResultSet>(t =>
-                {
-                    Debug.Assert(!t.IsCanceled, "Execution task was canceled");
-                    if (t.IsFaulted)
-                    {
-                        throw t.Exception.InnerException;
-                    }
-                    else
-                    {
-                        var internalResult = new BulkCopySimpleResultSet();
-                        RunParserReliably(internalResult);
-                        CacheMetadataIfEnabled(internalResult);
-                        return internalResult;
-                    }
-                }, TaskScheduler.Default);
+                await executeTask.ConfigureAwait(false);
             }
+
+            BulkCopySimpleResultSet result = new();
+            RunParser(result);
+            CacheMetadataIfEnabled(result);
+            return result;
         }
 
         internal bool IsCachedMetadataValid()
@@ -3167,8 +3146,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             Debug.Assert(_hasMoreRowToCopy, "first time it is true, otherwise this method would not have been called.");
             _hasMoreRowToCopy = true;
-            Task<BulkCopySimpleResultSet> internalResultsTask = null;
-            BulkCopySimpleResultSet internalResults = new BulkCopySimpleResultSet();
+            BulkCopySimpleResultSet internalResults;
             SqlConnectionInternal internalConnection = _connection.GetOpenTdsConnection();
 
             _parser = _connection.Parser;
@@ -3255,16 +3233,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
-                internalResultsTask = CreateAndExecuteInitialQueryAsync(out internalResults); // Task/Null
+                internalResults = await CreateAndExecuteInitialQueryAsync().ConfigureAwait(false);
             }
             catch (SqlException ex)
             {
                 throw SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex);
-            }
-
-            if (internalResultsTask != null)
-            {
-                internalResults = await internalResultsTask.ConfigureAwait(false);
             }
 
             Debug.Assert(internalResults != null, "Executing initial query finished synchronously, but there were no results");
