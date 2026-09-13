@@ -2316,11 +2316,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             try
             {
                 WriteRowSourceToServerCommon(columnCount); // This is common in both sync and async
-                Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
-                if (resultTask != null)
-                {
-                    await resultTask.ConfigureAwait(false);
-                }
+                await WriteToServerInternalAsync(ctoken).ConfigureAwait(false);
             }
             finally
             {
@@ -3341,11 +3337,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
-        // This returns Task for Async, Null for Sync
-        private Task WriteToServerInternalAsync(CancellationToken ctoken)
+        private async ValueTask WriteToServerInternalAsync(CancellationToken ctoken)
         {
             TaskCompletionSource<object> source = null;
             Task<object> resultTask = null;
+
+            if (_connection == null)
+            {
+                // No connection
+                throw ADP.ClosedConnectionError();
+            }
 
             if (_isAsyncBulkCopy)
             {
@@ -3355,68 +3356,30 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             if (_destinationTableName == null)
             {
-                if (source != null)
-                {
-                    source.SetException(SQL.BulkLoadMissingDestinationTable()); // No table to copy
-                }
-                else
-                {
-                    throw SQL.BulkLoadMissingDestinationTable();
-                }
-                return resultTask;
+                // No table to copy
+                throw SQL.BulkLoadMissingDestinationTable();
             }
 
-            try
+            // readTask == reading task. This is the first read call. "more" is valid only if readTask == null;
+            Task readTask = ReadFromRowSourceAsync(ctoken);
+            if (readTask != null)
             {
-                Task readTask = ReadFromRowSourceAsync(ctoken); // readTask == reading task. This is the first read call. "more" is valid only if readTask == null;
+                Debug.Assert(_isAsyncBulkCopy, "Read must not return a Task in the Sync mode");
+                await readTask.ConfigureAwait(false);
+            }
 
-                if (readTask == null)
-                {   // Synchronously finished reading.
-                    if (!_hasMoreRowToCopy)
-                    {   // No rows in the source to copy!
-                        if (source != null)
-                        {
-                            source.SetResult(null);
-                        }
-                        return resultTask;
-                    }
-                    else
-                    {   // True, we have more rows.
-                        WriteToServerInternalRestAsync(ctoken, source); //rest of the method, passing the same completion and returning the incomplete task (ret).
-                        return resultTask;
-                    }
-                }
-                else
-                {
-                    Debug.Assert(_isAsyncBulkCopy, "Read must not return a Task in the Sync mode");
-                    AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                        onSuccess: (object state) =>
-                        {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            if (!sqlBulkCopy._hasMoreRowToCopy)
-                            {
-                                source.SetResult(null); // No rows to copy!
-                            }
-                            else
-                            {
-                                sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
-                            }
-                        });
-                    return resultTask;
-                }
-            }
-            catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+            if (!_hasMoreRowToCopy)
             {
-                if (source != null)
-                {
-                    source.TrySetException(ex);
-                }
-                else
-                {
-                    throw;
-                }
+                return;
             }
-            return resultTask;
+
+            // True, we have more rows.
+            WriteToServerInternalRestAsync(ctoken, source);
+
+            if (resultTask is not null)
+            {
+                await resultTask.ConfigureAwait(false);
+            }
         }
 
         private void ResetWriteToServerGlobalVariables()
