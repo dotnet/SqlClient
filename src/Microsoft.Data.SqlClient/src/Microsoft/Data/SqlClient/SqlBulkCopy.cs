@@ -2072,7 +2072,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public Task WriteToServerAsync(DataRow[] rows) => WriteToServerAsync(rows, CancellationToken.None);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowAndCancellationTokenParameters"]/*'/>
-        public async Task WriteToServerAsync(DataRow[] rows, CancellationToken cancellationToken)
+        public Task WriteToServerAsync(DataRow[] rows, CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
@@ -2094,11 +2094,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 ResetWriteToServerGlobalVariables();
-
-                cancellationToken.ThrowIfCancellationRequested();
                 if (rows.Length == 0)
                 {
-                    return;
+                    return cancellationToken.IsCancellationRequested
+                        ? Task.FromCanceled(cancellationToken)
+                        : Task.CompletedTask;
                 }
 
                 DataTable table = rows[0].Table;
@@ -2110,7 +2110,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
 
-                await WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).ConfigureAwait(false);
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).AsTask();
             }
             finally
             {
@@ -2122,7 +2122,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public Task WriteToServerAsync(DbDataReader reader) => WriteToServerAsync(reader, CancellationToken.None);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderAndCancellationTokenParameters"]/*'/>
-        public async Task WriteToServerAsync(DbDataReader reader, CancellationToken cancellationToken)
+        public Task WriteToServerAsync(DbDataReader reader, CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
@@ -2144,16 +2144,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 ResetWriteToServerGlobalVariables();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
                 _rowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
                 _dbDataReaderRowSource = reader;
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
 
-                await WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).ConfigureAwait(false);
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).AsTask();
             }
             finally
             {
@@ -2165,7 +2162,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public Task WriteToServerAsync(IDataReader reader) => WriteToServerAsync(reader, CancellationToken.None);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderAndCancellationTokenParameters"]/*'/>
-        public async Task WriteToServerAsync(IDataReader reader, CancellationToken cancellationToken)
+        public Task WriteToServerAsync(IDataReader reader, CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
@@ -2186,16 +2183,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 ResetWriteToServerGlobalVariables();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
 
-                await WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).ConfigureAwait(false);
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).AsTask();
             }
             finally
             {
@@ -2213,7 +2207,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         public Task WriteToServerAsync(DataTable table, DataRowState rowState) => WriteToServerAsync(table, rowState, CancellationToken.None);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateAndCancellationTokenParameters"]/*'/>
-        public async Task WriteToServerAsync(DataTable table, DataRowState rowState, CancellationToken cancellationToken)
+        public Task WriteToServerAsync(DataTable table, DataRowState rowState, CancellationToken cancellationToken)
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
@@ -2235,9 +2229,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 ResetWriteToServerGlobalVariables();
-
-                cancellationToken.ThrowIfCancellationRequested();
-
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
                 _dataTableSource = table;
@@ -2245,7 +2236,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowEnumerator = table.Rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
 
-                await WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).ConfigureAwait(false);
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).AsTask();
             }
             finally
             {
@@ -2269,7 +2260,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                     catch (OperationCanceledException) when (ctoken.IsCancellationRequested)
                     {
-                        throw;
+                        ctoken.ThrowIfCancellationRequested();
                     }
                     catch (Exception)
                     {
@@ -3044,9 +3035,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     await task.ConfigureAwait(false);
                 }
-                cts.ThrowIfCancellationRequested();
-
                 completedSuccessfully = true;
+
+                // We may get cancellation req even after the entire copy.
+                cts.ThrowIfCancellationRequested();
             }
             finally
             {
@@ -3193,12 +3185,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             if (!_hasMoreRowToCopy)
             {
+                // No rows in the source to copy!
                 return;
             }
 
             try
             {
-                // True, we have more rows.
                 await WriteToServerInternalRestAsync(ctoken).ConfigureAwait(false);
             }
             finally
