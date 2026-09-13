@@ -97,7 +97,8 @@ where T : unmanaged
         {
             return SQLMessage.NullString();
         }
-        return JsonSerializer.Serialize(Memory);
+        // GetTypeFieldsOrThrow guarantees T is float.
+        return JsonSerializer.Serialize((ReadOnlyMemory<float>)(object)Memory, SqlClientJsonSerializerContext.Default.ReadOnlyMemorySingle);
     }
 
     #endregion
