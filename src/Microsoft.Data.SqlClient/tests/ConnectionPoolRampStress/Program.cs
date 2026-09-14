@@ -31,6 +31,16 @@ internal static class Program
                 Console.WriteLine($"{sample.Combination} n={sample.Concurrency} rep={sample.Repetition}");
             return 0;
         }
+        if (settings.CacheAuthentication)
+        {
+            string input = Environment.GetEnvironmentVariable(settings.ConnectionEnvironment) ??
+                throw new AuthenticationCacheConfigurationException();
+            string? observer = settings.XEvents
+                ? Environment.GetEnvironmentVariable(settings.XEventConnectionEnvironment ?? settings.ConnectionEnvironment) ??
+                    throw new AuthenticationCacheConfigurationException()
+                : null;
+            CachedAuthenticationProvider.Configure(settings, input, observer);
+        }
         // JSON Lines is append-safe evidence: each line is a complete allowlisted JSON record.
         // Refuse to overwrite existing comparison results.
         using FileStream file = new(settings.Output, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
@@ -47,7 +57,7 @@ internal static class Program
         {
             if (!sweep.ShouldRun(sample)) continue;
             Write(new { Kind = "sample-start", Sample = sample, StartedUtc = DateTimeOffset.UtcNow });
-            SupervisedSample result = new Supervisor().Run(settings, sample, packet =>
+            SupervisedSample result = new ObservedSampleRunner().Run(settings, sample, packet =>
             {
                 Write(new { Kind = "progress", Sample = sample, Packet = packet });
                 if (packet.Interval is { } interval)
@@ -57,13 +67,34 @@ internal static class Program
                         $"rounds/s={interval.Metrics.RoundsPerSecond:F1} p95ms={interval.Metrics.Opens.P95Milliseconds:F3} " +
                         $"failures={interval.Metrics.FailedOpens.Count} " +
                         $"drain={interval.Drain}");
-            });
+            }, captureStarting: name => Write(new
+            {
+                Kind = "xevent-start", Sample = sample, SessionName = name, StartedUtc = DateTimeOffset.UtcNow
+            }));
             sweep.Record(result);
             Write(new { Kind = "sample-end", Result = result });
             Console.WriteLine($"{sample.Combination} n={sample.Concurrency} rep={sample.Repetition} {result.Outcome} " +
                 $"opens/s={result.Result?.Measured.OpensPerSecond:F1} p95ms={result.Result?.Measured.Opens.P95Milliseconds:F3} " +
                 $"started={result.Result?.StartedWorkers} peak-calls={result.Result?.PeakOutstandingCalls}");
             exit = Math.Max(exit, ExitCode(result.Outcome));
+            if (result.XEvents is { } xe)
+            {
+                if (xe.DurationAvailable)
+                    Console.WriteLine($"xevents={xe.Status} events={xe.CapturedEvents} " +
+                        $"server-login-p95ms={xe.SuccessfulLogins.P95Milliseconds:F3} " +
+                        $"server-failed-logins={xe.FailedLogins.Count} session-dropped={xe.SessionDropped}");
+                else
+                    Console.WriteLine($"xevents={xe.Status} event={xe.EventName} events={xe.CapturedEvents} " +
+                        $"new-logins={xe.Counts?.NewConnectionLogins} cached-logins={xe.Counts?.CachedConnectionLogins} " +
+                        $"server-login-duration=unavailable session-dropped={xe.SessionDropped}");
+                if (!xe.SessionDropped) Console.WriteLine($"XEvent session cleanup required: {xe.SessionName}");
+                if (xe.Status != "captured")
+                {
+                    Console.WriteLine("XEvent capture unavailable or incomplete. See XEvents in JSONL; this is not a workload saturation finding.");
+                    if (result.Outcome != Outcome.SetupFailure) exit = Math.Max(exit, 4);
+                    break;
+                }
+            }
             if (result.Outcome == Outcome.SetupFailure || !result.Reaped) break;
             Thread.Sleep(TimeSpan.FromSeconds(settings.CooldownSeconds));
         }
@@ -90,7 +121,8 @@ internal static class Program
             ThreadPoolSettings threadPool = ThreadPoolSettings.Configure(sample.Profile, config.Settings.WorkerMinimum);
             string name = Environment.GetEnvironmentVariable("SQLCLIENT_RAMP_INPUT_ENV") ?? "";
             string input = Environment.GetEnvironmentVariable(name) ?? throw new ArgumentException();
-            ConnectionFactory factory = new(input, sample, config.Settings);
+            CachedAuthenticationProvider.Configure(config.Settings, input);
+            ConnectionFactory factory = new(input, sample, config.Settings, config.ApplicationName);
             using PhysicalCounters counters = new();
             RuntimeMetadata metadata = factory.Preflight(threadPool);
             WorkloadRunner runner = new(config.Settings, sample, factory, counters);
@@ -102,8 +134,17 @@ internal static class Program
                 }
                 catch (IOException) { runner.RequestStop(); }
             }) { IsBackground = true, Name = "ramp-control" }.Start();
+            long? authenticationBefore = config.Settings.CacheAuthentication
+                ? CachedAuthenticationProvider.CurrentAcquisitionCount : null;
             SampleResult result = runner.Run(interval => Wire.Write(new("interval", Interval: interval)),
                 () => Wire.Write(new("ready", Metadata: metadata, StartedUtc: DateTimeOffset.UtcNow)));
+            if (config.Settings.CacheAuthentication)
+                result = result with
+                {
+                    AuthenticationAcquisitionsBeforeWorkload = authenticationBefore,
+                    AuthenticationAcquisitionsDuringWorkload =
+                        CachedAuthenticationProvider.CurrentAcquisitionCount - authenticationBefore
+                };
             Wire.Write(new("result", Result: result));
             return ExitCode(result.Outcome);
         }

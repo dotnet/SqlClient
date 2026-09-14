@@ -10,11 +10,14 @@ using System.Text.RegularExpressions;
 
 namespace ConnectionPoolRampStress;
 
-internal sealed record ChildConfiguration(Settings Settings, Sample Sample);
+internal sealed record ChildConfiguration(Settings Settings, Sample Sample, string? ApplicationName = null);
 internal sealed record Packet(string Kind, RuntimeMetadata? Metadata = null, IntervalResult? Interval = null,
     SampleResult? Result = null, SafeFailure? Failure = null, DateTimeOffset? StartedUtc = null);
 internal sealed record SupervisedSample(Sample Sample, Outcome Outcome, int? ExitCode, bool Deadline,
-    bool Killed, long DiscardedOutputLines, SampleResult? Result, SafeFailure? Failure, bool Reaped = true);
+    bool Killed, long DiscardedOutputLines, SampleResult? Result, SafeFailure? Failure, bool Reaped = true)
+{
+    public LoginXEventResult? XEvents { get; init; }
+}
 
 internal static class Wire
 {
@@ -33,7 +36,8 @@ internal static class Wire
 
 internal sealed class Supervisor
 {
-    public static ProcessStartInfo ChildStartInfo(Settings settings, Sample sample, string? fixture = null)
+    public static ProcessStartInfo ChildStartInfo(Settings settings, Sample sample, string? fixture = null,
+        string? applicationName = null)
     {
         string assembly = typeof(Supervisor).Assembly.Location;
         string host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ??
@@ -50,16 +54,19 @@ internal sealed class Supervisor
         info.ArgumentList.Add(assembly);
         info.ArgumentList.Add(fixture is null ? "--child" : "--fixture");
         if (fixture is not null) info.ArgumentList.Add(fixture);
-        info.Environment["SQLCLIENT_RAMP_CONFIG"] = JsonSerializer.Serialize(new ChildConfiguration(settings, sample), Wire.Json);
+        info.Environment["SQLCLIENT_RAMP_CONFIG"] = JsonSerializer.Serialize(new ChildConfiguration(settings, sample, applicationName), Wire.Json);
         info.Environment["SQLCLIENT_RAMP_INPUT_ENV"] = settings.ConnectionEnvironment;
+        if (settings.XEventConnectionEnvironment is { } observer && observer != settings.ConnectionEnvironment)
+            info.Environment.Remove(observer);
         // Preserve the requested env var in the inherited environment. Never copy its value
         // into arguments, configuration JSON, errors, or result records.
         return info;
     }
 
-    public SupervisedSample Run(Settings settings, Sample sample, Action<Packet> progress, string? fixture = null)
+    public SupervisedSample Run(Settings settings, Sample sample, Action<Packet> progress, string? fixture = null,
+        string? applicationName = null)
     {
-        using Process child = new() { StartInfo = ChildStartInfo(settings, sample, fixture) };
+        using Process child = new() { StartInfo = ChildStartInfo(settings, sample, fixture, applicationName) };
         bool ready = false;
         bool deadline = false;
         bool killed = false;
@@ -247,6 +254,7 @@ internal sealed class Sweep
             SupervisedSample? first = results.FirstOrDefault(r => r.Outcome != Outcome.Success);
             yield return new(combination, highest, first?.Sample.Concurrency, first?.Outcome,
                 first is null && highest == settings.Maximum ? $"no failure observed through {settings.Maximum}" :
+                first is null ? "sweep stopped before maximum; no workload failure observed" :
                 first?.Outcome == Outcome.SetupFailure || first?.Failure?.Category is "startup-deadline" or "setup"
                     ? "setup failure or startup deadline, not a saturation observation" :
                 "observed boundary, repeat to assess transience");

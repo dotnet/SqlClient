@@ -17,7 +17,12 @@ internal sealed record Settings
 {
     // These input-only fields are never part of the result schema.
     [JsonIgnore] public string ConnectionEnvironment { get; init; } = "SQLCLIENT_RAMP_CONNECTION";
+    [JsonIgnore] public string? XEventConnectionEnvironment { get; init; }
     [JsonIgnore] public string Output { get; init; } = "connection-pool-ramp.jsonl";
+    public bool XEvents { get; init; }
+    public string XEventEvent { get; init; } = "process_login_finish";
+    public bool CacheAuthentication { get; init; }
+    public int XEventTimeoutSeconds { get; init; } = 5;
     public int Start { get; init; } = 1;
     public int Maximum { get; init; } = 512;
     public int Growth { get; init; } = 2;
@@ -67,6 +72,14 @@ internal sealed record Settings
         {
             throw new ArgumentException("An environment-variable name and output path are required.");
         }
+        if (XEventTimeoutSeconds < 1 || XEventTimeoutSeconds > 60 ||
+            XEventConnectionEnvironment is not null &&
+                (string.IsNullOrWhiteSpace(XEventConnectionEnvironment) || XEventConnectionEnvironment.Contains('=')))
+        {
+            throw new ArgumentException("Invalid XEvent timeout or environment-variable name.");
+        }
+        if (!Choices.XEventEvents.Contains(XEventEvent) || (!XEvents && XEventEvent != "process_login_finish"))
+            throw new ArgumentException("Select a supported XEvent with --xevents enabled.");
     }
 
     public IEnumerable<int> Levels()
@@ -106,6 +119,7 @@ internal static class Choices
     public static readonly string[] Callers = ["all", "async", "sync-threadpool", "sync-dedicated"];
     public static readonly string[] Workloads = ["both", "open-close", "cold-ramps"];
     public static readonly string[] Profiles = ["both", "default", "provisioned"];
+    public static readonly string[] XEventEvents = ["process_login_finish", "login"];
     public static string Name<T>(T value) where T : Enum => value.ToString() switch
     {
         "OpenClose" => "open-close",
@@ -127,12 +141,16 @@ internal static class CommandLine
         Option<string> caller = new("--caller") { DefaultValueFactory = _ => "all" };
         Option<string> work = new("--workload") { DefaultValueFactory = _ => "both" };
         Option<string> profile = new("--profile") { DefaultValueFactory = _ => "both" };
+        Option<bool> xevents = new("--xevents") { Description = "Capture login telemetry using a temporary, automatically scoped XEvent session." };
+        Option<string> xeventEvent = new("--xevent-event") { DefaultValueFactory = _ => "process_login_finish", Description = "process_login_finish: server duration. login: new/cached login counts only." };
+        Option<bool> cacheAuthentication = new("--cache-authentication") { Description = "Cache Active Directory Default tokens in each harness process. Preflight warms authentication outside measurement." };
+        Option<string> xeventConnection = new("--xevent-connection-env") { Description = "Optional observer connection environment variable. Defaults to the workload connection." };
         Option<bool> list = new("--list", "--dry-run") { Description = "List the matrix without reading credentials or opening connections." };
         Dictionary<string, Option<int>> integers = new();
         foreach ((string name, int value) in new (string, int)[]
         {
             ("start", 1), ("max", 512), ("growth", 2), ("repetitions", 3),
-            ("connect-timeout", 15), ("worker-minimum", 1024)
+            ("connect-timeout", 15), ("worker-minimum", 1024), ("xevent-timeout", 5)
         })
         {
             Option<int> option = new("--" + name) { DefaultValueFactory = _ => value };
@@ -150,7 +168,7 @@ internal static class CommandLine
             durations.Add(name, option);
             root.Options.Add(option);
         }
-        foreach (Option option in new Option[] { connection, output, pool, caller, work, profile, list }) root.Options.Add(option);
+        foreach (Option option in new Option[] { connection, output, pool, caller, work, profile, list, xevents, xeventEvent, xeventConnection, cacheAuthentication }) root.Options.Add(option);
         var parse = root.Parse(args);
         // Parser diagnostics echo arbitrary input. Never print them.
         if (parse.Errors.Count != 0)
@@ -163,6 +181,10 @@ internal static class CommandLine
             Settings settings = new()
             {
                 ConnectionEnvironment = result.GetValue(connection)!, Output = result.GetValue(output)!,
+                XEvents = result.GetValue(xevents), XEventConnectionEnvironment = result.GetValue(xeventConnection),
+                XEventEvent = result.GetValue(xeventEvent)!,
+                CacheAuthentication = result.GetValue(cacheAuthentication),
+                XEventTimeoutSeconds = result.GetValue(integers["xevent-timeout"]),
                 Pool = result.GetValue(pool)!, Caller = result.GetValue(caller)!,
                 Work = result.GetValue(work)!, Profile = result.GetValue(profile)!,
                 Start = result.GetValue(integers["start"]), Maximum = result.GetValue(integers["max"]),
@@ -178,6 +200,11 @@ internal static class CommandLine
             {
                 settings.Validate();
                 return action(settings, result.GetValue(list));
+            }
+            catch (AuthenticationCacheConfigurationException)
+            {
+                Console.Error.WriteLine(AuthenticationCacheConfigurationException.Diagnostic);
+                return 2;
             }
             catch (Exception)
             {

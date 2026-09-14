@@ -9,6 +9,8 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Microsoft.Data.SqlClient.csproj" Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient" Condition="'$(ReferenceType)' == 'Package'" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Condition="'$(ReferenceType)' == 'Package'" />
     <PackageReference Include="System.CommandLine" />
     <InternalsVisibleTo Include="ConnectionPoolRampStress.Tests" />
   </ItemGroup>

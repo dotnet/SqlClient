@@ -78,12 +78,13 @@ internal sealed class ConnectionFactory : IConnectionFactory
     private readonly string _connectionString;
     public EffectiveConnection Effective { get; }
 
-    public ConnectionFactory(string input, Sample sample, Settings settings)
+    public ConnectionFactory(string input, Sample sample, Settings settings, string? applicationName = null)
     {
         if (sample.Pool == PoolMode.V2 &&
             typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.ConnectionPool.ChannelDbConnectionPool") is null)
             throw new NotSupportedException();
         var builder = Normalize(input, sample, settings);
+        builder.ApplicationName = WorkloadApplicationName(applicationName);
         _connectionString = builder.ConnectionString;
         AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", out bool managed);
         Effective = new(builder.Pooling, builder.MaxPoolSize, builder.MinPoolSize, builder.ConnectTimeout,
@@ -103,9 +104,23 @@ internal sealed class ConnectionFactory : IConnectionFactory
         Enlist = false
     };
 
+    internal static string WorkloadApplicationName(string? name)
+    {
+        if (name is null) return "ConnectionPoolRampStress";
+        if (!Regex.IsMatch(name, @"\AConnectionPoolRampStress_[0-9a-f]{32}\z"))
+            throw new ArgumentException("Invalid sample application name.");
+        return name;
+    }
+
+    internal static SqlConnectionStringBuilder PreflightConnection(string connectionString) => new(connectionString)
+    {
+        Pooling = false,
+        ApplicationName = "ConnectionPoolRampStress-preflight"
+    };
+
     public RuntimeMetadata Preflight(ThreadPoolSettings threadPool)
     {
-        SqlConnectionStringBuilder builder = new(_connectionString) { Pooling = false };
+        SqlConnectionStringBuilder builder = PreflightConnection(_connectionString);
         using SqlConnection connection = new(builder.ConnectionString);
         connection.Open();
         string version = connection.ServerVersion;

@@ -13,6 +13,14 @@ namespace ConnectionPoolRampStress.Tests;
 /// <summary>Checks bounded matrix generation, safe configuration, and descriptive measurements without SQL Server.</summary>
 public sealed class ConfigurationTests
 {
+    /// <summary>Entra connection strings resolve the repository's Azure provider without custom registration.</summary>
+    [Fact]
+    public void DefaultAuthenticationProviderIsAvailable()
+    {
+        Assert.IsType<ActiveDirectoryAuthenticationProvider>(
+            SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault));
+    }
+
     /// <summary>Includes a non-geometric maximum exactly once.</summary>
     [Theory]
     [InlineData(512, new[] { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 })]
@@ -56,6 +64,18 @@ public sealed class ConfigurationTests
         Boundary boundary = Assert.Single(sweep.Boundaries(settings));
         Assert.Equal(1, boundary.HighestAllRepetitionsSuccessful);
         Assert.Equal(2, boundary.FirstNonSuccessLevel);
+    }
+
+    /// <summary>Stopping for telemetry alone cannot be reported as a workload failure boundary.</summary>
+    [Fact]
+    public void PartialSweepWithoutWorkloadFailureHasNoObservedBoundary()
+    {
+        Settings settings = new() { Maximum = 8, Repetitions = 1 };
+        Sweep sweep = new();
+        sweep.Record(new(Helpers.Sample(), Outcome.Success, 0, false, false, 0, null, null));
+        Boundary boundary = Assert.Single(sweep.Boundaries(settings));
+        Assert.Null(boundary.FirstNonSuccessLevel);
+        Assert.Equal("sweep stopped before maximum; no workload failure observed", boundary.Interpretation);
     }
 
     /// <summary>Normalizes the measured pool without exposing the input string in safe settings.</summary>

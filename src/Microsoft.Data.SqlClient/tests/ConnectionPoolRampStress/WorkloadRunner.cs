@@ -11,6 +11,8 @@ internal sealed record SampleResult(Outcome Outcome, double MeasurementSeconds, 
     Trend Trend)
 {
     public InitialRamp? InitialRamp { get; init; }
+    public long? AuthenticationAcquisitionsBeforeWorkload { get; init; }
+    public long? AuthenticationAcquisitionsDuringWorkload { get; init; }
 }
 
 internal sealed record InitialRamp(int SettledAttempts, int SuccessfulOpens, bool Complete,

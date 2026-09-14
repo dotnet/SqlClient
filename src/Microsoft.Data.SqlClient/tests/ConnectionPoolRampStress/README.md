@@ -84,6 +84,11 @@ Use a new output path per invocation. Existing files are never overwritten.
 | `--deadline` | 120 seconds from child launch, including startup and drain |
 | `--cleanup-grace` | 5 seconds for cooperative shutdown before forced termination |
 | `--cooldown` | 2 seconds after child exit |
+| `--xevents` | Opt into server-side `sqlserver.process_login_finish` timing; disabled by default |
+| `--xevent-event` | `process_login_finish` (default), or `login` for counts without durations |
+| `--xevent-connection-env` | Optional observer credential variable; defaults to `--connection-env` |
+| `--xevent-timeout` | Observer connect/command timeout, 5 seconds, range 1-60 |
+| `--cache-authentication` | Opt-in process-local token cache for Active Directory Default |
 | `--list`, `--dry-run` | No credentials, connections, or child processes |
 
 The deadline must cover startup + measurement + drain. Cleanup grace follows an
@@ -159,6 +164,146 @@ stderr, unrecognized stdout, oversized lines, and parser diagnostics are never
 forwarded. Errors contain only allowlisted types, categories, and primary SQL
 error numbers. Connection strings, arbitrary exception messages, environment
 names/values, and output paths are excluded from the result schema.
+
+## Server-side login timing with Extended Events
+
+Add `--xevents` to capture server login time alongside client `Open()` latency.
+For the focused eight-thread experiment, use **dedicated synchronous workers**,
+not the ThreadPool caller. Each worker keeps the same real thread for its entire
+open/close loop. The observer runs in the parent process on a separate thread.
+
+```sh
+dotnet "$harness" --pool disabled --caller sync-dedicated --profile default --workload open-close --start 8 --max 8 --repetitions 1 --duration 30 --xevents --output ramp-eight-xevents.jsonl
+```
+
+On Windows PowerShell, after supplying `SQLCLIENT_RAMP_CONNECTION` securely:
+
+```powershell
+$harness = "src/Microsoft.Data.SqlClient/tests/ConnectionPoolRampStress/bin/Release/net8.0/ConnectionPoolRampStress.dll"
+dotnet $harness --pool disabled --caller sync-dedicated --profile default --workload open-close --start 8 --max 8 --repetitions 1 --duration 30 --xevents --output ramp-eight-xevents.jsonl
+```
+
+The observer needs permission to create, start, read, and drop an Extended Events
+session, including the relevant XE DMVs. The collector selects **database scope**
+for Azure SQL Database and **server scope** for SQL Server and Azure SQL Managed
+Instance. `XEvents.Scope` records this choice. Permission names vary by platform
+and version; SQL Server 2022+ has granular event-session permissions and
+`VIEW SERVER PERFORMANCE STATE`. Use an authorized test instance, not production.
+The selected event and fields are discovered before admitting workload. Duration
+mode requires `sqlserver.process_login_finish`, `total_time_ms`, and `is_success`.
+Count mode requires `sqlserver.login` and `is_cached`. Missing capabilities fail
+setup explicitly. No other event is silently substituted.
+Database-scoped session support does not imply that Azure SQL Database exposes
+`process_login_finish`. If the event is unavailable, omit `--xevents` for a
+client-only run and report server-side login duration as unavailable, not zero.
+
+Normally the observer uses the workload connection credentials. To use a separate
+authorized account on the **same SQL Server instance**, supply its connection
+string securely in another environment variable and select it with
+`--xevent-connection-env SQLCLIENT_RAMP_OBSERVER`. This named observer variable is
+not forwarded to workload children. Neither connection string is written to
+results. Authentication, transport, and encryption of the workload remain
+unchanged.
+For Azure SQL Database, the observer must also connect to the workload database.
+
+### Azure SQL and cached authentication
+
+The harness references the repository's Azure authentication extension. For
+`Authentication=Active Directory Default`, sign in with `az login` before starting
+the harness. DefaultAzureCredential does not open an interactive browser itself.
+CLI credential retrieval can still invoke a process for every token request,
+even after sign-in.
+
+Use `--cache-authentication` to isolate that retrieval overhead from login
+measurements. Each process wraps the default provider in a single-flight,
+memory-only token cache, keyed by authentication identity and destination. The
+existing non-pooled preflight warms authentication, not the measured connection
+pool. Failures are not cached. Workload and observer connections must both use
+Active Directory Default when this option is enabled.
+
+Tokens refresh within five minutes of expiry, so long samples can still acquire
+tokens during measurement. Each sample records
+`AuthenticationAcquisitionsBeforeWorkload` and
+`AuthenticationAcquisitionsDuringWorkload`. The latter includes drain and should
+be zero when interpreting a sample as excluding token retrieval.
+
+For databases that expose `sqlserver.login` but not `process_login_finish`,
+explicitly select counts rather than durations:
+
+```sh
+dotnet "$harness" --pool v2 --caller sync-dedicated --profile default \
+  --workload open-close --start 1 --max 512 --repetitions 1 --duration 30 \
+  --connect-timeout 30 --drain 35 --deadline 140 --cache-authentication \
+  --xevents --xevent-event login --xevent-timeout 30 --output azure-v2.jsonl
+```
+
+`login` exposes `is_cached`, distinguishing new connections from cached
+connection logins. It does not expose login duration. These event counts are not
+pooled client open/close cycle counts: a pooled open/close loop without commands
+may not send a reset request to the server. Client Open latency remains available.
+Count results have `DurationAvailable=false` and populate `Counts` rather than
+duration observations. Do not interpret the empty duration histograms as zeros.
+Resume a paused serverless database before measuring and record its service tier.
+
+The harness creates one uniquely named session per sample with `STARTUP_STATE=OFF`
+and a bounded, in-memory `ring_buffer` target retaining at most 128 full events.
+Polling every second consumes and deduplicates events before they are evicted.
+This keeps large login payloads from accumulating past the target's XML limit.
+Bursts that exceed this capacity between polls are reported as incomplete capture.
+A generated application name filters
+the sample's logins. Observer and preflight connections use different names.
+Polling aggregates event timestamps and `total_time_ms`, then discards raw XML.
+No event files, query text, usernames, or server names are written to results.
+The session uses lossy event retention rather than blocking SQL Server if capture
+cannot keep up. Instrumentation still adds overhead, so compare instrumented runs
+with other instrumented runs.
+
+Each `sample-end.Result.XEvents` contains:
+
+* `Status`, event counts, and successful/failed server-login distributions with
+  count, mean, p50, p95, p99, and maximum in **milliseconds**.
+* Per-second `Intervals` using **server event timestamps**, not client stopwatch
+  time. Client/server clock synchronization is needed for cross-machine alignment.
+* Capture loss, truncation, invalid-event indicators, and cleanup status.
+
+These aggregates cover the sample's complete captured lifetime, **including
+drain**, unlike the client's measurement-only throughput. They are not per-Open
+correlations. Pooled reuse can complete many client opens without new physical
+login events, and some client failures occur before the server emits this event.
+Server event timing is not end-to-end client latency. Percentiles use the same
+bounded logarithmic histograms as other harness metrics, not exact sorted samples.
+
+Empty, lossy, malformed, or failed capture is reported explicitly rather than
+as zero-millisecond latency. A capture problem stops the run and produces a
+nonzero exit code (2 for setup, otherwise 4), while retaining the workload's own
+outcome and any collected data. It is **not a workload saturation boundary**.
+
+The parent reads the target before stopping it, then drops the session even when
+a workload child times out or is killed. Observer setup/collection/cleanup are
+outside the child's measurement/deadline and have bounded individual SQL calls
+controlled by `--xevent-timeout`. Under high load, observer queries can also time out. Increasing
+`--xevent-timeout` (for example, to 30 seconds) leaves the workload's
+`--connect-timeout` unchanged. If the parent itself is killed, the server
+disconnects, or permissions prevent cleanup, a session can remain. The result
+includes the generated `SessionName` and `SessionDropped`; the `xevent-start`
+record also saves the session name before creation, in case the parent exits
+without a final result. Remove only that session on the same instance if cleanup
+is incomplete.
+
+### Live capture checks
+
+Offline capture tests run with the harness test project. For the opt-in live
+checks, securely supply `SQLCLIENT_RAMP_CONNECTION`, set
+`SQLCLIENT_RAMP_XEVENT_TESTS=1`, and run:
+
+```sh
+dotnet test src/Microsoft.Data.SqlClient/tests/ConnectionPoolRampStress.Tests/ConnectionPoolRampStress.Tests.csproj -c Release -f net8.0 --filter "FullyQualifiedName~LiveXEventTests" --blame-hang-timeout 3m
+```
+
+These short samples exercise dedicated synchronous and asynchronous callers,
+both pools and the non-pooled control, isolation from preflight/observer logins,
+and session cleanup after forced child termination. They require the event and
+permissions described above and fail rather than skip if capture is unavailable.
 
 ## Read the results
 
