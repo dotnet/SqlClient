@@ -303,17 +303,17 @@ namespace Microsoft.Data.SqlClient
 
                         if (SqlDbType.Xml == colMetaData.DbType)
                         {
-                            typeSpecificNamePart1 = colMetaData.XmlSchemaCollection?.Database;
-                            typeSpecificNamePart2 = colMetaData.XmlSchemaCollection?.OwningSchema;
-                            typeSpecificNamePart3 = colMetaData.XmlSchemaCollection?.Name;
+                            typeSpecificNamePart1 = colMetaData.XmlTypeInfo?.Database;
+                            typeSpecificNamePart2 = colMetaData.XmlTypeInfo?.OwningSchema;
+                            typeSpecificNamePart3 = colMetaData.XmlTypeInfo?.Name;
                         }
                         else if (SqlDbType.Udt == colMetaData.DbType)
                         {
                             Connection.CheckGetExtendedUDTInfo(colMetaData, true); // Ensure that colMetaData.udtType is set
 
-                            typeSpecificNamePart1 = colMetaData.Udt?.DatabaseName;
-                            typeSpecificNamePart2 = colMetaData.Udt?.SchemaName;
-                            typeSpecificNamePart3 = colMetaData.Udt?.TypeName;
+                            typeSpecificNamePart1 = colMetaData.UdtTypeInfo?.DatabaseName;
+                            typeSpecificNamePart2 = colMetaData.UdtTypeInfo?.SchemaName;
+                            typeSpecificNamePart3 = colMetaData.UdtTypeInfo?.TypeName;
                         }
 
                         int length = colMetaData.length;
@@ -335,7 +335,7 @@ namespace Microsoft.Data.SqlClient
                                 colMetaData.scale,
                                 collation != null ? collation.LCID : _defaultLCID,
                                 collation != null ? collation.SqlCompareOptions : SqlCompareOptions.None,
-                                colMetaData.Udt?.Type,
+                                colMetaData.UdtTypeInfo?.Type,
                                 isMultiValued: false,
                                 fieldMetaData: null,
                                 extendedProperties: null,
@@ -610,13 +610,13 @@ namespace Microsoft.Data.SqlClient
                     if (col.DbType == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
                         Debug.Assert(Connection.Parser.Capabilities.UserDefinedTypes, "Invalid Column type received from the server");
-                        schemaRow[udtAssemblyQualifiedName] = col.Udt?.AssemblyQualifiedName;
+                        schemaRow[udtAssemblyQualifiedName] = col.UdtTypeInfo?.AssemblyQualifiedName;
                     }
                     else if (col.DbType == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        schemaRow[xmlSchemaCollectionDatabase] = col.XmlSchemaCollection?.Database;
-                        schemaRow[xmlSchemaCollectionOwningSchema] = col.XmlSchemaCollection?.OwningSchema;
-                        schemaRow[xmlSchemaCollectionName] = col.XmlSchemaCollection?.Name;
+                        schemaRow[xmlSchemaCollectionDatabase] = col.XmlTypeInfo?.Database;
+                        schemaRow[xmlSchemaCollectionOwningSchema] = col.XmlTypeInfo?.OwningSchema;
+                        schemaRow[xmlSchemaCollectionName] = col.XmlTypeInfo?.Name;
                     }
                 }
 
@@ -1205,7 +1205,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.DbType == SqlDbType.Udt)
                 {
-                    dataTypeName = metaData.Udt?.DatabaseName + "." + metaData.Udt?.SchemaName + "." + metaData.Udt?.TypeName;
+                    dataTypeName = metaData.UdtTypeInfo?.DatabaseName + "." + metaData.UdtTypeInfo?.SchemaName + "." + metaData.UdtTypeInfo?.TypeName;
                 }
                 else
                 { // For all other types, including Xml - use data in MetaType.
@@ -1280,7 +1280,7 @@ namespace Microsoft.Data.SqlClient
                 if (metaData.DbType == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
-                    fieldType = metaData.Udt?.Type;
+                    fieldType = metaData.UdtTypeInfo?.Type;
                 }
                 else if (metaData.DbType == SqlDbTypeExtensions.Vector)
                 {
@@ -1399,7 +1399,7 @@ namespace Microsoft.Data.SqlClient
                 if (metaData.DbType == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
-                    providerSpecificFieldType = metaData.Udt?.Type;
+                    providerSpecificFieldType = metaData.UdtTypeInfo?.Type;
                 }
                 else if (metaData.DbType == SqlDbTypeExtensions.Vector)
                 {
