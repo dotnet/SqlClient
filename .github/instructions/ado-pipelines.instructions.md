@@ -78,6 +78,7 @@ PR pipelines:
 
 CI pipelines:
 - Trigger on push to `release/7.1` (GitHub) and `internal/release/7.1` (ADO) with `batch: true`
+- Exception: the legacy `dotnet-sqlclient-ci-package-reference-pipeline.yml` has its GitHub `release/7.1` push entry commented out, so only the ADO push trigger is active; its GitHub daily schedule still runs
 - Scheduled daily builds are staggered to avoid main and other release-branch schedules (see individual pipeline files for cron times)
 - Full TFM matrix including net10.0 test legs and legacy SQL Server manual-test coverage
 

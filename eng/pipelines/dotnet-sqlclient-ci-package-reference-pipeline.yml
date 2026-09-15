@@ -19,12 +19,15 @@
 #   - Daily at 11:00 UTC on GitHub release/7.1
 #   - Daily at 19:00 UTC on ADO internal/release/7.1
 #
-# GOTCHA: This pipeline definition is triggered by GitHub _and_ ADO CI.  We are
-# able to define different triggers and schedules using branch filters:
+# GOTCHA: This pipeline definition is registered with GitHub _and_ ADO CI.  We
+# are able to define different triggers and schedules using branch filters:
 #
-#   - The GitHub registration uses the release/7.1 branch filters.
+#   - The GitHub registration uses the release/7.1 branch filters.  Only its
+#     schedule is active; the CI push trigger is commented out below due to
+#     limited resources.
 #
-#   - The ADO registration uses the internal/release/7.1 branch filters.
+#   - The ADO registration uses the internal/release/7.1 branch filters, for
+#     both the push trigger and the schedule.
 #
 # Changes are batched together to ensure that the pipline never runs
 # concurrently.
