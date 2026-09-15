@@ -21,6 +21,8 @@ internal sealed record SampleResult(Outcome Outcome, double MeasurementSeconds, 
     public Distribution DriverOpenLatency { get; init; } = new(0, null, null, null, 0);
     public Distribution FailedDriverOpenLatency { get; init; } = new(0, null, null, null, 0);
     public long CanceledOpenGateWaits { get; init; }
+    public int? InitialHeldConnections { get; init; }
+    public PoolCreationObservation? PoolCreation { get; init; }
 }
 
 internal sealed record InitialRamp(int SettledAttempts, int SuccessfulOpens, bool Complete,
@@ -65,10 +67,12 @@ internal sealed class WorkloadRunner
     private int _initialSettled;
     private int _initialSuccesses;
     private double _initialLastCompletion;
+    private int? _initialHeld;
 
     public WorkloadRunner(Settings settings, Sample sample, IConnectionFactory factory,
         PhysicalCounters counters, IClock? clock = null)
     {
+        ConnectionFactory.ValidateExperiment(settings, sample);
         if (settings.MaxConcurrentOpens < 0 || settings.MaxConcurrentOpens > 4096 ||
             settings.MaxConcurrentOpens != 0 && (sample.Pool != PoolMode.Disabled || sample.Workload != Workload.OpenClose))
             throw new ArgumentException("The open cap requires a non-pooled open-close sample.");
@@ -113,6 +117,7 @@ internal sealed class WorkloadRunner
         Thread? cancellationThread = null;
         try
         {
+            _factory.StartMeasurement();
             PrepareWorkers();
             ready?.Invoke();
             _metrics.Origin = _clock.Seconds;
@@ -149,10 +154,22 @@ internal sealed class WorkloadRunner
                 {
                     double rampSeconds = Math.Max(0, Volatile.Read(ref _lastCompletion) - _roundGate);
                     _coordinatorMetrics.Add(Metric.Ramp, rampSeconds * 1000, _roundOpens);
+                    if (_rounds == 0)
+                    {
+                        IConnection[] held = _workers.Select(w => w.Held).OfType<IConnection>().ToArray();
+                        _initialHeld = held.Length;
+                        _factory.ObserveColdRound(held);
+                    }
                     CloseRound();
                     _coordinatorMetrics.Add(Metric.Round, (_clock.Seconds - _roundGate) * 1000);
                     _rounds++;
                     roundActive = false;
+                    if (_settings.Rounds == 1)
+                    {
+                        _stop = true;
+                        _metrics.StopAdmission();
+                        stopAt = _metrics.MeasurementEnd;
+                    }
                     if (Admitting)
                     {
                         DispatchRound();
@@ -224,6 +241,8 @@ internal sealed class WorkloadRunner
                 _gateStop?.Dispose();
                 if (cancellationThread is null || cancellationThread.Join(0)) _cancel.Dispose();
             }
+            try { _factory.StopMeasurement(); }
+            catch (Exception exception) { RecordFailure(exception); incomplete = true; }
         }
         incomplete |= _externalStop;
         _metrics.Seal();
@@ -243,6 +262,8 @@ internal sealed class WorkloadRunner
             DriverOpenLatency = SnapshotLatency(worker => worker.DriverOpenLatency),
             FailedDriverOpenLatency = SnapshotLatency(worker => worker.FailedDriverOpenLatency),
             CanceledOpenGateWaits = Interlocked.Read(ref _canceledOpenGateWaits),
+            InitialHeldConnections = _initialHeld,
+            PoolCreation = _factory.PoolCreation,
             InitialRamp = new(_initialSettled, _initialSuccesses, _initialSettled == _workers.Length,
                 Math.Max(0, _initialLastCompletion - _metrics.Origin),
                 MetricBucket.Rate(_initialSuccesses, _initialLastCompletion - _metrics.Origin))

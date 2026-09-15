@@ -80,6 +80,8 @@ Use a new output path per invocation. Existing files are never overwritten.
 | `--duration`, `--interval` | 30 and 1 seconds |
 | `--connect-timeout` | 15 seconds, finite and positive |
 | `--max-concurrent-opens` | 0 (no external cap), or 1-4096 for `--pool disabled --workload open-close` only |
+| `--rounds` | 0 (duration-bounded repetition), or 1 for a single held `cold-ramps` round |
+| `--pool-creation-limit` | 0 (no internal limiter), or 1-4096 for `--pool v2 --workload cold-ramps --rounds 1` only |
 | `--drain` | 20 seconds after admission stops |
 | `--startup-timeout` | 60 seconds to prepare workers and finish preflight |
 | `--deadline` | 120 seconds from child launch, including startup and drain |
@@ -191,6 +193,104 @@ and are canceled only under the existing drain/shutdown policy. Driver failures,
 including driver cancellation exceptions, remain failures and release permits.
 
 ## Isolation, failure, and safety
+
+### Experimental V2 constructor limiter
+
+Use this **test-harness-only** experiment to compare the existing V2
+`ConcurrencyLimiter` dependency, not the external `--max-concurrent-opens` gate.
+No production setting, default, public API, or driver source changes are involved.
+
+```sh
+for limit in 0 4 10; do
+  dotnet "$harness" --pool v2 --workload cold-ramps --rounds 1 \
+    --pool-creation-limit "$limit" --max-concurrent-opens 0 \
+    --caller async --profile provisioned --worker-minimum 512 \
+    --start 128 --max 128 --repetitions 1 \
+    --connect-timeout 15 --duration 30 --drain 20 \
+    --startup-timeout 60 --deadline 120 --xevents \
+    --output "cold-v2-n128-limit${limit}-rep1.jsonl"
+done
+```
+
+Repeat with new output names, alternating limit order between repetitions.
+Use `--repetitions 1` in a controller loop if failed repetitions must not suppress
+later repetitions. Each sample already runs in a fresh child process. Repeat at
+other N values and with `--caller sync-dedicated`, keeping profile and settings
+matched. Use a worker minimum sufficient for the largest N. Do not change
+`DOTNET_PROCESSOR_COUNT`. Server login timing uses the existing XEvent collector.
+The non-pooled preflight and observer connections are outside measurement.
+
+`--rounds 1` releases N workers once. Successful connections stay held until
+every attempted open settles, including failed or timed-out attempts. The
+coordinator records the initial ramp and held ownership, closes the connections,
+clears the pool, and exits without starting a second round. Duration and drain
+remain safety bounds. A deadline or uninterruptible call yields incomplete
+evidence, not proof of N held connections.
+
+For V2 one-round samples, `PoolCreationAdapter`:
+
+1. Resolves the loaded driver's actual internal types and checks its assembly
+   version and public-key token against the harness's compiled assembly reference.
+   It validates the exact constructor signature, readonly limiter field type,
+   dictionary type, and required members. Unsupported layouts fail setup.
+2. Uses a unique sample application name. After preflight, before worker dispatch,
+   it constructs `ChannelDbConnectionPool` with the normal `SqlConnectionFactory`,
+   normal provider information, and either `null` (limit 0) or a new
+   `ConcurrencyLimiter` with the requested `PermitLimit` and `QueueLimit=0`.
+3. Registers the pool into its empty `SqlConnection.PoolGroup` collection under
+   the group's lock, preserving startup and active-pool metric accounting.
+   It never changes a readonly field, substitutes physical opens, or shares a
+   limiter between pools. The 0 baseline uses the same registration and checks.
+4. Verifies the registered pool before each connection is created and verifies
+   each successful connection's actual internal pool. Replacement or unexpected
+   state fails the sample. Identity-based pooling, integrated security, user
+   instances, and configured failover partners are outside this experiment.
+5. Forces `PoolBlockingPeriod=NeverBlock` for these V2 one-round samples only,
+   so cached login-error blocking does not confound the limit comparison.
+   Min pool size is zero, max pool size N, retry count zero, and enlistment off.
+   Existing runs with default `--rounds 0` remain unchanged.
+6. Clears the pool before disposing its caller-owned limiter. If owners remain
+   after bounded cancellation, final cleanup is deferred until they dispose.
+   A physical creation lease that outlives outer cancellation also defers limiter
+   disposal until it returns. Uninterruptible work is contained by child exit.
+
+Added JSON fields under `sample-end.Result.Result`:
+
+| Field | Meaning |
+|---|---|
+| `InitialRamp` | Settled attempts, successful opens, completion flag, initial gate-to-last-completion seconds and opens/second |
+| `InitialHeldConnections` | Successful connection objects still held at first-round settlement |
+| `DriverOpenLatency.P95Milliseconds` | Client success p95 across measurement and drain, including internal pool wait |
+| `FailedDriverOpenLatency` and `Failures` | Failure durations and safe categories/numbers. Pool wait timeouts can be `InvalidOperationException`, so inspect failure totals too |
+| `PoolCreation.ConfiguredLimit` | Actual constructor limit, 0 means `null` |
+| `PoolCreation.AdapterContract`, `PoolType`, `DriverAssemblyVersion`, `DriverModuleId`, `PoolId` | Adapter contract and exact loaded pool/module identity |
+| `PoolCreation.VerifiedHeldConnections` | Actual open `SqlConnection` instances verified against that pool |
+| `PoolCreation.DistinctPhysicalConnectionIds` | Count of distinct nonempty `ClientConnectionId` values, never the IDs themselves |
+| `PoolCreation.PoolConnectionsAtSettlement` | Driver pool's physical connection count before closing held connections |
+| `PoolCreation.SampledPeakActivePermits`, `PermitSamples`, `PermitSamplingIntervalMilliseconds` | Occupied permits sampled by a dedicated thread approximately every 1 ms. Peak is a **lower bound**, not an exact physical-creation peak |
+| `PoolCreation.SuccessfulLeases`, `FailedLeases` | Actual limiter counters. Failed leases are deferrals, not failed opens. Null without a limiter |
+| `PoolCreation.AvailablePermitsAfterDrain` | Actual available permits when observation ends. A settled sample should have the full limit |
+| `PoolCreation.PeakPhysicalCreations` | Null: exact peak physical-creation concurrency is not instrumented |
+| `PoolCreation.PoolCleared`, `LimiterDisposed` | Cleanup observed before result publication. Limiter disposal is null for limit 0 |
+
+Proof of a successful N-connection cold ramp requires all initial attempts
+settled, N successful opens, and all three `PoolCreation` held/physical counts
+equal to N. It also requires one completed round, no failures, no external gate,
+and confirmed child reaping. A failed or incomplete sample cannot prove this.
+`XEvents` remains at `sample-end.Result.XEvents`, including server login duration
+distributions and session cleanup. Do not interpret permit deferrals as timeouts.
+
+The adapter is deliberately coupled to this internal layout. Assembly identity
+plus structural checks are not a promise of compatibility with future driver
+implementations. Record the module ID and commit alongside each run.
+
+Local SQL Server 2025 under Docker emulation is a smoke/control target, not a
+representative native server. No native-target performance conclusion or default
+limit recommendation follows from that environment alone. Live validation is
+opt-in via `LivePoolCreationExperimentTests`; ordinary tests use denied real pool
+permits to verify the seam without network creation.
+
+### Process isolation
 
 Every complete timed sample is a new process. The V2 AppContext switch is set
 before the first connection, including preflight. This avoids cached switch/pool

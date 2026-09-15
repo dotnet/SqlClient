@@ -478,6 +478,7 @@ internal sealed class FakeFactory(int roundSize) : IConnectionFactory, IDisposab
     private int _active;
     private int _clears;
     public int FailId { get; init; }
+    public int TimeoutId { get; init; }
     public int FailDisposeId { get; init; }
     public bool Block { get; init; }
     public bool PrematureDispose;
@@ -552,6 +553,7 @@ internal sealed class FakeFactory(int roundSize) : IConnectionFactory, IDisposab
             Interlocked.Decrement(ref owner._active);
             Interlocked.Increment(ref owner._completed);
             if (id == owner.FailId) throw new InvalidOperationException("suppressed test failure");
+            if (id == owner.TimeoutId) throw new TimeoutException();
             _opened = true;
         }
 

@@ -186,8 +186,17 @@ internal sealed class Supervisor
             (packet.Interval is null || packet.Interval.CumulativeFailures.All(f => Safe(f.Failure))) &&
             (packet.Result is null || (Enum.IsDefined(packet.Result.Outcome) &&
                 packet.Result.Trend.Status is "insufficient-data" or "descriptive" &&
-                packet.Result.Failures.All(f => Safe(f.Failure))));
+                packet.Result.Failures.All(f => Safe(f.Failure)) &&
+                (packet.Result.PoolCreation is null || SafePoolCreation(packet.Result.PoolCreation))));
     }
+
+    private static bool SafePoolCreation(PoolCreationObservation observation) =>
+        observation.AdapterContract == "channel-constructor-registration-v1" &&
+        observation.PoolType == "Microsoft.Data.SqlClient.ConnectionPool.ChannelDbConnectionPool" &&
+        observation.DriverAssemblyVersion is not null &&
+        Regex.IsMatch(observation.DriverAssemblyVersion, "^[0-9.]{1,40}$") &&
+        Guid.TryParseExact(observation.DriverModuleId, "D", out _) &&
+        observation.ConfiguredLimit is >= 0 and <= 4096;
 
     private static bool SafeMetadata(RuntimeMetadata metadata)
     {

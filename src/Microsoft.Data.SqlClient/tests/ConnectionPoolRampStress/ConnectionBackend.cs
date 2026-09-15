@@ -18,6 +18,10 @@ internal interface IConnectionFactory
 {
     IConnection Create();
     void ClearPool();
+    void StartMeasurement() { }
+    void ObserveColdRound(IReadOnlyList<IConnection> held) { }
+    void StopMeasurement() { }
+    PoolCreationObservation? PoolCreation => null;
 }
 
 internal sealed record SafeFailure(string ExceptionType, int? SqlNumber, string Category);
@@ -76,21 +80,47 @@ internal sealed record ThreadPoolSettings(int MinimumWorkers, int MinimumIo, int
 internal sealed class ConnectionFactory : IConnectionFactory
 {
     private readonly string _connectionString;
+    private readonly bool _creationExperiment;
+    private readonly int _creationLimit;
+    private readonly object _lifetimeGate = new();
+    private PoolCreationAdapter? _creationAdapter;
+    private int _owners;
+    private bool _stopping;
     public EffectiveConnection Effective { get; }
+    public PoolCreationObservation? PoolCreation => _creationAdapter?.Snapshot;
+    internal PoolCreationAdapter? CreationAdapter => _creationAdapter;
 
     public ConnectionFactory(string input, Sample sample, Settings settings, string? applicationName = null)
     {
         if (sample.Pool == PoolMode.V2 &&
             typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.ConnectionPool.ChannelDbConnectionPool") is null)
             throw new NotSupportedException();
+        ValidateExperiment(settings, sample);
+        _creationExperiment = sample.Pool == PoolMode.V2 && settings.Rounds == 1;
+        _creationLimit = settings.PoolCreationLimit;
         var builder = Normalize(input, sample, settings);
-        builder.ApplicationName = WorkloadApplicationName(applicationName);
+        if (_creationExperiment && (builder.IntegratedSecurity || builder.UserInstance || builder.FailoverPartner.Length != 0))
+            throw new ArgumentException("The creation experiment requires non-identity pooling with no user instance or failover partner.");
+        if (_creationExperiment) builder.PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock;
+        builder.ApplicationName = WorkloadApplicationName(applicationName ??
+            (_creationExperiment ? $"ConnectionPoolRampStress_{Guid.NewGuid():N}" : null));
         _connectionString = builder.ConnectionString;
         AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", out bool managed);
         Effective = new(builder.Pooling, builder.MaxPoolSize, builder.MinPoolSize, builder.ConnectTimeout,
             builder.ConnectRetryCount, builder.PoolBlockingPeriod.ToString(), builder.Encrypt.ToString(),
             builder.TrustServerCertificate, !OperatingSystem.IsWindows() || managed ? "managed" : "native",
             builder.Enlist);
+    }
+
+    internal static void ValidateExperiment(Settings settings, Sample sample)
+    {
+        if (settings.Rounds is < 0 or > 1 ||
+            settings.Rounds != 0 && sample.Workload != Workload.ColdRamps ||
+            settings.PoolCreationLimit is < 0 or > 4096 ||
+            settings.PoolCreationLimit != 0 &&
+                (sample.Pool != PoolMode.V2 || sample.Workload != Workload.ColdRamps || settings.Rounds != 1 ||
+                 settings.MaxConcurrentOpens != 0))
+            throw new ArgumentException("Invalid pool creation experiment.");
     }
 
     internal static SqlConnectionStringBuilder Normalize(string input, Sample sample, Settings settings) => new(input)
@@ -135,10 +165,58 @@ internal sealed class ConnectionFactory : IConnectionFactory
             Regex.IsMatch(version, "^[0-9.]{1,40}$") ? version : "unavailable", Effective);
     }
 
-    public IConnection Create() => new Connection(new SqlConnection(_connectionString));
+    public void StartMeasurement()
+    {
+        if (_creationExperiment)
+        {
+            if (_creationAdapter is not null || _stopping) throw new InvalidOperationException();
+            _creationAdapter = PoolCreationAdapter.Install(_connectionString, _creationLimit);
+        }
+    }
+
+    public IConnection Create()
+    {
+        if (!_creationExperiment) return new Connection(new SqlConnection(_connectionString));
+        lock (_lifetimeGate)
+        {
+            if (_stopping || _creationAdapter is null) throw new InvalidOperationException();
+            SqlConnection connection = new(_connectionString);
+            try { _creationAdapter.VerifyRegistered(connection); }
+            catch { connection.Dispose(); throw; }
+            _owners++;
+            return new ExperimentConnection(connection, this);
+        }
+    }
+
+    public void ObserveColdRound(IReadOnlyList<IConnection> held) =>
+        _creationAdapter?.ObserveHeld(held.Cast<ExperimentConnection>().Select(c => c.Value).ToArray());
+
+    public void StopMeasurement()
+    {
+        lock (_lifetimeGate)
+        {
+            _stopping = true;
+            _creationAdapter?.StopSampling();
+            if (_owners == 0) _creationAdapter?.Dispose();
+        }
+    }
+
+    private void ReleaseOwner()
+    {
+        lock (_lifetimeGate)
+        {
+            _owners--;
+            if (_stopping && _owners == 0) _creationAdapter?.Dispose();
+        }
+    }
 
     public void ClearPool()
     {
+        if (_creationAdapter is not null)
+        {
+            _creationAdapter.Clear();
+            return;
+        }
         using SqlConnection key = new(_connectionString);
         SqlConnection.ClearPool(key);
     }
@@ -148,5 +226,27 @@ internal sealed class ConnectionFactory : IConnectionFactory
         public void Open() => connection.Open();
         public Task OpenAsync(CancellationToken cancellationToken) => connection.OpenAsync(cancellationToken);
         public void Dispose() => connection.Dispose();
+    }
+
+    private sealed class ExperimentConnection(SqlConnection connection, ConnectionFactory owner) : IConnection
+    {
+        private int _disposed;
+        internal SqlConnection Value => connection;
+        public void Open()
+        {
+            connection.Open();
+            owner._creationAdapter!.VerifyOpened(connection);
+        }
+        public async Task OpenAsync(CancellationToken cancellationToken)
+        {
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            owner._creationAdapter!.VerifyOpened(connection);
+        }
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+            try { connection.Dispose(); }
+            finally { owner.ReleaseOwner(); }
+        }
     }
 }

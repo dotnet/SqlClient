@@ -31,6 +31,8 @@ internal sealed record Settings
     public double IntervalSeconds { get; init; } = 1;
     public int ConnectTimeoutSeconds { get; init; } = 15;
     public int MaxConcurrentOpens { get; init; }
+    public int PoolCreationLimit { get; init; }
+    public int Rounds { get; init; }
     public double DrainSeconds { get; init; } = 20;
     public double StartupSeconds { get; init; } = 60;
     public double DeadlineSeconds { get; init; } = 120;
@@ -72,6 +74,12 @@ internal sealed record Settings
             MaxConcurrentOpens != 0 && (Pool != "disabled" || Work != "open-close"))
         {
             throw new ArgumentException("Max concurrent opens must be 0, or 1-4096 with pool disabled and workload open-close.");
+        }
+        if (Rounds is < 0 or > 1 || Rounds != 0 && Work != "cold-ramps" ||
+            PoolCreationLimit is < 0 or > 4096 ||
+            PoolCreationLimit != 0 && (Pool != "v2" || Work != "cold-ramps" || Rounds != 1))
+        {
+            throw new ArgumentException("Rounds must be 0 or 1 for cold-ramps. A pool creation limit requires V2 cold-ramps with rounds 1.");
         }
         if (string.IsNullOrWhiteSpace(ConnectionEnvironment) || ConnectionEnvironment.Contains('=') ||
             string.IsNullOrWhiteSpace(Output))
@@ -157,7 +165,7 @@ internal static class CommandLine
         {
             ("start", 1), ("max", 512), ("growth", 2), ("repetitions", 3),
             ("connect-timeout", 15), ("worker-minimum", 1024), ("xevent-timeout", 5),
-            ("max-concurrent-opens", 0)
+            ("max-concurrent-opens", 0), ("pool-creation-limit", 0), ("rounds", 0)
         })
         {
             Option<int> option = new("--" + name) { DefaultValueFactory = _ => value };
@@ -198,6 +206,8 @@ internal static class CommandLine
                 Growth = result.GetValue(integers["growth"]), Repetitions = result.GetValue(integers["repetitions"]),
                 ConnectTimeoutSeconds = result.GetValue(integers["connect-timeout"]),
                 MaxConcurrentOpens = result.GetValue(integers["max-concurrent-opens"]),
+                PoolCreationLimit = result.GetValue(integers["pool-creation-limit"]),
+                Rounds = result.GetValue(integers["rounds"]),
                 WorkerMinimum = result.GetValue(integers["worker-minimum"]),
                 DurationSeconds = result.GetValue(durations["duration"]), IntervalSeconds = result.GetValue(durations["interval"]),
                 DrainSeconds = result.GetValue(durations["drain"]), StartupSeconds = result.GetValue(durations["startup-timeout"]),
