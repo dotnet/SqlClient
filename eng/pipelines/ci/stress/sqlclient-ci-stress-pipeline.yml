@@ -51,6 +51,11 @@ resources:
           include:
             - main
             - internal/main
+            # Azure discovers completion triggers by evaluating the YAML on each pipeline's
+            # configured default branch. Include release branches that contain this pipeline;
+            # after a match, Azure runs it using the triggering package run's branch and commit.
+            - release/7.1
+            - internal/release/7.1
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
