@@ -17,7 +17,7 @@ schedules:
     displayName: 7.1 Daily Official Build (23:00 UTC)
     branches:
       include:
-        - internal/release/7.1-staging
+        - internal/release/7.1
     always: true
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.

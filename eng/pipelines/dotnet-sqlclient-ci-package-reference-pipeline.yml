@@ -60,10 +60,10 @@ trigger:
       # GitHub release branch.
       #
       # GOTCHA: Currently disabled due to limited resources.
-      #- release/7.1-staging
+      #- release/7.1
 
       # ADO release branch.
-      - internal/release/7.1-staging
+      - internal/release/7.1
 
 # Trigger this pipeline on a schedule.
 schedules:
@@ -73,7 +73,7 @@ schedules:
     displayName: 7.1 GitHub Package-Reference Daily Run (11:00 UTC)
     branches:
       include:
-      - release/7.1-staging
+      - release/7.1
     always: true
 
   # ADO internal/release/7.1 daily.
@@ -81,7 +81,7 @@ schedules:
     displayName: 7.1 ADO Package-Reference Daily Run (19:00 UTC)
     branches:
       include:
-      - internal/release/7.1-staging
+      - internal/release/7.1
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.

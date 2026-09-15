@@ -49,8 +49,8 @@ resources:
       trigger:
         branches:
           include:
-            - release/7.1-staging
-            - internal/release/7.1-staging
+            - release/7.1
+            - internal/release/7.1
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:

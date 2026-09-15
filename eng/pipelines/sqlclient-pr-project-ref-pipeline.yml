@@ -32,7 +32,7 @@ pr:
   branches:
     include:
       # GitHub repo branch targets that will trigger PR validation builds.
-      - release/7.1-staging
+      - release/7.1
 
   paths:
     include:

@@ -26,7 +26,7 @@ resources:
       trigger:
         branches:
           include:
-            - internal/release/7.1-staging
+            - internal/release/7.1
 
 parameters:
 

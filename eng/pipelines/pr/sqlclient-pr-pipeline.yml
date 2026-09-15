@@ -24,7 +24,7 @@ name: $(DayOfYear)$(Rev:rr)
 pr:
   branches:
     include:
-      - release/7.1-staging
+      - release/7.1
 
   paths:
     include:

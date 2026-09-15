@@ -34,7 +34,7 @@ pr:
       # GitHub repo branch targets that will trigger PR validation builds.
       #
       # GOTCHA: Currently disabled due to limited resources.
-      # release/7.1-staging
+      # release/7.1
     ]
 
   paths:

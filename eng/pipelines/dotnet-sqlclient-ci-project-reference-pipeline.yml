@@ -58,10 +58,10 @@ trigger:
   branches:
     include:
       # GitHub release branch.
-      - release/7.1-staging
+      - release/7.1
 
       # ADO release branch.
-      - internal/release/7.1-staging
+      - internal/release/7.1
 
 # Trigger this pipeline on a schedule.
 schedules:
@@ -71,7 +71,7 @@ schedules:
     displayName: 7.1 GitHub Project-Reference Daily Run (09:00 UTC)
     branches:
       include:
-      - release/7.1-staging
+      - release/7.1
     always: true
 
   # ADO internal/release/7.1 daily.
@@ -79,7 +79,7 @@ schedules:
     displayName: 7.1 ADO Project-Reference Daily Run (17:00 UTC)
     branches:
       include:
-      - internal/release/7.1-staging
+      - internal/release/7.1
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.

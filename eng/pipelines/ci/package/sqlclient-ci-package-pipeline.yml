@@ -32,7 +32,7 @@ schedules:
     displayName: 7.1 GitHub Daily Package Build (13:00 UTC)
     branches:
       include:
-        - release/7.1-staging
+        - release/7.1
 
     always: true
 
@@ -40,7 +40,7 @@ schedules:
     displayName: 7.1 ADO Daily Package Build (21:00 UTC)
     branches:
       include:
-        - internal/release/7.1-staging
+        - internal/release/7.1
     always: true
 
 # Pipeline parameters visible in the Azure DevOps UI.

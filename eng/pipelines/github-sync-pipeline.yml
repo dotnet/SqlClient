@@ -39,7 +39,7 @@ schedules:
     displayName: 7.1 Daily GitHub Sync (15:00 UTC)
     branches:
       include:
-        - internal/release/7.1-staging
+        - internal/release/7.1
     always: true
 
 # Pipeline parameters, visible in the Azure DevOps UI.
@@ -49,13 +49,13 @@ parameters:
   - name: githubBranch
     displayName: GitHub Branch
     type: string
-    default: release/7.1-staging
+    default: release/7.1
 
   # The ADO target branch to create the PR against.
   - name: targetBranch
     displayName: ADO Target Branch
     type: string
-    default: internal/release/7.1-staging
+    default: internal/release/7.1
 
 variables:
   - template: /eng/pipelines/libraries/ci-build-variables.yml@self
