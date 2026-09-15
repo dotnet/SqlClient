@@ -5,6 +5,8 @@
 #if NET
 
 using System;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
 
 #nullable enable
 

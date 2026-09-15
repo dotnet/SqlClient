@@ -13,6 +13,7 @@ using System.IO;
 using System.Reflection;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 
 #if NET
@@ -55,14 +56,14 @@ namespace Microsoft.Data.SqlClient.Server
         //      These methods implement common semantics for getters & setters
         //      All access to underlying Smi getters/setters must validate parameters
         //      in these methods
-        //  
+        //
 
         //  The idea for the getters is that there are two types associated with the field/column,
-        //  the one the user asks for (implicitly via a strongly-typed getter) and the one the data 
+        //  the one the user asks for (implicitly via a strongly-typed getter) and the one the data
         //  is stored in (SmiMetaData).
         //  When a strong getter is invoked, we try one of two ways to get the value
         //      1) go directly to the source for the requested type if possible
-        //      2) instantiate the value based on the stored type (GetValue), then ask the Clr 
+        //      2) instantiate the value based on the stored type (GetValue), then ask the Clr
         //          to convert.
         internal static bool IsDBNull(ITypedGettersV3 getters, int ordinal)
         {
@@ -1643,7 +1644,7 @@ namespace Microsoft.Data.SqlClient.Server
                     typeCode != ExtendedClrTypeCode.DbDataReader &&
                     typeCode != ExtendedClrTypeCode.IEnumerableOfSqlDataRecord
                 ) ||
-                CanAccessSetterDirectly(metaData, typeCode), 
+                CanAccessSetterDirectly(metaData, typeCode),
                 "Un-validated type '" + typeCode + "' for metaData: " + metaData.SqlDbType
             );
 
@@ -1669,7 +1670,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         //  Implements SqlClient 2.0-compatible SetValue() semantics + VS2008 extensions
-        //      Assumes caller already validated basic type against the metadata, other than trimming lengths and 
+        //      Assumes caller already validated basic type against the metadata, other than trimming lengths and
         //      checking individual field values (TVPs)
         internal static void SetCompatibleValueV200(
             SmiTypedGetterSetter setters,
@@ -1688,7 +1689,7 @@ namespace Microsoft.Data.SqlClient.Server
                     typeCode != ExtendedClrTypeCode.DbDataReader &&
                     typeCode != ExtendedClrTypeCode.IEnumerableOfSqlDataRecord
                 ) ||
-                CanAccessSetterDirectly(metaData, typeCode), 
+                CanAccessSetterDirectly(metaData, typeCode),
                 "Un-validated type '" + typeCode + "' for metaData: " + metaData.SqlDbType
             );
 
@@ -1915,9 +1916,9 @@ namespace Microsoft.Data.SqlClient.Server
                             break;
 
                         default:
-                            // In order for us to get here we would have to have an 
-                            // invalid instance of SqlDbType, or one would have to add 
-                            // new member to SqlDbType without adding a case in this 
+                            // In order for us to get here we would have to have an
+                            // invalid instance of SqlDbType, or one would have to add
+                            // new member to SqlDbType without adding a case in this
                             // switch, hence the assert.
                             Debug.Fail("unsupported DbType:" + metaData[i].SqlDbType.ToString());
                             throw ADP.NotSupported();
@@ -2110,7 +2111,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
         }
-       
+
         //
         //  Common utility code to get lengths correct for trimming
         //
@@ -2254,7 +2255,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetBytes_FromRecord(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlDataRecord record, int offset)
         {
-            // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
+            // Deal with large values by sending bufferLength of NoLengthLimit (== assume
             //  CheckXetParameters will ignore requested-length checks in this case
             long bufferLength = record.GetBytes(ordinal, 0, null, 0, 0);
             if (bufferLength > int.MaxValue)
@@ -2299,7 +2300,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetBytes_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
-            // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
+            // Deal with large values by sending bufferLength of NoLengthLimit (== assume
             //  CheckXetParameters will ignore requested-length checks in this case)
             int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, actualLength: NoLengthLimit, fieldOffset: 0, bufferLength: NoLengthLimit, bufferOffset: offset, length: NoLengthLimit);
 
@@ -2335,7 +2336,7 @@ namespace Microsoft.Data.SqlClient.Server
             int length = 0;
             if (!value.IsNull)
             {
-                // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
+                // Deal with large values by sending bufferLength of NoLengthLimit (== assume
                 //  CheckXetParameters will ignore requested-length checks in this case
                 long bufferLength = value.Length;
                 if (bufferLength > int.MaxValue)
@@ -2423,7 +2424,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Use chunking via SetChars to transfer a value from a reader to a gettersetter
         private static void SetChars_FromReader(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
-            // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
+            // Deal with large values by sending bufferLength of NoLengthLimit (== assume
             //  CheckXetParameters will ignore requested-length checks in this case)
             int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, actualLength: NoLengthLimit, fieldOffset: 0, bufferLength: NoLengthLimit , bufferOffset: offset, length: NoLengthLimit );
 
@@ -2758,7 +2759,7 @@ namespace Microsoft.Data.SqlClient.Server
 /*DOnly*/{ _ ,  _ ,  _ , _ , X , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , X  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  X  , _  , X  , _ , },/*DateOnly*/
 /*TOnly*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeOnly*/
 #endif
-/*Strm */{ _ ,  X ,  _ , _ , _ , _  , _ , X , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , X  , _  , _  , _ , _  , _ , _ , _ ,  X , _,  _  , _  , _  , _ , },/*Stream*/ 
+/*Strm */{ _ ,  X ,  _ , _ , _ , _  , _ , X , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , X  , _  , _  , _ , _  , _ , _ , _ ,  X , _,  _  , _  , _  , _ , },/*Stream*/
 /*TxRdr*/{ _ ,  _ ,  _ , X , _ , _  , _ , _ , _  , _  , X  , X  , X  , _ , _ , _  , _ , _  , X  , _ , _ , _  , X  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*TextReader*/
 /*XmlRd*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*XmlReader*/
     //     BI, Bin, Bit, Ch, DT, Dec, Fl, Im, Int, Mny, NCh, NTx, NVC, Rl, UI, SDT, SI, SMn, Txt, TS, TI, VBn, VCh, Var, 24, Xml, 26, 27, 28, Udt, St, Dat, Tm, DT2, DTO
@@ -2814,7 +2815,7 @@ namespace Microsoft.Data.SqlClient.Server
 /*DOnly*/{ _ ,  _ ,  _ , _ , X , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , X  , _ , _  , _  , _ , _ , _  , _  , X  , _ , _  , _ , _ , _ ,  _ , _,  X  , _  , X  , _ , },/*DateOnly*/
 /*TOnly*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeOnly*/
 #endif
-/*Strm */{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*Stream*/ 
+/*Strm */{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*Stream*/
 /*TxRdr*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*TextReader*/
 /*XmlRd*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , _ , },/*XmlReader*/
     //     BI, Bin, Bit, Ch, DT, Dec, Fl, Im, Int, Mny, NCh, NTx, NVC, Rl, UI, SDT, SI, SMn, Txt, TS, TI, VBn, VCh, Var, 24, Xml, 26, 27, 28, Udt, St, Dat, Tm, DT2, DTO
@@ -3021,9 +3022,9 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(getters, ordinal));
 
-            // Note: depending on different getters, the result string may be truncated, e.g. for 
+            // Note: depending on different getters, the result string may be truncated, e.g. for
             // Inproc process, the getter is InProcRecordBuffer (implemented in SqlAcess), string will be
-            // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data 
+            // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data
             // is not truncated. Please refer VSDD 479655 for more detailed information regarding the string length.
             string result = getters.GetString(ordinal);
             return result;
@@ -3437,7 +3438,7 @@ namespace Microsoft.Data.SqlClient.Server
                 #else
                 long longValue = SqlTypeWorkarounds.SqlMoneyToLong(value);
                 #endif
-                
+
                 setters.SetInt64(ordinal, longValue);
             }
         }
@@ -3598,7 +3599,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 setters.EndElements();
-  
+
             }
             finally
             {
@@ -3642,7 +3643,7 @@ namespace Microsoft.Data.SqlClient.Server
                     {
                         object cellValue = row[i];
 
-                        // Only determine cell types for first row, to save expensive 
+                        // Only determine cell types for first row, to save expensive
                         if (ExtendedClrTypeCode.Invalid == cellTypes[i])
                         {
                             cellTypes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(

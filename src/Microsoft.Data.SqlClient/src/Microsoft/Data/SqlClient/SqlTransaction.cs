@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
@@ -106,7 +107,7 @@ namespace Microsoft.Data.SqlClient
                     ObjectId,
                     ActivityCorrelator.Current,
                     Connection?.ClientConnectionId);
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -187,7 +188,7 @@ namespace Microsoft.Data.SqlClient
                         ObjectId,
                         ActivityCorrelator.Current,
                         Connection?.ClientConnectionId);
-                    
+
                     try
                     {
 

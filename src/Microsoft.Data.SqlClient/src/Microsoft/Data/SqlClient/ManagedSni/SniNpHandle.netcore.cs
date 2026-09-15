@@ -14,6 +14,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -383,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
-            {			
+            {
                 if (!_validateCert)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
@@ -392,7 +393,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
                 return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
-			}	
+			}
         }
 
         /// <summary>

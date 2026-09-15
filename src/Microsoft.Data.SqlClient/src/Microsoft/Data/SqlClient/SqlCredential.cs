@@ -4,6 +4,7 @@
 
 using System.Security;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

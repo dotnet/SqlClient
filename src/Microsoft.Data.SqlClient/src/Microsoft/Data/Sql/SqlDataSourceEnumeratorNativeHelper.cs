@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using static Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.Sql
 {
@@ -108,7 +109,7 @@ namespace Microsoft.Data.Sql
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of received server instances are {2}",
                                                    nameof(SqlDataSourceEnumeratorNativeHelper), nameof(ParseServerEnumString), serverinstanceslist.Length);
 
-            // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 
+            // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.."
             // Every row is terminated by a null character.
             // Process one row at a time
             foreach (string instance in serverinstanceslist)

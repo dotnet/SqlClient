@@ -12,6 +12,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -52,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             public int RefCount;
             public string Stack;
         }
-      
+
         internal List<History> _history = null;
 #endif
 

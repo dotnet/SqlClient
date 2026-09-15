@@ -9,6 +9,7 @@ using System.IO;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
 
