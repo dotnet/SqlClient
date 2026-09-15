@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         internal long _oldLongValue;
         internal SqlCollation _newCollation;
         internal SqlCollation _oldCollation;
-        internal RoutingInfo _newRoutingInfo;
+        internal TdsEnvChangeRoutingInfo _newRoutingInfo;
         internal bool _newBinRented;
         internal bool _oldBinRented;
 

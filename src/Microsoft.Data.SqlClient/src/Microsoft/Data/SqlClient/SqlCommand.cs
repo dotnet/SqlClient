@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Cut down on object creation and cache all the cached metadata
         /// </summary>
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
 
         /// <summary>
         /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
@@ -894,7 +894,7 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Autoproperty
         // @TODO: MetaData or Metadata?
-        internal _SqlMetaDataSet MetaData => _cachedMetaData;
+        internal TdsColumnMetadataToken MetaData => _cachedMetaData;
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
@@ -1670,7 +1670,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnReturnValue(SqlReturnValue returnValue, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken returnValue, TdsParserStateObject stateObj)
         {
             // Move the return value to the corresponding output parameter.
             // Return parameters are sent in the order in which they were defined in the procedure.
@@ -1682,9 +1682,9 @@ namespace Microsoft.Data.SqlClient
             if (_inPrepare)
             {
                 // Store the returned prepare handle if we are returning from sp_prepare
-                if (!returnValue.value.IsNull)
+                if (!returnValue.Value.IsNull)
                 {
-                    _prepareHandle = returnValue.value.Int32;
+                    _prepareHandle = returnValue.Value.Int32;
                 }
 
                 _inPrepare = false;
@@ -1703,7 +1703,7 @@ namespace Microsoft.Data.SqlClient
                 // If the parameter's direction is InputOutput, Output, or ReturnValue and it needs
                 // to be transparently encrypted/decrypted, then simply decrypt, deserialize, and
                 // set the value.
-                if (returnValue.cipherMD is not null &&
+                if (returnValue.CipherMetadata is not null &&
                     thisParam.CipherMetadata is not null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                      thisParam.Direction == ParameterDirection.InputOutput ||
@@ -1711,11 +1711,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // @TODO: make this a separate method
                     // Validate type of the return value is valid for encryption
-                    if (returnValue.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (returnValue.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
                         throw SQL.InvalidDataTypeForEncryptedParameter(
                             thisParam.GetPrefixedParameterName(),
-                            returnValue.tdsType,
+                            returnValue.TdsType,
                             expectedDataType: TdsEnums.SQLBIGVARBINARY);
                     }
 
@@ -1726,17 +1726,17 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!returnValue.value.IsNull)
+                    if (!returnValue.Value.IsNull)
                     {
                         try
                         {
                             Debug.Assert(_activeConnection is not null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            returnValue.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
                             byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
-                                returnValue.value.ByteArray,
-                                returnValue.cipherMD,
+                                returnValue.Value.ByteArray,
+                                returnValue.CipherMetadata,
                                 _activeConnection,
                                 this);
 
@@ -1794,9 +1794,9 @@ namespace Microsoft.Data.SqlClient
                             _activeConnection.CheckGetExtendedUDTInfo(returnValue, fThrow: true);
 
                             // Extract the byte array from the param value
-                            object data = returnValue.value.IsNull
+                            object data = returnValue.Value.IsNull
                                 ? DBNull.Value
-                                : returnValue.value.ByteArray;
+                                : returnValue.Value.ByteArray;
 
                             // Call the connection to instantiate the UDT object
                             thisParam.Value = _activeConnection.GetUdtValue(data, returnValue, returnDBNull: false);
@@ -1812,13 +1812,13 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(returnValue.value);
+                        thisParam.SetSqlBuffer(returnValue.Value);
                     }
 
-                    // @TODO: This seems fishy to me, it seems like it should be part of the SqlReturnValue class
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
+                    // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.DbType, isMultiValued: false);
 
-                    if (returnValue.type is SqlDbType.Decimal)
+                    if (returnValue.DbType is SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                         thisParam.PrecisionInternal = returnValue.precision;
@@ -1827,7 +1827,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                     }
-                    else if (returnValue.type is SqlDbType.Xml)
+                    else if (returnValue.DbType is SqlDbType.Xml)
                     {
                         if (thisParam.Value is SqlCachedBuffer cachedBuffer)
                         {
