@@ -22,9 +22,11 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# The resource branch filter limits completion triggers to the intended upstream branch. Because
-# both pipelines use the same repository, an eligible run executes this YAML from the triggering
-# package run's branch and commit, preserving branch-specific pipeline definitions.
+# The resource branch filter is an explicit allowlist of pipeline versions designed to run from
+# package completion. Do not add a branch merely because it contains Managed Instance pipeline YAML;
+# any future 7.0 or 6.1 versions must remain excluded. Because both pipelines use the same repository,
+# an eligible run executes this YAML from the triggering package run's branch and commit, preserving
+# branch-specific pipeline definitions.
 resources:
   pipelines:
 
@@ -44,11 +46,9 @@ resources:
           include:
             - internal/main
             # Azure discovers completion triggers by evaluating the YAML on this pipeline's
-            # configured default branch. Include every supported release branch here; after a
-            # match, Azure runs this pipeline using the triggering package run's branch and commit.
+            # configured default branch. Only 7.1 is opted in to package completion; after a match,
+            # Azure runs this pipeline using the triggering package run's branch and commit.
             - internal/release/7.1
-            - internal/release/7.0
-            - internal/release/6.1
 
 # Pipeline parameters, visible in the Azure DevOps UI.
 parameters:
