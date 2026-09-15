@@ -7,6 +7,7 @@ Linux and Windows.
 ## Start here
 
 - [Pool V2 blog post](PoolV2BlogPost.md)
+- [Pool V2 blog post (Word)](PoolV2BlogPost.docx)
 - [Interactive report](index.html)
 - [Full ordered benchmark results](05-full-benchmark-results.svg)
 
@@ -65,6 +66,7 @@ results came from
 | Path | Description |
 |---|---|
 | `PoolV2BlogPost.md` | Shareable draft blog post |
+| `PoolV2BlogPost.docx` | Word version with embedded benchmark charts |
 | `index.html` | Interactive report |
 | `01-*.{png,svg}` through `05-*.{png,svg}` | Generated charts |
 | `data/linux-results.txt` | Raw Linux comparison |
