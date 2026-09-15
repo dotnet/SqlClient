@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img">
+<title>Cold-start pool ramp, async</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="0.00" y="0.00" width="1600.00" height="820.00" fill="#f8fafc"/>
+<text x="64.00" y="68.00" font-size="38" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Cold-start pool ramp, async</text>
+<text x="64.00" y="108.00" font-size="20" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Linux up to 6.6x faster; Windows up to 9.6x faster. Opens physical capacity from a cold pool; max pool size 200.</text>
+<rect x="64.00" y="145.00" width="720.00" height="650.00" fill="#ffffff" stroke="#dbe4ee" stroke-width="1" rx="16"/>
+<text x="92.00" y="187.00" font-size="24" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Linux</text>
+<rect x="404.00" y="169.00" width="18.00" height="18.00" fill="#94a3b8" rx="4"/>
+<text x="432.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Legacy pool</text>
+<rect x="594.00" y="169.00" width="18.00" height="18.00" fill="#0f766e" rx="4"/>
+<text x="622.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">New pool</text>
+<text x="89.00" y="459.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="middle" transform="rotate(-90 89.00 459.00)">Mean time (ms)</text>
+<line x1="150.00" y1="695.00" x2="756.00" y2="695.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="701.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0</text>
+<line x1="150.00" y1="627.57" x2="756.00" y2="627.57" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="633.57" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">100</text>
+<line x1="150.00" y1="560.14" x2="756.00" y2="560.14" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="566.14" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">200</text>
+<line x1="150.00" y1="492.71" x2="756.00" y2="492.71" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="498.71" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">300</text>
+<line x1="150.00" y1="425.29" x2="756.00" y2="425.29" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="431.29" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">400</text>
+<line x1="150.00" y1="357.86" x2="756.00" y2="357.86" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="363.86" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">500</text>
+<line x1="150.00" y1="290.43" x2="756.00" y2="290.43" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="296.43" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">600</text>
+<line x1="150.00" y1="223.00" x2="756.00" y2="223.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="229.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">700</text>
+<rect x="143.75" y="651.99" width="76.00" height="43.01" fill="#94a3b8" rx="5"/>
+<text x="181.75" y="641.99" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">63.8</text>
+<rect x="231.75" y="681.79" width="76.00" height="13.21" fill="#0f766e" rx="5"/>
+<text x="269.75" y="671.79" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">19.6</text>
+<text x="225.75" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">10</text>
+<rect x="295.25" y="592.15" width="76.00" height="102.85" fill="#94a3b8" rx="5"/>
+<text x="333.25" y="582.15" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">152.5</text>
+<rect x="383.25" y="671.75" width="76.00" height="23.25" fill="#0f766e" rx="5"/>
+<text x="421.25" y="661.75" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">34.5</text>
+<text x="377.25" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">25</text>
+<rect x="446.75" y="489.60" width="76.00" height="205.40" fill="#94a3b8" rx="5"/>
+<text x="484.75" y="479.60" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">304.6</text>
+<rect x="534.75" y="654.11" width="76.00" height="40.89" fill="#0f766e" rx="5"/>
+<text x="572.75" y="644.11" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">60.6</text>
+<text x="528.75" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">50</text>
+<rect x="598.25" y="287.69" width="76.00" height="407.31" fill="#94a3b8" rx="5"/>
+<text x="636.25" y="277.69" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">604.1</text>
+<rect x="686.25" y="632.98" width="76.00" height="62.02" fill="#0f766e" rx="5"/>
+<text x="724.25" y="622.98" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">92.0</text>
+<text x="680.25" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">100</text>
+<text x="424.00" y="771.00" font-size="16" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">Physical connections opened</text>
+<rect x="816.00" y="145.00" width="720.00" height="650.00" fill="#ffffff" stroke="#dbe4ee" stroke-width="1" rx="16"/>
+<text x="844.00" y="187.00" font-size="24" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Windows</text>
+<rect x="1156.00" y="169.00" width="18.00" height="18.00" fill="#94a3b8" rx="4"/>
+<text x="1184.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Legacy pool</text>
+<rect x="1346.00" y="169.00" width="18.00" height="18.00" fill="#0f766e" rx="4"/>
+<text x="1374.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">New pool</text>
+<text x="841.00" y="459.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="middle" transform="rotate(-90 841.00 459.00)">Mean time (ms)</text>
+<line x1="902.00" y1="695.00" x2="1508.00" y2="695.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="701.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0</text>
+<line x1="902.00" y1="627.57" x2="1508.00" y2="627.57" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="633.57" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">100</text>
+<line x1="902.00" y1="560.14" x2="1508.00" y2="560.14" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="566.14" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">200</text>
+<line x1="902.00" y1="492.71" x2="1508.00" y2="492.71" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="498.71" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">300</text>
+<line x1="902.00" y1="425.29" x2="1508.00" y2="425.29" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="431.29" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">400</text>
+<line x1="902.00" y1="357.86" x2="1508.00" y2="357.86" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="363.86" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">500</text>
+<line x1="902.00" y1="290.43" x2="1508.00" y2="290.43" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="296.43" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">600</text>
+<line x1="902.00" y1="223.00" x2="1508.00" y2="223.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="229.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">700</text>
+<rect x="895.75" y="680.56" width="76.00" height="14.44" fill="#94a3b8" rx="5"/>
+<text x="933.75" y="670.56" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">21.4</text>
+<rect x="983.75" y="691.93" width="76.00" height="3.07" fill="#0f766e" rx="5"/>
+<text x="1021.75" y="681.93" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">4.55</text>
+<text x="977.75" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">10</text>
+<rect x="1047.25" y="659.36" width="76.00" height="35.64" fill="#94a3b8" rx="5"/>
+<text x="1085.25" y="649.36" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">52.9</text>
+<rect x="1135.25" y="689.99" width="76.00" height="5.01" fill="#0f766e" rx="5"/>
+<text x="1173.25" y="679.99" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">7.43</text>
+<text x="1129.25" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">25</text>
+<rect x="1198.75" y="625.90" width="76.00" height="69.10" fill="#94a3b8" rx="5"/>
+<text x="1236.75" y="615.90" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">102.5</text>
+<rect x="1286.75" y="686.86" width="76.00" height="8.14" fill="#0f766e" rx="5"/>
+<text x="1324.75" y="676.86" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">12.1</text>
+<text x="1280.75" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">50</text>
+<rect x="1350.25" y="558.07" width="76.00" height="136.93" fill="#94a3b8" rx="5"/>
+<text x="1388.25" y="548.07" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">203.1</text>
+<rect x="1438.25" y="680.73" width="76.00" height="14.27" fill="#0f766e" rx="5"/>
+<text x="1476.25" y="670.73" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">21.2</text>
+<text x="1432.25" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">100</text>
+<text x="1176.00" y="771.00" font-size="16" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">Physical connections opened</text>
+</svg>

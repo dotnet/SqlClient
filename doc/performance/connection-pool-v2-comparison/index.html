@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connection Pool Performance: Legacy vs. New on Linux and Windows</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #0f172a;
+      background: #eef2f7;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1700px; margin: 0 auto; padding: 48px 32px 64px; }
+    h1 { margin: 0 0 28px; font-size: 42px; letter-spacing: -0.03em; }
+    .charts { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    .chart {
+      margin: 0;
+      background: white;
+      border: 1px solid #dbe4ee;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+    .chart img { display: block; width: 100%; height: auto; }
+    .downloads { margin-top: 16px; color: #64748b; font-size: 14px; }
+    .methodology {
+      margin-top: 32px;
+      padding: 30px;
+      background: white;
+      border: 1px solid #dbe4ee;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    }
+    .methodology h2 { margin: 0 0 22px; font-size: 30px; }
+    .methodology h3 { margin: 0 0 14px; font-size: 20px; }
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 28px;
+    }
+    .method-card {
+      padding: 20px 22px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .method-card ul { margin: 0; padding-left: 21px; }
+    .method-card li { margin: 8px 0; line-height: 1.45; }
+    .environment {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 9px 16px;
+      margin: 0;
+    }
+    .environment dt { font-weight: 700; }
+    .environment dd { margin: 0; color: #475569; line-height: 1.4; }
+    .table-wrap { overflow-x: auto; }
+    .benchmark-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .benchmark-table th {
+      padding: 11px 12px;
+      background: #f1f5f9;
+      border-bottom: 2px solid #cbd5e1;
+      text-align: left;
+    }
+    .benchmark-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .benchmark-table td:first-child { width: 25%; }
+    .benchmark-table td:nth-child(2) { width: 24%; color: #475569; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    @media (max-width: 1050px) {
+      .method-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      main { padding: 28px 14px 40px; }
+      h1 { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Connection Pool Performance: Legacy vs. New on Linux and Windows</h1>
+    <section class="charts"><figure class="chart"><a href="01-cold-start-sync.svg" target="_blank"><img src="01-cold-start-sync.svg" alt="01-cold-start-sync"></a></figure><figure class="chart"><a href="02-cold-start-async.svg" target="_blank"><img src="02-cold-start-async.svg" alt="02-cold-start-async"></a></figure><figure class="chart"><a href="03-rapid-fire-sync.svg" target="_blank"><img src="03-rapid-fire-sync.svg" alt="03-rapid-fire-sync"></a></figure><figure class="chart"><a href="04-rapid-fire-async.svg" target="_blank"><img src="04-rapid-fire-async.svg" alt="04-rapid-fire-async"></a></figure><figure class="chart"><a href="05-full-benchmark-results.svg" target="_blank"><img src="05-full-benchmark-results.svg" alt="05-full-benchmark-results"></a></figure></section>
+    <p class="downloads">Click any graph to open its full-resolution SVG.</p>
+    <section class="methodology">
+      <h2>Methodology and test coverage</h2>
+      <div class="method-grid">
+        <section class="method-card">
+          <h3>Comparison method</h3>
+          <ul>
+            <li>Linux and Windows used the same 68 benchmark and parameter rows.
+              Each platform ran the same Release build in separate processes with
+              <code>UseConnectionPoolV2=false</code> for the legacy pool and
+              <code>true</code> for the new channel pool.</li>
+            <li>Benchmark units were interleaved legacy then new, back to back on the
+              same host and reserved CPU set, to reduce machine-state drift.</li>
+            <li>BenchmarkDotNet used the in-process MediumRun job targeting
+              <code>net9.0</code>, Server GC, MemoryDiagnoser, and ThreadingDiagnoser.
+              Benchmark-specific iteration and warmup counts came from the runner config.</li>
+            <li>A slowdown above 10% was rerun across three total passes and marked
+              confirmed only when it reproduced in a strict majority.</li>
+            <li>Speedup is calculated within each platform as legacy mean divided by
+              new-pool mean; 1.0x is parity. Absolute milliseconds should not be
+              compared across Linux and Windows because they are separate machine runs.</li>
+          </ul>
+        </section>
+        <section class="method-card">
+          <h3>Perf lab environment</h3>
+          <dl class="environment">
+            <dt>Platforms</dt>
+            <dd>Separate Linux and Windows client runs in the internal SqlClient
+              performance lab on Azure Dedicated Hosts.</dd>
+            <dt>Windows run</dt>
+            <dd><a href="https://sqlclientdrivers.visualstudio.com/ADO.Net/_build/results?buildId=170431&amp;view=ms.vss-build-web.run-extensions-tab">Azure DevOps build 170431</a>.</dd>
+            <dt>Linux run</dt>
+            <dd>The previously supplied Linux comparison using the matching parameter
+              matrix.</dd>
+            <dt>CPU isolation</dt>
+            <dd>The harness pins the benchmark client and SQL Server to disjoint CPU
+              sets supplied by the perf-lab template.</dd>
+            <dt>Runtime</dt>
+            <dd><code>net9.0</code>, Release configuration, Server GC.</dd>
+            <dt>SQL Server</dt>
+            <dd>The perf-lab SQL instance and <code>sqlclient-perf-db</code> database.
+              Each build records the exact CPU topology, SQL version, MAXDOP, memory,
+              affinity, and tempdb layout in its diagnostics artifact.</dd>
+          </dl>
+        </section>
+      </div>
+      <h3>What each pool benchmark measures</h3>
+      <div class="table-wrap">
+        <table class="benchmark-table">
+          <thead>
+            <tr><th>Benchmark</th><th>Parameters in this run</th><th>Measured workload</th></tr>
+          </thead>
+          <tbody><tr><td><code>ColdStartRamp / ColdStartRampAsync</code></td><td>Connections 10/25/50/100; max pool 200</td><td>Clears the pool, opens the requested number of physical connections, and holds each until all callers connect. Measures cold startup and scale-out; sync uses dedicated threads and async uses tasks.</td></tr><tr><td><code>RapidFireOpenCloseSync / Async</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Uses a fully pre-warmed pool and repeatedly checks connections out and returns them immediately. This is a zero-hold-time worst case for the hot acquire/return and waiter handoff paths.</td></tr><tr><td><code>RapidOpenCloseSingleThread / Async</code></td><td>1000 operations; pool depths 1/10/100</td><td>Runs repeated checkout/return on one caller with no contention. Isolates per-operation pool overhead and the reuse-locality difference between LIFO and FIFO idle-connection ordering.</td></tr><tr><td><code>SteadyStateOpenQueryClose variants</code></td><td>Parallelism 50; max pool 10/25/50/100/200; 20 operations/worker</td><td>Uses a pre-warmed pool for open, SELECT 1, and close loops. Pool sizes above, equal to, and below demand separate hot-path throughput from waiter back-pressure; variants use sync, async, or dedicated threads.</td></tr><tr><td><code>SaturatedSyncOpenOnThreadPool</code></td><td>Parallelism 50; pool 10; worker floors 4/16/32/128</td><td>Runs blocking Open calls on thread-pool threads against a saturated pool. Sweeping the minimum worker count exposes continuation starvation and thread-injection sensitivity.</td></tr><tr><td><code>RandomizedHoldAndQuery</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Holds each checkout for a random 0-50 ms and executes a small query about half the time. Represents mixed application hold times.</td></tr><tr><td><code>MixedSyncAsyncContention</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Splits workers between sync and async open/query/close loops to exercise both checkout paths against the same pool.</td></tr><tr><td><code>MultiCommandReuse</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Checks out once per worker and executes 5-15 sequential commands before returning the connection. Models multi-step ORM or unit-of-work usage.</td></tr><tr><td><code>PoolExhaustionRecovery</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Starts at least twice as many tasks as the pool can serve, runs a query, and holds connections for 10-100 ms. Measures queued-waiter back-pressure and recovery.</td></tr><tr><td><code>BurstyTrafficPattern</code></td><td>Parallelism 10/50; max pool 50/100</td><td>Runs five waves of concurrent checkouts, each executing 1-5 queries, with a short pause between waves. Models clustered request traffic.</td></tr><tr><td><code>OpenConnectionsConcurrently</code></td><td>Concurrent opens 10/50/100; pooling enabled</td><td>Starts many OpenAsync calls together and disposes each connection after it opens. Measures concurrent connection acquisition with pooling enabled.</td></tr><tr><td><code>OpenConnection / OpenAsyncConnection</code></td><td>Pooling enabled; MARS on/off</td><td>Measures the basic sync and async pooled-open API path for a single connection, with and without Multiple Active Result Sets.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

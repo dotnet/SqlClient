@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img">
+<title>Rapid-fire open/close, sync</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="0.00" y="0.00" width="1600.00" height="820.00" fill="#f8fafc"/>
+<text x="64.00" y="68.00" font-size="38" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Rapid-fire open/close, sync</text>
+<text x="64.00" y="108.00" font-size="20" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Linux up to 7.0x faster; Windows up to 1.18x faster. Hot-path checkout/return under concurrent churn; max pool size 100.</text>
+<rect x="64.00" y="145.00" width="720.00" height="650.00" fill="#ffffff" stroke="#dbe4ee" stroke-width="1" rx="16"/>
+<text x="92.00" y="187.00" font-size="24" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Linux</text>
+<rect x="404.00" y="169.00" width="18.00" height="18.00" fill="#94a3b8" rx="4"/>
+<text x="432.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Legacy pool</text>
+<rect x="594.00" y="169.00" width="18.00" height="18.00" fill="#0f766e" rx="4"/>
+<text x="622.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">New pool</text>
+<text x="89.00" y="459.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="middle" transform="rotate(-90 89.00 459.00)">Mean time (ms)</text>
+<line x1="150.00" y1="695.00" x2="756.00" y2="695.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="701.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0</text>
+<line x1="150.00" y1="658.69" x2="756.00" y2="658.69" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="664.69" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0.5</text>
+<line x1="150.00" y1="622.38" x2="756.00" y2="622.38" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="628.38" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">1</text>
+<line x1="150.00" y1="586.08" x2="756.00" y2="586.08" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="592.08" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">1.5</text>
+<line x1="150.00" y1="549.77" x2="756.00" y2="549.77" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="555.77" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">2</text>
+<line x1="150.00" y1="513.46" x2="756.00" y2="513.46" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="519.46" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">2.5</text>
+<line x1="150.00" y1="477.15" x2="756.00" y2="477.15" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="483.15" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">3</text>
+<line x1="150.00" y1="440.85" x2="756.00" y2="440.85" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="446.85" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">3.5</text>
+<line x1="150.00" y1="404.54" x2="756.00" y2="404.54" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="410.54" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">4</text>
+<line x1="150.00" y1="368.23" x2="756.00" y2="368.23" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="374.23" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">4.5</text>
+<line x1="150.00" y1="331.92" x2="756.00" y2="331.92" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="337.92" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">5</text>
+<line x1="150.00" y1="295.62" x2="756.00" y2="295.62" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="301.62" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">5.5</text>
+<line x1="150.00" y1="259.31" x2="756.00" y2="259.31" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="265.31" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">6</text>
+<line x1="150.00" y1="223.00" x2="756.00" y2="223.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="136.00" y="229.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">6.5</text>
+<rect x="219.50" y="527.20" width="76.00" height="167.80" fill="#94a3b8" rx="5"/>
+<text x="257.50" y="517.20" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">2.31</text>
+<rect x="307.50" y="656.17" width="76.00" height="38.83" fill="#0f766e" rx="5"/>
+<text x="345.50" y="646.17" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">0.5348</text>
+<text x="301.50" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">10</text>
+<rect x="522.50" y="254.02" width="76.00" height="440.98" fill="#94a3b8" rx="5"/>
+<text x="560.50" y="244.02" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">6.07</text>
+<rect x="610.50" y="632.30" width="76.00" height="62.70" fill="#0f766e" rx="5"/>
+<text x="648.50" y="622.30" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">0.8635</text>
+<text x="604.50" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">50</text>
+<text x="424.00" y="771.00" font-size="16" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">Parallelism</text>
+<rect x="816.00" y="145.00" width="720.00" height="650.00" fill="#ffffff" stroke="#dbe4ee" stroke-width="1" rx="16"/>
+<text x="844.00" y="187.00" font-size="24" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Windows</text>
+<rect x="1156.00" y="169.00" width="18.00" height="18.00" fill="#94a3b8" rx="4"/>
+<text x="1184.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Legacy pool</text>
+<rect x="1346.00" y="169.00" width="18.00" height="18.00" fill="#0f766e" rx="4"/>
+<text x="1374.00" y="185.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">New pool</text>
+<text x="841.00" y="459.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="middle" transform="rotate(-90 841.00 459.00)">Mean time (ms)</text>
+<line x1="902.00" y1="695.00" x2="1508.00" y2="695.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="701.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0</text>
+<line x1="902.00" y1="658.69" x2="1508.00" y2="658.69" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="664.69" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">0.5</text>
+<line x1="902.00" y1="622.38" x2="1508.00" y2="622.38" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="628.38" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">1</text>
+<line x1="902.00" y1="586.08" x2="1508.00" y2="586.08" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="592.08" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">1.5</text>
+<line x1="902.00" y1="549.77" x2="1508.00" y2="549.77" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="555.77" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">2</text>
+<line x1="902.00" y1="513.46" x2="1508.00" y2="513.46" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="519.46" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">2.5</text>
+<line x1="902.00" y1="477.15" x2="1508.00" y2="477.15" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="483.15" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">3</text>
+<line x1="902.00" y1="440.85" x2="1508.00" y2="440.85" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="446.85" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">3.5</text>
+<line x1="902.00" y1="404.54" x2="1508.00" y2="404.54" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="410.54" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">4</text>
+<line x1="902.00" y1="368.23" x2="1508.00" y2="368.23" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="374.23" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">4.5</text>
+<line x1="902.00" y1="331.92" x2="1508.00" y2="331.92" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="337.92" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">5</text>
+<line x1="902.00" y1="295.62" x2="1508.00" y2="295.62" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="301.62" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">5.5</text>
+<line x1="902.00" y1="259.31" x2="1508.00" y2="259.31" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="265.31" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">6</text>
+<line x1="902.00" y1="223.00" x2="1508.00" y2="223.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="888.00" y="229.00" font-size="14" fill="#64748b" font-weight="400" text-anchor="end" opacity="1">6.5</text>
+<rect x="971.50" y="642.92" width="76.00" height="52.08" fill="#94a3b8" rx="5"/>
+<text x="1009.50" y="632.92" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">0.7172</text>
+<rect x="1059.50" y="650.99" width="76.00" height="44.01" fill="#0f766e" rx="5"/>
+<text x="1097.50" y="640.99" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">0.6061</text>
+<text x="1053.50" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">10</text>
+<rect x="1274.50" y="614.00" width="76.00" height="81.00" fill="#94a3b8" rx="5"/>
+<text x="1312.50" y="604.00" font-size="13" fill="#64748b" font-weight="600" text-anchor="middle" opacity="1">1.12</text>
+<rect x="1362.50" y="626.03" width="76.00" height="68.97" fill="#0f766e" rx="5"/>
+<text x="1400.50" y="616.03" font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle" opacity="1">0.9498</text>
+<text x="1356.50" y="727.00" font-size="17" fill="#0f172a" font-weight="600" text-anchor="middle" opacity="1">50</text>
+<text x="1176.00" y="771.00" font-size="16" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">Parallelism</text>
+</svg>

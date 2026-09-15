@@ -1,0 +1,838 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="4912" viewBox="0 0 2000 4912" role="img">
+<title>Full benchmark results: Linux and Windows</title>
+<style>text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}</style>
+<rect x="0.00" y="0.00" width="2000.00" height="4912.00" fill="#f8fafc"/>
+<text x="64.00" y="64.00" font-size="38" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Full benchmark results: Linux and Windows</text>
+<text x="64.00" y="98.00" font-size="17" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">68 matched benchmark and parameter rows, sorted by mean Linux/Windows speedup.</text>
+<text x="68.00" y="132.00" font-size="16" fill="#64748b" font-weight="700" text-anchor="start" opacity="1">Benchmark scenario</text>
+<text x="1080.00" y="132.00" font-size="16" fill="#64748b" font-weight="700" text-anchor="middle" opacity="1">Linux speedup</text>
+<text x="900.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0x</text>
+<line x1="900.00" y1="176.00" x2="900.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="930.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1x</text>
+<line x1="930.00" y1="176.00" x2="930.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="960.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2x</text>
+<line x1="960.00" y1="176.00" x2="960.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1020.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4x</text>
+<line x1="1020.00" y1="176.00" x2="1020.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1080.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6x</text>
+<line x1="1080.00" y1="176.00" x2="1080.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1140.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">8x</text>
+<line x1="1140.00" y1="176.00" x2="1140.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1200.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">10x</text>
+<line x1="1200.00" y1="176.00" x2="1200.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1260.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">12x</text>
+<line x1="1260.00" y1="176.00" x2="1260.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1680.00" y="132.00" font-size="16" fill="#64748b" font-weight="700" text-anchor="middle" opacity="1">Windows speedup</text>
+<text x="1500.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0x</text>
+<line x1="1500.00" y1="176.00" x2="1500.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1530.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1x</text>
+<line x1="1530.00" y1="176.00" x2="1530.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1560.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2x</text>
+<line x1="1560.00" y1="176.00" x2="1560.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1620.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4x</text>
+<line x1="1620.00" y1="176.00" x2="1620.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1680.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6x</text>
+<line x1="1680.00" y1="176.00" x2="1680.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1740.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">8x</text>
+<line x1="1740.00" y1="176.00" x2="1740.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1800.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">10x</text>
+<line x1="1800.00" y1="176.00" x2="1800.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="1860.00" y="158.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">12x</text>
+<line x1="1860.00" y1="176.00" x2="1860.00" y2="4520.00" stroke="#dbe4ee" stroke-width="1" stroke-dasharray="4 8"/>
+<text x="68.00" y="198.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp Async</text>
+<text x="68.00" y="221.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=100, Pool=200</text>
+<rect x="900.00" y="186.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="186.00" width="166.98" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1104.98" y="205.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">6.6x faster</text>
+<text x="1080.00" y="231.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">604.1 -&gt; 92.0 ms</text>
+<rect x="1500.00" y="186.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="186.00" width="257.91" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1795.91" y="205.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">9.6x faster</text>
+<text x="1680.00" y="231.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">203.1 -&gt; 21.2 ms</text>
+<text x="68.00" y="262.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp</text>
+<text x="68.00" y="285.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=100, Pool=200</text>
+<rect x="900.00" y="250.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="250.00" width="130.86" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1068.86" y="269.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">5.4x faster</text>
+<text x="1080.00" y="295.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">630.1 -&gt; 117.5 ms</text>
+<rect x="1500.00" y="250.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="250.00" width="263.54" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1801.54" y="269.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">9.8x faster</text>
+<text x="1680.00" y="295.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">219.0 -&gt; 22.4 ms</text>
+<text x="68.00" y="326.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp Async</text>
+<text x="68.00" y="349.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=50, Pool=200</text>
+<rect x="900.00" y="314.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="314.00" width="120.68" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1058.68" y="333.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">5.0x faster</text>
+<text x="1080.00" y="359.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">304.6 -&gt; 60.6 ms</text>
+<rect x="1500.00" y="314.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="314.00" width="224.45" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1762.45" y="333.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">8.5x faster</text>
+<text x="1680.00" y="359.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">102.5 -&gt; 12.1 ms</text>
+<text x="68.00" y="390.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp</text>
+<text x="68.00" y="413.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=50, Pool=200</text>
+<rect x="900.00" y="378.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="378.00" width="116.06" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1054.06" y="397.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.9x faster</text>
+<text x="1080.00" y="423.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">319.1 -&gt; 65.5 ms</text>
+<rect x="1500.00" y="378.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="378.00" width="216.91" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1754.91" y="397.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">8.2x faster</text>
+<text x="1680.00" y="423.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">109.3 -&gt; 13.3 ms</text>
+<rect x="54.00" y="436.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="442.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="457.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="454.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Dedicated Threads</text>
+<text x="68.00" y="477.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100, Ops/worker=20</text>
+<rect x="900.00" y="442.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="442.00" width="2.97" height="24.00" fill="#0f766e" rx="6"/>
+<text x="940.97" y="461.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.099x faster</text>
+<text x="1080.00" y="487.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">28.0 -&gt; 25.5 ms</text>
+<rect x="1500.00" y="442.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="442.00" width="313.64" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1851.64" y="461.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">11.5x faster</text>
+<text x="1680.00" y="487.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">156.4 -&gt; 13.6 ms</text>
+<rect x="54.00" y="500.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="506.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="521.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="518.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Async</text>
+<text x="68.00" y="541.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50, Ops/worker=20</text>
+<rect x="900.00" y="506.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="506.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.70" y="525.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.010x slower</text>
+<text x="1080.00" y="551.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">19.5 -&gt; 19.7 ms</text>
+<rect x="1500.00" y="506.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="506.00" width="300.76" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1838.76" y="525.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">11.0x faster</text>
+<text x="1680.00" y="551.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">94.6 -&gt; 8.58 ms</text>
+<text x="68.00" y="582.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp Async</text>
+<text x="68.00" y="605.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=25, Pool=200</text>
+<rect x="900.00" y="570.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="570.00" width="102.74" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1040.74" y="589.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.4x faster</text>
+<text x="1080.00" y="615.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">152.5 -&gt; 34.5 ms</text>
+<rect x="1500.00" y="570.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="570.00" width="183.37" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1721.37" y="589.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">7.1x faster</text>
+<text x="1680.00" y="615.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">52.9 -&gt; 7.43 ms</text>
+<text x="68.00" y="646.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp</text>
+<text x="68.00" y="669.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=25, Pool=200</text>
+<rect x="900.00" y="634.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="634.00" width="101.52" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1039.52" y="653.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.4x faster</text>
+<text x="1080.00" y="679.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">160.2 -&gt; 36.6 ms</text>
+<rect x="1500.00" y="634.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="634.00" width="173.94" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1711.94" y="653.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">6.8x faster</text>
+<text x="1680.00" y="679.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">55.4 -&gt; 8.15 ms</text>
+<rect x="54.00" y="692.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="698.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="713.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="710.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Async</text>
+<text x="68.00" y="733.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100, Ops/worker=20</text>
+<rect x="900.00" y="698.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="698.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.17" y="717.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.006x faster</text>
+<text x="1080.00" y="743.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">20.4 -&gt; 20.2 ms</text>
+<rect x="1500.00" y="698.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="698.00" width="242.73" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1780.73" y="717.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">9.1x faster</text>
+<text x="1680.00" y="743.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">77.4 -&gt; 8.51 ms</text>
+<text x="68.00" y="774.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Sync</text>
+<text x="68.00" y="797.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="762.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="762.00" width="180.97" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1118.97" y="781.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">7.0x faster</text>
+<text x="1080.00" y="807.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.07 -&gt; 0.8635 ms</text>
+<rect x="1500.00" y="762.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="762.00" width="5.23" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1543.23" y="781.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.17x faster</text>
+<text x="1680.00" y="807.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.12 -&gt; 0.9498 ms</text>
+<text x="68.00" y="838.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Sync</text>
+<text x="68.00" y="861.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="826.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="826.00" width="172.98" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1110.98" y="845.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">6.8x faster</text>
+<text x="1080.00" y="871.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.73 -&gt; 0.8475 ms</text>
+<rect x="1500.00" y="826.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="826.00" width="6.63" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1544.63" y="845.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.22x faster</text>
+<text x="1680.00" y="871.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.11 -&gt; 0.9117 ms</text>
+<text x="68.00" y="902.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp Async</text>
+<text x="68.00" y="925.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=10, Pool=200</text>
+<rect x="900.00" y="890.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="890.00" width="67.69" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1005.69" y="909.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">3.3x faster</text>
+<text x="1080.00" y="935.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">63.8 -&gt; 19.6 ms</text>
+<rect x="1500.00" y="890.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="890.00" width="111.31" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1649.31" y="909.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.7x faster</text>
+<text x="1680.00" y="935.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">21.4 -&gt; 4.55 ms</text>
+<text x="68.00" y="966.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Cold-start ramp: Cold Start Ramp</text>
+<text x="68.00" y="989.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Connections=10, Pool=200</text>
+<rect x="900.00" y="954.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="954.00" width="69.08" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1007.08" y="973.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">3.3x faster</text>
+<text x="1080.00" y="999.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">65.1 -&gt; 19.7 ms</text>
+<rect x="1500.00" y="954.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="954.00" width="102.74" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1640.74" y="973.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.4x faster</text>
+<text x="1680.00" y="999.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">22.8 -&gt; 5.16 ms</text>
+<text x="68.00" y="1030.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Async</text>
+<text x="68.00" y="1053.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="1018.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1018.00" width="164.05" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1102.05" y="1037.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">6.5x faster</text>
+<text x="1080.00" y="1063.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.22 -&gt; 0.8069 ms</text>
+<rect x="1500.00" y="1018.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1018.00" width="4.09" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1542.09" y="1037.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.14x faster</text>
+<text x="1680.00" y="1063.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.07 -&gt; 0.9404 ms</text>
+<text x="68.00" y="1094.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Async</text>
+<text x="68.00" y="1117.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="1082.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1082.00" width="155.30" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1093.30" y="1101.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">6.2x faster</text>
+<text x="1080.00" y="1127.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.26 -&gt; 0.8520 ms</text>
+<rect x="1500.00" y="1082.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1082.00" width="3.76" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1541.76" y="1101.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.13x faster</text>
+<text x="1680.00" y="1127.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.03 -&gt; 0.9152 ms</text>
+<text x="68.00" y="1158.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Sync</text>
+<text x="68.00" y="1181.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="1146.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1146.00" width="99.65" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1037.65" y="1165.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">4.3x faster</text>
+<text x="1080.00" y="1191.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.31 -&gt; 0.5348 ms</text>
+<rect x="1500.00" y="1146.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1146.00" width="5.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1543.50" y="1165.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.18x faster</text>
+<text x="1680.00" y="1191.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.7172 -&gt; 0.6061 ms</text>
+<text x="68.00" y="1222.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Parallel connections: Open Connections Concurrently</text>
+<text x="68.00" y="1245.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Concurrency=100</text>
+<rect x="900.00" y="1210.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1210.00" width="22.78" height="24.00" fill="#0f766e" rx="6"/>
+<text x="960.78" y="1229.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.76x faster</text>
+<text x="1080.00" y="1255.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">39.2 -&gt; 22.3 ms</text>
+<rect x="1500.00" y="1210.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1210.00" width="81.94" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1619.94" y="1229.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">3.7x faster</text>
+<text x="1680.00" y="1255.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">23.4 -&gt; 6.28 ms</text>
+<text x="68.00" y="1286.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Async</text>
+<text x="68.00" y="1309.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="1274.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1274.00" width="76.91" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1014.91" y="1293.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">3.6x faster</text>
+<text x="1080.00" y="1319.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.07 -&gt; 0.5806 ms</text>
+<rect x="1500.00" y="1274.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1274.00" width="5.05" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1543.05" y="1293.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.17x faster</text>
+<text x="1680.00" y="1319.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.7303 -&gt; 0.6251 ms</text>
+<rect x="54.00" y="1332.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="1338.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="1353.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="1350.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close</text>
+<text x="68.00" y="1373.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100, Ops/worker=20</text>
+<rect x="900.00" y="1338.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1338.00" width="5.63" height="24.00" fill="#0f766e" rx="6"/>
+<text x="943.63" y="1357.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.19x faster</text>
+<text x="1080.00" y="1383.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">25.7 -&gt; 21.6 ms</text>
+<rect x="1500.00" y="1338.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1338.00" width="70.67" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1608.67" y="1357.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">3.4x faster</text>
+<text x="1680.00" y="1383.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">31.3 -&gt; 9.34 ms</text>
+<text x="68.00" y="1414.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Parallel connections: Open Connections Concurrently</text>
+<text x="68.00" y="1437.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Concurrency=50</text>
+<rect x="900.00" y="1402.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1402.00" width="13.73" height="24.00" fill="#0f766e" rx="6"/>
+<text x="951.73" y="1421.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.46x faster</text>
+<text x="1080.00" y="1447.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">49.5 -&gt; 33.9 ms</text>
+<rect x="1500.00" y="1402.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1402.00" width="44.39" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1582.39" y="1421.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">2.5x faster</text>
+<text x="1680.00" y="1447.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">18.2 -&gt; 7.36 ms</text>
+<rect x="54.00" y="1460.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="1466.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="1481.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="1478.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close</text>
+<text x="68.00" y="1501.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50, Ops/worker=20</text>
+<rect x="900.00" y="1466.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1466.00" width="6.39" height="24.00" fill="#0f766e" rx="6"/>
+<text x="944.39" y="1485.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.21x faster</text>
+<text x="1080.00" y="1511.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">26.7 -&gt; 22.0 ms</text>
+<rect x="1500.00" y="1466.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1466.00" width="46.14" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1584.14" y="1485.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">2.5x faster</text>
+<text x="1680.00" y="1511.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">22.8 -&gt; 8.99 ms</text>
+<text x="68.00" y="1542.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Async</text>
+<text x="68.00" y="1565.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="1530.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1530.00" width="41.70" height="24.00" fill="#0f766e" rx="6"/>
+<text x="979.70" y="1549.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">2.4x faster</text>
+<text x="1080.00" y="1575.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.52 -&gt; 0.6355 ms</text>
+<rect x="1500.00" y="1530.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1530.00" width="2.53" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1540.53" y="1549.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.084x faster</text>
+<text x="1680.00" y="1575.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.7007 -&gt; 0.6461 ms</text>
+<text x="68.00" y="1606.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Parallel connections: Open Connections Concurrently</text>
+<text x="68.00" y="1629.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Concurrency=10</text>
+<rect x="900.00" y="1594.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1594.00" width="14.80" height="24.00" fill="#0f766e" rx="6"/>
+<text x="952.80" y="1613.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.49x faster</text>
+<text x="1080.00" y="1639.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">25.9 -&gt; 17.3 ms</text>
+<rect x="1500.00" y="1594.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1594.00" width="28.14" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1566.14" y="1613.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.94x faster</text>
+<text x="1680.00" y="1639.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">7.69 -&gt; 3.97 ms</text>
+<rect x="54.00" y="1652.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="1658.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="1673.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="1670.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close</text>
+<text x="68.00" y="1693.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=25, Ops/worker=20</text>
+<rect x="900.00" y="1658.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1658.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.21" y="1677.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.007x faster</text>
+<text x="1080.00" y="1703.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">26.9 -&gt; 26.7 ms</text>
+<rect x="1500.00" y="1658.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1658.00" width="33.42" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1571.42" y="1677.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">2.1x faster</text>
+<text x="1680.00" y="1703.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">24.0 -&gt; 11.4 ms</text>
+<text x="68.00" y="1734.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">SqlConnection: Open Connection</text>
+<text x="68.00" y="1757.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">MARS=off</text>
+<rect x="900.00" y="1722.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1722.00" width="16.35" height="24.00" fill="#0f766e" rx="6"/>
+<text x="954.35" y="1741.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.54x faster</text>
+<text x="1080.00" y="1767.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0034 -&gt; 0.0022 ms</text>
+<rect x="1500.00" y="1722.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1722.00" width="14.59" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1552.59" y="1741.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.49x faster</text>
+<text x="1680.00" y="1767.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0034 -&gt; 0.0023 ms</text>
+<text x="68.00" y="1798.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">SqlConnection: Open Async Connection</text>
+<text x="68.00" y="1821.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">MARS=off</text>
+<rect x="900.00" y="1786.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1786.00" width="16.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="954.50" y="1805.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.55x faster</text>
+<text x="1080.00" y="1831.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0036 -&gt; 0.0023 ms</text>
+<rect x="1500.00" y="1786.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1786.00" width="14.27" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1552.27" y="1805.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.48x faster</text>
+<text x="1680.00" y="1831.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0036 -&gt; 0.0025 ms</text>
+<rect x="54.00" y="1844.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="1850.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="1865.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="1862.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Dedicated Threads</text>
+<text x="68.00" y="1885.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50, Ops/worker=20</text>
+<rect x="900.00" y="1850.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1850.00" width="2.37" height="24.00" fill="#0f766e" rx="6"/>
+<text x="940.37" y="1869.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.079x faster</text>
+<text x="1080.00" y="1895.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">27.5 -&gt; 25.4 ms</text>
+<rect x="1500.00" y="1850.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1850.00" width="26.61" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1564.61" y="1869.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.89x faster</text>
+<text x="1680.00" y="1895.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">31.6 -&gt; 16.7 ms</text>
+<text x="68.00" y="1926.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Rapid Fire Open Close Sync</text>
+<text x="68.00" y="1949.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="1914.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1914.00" width="26.35" height="24.00" fill="#0f766e" rx="6"/>
+<text x="964.35" y="1933.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.88x faster</text>
+<text x="1080.00" y="1959.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">1.55 -&gt; 0.8257 ms</text>
+<rect x="1500.00" y="1914.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1914.00" width="1.95" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1539.95" y="1933.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.065x faster</text>
+<text x="1680.00" y="1959.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.7129 -&gt; 0.6694 ms</text>
+<text x="68.00" y="1990.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">SqlConnection: Open Connection</text>
+<text x="68.00" y="2013.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">MARS=on</text>
+<rect x="900.00" y="1978.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="1978.00" width="12.75" height="24.00" fill="#0f766e" rx="6"/>
+<text x="950.75" y="1997.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.42x faster</text>
+<text x="1080.00" y="2023.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0040 -&gt; 0.0028 ms</text>
+<rect x="1500.00" y="1978.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="1978.00" width="13.15" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1551.15" y="1997.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.44x faster</text>
+<text x="1680.00" y="2023.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0036 -&gt; 0.0025 ms</text>
+<rect x="54.00" y="2036.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2042.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2057.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2054.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Dedicated Threads</text>
+<text x="68.00" y="2077.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=25, Ops/worker=20</text>
+<rect x="900.00" y="2042.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2042.00" width="6.81" height="24.00" fill="#0f766e" rx="6"/>
+<text x="944.81" y="2061.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.23x faster</text>
+<text x="1080.00" y="2087.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">35.4 -&gt; 28.9 ms</text>
+<rect x="1500.00" y="2042.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2042.00" width="14.90" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1552.90" y="2061.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.50x faster</text>
+<text x="1680.00" y="2087.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">20.1 -&gt; 13.5 ms</text>
+<text x="68.00" y="2118.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">SqlConnection: Open Async Connection</text>
+<text x="68.00" y="2141.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">MARS=on</text>
+<rect x="900.00" y="2106.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2106.00" width="10.44" height="24.00" fill="#0f766e" rx="6"/>
+<text x="948.44" y="2125.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.35x faster</text>
+<text x="1080.00" y="2151.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0037 -&gt; 0.0027 ms</text>
+<rect x="1500.00" y="2106.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2106.00" width="10.78" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1548.78" y="2125.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.36x faster</text>
+<text x="1680.00" y="2151.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">0.0032 -&gt; 0.0024 ms</text>
+<rect x="54.00" y="2164.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2170.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2185.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2182.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Async</text>
+<text x="68.00" y="2205.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=25, Ops/worker=20</text>
+<rect x="900.00" y="2170.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="927.61" y="2170.00" width="2.39" height="24.00" fill="#dc2626" rx="6"/>
+<text x="919.61" y="2189.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.087x slower</text>
+<text x="1080.00" y="2215.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">21.1 -&gt; 22.9 ms</text>
+<rect x="1500.00" y="2170.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2170.00" width="23.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1561.50" y="2189.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.78x faster</text>
+<text x="1680.00" y="2215.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">18.8 -&gt; 10.5 ms</text>
+<text x="68.00" y="2246.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread Async</text>
+<text x="68.00" y="2269.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=1</text>
+<rect x="900.00" y="2234.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2234.00" width="9.96" height="24.00" fill="#0f766e" rx="6"/>
+<text x="947.96" y="2253.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.33x faster</text>
+<text x="1080.00" y="2279.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.33 -&gt; 4.75 ms</text>
+<rect x="1500.00" y="2234.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2234.00" width="9.06" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1547.06" y="2253.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.30x faster</text>
+<text x="1680.00" y="2279.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.52 -&gt; 4.24 ms</text>
+<text x="68.00" y="2310.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread</text>
+<text x="68.00" y="2333.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=1</text>
+<rect x="900.00" y="2298.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2298.00" width="7.91" height="24.00" fill="#0f766e" rx="6"/>
+<text x="945.91" y="2317.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.26x faster</text>
+<text x="1080.00" y="2343.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.78 -&gt; 3.78 ms</text>
+<rect x="1500.00" y="2298.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2298.00" width="9.37" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1547.37" y="2317.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.31x faster</text>
+<text x="1680.00" y="2343.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.71 -&gt; 3.59 ms</text>
+<rect x="54.00" y="2356.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2362.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2377.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2374.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Dedicated Threads</text>
+<text x="68.00" y="2397.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=200, Ops/worker=20</text>
+<rect x="900.00" y="2362.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2362.00" width="1.58" height="24.00" fill="#0f766e" rx="6"/>
+<text x="939.58" y="2381.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.053x faster</text>
+<text x="1080.00" y="2407.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">29.0 -&gt; 27.5 ms</text>
+<rect x="1500.00" y="2362.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2362.00" width="13.47" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1551.47" y="2381.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.45x faster</text>
+<text x="1680.00" y="2407.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">19.9 -&gt; 13.7 ms</text>
+<rect x="54.00" y="2420.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2426.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2441.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2438.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close</text>
+<text x="68.00" y="2461.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20</text>
+<rect x="900.00" y="2426.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2426.00" width="2.49" height="24.00" fill="#0f766e" rx="6"/>
+<text x="940.49" y="2445.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.083x faster</text>
+<text x="1080.00" y="2471.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">42.3 -&gt; 39.1 ms</text>
+<rect x="1500.00" y="2426.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2426.00" width="12.20" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1550.20" y="2445.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.41x faster</text>
+<text x="1680.00" y="2471.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">39.7 -&gt; 28.2 ms</text>
+<rect x="54.00" y="2484.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2490.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2505.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2502.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Mixed Sync Async Contention</text>
+<text x="68.00" y="2525.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="2490.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2490.00" width="9.53" height="24.00" fill="#0f766e" rx="6"/>
+<text x="947.53" y="2509.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.32x faster</text>
+<text x="1080.00" y="2535.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.51 -&gt; 3.42 ms</text>
+<rect x="1500.00" y="2490.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2490.00" width="1.63" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1539.63" y="2509.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.054x faster</text>
+<text x="1680.00" y="2535.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">3.05 -&gt; 2.89 ms</text>
+<rect x="54.00" y="2548.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2554.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2569.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2566.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Async</text>
+<text x="68.00" y="2589.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20</text>
+<rect x="900.00" y="2554.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="927.58" y="2554.00" width="2.42" height="24.00" fill="#dc2626" rx="6"/>
+<text x="919.58" y="2573.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.088x slower</text>
+<text x="1080.00" y="2599.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">34.2 -&gt; 37.2 ms</text>
+<rect x="1500.00" y="2554.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2554.00" width="11.66" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1549.66" y="2573.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.39x faster</text>
+<text x="1680.00" y="2599.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">31.4 -&gt; 22.6 ms</text>
+<rect x="54.00" y="2612.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2618.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2633.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2630.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Mixed Sync Async Contention</text>
+<text x="68.00" y="2653.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="2618.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2618.00" width="7.28" height="24.00" fill="#0f766e" rx="6"/>
+<text x="945.28" y="2637.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.24x faster</text>
+<text x="1080.00" y="2663.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.57 -&gt; 3.68 ms</text>
+<rect x="1500.00" y="2618.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="2618.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.90" y="2637.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.003x slower</text>
+<text x="1680.00" y="2663.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">3.11 -&gt; 3.12 ms</text>
+<rect x="54.00" y="2676.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2682.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2697.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2694.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close</text>
+<text x="68.00" y="2717.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=200, Ops/worker=20</text>
+<rect x="900.00" y="2682.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.40" y="2682.00" width="1.60" height="24.00" fill="#dc2626" rx="6"/>
+<text x="920.40" y="2701.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.056x slower</text>
+<text x="1080.00" y="2727.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">23.4 -&gt; 24.8 ms</text>
+<rect x="1500.00" y="2682.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2682.00" width="8.52" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1546.52" y="2701.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.28x faster</text>
+<text x="1680.00" y="2727.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">12.5 -&gt; 9.77 ms</text>
+<text x="68.00" y="2758.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread</text>
+<text x="68.00" y="2781.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=10</text>
+<rect x="900.00" y="2746.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2746.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.05" y="2765.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.002x faster</text>
+<text x="1080.00" y="2791.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.30 -&gt; 5.30 ms</text>
+<rect x="1500.00" y="2746.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2746.00" width="6.64" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1544.64" y="2765.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.22x faster</text>
+<text x="1680.00" y="2791.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.25 -&gt; 5.12 ms</text>
+<rect x="54.00" y="2804.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2810.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2825.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2822.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Async</text>
+<text x="68.00" y="2845.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=200, Ops/worker=20</text>
+<rect x="900.00" y="2810.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="927.70" y="2810.00" width="2.30" height="24.00" fill="#dc2626" rx="6"/>
+<text x="919.70" y="2829.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.083x slower</text>
+<text x="1080.00" y="2855.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">19.5 -&gt; 21.2 ms</text>
+<rect x="1500.00" y="2810.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2810.00" width="8.00" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1546.00" y="2829.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.27x faster</text>
+<text x="1680.00" y="2855.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">11.2 -&gt; 8.87 ms</text>
+<rect x="54.00" y="2868.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2874.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2889.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2886.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Contention: Steady State Open Query Close Dedicated Threads</text>
+<text x="68.00" y="2909.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20</text>
+<rect x="900.00" y="2874.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="2874.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.76" y="2893.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.025x faster</text>
+<text x="1080.00" y="2919.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">42.2 -&gt; 41.1 ms</text>
+<rect x="1500.00" y="2874.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2874.00" width="3.63" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1541.63" y="2893.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.12x faster</text>
+<text x="1680.00" y="2919.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">31.1 -&gt; 27.8 ms</text>
+<rect x="54.00" y="2932.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="2938.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="2953.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="2950.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Mixed Sync Async Contention</text>
+<text x="68.00" y="2973.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="2938.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.03" y="2938.00" width="1.97" height="24.00" fill="#dc2626" rx="6"/>
+<text x="920.03" y="2957.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.070x slower</text>
+<text x="1080.00" y="2983.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">8.88 -&gt; 9.51 ms</text>
+<rect x="1500.00" y="2938.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="2938.00" width="5.62" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1543.62" y="2957.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.19x faster</text>
+<text x="1680.00" y="2983.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.93 -&gt; 5.84 ms</text>
+<rect x="54.00" y="2996.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3002.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3017.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3014.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Mixed Sync Async Contention</text>
+<text x="68.00" y="3037.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="3002.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3002.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.41" y="3021.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.014x faster</text>
+<text x="1080.00" y="3047.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">9.44 -&gt; 9.32 ms</text>
+<rect x="1500.00" y="3002.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3002.00" width="2.79" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1540.79" y="3021.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.093x faster</text>
+<text x="1680.00" y="3047.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.94 -&gt; 6.35 ms</text>
+<rect x="54.00" y="3060.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3066.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3081.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3078.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Multi Command Reuse</text>
+<text x="68.00" y="3101.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="3066.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="3066.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.40" y="3085.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.020x slower</text>
+<text x="1080.00" y="3111.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">7.80 -&gt; 7.96 ms</text>
+<rect x="1500.00" y="3066.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3066.00" width="1.82" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1539.82" y="3085.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.061x faster</text>
+<text x="1680.00" y="3111.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.33 -&gt; 5.97 ms</text>
+<rect x="54.00" y="3124.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3130.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3145.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3142.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Pool Exhaustion Recovery</text>
+<text x="68.00" y="3165.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="3130.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3130.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.14" y="3149.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.005x faster</text>
+<text x="1080.00" y="3175.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">145.5 -&gt; 144.8 ms</text>
+<rect x="1500.00" y="3130.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3130.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1538.95" y="3149.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.032x faster</text>
+<text x="1680.00" y="3175.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">161.1 -&gt; 156.2 ms</text>
+<rect x="54.00" y="3188.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3194.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3209.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3206.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Pool Exhaustion Recovery</text>
+<text x="68.00" y="3229.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="3194.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3194.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.04" y="3213.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.001x faster</text>
+<text x="1080.00" y="3239.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">174.0 -&gt; 173.8 ms</text>
+<rect x="1500.00" y="3194.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3194.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1538.29" y="3213.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.010x faster</text>
+<text x="1680.00" y="3239.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">185.7 -&gt; 183.9 ms</text>
+<rect x="54.00" y="3252.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3258.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3273.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3270.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Randomized Hold And Query</text>
+<text x="68.00" y="3293.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="3258.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="3258.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.98" y="3277.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.001x slower</text>
+<text x="1080.00" y="3303.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">314.1 -&gt; 314.3 ms</text>
+<rect x="1500.00" y="3258.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3258.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1538.26" y="3277.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.009x faster</text>
+<text x="1680.00" y="3303.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">395.1 -&gt; 391.6 ms</text>
+<rect x="54.00" y="3316.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3322.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3337.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3334.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Pool Exhaustion Recovery</text>
+<text x="68.00" y="3357.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="3322.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3322.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.21" y="3341.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.007x faster</text>
+<text x="1080.00" y="3367.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">125.1 -&gt; 124.2 ms</text>
+<rect x="1500.00" y="3322.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3322.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.97" y="3341.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.001x slower</text>
+<text x="1680.00" y="3367.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">133.5 -&gt; 133.6 ms</text>
+<rect x="54.00" y="3380.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3386.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3401.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3398.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Bursty Traffic Pattern</text>
+<text x="68.00" y="3421.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="3386.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3386.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.34" y="3405.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.011x faster</text>
+<text x="1080.00" y="3431.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">34.8 -&gt; 34.4 ms</text>
+<rect x="1500.00" y="3386.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3386.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.82" y="3405.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.006x slower</text>
+<text x="1680.00" y="3431.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">70.5 -&gt; 71.0 ms</text>
+<rect x="54.00" y="3444.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3450.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3465.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3462.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Randomized Hold And Query</text>
+<text x="68.00" y="3485.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="3450.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3450.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.04" y="3469.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.001x faster</text>
+<text x="1080.00" y="3495.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">314.2 -&gt; 313.8 ms</text>
+<rect x="1500.00" y="3450.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3450.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1538.07" y="3469.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.002x faster</text>
+<text x="1680.00" y="3495.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">393.7 -&gt; 392.8 ms</text>
+<rect x="54.00" y="3508.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3514.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3529.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3526.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Randomized Hold And Query</text>
+<text x="68.00" y="3549.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="3514.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3514.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.10" y="3533.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.003x faster</text>
+<text x="1080.00" y="3559.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">342.5 -&gt; 341.4 ms</text>
+<rect x="1500.00" y="3514.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3514.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.98" y="3533.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.001x slower</text>
+<text x="1680.00" y="3559.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">405.9 -&gt; 406.1 ms</text>
+<rect x="54.00" y="3572.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3578.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3593.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3590.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Randomized Hold And Query</text>
+<text x="68.00" y="3613.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="3578.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="3578.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.97" y="3597.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.001x slower</text>
+<text x="1080.00" y="3623.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">341.8 -&gt; 342.2 ms</text>
+<rect x="1500.00" y="3578.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3578.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1538.04" y="3597.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.001x faster</text>
+<text x="1680.00" y="3623.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">408.5 -&gt; 408.0 ms</text>
+<text x="68.00" y="3654.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread Async</text>
+<text x="68.00" y="3677.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=100</text>
+<rect x="900.00" y="3642.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="923.60" y="3642.00" width="6.40" height="24.00" fill="#dc2626" rx="6"/>
+<text x="915.60" y="3661.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.27x slower<tspan baseline-shift="super" font-size="9" dx="2">1</tspan></text>
+<text x="1080.00" y="3687.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.15 -&gt; 2.73 ms</text>
+<rect x="1500.00" y="3642.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="3642.00" width="6.39" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1544.39" y="3661.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.21x faster</text>
+<text x="1680.00" y="3687.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.28 -&gt; 1.88 ms</text>
+<text x="68.00" y="3718.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Thread-pool pressure: Saturated Sync Open On Thread Pool</text>
+<text x="68.00" y="3741.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20, Workers=16</text>
+<rect x="900.00" y="3706.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3706.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.02" y="3725.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.001x faster</text>
+<text x="1080.00" y="3751.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">37.4 -&gt; 37.3 ms</text>
+<rect x="1500.00" y="3706.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3706.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.96" y="3725.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.001x slower</text>
+<text x="1680.00" y="3751.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">21.9 -&gt; 21.9 ms</text>
+<rect x="54.00" y="3764.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3770.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3785.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3782.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Bursty Traffic Pattern</text>
+<text x="68.00" y="3805.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="3770.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3770.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.12" y="3789.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.004x faster</text>
+<text x="1080.00" y="3815.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">34.4 -&gt; 34.2 ms</text>
+<rect x="1500.00" y="3770.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3770.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.86" y="3789.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.005x slower</text>
+<text x="1680.00" y="3815.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">69.4 -&gt; 69.7 ms</text>
+<rect x="54.00" y="3828.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3834.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3849.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3846.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Pool Exhaustion Recovery</text>
+<text x="68.00" y="3869.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="3834.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3834.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.09" y="3853.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.003x faster</text>
+<text x="1080.00" y="3879.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">111.3 -&gt; 111.0 ms</text>
+<rect x="1500.00" y="3834.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3834.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.07" y="3853.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.032x slower</text>
+<text x="1680.00" y="3879.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">110.9 -&gt; 114.5 ms</text>
+<rect x="54.00" y="3892.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3898.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3913.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3910.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Bursty Traffic Pattern</text>
+<text x="68.00" y="3933.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="3898.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="3898.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.30" y="3917.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.024x slower</text>
+<text x="1080.00" y="3943.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">41.6 -&gt; 42.6 ms</text>
+<rect x="1500.00" y="3898.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="3898.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1521.64" y="3917.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.012x slower</text>
+<text x="1680.00" y="3943.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">68.8 -&gt; 69.7 ms</text>
+<rect x="54.00" y="3956.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="3962.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="3977.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="3974.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Multi Command Reuse</text>
+<text x="68.00" y="3997.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=100</text>
+<rect x="900.00" y="3962.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="3962.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="939.39" y="3981.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.046x faster</text>
+<text x="1080.00" y="4007.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.53 -&gt; 5.29 ms</text>
+<rect x="1500.00" y="3962.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1527.39" y="3962.00" width="2.61" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1519.39" y="3981.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.095x slower</text>
+<text x="1680.00" y="4007.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.92 -&gt; 3.20 ms</text>
+<text x="68.00" y="4038.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Thread-pool pressure: Saturated Sync Open On Thread Pool</text>
+<text x="68.00" y="4061.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20, Workers=32</text>
+<rect x="900.00" y="4026.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="930.00" y="4026.00" width="1.50" height="24.00" fill="#0f766e" rx="6"/>
+<text x="938.20" y="4045.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.007x faster</text>
+<text x="1080.00" y="4071.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">35.7 -&gt; 35.5 ms</text>
+<rect x="1500.00" y="4026.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.32" y="4026.00" width="1.68" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1520.32" y="4045.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.059x slower</text>
+<text x="1680.00" y="4071.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">19.3 -&gt; 20.5 ms</text>
+<text x="68.00" y="4102.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread Async</text>
+<text x="68.00" y="4125.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=10</text>
+<rect x="900.00" y="4090.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="924.53" y="4090.00" width="5.47" height="24.00" fill="#dc2626" rx="6"/>
+<text x="916.53" y="4109.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.22x slower<tspan baseline-shift="super" font-size="9" dx="2">1</tspan></text>
+<text x="1080.00" y="4135.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.16 -&gt; 5.09 ms</text>
+<rect x="1500.00" y="4090.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="4090.00" width="3.87" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1541.87" y="4109.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.13x faster</text>
+<text x="1680.00" y="4135.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">6.01 -&gt; 5.32 ms</text>
+<rect x="54.00" y="4148.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="4154.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="4169.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="4166.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Multi Command Reuse</text>
+<text x="68.00" y="4189.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=10, Pool=50</text>
+<rect x="900.00" y="4154.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="925.20" y="4154.00" width="4.80" height="24.00" fill="#dc2626" rx="6"/>
+<text x="917.20" y="4173.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.19x slower<tspan baseline-shift="super" font-size="9" dx="2">2</tspan></text>
+<text x="1080.00" y="4199.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">3.65 -&gt; 4.35 ms</text>
+<rect x="1500.00" y="4154.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1530.00" y="4154.00" width="2.26" height="24.00" fill="#0f766e" rx="6"/>
+<text x="1540.26" y="4173.00" font-size="12" fill="#0f766e" font-weight="700" text-anchor="start" opacity="1">1.075x faster</text>
+<text x="1680.00" y="4199.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">3.29 -&gt; 3.06 ms</text>
+<rect x="54.00" y="4212.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="4218.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="4233.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="4230.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Multi Command Reuse</text>
+<text x="68.00" y="4253.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=50</text>
+<rect x="900.00" y="4218.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="4218.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="920.79" y="4237.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.042x slower</text>
+<text x="1080.00" y="4263.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">7.81 -&gt; 8.13 ms</text>
+<rect x="1500.00" y="4218.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1528.50" y="4218.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1520.62" y="4237.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.048x slower</text>
+<text x="1680.00" y="4263.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">5.63 -&gt; 5.90 ms</text>
+<text x="68.00" y="4294.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Thread-pool pressure: Saturated Sync Open On Thread Pool</text>
+<text x="68.00" y="4317.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20, Workers=128</text>
+<rect x="900.00" y="4282.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="4282.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.49" y="4301.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.017x slower</text>
+<text x="1080.00" y="4327.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">36.3 -&gt; 37.0 ms</text>
+<rect x="1500.00" y="4282.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1526.77" y="4282.00" width="3.23" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1518.77" y="4301.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.12x slower<tspan baseline-shift="super" font-size="9" dx="2">6</tspan></text>
+<text x="1680.00" y="4327.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">18.9 -&gt; 21.2 ms</text>
+<rect x="54.00" y="4340.00" width="1892.00" height="60.00" fill="#eff6ff" rx="7"/>
+<rect x="680.00" y="4346.00" width="120.00" height="20.00" fill="#dbeafe" rx="10"/>
+<text x="740.00" y="4361.00" font-size="10" fill="#1d4ed8" font-weight="700" text-anchor="middle" opacity="1">SQL/hold-heavy</text>
+<text x="68.00" y="4358.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Stress: Bursty Traffic Pattern</text>
+<text x="68.00" y="4381.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=100</text>
+<rect x="900.00" y="4346.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.50" y="4346.00" width="1.50" height="24.00" fill="#dc2626" rx="6"/>
+<text x="921.03" y="4365.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.033x slower</text>
+<text x="1080.00" y="4391.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">41.8 -&gt; 43.2 ms</text>
+<rect x="1500.00" y="4346.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1522.89" y="4346.00" width="7.11" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1514.89" y="4365.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.31x slower<tspan baseline-shift="super" font-size="9" dx="2">5</tspan></text>
+<text x="1680.00" y="4391.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">67.9 -&gt; 89.0 ms</text>
+<text x="68.00" y="4422.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Thread-pool pressure: Saturated Sync Open On Thread Pool</text>
+<text x="68.00" y="4445.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">P=50, Pool=10, Ops/worker=20, Workers=4</text>
+<rect x="900.00" y="4410.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="923.65" y="4410.00" width="6.35" height="24.00" fill="#dc2626" rx="6"/>
+<text x="915.65" y="4429.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.27x slower<tspan baseline-shift="super" font-size="9" dx="2">3</tspan></text>
+<text x="1080.00" y="4455.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">43.4 -&gt; 55.1 ms</text>
+<rect x="1500.00" y="4410.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1523.19" y="4410.00" width="6.81" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1515.19" y="4429.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.29x slower<tspan baseline-shift="super" font-size="9" dx="2">6</tspan></text>
+<text x="1680.00" y="4455.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">23.6 -&gt; 30.5 ms</text>
+<text x="68.00" y="4486.00" font-size="15" fill="#0f172a" font-weight="600" text-anchor="start" opacity="1">Churn: Rapid Open Close Single Thread</text>
+<text x="68.00" y="4509.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Ops=1000, Depth=100</text>
+<rect x="900.00" y="4474.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="928.18" y="4474.00" width="1.82" height="24.00" fill="#dc2626" rx="6"/>
+<text x="920.18" y="4493.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">1.064x slower</text>
+<text x="1080.00" y="4519.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">4.12 -&gt; 4.38 ms</text>
+<rect x="1500.00" y="4474.00" width="360.00" height="24.00" fill="#e2e8f0" rx="6"/>
+<rect x="1514.70" y="4474.00" width="15.30" height="24.00" fill="#dc2626" rx="6"/>
+<text x="1506.70" y="4493.00" font-size="12" fill="#dc2626" font-weight="700" text-anchor="end" opacity="1">2.0x slower<tspan baseline-shift="super" font-size="9" dx="2">4</tspan></text>
+<text x="1680.00" y="4519.00" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" opacity="1">2.11 -&gt; 4.31 ms</text>
+<text x="64.00" y="4558.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">68 matched pool-focused rows; pooling-disabled controls omitted. Linux SQL/hold median 1.004x (29/35 within 0.9x-1.1x); Windows 1.075x (18/35).</text>
+<text x="64.00" y="4584.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">Speedup is calculated within each platform: legacy mean / new-pool mean. 1.0x is parity.</text>
+<text x="64.00" y="4610.00" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">SQL/hold-heavy = executes SQL commands or deliberately holds a checked-out connection; pool overhead is only part of the measured time.</text>
+<line x1="64.00" y1="4638.00" x2="1936.00" y2="4638.00" stroke="#dbe4ee" stroke-width="1"/>
+<text x="64.00" y="4668.00" font-size="16" fill="#0f172a" font-weight="700" text-anchor="start" opacity="1">Notes on platform-specific timing regressions greater than 1.1x slower</text>
+<text x="64.00" y="4696.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">1. Linux: async single-thread churn at depths 10 and 100 exposes reuse order: the legacy LIFO stack reuses one hot connection; the FIFO channel rotates through the idle set, reducing locality.</text>
+<text x="64.00" y="4722.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">2. Linux: multi-command reuse (P=10, Pool=50) checks out once, then runs 5-15 SQL commands. SQL/server time dominates; the regression reproduced in 2 of 3 runs.</text>
+<text x="64.00" y="4748.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">3. Linux: with 4 minimum worker threads, 50 sync callers competing for 10 connections starve queued channel continuations. Results return near parity at worker floors 16, 32, and 128.</text>
+<text x="64.00" y="4774.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">4. Windows: sync single-thread churn at depths 100 exposes reuse order: the legacy LIFO stack reuses one hot connection; the FIFO channel rotates through the idle set, reducing locality.</text>
+<text x="64.00" y="4800.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">5. Windows: bursty traffic (P=50, Pool=100) runs 1-5 SQL queries per checkout in waves. SQL/server variance dominates; the slowdown appeared in 1 of 3 runs.</text>
+<text x="64.00" y="4826.00" font-size="13" fill="#64748b" font-weight="400" text-anchor="start" opacity="1">6. Windows: with 4 and 128 minimum worker threads, 50 sync callers competing for 10 connections starve queued channel continuations. Results return near parity at worker floors 16 and 32.</text>
+</svg>
