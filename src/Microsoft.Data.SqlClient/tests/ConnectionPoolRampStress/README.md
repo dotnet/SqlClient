@@ -79,6 +79,7 @@ Use a new output path per invocation. Existing files are never overwritten.
 | `--repetitions` | 3 |
 | `--duration`, `--interval` | 30 and 1 seconds |
 | `--connect-timeout` | 15 seconds, finite and positive |
+| `--max-concurrent-opens` | 0 (no external cap), or 1-4096 for `--pool disabled --workload open-close` only |
 | `--drain` | 20 seconds after admission stops |
 | `--startup-timeout` | 60 seconds to prepare workers and finish preflight |
 | `--deadline` | 120 seconds from child launch, including startup and drain |
@@ -127,6 +128,67 @@ The default profile leaves runtime ThreadPool settings unchanged. Provisioned
 sets exactly the requested worker minimum, validates the return value, and reads
 the settings back. It never raises the maximum. Profile settings are recorded,
 not treated as interchangeable workloads.
+
+### Controlled non-pooled open admission
+
+Use `--max-concurrent-opens` to compare callers with the same external limit on
+outstanding `Open` / `OpenAsync` invocations. A single per-sample semaphore guards
+only connection establishment, not creation or disposal. Synchronous callers
+wait synchronously on their existing threads. Async callers await the same gate.
+No per-open `Task.Run`, driver changes, reflection into driver state, or processor
+count overrides are used.
+
+Zero preserves the uncapped path. Nonzero caps require exactly `--pool disabled`
+and `--workload open-close`; pooled modes, `--pool all`, cold ramps, and
+`--workload both` are rejected. A cap above worker count N is allowed and has
+effective capacity N.
+
+For example, if the child reports `ProcessorCount = 10`, run these sequentially
+with separate output files, then repeat with `--max-concurrent-opens 0` for both
+uncapped controls:
+
+```sh
+dotnet "$harness" --pool disabled --workload open-close --profile default \
+  --caller sync-dedicated --start 32 --max 32 --repetitions 1 \
+  --max-concurrent-opens 10 --output ramp-capped-sync.jsonl
+dotnet "$harness" --pool disabled --workload open-close --profile default \
+  --caller async --start 32 --max 32 --repetitions 1 \
+  --max-concurrent-opens 10 --output ramp-capped-async.jsonl
+```
+
+Keep N, profile, authentication, connection settings, and duration identical.
+Repeat at other N values, such as 128. Matching the external cap to the recorded
+`Environment.ProcessorCount` tests whether equalizing admission reduces the
+sync/async throughput difference. It does not directly observe the driver's
+internal non-pooled pending-open slots or establish them as the only cause.
+
+Each sample result adds:
+
+- `ProcessorCount`: the child's actual `Environment.ProcessorCount`.
+- `ConfiguredMaxConcurrentOpens` and `EffectiveMaxConcurrentOpens`: zero means
+  no external cap, otherwise the effective value is `min(configured, N)`.
+- `ActualPeakActiveOpens`: peak outstanding driver invocations inside the gate,
+  including admitted calls that finish during drain. This measures API calls,
+  not internal sockets or server logins.
+- `OpenGateWait`: bounded histogram across measurement and drain, including
+  successful, timed-out, and canceled gate waits. It is empty when uncapped.
+- `DriverOpenLatency` and `FailedDriverOpenLatency`: separate histograms of
+  successful and failed driver invocations across measurement and drain. These
+  exclude gate wait, creation, and disposal and are recorded even when uncapped.
+  Gate timeouts and canceled gate waits are not driver invocations.
+- `CanceledOpenGateWaits`: queued admissions stopped without invoking the driver.
+
+Existing successful and failed Open latency includes gate wait. Outstanding-call
+counts include gate waiters; `ActualPeakActiveOpens` excludes them. Attempts that
+stop at the gate count as attempts and canceled waits, not failed driver opens.
+
+Each gate wait is bounded by `--connect-timeout` and emits `TimeoutException` on
+expiry while measurement is still admitting. The driver retains its own existing
+connect timeout after admission: these are **sequential wait + open budgets**,
+not one shared deadline. Measurement stop cancels queued gate waits without
+creating failures. Already admitted driver calls can finish during bounded drain
+and are canceled only under the existing drain/shutdown policy. Driver failures,
+including driver cancellation exceptions, remain failures and release permits.
 
 ## Isolation, failure, and safety
 

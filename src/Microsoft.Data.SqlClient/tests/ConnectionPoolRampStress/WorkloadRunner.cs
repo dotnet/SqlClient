@@ -13,6 +13,14 @@ internal sealed record SampleResult(Outcome Outcome, double MeasurementSeconds, 
     public InitialRamp? InitialRamp { get; init; }
     public long? AuthenticationAcquisitionsBeforeWorkload { get; init; }
     public long? AuthenticationAcquisitionsDuringWorkload { get; init; }
+    public int ProcessorCount { get; init; }
+    public int ConfiguredMaxConcurrentOpens { get; init; }
+    public int EffectiveMaxConcurrentOpens { get; init; }
+    public int ActualPeakActiveOpens { get; init; }
+    public Distribution OpenGateWait { get; init; } = new(0, null, null, null, 0);
+    public Distribution DriverOpenLatency { get; init; } = new(0, null, null, null, 0);
+    public Distribution FailedDriverOpenLatency { get; init; } = new(0, null, null, null, 0);
+    public long CanceledOpenGateWaits { get; init; }
 }
 
 internal sealed record InitialRamp(int SettledAttempts, int SuccessfulOpens, bool Complete,
@@ -28,6 +36,9 @@ internal sealed class WorkloadRunner
     private readonly MetricStore.WorkerMetrics _coordinatorMetrics;
     private readonly PhysicalCounters _counters;
     private readonly CancellationTokenSource _cancel = new();
+    private readonly SemaphoreSlim? _openGate;
+    private readonly CancellationTokenSource? _gateStop;
+    private readonly int _effectiveMaxConcurrentOpens;
     private readonly AutoResetEvent _roundCompleted = new(false);
     private readonly object _failureGate = new();
     private readonly Dictionary<SafeFailure, long> _failures = new();
@@ -42,6 +53,10 @@ internal sealed class WorkloadRunner
     private int _started;
     private int _inFlight;
     private int _peak;
+    private int _actualActive;
+    private int _actualPeak;
+    private int _waitingOpenAdmissions;
+    private long _canceledOpenGateWaits;
     private int _failed;
     private long _roundOpens;
     private long _rounds;
@@ -54,6 +69,9 @@ internal sealed class WorkloadRunner
     public WorkloadRunner(Settings settings, Sample sample, IConnectionFactory factory,
         PhysicalCounters counters, IClock? clock = null)
     {
+        if (settings.MaxConcurrentOpens < 0 || settings.MaxConcurrentOpens > 4096 ||
+            settings.MaxConcurrentOpens != 0 && (sample.Pool != PoolMode.Disabled || sample.Workload != Workload.OpenClose))
+            throw new ArgumentException("The open cap requires a non-pooled open-close sample.");
         _settings = settings;
         _sample = sample;
         _factory = factory;
@@ -62,8 +80,17 @@ internal sealed class WorkloadRunner
         _metrics = new(settings, _clock);
         _coordinatorMetrics = _metrics.NewWorker();
         _workers = Enumerable.Range(0, sample.Concurrency)
-            .Select(_ => new Worker(_metrics.NewWorker())).ToArray();
+            .Select(_ => new Worker(_metrics.NewWorker(), settings.MaxConcurrentOpens > 0)).ToArray();
+        if (settings.MaxConcurrentOpens > 0)
+        {
+            _effectiveMaxConcurrentOpens = Math.Min(settings.MaxConcurrentOpens, sample.Concurrency);
+            _openGate = new(_effectiveMaxConcurrentOpens, _effectiveMaxConcurrentOpens);
+            _gateStop = new();
+        }
     }
+
+    internal int AvailableOpenPermits => _openGate?.CurrentCount ?? 0;
+    internal int WaitingOpenAdmissions => Volatile.Read(ref _waitingOpenAdmissions);
 
     // Called by the dedicated stdin reader. It must not invoke cancellation callbacks.
     public void RequestStop()
@@ -115,6 +142,8 @@ internal sealed class WorkloadRunner
                     _stop = true;
                     _metrics.StopAdmission();
                     stopAt = _metrics.MeasurementEnd;
+                    // This private token only wakes harness semaphore waiters, never driver callbacks.
+                    _gateStop?.Cancel();
                 }
                 if (_sample.Workload == Workload.ColdRamps && roundActive && Volatile.Read(ref _pending) == 0)
                 {
@@ -159,6 +188,7 @@ internal sealed class WorkloadRunner
         {
             _stop = true;
             _shutdown = true;
+            _gateStop?.Cancel();
             if (incomplete || _externalStop)
             {
                 // Cancellation callbacks may block. Never run them on the timing thread.
@@ -190,6 +220,8 @@ internal sealed class WorkloadRunner
             {
                 foreach (Worker worker in _workers) worker.Gate.Dispose();
                 _roundCompleted.Dispose();
+                _openGate?.Dispose();
+                _gateStop?.Dispose();
                 if (cancellationThread is null || cancellationThread.Join(0)) _cancel.Dispose();
             }
         }
@@ -203,6 +235,14 @@ internal sealed class WorkloadRunner
         return new(outcome, measurement, drain, _metrics.Total(false, measurement), _metrics.Total(true, drain),
             _workers.Length, _started, _peak, _rounds, roundActive, SnapshotFailures(), Trend.Calculate(_metrics.Intervals))
         {
+            ProcessorCount = Environment.ProcessorCount,
+            ConfiguredMaxConcurrentOpens = _settings.MaxConcurrentOpens,
+            EffectiveMaxConcurrentOpens = _effectiveMaxConcurrentOpens,
+            ActualPeakActiveOpens = _openGate is null ? _peak : Volatile.Read(ref _actualPeak),
+            OpenGateWait = SnapshotLatency(worker => worker.OpenGateWait),
+            DriverOpenLatency = SnapshotLatency(worker => worker.DriverOpenLatency),
+            FailedDriverOpenLatency = SnapshotLatency(worker => worker.FailedDriverOpenLatency),
+            CanceledOpenGateWaits = Interlocked.Read(ref _canceledOpenGateWaits),
             InitialRamp = new(_initialSettled, _initialSuccesses, _initialSettled == _workers.Length,
                 Math.Max(0, _initialLastCompletion - _metrics.Origin),
                 MetricBucket.Rate(_initialSuccesses, _initialLastCompletion - _metrics.Origin))
@@ -325,6 +365,7 @@ internal sealed class WorkloadRunner
         IConnection? connection = null;
         bool opened = false;
         bool calling = false;
+        double? driverMilliseconds = null;
         double openCompleted = cycleStart;
         worker.Metrics.Add(Metric.Attempt);
         try
@@ -341,9 +382,32 @@ internal sealed class WorkloadRunner
             openStart = _clock.Seconds;
             try
             {
-                if (asynchronous) await connection.OpenAsync(_cancel.Token).ConfigureAwait(false);
-                else connection.Open();
-                opened = true;
+                if (_openGate is not null)
+                {
+                    if (!await WaitForOpenAdmission(worker, asynchronous).ConfigureAwait(false)) return;
+                    int active = Interlocked.Increment(ref _actualActive);
+                    do
+                    {
+                        previous = Volatile.Read(ref _actualPeak);
+                        if (active <= previous) break;
+                    } while (Interlocked.CompareExchange(ref _actualPeak, active, previous) != previous);
+                }
+                double driverStart = _clock.Seconds;
+                try
+                {
+                    if (asynchronous) await connection.OpenAsync(_cancel.Token).ConfigureAwait(false);
+                    else connection.Open();
+                    opened = true;
+                }
+                finally
+                {
+                    driverMilliseconds = (_clock.Seconds - driverStart) * 1000;
+                    if (_openGate is not null)
+                    {
+                        Interlocked.Decrement(ref _actualActive);
+                        _openGate.Release();
+                    }
+                }
             }
             finally
             {
@@ -370,6 +434,11 @@ internal sealed class WorkloadRunner
         finally
         {
             if (calling) Interlocked.Decrement(ref _inFlight);
+            if (driverMilliseconds is double latency)
+            {
+                Histogram histogram = opened ? worker.DriverOpenLatency : worker.FailedDriverOpenLatency;
+                lock (histogram) histogram.Add(latency);
+            }
             double completed = openCompleted;
             double previous;
             do
@@ -398,6 +467,50 @@ internal sealed class WorkloadRunner
             if (!hold && opened && disposed)
                 worker.Metrics.Add(Metric.Cycle, (_clock.Seconds - cycleStart) * 1000);
         }
+    }
+
+    private async ValueTask<bool> WaitForOpenAdmission(Worker worker, bool asynchronous)
+    {
+        double start = _clock.Seconds;
+        CancellationToken stop = _gateStop!.Token;
+        Interlocked.Increment(ref _waitingOpenAdmissions);
+        try
+        {
+            TimeSpan timeout = TimeSpan.FromSeconds(_settings.ConnectTimeoutSeconds);
+            bool entered = asynchronous
+                ? await _openGate!.WaitAsync(timeout, stop).ConfigureAwait(false)
+                : _openGate!.Wait(timeout, stop);
+            if (!Admitting)
+            {
+                if (entered) _openGate.Release();
+                Interlocked.Increment(ref _canceledOpenGateWaits);
+                return false;
+            }
+            if (!entered) throw new TimeoutException();
+            return true;
+        }
+        catch (OperationCanceledException exception) when (stop.IsCancellationRequested && exception.CancellationToken == stop)
+        {
+            Interlocked.Increment(ref _canceledOpenGateWaits);
+            return false;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _waitingOpenAdmissions);
+            lock (worker.OpenGateWait!) worker.OpenGateWait.Add((_clock.Seconds - start) * 1000);
+        }
+    }
+
+    private Distribution SnapshotLatency(Func<Worker, Histogram?> select)
+    {
+        Histogram combined = new();
+        foreach (Worker worker in _workers)
+        {
+            Histogram? histogram = select(worker);
+            if (histogram is not null)
+                lock (histogram) combined.Merge(histogram);
+        }
+        return combined.Snapshot();
     }
 
     private void CloseRound()
@@ -441,10 +554,13 @@ internal sealed class WorkloadRunner
             return _failures.Select(pair => new FailureCount(pair.Key, pair.Value)).ToList();
     }
 
-    private sealed class Worker(MetricStore.WorkerMetrics metrics)
+    private sealed class Worker(MetricStore.WorkerMetrics metrics, bool capped)
     {
         public readonly SemaphoreSlim Gate = new(0);
         public readonly MetricStore.WorkerMetrics Metrics = metrics;
+        public readonly Histogram? OpenGateWait = capped ? new() : null;
+        public readonly Histogram DriverOpenLatency = new();
+        public readonly Histogram FailedDriverOpenLatency = new();
         public IConnection? Held;
         public bool Started;
         public bool Ready;

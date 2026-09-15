@@ -30,6 +30,7 @@ internal sealed record Settings
     public double DurationSeconds { get; init; } = 30;
     public double IntervalSeconds { get; init; } = 1;
     public int ConnectTimeoutSeconds { get; init; } = 15;
+    public int MaxConcurrentOpens { get; init; }
     public double DrainSeconds { get; init; } = 20;
     public double StartupSeconds { get; init; } = 60;
     public double DeadlineSeconds { get; init; } = 120;
@@ -66,6 +67,11 @@ internal sealed record Settings
             !Choices.Workloads.Contains(Work) || !Choices.Profiles.Contains(Profile))
         {
             throw new ArgumentException("Invalid matrix selection.");
+        }
+        if (MaxConcurrentOpens < 0 || MaxConcurrentOpens > 4096 ||
+            MaxConcurrentOpens != 0 && (Pool != "disabled" || Work != "open-close"))
+        {
+            throw new ArgumentException("Max concurrent opens must be 0, or 1-4096 with pool disabled and workload open-close.");
         }
         if (string.IsNullOrWhiteSpace(ConnectionEnvironment) || ConnectionEnvironment.Contains('=') ||
             string.IsNullOrWhiteSpace(Output))
@@ -150,7 +156,8 @@ internal static class CommandLine
         foreach ((string name, int value) in new (string, int)[]
         {
             ("start", 1), ("max", 512), ("growth", 2), ("repetitions", 3),
-            ("connect-timeout", 15), ("worker-minimum", 1024), ("xevent-timeout", 5)
+            ("connect-timeout", 15), ("worker-minimum", 1024), ("xevent-timeout", 5),
+            ("max-concurrent-opens", 0)
         })
         {
             Option<int> option = new("--" + name) { DefaultValueFactory = _ => value };
@@ -190,6 +197,7 @@ internal static class CommandLine
                 Start = result.GetValue(integers["start"]), Maximum = result.GetValue(integers["max"]),
                 Growth = result.GetValue(integers["growth"]), Repetitions = result.GetValue(integers["repetitions"]),
                 ConnectTimeoutSeconds = result.GetValue(integers["connect-timeout"]),
+                MaxConcurrentOpens = result.GetValue(integers["max-concurrent-opens"]),
                 WorkerMinimum = result.GetValue(integers["worker-minimum"]),
                 DurationSeconds = result.GetValue(durations["duration"]), IntervalSeconds = result.GetValue(durations["interval"]),
                 DrainSeconds = result.GetValue(durations["drain"]), StartupSeconds = result.GetValue(durations["startup-timeout"]),
