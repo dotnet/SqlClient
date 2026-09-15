@@ -71,6 +71,7 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 
 PR pipelines:
 - Trigger on PRs targeting `release/7.1`; path filters vary by pipeline
+- Exception: the legacy `sqlclient-pr-package-ref-pipeline.yml` has an empty branch include list, so it has no PR trigger and is manual-queue only
 - Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
 - Timeout: 90 minutes
 - Package-ref PR disables Always Encrypted tests in Debug config and also disables legacy SQL Server test legs to keep validation fast
