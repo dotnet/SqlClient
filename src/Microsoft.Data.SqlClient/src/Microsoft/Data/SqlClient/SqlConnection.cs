@@ -262,6 +262,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            RegisteredApplication = connection.RegisteredApplication;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate
@@ -378,6 +379,34 @@ namespace Microsoft.Data.SqlClient
 
                 // Set the dictionary to the ReadOnly dictionary.
                 s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
+        [CLSCompliant(false)]
+        public RegisteredApplication RegisteredApplication
+        {
+            get;
+            set
+            {
+                DbConnectionInternal connectionInternal = InnerConnection;
+                bool canSet = connectionInternal.AllowSetConnectionString;
+                if (canSet)
+                {
+                    // Reserve the closed state so Open cannot read the old value while this setter
+                    // publishes the new one.
+                    canSet = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                    if (canSet)
+                    {
+                        field = value;
+                        SetInnerConnectionTo(connectionInternal);
+                    }
+                }
+
+                if (!canSet)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), connectionInternal.State);
+                }
             }
         }
 

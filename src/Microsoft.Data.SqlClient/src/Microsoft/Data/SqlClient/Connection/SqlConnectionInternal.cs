@@ -306,6 +306,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private bool _sessionRecoveryRequested;
 
+        /// <summary>
+        /// The middleware application identity of the <see cref="SqlConnection"/> that caused
+        /// this physical connection to be created. Reported once, at login.
+        /// </summary>
+        private readonly RegisteredApplication _registeredApplication;
+
         private int _threadIdOwningParserLock = -1;
 
         // @TODO: Rename to indicate this has to do with routing
@@ -344,12 +350,14 @@ namespace Microsoft.Data.SqlClient.Connection
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
             SspiContextProvider sspiContextProvider = null,
-            ISqlClientMetrics metrics = null)
+            ISqlClientMetrics metrics = null,
+            RegisteredApplication registeredApplication = RegisteredApplication.Unknown)
             : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
+            _registeredApplication = registeredApplication;
 
             #if DEBUG
             if (reconnectSessionData != null)
@@ -3063,6 +3071,7 @@ namespace Microsoft.Data.SqlClient.Connection
             login.password = ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
             login.language = _currentLanguage;
+            login.appId = _registeredApplication;
 
             if (!login.userInstance)
             {
