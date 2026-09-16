@@ -32,7 +32,7 @@
       This is the *next* version to release of the SqlClient family.  Update this after a version
       is released.  Every SqlClient family package uses this version.
     -->
-    <SqlClientNextVersion>7.1.0-preview3</SqlClientNextVersion>
+    <SqlClientNextVersion>7.1.0</SqlClientNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
