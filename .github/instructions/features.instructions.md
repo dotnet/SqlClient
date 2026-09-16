@@ -243,7 +243,7 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
-| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Controls whether SqlClient reads app.config, for configurable retry logic, authentication providers and switch overrides. Set to `false` to trim the configuration reading out of a trimmed or Native AOT application |
+| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Controls whether SqlClient reads app.config: configurable retry logic, authentication providers, switch overrides and, on .NET Framework, `system.data.localdb`. See [Trimming](#trimming) |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
@@ -273,6 +273,18 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverB
 //   }
 // }
 ```
+
+### Trimming
+
+`EnableAppConfig` removes the configuration reading from a trimmed or Native AOT application only when set at publish time:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig" Value="false" Trim="true" />
+</ItemGroup>
+```
+
+Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings.
 
 ### Guidelines for Adding New Switches
 1. Define the switch name constant in `LocalAppContextSwitches.cs`
