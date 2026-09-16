@@ -40,12 +40,15 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (configurationSection == null)
+                if (LocalAppContextSwitches.EnableAppConfig)
                 {
-                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
+                    // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
+                    configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
+                    if (configurationSection == null)
+                    {
+                        // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
+                        configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
+                    }
                 }
             }
             catch (ConfigurationErrorsException e)

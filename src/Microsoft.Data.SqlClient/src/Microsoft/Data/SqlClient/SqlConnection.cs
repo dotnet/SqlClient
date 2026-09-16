@@ -153,7 +153,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                    _retryLogicProvider = LocalAppContextSwitches.EnableAppConfig
+                        ? SqlConfigurableRetryLogicManager.ConnectionProvider
+                        : SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
                 return _retryLogicProvider;
             }
