@@ -11,9 +11,7 @@
 #   - Microsoft.Data.SqlClient
 #   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 #
-# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and
-# release/* branches in GitHub.  The dev/* pattern includes dev/automation/*
-# branches created by AI agents.
+# PR validation is disabled on the release/7.1 branch due to limited resources.
 #
 # It maps to the "PR-SqlClient-Package" pipeline in the Public project:
 #
@@ -25,39 +23,36 @@
 # Format $(DayOfYear)$(Rev:rr) yields e.g. 15401 (day 154, run 01) — always < 65535.
 name: $(DayOfYear)$(Rev:rr)
 
-# Trigger PR validation runs for all pushes to PRs that target the specified
-# branches.
+# PR validation is disabled due to limited resources.
 #
 # https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
 #
-pr:
-  branches:
-    include:
-      # GitHub repo branch targets that will trigger PR validation builds.
-      #
-      # GOTCHA: Currently disabled on all but release/* due to limited resources.
-      #- dev/*
-      #- feat/*
-      #- main
-      - release/*
+pr: none
 
-  paths:
-    include:
-      - .azuredevops/*
-      - .config/*
-      - doc/*
-      - eng/pipelines/*
-      - src/*
-      - tools/*
-      - azurepipelines-coverage.yml
-      - build.proj
-      - Directory.Packages.props
-      - dotnet-tools.json
-      - global.json
-      - NuGet.config
-    exclude:
-      - eng/pipelines/ci/*
-      - eng/pipelines/onebranch/*
+# To re-enable PR validation on this branch, replace `pr: none` above with:
+#
+# pr:
+#   branches:
+#     include:
+#       - release/7.1
+#
+#   paths:
+#     include:
+#       - .azuredevops/*
+#       - .config/*
+#       - doc/*
+#       - eng/pipelines/*
+#       - src/*
+#       - tools/*
+#       - azurepipelines-coverage.yml
+#       - build.proj
+#       - Directory.Packages.props
+#       - dotnet-tools.json
+#       - global.json
+#       - NuGet.config
+#     exclude:
+#       - eng/pipelines/ci/*
+#       - eng/pipelines/onebranch/*
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none

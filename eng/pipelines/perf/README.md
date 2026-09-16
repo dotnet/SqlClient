@@ -11,7 +11,7 @@ database.
 | Path | Purpose |
 | ---- | ------- |
 | `sqlclient-perf-pipeline.yml` | The main (manual/nightly) pipeline. Extends `v1/Perf.Test.Job.yml@PerfTemplates`. Baseline = released NuGet package; ingests into Kusto. |
-| `sqlclient-perf-pr-pipeline.yml` | PR pipeline. Same template, same scripts, same options; baseline = **`main` branch source**; **no Kusto ingestion**. |
+| `sqlclient-perf-pr-pipeline.yml` | PR pipeline. Same template, same scripts, same options; baseline = **`release/7.1` branch source**; **no Kusto ingestion**. |
 | `sqlclient-perf-experiment.yml` | Experiment pipeline. Same template, same scripts; both passes build the **same source** and differ only in one runner-config switch; **no Kusto ingestion**. |
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is a released package (`--baseline-version`), another git ref's source (`--baseline-source-ref`), or the same source with one runner-config switch flipped off (`--switch-under-test`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
@@ -107,7 +107,7 @@ pipeline. It differs in exactly two ways:
 | | `sqlclient-perf-pipeline.yml` | `sqlclient-perf-pr-pipeline.yml` |
 | --- | --- | --- |
 | Candidate | branch the run is queued on | branch the run is queued on (unchanged) |
-| Baseline | released NuGet package (`baselineVersion`, default `7.0.2`) | **source of another git ref** (`baselineSourceRef`, default `main`) |
+| Baseline | released NuGet package (`baselineVersion`, default `7.0.2`) | **source of another git ref** (`baselineSourceRef`, default `release/7.1`) |
 | Kusto | translates + (optionally) ingests | **never** — no ADX variable group, no translate/ingest steps |
 
 Both pipelines are **manual / queue-time only** (`pr: none`, `trigger: none`): a run occupies a
@@ -117,7 +117,7 @@ PR-only parameters (everything else is identical to the table above):
 
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
-| `baselineSourceRef` | `main` | Git ref of this repo whose **source** is the baseline. Empty = current-only (no baseline pass / comparison). |
+| `baselineSourceRef` | `release/7.1` | Git ref of this repo whose **source** is the baseline. Empty = current-only (no baseline pass / comparison). |
 | `baselineRepoUrl` | `https://github.com/dotnet/SqlClient.git` | Fallback remote used to obtain the baseline ref when the VM copy of the checkout cannot fetch it from its own `origin`. |
 | `testTimeoutMinutes` | `210` | Higher than the main pipeline's `180` because **both** sides are built from source. |
 
@@ -160,7 +160,7 @@ questions. Two of them vary the **source** under measurement; the third varies t
 | Question | Pipeline | Baseline | Current |
 | --- | --- | --- | --- |
 | Has this branch regressed against a released package? | `sqlclient-perf-pipeline.yml` | released NuGet package | queued branch |
-| Does my PR regress the branch it merges into? | `sqlclient-perf-pr-pipeline.yml` | `main` source | queued branch |
+| Does my PR regress the branch it merges into? | `sqlclient-perf-pr-pipeline.yml` | `release/7.1` source | queued branch |
 | What does this switch cost or buy? | `sqlclient-perf-experiment.yml` | queued branch, switch **off** | queued branch, switch **on** |
 
 `sqlclient-perf-experiment.yml` picks one runner-config switch via the `switchUnderTest`
@@ -437,9 +437,8 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 
 1. Open the **PR** performance test pipeline (`sqlclient-perf-pr-pipeline.yml`) in Azure DevOps and
    select **Run pipeline**.
-2. Choose the PR's branch to benchmark. Leave `baselineSourceRef` at `main` unless the PR targets a
-   different branch (e.g. a release branch). No Kusto configuration is involved — PR results are
-   never ingested.
+2. Choose the PR's branch to benchmark. Leave `baselineSourceRef` at `release/7.1` unless the PR
+   targets a different branch. No Kusto configuration is involved — PR results are never ingested.
 3. After the run, review the **run summary** (comparison, labelled `<ref>@<short-sha>`) and the
    `perf-results` artifact. The build is tagged **`Baseline <ref>`**.
 

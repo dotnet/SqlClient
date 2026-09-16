@@ -10,9 +10,9 @@
 # only differences are what it compares against and what it does with the results:
 #
 #   * Baseline    - the branch the run is queued on ("current") is compared against the SOURCE of
-#                   another ref of this repository (by default 'main'), NOT a released NuGet package.
-#                   Both sides are therefore built from source, which is what a PR author wants to
-#                   know: "does my change regress the branch I am merging into?"
+#                   another ref of this repository (by default 'release/7.1'), NOT a released NuGet
+#                   package.  Both sides are therefore built from source, which is what a PR author
+#                   wants to know: "does my change regress the branch I am merging into?"
 #   * No Kusto    - results are never ingested into the perf database (a PR run measures an unmerged
 #                   branch, so its numbers must not pollute the historical trend).  The comparison
 #                   and the raw BenchmarkDotNet artifacts are still published as pipeline artifacts.
@@ -64,7 +64,7 @@ parameters:
   - name: baselineSourceRef
     displayName: Baseline Source Ref (branch)
     type: string
-    default: main
+    default: release/7.1
 
   # Remote used to obtain the baseline ref when it cannot be fetched from the VM copy of the
   # checkout's own 'origin' (e.g. the source tree reached the VM without its .git directory, or
