@@ -142,6 +142,9 @@ namespace Microsoft.Data.SqlClient
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
+        // Shared by all connections when app.config is not read.
+        private static SqlRetryLogicBaseProvider s_noneRetryProvider;
+
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
@@ -155,7 +158,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _retryLogicProvider = LocalAppContextSwitches.EnableAppConfig
                         ? SqlConfigurableRetryLogicManager.ConnectionProvider
-                        : SqlConfigurableRetryFactory.CreateNoneRetryProvider();
+                        : LazyInitializer.EnsureInitialized(ref s_noneRetryProvider, SqlConfigurableRetryFactory.CreateNoneRetryProvider);
                 }
                 return _retryLogicProvider;
             }
