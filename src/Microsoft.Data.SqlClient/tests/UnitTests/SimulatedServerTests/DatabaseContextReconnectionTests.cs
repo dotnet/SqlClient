@@ -64,6 +64,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             /// Omits the database ENV_CHANGE token from the recovery login response.
             /// </summary>
             OmitDatabaseEnvChange,
+
+            /// <summary>
+            /// Sends the recovered database name with different casing.  A case-sensitive
+            /// server can host databases whose names differ only by case, so this is a real
+            /// mismatch that a case-insensitive comparison would miss.
+            /// </summary>
+            SendCaseAlteredDatabase,
         }
 
         /// <summary>
@@ -215,6 +222,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     // Force the initial catalog before the base class builds the login
                     // response, producing a mismatched database ENV_CHANGE for the test.
                     session.Database = InitialDatabase;
+                }
+                else if (RecoveryBehavior == RecoveryDatabaseBehavior.SendCaseAlteredDatabase
+                    && session.IsSessionRecoveryEnabled
+                    && Login7Count > 1)
+                {
+                    session.Database = session.Database.ToUpperInvariant();
                 }
 
                 TDSMessageCollection result = base.OnAuthenticationCompleted(session);
@@ -696,6 +709,46 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 SqlConnection.ClearPool(connection);
             }
+        }
+
+        /// <summary>
+        /// Covers the ordinal comparison in <c>CompleteLogin</c>: the recovery response names
+        /// the same database with different casing.
+        /// <para>
+        /// A case-sensitive server can host databases whose names differ only by case, so this
+        /// counts as a genuine mismatch and must still produce a corrective <c>USE</c>.  The
+        /// other mismatch cases use entirely different names and therefore pass under either an
+        /// ordinal or a case-insensitive comparison; only this one pins the behavior.
+        /// </para>
+        /// </summary>
+        [Fact]
+        public void UseDatabase_CaseAlteredRecovery_IssuesCorrectiveUse()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = true;
+
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendCaseAlteredDatabase);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
+            DisconnectAndExecute(server, connection);
+
+            // The server reported the same name in a different case.
+            Assert.Equal(SwitchedDatabase.ToUpperInvariant(), server.LastLoginResponseDatabase);
+
+            AssertCorrectiveUse(server, useCountBeforeReconnect, expectCorrection: true);
+            Assert.Equal(SwitchedDatabase, connection.Database);
         }
 
         #endregion

@@ -91,8 +91,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // wrong database.
                 if (_createdTableNames.Count > 0)
                 {
-                    string initialCatalog = new SqlConnectionStringBuilder(
-                        _baseConnectionString).InitialCatalog;
+                    // Read the login's default database; the connection string is allowed to
+                    // omit Initial Catalog, which would otherwise skip cleanup entirely.
+                    string initialCatalog = conn.Database;
 
                     if (!string.IsNullOrEmpty(initialCatalog)
                         && !string.Equals(initialCatalog, _tempDbName,
@@ -472,8 +473,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Should NOT exist in the initial catalog
-            string initialCatalog = new SqlConnectionStringBuilder(
-                _baseConnectionString).InitialCatalog;
+            string initialCatalog = verifier.Database;
             if (!string.IsNullOrEmpty(initialCatalog)
                 && !string.Equals(initialCatalog, _tempDbName, StringComparison.OrdinalIgnoreCase))
             {
@@ -570,8 +570,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlConnection verifier = new(_baseConnectionString);
             verifier.Open();
 
-            string initialCatalog = new SqlConnectionStringBuilder(
-                _baseConnectionString).InitialCatalog;
+            string initialCatalog = verifier.Database;
 
             for (int i = 0; i < iterations; i++)
             {
