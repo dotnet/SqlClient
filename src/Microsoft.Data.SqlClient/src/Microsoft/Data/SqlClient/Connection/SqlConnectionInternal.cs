@@ -2001,7 +2001,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
@@ -2270,7 +2270,7 @@ namespace Microsoft.Data.SqlClient.Connection
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
 
-            CompleteLogin(!ConnectionOptions.Pooling);
+            CompleteLogin(!ConnectionOptions.Pooling, timeout);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
         }
@@ -2306,7 +2306,7 @@ namespace Microsoft.Data.SqlClient.Connection
             return true;
         }
 
-        private void CompleteLogin(bool enlistOK) // @TODO: Rename as per guidelines
+        private void CompleteLogin(bool enlistOK, TimeoutTimer timeout) // @TODO: Rename as per guidelines
         {
             _parser.Run(
                 RunBehavior.UntilDone,
@@ -2386,12 +2386,31 @@ namespace Microsoft.Data.SqlClient.Connection
                 if (recoveredDatabase != null
                     && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
                 {
+                    // Spend only what is left of the login budget. Starting a fresh
+                    // ConnectTimeout here would let a slow login plus a stalled batch overrun
+                    // the caller's connect timeout by up to another full interval.
+                    int batchTimeoutSeconds = 0;
+                    if (!timeout.IsInfinite)
+                    {
+                        if (timeout.IsExpired)
+                        {
+                            throw SQL.CR_ReconnectTimeout();
+                        }
+
+                        long remainingSeconds = timeout.MillisecondsRemaining / 1000;
+
+                        // Round a sub-second remainder up so the batch still gets to run.
+                        batchTimeoutSeconds = remainingSeconds < 1
+                            ? 1
+                            : (int)Math.Min(remainingSeconds, int.MaxValue);
+                    }
+
                     // The server is not on the expected database.  Force it there.
                     string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);
                     _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
                     Task executeTask = _parser.TdsExecuteSQLBatch(
                         $"USE {safeName}",
-                        ConnectionOptions.ConnectTimeout,
+                        batchTimeoutSeconds,
                         notificationRequest: null,
                         _parser._physicalStateObj,
                         sync: true);

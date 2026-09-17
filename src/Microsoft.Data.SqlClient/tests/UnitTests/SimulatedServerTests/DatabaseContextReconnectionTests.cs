@@ -81,6 +81,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
             }
 
+            /// <summary>
+            /// Number of <c>USE</c> batches this engine has executed.
+            /// </summary>
+            public int UseDatabaseCount { get; private set; }
+
+            /// <summary>
+            /// Database named by the most recent <c>USE</c> batch, or <c>null</c> if none.
+            /// </summary>
+            public string? LastUseDatabase { get; private set; }
+
             protected override TDSMessageCollection CreateQueryResponse(
                 ITDSServerSession session, TDSSQLBatchToken batchRequest)
             {
@@ -98,16 +108,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             /// <summary>
             /// Moves the simulated session to <paramref name="newDatabase"/> and returns the
             /// tokens a server sends for a database change: an ENV_CHANGE carrying both the
-            /// old and new names, the matching INFO(5701) message, and a final DONE.
+            /// old and new names, the matching INFO(5701) message, and a final DONE.  Also
+            /// records the batch so tests can assert the server, not just the client, moved.
             /// </summary>
             /// <param name="session">The session whose current database is updated.</param>
             /// <param name="newDatabase">The database name parsed from the batch.</param>
             /// <returns>The response tokens for the <c>USE</c> batch.</returns>
-            private static TDSMessageCollection HandleUseDatabase(ITDSServerSession session,
+            private TDSMessageCollection HandleUseDatabase(ITDSServerSession session,
                 string newDatabase)
             {
                 string oldDatabase = session.Database;
                 session.Database = newDatabase;
+
+                UseDatabaseCount++;
+                LastUseDatabase = newDatabase;
 
                 var envChange = new TDSEnvChangeToken(
                     TDSEnvChangeTokenType.Database, newDatabase, oldDatabase);
@@ -132,7 +146,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private sealed class DisconnectableTdsServer : GenericTdsServer<TdsServerArguments>
         {
+            private readonly DatabaseContextQueryEngine _queryEngine;
+
             public int Port => EndPoint.Port;
+
+            /// <summary>
+            /// Number of <c>USE</c> batches the server has executed.  Tests compare this across
+            /// a reconnection to prove a corrective <c>USE</c> actually reached the server,
+            /// which <see cref="SqlConnection.Database"/> alone cannot show.
+            /// </summary>
+            public int UseDatabaseCount => _queryEngine.UseDatabaseCount;
+
+            /// <summary>
+            /// Database named by the most recent <c>USE</c> batch, or <c>null</c> if none.
+            /// </summary>
+            public string? LastUseDatabase => _queryEngine.LastUseDatabase;
 
             /// <summary>
             /// Controls how the server responds to session recovery with a changed database.
@@ -156,8 +184,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             private DisconnectableTdsServer(TdsServerArguments args,
                 RecoveryDatabaseBehavior behavior)
-                : base(args, new DatabaseContextQueryEngine(args))
+                : this(args, new DatabaseContextQueryEngine(args), behavior)
             {
+            }
+
+            private DisconnectableTdsServer(TdsServerArguments args,
+                DatabaseContextQueryEngine queryEngine,
+                RecoveryDatabaseBehavior behavior)
+                : base(args, queryEngine)
+            {
+                _queryEngine = queryEngine;
                 RecoveryBehavior = behavior;
                 Start();
             }
@@ -350,6 +386,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// Assert whether a corrective <c>USE</c> reached the server during the reconnection
+        /// that just occurred.
+        /// <para>
+        /// Checking <see cref="SqlConnection.Database"/> is not sufficient on its own:
+        /// <c>CompleteLogin</c> assigns the recovered database to the connection after issuing
+        /// the batch, so the client-side property matches even if the batch was never sent or
+        /// processed.  Comparing the server's <c>USE</c> count proves the server session was
+        /// actually realigned.
+        /// </para>
+        /// </summary>
+        /// <param name="server">The simulated server that handled the reconnection.</param>
+        /// <param name="useCountBeforeReconnect">USE count captured before the disconnect.</param>
+        /// <param name="expectCorrection">Whether the diagnostic switch was enabled.</param>
+        private static void AssertCorrectiveUse(DisconnectableTdsServer server,
+            int useCountBeforeReconnect, bool expectCorrection)
+        {
+            if (expectCorrection)
+            {
+                Assert.True(server.UseDatabaseCount > useCountBeforeReconnect,
+                    "Expected a corrective USE to reach the server after reconnection, but the "
+                    + $"server executed no new USE batch (count stayed at {server.UseDatabaseCount}).");
+                Assert.Equal(SwitchedDatabase, server.LastUseDatabase);
+            }
+            else
+            {
+                Assert.Equal(useCountBeforeReconnect, server.UseDatabaseCount);
+            }
+        }
+
         #endregion
 
         #region Baseline Tests
@@ -530,6 +596,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             // The simulated response sent InitialCatalog in ENV_CHANGE.
@@ -537,6 +605,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
             Assert.Equal(expectedDatabase, connection.Database);
+            AssertCorrectiveUse(server, useCountBeforeReconnect, verifyRecoveredDb);
         }
 
         /// <summary>
@@ -561,12 +630,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             Assert.Equal(InitialDatabase, server.LastLoginResponseDatabase);
 
             string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
             Assert.Equal(expectedDatabase, connection.Database);
+            AssertCorrectiveUse(server, useCountBeforeReconnect, verifyRecoveredDb);
         }
 
         #endregion
@@ -602,6 +674,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             // The server never sent a database ENV_CHANGE.
@@ -609,6 +683,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
             Assert.Equal(expectedDatabase, connection.Database);
+            AssertCorrectiveUse(server, useCountBeforeReconnect, verifyRecoveredDb);
         }
 
         /// <summary>
@@ -633,12 +708,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             Assert.Null(server.LastLoginResponseDatabase);
 
             string expectedDatabase = verifyRecoveredDb ? SwitchedDatabase : InitialDatabase;
             Assert.Equal(expectedDatabase, connection.Database);
+            AssertCorrectiveUse(server, useCountBeforeReconnect, verifyRecoveredDb);
         }
 
         #endregion
