@@ -227,7 +227,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_PreservesContext()
         {
             var builder = BuildConnectionString(pooling: false);
@@ -256,7 +257,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ChangeDatabase_KillReconnect_PreservesContext()
         {
             var builder = BuildConnectionString(pooling: false);
@@ -281,7 +283,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_Pooled_PreservesContext()
         {
             var builder = BuildConnectionString(pooling: true);
@@ -311,7 +314,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_MARS_PreservesContext()
         {
             var builder = BuildConnectionString(pooling: false, mars: true);
@@ -343,7 +347,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_StressLoop_PreservesContext()
         {
             const int iterations = 100;
@@ -379,7 +384,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ChangeDatabase_KillReconnect_StressLoop_PreservesContext()
         {
             const int iterations = 100;
@@ -416,7 +422,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_CreateTable_LandsInCorrectDb()
         {
             var builder = BuildConnectionString(pooling: false);
@@ -490,7 +497,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_KillReconnect_StressCreateTables_LandInCorrectDb()
         {
             const int iterations = 50;
@@ -600,7 +608,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void MultipleDatabaseSwitches_KillReconnect_LastSwitchWins()
         {
             var builder = BuildConnectionString(pooling: false);
@@ -671,7 +680,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UseDatabase_DoubleKill_CreateTable_LandsInCorrectDb()
         {
             var builder = BuildConnectionString(pooling: false);
@@ -726,7 +736,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer))]
+            nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         public async Task UseDatabase_KillReconnect_Async_CreateTable_LandsInCorrectDb()
         {
             var builder = BuildConnectionString(pooling: false);
