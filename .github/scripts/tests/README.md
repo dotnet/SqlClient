@@ -1,5 +1,25 @@
 # GitHub Actions Script Tests
 
+## Agentic triage output tests
+
+`validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
+20 or newer) and `jq`, both preinstalled on the CI runner. No npm dependencies
+are needed. Run it from the repository root:
+
+```bash
+node --test .github/scripts/tests/validate-triage-output.test.cjs
+```
+
+These tests also run in `verify-aw-lock.yml`. They cover the validation gate
+before triage comments and labels are published: complete summaries, explicit
+no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
+examples, duplicate comments, and mixed success/incomplete outcomes.
+They also exercise the workflow's exact `jq` encoding/check expressions with
+quotes, backticks, backslashes, shell-like text, and newlines. Set `JQ_PATH` to
+the full jq executable path if it is not on your local `PATH`.
+
+## Shell script tests
+
 This directory contains tests for the shell scripts used by the
 [cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
 [check-milestone](./../../../.github/workflows/check-milestone.yml) and
