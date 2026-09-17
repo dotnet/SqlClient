@@ -641,6 +641,63 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             AssertCorrectiveUse(server, useCountBeforeReconnect, verifyRecoveredDb);
         }
 
+        /// <summary>
+        /// Guards the ordering of the recovery-snapshot clear in <c>CompleteLogin</c>.
+        /// <para>
+        /// With the diagnostic enabled and a mismatched recovery response the client issues a
+        /// corrective <c>USE</c>.  The ENV_CHANGE that command produces must not be recorded as
+        /// the connection's original database; if it were, returning the connection to the pool
+        /// and reopening it would resume on the switched database and leak that context to the
+        /// next pool user instead of resetting to the initial catalog.
+        /// </para>
+        /// </summary>
+        [Fact]
+        public void UseDatabase_BuggyRecovery_Pooled_PoolResetRestoresInitialCatalog()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = true;
+
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendInitialCatalog);
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.Port}",
+                InitialCatalog = InitialDatabase,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                ConnectRetryCount = 2,
+                ConnectRetryInterval = 1,
+                ConnectTimeout = 10,
+                Pooling = true,
+            };
+
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            try
+            {
+                connection.Open();
+
+                using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                int useCountBeforeReconnect = server.UseDatabaseCount;
+
+                DisconnectAndExecute(server, connection);
+
+                AssertCorrectiveUse(server, useCountBeforeReconnect, expectCorrection: true);
+                Assert.Equal(SwitchedDatabase, connection.Database);
+
+                connection.Close();
+                connection.Open();
+
+                Assert.Equal(InitialDatabase, connection.Database);
+            }
+            finally
+            {
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
         #endregion
 
         #region Reconnection Tests — Omitted database response

@@ -613,13 +613,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void MultipleDatabaseSwitches_KillReconnect_LastSwitchWins()
         {
             var builder = BuildConnectionString(pooling: false);
-            string initialCatalog = new SqlConnectionStringBuilder(
-                _baseConnectionString).InitialCatalog;
             string tableName = "tbl_multi_" + Guid.NewGuid().ToString("N").Substring(0, 8);
             _createdTableNames.Add(tableName);
 
             using SqlConnection conn = new(builder.ConnectionString);
             conn.Open();
+
+            // Read the login's default database rather than the connection string, which is
+            // allowed to omit Initial Catalog.
+            string initialCatalog = conn.Database;
 
             // Switch away and back multiple times
             using (SqlCommand cmd = new($"USE [{_tempDbName}]", conn))
