@@ -32,6 +32,7 @@ public class LocalAppContextSwitchesTest
         using LocalAppContextSwitchesHelper switchesHelper = new();
 
         switchesHelper.EnableMultiSubnetFailoverByDefault = null;
+        switchesHelper.VerifyRecoveredDatabaseContext = null;
         switchesHelper.IgnoreServerProvidedFailoverPartner = null;
         switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
         switchesHelper.LegacyRowVersionNullBehavior = null;
@@ -69,6 +70,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        Assert.False(switchesHelper.VerifyRecoveredDatabaseContext);
         #if NET
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

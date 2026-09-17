@@ -1063,7 +1063,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 rng.GetBytes(randomBytes);
             }
-            
+
             return randomBytes;
         }
 
@@ -1086,6 +1086,16 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             return left.SequenceEqual<byte>(right);
+        }
+
+        /// <summary>
+        /// Forcibly close every active client connection without stopping
+        /// the TCP listener. The server continues to accept new
+        /// connections (e.g. reconnection attempts).
+        /// </summary>
+        protected void DisconnectAllClients()
+        {
+            _endpoint?.DisconnectAll();
         }
 
         public virtual void Dispose()

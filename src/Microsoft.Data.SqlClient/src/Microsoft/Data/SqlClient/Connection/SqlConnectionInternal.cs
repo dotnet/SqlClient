@@ -2368,7 +2368,45 @@ namespace Microsoft.Data.SqlClient.Connection
                     _currentSessionData._encrypted = isEncrypted;
                 }
 
+                // The opt-in diagnostic compares the database captured before the
+                // connection dropped with the database observed during the recovery
+                // login. If they differ, align the connection before discarding the
+                // recovery snapshot.
+                string recoveredDatabase = null;
+                if (_recoverySessionData != null
+                    && LocalAppContextSwitches.VerifyRecoveredDatabaseContext)
+                {
+                    recoveredDatabase = _recoverySessionData._database
+                        ?? _recoverySessionData._initialDatabase;
+                }
+
                 _recoverySessionData = null;
+
+                if (recoveredDatabase != null
+                    && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.OrdinalIgnoreCase))
+                {
+                    // The server is not on the expected database.  Force it there.
+                    string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+                    Task executeTask = _parser.TdsExecuteSQLBatch(
+                        $"USE {safeName}",
+                        ConnectionOptions.ConnectTimeout,
+                        notificationRequest: null,
+                        _parser._physicalStateObj,
+                        sync: true);
+                    Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+                    _parser.Run(
+                        RunBehavior.UntilDone,
+                        cmdHandler: null,
+                        dataStream: null,
+                        bulkCopyHandler: null,
+                        _parser._physicalStateObj);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                    // The USE command triggers an ENV_CHANGE that updates CurrentDatabase,
+                    // but set it explicitly in case the response is unexpected.
+                    CurrentDatabase = recoveredDatabase;
+                }
             }
 
             Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext,
