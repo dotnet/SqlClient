@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Stable Release 7.1.0] - 2026-09-16
+## [Stable Release 7.1.0] - 2026-09-17
 
 General availability of Microsoft.Data.SqlClient 7.1. The sections below list the changes since [7.1.0-preview3](release-notes/7.1/7.1.0-preview3.md). See the [7.1.0 release notes](release-notes/7.1/7.1.0.md) for the cumulative list of changes since the 7.0.3 stable release.
 
