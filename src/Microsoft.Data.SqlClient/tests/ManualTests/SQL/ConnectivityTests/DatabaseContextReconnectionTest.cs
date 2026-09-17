@@ -4,10 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -25,8 +26,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </summary>
     public sealed class DatabaseContextReconnectionTest : IDisposable
     {
-        private const string SwitchName =
-            "Switch.Microsoft.Data.SqlClient.VerifyRecoveredDatabaseContext";
+        /// <summary>
+        /// Holds <c>VerifyRecoveredDatabaseContext</c> off for the lifetime of this class and
+        /// restores the previous value on disposal.  The helper is required rather than a bare
+        /// <see cref="AppContext.SetSwitch"/> call because the driver caches each switch on
+        /// first read, so a plain AppContext write would not affect an already-cached value.
+        /// </summary>
+        private readonly SwitchesHelper _switchesHelper;
 
         /// <summary>
         /// Temporary database created for the test run.
@@ -48,56 +54,86 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public DatabaseContextReconnectionTest()
         {
-            _baseConnectionString = DataTestUtility.TCPConnectionString;
-            _tempDbName = "sqlclient_dbctx_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+            _switchesHelper = new SwitchesHelper
+            {
+                VerifyRecoveredDatabaseContext = false,
+            };
 
-            using SqlConnection conn = new(_baseConnectionString);
-            conn.Open();
-            using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = $"CREATE DATABASE [{_tempDbName}]";
-            cmd.ExecuteNonQuery();
+            try
+            {
+                _baseConnectionString = DataTestUtility.TCPConnectionString;
+                _tempDbName = "sqlclient_dbctx_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+
+                using SqlConnection conn = new(_baseConnectionString);
+                conn.Open();
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = $"CREATE DATABASE [{_tempDbName}]";
+                cmd.ExecuteNonQuery();
+            }
+            catch
+            {
+                // xUnit does not dispose an instance whose constructor threw, so release
+                // the process-wide switch lock here or every later test would block on it.
+                _switchesHelper.Dispose();
+                throw;
+            }
         }
 
         public void Dispose()
         {
-            using SqlConnection conn = new(_baseConnectionString);
-            conn.Open();
-
-            // Clean up any tables that may have been created in the initial
-            // catalog if the database context bug caused DDL to execute in the
-            // wrong database.
-            if (_createdTableNames.Count > 0)
+            try
             {
-                string initialCatalog = new SqlConnectionStringBuilder(
-                    _baseConnectionString).InitialCatalog;
+                using SqlConnection conn = new(_baseConnectionString);
+                conn.Open();
 
-                if (!string.IsNullOrEmpty(initialCatalog)
-                    && !string.Equals(initialCatalog, _tempDbName,
-                        StringComparison.OrdinalIgnoreCase))
+                // Clean up any tables that may have been created in the initial
+                // catalog if the database context bug caused DDL to execute in the
+                // wrong database.
+                if (_createdTableNames.Count > 0)
                 {
-                    foreach (string tableName in _createdTableNames)
+                    string initialCatalog = new SqlConnectionStringBuilder(
+                        _baseConnectionString).InitialCatalog;
+
+                    if (!string.IsNullOrEmpty(initialCatalog)
+                        && !string.Equals(initialCatalog, _tempDbName,
+                            StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        foreach (string tableName in _createdTableNames)
                         {
-                            using SqlCommand cmd = conn.CreateCommand();
-                            cmd.CommandText =
-                                $"IF OBJECT_ID(N'[{initialCatalog}].dbo.[{tableName}]') " +
-                                $"IS NOT NULL DROP TABLE [{initialCatalog}].dbo.[{tableName}]";
-                            cmd.ExecuteNonQuery();
-                        }
-                        catch
-                        {
-                            // Best-effort cleanup
+                            try
+                            {
+                                using SqlCommand cmd = conn.CreateCommand();
+                                cmd.CommandText =
+                                    $"IF OBJECT_ID(N'[{initialCatalog}].dbo.[{tableName}]') " +
+                                    $"IS NOT NULL DROP TABLE [{initialCatalog}].dbo.[{tableName}]";
+                                cmd.ExecuteNonQuery();
+                            }
+                            catch
+                            {
+                                // Best-effort cleanup
+                            }
                         }
                     }
                 }
-            }
 
-            DataTestUtility.DropDatabase(conn, _tempDbName);
+                DataTestUtility.DropDatabase(conn, _tempDbName);
+            }
+            finally
+            {
+                _switchesHelper.Dispose();
+            }
         }
 
         #region Helpers
 
+        /// <summary>
+        /// Builds a connection string from the configured test server with connection
+        /// resiliency enabled, so that killing the session triggers a transparent
+        /// reconnection instead of surfacing an error.
+        /// </summary>
+        /// <param name="pooling">Whether the connection participates in a connection pool.</param>
+        /// <param name="mars">Whether Multiple Active Result Sets is enabled.</param>
+        /// <returns>A builder for the configured connection string.</returns>
         private SqlConnectionStringBuilder BuildConnectionString(
             bool pooling = false, bool mars = false)
         {
@@ -194,8 +230,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
 
             using SqlConnection conn = new(builder.ConnectionString);
@@ -225,8 +259,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void ChangeDatabase_KillReconnect_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
 
             using SqlConnection conn = new(builder.ConnectionString);
@@ -252,8 +284,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_Pooled_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: true);
             // Unique pool key so we don't interfere with other tests.
             builder.ApplicationName = "DbCtxPoolTest_" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -284,8 +314,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_MARS_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false, mars: true);
 
             using SqlConnection conn = new(builder.ConnectionString);
@@ -318,8 +346,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_StressLoop_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             const int iterations = 100;
             var builder = BuildConnectionString(pooling: false);
 
@@ -356,8 +382,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void ChangeDatabase_KillReconnect_StressLoop_PreservesContext()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             const int iterations = 100;
             var builder = BuildConnectionString(pooling: false);
 
@@ -395,8 +419,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_CreateTable_LandsInCorrectDb()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
             string tableName = "tbl_ctx_" + Guid.NewGuid().ToString("N").Substring(0, 8);
             _createdTableNames.Add(tableName);
@@ -471,8 +493,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_KillReconnect_StressCreateTables_LandInCorrectDb()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             const int iterations = 50;
             var builder = BuildConnectionString(pooling: false);
             var rng = new Random(42); // deterministic seed for reproducibility
@@ -583,8 +603,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void MultipleDatabaseSwitches_KillReconnect_LastSwitchWins()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
             string initialCatalog = new SqlConnectionStringBuilder(
                 _baseConnectionString).InitialCatalog;
@@ -656,8 +674,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public void UseDatabase_DoubleKill_CreateTable_LandsInCorrectDb()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
             builder.ConnectRetryCount = 3; // Need extra retries for double kill
             string tableName = "tbl_dblkill_" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -713,8 +729,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             nameof(DataTestUtility.IsNotAzureServer))]
         public async Task UseDatabase_KillReconnect_Async_CreateTable_LandsInCorrectDb()
         {
-            AppContext.SetSwitch(SwitchName, false);
-
             var builder = BuildConnectionString(pooling: false);
             string tableName = "tbl_async_" + Guid.NewGuid().ToString("N").Substring(0, 8);
             _createdTableNames.Add(tableName);

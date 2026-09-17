@@ -2380,10 +2380,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         ?? _recoverySessionData._initialDatabase;
                 }
 
-                _recoverySessionData = null;
-
+                // Compare ordinally: a case-sensitive server can host databases whose
+                // names differ only by case, so a case-insensitive match would treat
+                // two distinct recovery targets as equal and skip the correction.
                 if (recoveredDatabase != null
-                    && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.OrdinalIgnoreCase))
+                    && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
                 {
                     // The server is not on the expected database.  Force it there.
                     string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);
@@ -2407,6 +2408,12 @@ namespace Microsoft.Data.SqlClient.Connection
                     // but set it explicitly in case the response is unexpected.
                     CurrentDatabase = recoveredDatabase;
                 }
+
+                // Cleared only after the corrective USE. OnEnvChange treats a null
+                // recovery snapshot on a not-yet-open connection as a login-time change
+                // and would capture the recovered database as _originalDatabase, which a
+                // later pool reset would then restore instead of the initial catalog.
+                _recoverySessionData = null;
             }
 
             Debug.Assert(SniContext.Snix_Login == Parser._physicalStateObj.SniContext,

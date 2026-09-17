@@ -257,6 +257,7 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+| `Switch.Microsoft.Data.SqlClient.VerifyRecoveredDatabaseContext` | `false` | Diagnostic: after session recovery, issues a corrective `USE` when the recovered and reported databases differ |
 
 ### Usage Example
 ```csharp

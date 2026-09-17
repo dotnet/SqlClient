@@ -2,7 +2,6 @@
 // file to you under the MIT license.  See the LICENSE file in the project root for more
 // information.
 
-using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS;
@@ -96,6 +95,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 return base.CreateQueryResponse(session, batchRequest);
             }
 
+            /// <summary>
+            /// Moves the simulated session to <paramref name="newDatabase"/> and returns the
+            /// tokens a server sends for a database change: an ENV_CHANGE carrying both the
+            /// old and new names, the matching INFO(5701) message, and a final DONE.
+            /// </summary>
+            /// <param name="session">The session whose current database is updated.</param>
+            /// <param name="newDatabase">The database name parsed from the batch.</param>
+            /// <returns>The response tokens for the <c>USE</c> batch.</returns>
             private static TDSMessageCollection HandleUseDatabase(ITDSServerSession session,
                 string newDatabase)
             {
@@ -221,6 +228,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #region Helpers
 
+        /// <summary>
+        /// Builds a connection string for the simulated server with connection resiliency
+        /// enabled and pooling disabled, so each test drives its own reconnection rather
+        /// than receiving a pooled replacement connection.
+        /// </summary>
+        /// <param name="port">The simulated server's listening port.</param>
+        /// <param name="initialCatalog">The database sent as the login initial catalog.</param>
+        /// <returns>A builder for the configured connection string.</returns>
         private static SqlConnectionStringBuilder CreateConnectionStringBuilder(int port,
             string initialCatalog = InitialDatabase)
         {
@@ -455,21 +470,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             };
 
             using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
 
-            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            try
             {
-                cmd.ExecuteNonQuery();
+                connection.Open();
+
+                using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                Assert.Equal(SwitchedDatabase, connection.Database);
+
+                DisconnectAndExecute(server, connection);
+
+                Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
+                Assert.Equal(SwitchedDatabase, connection.Database);
             }
-
-            Assert.Equal(SwitchedDatabase, connection.Database);
-
-            DisconnectAndExecute(server, connection);
-
-            Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
-            Assert.Equal(SwitchedDatabase, connection.Database);
-
-            SqlConnection.ClearPool(connection);
+            finally
+            {
+                // Clear the pool even when an assertion fails, so this test's pooled
+                // connections cannot be handed to a later test.
+                SqlConnection.ClearPool(connection);
+            }
         }
 
         #endregion
