@@ -205,6 +205,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Start();
             }
 
+            /// <summary>
+            /// Drops every connected client so the next command has to reconnect.
+            /// </summary>
             public new void DisconnectAllClients()
                 => base.DisconnectAllClients();
 
@@ -593,6 +596,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 // connections cannot be handed to a later test.
                 SqlConnection.ClearPool(connection);
             }
+        }
+
+        /// <summary>
+        /// With the diagnostic enabled and a server that restores the database correctly, no
+        /// corrective <c>USE</c> should be sent.
+        /// <para>
+        /// The other matching-recovery tests leave the switch at its default <c>false</c>, so
+        /// they cannot catch a comparison that fires when the databases already agree; this one
+        /// pins the no-op case.
+        /// </para>
+        /// </summary>
+        [Fact]
+        public void UseDatabase_ProperRecovery_SwitchEnabled_SendsNoCorrectiveUse()
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.VerifyRecoveredDatabaseContext = true;
+
+            using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendRecoveredDatabase);
+            SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+
+            using (SqlCommand cmd = new($"USE [{SwitchedDatabase}]", connection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            Assert.Equal(SwitchedDatabase, connection.Database);
+
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
+            DisconnectAndExecute(server, connection);
+
+            Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
+            Assert.Equal(SwitchedDatabase, connection.Database);
+            AssertCorrectiveUse(server, useCountBeforeReconnect, expectCorrection: false);
         }
 
         #endregion

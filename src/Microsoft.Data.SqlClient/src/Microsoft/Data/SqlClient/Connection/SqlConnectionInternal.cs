@@ -2306,6 +2306,40 @@ namespace Microsoft.Data.SqlClient.Connection
             return true;
         }
 
+        /// <summary>
+        /// Converts what remains of the login budget into the whole-second timeout used for the
+        /// corrective post-recovery <c>USE</c> batch.
+        /// </summary>
+        /// <param name="timeout">The timer governing the current login attempt.</param>
+        /// <returns>The batch timeout in seconds, where zero means no timeout.</returns>
+        /// <exception cref="SqlException">Thrown when the login budget is already exhausted.</exception>
+        /// <remarks>
+        /// Bounding the batch by the remaining budget, rather than restarting a full
+        /// ConnectTimeout, keeps a slow login followed by a stalled batch from overrunning the
+        /// caller's connect timeout by another interval. The batch API takes whole seconds, so a
+        /// sub-second remainder is raised to one second instead of being left as zero, which the
+        /// parser would read as no timeout at all; the batch can therefore outlive the remaining
+        /// budget by under a second, the same floor <c>Login</c> applies.
+        /// </remarks>
+        internal static int GetCorrectiveBatchTimeoutSeconds(TimeoutTimer timeout)
+        {
+            if (timeout.IsInfinite)
+            {
+                return 0;
+            }
+
+            if (timeout.IsExpired)
+            {
+                throw SQL.CR_ReconnectTimeout();
+            }
+
+            long remainingSeconds = timeout.MillisecondsRemaining / 1000;
+
+            return remainingSeconds < 1
+                ? 1
+                : (int)Math.Min(remainingSeconds, int.MaxValue);
+        }
+
         private void CompleteLogin(bool enlistOK, TimeoutTimer timeout) // @TODO: Rename as per guidelines
         {
             _parser.Run(
@@ -2386,27 +2420,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 if (recoveredDatabase != null
                     && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
                 {
-                    // Bound the corrective batch by what is left of the login budget instead of
-                    // restarting a full ConnectTimeout, which would let a slow login plus a
-                    // stalled batch overrun the caller's connect timeout by another interval.
-                    int batchTimeoutSeconds = 0;
-                    if (!timeout.IsInfinite)
-                    {
-                        if (timeout.IsExpired)
-                        {
-                            throw SQL.CR_ReconnectTimeout();
-                        }
-
-                        long remainingSeconds = timeout.MillisecondsRemaining / 1000;
-
-                        // This batch API takes whole seconds, so a sub-second remainder is
-                        // raised to one second rather than left as zero, which the parser would
-                        // read as no timeout at all. The batch can therefore outlive the
-                        // remaining budget by under a second; Login() applies the same floor.
-                        batchTimeoutSeconds = remainingSeconds < 1
-                            ? 1
-                            : (int)Math.Min(remainingSeconds, int.MaxValue);
-                    }
+                    int batchTimeoutSeconds = GetCorrectiveBatchTimeoutSeconds(timeout);
 
                     // The server is not on the expected database.  Force it there.
                     string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);

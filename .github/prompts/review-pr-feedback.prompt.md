@@ -75,7 +75,11 @@ Follow the referenced skill instructions before producing any custom filter.
   thread-only query silently misses them.
 - They are embedded in the body of the review itself. Fetch review bodies with the selected
   mechanism — an MCP tool that returns reviews, or the `gh` CLI:
-  `gh api graphql -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviews(first:50){nodes{url state submittedAt author{login} body}}}}}' -f owner=<owner> -f repo=<repo> -F pr=<number>`
+  `gh api graphql -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviews(first:100){nodes{url state submittedAt author{login} body}}}}}' -f owner=<owner> -f repo=<repo> -F pr=<number>`
+- Check whether the review list was truncated, and page through the rest if it was. A long-lived
+  pull request can accumulate more reviews than a single page returns, and a silently truncated
+  list hides exactly the feedback this step exists to surface. Request `pageInfo{hasNextPage
+  endCursor}` and follow it with `after:` rather than assuming one page is the whole history.
 - Whichever mechanism you use, make sure it returns the review **body**; a tool that lists only
   review comments or threads will not surface suppressed comments.
 - Scan every review body for a collapsed `<details>` section introduced by either known heading:
