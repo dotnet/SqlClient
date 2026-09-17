@@ -385,7 +385,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 }
                 catch (SqlException)
                 {
-                    // Expected — broken connection detected and no retry available.
+                    // Expected - broken connection detected and no retry available.
                     return;
                 }
 
@@ -498,7 +498,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
-        #region Reconnection Tests — Proper Server Recovery
+        #region Reconnection Tests - Proper Server Recovery
 
         /// <summary>
         /// After switching the database via USE [db] and reconnecting, the server properly
@@ -597,7 +597,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
-        #region Reconnection Tests — Mismatched database response
+        #region Reconnection Tests - Mismatched database response
 
         /// <summary>
         /// Uses a recovery response whose ENV_CHANGE carries the initial catalog instead
@@ -783,7 +783,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
-        #region Reconnection Tests — Omitted database response
+        #region Reconnection Tests - Omitted database response
 
         /// <summary>
         /// Uses a recovery response that omits the database ENV_CHANGE token.

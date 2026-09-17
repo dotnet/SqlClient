@@ -2386,9 +2386,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 if (recoveredDatabase != null
                     && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
                 {
-                    // Spend only what is left of the login budget. Starting a fresh
-                    // ConnectTimeout here would let a slow login plus a stalled batch overrun
-                    // the caller's connect timeout by up to another full interval.
+                    // Bound the corrective batch by what is left of the login budget instead of
+                    // restarting a full ConnectTimeout, which would let a slow login plus a
+                    // stalled batch overrun the caller's connect timeout by another interval.
                     int batchTimeoutSeconds = 0;
                     if (!timeout.IsInfinite)
                     {
@@ -2399,7 +2399,10 @@ namespace Microsoft.Data.SqlClient.Connection
 
                         long remainingSeconds = timeout.MillisecondsRemaining / 1000;
 
-                        // Round a sub-second remainder up so the batch still gets to run.
+                        // This batch API takes whole seconds, so a sub-second remainder is
+                        // raised to one second rather than left as zero, which the parser would
+                        // read as no timeout at all. The batch can therefore outlive the
+                        // remaining budget by under a second; Login() applies the same floor.
                         batchTimeoutSeconds = remainingSeconds < 1
                             ? 1
                             : (int)Math.Min(remainingSeconds, int.MaxValue);

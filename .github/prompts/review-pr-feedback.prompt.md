@@ -28,9 +28,16 @@ Read and write GitHub data with whatever access is available, in this order of p
 3. The **`gh` CLI** (`gh api graphql`, `gh api`, `gh pr`).
 4. **Direct GitHub REST/GraphQL** over HTTPS with a token.
 
-Probe availability instead of assuming. If the chosen mechanism is missing, unauthenticated, or
-errors, fall back to the next one and say which you used. Once a mechanism works, use it
-consistently for the whole run and remember it as the user's preference for future runs.
+Probe availability instead of assuming, and confirm the mechanism covers the operations this
+prompt actually needs: reading threads, reading review bodies, posting replies, and resolving
+threads. A read-only MCP server satisfies a naive "are the pull request tools present" check, then
+strands the run at step 9 with all the analysis already done, so verify write capability up front
+rather than discovering the gap at the end.
+
+If the chosen mechanism is missing, unauthenticated, or errors, fall back to the next one and say
+which you used. Prefer a single mechanism for the whole run, but fall back per operation when the
+selected one cannot perform a specific step, and report the split. Remember the working choice as
+the user's preference for future runs.
 
 Every operation in this prompt — reading threads, reading review bodies, replying, and resolving
 threads — is available through both MCP and the CLI. The GraphQL snippets below are `gh`
@@ -48,7 +55,9 @@ Follow the referenced skill instructions before producing any custom filter.
 1. Validate prerequisites
 - Select the access mechanism using the preference order in "Resource access", and confirm it
   actually works before relying on it: for the `gh` CLI confirm it is installed and
-  authenticated; for an MCP server confirm the pull request tools are available.
+  authenticated; for an MCP server confirm both the read tools (review threads and review
+  bodies) and the write tools (reply and resolve) are available, because a read-only server
+  cannot complete step 9.
 - Resolve repository from ${input:repo}, or infer from git remote.
 - Resolve PR number from ${input:pr} (accept number or URL).
 - Discover the correct git remote name from the current repository and store it for later commands.

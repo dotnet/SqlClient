@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Single-shot tests
 
         /// <summary>
-        /// USE [tempDb] → KILL → command → verify both client and server are
+        /// USE [tempDb] -> KILL -> command -> verify both client and server are
         /// on tempDb.  No pooling, no MARS.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// ChangeDatabase(tempDb) → KILL → command → verify context preserved.
+        /// ChangeDatabase(tempDb) -> KILL -> command -> verify context preserved.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
@@ -343,7 +343,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Stress tests
 
         /// <summary>
-        /// Runs USE → KILL → verify in a tight loop to surface intermittent
+        /// Runs USE -> KILL -> verify in a tight loop to surface intermittent
         /// failures in session recovery.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility),
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Object-creation tests
 
         /// <summary>
-        /// After USE → KILL → reconnect, creates a table via DDL and verifies
+        /// After USE -> KILL -> reconnect, creates a table via DDL and verifies
         /// via a separate connection that it landed in the expected database,
         /// not the initial catalog.  This is the strongest proof that the
         /// server's session context is actually on the right database.
@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             KillSpid(conn.ServerProcessId);
 
-            // Create a table — this DDL should execute in _tempDbName
+            // Create a table - this DDL should execute in _tempDbName
             using (SqlCommand createCmd = new(
                 $"CREATE TABLE [{tableName}] (Id INT PRIMARY KEY, Val NVARCHAR(50))", conn))
             {
@@ -513,7 +513,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string context = $"stress-create iteration {i}";
 
-                // Variable workload BEFORE USE — pollute session state
+                // Variable workload BEFORE USE - pollute session state
                 int preQueries = rng.Next(0, 6);
                 for (int q = 0; q < preQueries; q++)
                 {
@@ -550,7 +550,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Guid connIdBefore = GetConnectionId(conn);
                 KillSpid(conn.ServerProcessId);
 
-                // Reconnection happens here — create a table
+                // Reconnection happens here - create a table
                 string tableName = $"tbl_s{i}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
                 tableNames[i] = tableName;
                 _createdTableNames.Add(tableName);
@@ -595,13 +595,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     int wrongDb = (int)negCmd.ExecuteScalar();
                     Assert.True(wrongDb == 0,
                         $"Iteration {i}: Table '{tableNames[i]}' found in initial catalog " +
-                        $"'{initialCatalog}' — DDL executed in WRONG database!");
+                        $"'{initialCatalog}' - DDL executed in WRONG database!");
                 }
             }
         }
 
         /// <summary>
-        /// Two database switches before kill: USE initialCatalog → USE tempDb → KILL.
+        /// Two database switches before kill: USE initialCatalog -> USE tempDb -> KILL.
         /// After reconnection, creates a table and verifies the *last* switch won.
         /// Catches bugs where only the first database change is recorded in recovery data.
         /// </summary>
@@ -640,7 +640,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             KillSpid(conn.ServerProcessId);
 
-            // After reconnection, create a table — must land in _tempDbName
+            // After reconnection, create a table - must land in _tempDbName
             using (SqlCommand createCmd = new(
                 $"CREATE TABLE [{tableName}] (Id INT)", conn))
             {
@@ -701,13 +701,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // First kill
             KillSpid(conn.ServerProcessId);
 
-            // Force reconnection by querying — this triggers session recovery
+            // Force reconnection by querying - this triggers session recovery
             string dbAfterFirst = GetServerDatabase(conn);
             Assert.True(
                 string.Equals(_tempDbName, dbAfterFirst, StringComparison.OrdinalIgnoreCase),
                 $"After first kill: expected '{_tempDbName}', got '{dbAfterFirst}'");
 
-            // Second kill — immediately after first reconnection
+            // Second kill - immediately after first reconnection
             KillSpid(conn.ServerProcessId);
 
             // Create table after second reconnection
