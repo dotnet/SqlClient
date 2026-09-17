@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.IO.Compression;
+using System.Reflection.Metadata;
 
 namespace PackageValidator;
 
@@ -150,7 +151,7 @@ internal static class SymbolResolver
                 asm.HasSymbolPackageSymbols = true;
                 asm.SymbolPackageSymbolsMatch = true;
                 asm.SymbolPackageFile = byGuid;
-                asm.SymbolPackageVerifiedByChecksum = VerifyMatchedChecksum(archive, byGuid, asm);
+                InspectMatchedPdb(archive, byGuid, asm);
                 matchedPdbs.Add(byGuid);
             }
             else if (pdbByPathKey.TryGetValue(StripExtension(asm.Path), out string? byPath))
@@ -201,18 +202,24 @@ internal static class SymbolResolver
     }
 
     /// <summary>
-    /// Re-reads a GUID-matched PDB from the symbol package on demand and verifies it against the
-    /// assembly's recorded PDB checksums. Loading the bytes here (rather than retaining every PDB
-    /// during indexing) keeps peak memory to a single PDB.
+    /// Re-reads a GUID-matched PDB to verify checksums and inspect source coverage. Loading bytes
+    /// on demand rather than retaining all PDBs during indexing keeps peak memory to one PDB.
     /// </summary>
     /// <param name="archive">The open symbol-package archive.</param>
     /// <param name="pdbFullName">The full archive path of the matched PDB.</param>
     /// <param name="asm">The assembly whose checksums drive verification.</param>
-    /// <returns>The checksum verification result, or <see langword="null"/> if the entry cannot be read.</returns>
-    private static bool? VerifyMatchedChecksum(ZipArchive archive, string pdbFullName, BinaryReport asm)
+    private static void InspectMatchedPdb(ZipArchive archive, string pdbFullName, BinaryReport asm)
     {
         ZipArchiveEntry? entry = archive.GetEntry(pdbFullName);
-        return entry is null ? null : VerifyChecksum(asm, ReadEntry(entry));
+        if (entry is null)
+        {
+            return;
+        }
+        byte[] bytes = ReadEntry(entry);
+        asm.SymbolPackageVerifiedByChecksum = VerifyChecksum(asm, bytes);
+        using var stream = new MemoryStream(bytes, writable: false);
+        using MetadataReaderProvider provider = MetadataReaderProvider.FromPortablePdbStream(stream);
+        (asm.SourceCoverage ??= []).Add(PortablePdb.ReadSourceCoverage(provider.GetMetadataReader(), pdbFullName));
     }
 
     /// <summary>
