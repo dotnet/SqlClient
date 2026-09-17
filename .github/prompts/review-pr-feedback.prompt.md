@@ -1,6 +1,6 @@
 ---
 name: review-pr-feedback
-description: Uses gh CLI to collect unresolved PR review feedback, optionally includes discussion comments, applies fixes, and reports status.
+description: Uses gh CLI to collect unresolved PR review feedback and suppressed Copilot comments, optionally includes discussion comments, applies fixes, and reports status.
 argument-hint: pr=<number-or-url> repo=<owner/repo-optional> includeDiscussionComments=<true|false> authorFilter=<optional regex or csv> testScope=<optional test hint>
 tools: ['edit/editFiles', 'edit/createFile', 'read/readFile', 'read/problems', 'search/codebase', 'search/textSearch', 'search/fileSearch', 'execute/runInTerminal', 'execute/getTerminalOutput']
 ---
@@ -37,47 +37,70 @@ Follow the referenced skill instructions before producing any custom filter.
 - Extract thread id, file path, line/startLine, comment url, author login, and body.
 - If ${input:authorFilter} is provided, apply it case-insensitively.
 
-3. Optionally gather non-review discussion comments
+3. Gather suppressed Copilot review comments
+- Always perform this step. Suppressed comments never appear in `reviewThreads`, so a
+  thread-only query silently misses them.
+- They are embedded in the body of the review itself. Fetch review bodies, for example:
+  `gh api graphql -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviews(first:50){nodes{url state submittedAt author{login} body}}}}}' -f owner=<owner> -f repo=<repo> -F pr=<number>`
+- Scan every review body for a collapsed `<details>` section introduced by either known heading:
+  - `Comments suppressed due to low confidence (N)`
+  - `Suppressed comments (N)` (often nested under a `Review details` summary)
+- Within that section each entry has the form `**<path>:<line>**`, followed by a `*` bullet
+  describing the issue, optionally followed by a fenced code snippet.
+- Treat a `**Previously missed (N)**` marker as higher priority: it means the comment still
+  applies to code that has not changed since the previous review.
+- Deduplicate against the step 2 threads by path, line, and substance; the same finding is
+  sometimes raised both as a thread and as a suppressed comment.
+- Triage suppressed comments with the same rigor as unresolved threads. Do not dismiss one
+  merely because it was suppressed for low confidence; judge it on technical merit.
+- If ${input:authorFilter} is provided, apply it to the review author.
+
+4. Optionally gather non-review discussion comments
 - If ${input:includeDiscussionComments} is true, fetch PR issue comments.
 - Mark these as Informational because they do not have open/resolved state.
 - Apply ${input:authorFilter} if provided.
 
-4. Build an implementation plan
-- Group unresolved review feedback by file and risk.
+5. Build an implementation plan
+- Group unresolved review feedback and suppressed comments by file and risk.
 - Determine minimal safe edits needed.
 - Identify comments that are non-actionable or ambiguous.
 - Ask the user to confirm the plan before proceeding, showing a concise summary of proposed changes and rationale.
 
-5. Implement and verify
+6. Implement and verify
 - Apply required code or test updates with smallest safe change set.
 - Run targeted checks first.
 - If ${input:testScope} is provided, generate and use a focused MSTest filter via the skill.
 - Collect diagnostics when tests cannot run.
 
-6. Classify each item
+7. Classify each item
 - Fixed: change implemented and validated.
 - Needs Clarification: ambiguous, conflicting, or insufficiently specified.
 - Blocked: external dependency, permission, or missing context.
 - Informational: non-review discussion comment captured only.
+- Use the same classifications for suppressed comments as for unresolved threads.
 
-7. Produce a final report
-- Keep review-thread outcomes and discussion outcomes in separate sections.
+8. Produce a final report
+- Keep review-thread, suppressed-comment, and discussion outcomes in separate sections.
 - Include evidence for each item: file location, change summary, validation result.
 - Draft a distinct reply for each comment item that addresses that exact comment's request, context, and outcome.
 
-8. Commit changes
+9. Commit changes
 - If any changes were made, create a commit with a clear message referencing the PR and summarizing the resolution.
 - Prompt the user to review and confirm the commit message before finalizing.
 - When suggesting or performing a push, use the discovered git remote name.
 - Prompt the user to push the commit if they have permissions, or provide instructions if they do not.
 - Prompt the user to reply to each original PR comment with a comment-specific response and link to the relevant commit or code location, if appropriate.
 - Prompt the user to mark review threads as resolved in GitHub if they have permissions, or provide instructions if they do not.
+- Suppressed comments have no review thread and therefore cannot be resolved in GitHub. Report
+  their outcome in the final report, and prompt the user to acknowledge them in a single PR
+  comment when a code change resulted.
 
 ## Output Format
 1. PR Scope
 - Repo
 - PR number
 - Unresolved review threads found
+- Suppressed Copilot comments found (and how many were previously missed)
 - Discussion comments found (if enabled)
 
 2. Unresolved Review Feedback (Actionable)
@@ -90,32 +113,47 @@ Follow the referenced skill instructions before producing any custom filter.
 - Evidence: <tests/diagnostics>
 - Suggested reply: <specific response for this exact comment>
 
-3. Discussion Comments (Informational, optional)
+3. Suppressed Copilot Comments (Actionable)
+- Item: <review url> (suppressed; no resolvable thread)
+- Location: <file>:<line>
+- Previously missed: <yes|no>
+- Request summary: <concise>
+- Action taken: <change or rationale>
+- Status: Fixed | Needs Clarification | Blocked
+- Evidence: <tests/diagnostics>
+
+4. Discussion Comments (Informational, optional)
 - Item: <comment url>
 - Author: <login>
 - Summary: <concise>
 - Notes: <if converted to actionable task, explain>
 - Suggested reply: <specific response for this exact comment>
 
-4. Validation
+5. Validation
 - Commands run
 - Filters used
 - Pass/fail summary
 - Remaining warnings/errors
 
-5. Final Summary
+6. Final Summary
 - Files changed
 - Number fixed
 - Number needing clarification
 - Number blocked
 - Number informational
+- Number of suppressed comments addressed
 - Recommended next step
 
 ## Rules
 - Do not invent comments; only act on data fetched from gh.
 - Review-thread resolution tracking is authoritative for unresolved state.
+- Never treat review threads as the complete feedback set; always also scan review bodies for
+  suppressed comments, because they carry no resolution state and are otherwise invisible.
+- Never skip a suppressed comment on the grounds that it was suppressed, already resolved
+  elsewhere, or attached to unchanged code; state an explicit outcome for each one.
 - Keep behavior-compatible edits unless feedback explicitly requires change.
-- If no unresolved review threads exist, report that explicitly.
+- If no unresolved review threads exist, report that explicitly, and separately report whether
+  any suppressed comments remain outstanding.
 - If auth or permission fails, report exact failure and minimum required user action.
 - Do not use `set -e` in bash commands or scripts.
 - After each terminal step, verify the bash session is still alive; if it died, report it immediately, start a new session, and continue from the last confirmed checkpoint.
