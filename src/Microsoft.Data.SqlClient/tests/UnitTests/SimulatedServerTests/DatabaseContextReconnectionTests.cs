@@ -227,7 +227,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                     && session.IsSessionRecoveryEnabled
                     && Login7Count > 1)
                 {
-                    session.Database = session.Database.ToUpperInvariant();
+                    session.Database = InvertCase(session.Database);
                 }
 
                 TDSMessageCollection result = base.OnAuthenticationCompleted(session);
@@ -427,6 +427,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Equal(useCountBeforeReconnect, server.UseDatabaseCount);
             }
+        }
+
+        /// <summary>
+        /// Returns <paramref name="value"/> with the case of every letter flipped, so the result
+        /// always differs ordinally from the input while remaining equal ignoring case.
+        /// Upper-casing would be a no-op for a name that is already upper case, silently
+        /// removing the mismatch these tests depend on.
+        /// </summary>
+        /// <param name="value">The database name to re-case.</param>
+        /// <returns>The same name with inverted letter casing.</returns>
+        private static string InvertCase(string value)
+        {
+            char[] chars = value.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                chars[i] = char.IsUpper(chars[i])
+                    ? char.ToLowerInvariant(chars[i])
+                    : char.ToUpperInvariant(chars[i]);
+            }
+
+            return new string(chars);
         }
 
         #endregion
@@ -727,6 +748,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using LocalAppContextSwitchesHelper switchesHelper = new();
             switchesHelper.VerifyRecoveredDatabaseContext = true;
 
+            // The scenario only means anything if the re-cased name is a genuine ordinal
+            // mismatch, so fail loudly here rather than in the driver assertions below.
+            string otherCaseName = InvertCase(SwitchedDatabase);
+            Assert.NotEqual(SwitchedDatabase, otherCaseName);
+            Assert.True(
+                string.Equals(SwitchedDatabase, otherCaseName,
+                    System.StringComparison.OrdinalIgnoreCase),
+                $"'{otherCaseName}' must differ from '{SwitchedDatabase}' only by case.");
+
             using DisconnectableTdsServer server = new(RecoveryDatabaseBehavior.SendCaseAlteredDatabase);
             SqlConnectionStringBuilder builder = CreateConnectionStringBuilder(server.Port);
 
@@ -745,7 +775,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             DisconnectAndExecute(server, connection);
 
             // The server reported the same name in a different case.
-            Assert.Equal(SwitchedDatabase.ToUpperInvariant(), server.LastLoginResponseDatabase);
+            Assert.Equal(otherCaseName, server.LastLoginResponseDatabase);
 
             AssertCorrectiveUse(server, useCountBeforeReconnect, expectCorrection: true);
             Assert.Equal(SwitchedDatabase, connection.Database);
