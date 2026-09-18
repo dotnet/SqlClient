@@ -12,7 +12,7 @@ General availability of Microsoft.Data.SqlClient 7.1. The sections below list th
 
 ### Added
 
-- Added a `RegisteredApplication` enum and a matching `SqlConnection.RegisteredApplication` property that let a library or tool identify itself to SQL Server through version 2 of the TDS USERAGENT feature extension. The payload also carries a new driver-owned 64-bit *Driver Properties* flag field; bit 0 reports whether connection pool V2 is in use. Application identity is client-supplied telemetry and must never be used for authorization or any other security decision. The value must be set before `Open`/`OpenAsync` and is not part of the connection pool key.
+- Added a `RegisteredApplication` enum and a matching `SqlConnection.RegisteredApplication` property that let a library or tool identify itself to SQL Server through version 2 of the TDS USERAGENT feature extension. The payload also carries a new driver-owned 64-bit *Driver Properties* flag field; bit 0 reports whether connection pool V2 is enabled for the process. Application identity is client-supplied telemetry and must never be used for authorization or any other security decision. The value must be set before `Open`/`OpenAsync` and is not part of the connection pool key.
   ([#3201](https://github.com/dotnet/SqlClient/issues/3201), [#4632](https://github.com/dotnet/SqlClient/pull/4632))
 
 ### Changed
