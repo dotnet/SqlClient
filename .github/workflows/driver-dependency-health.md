@@ -110,6 +110,12 @@ safe-outputs:
   noop:
     report-as-issue: false
   # Failures remain visible in the Actions run without creating daily issue noise.
+  report-incomplete:
+    create-issue: false
+  missing-tool:
+    create-issue: false
+  missing-data:
+    create-issue: false
   report-failure-as-issue: false
 ---
 
