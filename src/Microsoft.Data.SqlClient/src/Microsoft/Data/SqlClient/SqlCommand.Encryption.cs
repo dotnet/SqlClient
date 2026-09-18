@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
-using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -243,152 +242,149 @@ namespace Microsoft.Data.SqlClient
                 _activeConnection.EnclaveAttestationUrl,
                 _activeConnection.Database);
 
-        // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
-        private SqlDataReader GetParameterEncryptionDataReader(
-            out Task returnTask,
+        /// <summary>
+        /// Schedules asynchronous consumption of the sp_describe_parameter_encryption results.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The returned task completes once the describe-parameter-encryption results have been read and every
+        /// column encryption key has been decrypted through the asynchronous key store provider APIs.
+        /// </para>
+        /// <para>
+        /// The work is dispatched with <see cref="Task.Run(Func{Task})"/> rather than awaited inline because
+        /// the body issues blocking TDS reads before reaching a suspension point, and
+        /// <c>PrepareForTransparentEncryption</c> runs synchronously on the caller's thread under the
+        /// asynchronous execution entry points. Awaiting inline would run those reads on the caller's thread
+        /// whenever <paramref name="fetchInputParameterEncryptionInfoTask"/> is <c>null</c> or already
+        /// completed. This preserves the behaviour of the two continuations it replaced, which reached the
+        /// thread pool via <c>Task.Run</c> and via <c>ContinueWith</c> without
+        /// <see cref="TaskContinuationOptions.ExecuteSynchronously"/> respectively, so neither could run
+        /// inline either. Once dispatched, every <c>await</c> releases the pooled thread for the duration of
+        /// key store provider I/O.
+        /// </para>
+        /// <para>
+        /// Do not "optimise" this into an inline <c>await</c> of
+        /// <paramref name="fetchInputParameterEncryptionInfoTask"/> in order to save a thread pool dispatch.
+        /// That task is completed by the network write callback, so an inline continuation would run the
+        /// blocking TDS reads below on an SNI callback thread. The replaced <c>ContinueWith</c> deliberately
+        /// omitted <see cref="TaskContinuationOptions.ExecuteSynchronously"/> for exactly this reason. The
+        /// dispatch this costs is negligible next to the round trip it accompanies.
+        /// </para>
+        /// </remarks>
+        /// <param name="fetchInputParameterEncryptionInfoTask">
+        /// Task representing the pending network write of the describe-parameter-encryption request, or
+        /// <c>null</c> when that write completed synchronously.
+        /// </param>
+        /// <param name="describeParameterEncryptionDataReader">Reader over the describe-parameter-encryption results</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Map of encryption RPC requests to their original RPC requests</param>
+        /// <param name="describeParameterEncryptionNeeded">Whether describe parameter encryption was required</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the key store operations</param>
+        /// <returns>A task that completes once the describe-parameter-encryption results have been consumed</returns>
+        private Task GetParameterEncryptionDataReaderAsync(
             Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool describeParameterEncryptionNeeded,
-            bool isRetry)
-        {
-            returnTask = AsyncHelper.CreateContinuationTaskWithState(
-                taskToContinue: fetchInputParameterEncryptionInfoTask,
-                state: this,
-                onSuccess: sqlCommand =>
-                {
-                    bool processFinallyBlockAsync = true;
-                    bool decrementAsyncCountInFinallyBlockAsync = true;
+            bool isRetry,
+            CancellationToken cancellationToken) =>
+            Task.Run(() => ConsumeDescribeParameterEncryptionResultsAsync(
+                fetchInputParameterEncryptionInfoTask,
+                describeParameterEncryptionDataReader,
+                describeParameterEncryptionRpcOriginalRpcMap,
+                describeParameterEncryptionNeeded,
+                isRetry,
+                cancellationToken));
 
-                    try
-                    {
-                        // Check for any exceptions on network write, before reading.
-                        sqlCommand.CheckThrowSNIException();
-
-                        // If it is async, then TryFetchInputParameterEncryptionInfo ->
-                        // RunExecuteReaderTds would have incremented the async count. Decrement it
-                        // when we are about to complete async execute reader.
-                        SqlConnectionInternal internalConnectionTds = sqlCommand._activeConnection.GetOpenTdsConnection();
-                        if (internalConnectionTds is not null)
-                        {
-                            internalConnectionTds.DecrementAsyncCount();
-                            decrementAsyncCountInFinallyBlockAsync = false;
-                        }
-
-                        // Complete executereader.
-                        // @TODO: If we can remove this reference, this could be a static lambda
-                        describeParameterEncryptionDataReader = sqlCommand.CompleteAsyncExecuteReader(
-                            isInternal: false,
-                            forDescribeParameterEncryption: true);
-                        Debug.Assert(sqlCommand._stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
-
-                        // Read the results of describe parameter encryption.
-                        sqlCommand.ReadDescribeEncryptionParameterResults(
-                            describeParameterEncryptionDataReader,
-                            describeParameterEncryptionRpcOriginalRpcMap,
-                            isRetry);
-
-                        #if DEBUG
-                        // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                        if (_sleepAfterReadDescribeEncryptionParameterResults)
-                        {
-                            Thread.Sleep(TimeSpan.FromSeconds(10));
-                        }
-                        #endif
-                    }
-                    catch (Exception e)
-                    {
-                        processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
-                        throw;
-                    }
-                    finally
-                    {
-                        sqlCommand.PrepareTransparentEncryptionFinallyBlock(
-                            closeDataReader: processFinallyBlockAsync,
-                            decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                            clearDataStructures: processFinallyBlockAsync,
-                            wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                            describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                    }
-                },
-                onFailure: static (sqlCommand, exception) =>
-                {
-                    sqlCommand.CachedAsyncState?.ResetAsyncState();
-                    if (exception is not null)
-                    {
-                        throw exception;
-                    }
-                });
-
-            return describeParameterEncryptionDataReader;
-        }
-
-        private SqlDataReader GetParameterEncryptionDataReaderAsync(
-            out Task returnTask,
+        /// <summary>
+        /// Awaits the describe-parameter-encryption request and consumes its results asynchronously.
+        /// </summary>
+        /// <remarks>
+        /// Failure of <paramref name="fetchInputParameterEncryptionInfoTask"/> resets the cached async state and
+        /// skips the transparent encryption finally block; cancellation of it does neither. Failures raised
+        /// while consuming the results run the finally block but leave the cached async state alone. These
+        /// semantics are inherited from the callback-based continuation this method replaced.
+        /// </remarks>
+        private async Task ConsumeDescribeParameterEncryptionResultsAsync(
+            Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool describeParameterEncryptionNeeded,
-            bool isRetry)
+            bool isRetry,
+            CancellationToken cancellationToken)
         {
-            returnTask = Task.Run(() =>
+            if (fetchInputParameterEncryptionInfoTask is not null)
             {
-                bool processFinallyBlockAsync = true;
-                bool decrementAsyncCountInFinallyBlockAsync = true;
-
                 try
                 {
-                    // Check for any exception on network write before reading.
-                    CheckThrowSNIException();
-
-                    // If it is async, then TryFetchInputParameterEncryptionInfo ->
-                    // RunExecuteReaderTds would have incremented the async count. Decrement it
-                    // when we are about to complete async execute reader.
-                    SqlConnectionInternal internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                    if (internalConnectionTds is not null)
-                    {
-                        internalConnectionTds.DecrementAsyncCount();
-                        decrementAsyncCountInFinallyBlockAsync = false;
-                    }
-
-                    // Complete executereader.
-                    describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(
-                        isInternal: false,
-                        forDescribeParameterEncryption: true);
-                    Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
-
-                    // Read the results of describe parameter encryption.
-                    ReadDescribeEncryptionParameterResults(
-                        describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap,
-                        isRetry);
-
-                    #if DEBUG
-                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                    if (_sleepAfterReadDescribeEncryptionParameterResults)
-                    {
-                        Thread.Sleep(TimeSpan.FromSeconds(10));
-                    }
-                    #endif
+                    await fetchInputParameterEncryptionInfoTask.ConfigureAwait(false);
                 }
-                catch (Exception e)
+                catch (OperationCanceledException)
                 {
-                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
                     throw;
                 }
-                finally
+                catch
                 {
-                    PrepareTransparentEncryptionFinallyBlock(
-                        closeDataReader: processFinallyBlockAsync,
-                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                        clearDataStructures: processFinallyBlockAsync,
-                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                    CachedAsyncState?.ResetAsyncState();
+                    throw;
                 }
-            });
+            }
 
-            return describeParameterEncryptionDataReader;
+            bool processFinallyBlockAsync = true;
+            bool decrementAsyncCountInFinallyBlockAsync = true;
+
+            try
+            {
+                // Check for any exceptions on network write, before reading.
+                CheckThrowSNIException();
+
+                // If it is async, then TryFetchInputParameterEncryptionInfo ->
+                // RunExecuteReaderTds would have incremented the async count. Decrement it
+                // when we are about to complete async execute reader.
+                SqlConnectionInternal internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                if (internalConnectionTds is not null)
+                {
+                    internalConnectionTds.DecrementAsyncCount();
+                    decrementAsyncCountInFinallyBlockAsync = false;
+                }
+
+                // Complete executereader.
+                describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(
+                    isInternal: false,
+                    forDescribeParameterEncryption: true);
+                Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
+
+                // Read the results of describe parameter encryption.
+                await ReadDescribeEncryptionParameterResultsAsync(
+                        describeParameterEncryptionDataReader,
+                        describeParameterEncryptionRpcOriginalRpcMap,
+                        isRetry,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                #if DEBUG
+                // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                if (_sleepAfterReadDescribeEncryptionParameterResults)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
+                }
+                #endif
+            }
+            catch (Exception e)
+            {
+                processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                PrepareTransparentEncryptionFinallyBlock(
+                    closeDataReader: processFinallyBlockAsync,
+                    decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                    clearDataStructures: processFinallyBlockAsync,
+                    wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                    describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                    describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+            }
         }
 
         private void InvalidateEnclaveSession()
@@ -575,6 +571,119 @@ namespace Microsoft.Data.SqlClient
             out bool usedCache,
             bool isRetry)
         {
+            returnTask = null;
+            usedCache = false;
+
+            // Capture the caller's cancellation token once, here, while we are still on the thread that
+            // started the execution. Everything below may run after the operation has completed and
+            // cleared the field, so reading it later could silently observe CancellationToken.None.
+            CancellationToken cancellationToken = isAsync ? _asyncExecutionCancellationToken : CancellationToken.None;
+
+            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for
+            // each parameter from the cache. If this succeeds then return immediately, otherwise just
+            // fall back to the full crypto MD discovery.
+            if (!_batchRPCMode && !isRetry && _parameters?.Count > 0)
+            {
+                SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
+
+                if (!isAsync)
+                {
+                    if (cache.GetQueryMetadataIfExists(this))
+                    {
+                        usedCache = true;
+                        return;
+                    }
+                }
+                else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
+                {
+                    // The cached metadata matched, but the column encryption keys still have to be
+                    // loaded, which may require key store network I/O. Hand the rest of the work to a
+                    // task so that the caller's thread is not blocked on it.
+                    usedCache = true;
+                    returnTask = CompleteCachedQueryMetadataAsync(
+                        metadata,
+                        timeout,
+                        completion,
+                        asyncWrite,
+                        isRetry,
+                        cancellationToken);
+                    return;
+                }
+            }
+
+            PrepareForTransparentEncryptionCore(
+                isAsync,
+                timeout,
+                completion,
+                out returnTask,
+                asyncWrite,
+                isRetry,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Finishes a query metadata cache lookup whose column encryption keys still had to be loaded,
+        /// falling back to a full describe parameter encryption round trip if the cached key information
+        /// turned out to be stale.
+        /// </summary>
+        /// <remarks>
+        /// The command reports <c>usedCache = true</c> even when this method falls back, because the
+        /// caller has already returned by the time the fallback is discovered. That is deliberately
+        /// conservative: over-reporting a cache hit can only cause one additional retry attempt of an
+        /// already failing execution, whereas under-reporting it would suppress the
+        /// <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a genuine cache hit needs.
+        /// </remarks>
+        private async Task CompleteCachedQueryMetadataAsync(
+            SqlQueryMetadataCache.CachedQueryMetadata metadata,
+            int timeout,
+            TaskCompletionSource<object> completion,
+            bool asyncWrite,
+            bool isRetry,
+            CancellationToken cancellationToken)
+        {
+            bool cacheHit = await SqlQueryMetadataCache.GetInstance()
+                .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (cacheHit)
+            {
+                return;
+            }
+
+            // The cached key information was stale, so run the full describe parameter encryption
+            // round trip. It issues blocking TDS writes, but we are already off the caller's thread.
+            PrepareForTransparentEncryptionCore(
+                isAsync: true,
+                timeout,
+                completion,
+                out Task describeTask,
+                asyncWrite,
+                isRetry,
+                cancellationToken);
+
+            if (describeTask is not null)
+            {
+                await describeTask.ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Performs transparent parameter encryption preparation by issuing a full
+        /// sp_describe_parameter_encryption round trip, bypassing the query metadata cache.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="cancellationToken"/> is captured by the caller while it is still on the thread
+        /// that started the execution, and is used only by the asynchronous key store provider calls.
+        /// </remarks>
+        private void PrepareForTransparentEncryptionCore(
+            bool isAsync,
+            int timeout,
+            TaskCompletionSource<object> completion, // @TODO: Only used for debug checks
+            out Task returnTask,
+            bool asyncWrite,
+            bool isRetry,
+            CancellationToken cancellationToken)
+        {
             Debug.Assert(_activeConnection != null,
                 "_activeConnection should not be null in PrepareForTransparentEncryption.");
             Debug.Assert(_activeConnection.Parser != null,
@@ -592,18 +701,6 @@ namespace Microsoft.Data.SqlClient
             bool describeParameterEncryptionNeeded = false;
             SqlDataReader describeParameterEncryptionDataReader = null;
             returnTask = null;
-            usedCache = false;
-
-            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for each parameter from the cache.
-            // If this succeeds then return immediately, otherwise just fall back to the full crypto MD discovery.
-            if (!_batchRPCMode &&
-                !isRetry &&
-                _parameters?.Count > 0 &&
-                SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
-            {
-                usedCache = true;
-                return;
-            }
 
             // A flag to indicate if finallyblock needs to execute.
             bool processFinallyBlock = true;
@@ -662,13 +759,13 @@ namespace Microsoft.Data.SqlClient
                         // execution pending. Note that this should be done outside the task's
                         // continuation delegate.
                         processFinallyBlock = false;
-                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(
-                            out returnTask,
+                        returnTask = GetParameterEncryptionDataReaderAsync(
                             fetchInputParameterEncryptionInfoTask,
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
                             describeParameterEncryptionNeeded,
-                            isRetry);
+                            isRetry,
+                            cancellationToken);
 
                         decrementAsyncCountInFinallyBlock = false;
                     }
@@ -682,12 +779,13 @@ namespace Microsoft.Data.SqlClient
                             // execution pending. Note that this should be done outside the task's
                             // continuation delegate.
                             processFinallyBlock = false;
-                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(
-                                out returnTask,
+                            returnTask = GetParameterEncryptionDataReaderAsync(
+                                fetchInputParameterEncryptionInfoTask: null,
                                 describeParameterEncryptionDataReader,
                                 describeParameterEncryptionRpcOriginalRpcMap,
                                 describeParameterEncryptionNeeded,
-                                isRetry);
+                                isRetry,
+                                cancellationToken);
 
                             decrementAsyncCountInFinallyBlock = false;
                         }
@@ -786,9 +884,126 @@ namespace Microsoft.Data.SqlClient
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
         /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         private void ReadDescribeEncryptionParameterResults(
-            SqlDataReader ds, // @TODO: Rename something more obvious
+            SqlDataReader ds,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool isRetry)
+        {
+            PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
+            ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, isRetry, pending);
+
+            IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
+            for (int i = 0; i < verifications.Count; i++)
+            {
+                ColumnMasterKeySignatureVerification verification = verifications[i];
+                SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                    verification.KeyStoreName,
+                    verification.KeyPath,
+                    verification.IsEnclaveEnabled,
+                    verification.Signature,
+                    _activeConnection,
+                    this);
+            }
+
+            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
+            for (int i = 0; i < keyDecryptions.Count; i++)
+            {
+                SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
+            }
+
+            CacheQueryMetadataIfNeeded();
+        }
+
+        /// <summary>
+        /// Asynchronously reads the output of sp_describe_parameter_encryption.
+        /// </summary>
+        /// <remarks>
+        /// Async counterpart of <see cref="ReadDescribeEncryptionParameterResults"/>. Result set parsing is
+        /// shared with the synchronous path; only the column master key signature verifications and column
+        /// encryption key decryptions differ, and those are the operations that may reach out to a key store
+        /// over the network.
+        /// </remarks>
+        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async Task ReadDescribeEncryptionParameterResultsAsync(
+            SqlDataReader ds,
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool isRetry,
+            CancellationToken cancellationToken)
+        {
+            PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
+            ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, isRetry, pending);
+
+            IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
+            for (int i = 0; i < verifications.Count; i++)
+            {
+                ColumnMasterKeySignatureVerification verification = verifications[i];
+                await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                        verification.KeyStoreName,
+                        verification.KeyPath,
+                        verification.IsEnclaveEnabled,
+                        verification.Signature,
+                        _activeConnection,
+                        this,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            // Decrypted sequentially rather than with Task.WhenAll. Distinct SqlCipherMetadata entries
+            // frequently share a column encryption key, and SqlSymmetricKeyCache.GetKeyAsync deliberately
+            // does not hold its gate across provider I/O, so concurrent misses for the same key would each
+            // issue their own key store call. Sequential decryption lets the first result populate the cache
+            // for the rest, which matters more than overlapping the few distinct keys a query uses.
+            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
+            for (int i = 0; i < keyDecryptions.Count; i++)
+            {
+                await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            CacheQueryMetadataIfNeeded();
+        }
+
+        /// <summary>
+        /// Adds the encryption metadata for the current query to the query metadata cache when applicable.
+        /// </summary>
+        private void CacheQueryMetadataIfNeeded()
+        {
+            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
+            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && _parameters?.Count > 0)
+            {
+                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
+            }
+        }
+
+        /// <summary>
+        /// Parses the result sets returned by sp_describe_parameter_encryption.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Column master key signature verification and column encryption key decryption are not performed
+        /// here; they are recorded in <paramref name="pending"/> so that the caller can execute them either
+        /// synchronously or asynchronously. Deferring them also means no key store network call is made while
+        /// the describe-parameter-encryption reader is still positioned mid-stream.
+        /// </para>
+        /// <para>
+        /// Deferring these operations changes which exception surfaces when a query hits more than one
+        /// problem. Previously verification and decryption were interleaved with parsing, so a bad signature
+        /// on the first key was raised before the parameter metadata result set was parsed at all. Now parsing
+        /// always completes first, so a malformed result set is reported in preference to a key store failure.
+        /// The set of exceptions that can be thrown, and the state left behind on failure, are unchanged.
+        /// </para>
+        /// </remarks>
+        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
+        /// <param name="pending">Collects the key store operations that the caller must complete</param>
+        private void ReadDescribeEncryptionParameterResultsCore(
+            SqlDataReader ds, // @TODO: Rename something more obvious
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool isRetry,
+            PendingColumnEncryptionKeyOperations pending)
         {
             // @TODO: This should be SqlTceCipherInfoTable
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
@@ -820,7 +1035,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // 1) Read the first result set that contains the column encryption key list
-                bool enclaveMetadataExists = ReadDescribeEncryptionParameterResultsKeys(ds, columnEncryptionKeyTable);
+                bool enclaveMetadataExists = ReadDescribeEncryptionParameterResultsKeys(ds, columnEncryptionKeyTable, pending);
                 if (!enclaveMetadataExists && !ds.NextResult())
                 {
                     throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
@@ -854,7 +1069,7 @@ namespace Microsoft.Data.SqlClient
                 int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
-                    receivedMetadataCount = ReadDescribeEncryptionParameterResultsMetadata(ds, rpc, columnEncryptionKeyTable);
+                    receivedMetadataCount = ReadDescribeEncryptionParameterResultsMetadata(ds, rpc, columnEncryptionKeyTable, pending);
                 }
 
                 // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
@@ -902,12 +1117,64 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+        }
 
-            // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && _parameters?.Count > 0)
+        /// <summary>
+        /// Key store operations discovered while parsing sp_describe_parameter_encryption results, deferred so
+        /// that they can be executed either synchronously or asynchronously.
+        /// </summary>
+        private sealed class PendingColumnEncryptionKeyOperations
+        {
+            private List<ColumnMasterKeySignatureVerification> _signatureVerifications;
+            private List<SqlCipherMetadata> _keyDecryptions;
+
+            /// <summary>Column master key signatures that must be verified.</summary>
+            internal IReadOnlyList<ColumnMasterKeySignatureVerification> SignatureVerifications =>
+                (IReadOnlyList<ColumnMasterKeySignatureVerification>)_signatureVerifications ??
+                Array.Empty<ColumnMasterKeySignatureVerification>();
+
+            /// <summary>Column encryption keys that must be decrypted.</summary>
+            internal IReadOnlyList<SqlCipherMetadata> KeyDecryptions =>
+                (IReadOnlyList<SqlCipherMetadata>)_keyDecryptions ?? Array.Empty<SqlCipherMetadata>();
+
+            /// <summary>
+            /// Records a column master key signature that must be verified before the query runs.
+            /// </summary>
+            internal void AddSignatureVerification(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] signature) =>
+                (_signatureVerifications ??= new List<ColumnMasterKeySignatureVerification>())
+                    .Add(new ColumnMasterKeySignatureVerification(keyStoreName, keyPath, isEnclaveEnabled, signature));
+
+            /// <summary>
+            /// Records a column encryption key that must be decrypted before the query runs.
+            /// </summary>
+            internal void AddKeyDecryption(SqlCipherMetadata cipherMetadata) =>
+                (_keyDecryptions ??= new List<SqlCipherMetadata>()).Add(cipherMetadata);
+        }
+
+        /// <summary>
+        /// Describes a pending column master key signature verification.
+        /// </summary>
+        private readonly struct ColumnMasterKeySignatureVerification
+        {
+            internal ColumnMasterKeySignatureVerification(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] signature)
             {
-                SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
+                KeyStoreName = keyStoreName;
+                KeyPath = keyPath;
+                IsEnclaveEnabled = isEnclaveEnabled;
+                Signature = signature;
             }
+
+            internal string KeyStoreName { get; }
+
+            internal string KeyPath { get; }
+
+            /// <summary>
+            /// Whether the server reported that this key is required by the enclave. Carried explicitly
+            /// rather than assumed, because it selects which signature the key store validates.
+            /// </summary>
+            internal bool IsEnclaveEnabled { get; }
+
+            internal byte[] Signature { get; }
         }
 
         private void ReadDescribeEncryptionParameterResultsAttestation(SqlDataReader ds, bool isRetry)
@@ -960,7 +1227,8 @@ namespace Microsoft.Data.SqlClient
 
         private bool ReadDescribeEncryptionParameterResultsKeys(
             SqlDataReader ds,
-            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
+            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable,
+            PendingColumnEncryptionKeyOperations pending)
         {
             bool enclaveMetadataExists = true;
             while (ds.Read())
@@ -1060,13 +1328,9 @@ namespace Microsoft.Data.SqlClient
                             length: keySignatureLength);
                     }
 
-                    SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                        providerName,
-                        keyPath,
-                        isEnclaveEnabled: isRequestedByEnclave,
-                        keySignature,
-                        _activeConnection,
-                        this);
+                    // Defer signature verification: it may reach a key store over the network and must not
+                    // run while this reader is still positioned mid-result-set.
+                    pending.AddSignatureVerification(providerName, keyPath, isRequestedByEnclave, keySignature);
 
                     // Lookup the key, failing which throw an exception
                     // @TODO: Seriously, we *just* did this, why are we looking it up again??
@@ -1101,7 +1365,8 @@ namespace Microsoft.Data.SqlClient
         private int ReadDescribeEncryptionParameterResultsMetadata(
             SqlDataReader ds,
             _SqlRPC rpc,
-            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable)
+            Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable,
+            PendingColumnEncryptionKeyOperations pending)
         {
             Debug.Assert(rpc is not null, "Describe Parameter Encryption requested for non-TCE spec proc");
 
@@ -1156,8 +1421,10 @@ namespace Microsoft.Data.SqlClient
                                 encryptionType: columnEncryptionType,
                                 normalizationRuleVersion: columnNormalizationRuleVersion);
 
-                            // Decrypt the symmetric key. This will also validate and throw if needed.
-                            SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
+                            // Defer decryption of the symmetric key: it may reach a key store over the network
+                            // and must not run while this reader is still positioned mid-result-set. Decryption
+                            // also validates the metadata and will throw if it is invalid.
+                            pending.AddKeyDecryption(sqlParameter.CipherMetadata);
 
                             // This is effective only for _batchRPCMode even though we set it for
                             // non-_batchRPCMode also, since for non-_batchRPCMode, param options
