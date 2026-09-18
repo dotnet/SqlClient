@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlVectorTypeSupport">
+    <SqlVectorTypeSupport>
+      <summary>
+        Specifies the level of support for the <c>vector</c> data type which the driver
+        negotiates with the server.
+      </summary>
+      <remarks>
+        <para>
+          A vector column is only exchanged in its binary form when the server acknowledges
+          a version of the vector feature extension which covers the column's base type. A
+          column whose base type is not covered is returned as a <c>varchar(max)</c>
+          containing a JSON array.
+        </para>
+        <para>
+          The default is <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V1" />,
+          so an application opts in to a newer representation rather than receiving it when
+          it upgrades the driver.
+        </para>
+      </remarks>
+    </SqlVectorTypeSupport>
+    <Off>
+      <summary>
+        The vector feature extension is not requested. Every vector column is returned as a
+        <c>varchar(max)</c> containing a JSON array, as it was before the type existed.
+      </summary>
+    </Off>
+    <V1>
+      <summary>
+        Vectors with a <c>float32</c> base type are exchanged in their binary form and are
+        surfaced as <c>SqlVector&lt;float&gt;</c>. Columns with any other base type are
+        returned as a <c>varchar(max)</c> containing a JSON array. This is the default.
+      </summary>
+    </V1>
+    <V2>
+      <summary>
+        Adds <c>float16</c> to the base types exchanged in their binary form. On .NET such a
+        column is surfaced as <c>SqlVector&lt;System.Half&gt;</c>; on .NET Framework, where
+        <c>System.Half</c> is unavailable, it is surfaced as a JSON array string and can be
+        read as a <c>SqlVector&lt;float&gt;</c> on request.
+      </summary>
+      <remarks>
+        On .NET Framework, the driver widens each element of a <c>float16</c> column to single
+        precision as it reads, and renders the result as a JSON array for the string read
+        paths. On .NET, a <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no
+        per-element conversion takes place. Take this into account when you choose this value
+        for a .NET Framework application which reads <c>float16</c> columns in bulk.
+      </remarks>
+    </V2>
+  </members>
+</docs>

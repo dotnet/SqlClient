@@ -13,16 +13,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
-
-#if NETFRAMEWORK
-using Microsoft.Data.Common.ConnectionString;
-#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -1736,22 +1733,33 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
+                    // The server is expected to cap its acknowledgement to the version the
+                    // connection asked for. Bound it here as well, so that a server which
+                    // does not cannot raise this connection above the version it opted in
+                    // to: accepting a higher one would return float16 columns in their
+                    // binary form to a connection which asked for v1, which is exactly the
+                    // change the keyword exists to prevent.
+                    byte requestedVersion =
+                        VectorTypeSupportUtilities.ToFeatureExtensionVersion(ConnectionOptions.VectorTypeSupport);
+
                     byte vectorSupportVersion = data[0];
-                    if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                    if (vectorSupportVersion == 0 || vectorSupportVersion > requestedVersion)
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                             "Object ID {0}, " +
                             "Invalid version number {1} for VECTORSUPPORT, " +
-                            "Max supported version is {2}",
+                            "Requested version is {2}",
                             ObjectID,
                             vectorSupportVersion,
-                            TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            requestedVersion);
 
                         throw SQL.ParsingError();
                     }
 
-                    Capabilities.Float32VectorType = true;
+                    // Record the negotiated version rather than a simple flag: it determines
+                    // which vector base types the server will send and accept natively.
+                    Capabilities.VectorVersion = vectorSupportVersion;
 
                     break;
                 }
@@ -3169,7 +3177,17 @@ namespace Microsoft.Data.SqlClient.Connection
             // @TODO: Request all the implicit features in one place (probably at the very top)
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
-            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+            // The vector feature extension is only requested when the connection asks for a
+            // version of it. Omitting the request leaves vector columns as varchar(max)
+            // containing a JSON array, which is how they were presented before the type
+            // was introduced.
+            if (VectorTypeSupportUtilities.ToFeatureExtensionVersion(ConnectionOptions.VectorTypeSupport)
+                != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            }
+
             requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
 
