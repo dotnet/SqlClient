@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -215,6 +215,8 @@ public sealed class SqlMetaData
     public System.Data.SqlTypes.SqlCompareOptions CompareOptions { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/DbType/*' />
     public System.Data.DbType DbType { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsComputed/*' />
+    public bool IsComputed { get { throw null; } init { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsUniqueKey/*' />
     public bool IsUniqueKey { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/LocaleId/*' />
