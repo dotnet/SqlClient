@@ -31,13 +31,12 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!--
-      Do NOT enable CentralPackageTransitivePinningEnabled. This repository
-      produces NuGet library packages (not applications). Transitive pinning
-      promotes every pinned transitive dependency into a direct NuGet
-      dependency in the generated .nuspec, polluting consumers' dependency
-      graphs with packages they never asked for.
+      Enable central transitive pinning so centrally managed versions can
+      remediate transitive dependencies. Keep pins compatible with each target
+      framework's dependency graph, and review packed dependencies: NuGet can
+      promote pinned transitive dependencies into direct package dependencies.
     -->
-    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <!--
