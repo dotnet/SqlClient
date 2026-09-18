@@ -33,6 +33,9 @@ General availability of Microsoft.Data.SqlClient 7.1. The sections below list th
    [#4440](https://github.com/dotnet/SqlClient/pull/4440),
    [#4646](https://github.com/dotnet/SqlClient/pull/4646))
 
+- Updated `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` to v7.1.0 (was v7.1.0-preview3.26226.3).
+  ([#4698](https://github.com/dotnet/SqlClient/pull/4698))
+
 - Updated the bundled .NET 10 SDK to `10.0.401`.
   ([#4686](https://github.com/dotnet/SqlClient/pull/4686))
 
