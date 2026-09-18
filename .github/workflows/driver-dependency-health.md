@@ -52,12 +52,38 @@ steps:
       $directory = Join-Path $root 'artifacts/dependency-health'
       New-Item -ItemType Directory -Force -Path $directory | Out-Null
       [xml]$config = Get-Content (Join-Path $root 'NuGet.config') -Raw
-      # Preserve governed package sources and mappings, including the local sibling feed.
+      # Preserve external package governance; shipping siblings must come from this run.
       foreach ($source in $config.configuration.packageSources.add) {
         if ($source.value -notmatch '^https?://') {
           $source.value = [IO.Path]::GetFullPath((Join-Path $root $source.value))
         }
       }
+      $packages = Join-Path $directory 'packages'
+      $cache = Join-Path $directory 'cache-initial'
+      if ((Test-Path $packages) -or (Test-Path $cache)) {
+        throw 'Dependency-health package feed and cache must start empty.'
+      }
+      $local = $config.SelectSingleNode("/configuration/packageSources/add[@key='local']")
+      $mapping = $config.SelectSingleNode("/configuration/packageSourceMapping/packageSource[@key='local']")
+      if (!$local -or !$mapping) { throw 'Required local package source/mapping is missing.' }
+      $local.SetAttribute('value', $packages)
+      $siblings = @(
+        'Microsoft.Data.SqlClient',
+        'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider',
+        'Microsoft.Data.SqlClient.Extensions.Abstractions',
+        'Microsoft.Data.SqlClient.Extensions.Azure',
+        'Microsoft.Data.SqlClient.Internal.Logging',
+        'Microsoft.SqlServer.Server'
+      )
+      foreach ($id in $siblings) {
+        if (!$mapping.SelectSingleNode("package[@pattern='$id']")) {
+          throw "Missing exact local source mapping for $id"
+        }
+        foreach ($entry in $config.SelectNodes("/configuration/packageSourceMapping/packageSource[@key!='local']/package[@pattern='$id']")) {
+          $entry.ParentNode.RemoveChild($entry) | Out-Null
+        }
+      }
+      New-Item -ItemType Directory -Path $packages, $cache | Out-Null
       if ($config.configuration.auditSources) {
         $config.configuration.RemoveChild($config.configuration.auditSources) | Out-Null
       }
@@ -72,6 +98,8 @@ steps:
       $config.Save($path)
       # Inherited by child dotnet commands, including build.proj's Exec tasks.
       "RestoreConfigFile=$path" >> $env:GITHUB_ENV
+      "DEPENDENCY_HEALTH_PACKAGES=$packages" >> $env:GITHUB_ENV
+      "NUGET_PACKAGES=$cache" >> $env:GITHUB_ENV
 
   - name: Collect open pull requests for duplicate detection
     uses: actions/github-script@v9.0.0
@@ -157,9 +185,13 @@ environment variable consistently for restore, evaluation, and list commands
 in each variant, then unset it. Exclude test/sample/tool
 dependencies from remediation unless they are also in a shipping graph.
 
-The environment's `RestoreConfigFile` preserves the repository's governed
-package sources and mappings, and explicitly uses public NuGet vulnerability
-data. Keep it set for all restore/build/pack commands. Do not change feed policy,
+The environment's `RestoreConfigFile` preserves governed external package
+acquisition and explicitly uses public NuGet vulnerability data. For the six
+shipping siblings only, the run-local config restricts source mapping to the
+isolated local feed `DEPENDENCY_HEALTH_PACKAGES`, excluding published fallback.
+`NUGET_PACKAGES` starts in a fresh run-local cache so previously downloaded
+siblings cannot bypass source mapping. Keep these settings for all
+restore/build/pack commands. Do not change the tracked feed policy,
 use private feeds or credentials, or publish private links, emails, or secrets.
 Keep scratch files and command evidence under `artifacts/dependency-health`;
 never include them, binaries, generated assets, or unrelated edits in the PR.
@@ -238,18 +270,51 @@ remaining findings rather than claiming the whole repository is healthy.
 
 Whether proposing a fix or declaring healthy, restore repository tools using
 `dotnet tool restore --configfile "$RestoreConfigFile"`.
-Use the existing `build.proj` BuildDriver and Pack targets in Project mode to
-validate shipping builds and produce the real sibling packages locally. Inspect
-the generated nupkg nuspec dependency groups: transitive pinning can promote
+Validate Project-mode shipping builds with
+`dotnet build build.proj -t:BuildDriver -p:ReferenceType=Project -p:Configuration=Release`.
+Before packing, evaluate each of the six shipping products' `PackageId` and
+`PackageVersion` using `dotnet msbuild <project> -getProperty:PackageId,PackageVersion`
+with the same version/build properties that will be used below. Record this
+expected ID/version manifest; derive versions from the repository, never from
+published packages or filename guesses.
+
+Set `ReferenceType=Package` in the environment for this entire phase, including
+child commands, and use a new, empty run-local `NUGET_PACKAGES` directory for
+each pack/validation attempt. Never reuse sibling cache entries from an earlier
+attempt after editing. Use the repository's supported dependency-ordered flow:
+
+```bash
+dotnet build build.proj -t:Pack -p:ReferenceType=Package -p:Configuration=Release -p:PackBuild=true -p:SkipDependencyPack=false -p:PackagesDir="$DEPENDENCY_HEALTH_PACKAGES"
+```
+
+Unlike Project-mode packing, this flow copies produced nupkgs into the configured
+local feed before dependent builds restore them. Do not use `--no-build`, skip
+dependency packs, or restore Package-mode consumers before their prerequisites.
+Keep `RestoreConfigFile` inherited by every child process.
+
+Require all six expected ID/version nupkgs in `DEPENDENCY_HEALTH_PACKAGES` after
+a successful pack. Open their nuspecs and match the recorded manifest; do not
+accept similarly named files, old artifacts, or a partial pack as success. Inspect
+the generated nuspec dependency groups: transitive pinning can promote
 dependencies, while the driver also has custom nuspec generation. Verify that
 the proposed fix is actually reflected in the shipped dependency requirements;
 a clean project restore alone is not enough. Do not publish packages.
 
 Then restore/audit the same scoped matrix in `ReferenceType=Package` mode using
-those locally produced siblings. `dotnet list package` has no MSBuild property
-switch: set the `ReferenceType=Package` environment variable for both restore
-and list commands in this phase, and unset it afterward. Do not substitute
-published sibling versions for locally computed versions. Run the affected
+those locally produced siblings, using `--force` for each restore. For every
+resolved sibling package in every TFM's `project.assets.json`, verify its exact
+ID/version matches the manifest (being inside a version range is insufficient).
+Use the assets' `packageFolders` and library `path` to inspect the restored
+package's `.nupkg.metadata`: its `source` must be the isolated local feed, and
+its content hash must match the SHA-512 of that run's corresponding local nupkg.
+Missing provenance, a different version/content hash, or any remote source
+requires `report_incomplete`; never claim validation from published fallback.
+Only evaluate sibling entries actually present in each graph; native SNI and
+other external packages remain governed dependencies, not locally built siblings.
+
+`dotnet list package` has no MSBuild property switch, so retain the
+`ReferenceType=Package` environment variable for both restore and list commands,
+and unset it afterward. Run the affected
 existing tests that are executable on Linux; explicitly leave Windows-only
 execution to CI, without claiming it passed. If build, pack, package-mode
 restore/audit, or required tests fail, do not create a PR; use `report_incomplete`
