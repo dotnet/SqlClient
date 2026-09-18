@@ -627,6 +627,7 @@ namespace Microsoft.Data.SqlClient
             _serverSPN = connectionOptions._serverSPN;
             _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
             _hostNameInCertificate = connectionOptions._hostNameInCertificate;
+            _vectorTypeSupport = connectionOptions._vectorTypeSupport;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;

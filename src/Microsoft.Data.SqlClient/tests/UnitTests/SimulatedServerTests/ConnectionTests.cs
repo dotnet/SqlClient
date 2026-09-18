@@ -1082,6 +1082,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
 
 
+        /// <summary>
+        /// Verifies that the client and server settle on the highest vector feature
+        /// extension version they have in common, and that a server which reports no support
+        /// or does not acknowledge the feature leaves it unnegotiated. Getting this wrong
+        /// would make the driver read vector columns in a layout the server did not send.
+        /// </summary>
+        /// <param name="expectedConnectionResult">Whether the connection is expected to open.</param>
+        /// <param name="serverVersion">The version the simulated server supports, or 0xFF for no acknowledgement.</param>
+        /// <param name="expectedNegotiatedVersion">The version expected on the wire.</param>
         // Test to verify that the server and client negotiate
         // the common feature extension version.
         // The connection requests the version configured by the Vector Type Support
@@ -1191,6 +1200,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// Verifies that the driver refuses a vector feature extension acknowledgement whose
+        /// version it cannot interpret, rather than trusting it. The simulated server
+        /// acknowledges its own version instead of capping it to the client's, which is what
+        /// a future server supporting a later payload layout would do.
+        /// </summary>
+        /// <param name="serverVersion">A version above the client's ceiling.</param>
         // Test that the driver refuses a vector feature extension ack whose version it
         // cannot interpret. The server here acknowledges its own version rather than
         // capping it to the client's, which is what a future server supporting a later
@@ -1244,6 +1260,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(serverVersion, acknowledgedVersion);
         }
 
+        /// <summary>
+        /// Verifies that the version requested at login follows the <c>Vector Type Support</c>
+        /// keyword, and that the request is omitted entirely when the keyword asks for no
+        /// vector support. This is the opt-in contract: the keyword defaults to v1, so
+        /// upgrading the driver does not change the representation an existing application
+        /// receives.
+        /// </summary>
+        /// <param name="setting">The keyword value, or null to leave it unset.</param>
+        /// <param name="expectRequest">Whether a feature request is expected at login.</param>
+        /// <param name="expectedRequestedVersion">The version expected in that request.</param>
         // Test that the vector feature extension version requested at login follows the
         // Vector Type Support keyword, and that the request is omitted entirely when the
         // keyword asks for no vector support.

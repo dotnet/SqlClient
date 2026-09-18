@@ -43,12 +43,24 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     public VectorFloat16BehaviourTests()
     {
         _managementConnection = new SqlConnection(_connectionString);
-        _managementConnection.Open();
 
-        _float16Table = new Table(_managementConnection, "VectorF16BehaviourTable",
-            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(3, float16) NULL)");
-        _float32Table = new Table(_managementConnection, "VectorF32BehaviourTable",
-            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(3, float32) NULL)");
+        // NOTE: If this constructor throws, xUnit never calls Dispose, so any object already
+        //   created (each of which has a GUID-based name) would be left in the database
+        //   permanently. This mirrors NativeVectorTestsBase.
+        try
+        {
+            _managementConnection.Open();
+
+            _float16Table = new Table(_managementConnection, "VectorF16BehaviourTable",
+                $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(3, float16) NULL)");
+            _float32Table = new Table(_managementConnection, "VectorF32BehaviourTable",
+                $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(3, float32) NULL)");
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     public static bool IsSupported => DataTestUtility.IsSqlVectorFloat16Supported;
@@ -575,12 +587,27 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
             return;
         }
 
-        _float16Table.Dispose();
-        _float32Table.Dispose();
-        _managementConnection.Dispose();
+        // Reachable from the constructor with the fields still unset, so each drop is
+        // null-tolerant and best-effort: failing to drop one object must not leak the others.
+        DisposeSafely(_float16Table);
+        DisposeSafely(_float32Table);
+        _managementConnection?.Dispose();
         _disposed = true;
 
         GC.SuppressFinalize(this);
+    }
+
+    private static void DisposeSafely(IDisposable? disposable)
+    {
+        try
+        {
+            disposable?.Dispose();
+        }
+        catch
+        {
+            // Best-effort cleanup; the object is named with a GUID so a leak is not a
+            // correctness problem for other tests.
+        }
     }
 
     #endregion

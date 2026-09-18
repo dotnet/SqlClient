@@ -1499,7 +1499,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// <para>
         /// A payload read from another vector column is left as it is, so a copy between
         /// columns of different base types is reported by the server rather than being
-        /// silently narrowed.
+        /// silently narrowed. On .NET Framework a float16 column has no <c>System.Half</c>
+        /// to report, so it describes itself as a string and takes the textual path above:
+        /// such a copy is converted by the client rather than rejected. That divergence is
+        /// inherent to the base type having no native representation there, and is covered
+        /// by <c>BulkCopiesFloat16ToFloat32ThroughTheTextualRepresentation</c>.
         /// </para>
         /// </remarks>
         private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata) =>

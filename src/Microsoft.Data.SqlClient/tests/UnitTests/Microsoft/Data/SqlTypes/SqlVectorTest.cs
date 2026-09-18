@@ -238,6 +238,11 @@ public class SqlVectorTest
 
     #if NET
 
+    /// <summary>
+    /// Verifies that a float16 vector built from memory reports the float16 base type and a
+    /// two byte element size, and writes that base type into the payload header. The header
+    /// is what tells the server how to read the elements, so it must match the type argument.
+    /// </summary>
     [Fact]
     public void Float16_Construct_Memory()
     {
@@ -258,6 +263,11 @@ public class SqlVectorTest
         Assert.Equal(TdsEnums.VECTOR_HEADER_SIZE + (3 * 2), ivec.VectorPayload.Length);
     }
 
+    /// <summary>
+    /// Verifies that a null float16 vector still carries its base type, element size, and
+    /// dimension count, which the driver needs to describe the parameter to the server even
+    /// though it sends no elements.
+    /// </summary>
     [Fact]
     public void Float16_Construct_Length()
     {
@@ -273,6 +283,11 @@ public class SqlVectorTest
         Assert.Equal(TdsEnums.VECTOR_HEADER_SIZE + (5 * 2), ivec.Size);
     }
 
+    /// <summary>
+    /// Verifies that the dimension limit is derived from the element size rather than fixed:
+    /// a float16 vector holds 3996 elements before the payload exceeds the maximum size,
+    /// twice the float32 limit, and one more is rejected.
+    /// </summary>
     [Fact]
     public void Float16_Construct_Length_Exceeds_8000()
     {
@@ -283,6 +298,12 @@ public class SqlVectorTest
         Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<Half>.CreateNull(3997));
     }
 
+    /// <summary>
+    /// Verifies that a float16 vector renders its exact element values. Serialising the
+    /// elements as <c>Half</c> would instead emit the shortest string which round trips to
+    /// the same <c>Half</c>, rendering 65504 as "65500" and losing the value the column
+    /// actually holds.
+    /// </summary>
     [Fact]
     public void Float16_GetString_RendersExactValues()
     {
@@ -293,6 +314,11 @@ public class SqlVectorTest
         Assert.Equal("[65504,1.5]", vec.GetString());
     }
 
+    /// <summary>
+    /// Verifies that a value both base types represent exactly renders identically, so a
+    /// caller reading through the string path cannot tell the two apart from the rendering
+    /// alone. This is why the column schema exposes the base type separately.
+    /// </summary>
     [Fact]
     public void Float16_GetString_MatchesFloat32Rendering()
     {
@@ -305,12 +331,20 @@ public class SqlVectorTest
 
     #endif
 
+    /// <summary>
+    /// Verifies that a float32 vector renders as a JSON array, the form the server accepts
+    /// as a vector literal and the form callers receive from the string read paths.
+    /// </summary>
     [Fact]
     public void Float32_GetString_RendersJson()
     {
         Assert.Equal("[1.5,2.5]", new SqlVector<float>(new[] { 1.5f, 2.5f }).GetString());
     }
 
+    /// <summary>
+    /// Verifies that a null vector renders as the null string rather than an empty JSON
+    /// array, so a null is not mistaken for a zero length vector.
+    /// </summary>
     [Fact]
     public void GetString_Null_RendersNullString()
     {
@@ -321,6 +355,12 @@ public class SqlVectorTest
 
     #region Widening Read Tests
 
+    /// <summary>
+    /// Verifies that a float16 payload is widened when read as <c>SqlVector&lt;float&gt;</c>,
+    /// which is how a float16 column is read on frameworks without <c>System.Half</c>. The
+    /// result reports float32, so a vector's base type stays determined by its element type
+    /// rather than by the payload it came from.
+    /// </summary>
     [Fact]
     public void FromTdsPayload_WidensFloat16ToFloat32()
     {
@@ -337,6 +377,10 @@ public class SqlVectorTest
         Assert.Equal(0x00, ((ISqlVector)vec).ElementType);
     }
 
+    /// <summary>
+    /// Verifies that a payload whose base type already matches the requested element type is
+    /// read as it is, confirming the widening path above is taken only when it is needed.
+    /// </summary>
     [Fact]
     public void FromTdsPayload_MatchingElementType_ReadsDirectly()
     {
@@ -349,6 +393,11 @@ public class SqlVectorTest
 
     #if NET
 
+    /// <summary>
+    /// Verifies that reading a float32 payload as <c>SqlVector&lt;Half&gt;</c> throws rather
+    /// than narrowing. Narrowing loses information, so it is never performed implicitly on a
+    /// read, unlike the widening case above.
+    /// </summary>
     [Fact]
     public void FromTdsPayload_NarrowingIsRejected()
     {
@@ -364,9 +413,21 @@ public class SqlVectorTest
 
     #region Helpers
 
+    /// <summary>
+    /// Builds a float32 vector payload from a header and its elements.
+    /// </summary>
+    /// <param name="header">The payload header, which may be deliberately malformed.</param>
+    /// <param name="values">The elements to append after the header.</param>
+    /// <returns>The assembled payload.</returns>
     private byte[] MakeTdsPayload(byte[] header, ReadOnlyMemory<float> values) =>
         MakeTdsPayloadStatic(header, values);
 
+    /// <summary>
+    /// The static form of <see cref="MakeTdsPayload"/>, for callers which have no instance.
+    /// </summary>
+    /// <param name="header">The payload header, which may be deliberately malformed.</param>
+    /// <param name="values">The elements to append after the header.</param>
+    /// <returns>The assembled payload.</returns>
     private static byte[] MakeTdsPayloadStatic(byte[] header, ReadOnlyMemory<float> values)
     {
         int length = header.Length + (values.Length * sizeof(float));
@@ -384,6 +445,8 @@ public class SqlVectorTest
     /// Builds a float16 vector payload without using <c>System.Half</c>, so that tests
     /// which need one can also run on .NET Framework.
     /// </summary>
+    /// <param name="values">The elements, narrowed to binary16 as they are written.</param>
+    /// <returns>The assembled float16 payload.</returns>
     private static byte[] MakeFloat16Payload(float[] values)
     {
         byte[] payload = new byte[TdsEnums.VECTOR_HEADER_SIZE + (values.Length * 2)];

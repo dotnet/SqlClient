@@ -8,6 +8,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 
 #nullable enable
 
+/// <summary>
+/// Supplies the native vector test matrix for a <c>float16</c> column read and written
+/// through the single precision representation. Every sample value is chosen to be exactly
+/// representable in binary16 so that narrowing to the column and widening back is lossless,
+/// which lets the shared matrix assert equality rather than tolerance. This is the only
+/// strongly typed representation available on .NET Framework, which has no
+/// <c>System.Half</c>.
+/// </summary>
 public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<float>
 {
     // Every value is exactly representable in binary16, so it survives narrowing on the

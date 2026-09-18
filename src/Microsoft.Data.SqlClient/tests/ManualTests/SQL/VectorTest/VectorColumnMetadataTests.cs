@@ -24,6 +24,12 @@ public sealed class VectorColumnMetadataTests
 
     public static bool IsFloat16Supported => DataTestUtility.IsSqlVectorFloat16Supported;
 
+    /// <summary>
+    /// Verifies that a vector column reports its base type and dimension count under their
+    /// own property names. Both are encoded indirectly on the wire — the base type as the
+    /// numeric scale and the dimension count derived from the column size — so this is the
+    /// contract that spares callers from knowing that encoding.
+    /// </summary>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData(1)]
     [InlineData(3)]
@@ -46,6 +52,10 @@ public sealed class VectorColumnMetadataTests
         Assert.Equal(dimensions, column["VectorDimensions"]);
     }
 
+    /// <summary>
+    /// Verifies that the vector properties read as null for columns which are not vectors,
+    /// so that a caller can probe any column without having to guard the call.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsNullForNonVectorColumns()
     {
@@ -63,6 +73,12 @@ public sealed class VectorColumnMetadataTests
         }
     }
 
+    /// <summary>
+    /// Verifies that adding the vector properties leaves the standard column schema
+    /// properties intact, and that an unrecognised property name still returns null rather
+    /// than throwing. This guards against the new properties disturbing the existing
+    /// indexer contract.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsStandardPropertiesAlongsideVectorProperties()
     {
@@ -82,6 +98,11 @@ public sealed class VectorColumnMetadataTests
         Assert.Null(column["NoSuchProperty"]);
     }
 
+    /// <summary>
+    /// Verifies that a connection which negotiated vector support reports the type in the
+    /// DataTypes schema collection, with the provider type and create format a caller would
+    /// use to declare a column.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void SchemaCollectionIncludesVectorType()
     {
@@ -95,6 +116,13 @@ public sealed class VectorColumnMetadataTests
         Assert.Equal("vector({0})", vectorRow["CreateFormat"]);
     }
 
+    /// <summary>
+    /// Verifies that a connection which opted out of vector support does not report the
+    /// type, because it reads vector columns as <c>varchar(max)</c> and so has no vector
+    /// type to offer. Paired with the test above, this pins the collection to what the
+    /// connection negotiated rather than to the version the server reports, which is what
+    /// makes it correct on Azure SQL.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void SchemaCollectionOmitsVectorTypeWhenItIsNotNegotiated()
     {
@@ -113,6 +141,11 @@ public sealed class VectorColumnMetadataTests
         Assert.Null(FindVectorType(connection));
     }
 
+    /// <summary>
+    /// Finds the vector row in a connection's DataTypes schema collection.
+    /// </summary>
+    /// <param name="connection">An open connection whose schema is read.</param>
+    /// <returns>The vector row, or <see langword="null"/> when the type is not reported.</returns>
     private static DataRow? FindVectorType(SqlConnection connection)
     {
         foreach (DataRow row in connection.GetSchema("DataTypes").Rows)
@@ -126,6 +159,13 @@ public sealed class VectorColumnMetadataTests
         return null;
     }
 
+    /// <summary>
+    /// Verifies the use case the properties exist for: choosing a read path without knowing
+    /// the schema in advance. <c>GetFieldType</c> is not enough on its own, because it
+    /// reports string for a float16 column on .NET Framework just as it does for a varchar
+    /// one, and cannot distinguish the two base types at all for a caller which wants to
+    /// read both through a single representation.
+    /// </summary>
     [ConditionalFact(nameof(IsFloat16Supported))]
     public void DrivesReadPathForACallerWhichDoesNotKnowTheSchema()
     {

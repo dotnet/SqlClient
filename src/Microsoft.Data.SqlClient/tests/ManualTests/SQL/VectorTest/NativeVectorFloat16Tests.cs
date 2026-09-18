@@ -12,6 +12,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 
 #nullable enable
 
+/// <summary>
+/// Supplies the native vector test matrix for a <c>float16</c> column read and written as
+/// <c>SqlVector&lt;Half&gt;</c>, which is the column's own base type and so travels without
+/// conversion. The samples span the binary16 extremes, a subnormal, and a negative zero, and
+/// every value is exactly representable, so it survives the round trip through the JSON
+/// rendering that the string based read paths return.
+/// </summary>
 public sealed class VectorFloat16TestData : NativeVectorTestDataBase<Half>
 {
     // Includes the extremes of the binary16 range, a subnormal, and a negative zero.
@@ -60,6 +67,12 @@ public sealed class VectorFloat16TestData : NativeVectorTestDataBase<Half>
     public override string ConnectionString => DataTestUtility.VectorFloat16ConnectionString;
 }
 
+/// <summary>
+/// Runs the full native vector matrix against a <c>float16</c> column using
+/// <c>SqlVector&lt;Half&gt;</c>, the representation which matches the column's base type and
+/// is therefore exchanged as the server sent it, with no per element conversion. Compiled
+/// only for .NET, since <c>System.Half</c> does not exist on .NET Framework.
+/// </summary>
 [Trait("Set", "3")]
 public sealed class NativeVectorFloat16Tests : NativeVectorTestsBase<Half, VectorFloat16TestData>
 {

@@ -28,6 +28,12 @@ public class Float16ConverterTest
 
     #if NET
 
+    /// <summary>
+    /// Verifies the widening direction against <c>System.Half</c> exhaustively, over all
+    /// 65,536 binary16 bit patterns. Comparing bitwise rather than by value distinguishes
+    /// positive from negative zero and compares a NaN's sign and payload rather than only
+    /// its NaN-ness.
+    /// </summary>
     [Fact]
     public void ToSingle_MatchesHalf_ForEveryBitPattern()
     {
@@ -46,6 +52,11 @@ public class Float16ConverterTest
         }
     }
 
+    /// <summary>
+    /// Verifies the narrowing direction against <c>System.Half</c> for every value which
+    /// binary16 can represent, so that a value read from a float16 column is written back
+    /// unchanged.
+    /// </summary>
     [Fact]
     public void FromSingle_MatchesHalf_ForEveryRepresentableValue()
     {
@@ -62,6 +73,12 @@ public class Float16ConverterTest
         }
     }
 
+    /// <summary>
+    /// Verifies narrowing against <c>System.Half</c> for inputs drawn from the whole single
+    /// precision space, not just those binary16 can represent. This is what covers rounding,
+    /// overflow, and underflow for arbitrary application values, which the exhaustive
+    /// representable-value test above cannot reach.
+    /// </summary>
     [Fact]
     public void FromSingle_MatchesHalf_AcrossTheSinglePrecisionRange()
     {
@@ -79,6 +96,11 @@ public class Float16ConverterTest
         }
     }
 
+    /// <summary>
+    /// Verifies that a NaN keeps its sign and payload in both directions rather than being
+    /// canonicalised, so the codec and <c>System.Half</c> cannot diverge on inputs an
+    /// application could legitimately send.
+    /// </summary>
     [Fact]
     public void ConvertsNaN_PreservingSignAndPayload()
     {
@@ -107,6 +129,11 @@ public class Float16ConverterTest
 
     #region Round trips
 
+    /// <summary>
+    /// Verifies that a value binary16 can represent exactly survives a narrow then widen
+    /// round trip unchanged, covering the range's boundaries: the largest finite value, the
+    /// smallest normal, and the smallest subnormal.
+    /// </summary>
     [Theory]
     // Exactly representable values.
     [InlineData(0f)]
@@ -122,6 +149,10 @@ public class Float16ConverterTest
         Assert.Equal(value, Float16Converter.ManualToSingle(Float16Converter.ManualFromSingle(value)));
     }
 
+    /// <summary>
+    /// Verifies that negative zero stays negative through a round trip, which a naive
+    /// implementation loses by treating the value as equal to positive zero.
+    /// </summary>
     [Fact]
     public void RoundTrip_PreservesSignOfZero()
     {
@@ -137,6 +168,11 @@ public class Float16ConverterTest
 
     #region Rounding
 
+    /// <summary>
+    /// Verifies that a value binary16 cannot represent is rounded to the nearest one it can,
+    /// including at the top of the range where rounding up must still produce the largest
+    /// finite value rather than an infinity.
+    /// </summary>
     [Theory]
     // Values which are not representable are rounded to the nearest binary16 value.
     [InlineData(1.1f, 1.0996094f)]
@@ -150,6 +186,11 @@ public class Float16ConverterTest
         Assert.Equal(expected, Float16Converter.ManualToSingle(Float16Converter.ManualFromSingle(value)));
     }
 
+    /// <summary>
+    /// Verifies that a value exactly halfway between two binary16 values resolves towards
+    /// the one with an even mantissa, which is the IEEE 754 default and the rule
+    /// <c>System.Half</c> and SQL Server both follow.
+    /// </summary>
     [Fact]
     public void FromSingle_RoundsTiesToEven()
     {
@@ -166,6 +207,11 @@ public class Float16ConverterTest
 
     #region Overflow and underflow
 
+    /// <summary>
+    /// Verifies that a value too large for binary16 saturates to positive infinity. Callers
+    /// which must reject such a value rather than store an infinity detect it from this
+    /// result, which is what the bulk copy write path relies on.
+    /// </summary>
     [Theory]
     [InlineData(70000f)]
     [InlineData(float.MaxValue)]
@@ -174,6 +220,10 @@ public class Float16ConverterTest
         Assert.Equal(0x7C00, Float16Converter.ManualFromSingle(value));
     }
 
+    /// <summary>
+    /// Verifies that a value too negative for binary16 saturates to negative infinity,
+    /// the counterpart of the overflow case above.
+    /// </summary>
     [Theory]
     [InlineData(-70000f)]
     [InlineData(float.MinValue)]
@@ -182,6 +232,10 @@ public class Float16ConverterTest
         Assert.Equal(0xFC00, Float16Converter.ManualFromSingle(value));
     }
 
+    /// <summary>
+    /// Verifies that a value below half the smallest subnormal flushes to zero rather than
+    /// rounding up to the smallest subnormal.
+    /// </summary>
     [Theory]
     // Below half of the smallest subnormal, so these round to zero rather than to it.
     [InlineData(1e-8f)]
@@ -192,6 +246,12 @@ public class Float16ConverterTest
         Assert.Equal(0x0000, Float16Converter.ManualFromSingle(value));
     }
 
+    /// <summary>
+    /// Verifies that subnormal binary16 values are produced rather than flushed to zero,
+    /// including the value just above half the smallest subnormal, which must round up to
+    /// it. Subnormals use a different encoding path from normals, so they are covered
+    /// separately.
+    /// </summary>
     [Fact]
     public void FromSingle_PreservesSubnormals()
     {
@@ -205,6 +265,10 @@ public class Float16ConverterTest
 
     #region Infinity and NaN
 
+    /// <summary>
+    /// Verifies that an infinity narrows to the binary16 infinity of the same sign, rather
+    /// than being confused with the overflow saturation which produces the same encoding.
+    /// </summary>
     [Fact]
     public void FromSingle_PreservesInfinity()
     {
@@ -212,6 +276,10 @@ public class Float16ConverterTest
         Assert.Equal(0xFC00, Float16Converter.ManualFromSingle(float.NegativeInfinity));
     }
 
+    /// <summary>
+    /// Verifies that a binary16 infinity widens to the single precision infinity of the
+    /// same sign, the counterpart of the narrowing case above.
+    /// </summary>
     [Fact]
     public void ToSingle_PreservesInfinity()
     {
@@ -219,6 +287,12 @@ public class Float16ConverterTest
         Assert.Equal(float.NegativeInfinity, Float16Converter.ManualToSingle(0xFC00));
     }
 
+    /// <summary>
+    /// Verifies that a NaN stays a NaN through a round trip, and that any binary16 encoding
+    /// with a maximal exponent and a non-zero mantissa widens to one. This runs on every
+    /// target framework, unlike the payload-preserving test above which needs
+    /// <c>System.Half</c> as a reference.
+    /// </summary>
     [Fact]
     public void ConvertsNaN()
     {
