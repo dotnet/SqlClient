@@ -448,16 +448,19 @@ $ sqlcmd -S localhost -U sa -P password
 1> quit
 ```
 
-The default `runnerconfig.jsonc` expects a database named `sqlclient-perf-db`,
-but you may change the config to use any existing database.  The benchmarks
+The default `runnerconfig.default.jsonc` expects a database named
+`sqlclient-perf-db`, but you may change the generated `runnerconfig.jsonc`
+to use any existing database.  The benchmarks
 create and drop their own tables (typically prefixed with `perf_`) in this
 database; other existing tables are left untouched.
 
 ### Configure Runner
 
-Configure the benchmarks by editing the `runnerconfig.jsonc` file directly in the
+Configure the benchmarks by editing the `runnerconfig.jsonc` file in the
 `PerformanceTests` directory with an appropriate connection string and benchmark
-settings:
+settings. If the file does not exist, the build creates it from
+`runnerconfig.default.jsonc`; `runnerconfig.jsonc` is ignored by git so local
+connection strings and benchmark settings can stay local.
 
 ```json
 {
@@ -504,11 +507,10 @@ copy the file into the `artifacts` directory alongside the benchmark DLL.  By
 default, the benchmarks look for `runnerconfig.jsonc` in the same directory as
 the DLL.
 
-Optionally, to avoid polluting your git workspace and requiring a build after
-each config change, copy `runnerconfig.jsonc` to a new file, make your edits
-there, and then specify the new file with the RUNNER_CONFIG environment
-variable. The same approach works for `datatypes.json` via the
-`DATATYPES_CONFIG` environment variable.
+Optionally, to avoid requiring a build after each config change, copy
+`runnerconfig.jsonc` to a new file, make your edits there, and then specify the
+new file with the RUNNER_CONFIG environment variable. The same approach works
+for `datatypes.json` via the `DATATYPES_CONFIG` environment variable.
 
 PowerShell:
 
