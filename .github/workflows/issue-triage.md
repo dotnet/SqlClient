@@ -51,11 +51,35 @@ permissions:
   pull-requests: read
 
 tools:
-  bash: [cat, find, grep]
+  bash: [cat, find, grep, jq]
   github:
     min-integrity: none
 
 safe-outputs:
+  steps:
+    - name: Checkout trusted triage validator
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        path: triage-validator
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+    - name: Validate triage output before publishing
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
+      with:
+        script: |
+          const path = require('node:path');
+          const fs = require('node:fs');
+          const { validateTriageOutput } = require(path.join(process.env.GITHUB_WORKSPACE,
+            'triage-validator', '.github', 'scripts', 'validate-triage-output.cjs'));
+          const filename = process.env.GH_AW_AGENT_OUTPUT;
+          if (!filename) {
+            throw new Error('Missing agent output; refusing to publish unvalidated triage output.');
+          }
+          validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+          core.info('Triage output validated before safe-output publication.');
   # One triage summary per run. `hide-older-comments` collapses previous
   # summaries so only the latest is visible.
   add-comment:
@@ -115,6 +139,46 @@ workflow is permitted to manage.
 Do NOT post intermediate findings. Do NOT post separate comments for
 area detection, duplicate checking, or environment validation.
 Everything goes into the single triage summary at the end.
+
+## Safe-output submission
+
+Every successful `safeoutputs` call queues a real write; it is NOT a dry run.
+Never test a write tool with a placeholder, `test` message, `-`, or `@-`.
+Do not experiment with alternative comment calls after a submission error.
+
+Finish all analysis and compose the complete Markdown summary in
+`/tmp/gh-aw/agent/triage-summary.md` using the file-writing tool. Before any
+write intent, check that it starts with the Triage Summary heading, has all
+five populated check rows, and contains meaningful Analysis and Next Steps
+sections. Replace every template placeholder; do not wrap the summary in a
+code fence or quote.
+
+Use the allowed `jq` command to JSON-encode the entire file without shell
+interpolation of its contents:
+
+```bash
+jq -Rs '{body: .}' /tmp/gh-aw/agent/triage-summary.md > /tmp/gh-aw/agent/triage-summary.json
+jq -e 'type == "object" and (.body | type == "string" and length > 0)' /tmp/gh-aw/agent/triage-summary.json
+```
+
+Run these local preparation/check commands first and confirm both succeed.
+Only then submit the finished payload exactly once:
+
+```bash
+safeoutputs add_comment . < /tmp/gh-aw/agent/triage-summary.json
+```
+
+The standalone `.` reads a JSON object from stdin. `-` and `@-` are NOT
+stdin sentinels. Do not use `--body -`, `--body @-`, hand-escaped Markdown
+in shell arguments, or raw GitHub writes. The comment target defaults to
+the triggering issue; do not override the target.
+
+If preparation or submission fails, stop without changing labels. Report
+the failure through `safeoutputs report_incomplete` with the actual error;
+do not call `add_comment` again, send a substitute comment, or claim success.
+Only queue the permitted label action after the final comment is accepted.
+The safe-output job validates the result before any comments or labels are
+published and rejects placeholders or mixed success/incomplete outcomes.
 
 ---
 
