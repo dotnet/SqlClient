@@ -89,4 +89,45 @@ internal static class ReadOnlySequenceUtilities
             return true;
         }
     }
+
+    /// <summary>
+    /// Find the absolute position of <paramref name="value"/> in <paramref name="sequence"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of each element in <paramref name="sequence"/>.</typeparam>
+    /// <param name="sequence">The sequence to search.</param>
+    /// <param name="value">The value to search for.</param>
+    /// <returns>The absolute position of <paramref name="value"/>.</returns>
+    /// <remarks>
+    /// This is similar to <see cref="BuffersExtensions.PositionOf{T}"/>. However, this returns the
+    /// number of elements prior to the first appearance of <paramref name="value"/>, while PositionOf
+    /// returns a <see cref="SequencePosition"/>.
+    /// </remarks>
+    public static long IndexOf<T>(this in ReadOnlySequence<T> sequence, T value)
+         where T : IEquatable<T>
+    {
+        if (sequence.IsSingleSegment)
+        {
+            return sequence.First.Span.IndexOf(value);
+        }
+
+        long cumulativeIndex = 0;
+
+        SequencePosition position = sequence.Start;
+        while (sequence.TryGet(ref position, out ReadOnlyMemory<T> currChunk, advance: true))
+        {
+            int idx = currChunk.Span.IndexOf(value);
+
+            if (idx != -1)
+            {
+                cumulativeIndex += idx;
+                return cumulativeIndex;
+            }
+            else
+            {
+                cumulativeIndex += currChunk.Length;
+            }
+        }
+
+        return -1;
+    }
 }
