@@ -1733,17 +1733,26 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
+                    // The server is expected to cap its acknowledgement to the version the
+                    // connection asked for. Bound it here as well, so that a server which
+                    // does not cannot raise this connection above the version it opted in
+                    // to: accepting a higher one would return float16 columns in their
+                    // binary form to a connection which asked for v1, which is exactly the
+                    // change the keyword exists to prevent.
+                    byte requestedVersion =
+                        VectorTypeSupportUtilities.ToFeatureExtensionVersion(ConnectionOptions.VectorTypeSupport);
+
                     byte vectorSupportVersion = data[0];
-                    if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                    if (vectorSupportVersion == 0 || vectorSupportVersion > requestedVersion)
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                             "Object ID {0}, " +
                             "Invalid version number {1} for VECTORSUPPORT, " +
-                            "Max supported version is {2}",
+                            "Requested version is {2}",
                             ObjectID,
                             vectorSupportVersion,
-                            TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            requestedVersion);
 
                         throw SQL.ParsingError();
                     }

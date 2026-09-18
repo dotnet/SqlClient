@@ -1261,6 +1261,66 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Verifies that the driver refuses an acknowledgement above the version this
+        /// connection asked for, even when it is one the client could otherwise interpret.
+        /// The keyword is an opt-in, so honouring a v2 acknowledgement on a v1 connection
+        /// would return float16 columns in their binary form to an application which never
+        /// asked for that — the precise back-compat change the keyword exists to prevent.
+        /// </summary>
+        /// <param name="setting">The version the connection asks for, or null to leave it at the default.</param>
+        [Theory]
+        // The default is v1, so an application which says nothing is covered too.
+        [InlineData(null)]
+        [InlineData(SqlVectorTypeSupport.V1)]
+        public void TestConnRejectsVectorFeatExtVersionAboveRequested(SqlVectorTypeSupport? setting)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            // The server acknowledges its own version rather than capping it to the
+            // client's, which is what a server that does not honour the request would do.
+            server.ServerSupportedVectorFeatureExtVersion = 0x2;
+            server.AcknowledgeRawVectorFeatureExtVersion = true;
+
+            byte acknowledgedVersion = 0;
+
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                TDSFeatureExtAckGenericOption option = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault()?
+                    .Options
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    acknowledgedVersion = option.FeatureAckData[0];
+                }
+            };
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+            };
+
+            if (setting.HasValue)
+            {
+                builder.VectorTypeSupport = setting.Value;
+            }
+
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            Assert.Throws<InvalidOperationException>(() => connection.Open());
+
+            // Confirms the server really did acknowledge v2, so the failure above is the
+            // requested version being exceeded rather than an unrelated connection problem.
+            Assert.Equal(0x2, acknowledgedVersion);
+        }
+
+        /// <summary>
         /// Verifies that the version requested at login follows the <c>Vector Type Support</c>
         /// keyword, and that the request is omitted entirely when the keyword asks for no
         /// vector support. This is the opt-in contract: the keyword defaults to v1, so

@@ -575,6 +575,37 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal(values, reader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
+    /// <summary>
+    /// Verifies that a JSON string in a column declared as <see cref="object"/> is still
+    /// parsed into the destination's base type. The declared type reports nothing useful
+    /// here, so the value itself has to be examined; otherwise the float32 payload produced
+    /// by coercion would reach a float16 column at the wrong width and the server would
+    /// reject the copy.
+    /// </summary>
+    [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesJsonStringSourceFromAnObjectTypedColumn()
+    {
+        DataTable table = new();
+        table.Columns.Add(ColumnName, typeof(object));
+        table.Rows.Add("[1.5,2.5,3.5]");
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(table);
+        }
+
+        using SqlCommand command =
+            new($"SELECT TOP 1 {ColumnName} FROM {_float16Table.Name} ORDER BY Id DESC", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        Assert.True(reader.Read());
+        Assert.Equal([1.5f, 2.5f, 3.5f], reader.GetSqlVector<float>(0).Memory.ToArray());
+    }
+
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopyRejectsValuesOutsideTheFloat16Range()
     {

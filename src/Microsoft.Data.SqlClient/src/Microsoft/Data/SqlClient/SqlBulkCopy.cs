@@ -1497,6 +1497,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// within the data stream: the <c>INSERT BULK</c> declaration states the
         /// destination's base type, and elements of each base type differ in size.
         /// <para>
+        /// The source column's declared type is not enough on its own. A column declared as
+        /// <see cref="object"/> reports no useful type while still yielding a JSON string
+        /// row by row, so the value is examined as well. Only a string counts: a raw vector
+        /// payload is a byte array, so it is never mistaken for text.
+        /// </para>
+        /// <para>
         /// A payload read from another vector column is left as it is, so a copy between
         /// columns of different base types is reported by the server rather than being
         /// silently narrowed. On .NET Framework a float16 column has no <c>System.Half</c>
@@ -1506,9 +1512,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// by <c>BulkCopiesFloat16ToFloat32ThroughTheTextualRepresentation</c>.
         /// </para>
         /// </remarks>
-        private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata) =>
+        private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata, object value) =>
             metadata.type == SqlDbTypeExtensions.Vector &&
-            GetSourceColumnType(sourceOrdinal) == typeof(string);
+            (GetSourceColumnType(sourceOrdinal) == typeof(string) || value is string);
 
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
@@ -1867,7 +1873,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed, int sourceOrdinal)
         {
-            bool isTextSourcedVector = IsTextSourcedVectorColumn(sourceOrdinal, metadata);
+            bool isTextSourcedVector = IsTextSourcedVectorColumn(sourceOrdinal, metadata, value);
             coercedToDataFeed = false;
 
             if (isNull)
