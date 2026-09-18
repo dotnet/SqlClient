@@ -85,7 +85,8 @@ internal static class AssemblyInspector
 
             // Read the debug directory to learn which PDB (by GUID) this assembly was built with,
             // whether it already carries an embedded portable PDB, and any recorded PDB checksums.
-            (Guid? codeViewGuid, bool hasEmbeddedPdb, List<PdbChecksum>? checksums) = ReadDebugInfo(pe);
+            (Guid? codeViewGuid, bool hasEmbeddedPdb, List<PdbChecksum>? checksums,
+                List<PdbSourceCoverage>? sourceCoverage) = ReadDebugInfo(pe);
 
             // File, informational, and target-framework versions are assembly-level custom
             // attributes, so scan for them by attribute type name.
@@ -132,6 +133,7 @@ internal static class AssemblyInspector
                 CodeViewGuid = codeViewGuid,
                 Checksums = checksums,
                 HasEmbeddedSymbols = hasEmbeddedPdb,
+                SourceCoverage = sourceCoverage,
             };
         }
         catch (BadImageFormatException)
@@ -167,12 +169,14 @@ internal static class AssemblyInspector
     /// embeds a portable PDB, and any recorded PDB checksums.
     /// </summary>
     /// <param name="pe">The PE reader positioned over the assembly.</param>
-    /// <returns>The CodeView GUID, the embedded-PDB flag, and the recorded checksums (if any).</returns>
-    private static (Guid? CodeViewGuid, bool HasEmbeddedPdb, List<PdbChecksum>? Checksums) ReadDebugInfo(PEReader pe)
+    /// <returns>The CodeView GUID, embedded-PDB flag, checksums, and embedded source coverage (if any).</returns>
+    private static (Guid? CodeViewGuid, bool HasEmbeddedPdb, List<PdbChecksum>? Checksums,
+        List<PdbSourceCoverage>? SourceCoverage) ReadDebugInfo(PEReader pe)
     {
         Guid? codeViewGuid = null;
         bool hasEmbeddedPdb = false;
         List<PdbChecksum>? checksums = null;
+        List<PdbSourceCoverage>? sourceCoverage = null;
 
         foreach (DebugDirectoryEntry entry in pe.ReadDebugDirectory())
         {
@@ -191,6 +195,15 @@ internal static class AssemblyInspector
 
                 case DebugDirectoryEntryType.EmbeddedPortablePdb:
                     hasEmbeddedPdb = true;
+                    try
+                    {
+                        using MetadataReaderProvider provider = pe.ReadEmbeddedPortablePdbDebugDirectoryData(entry);
+                        (sourceCoverage ??= []).Add(PortablePdb.ReadSourceCoverage(provider.GetMetadataReader(), "embedded"));
+                    }
+                    catch (BadImageFormatException ex)
+                    {
+                        throw new InvalidDataException("Invalid embedded portable PDB.", ex);
+                    }
                     break;
 
                 case DebugDirectoryEntryType.PdbChecksum:
@@ -211,7 +224,7 @@ internal static class AssemblyInspector
             }
         }
 
-        return (codeViewGuid, hasEmbeddedPdb, checksums);
+        return (codeViewGuid, hasEmbeddedPdb, checksums, sourceCoverage);
     }
 
     /// <summary>
