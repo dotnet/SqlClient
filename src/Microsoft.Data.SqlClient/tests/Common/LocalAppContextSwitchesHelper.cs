@@ -59,6 +59,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useConnectionPoolV2Original;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
+    private readonly bool? _useLegacyUdtAssemblyLoadOriginal;
     #if NET
     // The s_useManagedNetworking field only exists in the SqlClient assembly
     // when it is built for .NET on Windows, so it is captured/restored at
@@ -127,6 +128,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_useLegacyIdleTimeoutBehavior");
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 GetSwitchValue("s_useOverallConnectTimeoutForPoolWait");
+            _useLegacyUdtAssemblyLoadOriginal =
+                GetSwitchValue("s_useLegacyUdtAssemblyLoad");
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -203,6 +206,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useOverallConnectTimeoutForPoolWait",
                 _useOverallConnectTimeoutForPoolWaitOriginal);
+            SetSwitchValue(
+                "s_useLegacyUdtAssemblyLoad",
+                _useLegacyUdtAssemblyLoadOriginal);
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -368,6 +374,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchPropertyValue(nameof(UseOverallConnectTimeoutForPoolWait));
         set => SetSwitchValue("s_useOverallConnectTimeoutForPoolWait", value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyUdtAssemblyLoad switch value.
+    /// </summary>
+    public bool? UseLegacyUdtAssemblyLoad
+    {
+        get => GetSwitchPropertyValue(nameof(UseLegacyUdtAssemblyLoad));
+        set => SetSwitchValue("s_useLegacyUdtAssemblyLoad", value);
     }
 
     #if NET

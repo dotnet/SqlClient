@@ -1122,6 +1122,12 @@
   <data name="SQLUDT_Unexpected" xml:space="preserve">
     <value>unexpected error encountered in SqlClient data provider. {0}</value>
   </data>
+  <data name="SQLUDT_AssemblyNotAllowed" xml:space="preserve">
+    <value>The assembly '{0}', named by a user-defined type returned by the server, was not loaded because it is not permitted by the user-defined type assembly load policy. To permit it, add the assembly name to the 'Microsoft.Data.SqlClient.UdtAssemblyAllowList' AppContext data element.</value>
+  </data>
+  <data name="SQLUDT_TypeNotUserDefined" xml:space="preserve">
+    <value>The type '{0}', named by a user-defined type returned by the server, is not a user-defined type because it is not annotated with SqlUserDefinedTypeAttribute.</value>
+  </data>
   <data name="SQLUDT_InvalidUdtTypeName" xml:space="preserve">
     <value>UdtTypeName property must be set for UDT parameters.</value>
   </data>
