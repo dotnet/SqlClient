@@ -119,6 +119,8 @@ stages:
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
+                  manualTestFilters: ${{ coalesce(config.value.manualTestFilters, 'category!=failing&category!=flaky&category!=interactive') }}
+                  flakyManualTestFilters: ${{ coalesce(config.value.flakyManualTestFilters, 'category=flaky') }}
                   configSqlFor: ${{ config.value.configSqlFor }}
                   operatingSystem: ${{ config.value.operatingSystem }}
                   saPassword: $(saPassword)
@@ -153,6 +155,8 @@ stages:
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
+                    manualTestFilters: ${{ coalesce(config.value.manualTestFilters, 'category!=failing&category!=flaky&category!=interactive') }}
+                    flakyManualTestFilters: ${{ coalesce(config.value.flakyManualTestFilters, 'category=flaky') }}
                     configSqlFor: ${{ config.value.configSqlFor }}
                     operatingSystem: ${{ config.value.operatingSystem }}
                     saPassword: $(saPassword)
