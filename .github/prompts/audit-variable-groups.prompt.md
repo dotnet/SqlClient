@@ -2,10 +2,20 @@
 name: audit-variable-groups
 description: Audit Azure DevOps variable groups by searching repos/branches for usage and updating descriptions accordingly.
 argument-hint: <optional: specific repos, branches, or variable groups to audit>
-tools: ['execute/runInTerminal', 'execute/getTerminalOutput', 'edit/createFile', 'read/readFile']
+# No `tools:` scoping on purpose: this prompt is access-agnostic and must be able
+# to call whatever Azure DevOps MCP server is connected in addition to the built-in
+# terminal/read/edit tools. Declaring a scoped `tools:` list would strip out
+# MCP/extension tools and force the `az` CLI path.
 ---
 
-Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **ADO.Net** project. Use the `az` CLI where possible; fall back to direct REST API calls where `az` doesn't provide sufficient coverage (e.g., repo file scanning, AzureKeyVault group updates).
+Audit Azure DevOps variable groups in the **sqlclientdrivers** organization, **ADO.Net** project.
+
+Use whatever Azure DevOps access is available, in this order of preference: a mechanism the user
+has already chosen previously; an **Azure DevOps MCP server** if one is connected; the **`az`
+CLI**; then **direct REST** calls. Probe availability rather than assuming, fall back when one is
+unavailable or errors, and state which you used. Some steps (repo file scanning, AzureKeyVault
+group updates) may not be covered by `az` or MCP, so direct REST remains the fallback there. The
+`az` commands below are examples of the operation to perform, not a requirement to use that CLI.
 
 ## Safety constraints
 
