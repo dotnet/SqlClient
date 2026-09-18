@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
 
                     using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
-                        return JsonSerializer.Deserialize<List<byte>>(stream)?.ToArray();
+                        return JsonSerializer.Deserialize(stream, SqlClientJsonSerializerContext.Default.ListByte)?.ToArray();
                     }
                 }
                 catch (Exception e)
