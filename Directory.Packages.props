@@ -158,6 +158,13 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
+    <!--
+      Azure.Core 1.51.1 and System.ClientModel 1.9.0 require DiagnosticSource
+      >= 10.0.2 and System.Text.Json >= 10.0.1 on their legacy targets.
+      These existing 10.x floors are graph-required exceptions to runtime-band
+      alignment; pinning them to 8.x/9.x would fail restore with NU1109.
+      Revisit with the upstream dependencies, not by lowering these pins alone.
+    -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
