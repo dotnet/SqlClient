@@ -23,11 +23,6 @@ General availability of Microsoft.Data.SqlClient 7.1. The sections below list th
 - Unified the exception message raised when conflicting token-based and SSPI authentication properties are set on the same `SqlConnection`, and documented the complete set of properties that conflict with `AccessToken`.
   ([#4629](https://github.com/dotnet/SqlClient/pull/4629))
 
-- Refreshed the localized resource strings shipped with the driver for all supported languages.
-  ([#4607](https://github.com/dotnet/SqlClient/pull/4607),
-   [#4645](https://github.com/dotnet/SqlClient/pull/4645),
-   [#4651](https://github.com/dotnet/SqlClient/pull/4651))
-
 - Documentation corrections for `SqlDataRecord`, `SqlMetaData`, and the LCID 1033 locale name.
   ([#1805](https://github.com/dotnet/SqlClient/issues/1805),
    [#4440](https://github.com/dotnet/SqlClient/pull/4440),
