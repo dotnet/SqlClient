@@ -773,14 +773,16 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
                     case MetaType.SqlVectorElementType.Float16:
                         #if NET
-                        return SqlVector<Half>.CreateNull(elementCount);
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
                         #else
                         // System.Half is unavailable, so a float16 vector has no faithful
                         // strongly typed representation and is surfaced as single precision.
-                        return SqlVector<float>.CreateNull(elementCount);
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
                         #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
@@ -2410,7 +2412,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
+                            value = ((ISqlVector)SqlVector<float>.CreateForConversion(
+                                JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {

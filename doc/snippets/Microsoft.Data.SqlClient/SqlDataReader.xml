@@ -982,7 +982,7 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVector`1" /> type.
       </exception>
       <exception cref="T:System.NotSupportedException">
-        The column's base type cannot be represented by <paramref name="T" /> without losing precision.
+        The column's base type cannot be represented by <typeparamref name="T" /> without losing precision.
       </exception>
       <remarks>
         <format type="text/markdown">

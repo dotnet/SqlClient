@@ -409,6 +409,46 @@ public class SqlVectorTest
 
     #endif
 
+    /// <summary>
+    /// Verifies that a float16 column wider than the float32 element limit can still be
+    /// read as <c>SqlVector&lt;float&gt;</c>. A float16 vector may declare up to 3996
+    /// dimensions, while 1998 is the most that can be sent as float32, and that limit
+    /// governs what a caller constructs rather than what the server sends. Rejecting these
+    /// would make such a column unreadable on .NET Framework by any means, since every read
+    /// path there widens to float32.
+    /// </summary>
+    [Theory]
+    [InlineData(1999)]
+    [InlineData(2000)]
+    [InlineData(3996)]
+    public void FromTdsPayload_WidensBeyondTheFloat32ElementLimit(int elementCount)
+    {
+        byte[] payload = MakeFloat16Payload(new float[elementCount]);
+
+        var vec = SqlVector<float>.FromTdsPayload(payload);
+
+        Assert.Equal(elementCount, vec.Length);
+    }
+
+    /// <summary>
+    /// Verifies the same for a null value, which is materialised from the column's declared
+    /// dimension count rather than from a payload. A null row must not fail where a
+    /// populated row in the same column succeeds.
+    /// </summary>
+    [Theory]
+    [InlineData(1999)]
+    [InlineData(3996)]
+    public void CreateNullFromServer_AllowsWideFloat16Columns(int elementCount)
+    {
+        var vec = SqlVector<float>.CreateNullFromServer(elementCount);
+
+        Assert.True(vec.IsNull);
+        Assert.Equal(elementCount, vec.Length);
+
+        // The public entry point still holds a caller to what can be sent as float32.
+        Assert.Throws<ArgumentOutOfRangeException>(() => SqlVector<float>.CreateNull(elementCount));
+    }
+
     #endregion
 
     #region Helpers

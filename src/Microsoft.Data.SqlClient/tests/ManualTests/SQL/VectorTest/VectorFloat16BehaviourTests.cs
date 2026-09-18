@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlTypes;
@@ -526,6 +527,52 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlCommand command =
             new($"SELECT TOP 1 CAST({ColumnName} AS varchar(100)) FROM {_float16Table.Name} ORDER BY Id DESC", connection);
         Assert.Contains("1.5", (string)command.ExecuteScalar());
+    }
+
+    /// <summary>
+    /// Verifies that a JSON string can be bulk copied into a float16 column declaring more
+    /// dimensions than can be sent as float32. The value is parsed into single precision
+    /// before being rewritten to the destination's base type, and that intermediate must not
+    /// be held to the float32 element limit: 2000 elements exceed what float32 can send, but
+    /// are well within float16's 3996.
+    /// </summary>
+    [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopiesJsonStringSourceIntoAWideFloat16Column()
+    {
+        const int Dimensions = 2000;
+
+        using Table wideTable = new(_managementConnection, "VectorF16WideTable",
+            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector({Dimensions}, float16) NULL)");
+
+        float[] values = new float[Dimensions];
+        for (int i = 0; i < values.Length; i++)
+        {
+            // Eighths are exactly representable in binary16 at this magnitude.
+            values[i] = (i % 8) * 0.125f;
+        }
+
+        DataTable source = new();
+        source.Columns.Add(ColumnName, typeof(string));
+        source.Rows.Add(JsonSerializer.Serialize(values));
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = wideTable.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(source);
+        }
+
+        using SqlCommand command =
+            new($"SELECT TOP 1 {ColumnName} FROM {wideTable.Name} ORDER BY Id DESC", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        Assert.True(reader.Read());
+
+        // Reading it back also exercises the widening path at a width beyond the float32
+        // element limit.
+        Assert.Equal(values, reader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
     [ConditionalFact(nameof(IsSupported))]

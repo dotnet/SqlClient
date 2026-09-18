@@ -41,10 +41,10 @@ where T : unmanaged
 
     #region Constructors
 
-    private SqlVector(int length)
+    private SqlVector(int length, bool validateLength)
     {
         (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
-        if (length < 0 || length > maxElements)
+        if (length < 0 || (validateLength && length > maxElements))
         {
             throw ADP.InvalidArraySize(nameof(length));
         }
@@ -59,13 +59,45 @@ where T : unmanaged
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
-    public static SqlVector<T> CreateNull(int length) => new(length);
+    public static SqlVector<T> CreateNull(int length) => new(length, validateLength: true);
+
+    /// <summary>
+    /// Creates a null vector for a column read from the server, without applying the
+    /// element count limit which governs construction by a caller.
+    /// </summary>
+    /// <remarks>
+    /// The limit is the number of elements of <typeparamref name="T"/> whose payload fits
+    /// in a TDS packet, so it is a property of the type a value is sent as. A column read
+    /// as a wider type than its own base type can exceed it: a <c>float16</c> column may
+    /// declare up to 3996 dimensions, while 1998 is the most that can be sent as
+    /// <c>float32</c>. Rejecting those here would make such a column unreadable, which on
+    /// .NET Framework would mean unreadable by any means, since every read path there
+    /// widens to <c>float32</c>.
+    /// </remarks>
+    internal static SqlVector<T> CreateNullFromServer(int length) => new(length, validateLength: false);
+
+    /// <summary>
+    /// Creates a vector to be converted to a destination's base type, without applying the
+    /// element count limit which governs a value sent as <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// A JSON array is parsed into single precision before the payload is rewritten for the
+    /// destination's base type. The limit applies to what is finally sent, not to that
+    /// intermediate: a <c>vector(2000, float16)</c> destination accepts the value, while
+    /// 2000 elements exceed what can be sent as <c>float32</c>.
+    /// </remarks>
+    internal static SqlVector<T> CreateForConversion(ReadOnlyMemory<T> memory) =>
+        new(memory, validateLength: false);
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
-    public SqlVector(ReadOnlyMemory<T> memory)
+    public SqlVector(ReadOnlyMemory<T> memory) : this(memory, validateLength: true)
+    {
+    }
+
+    private SqlVector(ReadOnlyMemory<T> memory, bool validateLength)
     {
         (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
-        if (memory.Length > maxElements)
+        if (validateLength && memory.Length > maxElements)
         {
             throw ADP.InvalidArraySize(nameof(memory));
         }
@@ -153,7 +185,7 @@ where T : unmanaged
             return new SqlVector<T>(tdsBytes);
         }
 
-        return new SqlVector<T>(WidenFloat16Payload(tdsBytes));
+        return new SqlVector<T>(WidenFloat16Payload(tdsBytes), validateLength: false);
     }
 
     /// <summary>

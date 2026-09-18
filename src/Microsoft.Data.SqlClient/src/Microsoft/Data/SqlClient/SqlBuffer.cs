@@ -987,7 +987,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (IsNull)
                 {
-                    return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
+                    return SqlVector<T>.CreateNullFromServer(_value._vectorInfo._elementCount);
                 }
 
                 return SqlVector<T>.FromTdsPayload(SqlBinary.Value);
