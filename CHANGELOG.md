@@ -36,9 +36,6 @@ General availability of Microsoft.Data.SqlClient 7.1. The sections below list th
 - Updated `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` to v7.1.0 (was v7.1.0-preview3.26226.3).
   ([#4698](https://github.com/dotnet/SqlClient/pull/4698))
 
-- Updated the bundled .NET 10 SDK to `10.0.401`.
-  ([#4686](https://github.com/dotnet/SqlClient/pull/4686))
-
 ### Fixed
 
 - Fixed a pooled connection being returned to the pool in a broken state after a `TransactionScope` rollback — for example, when distributed transaction promotion fails on .NET 8+ where implicit distributed transactions are disabled by default. Connection reset now preserves the transaction when the pooled connection is either a delegated transaction root or enlisted in a transaction.
@@ -283,7 +280,7 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - `SqlVector<float>` now serializes and deserializes multibyte values as little-endian explicitly.
   ([#3861](https://github.com/dotnet/SqlClient/pull/3861))
 
-- Updated the bundled .NET 10 SDK to `10.0.300`.
+- Updated the .NET 10 SDK used to build the repository to `10.0.300`.
   ([#4287](https://github.com/dotnet/SqlClient/pull/4287))
 
 - Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview2`, adding Windows Account Manager (WAM) broker support for Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview2.md).
