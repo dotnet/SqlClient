@@ -252,7 +252,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // ("https://login.microsoftonline.com/{tenantId}/oauth2/authorize"), so the tenant is
             // taken from the first path segment rather than the last.
 
-            if (!TryParseAuthority(parameters.Authority, out string authorityHost, out string tenant, out string msalAuthority))
+            if (!TryParseAuthority(parameters.Authority, out string authorityUrl, out string tenant))
             {
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
@@ -266,7 +266,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
                 // Cache DefaultAzureCredential based on scope, authority host, tenant, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityHost, scope, tenant, clientId);
+                TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityUrl, scope, tenant, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -275,7 +275,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
                 // Cache ManagedIdentityCredential based on scope, authority host, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityHost, scope, string.Empty, clientId);
+                TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityUrl, scope, string.Empty, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -284,7 +284,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
                 // Cache ClientSecretCredential based on scope, authority host, tenant, and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authorityHost, scope, tenant, clientId);
+                TokenCredentialKey tokenCredentialKey = new(typeof(ClientSecretCredential), authorityUrl, scope, tenant, clientId);
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
@@ -294,7 +294,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
             {
                 // Cache WorkloadIdentityCredential based on authority host and clientId
-                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authorityHost, string.Empty, string.Empty, clientId);
+                TokenCredentialKey tokenCredentialKey = new(typeof(WorkloadIdentityCredential), authorityUrl, string.Empty, string.Empty, clientId);
                 // If either tenant id, client id, or the token file path are not specified when fetching the token,
                 // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
@@ -322,11 +322,12 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 #endif
                 : s_systemBrowserRedirectUri;
 
+            string msalAuthorityUrl = authorityUrl + tenant;
             PublicClientAppKey pcaKey =
             #if NETFRAMEWORK
-                new(msalAuthority, redirectUri, _applicationClientId, _iWin32WindowFunc);
+                new(msalAuthorityUrl, redirectUri, _applicationClientId, _iWin32WindowFunc);
             #else
-                new(msalAuthority, redirectUri, _applicationClientId);
+                new(msalAuthorityUrl, redirectUri, _applicationClientId);
             #endif
 
             AuthenticationResult? result = null;
@@ -364,7 +365,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             #pragma warning restore CS0618 // Type or member is obsolete
             {
-                string pwCacheKey = GetAccountPwCacheKey(msalAuthority, parameters.UserId);
+                string pwCacheKey = GetAccountPwCacheKey(msalAuthorityUrl, parameters.UserId);
                 object? previousPw = s_accountPwCache.Get(pwCacheKey);
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 byte[] currPwHash = GetHash(password);
@@ -547,26 +548,23 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     }
 
     /// <summary>
-    /// Splits an Entra ID authority URL (the STSURL provided by the server in the FEDAUTHINFO TDS
-    /// token) into the authority host and the tenant.
+    /// Splits the STSURL provided by the server in the FEDAUTHINFO TDS token into the Entra ID
+    /// authority URL and tenant.
     /// </summary>
-    /// <param name="authorityUrl">
-    /// The authority URL, e.g. <c>https://login.microsoftonline.com/{tenantId}</c>. Some services
+    /// <param name="stsUrl">
+    /// The STSURL, e.g. <c>https://login.microsoftonline.com/{tenantId}</c>. Some services
     /// (for example the Dataverse/Dynamics 365 TDS endpoint) return an ADAL v1 style URL such as
     /// <c>https://login.microsoftonline.com/{tenantId}/oauth2/authorize</c>.
     /// </param>
-    /// <param name="authorityHost">
-    /// Receives the authority host with a trailing slash, e.g. <c>https://login.microsoftonline.com/</c>.
+    /// <param name="authorityUrl">
+    /// Receives the authority URL with a trailing slash, e.g. <c>https://login.microsoftonline.com/</c>.
     /// </param>
     /// <param name="tenant">
     /// Receives the tenant (the first path segment of the authority URL), which may be a tenant id,
     /// a domain name, or one of the <c>common</c>/<c>organizations</c>/<c>consumers</c> placeholders.
     /// </param>
-    /// <param name="msalAuthority">
-    /// Receives the normalized authority (host + tenant) suitable for MSAL's <c>WithAuthority</c>.
-    /// </param>
     /// <returns>
-    /// <c>true</c> if the authority URL is a well-formed, absolute HTTPS URL carrying a tenant
+    /// <c>true</c> if the STSURL is a well-formed, absolute HTTPS URL carrying a tenant
     /// segment; otherwise <c>false</c>.
     /// </returns>
     /// <remarks>
@@ -577,17 +575,16 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// <para>
     /// Entra ID authorities are always absolute HTTPS URLs, so anything else is rejected rather
     /// than guessed at. Both MSAL (<c>WithAuthority</c>) and Azure.Identity
-    /// (<c>TokenCredentialOptions.AuthorityHost</c>) require an absolute URI as well, so an
+    /// (<c>TokenCredentialOptions.AuthorityHost</c>) require an absolute URL as well, so an
     /// unparseable authority cannot produce a working credential.
     /// </para>
     /// </remarks>
     internal static bool TryParseAuthority(
-        string authorityUrl,
-        out string authorityHost,
-        out string tenant,
-        out string msalAuthority)
+        string stsUrl,
+        out string authorityUrl,
+        out string tenant)
     {
-        if (Uri.TryCreate(authorityUrl, UriKind.Absolute, out Uri? uri) &&
+        if (Uri.TryCreate(stsUrl, UriKind.Absolute, out Uri? uri) &&
             uri.Scheme == Uri.UriSchemeHttps &&
             uri.Segments.Length > 1)
         {
@@ -598,15 +595,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             if (tenant.Length > 0)
             {
-                authorityHost = uri.GetLeftPart(UriPartial.Authority) + "/";
-                msalAuthority = authorityHost + tenant;
+                authorityUrl = uri.GetLeftPart(UriPartial.Authority) + "/";
                 return true;
             }
         }
 
-        authorityHost = string.Empty;
+        authorityUrl = string.Empty;
         tenant = string.Empty;
-        msalAuthority = string.Empty;
         return false;
     }
 
@@ -840,15 +835,15 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// <summary>
     /// Builds the cache key used to remember which password was last validated for an account.
     /// </summary>
-    /// <param name="msalAuthority">
-    /// The normalized authority (host + tenant) from <see cref="TryParseAuthority"/>. The
+    /// <param name="msalAuthorityUrl">
+    /// The normalized MSAL authority URL (authority URL + tenant). The
     /// normalized form is used so that two spellings of the same tenant (for example a bare
     /// tenant endpoint and an OAuth v1 <c>/oauth2/authorize</c> endpoint) share a single entry.
     /// </param>
     /// <param name="userId">The user id being authenticated, which may be null.</param>
-    private static string GetAccountPwCacheKey(string msalAuthority, string? userId)
+    private static string GetAccountPwCacheKey(string msalAuthorityUrl, string? userId)
     {
-        return msalAuthority + "+" + userId;
+        return msalAuthorityUrl + "+" + userId;
     }
 
     private static byte[] GetHash(string input)

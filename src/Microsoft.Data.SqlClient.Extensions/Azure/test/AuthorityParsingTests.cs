@@ -6,7 +6,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>
 /// Tests for splitting the STSURL supplied by the server in the FEDAUTHINFO TDS token into an
-/// authority host and a tenant.
+/// authority URL and a tenant.
 /// </summary>
 /// <remarks>
 /// The cases below only cover authority shapes that Entra ID actually documents:
@@ -16,97 +16,93 @@ public class AuthorityParsingTests
 {
     private const string Tenant = "72f988bf-86f1-41af-91ab-2d7cd011db47";
 
-    public static TheoryData<string, string, string, string> AuthorityData => new()
+    /// <summary>
+    /// Provides documented STSURL shapes and their expected authority URL and tenant.
+    /// </summary>
+    public static TheoryData<string, string, string> AuthorityData => new()
     {
         // Azure SQL / Fabric style authority.
         {
             $"https://login.microsoftonline.com/{Tenant}",
             "https://login.microsoftonline.com/",
-            Tenant,
-            $"https://login.microsoftonline.com/{Tenant}"
+            Tenant
         },
         // Trailing slash.
         {
             $"https://login.microsoftonline.com/{Tenant}/",
             "https://login.microsoftonline.com/",
-            Tenant,
-            $"https://login.microsoftonline.com/{Tenant}"
+            Tenant
         },
         // v1.0 authorize endpoint, as returned by the Dataverse / Dynamics 365 TDS endpoint.
         {
             $"https://login.microsoftonline.com/{Tenant}/oauth2/authorize",
             "https://login.microsoftonline.com/",
-            Tenant,
-            $"https://login.microsoftonline.com/{Tenant}"
+            Tenant
         },
         // v2.0 token endpoint.
         {
             $"https://login.microsoftonline.com/{Tenant}/oauth2/v2.0/token",
             "https://login.microsoftonline.com/",
-            Tenant,
-            $"https://login.microsoftonline.com/{Tenant}"
+            Tenant
         },
         // US Government cloud.
         {
             $"https://login.microsoftonline.us/{Tenant}/oauth2/authorize",
             "https://login.microsoftonline.us/",
-            Tenant,
-            $"https://login.microsoftonline.us/{Tenant}"
+            Tenant
         },
         // Microsoft Azure operated by 21Vianet.
         {
             $"https://login.partner.microsoftonline.cn/{Tenant}",
             "https://login.partner.microsoftonline.cn/",
-            Tenant,
-            $"https://login.partner.microsoftonline.cn/{Tenant}"
+            Tenant
         },
         // Domain-name tenant.
         {
             "https://login.microsoftonline.com/contoso.onmicrosoft.com",
             "https://login.microsoftonline.com/",
-            "contoso.onmicrosoft.com",
-            "https://login.microsoftonline.com/contoso.onmicrosoft.com"
+            "contoso.onmicrosoft.com"
         },
         // Placeholder tenant.
         {
             "https://login.microsoftonline.com/common/oauth2/authorize",
             "https://login.microsoftonline.com/",
-            "common",
-            "https://login.microsoftonline.com/common"
+            "common"
         },
         {
             "https://login.microsoftonline.com/organizations",
             "https://login.microsoftonline.com/",
-            "organizations",
-            "https://login.microsoftonline.com/organizations"
+            "organizations"
         },
         {
             "https://login.microsoftonline.com/consumers",
             "https://login.microsoftonline.com/",
-            "consumers",
-            "https://login.microsoftonline.com/consumers"
+            "consumers"
         },
     };
 
+    /// <summary>
+    /// Verifies each supported STSURL shape yields the authority URL and first path segment tenant.
+    /// </summary>
     [Theory]
     [MemberData(nameof(AuthorityData))]
-    public void TryParseAuthority_SplitsHostAndTenant(
-        string authorityUrl,
-        string expectedHost,
-        string expectedTenant,
-        string expectedMsalAuthority)
+    public void TryParseAuthority_SplitsAuthorityUrlAndTenant(
+        string stsUrl,
+        string expectedAuthorityUrl,
+        string expectedTenant)
     {
         Assert.True(ActiveDirectoryAuthenticationProvider.TryParseAuthority(
-            authorityUrl,
-            out string host,
-            out string tenant,
-            out string msalAuthority));
+            stsUrl,
+            out string authorityUrl,
+            out string tenant));
 
-        Assert.Equal(expectedHost, host);
+        Assert.Equal(expectedAuthorityUrl, authorityUrl);
         Assert.Equal(expectedTenant, tenant);
-        Assert.Equal(expectedMsalAuthority, msalAuthority);
     }
 
+    /// <summary>
+    /// Verifies invalid STSURLs are rejected without returning partial authority data.
+    /// </summary>
     [Theory]
     // A tenant is required; an authority without one cannot yield a usable credential.
     [InlineData("https://login.microsoftonline.com")]
@@ -122,13 +118,11 @@ public class AuthorityParsingTests
     {
         Assert.False(ActiveDirectoryAuthenticationProvider.TryParseAuthority(
             authorityUrl,
-            out string host,
-            out string tenant,
-            out string msalAuthority));
+            out string parsedAuthorityUrl,
+            out string tenant));
 
-        Assert.Equal(string.Empty, host);
+        Assert.Equal(string.Empty, parsedAuthorityUrl);
         Assert.Equal(string.Empty, tenant);
-        Assert.Equal(string.Empty, msalAuthority);
     }
 
     /// <summary>

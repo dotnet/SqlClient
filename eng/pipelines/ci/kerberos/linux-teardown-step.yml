@@ -4,9 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This template leaves the Active Directory domain and destroys Kerberos
-# credentials.  It should be referenced at the end of any job that called
-# linux-init-step.yml.
+# This template tears down the Linux Kerberos environment by leaving the Active Directory domain
+# and destroying credentials. It should be referenced at the end of any job that called
+# linux-setup-step.yml.
 #
 # All steps use condition: always() so that cleanup runs even when previous
 # steps fail.
@@ -32,14 +32,15 @@ steps:
 
       DOMAIN="${{ parameters.kerberosDomain }}"
       DOMAIN_USER="${{ parameters.kerberosDomainUser }}"
-      DOMAIN_PASSWORD="${{ parameters.kerberosDomainPassword }}"
       DOMAIN_UPPER=$(echo "$DOMAIN" | tr '[:lower:]' '[:upper:]')
 
       # Leave the domain
-      echo "$DOMAIN_PASSWORD" | sudo realm leave "$DOMAIN_UPPER" --verbose \
+      echo "${DOMAIN_PASSWORD:-}" | sudo realm leave "$DOMAIN_UPPER" --verbose \
         -U "$DOMAIN_USER@$DOMAIN_UPPER" || true
 
       # Destroy the TGT and credential cache
       kdestroy || true
     displayName: Clean up Kerberos (domain leave + kdestroy)
     condition: always()
+    env:
+      DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}

@@ -1356,12 +1356,15 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+                // Capture the payload once so the length reserved below and the
+                // bytes written by WriteLoginData can never disagree.
+                ReadOnlyMemory<byte> userAgent = UserAgent.GetUcs2Bytes(rec.appId);
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    userAgent,
                     useFeatureExt,
                     length
                     );
@@ -1380,7 +1383,8 @@ namespace Microsoft.Data.SqlClient
                                length,
                                feOffset,
                                clientInterfaceName,
-                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
+                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty,
+                               userAgent);
             }
             finally
             {
@@ -9261,7 +9265,8 @@ namespace Microsoft.Data.SqlClient
                                     int length,
                                     int featureExOffset,
                                     string clientInterfaceName,
-                                    ReadOnlySpan<byte> outSSPI)
+                                    ReadOnlySpan<byte> outSSPI,
+                                    ReadOnlyMemory<byte> userAgent)
         {
             try
             {
@@ -9521,7 +9526,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    userAgent,
                     useFeatureExt,
                     length,
                     true

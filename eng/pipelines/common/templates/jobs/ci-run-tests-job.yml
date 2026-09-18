@@ -56,14 +56,8 @@ parameters:
     type: boolean
     default: false
 
-  # True if this job will run in a generic Azure Pipelines hosted pool; false to run in a custom 1ES
-  # pool.
-  - name: hostedPool
-    type: boolean
-    default: false
-
   # The VM image to use, which must exist in the specified pool.
-  - name: image
+  - name: poolImage
     type: string
 
   # The display name for this job.
@@ -110,6 +104,10 @@ parameters:
       - Release
 
   # The name of the Azure Pipelines pool to use.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 
@@ -149,7 +147,7 @@ parameters:
     type: string
 
 jobs:
-- job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
+- job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.poolImage, 'unknown_image')) }}
 
   # Some of our tests take longer than the default 60 minutes to run on some
   # OSes and configurations.
@@ -157,11 +155,14 @@ jobs:
 
   pool:
     name: '${{ parameters.poolName }}'
-    ${{ if eq(parameters.hostedPool, true) }}:
-      vmImage: ${{ parameters.image }}
+
+    # Images provided by Azure Pipelines must be selected using 'vmImage'.
+    ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+      vmImage: ${{ parameters.poolImage }}
+    # Images provided by 1ES must be selected using a demand.
     ${{ else }}:
       demands:
-      - imageOverride -equals ${{ parameters.image }}
+      - imageOverride -equals ${{ parameters.poolImage }}
 
   variables:
     - name: dotnetx86RootPath

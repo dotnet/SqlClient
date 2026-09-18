@@ -70,7 +70,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using (var command = new SqlCommand())
             {
                 command.Connection = sqlConnection;
-                command.CommandText = string.Format("DROP TABLE {0}", targetTable);
+                // NOTE: The drop is guarded so that cleanup is idempotent; the table name embeds a
+                //   GUID, so an unguarded drop that throws would leave it behind forever.
+                command.CommandText = string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", targetTable);
                 command.CommandType = CommandType.Text;
                 command.ExecuteNonQuery();
             }
@@ -79,10 +81,19 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 
         public void Dispose()
         {
-            DropTable(Connection, TableName);
-
-            Connection.Close();
-            Connection.Dispose();
+            try
+            {
+                DropTable(Connection, TableName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(InitialDatabase)}: failed to drop '{TableName}': {ex.Message}");
+            }
+            finally
+            {
+                Connection.Close();
+                Connection.Dispose();
+            }
         }
     }
 

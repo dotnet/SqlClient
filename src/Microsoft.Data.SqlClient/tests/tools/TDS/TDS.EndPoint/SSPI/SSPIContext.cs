@@ -45,11 +45,21 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// </summary>
         private int _maxTokenBufferSize;
 
+        private static void ThrowIfNotWindows()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new PlatformNotSupportedException("SSPI authentication is only supported on Windows.");
+            }
+        }
+
         /// <summary>
         /// Default constructor
         /// </summary>
         private SSPIContext()
         {
+            ThrowIfNotWindows();
+
             // Prepare a list of packages
             IList<string> packages = new List<string>();
 
@@ -126,6 +136,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// </summary>
         public static SSPIContext CreateServer()
         {
+            ThrowIfNotWindows();
+
             // Create an instance of the context
             SSPIContext context = new SSPIContext();
 
@@ -150,6 +162,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// </summary>
         public static SSPIContext CreateClient()
         {
+            ThrowIfNotWindows();
+
             // Create an instance of the context
             SSPIContext context = new SSPIContext();
 
@@ -176,6 +190,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// <returns>Token to be sent to the client in response</returns>
         public SSPIResponse StartServerAuthentication(byte[] clientToken)
         {
+            ThrowIfNotWindows();
+
             // Wrap client token with the security buffer
             SecBufferDesc clientSecBuffer = new SecBufferDesc(clientToken);
 
@@ -236,6 +252,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// <returns>Token to be sent to the client in response</returns>
         public SSPIResponse ContinueServerAuthentication(byte[] clientToken)
         {
+            ThrowIfNotWindows();
+
             // Wrap client token with the security buffer
             SecBufferDesc clientSecBuffer = new SecBufferDesc(clientToken);
 
@@ -295,6 +313,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// <returns>Token to be sent to the server</returns>
         public SSPIResponse StartClientAuthentication(string targetMachine, uint targetPort)
         {
+            ThrowIfNotWindows();
+
             // Save the server we're authenticating against
             _targetMachineSPN = string.Format("MSSQLSvc/{0}:{1}", targetMachine, targetPort);
 
@@ -350,6 +370,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// <returns>Token to be sent to the server</returns>
         public SSPIResponse ContinueClientAuthentication(byte[] clientToken)
         {
+            ThrowIfNotWindows();
+
             // Wrap client token with the security buffer
             SecBufferDesc serverSecBuffer = new SecBufferDesc(clientToken);
 
@@ -414,6 +436,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// <returns></returns>
         public IIdentity GetRemoteIdentity()
         {
+            ThrowIfNotWindows();
+
             IntPtr token = IntPtr.Zero;
 
             // Delegate into security API
@@ -434,6 +458,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint.SSPI
         /// </summary>
         public void Dispose()
         {
+            ThrowIfNotWindows();
+
             // Indicate that we're disposing
             Dispose(true);
         }
