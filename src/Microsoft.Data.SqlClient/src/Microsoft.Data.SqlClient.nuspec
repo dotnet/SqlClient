@@ -134,11 +134,11 @@
       should be packaged.
     -->
 
-    <!-- Lib Binaries ================================================== -->
+    <!-- Lib and Runtime Binaries ================================================== -->
     <!-- lib/net462 - These contain the implementation -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
 
     <!-- lib/net462 Localized Resources -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
@@ -155,9 +155,9 @@
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
 
-    <!-- lib/net8.0 - These are PlatformNotSupportedException assemblies -->
-    <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
+    <!-- lib/net8.0 - These contain the implementation -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
 
     <!-- lib/net8.0 Localized Resources -->
@@ -175,9 +175,9 @@
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
 
-    <!-- lib/net9.0 - These are PlatformNotSupportedException assemblies -->
-    <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
+    <!-- lib/net9.0 - These contain the implementation -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
 
     <!-- lib/net9.0 Localized Resources -->
@@ -195,6 +195,7 @@
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hans\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hant\" exclude="" />
 
+    <!-- @TODO: This is a temporary measure - removing the notsupported DLLs will come next -->
     <!-- lib/netstandard2.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
@@ -216,29 +217,5 @@
     <!-- ref/netstandard2.0 -->
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.0\" exclude="" />
-
-    <!-- Runtime Binaries ============================================== -->
-    <!-- @TODO: This is a temporary measure - removing the not support DLLs will come next -->
-
-    <!-- runtimes/win/lib/net462 -->
-    <!-- @TODO: We include the impl version in the lib folder - is the runtimes version necessary? -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
-
-    <!-- runtimes/unix/lib/net8.0 -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
-
-    <!-- runtimes/win/lib/net8.0 -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
-
-    <!-- runtimes/unix/lib/net9.0 -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net9.0\" exclude="" />
-
-    <!-- runtimes/win/lib/net9.0 -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net9.0\" exclude="" />
   </files>
 </package>
