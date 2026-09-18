@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
 /// Mirrors the corresponding tests in <see cref="ChannelDbConnectionPoolTest"/> so that the
 /// retrieval-side idle-expiry behavior is covered for both pool implementations.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class WaitHandleDbConnectionPoolIdleTimeoutTest : IDisposable
 {
     private const int DefaultMaxPoolSize = 50;

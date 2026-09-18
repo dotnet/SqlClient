@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient
 
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
+        private readonly bool _jsonTypeSupported;
 
         /// <summary>
         /// The version negotiated via the VECTORSUPPORT feature extension, which decides
@@ -53,6 +54,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
             _serverVersion = connectionCapabilities.ServerVersion;
+            _jsonTypeSupported = connectionCapabilities.JsonType;
             _vectorVersion = connectionCapabilities.VectorVersion;
 
             _collectionDataSet = LoadDataSetFromXml(xmlStream);
@@ -718,7 +720,7 @@ namespace Microsoft.Data.SqlClient
                 Locale = CultureInfo.InvariantCulture
             };
 
-            LoadDataTypesDataTables(metaDataCollectionsDataSet, _vectorVersion);
+            LoadDataTypesDataTables(metaDataCollectionsDataSet, _jsonTypeSupported, _vectorVersion);
 
             XmlReaderSettings settings = new()
             {

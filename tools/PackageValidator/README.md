@@ -28,6 +28,8 @@ For every package it opens, PackageValidator reports and validates:
   judged only over implementation assemblies.
 - **Symbols** — sibling `.snupkg` matching by debug GUID with portable-PDB checksum verification,
   embedded-symbol detection, and orphan/mismatch reporting.
+- **Source coverage** — inspect embedded and matched portable PDBs for missing Source Link mappings,
+  unembedded generated/temporary sources, and non-normalized document paths, without fetching sources.
 - **Intrinsic rules** — severity-tagged findings for missing/mismatched symbols,
   unsigned/delay-signed assemblies, dependency inconsistencies, and more.
 - **Expected versions** — optional `--expect-*` assertions for inter-package version-match
@@ -80,6 +82,9 @@ or one of the following finding **categories**:
 - `symbol-checksum-mismatch`
 - `symbol-orphan`
 - `symbol-duplicate`
+- `missing-source-link`
+- `untracked-source`
+- `non-deterministic-source-path`
 - `delay-signed`
 - `unsigned`
 - `package-unsigned`
@@ -87,6 +92,34 @@ or one of the following finding **categories**:
 - `unexpected-package-version`
 - `unexpected-file-version`
 - `unexpected-assembly-version`
+
+### Source coverage and deterministic paths
+
+The three source categories are warnings, and follow NuGet Package Explorer's offline checks:
+
+- `missing-source-link`: a document is neither embedded (Embedded Source custom debug information)
+  nor covered by a Source Link map. Matching is case-insensitive, supports exact keys and a single
+  trailing `*`, and does not download the resulting URL or verify remote source checksums.
+- `untracked-source`: an **unembedded** document has no Source Link mapping, or contains an `obj`,
+  `temp`, or `tmp` path segment (case-insensitive, either slash separator), even when Source Link maps it.
+- `non-deterministic-source-path`: a document path does not begin with `/_`, including embedded
+  documents. This checks path normalization, not complete build reproducibility.
+
+For example, `/_1/src/File.cs` is normalized but is **not** covered by a `/_/*` mapping.
+Generated documents under `/_/obj/` pass when embedded. Reference and satellite assemblies without
+PDBs do not receive source findings. `--no-snupkg` still checks embedded PDBs. Malformed source
+metadata/maps are inspection errors (exit 1), not successful coverage checks.
+Like NuGet Package Explorer, document records with nil name, language, hash algorithm, or hash
+handles are not inspected.
+
+JSON includes per-PDB `sourceCoverage` records on each inspected binary, with document counts and
+the offending paths; human-readable findings include the assembly, PDB, and document path.
+
+Gate these checks from the repository root (keep matching `.snupkg` files beside the packages):
+
+```powershell
+dotnet run --project .\tools\PackageValidator\src -- <package-directory> --fail-on missing-source-link untracked-source non-deterministic-source-path
+```
 
 ### `--expect-*` values
 
@@ -219,6 +252,8 @@ The `test/` project is an xUnit v3 suite running on Microsoft.Testing.Platform. 
 public-key-token computation, binary classification, SemVer 2.0 range evaluation (including
 prerelease ordering and malformed-input rejection), the rules engine, and expected-version
 assertions.
+Source coverage tests generate portable and embedded PDB fixtures with `MetadataBuilder`, exercising
+the extra-SourceRoot mapping regression, generated sources, path normalization, and symbol matching.
 
 ```bash
 # From tools/PackageValidator/test

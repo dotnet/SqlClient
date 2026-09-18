@@ -3,7 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace PackageValidator;
 
@@ -18,6 +20,124 @@ internal static class PortablePdb
 
     /// <summary>The length in bytes of the PDB id (a 16-byte GUID followed by a 4-byte stamp).</summary>
     private const int PdbIdLength = 20;
+
+    private static readonly Guid SourceLinkKind = new("cc110556-a091-4d38-9fec-25ab9a351a6a");
+    private static readonly Guid EmbeddedSourceKind = new("0e8a571b-6926-466e-b4ad-8ab04611f5fe");
+
+    /// <summary>Inspects document coverage without downloading sources or decompressing embedded source content.</summary>
+    /// <param name="reader">The matched or embedded portable PDB metadata reader.</param>
+    /// <param name="pdb">The symbol-package entry path or <c>"embedded"</c>.</param>
+    /// <returns>The source documents that fail the offline Source Link or deterministic path checks.</returns>
+    /// <exception cref="InvalidDataException">The source metadata or Source Link map is malformed.</exception>
+    public static PdbSourceCoverage ReadSourceCoverage(MetadataReader reader, string pdb)
+    {
+        try
+        {
+            List<string> mappings = ReadSourceMappings(reader);
+            var missing = new List<string>();
+            var untracked = new List<string>();
+            var nonNormalized = new List<string>();
+            int documentCount = 0;
+            foreach (DocumentHandle handle in reader.Documents)
+            {
+                Document document = reader.GetDocument(handle);
+                if (document.Name.IsNil || document.Language.IsNil ||
+                    document.HashAlgorithm.IsNil || document.Hash.IsNil)
+                {
+                    continue;
+                }
+                documentCount++;
+                string path = reader.GetString(document.Name);
+                bool embedded = reader.GetCustomDebugInformation(handle)
+                    .Any(h => reader.GetGuid(reader.GetCustomDebugInformation(h).Kind) == EmbeddedSourceKind);
+                if (!embedded)
+                {
+                    bool mapped = !path.Contains('*') && mappings.Any(key => key.EndsWith('*')
+                        ? path.StartsWith(key[..^1], StringComparison.OrdinalIgnoreCase)
+                        : string.Equals(path, key, StringComparison.OrdinalIgnoreCase));
+                    if (!mapped)
+                    {
+                        missing.Add(path);
+                    }
+                    if (!mapped || path.Split(['/', '\\']).Any(segment =>
+                        segment.Equals("obj", StringComparison.OrdinalIgnoreCase) ||
+                        segment.Equals("temp", StringComparison.OrdinalIgnoreCase) ||
+                        segment.Equals("tmp", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        untracked.Add(path);
+                    }
+                }
+                if (!path.StartsWith("/_", StringComparison.OrdinalIgnoreCase))
+                {
+                    nonNormalized.Add(path);
+                }
+            }
+            return new PdbSourceCoverage
+            {
+                Pdb = pdb,
+                DocumentCount = documentCount,
+                MissingSourceLinkDocuments = missing,
+                UntrackedDocuments = untracked,
+                NonNormalizedDocuments = nonNormalized,
+            };
+        }
+        catch (Exception ex) when (ex is BadImageFormatException or JsonException)
+        {
+            throw new InvalidDataException($"Invalid source metadata in PDB '{pdb}'.", ex);
+        }
+    }
+
+    /// <summary>Reads and validates module-level Source Link patterns using NPE's exact/trailing-wildcard rules.</summary>
+    /// <param name="reader">The portable PDB reader.</param>
+    /// <returns>Validated document path patterns; URL reachability is deliberately not checked.</returns>
+    private static List<string> ReadSourceMappings(MetadataReader reader)
+    {
+        var mappings = new List<string>();
+        foreach (CustomDebugInformationHandle handle in reader.GetCustomDebugInformation(
+            MetadataTokens.EntityHandle(TableIndex.Module, 1)))
+        {
+            CustomDebugInformation data = reader.GetCustomDebugInformation(handle);
+            if (reader.GetGuid(data.Kind) != SourceLinkKind)
+            {
+                continue;
+            }
+            using JsonDocument json = JsonDocument.Parse(
+                reader.GetBlobBytes(data.Value), new JsonDocumentOptions { AllowTrailingCommas = true });
+            if (json.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidDataException("Source Link must be a JSON object.");
+            }
+            foreach (JsonProperty property in json.RootElement.EnumerateObject())
+            {
+                if (property.Name != "documents")
+                {
+                    continue;
+                }
+                if (property.Value.ValueKind != JsonValueKind.Object)
+                {
+                    throw new InvalidDataException("Source Link 'documents' must be an object.");
+                }
+                foreach (JsonProperty mapping in property.Value.EnumerateObject())
+                {
+                    string key = mapping.Name;
+                    int star = key.IndexOf('*');
+                    if (key.Length == 0 || (star >= 0 && star != key.Length - 1) ||
+                        mapping.Value.ValueKind != JsonValueKind.String)
+                    {
+                        throw new InvalidDataException("Invalid Source Link document mapping.");
+                    }
+                    string url = mapping.Value.GetString()!;
+                    int urlStar = url.IndexOf('*');
+                    if (urlStar >= 0 && (star < 0 || urlStar != url.LastIndexOf('*')))
+                    {
+                        throw new InvalidDataException("Invalid Source Link URL wildcard.");
+                    }
+                    mappings.Add(key);
+                }
+            }
+        }
+        return mappings;
+    }
 
     /// <summary>
     /// Reads the debug GUID from a portable PDB.
@@ -191,6 +311,10 @@ internal static class PortablePdb
     /// <summary>
     /// Creates a <see cref="HashAlgorithm"/> for a PDB checksum algorithm name.
     /// </summary>
+    /// <remarks>
+    /// Only SHA-2 family algorithms are supported; weak hashes such as SHA-1 are deliberately not
+    /// recognized, so a PDB recording one is reported as inconclusive rather than verified.
+    /// </remarks>
     /// <param name="algorithm">The algorithm name as recorded in the debug directory (for example <c>"SHA256"</c>).</param>
     /// <returns>A new hash algorithm instance, or <see langword="null"/> if the name is not recognized.</returns>
     private static HashAlgorithm? CreateHashAlgorithm(string algorithm) =>
@@ -199,7 +323,6 @@ internal static class PortablePdb
             "SHA256" => SHA256.Create(),
             "SHA384" => SHA384.Create(),
             "SHA512" => SHA512.Create(),
-            "SHA1" => SHA1.Create(),
             _ => null,
         };
 }

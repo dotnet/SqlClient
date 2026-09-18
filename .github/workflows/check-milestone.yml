@@ -1,14 +1,45 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Check Milestone
+#
+# Validates that every pull request has an open milestone assigned, and that
+# the milestone is consistent with the branch the PR targets.
+#
+# Milestones map to release branches by major.minor:
+#
+#   * "7.0.3" -> release/7.0 exists -> the PR must target release/7.0.
+#   * "7.1.0" -> release/7.1 does not exist and it is the earliest configured
+#     unbranched series -> the PR must target main.
+#   * "8.0.0-preview1" -> release/8.0 does not exist, but 7.1 is still the
+#     active unbranched series -> the PR cannot target main yet.
+#
+# See .github/scripts/check-milestone-branch.sh for the full rule set.
+#
+# Cutting release/X.Y flips the expected target for X.Y.* milestones but emits
+# no pull request activity. recheck-milestones.yml reconciles the already open
+# PRs that the new branch invalidates.
+#
+#################################################################################
+
 name: Check Milestone
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, milestoned, demilestoned]
+    # The 'edited' type covers base branch changes, so retargeting a PR (manually,
+    # or automatically when a stacked PR's parent merges) re-runs this check.
+    types: [opened, reopened, edited, synchronize, milestoned, demilestoned]
 
 jobs:
   check-milestone:
     name: Validate milestone
     runs-on: ubuntu-latest
     permissions:
+      contents: read
+      issues: read
       pull-requests: read
     steps:
       - name: Check milestone is set
@@ -22,3 +53,21 @@ jobs:
         run: |
           echo "::error::Milestone '${{ github.event.pull_request.milestone.title }}' is ${{ github.event.pull_request.milestone.state }}. Please assign an open milestone."
           exit 1
+
+      - name: Checkout scripts
+        if: github.event.pull_request.milestone != null
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Check milestone matches target branch
+        if: github.event.pull_request.milestone != null
+        env:
+          # Pass PR data via env to avoid script injection from milestone text.
+          MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/check-milestone-branch.sh"

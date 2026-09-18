@@ -184,7 +184,9 @@ For a basic local SQL Server run, prepare:
 - A SQL Server instance that the test machine can reach.
 - Shared Memory, TCP, and Named Pipes protocols enabled when testing local Windows SQL Server scenarios.
 - The `NORTHWIND` database created from [tools/testsql/createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql). For
-  Azure SQL, use [tools/testsql/createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
+  Azure SQL, use [tools/testsql/createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql). Both scripts turn
+  `READ_COMMITTED_SNAPSHOT` and `ALLOW_SNAPSHOT_ISOLATION` off, which some transaction tests rely on. Azure SQL Database
+  enables `READ_COMMITTED_SNAPSHOT` by default, so run the script against the database rather than setting it up by hand.
 - The `UdtTestDb` database created from [tools/testsql/createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql) if you
   want UDT tests to run.
 - A login or integrated-security principal with permissions to create and drop the temporary objects used by the tests.
@@ -218,6 +220,7 @@ Update `config.jsonc` for your environment before running manual tests. The most
   "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
   "EnclaveEnabled": false,
   "TracingEnabled": false,
+  "SupportsEntraIntegrated": false,
   "SupportsIntegratedSecurity": true
 }
 ```
@@ -245,6 +248,9 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 
 ## Configuration Properties
 
+`SupportsEntraIntegrated` applies to Azure SQL Database, Azure SQL Managed Instance, and SQL Server
+2022 or later configured for Microsoft Entra authentication through Azure Arc.
+
 | Property                         | Description                                                                                 | Example or notes                                                                       |
 |----------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
 | `TCPConnectionString`            | Connection string for a TCP-enabled SQL Server or Azure SQL database.                       | `Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;` |
@@ -260,6 +266,7 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 | `AADServicePrincipalSecret`      | Optional application secret for service-principal authentication tests.                     | Keep this only in local, ignored config files or secure pipeline variables.            |
 | `AzureKeyVaultURL`               | Optional Azure Key Vault URL for Always Encrypted tests.                                    | `https://<keyvaultname>.vault.azure.net/`                                              |
 | `AzureKeyVaultTenantId`          | Optional Entra ID tenant ID for Azure Key Vault tests.                                      | Tenant ID GUID.                                                                        |
+| `SupportsEntraIntegrated`        | Whether the target supports Entra Integrated authentication for the Windows identity.       | `true` or `false`; defaults to `false`. See supported targets above.                   |
 | `SupportsIntegratedSecurity`     | Whether the user running tests has integrated-security access to the target SQL Server.     | `true` or `false`.                                                                     |
 | `LocalDbAppName`                 | Optional LocalDB instance name. Empty disables LocalDB testing.                             | `MSSQLLocalDB` or another local instance.                                              |
 | `LocalDbSharedInstanceName`      | Optional shared LocalDB instance name.                                                      | Used only when testing shared LocalDB.                                                 |

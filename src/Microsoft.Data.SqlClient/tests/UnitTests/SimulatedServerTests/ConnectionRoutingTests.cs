@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
     // need since each test uses its own TDS Server with ephemeral listen port.
-    [Collection("SimulatedServerTests")]
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionRoutingTests
     {
         [Theory]
@@ -136,7 +136,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -190,7 +192,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);

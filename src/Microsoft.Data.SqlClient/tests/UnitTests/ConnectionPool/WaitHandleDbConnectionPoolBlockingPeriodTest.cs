@@ -52,9 +52,19 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// <see cref="BlockingPeriodErrorState"/> uses it as its clock so the exit timer can be driven
     /// deterministically; otherwise the system clock is used.
     /// </summary>
+    /// <remarks>
+    /// The default connection string pins Pool Blocking Period to AlwaysBlock so the tests that
+    /// assert the pool enters its blocking-period error state do not depend on endpoint
+    /// classification. Under Auto, blocking is enabled only when the data source is not an Azure
+    /// endpoint, and ADPHelper (used by the simulated-server Azure routing tests) temporarily
+    /// registers "localhost" as an Azure endpoint in the process-wide
+    /// ADP.s_azureSqlServerEndpoints list. A pool resolves whether blocking is enabled exactly
+    /// once, at construction, so a pool built inside that window would never block - making those
+    /// assertions flaky under parallel collection execution.
+    /// </remarks>
     private WaitHandleDbConnectionPool CreatePool(
         SqlConnectionFactory connectionFactory,
-        string connectionString = "Data Source=localhost;",
+        string connectionString = "Data Source=localhost;Pool Blocking Period=AlwaysBlock;",
         TimeProvider? timeProvider = null)
     {
         var poolGroupOptions = new DbConnectionPoolGroupOptions(
@@ -101,11 +111,6 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// the originating exception is surfaced to the caller and <see cref="WaitHandleDbConnectionPool.ErrorOccurred"/>
     /// becomes true. Guards the <c>CreateObject</c> → <see cref="BlockingPeriodErrorState.Enter"/> wiring.
     /// </summary>
-    // Flaky under CI load only (passes locally 3/3 and on main CI; failed on a PR merge
-    // build): the WaitHandle pool's background create/prune thread races the ErrorOccurred
-    // assertion under load, and this file shares the DbConnectionInternal/SqlConnectionFactory
-    // changes from #4452. Not a defect in this PR.
-    [Trait("Category", "flaky")]
     [Fact]
     public void TryGetConnection_WhenFactoryThrows_EntersBlockingPeriod()
     {
@@ -131,11 +136,6 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// rethrows the original instance; the fast-fail throw returns a clone (to avoid sharing stack
     /// traces). Guards the error wait-handle → <see cref="BlockingPeriodErrorState.ThrowIfActive"/> path.
     /// </summary>
-    // Flaky under CI load only (passes locally 3/3 and on main CI; failed on a PR merge
-    // build): the WaitHandle pool's background create/prune thread races the assertion under
-    // load, and this file shares the DbConnectionInternal/SqlConnectionFactory changes from
-    // #4452. Not a defect in this PR.
-    [Trait("Category", "flaky")]
     [Fact]
     public void TryGetConnection_WhileBlocked_FastFailsWithCachedExceptionWithoutInvokingFactory()
     {
@@ -217,11 +217,6 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// an injected <see cref="FakeTimeProvider"/>, guarding the
     /// <see cref="BlockingPeriodErrorState"/> timer-exit → retry → <c>Clear</c> path at the pool level.
     /// </summary>
-    // Flaky under CI load only (passes locally 3/3 and on main CI; failed on a PR merge
-    // build): the WaitHandle pool's background create/prune thread races the ErrorOccurred/timer
-    // assertions under load, and this file shares the DbConnectionInternal/SqlConnectionFactory
-    // changes from #4452. Not a defect in this PR.
-    [Trait("Category", "flaky")]
     [Fact]
     public void TryGetConnection_AfterBlockingPeriodExpires_RetriesFactoryAndRecovers()
     {
@@ -263,11 +258,6 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// reset is wired through the pool. Drives timing deterministically with an injected
     /// <see cref="FakeTimeProvider"/>.
     /// </summary>
-    // Flaky under CI load only (passes locally 3/3 and on main CI; failed on a PR merge
-    // build): the WaitHandle pool's background create/prune thread races the ErrorOccurred/timer
-    // assertions under load, and this file shares the DbConnectionInternal/SqlConnectionFactory
-    // changes from #4452. Not a defect in this PR.
-    [Trait("Category", "flaky")]
     [Fact]
     public void TryGetConnection_SuccessfulCreate_ResetsBackoffToInitialWait()
     {
@@ -320,11 +310,6 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// backoff at the pool level. Drives timing deterministically with an injected
     /// <see cref="FakeTimeProvider"/>.
     /// </summary>
-    // Flaky under CI load only (passes locally 3/3 and on main CI; failed on a PR merge
-    // build): the WaitHandle pool's background create/prune thread races the ErrorOccurred/timer
-    // assertions under load, and this file shares the DbConnectionInternal/SqlConnectionFactory
-    // changes from #4452. Not a defect in this PR.
-    [Trait("Category", "flaky")]
     [Fact]
     public void TryGetConnection_FailingAgainAfterExitTimer_StillDoublesBackoff()
     {

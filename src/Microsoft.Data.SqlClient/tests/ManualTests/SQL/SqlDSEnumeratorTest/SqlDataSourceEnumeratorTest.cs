@@ -20,11 +20,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
             ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
 
-            return DataTestUtility.IsUsingNativeSNI() &&
+            return DataTestUtility.IsNotManagedInstance() &&
+                DataTestUtility.IsUsingNativeSNI() &&
                 service != null &&
                 service.Status == ServiceControllerStatus.Running;
         }
 
+        // Managed Instance endpoints are resolved directly through DNS and cannot be discovered
+        // through the SQL Browser service running on the test agent.
         [ConditionalFact(nameof(IsEnvironmentAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_NativeSNI()
@@ -35,7 +38,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingManagedSNI))]
+        // This validates client-side managed-SNI enumeration behavior and the agent's SQL Browser
+        // environment; it does not connect to or discover the configured Managed Instance.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingManagedSNI), nameof(DataTestUtility.IsNotManagedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_ManagedSNI()
         {
@@ -45,6 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlDataSourceConverter used to present instance names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
+        // Managed Instance endpoints are not enumerated through the test agent's SQL Browser service.
         [ConditionalFact(nameof(IsEnvironmentAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestDataSourceConverterGetStandardValues()

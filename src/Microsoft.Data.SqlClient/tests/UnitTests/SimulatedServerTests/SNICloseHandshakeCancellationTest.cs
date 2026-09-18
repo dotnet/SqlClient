@@ -119,7 +119,9 @@ public class SNICloseHandshakeCancellationTest
             ConnectRetryCount = 0,
             Pooling = false,
 #if NETFRAMEWORK
+            #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
             TransparentNetworkIPResolution = false,
+            #pragma warning restore 618
 #endif
         };
 

@@ -1190,10 +1190,10 @@ namespace Microsoft.Data.SqlClient
 
                         // We must NOT use the response for the FEDAUTHREQUIRED PreLogin option, if the connection string option
                         // was not using the new Authentication keyword or in other words, if Authentication=NotSpecified
-                        // Or AccessToken is not null, mean token based authentication is used.
+                        // Or an access token was supplied (AccessToken/AccessTokenCallback), which means token-based authentication is used.
                         if ((_connHandler.ConnectionOptions != null
                             && _connHandler.ConnectionOptions.Authentication != SqlAuthenticationMethod.NotSpecified)
-                            || _connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)
+                            || _connHandler.IsAccessTokenProvided)
                         {
                             fedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
                         }
@@ -1230,7 +1230,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
-                    ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
+                    (_connHandler.IsAccessTokenProvided && !trustServerCert);
 
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
@@ -1367,12 +1367,15 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+                // Capture the payload once so the length reserved below and the
+                // bytes written by WriteLoginData can never disagree.
+                ReadOnlyMemory<byte> userAgent = UserAgent.GetUcs2Bytes(rec.appId);
                 // calculate and reserve the required bytes for the featureEx
                 length = ApplyFeatureExData(
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    userAgent,
                     useFeatureExt,
                     length
                     );
@@ -1391,7 +1394,8 @@ namespace Microsoft.Data.SqlClient
                                length,
                                feOffset,
                                clientInterfaceName,
-                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
+                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty,
+                               userAgent);
             }
             finally
             {
@@ -9277,7 +9281,8 @@ namespace Microsoft.Data.SqlClient
                                     int length,
                                     int featureExOffset,
                                     string clientInterfaceName,
-                                    ReadOnlySpan<byte> outSSPI)
+                                    ReadOnlySpan<byte> outSSPI,
+                                    ReadOnlyMemory<byte> userAgent)
         {
             try
             {
@@ -9537,7 +9542,7 @@ namespace Microsoft.Data.SqlClient
                     requestedFeatures,
                     recoverySessionData,
                     fedAuthFeatureExtensionData,
-                    UserAgent.Ucs2Bytes,
+                    userAgent,
                     useFeatureExt,
                     length,
                     true

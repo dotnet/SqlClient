@@ -88,99 +88,44 @@
     </PackBuildArgument>
 
     <!--
-      PackageVersionAbstractions
-      Applies to:     BuildAbstractions, PackAbstractions
-      Description:    Specifies what version to assign to the Microsoft.Data.SqlClient.Extensions.Abstractions
-                      package. If this is omitted, the assigned version will default to the version
-                      calculated by Versions.props. If this is provided, it will override the
-                      package version and assembly versions will be calculated based on it.
-
-      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      (with -p:ReferenceType=Package)
-      Description:    Specifies what version of Microsoft.Data.SqlClient.Extensions.Abstractions
-                      to use when compiling/packaging/testing the specified package.
-
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
+      SqlClient family package versions
+      =================================
+      The Internal.Logging, Extensions.Abstractions, Extensions.Azure, and
+      AlwaysEncrypted.AzureKeyVaultProvider packages are all part of the SqlClient family and share
+      the SqlClient version.  There are no longer separate per-package version parameters for these
+      packages — use PackageVersionSqlClient (below) to set the version for the entire family.
     -->
-    <PackageVersionAbstractions Condition="'$(PackageVersionAbstractions)' == ''" />
-    <PackageVersionAbstractionsArgument Condition="'$(PackageVersionAbstractions)' != ''">
-      -p:AbstractionsPackageVersion=$(PackageVersionAbstractions)
-    </PackageVersionAbstractionsArgument>
 
     <!--
-      PackageVersionAkvProvider
-      Applies to:     BuildAkvProvider, PackAkvProvider
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-                      when building/packing the AKV provider. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
+      SqlClientNextVersion
+      Applies to:     GetVersionsSqlClient
+      Description:    Overrides the source-declared base version used to calculate the SqlClient
+                      family package and file versions. BuildNumber and BuildSuffix are applied to
+                      this value by Versions.props. An explicit PackageVersionSqlClient remains
+                      higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.Data.SqlClient/Versions.props
+      Example:        7.1.0-preview3
     -->
-    <PackageVersionAkvProvider Condition="'$(PackageVersionAkvProvider)' == ''" />
-    <PackageVersionAkvProviderArgument Condition="'$(PackageVersionAkvProvider)' != ''">
-      -p:AkvProviderPackageVersion=$(PackageVersionAkvProvider)
-    </PackageVersionAkvProviderArgument>
-
-    <!--
-      PackageVersionAzure
-      Applies to:     BuildAzure, PackAzure
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Extensions.Azure
-                      when building/packing the Azure package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
-    -->
-    <PackageVersionAzure Condition="'$(PackageVersionAzure)' == ''" />
-    <PackageVersionAzureArgument Condition="'$(PackageVersionAzure)' != ''">
-      -p:AzurePackageVersion=$(PackageVersionAzure)
-    </PackageVersionAzureArgument>
-
-    <!--
-      PackageVersionLogging
-      Applies to:     BuildLogging, PackLogging
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient.Internal.Logging
-                      when building/packing the Logging package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
-
-      Applies to:     BuildSqlClient*, PackSqlClient, TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      BuildAbstractions, PackAbstractions
-                      BuildAzure, PackAzure,
-                      (with -p:ReferenceType=Package)
-      Description:    Specifies what version of Microsoft.Data.SqlClient.Internal.Logging
-                      to use when compiling/packaging/testing the specified package.
-
-      Default value:  [blank]
-      Example:        1.0.1-dev2345
-    -->
-    <PackageVersionLogging Condition="'$(PackageVersionLogging)' == ''" />
-    <PackageVersionLoggingArgument Condition="'$(PackageVersionLogging)' != ''">
-      -p:LoggingPackageVersion=$(PackageVersionLogging)
-    </PackageVersionLoggingArgument>
+    <SqlClientNextVersion Condition="'$(SqlClientNextVersion)' == ''" />
+    <SqlClientNextVersionArgument Condition="'$(SqlClientNextVersion)' != ''">
+      -p:SqlClientNextVersion=$(SqlClientNextVersion)
+    </SqlClientNextVersionArgument>
 
     <!--
       PackageVersionSqlClient
-      Applies to:     TestSqlClient, TestSqlClientFunctional, TestSqlClientManual
-                      BuildAkvProvider, PackAkvProvider
-                      TestAzure
-                      (with -p:ReferenceType=Package)
-      Description     Specifies what version of Microsoft.Data.SqlClient to use when compiling
-                      to use when compiling/packaging/testing the specified package.
-
-      Applies to:     BuildSqlClient*, PackSqlClient
-      Description:    Specifies what version to assign to Microsoft.Data.SqlClient when building/
-                      packing the SqlClient package. If this is omitted, the assigned
-                      version will default to the version calculated by Versions.props. If this is
-                      provided, it will override the package version and assembly version will be
-                      calculated based on it.
+      Applies to:
+        Build:        BuildSqlClient*, BuildLogging, BuildAbstractions, BuildAzure, BuildAkvProvider
+        Pack:         PackSqlClient, PackLogging, PackAbstractions, PackAzure, PackAkvProvider
+        Test:         TestSqlClient, TestSqlClientFunctional, TestSqlClientManual, TestAzure
+                      (Package reference mode only)
+      Description:    Specifies the version of the SqlClient *family*.  All family packages
+                      (Microsoft.Data.SqlClient, Internal.Logging, Extensions.Abstractions,
+                      Extensions.Azure, and the AlwaysEncrypted.AzureKeyVaultProvider) share this
+                      single version, which is used both as the assigned package/assembly version
+                      when building/packing a family package and as the dependency version when a
+                      family package references another. Build and Pack targets use it in both
+                      reference modes; Test targets consume it only in Package reference mode. If
+                      omitted, the version defaults to the value calculated by Versions.props.
 
       Default value:  [blank]
       Example:        7.0.0-preview4
@@ -191,8 +136,41 @@
     </PackageVersionSqlClientArgument>
 
     <!--
+      FileVersionSqlClient
+      Applies to:     The same targets as PackageVersionSqlClient.
+      Description:    Specifies the assembly file version stamped on the SqlClient *family*.  When
+                      omitted, Versions.props derives it from the package version and BuildNumber.
+                      Supply it to stamp a pre-computed value instead, so no consumer has to
+                      re-derive it.  The assembly version is always derived from this value.
+      Default value:  [blank]
+      Example:        7.1.0.26238
+    -->
+    <FileVersionSqlClient Condition="'$(FileVersionSqlClient)' == ''" />
+    <FileVersionSqlClientArgument Condition="'$(FileVersionSqlClient)' != ''">
+      -p:SqlClientFileVersion=$(FileVersionSqlClient)
+    </FileVersionSqlClientArgument>
+
+    <!--
+      SqlServerNextVersion
+      Applies to:     GetVersionsSqlServer
+      Description:    Overrides the source-declared base version used to calculate the
+                      Microsoft.SqlServer.Server package and file versions. BuildNumber and
+                      BuildSuffix are applied to this value by Versions.props. An explicit
+                      PackageVersionSqlServer remains higher precedence for build and pack targets.
+      Default value:  The value declared in src/Microsoft.SqlServer.Server/Versions.props
+      Example:        1.1.0-preview1
+    -->
+    <SqlServerNextVersion Condition="'$(SqlServerNextVersion)' == ''" />
+    <SqlServerNextVersionArgument Condition="'$(SqlServerNextVersion)' != ''">
+      -p:SqlServerNextVersion=$(SqlServerNextVersion)
+    </SqlServerNextVersionArgument>
+
+    <!--
       PackageVersionSqlServer
-      Applies to:     BuildSqlServer
+      Applies to:
+        Build:        BuildSqlServer and BuildSqlClient* in Package reference mode
+        Pack:         PackSqlServer and PackSqlClient in Package reference mode
+        Test:         TestSqlClientUnit and TestSqlClientManual in Package reference mode
       Description:    Specifies the package version to use for Microsoft.SqlServer.Server. If this
                       is specified, it will be used preferentially: assembly version and file
                       version will be derived from the specified package version.
@@ -205,8 +183,22 @@
     </PackageVersionSqlServerArgument>
 
     <!--
+      FileVersionSqlServer
+      Applies to:     The same targets as PackageVersionSqlServer.
+      Description:    Specifies the assembly file version stamped on Microsoft.SqlServer.Server.
+                      When omitted, Versions.props derives it from the package version and
+                      BuildNumber.  Supply it to stamp a pre-computed value instead.
+      Default value:  [blank]
+      Example:        1.1.0.26238
+    -->
+    <FileVersionSqlServer Condition="'$(FileVersionSqlServer)' == ''" />
+    <FileVersionSqlServerArgument Condition="'$(FileVersionSqlServer)' != ''">
+      -p:SqlServerFileVersion=$(FileVersionSqlServer)
+    </FileVersionSqlServerArgument>
+
+    <!--
       ReferenceType
-      Applies to:     BuildSqlClient, BuildSqlClientUnix, BuildSqlClientWindows
+      Applies to:     BuildSqlClient, BuildSqlClientImpl
       Description:    Determines how to build SqlClient. If set to "Project", any cross-project
                       references (eg, Abstractions from SqlClient) will be made as project
                       references. If set to "Package", package references will be made instead. When
@@ -242,6 +234,112 @@
       Default value:  false
     -->
     <SkipDependencyPack Condition="'$(SkipDependencyPack)' == ''">false</SkipDependencyPack>
+
+    <!--
+      IsolatedBuildPath
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When set, redirects each project's binary output (bin) to an isolated
+                      location instead of the repo's artifacts/ folder, and forces a full
+                      (non-incremental) compile. This lets a build run at any time without
+                      clobbering existing real build output - for example, an analysis pass that
+                      only needs to compile the code and must not disturb a real build's output.
+
+                      * bin is redirected under "$(IsolatedBuildPath)/bin/" via ArtifactPath. Each
+                        project's OutputPath already appends a project-specific subfolder, so the
+                        projects do not collide and the real artifacts/ folder is left untouched.
+                      * The intermediate (obj) directory is intentionally left at its default,
+                        per-project location. MSBuild resolves the default relative obj/ against
+                        each project's own directory, which keeps intermediates separate for the
+                        multiple projects that make up a package (for example the ref, src, and
+                        notsupported projects of the driver). Pointing every project at a single
+                        shared obj/ under the isolated path makes those projects overwrite each
+                        other's restore assets and fail. The non-incremental switch guarantees a
+                        full recompile regardless of any pre-existing intermediate output.
+
+                      NOTE: Even though an isolated build shares the default obj/ with a prior real
+                      build, it does not perturb that real build's output. The non-incremental switch
+                      does not run Clean or delete anything; it disables the incremental/up-to-date
+                      checks and forces a full recompile so the analyzers see every source file. Real
+                      output is safe because bin is redirected to $(IsolatedBuildPath): the isolated
+                      build only ever writes to the isolated bin, never to the real artifacts/ bin.
+                      The recompile just rewrites the shared obj/ intermediates, which is harmless
+                      because nothing downstream consumes obj/.
+      Default value:  [blank] (normal artifacts/ location and incremental build are used)
+      Example:        C:\agent\_temp\isolated-build
+    -->
+    <IsolatedBuildPath Condition="'$(IsolatedBuildPath)' == ''" />
+    <IsolatedBuildArgument Condition="'$(IsolatedBuildPath)' != ''">
+      --no-incremental
+      -p:ArtifactPath="$(IsolatedBuildPath)/bin/"
+    </IsolatedBuildArgument>
+
+    <!--
+      EnableAnalyzers
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When true, turns on the full set of Roslyn analyzers for every project that is
+                      compiled and makes each project emit a per-project SARIF v1 log (see the
+                      EnableAnalyzers block in src/Directory.Build.props).
+
+                      The flag is forwarded to each project's own "dotnet build" invocation via
+                      EnableAnalyzersArgument. This forwarding is required because .NET [Roslyn]
+                      analyzers are compiler-integrated: they must run in the leaf compile, and each
+                      leaf compile is a separate "dotnet build" process that build.proj launches with
+                      an <Exec> - it does not inherit properties from this orchestrating build.
+
+                      Independent of IsolatedBuildPath. Analysis is normally run together with
+                      IsolatedBuildPath so the analyzer build does not disturb real build output, but
+                      the two properties can be set independently.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <EnableAnalyzers Condition="'$(EnableAnalyzers)' == ''">false</EnableAnalyzers>
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true'">
+      -p:EnableAnalyzers=true
+    </EnableAnalyzersArgument>
+
+    <!--
+      InternalAnalyzers
+      Applies to:     Build* targets (driver and extension projects)
+      Description:    When true (and EnableAnalyzers is also true), additionally runs the internal
+                      Microsoft.Internal.Analyzers ("IA*") Roslyn rules (see the InternalAnalyzers
+                      block in src/Directory.Build.props). The Microsoft.Internal.Analyzers package
+                      is Microsoft-internal and confidential, so this flag is set ONLY by the private
+                      ADO.Net project pipelines, which have access to an internal NuGet feed. The
+                      public build and public CI never set it.
+
+                      Like EnableAnalyzers, it is forwarded into each leaf "dotnet build" (it is
+                      appended to EnableAnalyzersArgument) because the analyzers are
+                      compiler-integrated and must run in the leaf compile.
+      Default value:  false
+      Allowed values: (true|false)
+    -->
+    <InternalAnalyzers Condition="'$(InternalAnalyzers)' == ''">false</InternalAnalyzers>
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true'">$(EnableAnalyzersArgument)
+      -p:InternalAnalyzers=true
+    </EnableAnalyzersArgument>
+
+    <!--
+      InternalAnalyzersNugetConfig
+      Applies to:     Build* targets, only when InternalAnalyzers is true
+      Description:    Path to the analysis NuGet.config that adds the internal feed hosting
+                      Microsoft.Internal.Analyzers. It is forwarded into each leaf "dotnet build"
+                      as -p:RestoreConfigFile.
+      Default value:  [blank]
+    -->
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
+      -p:RestoreConfigFile="$(InternalAnalyzersNugetConfig)"
+    </EnableAnalyzersArgument>
+
+    <!--
+      InternalAnalyzersVersion
+      Applies to:     Build* targets, only when InternalAnalyzers is true
+      Description:    Version of the Microsoft.Internal.Analyzers package to restore. It has no
+                      default (see Directory.Packages.props); the private ADO.Net pipeline pins it.
+      Default value:  [blank]
+    -->
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
+      -p:InternalAnalyzersVersion=$(InternalAnalyzersVersion)
+    </EnableAnalyzersArgument>
 
     <!--
       SigningKeyPath
@@ -303,6 +401,26 @@
     </TestCodeCoverageArgument>
 
     <!--
+      ============================================================================================
+      TRAIT CASING CONVENTION - read this before adding a trait or a filter anywhere in the repo.
+
+      Always use a lower-case "category" key AND lower-case values, both in [Trait(...)] attributes
+      in test code and in every filter expression (here and under eng/pipelines).
+
+      Why it matters: xunit.runner.visualstudio (2.8.2) resolves the filter's *property name*
+      against the set of trait keys discovered in the assembly using a case-SENSITIVE lookup, but
+      only on the execution path.  Test discovery (the "list tests" path) is case-INSENSITIVE.  So a
+      casing mismatch lists correctly and then silently misbehaves when the tests actually run:
+      "category!=x" matches everything and "category=x" matches nothing.  Trait *values* are always
+      compared case-insensitively, so only the key casing is dangerous.
+
+      The failure is per-assembly, which is why it hid for so long: it only surfaces when no test in
+      that assembly declares a lower-case "category" key.  Microsoft.DotNet.XUnitExtensions injects
+      one via [ActiveIssue], [OuterLoop], [PlatformSpecific] and friends, which masked the problem
+      in most of our test assemblies until Azure.Test - which uses none of those attributes - ran
+      its excluded "interactive" test in CI.
+      ============================================================================================
+
       TestFilters
       Applies to:     Test* targets
       Description:    Filter to use to include or exclude any tests. If not specified, this defaults
@@ -393,6 +511,71 @@
   -->
   <Target Name="Pack" DependsOnTargets="PackLogging;PackAbstractions;PackSqlClient;PackAzure;PackAkvProvider;PackSqlServer" />
 
+  <!-- ================================================================= -->
+  <!-- Version Extraction Targets
+       =========================
+       The SqlClient family shares one version, so there are two extraction targets:
+
+         GetVersionsSqlClient  — the SqlClient family version (Internal.Logging,
+                                 Extensions.Abstractions, Microsoft.Data.SqlClient,
+                                 Extensions.Azure, and the AKV Provider all share this).
+         GetVersionsSqlServer  — the independently-versioned Microsoft.SqlServer.Server.
+
+       Each emits labeled messages at High importance that pipelines capture by grepping stdout:
+         PackageVersion: <value>
+         FileVersion: <value>
+       GetVersionsSqlServer additionally emits its last-shipped version:
+         PublishedVersion: <value>
+
+       Usage:
+         dotnet build build.proj -t:GetVersionsSqlClient -v:m -nologo -p:BuildNumber=1234
+         # stdout contains:
+         #   PackageVersion: 7.1.0-preview1.1234
+         #   FileVersion: 7.1.0.1234
+  -->
+
+  <Target Name="GetVersionsSqlClient">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
+  <Target Name="GetVersionsSqlServer">
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
+    </Exec>
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; build &quot;$(SqlServerProjectPath)&quot; -getProperty:SqlServerPublishedVersion" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_PublishedVersion" />
+    </Exec>
+    <PropertyGroup>
+      <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+    </PropertyGroup>
+    <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
+    </Exec>
+    <Message Text="PackageVersion: $(_PackageVersion)" Importance="High" />
+    <Message Text="PublishedVersion: $(_PublishedVersion)" Importance="High" />
+    <Message Text="FileVersion: $(_FileVersion)" Importance="High" />
+  </Target>
+
   <!--
     Test: Run all test targets for all driver projects.
 
@@ -401,7 +584,7 @@
     environments. Please consider running project specific test targets or specific test sets within
     the project.
   -->
-  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestSqlClient" />
+  <Target Name="Test" DependsOnTargets="TestAbstractions;TestAzure;TestAkvProvider;TestSqlClient" />
 
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient Targets -->
@@ -428,7 +611,7 @@
 
   <!-- Build SqlClient Targets =============================================== -->
   <!-- BuildSqlClient: Builds all binaries for SqlClient -->
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientUnix;BuildSqlClientWindows;BuildSqlClientRef;BuildSqlClientNotSupported" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientImpl;BuildSqlClientRef;BuildSqlClientNotSupported" />
 
   <!--
     BuildSqlClientNotSupported: Builds a version of the SqlClient assemblies that always throws
@@ -461,6 +644,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientNotSupportedProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         -p:GenApiPath="@(GenApiArtifactPath->'%(FullPath)')"
         $(SigningKeyPathArgument)
 
@@ -468,11 +653,10 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -493,16 +677,18 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -514,65 +700,34 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
-  <!-- BuildSqlClientUnix: Builds all unix-specific SqlClient binaries -->
+  <!-- BuildSqlClientImpl: Builds implementation assemblies of SqlClient -->
   <PropertyGroup>
-    <BuildSqlClientUnixDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientUnixDependsOn>
+    <BuildSqlClientImplDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientImplDependsOn>
   </PropertyGroup>
-  <Target Name="BuildSqlClientUnix" DependsOnTargets="$(BuildSqlClientUnixDependsOn)">
+  <Target Name="BuildSqlClientImpl" DependsOnTargets="$(BuildSqlClientImplDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
 
-    <Message Importance="High" Text=">>> Building SqlClient for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <!-- BuildSqlClientWindows: Builds all windows-specific SqlClient binaries -->
-  <PropertyGroup>
-    <BuildSqlClientWindowsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientWindowsDependsOn>
-  </PropertyGroup>
-  <Target Name="BuildSqlClientWindows" DependsOnTargets="$(BuildSqlClientWindowsDependsOn)">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-        $(SigningKeyPathArgument)
-
-        <!-- Versioning Arguments -->
-        $(BuildNumberArgument)
-        $(BuildSuffixArgument)
-        $(PackageVersionSqlClientArgument)
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlServerArgument)
-      </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Implementation"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
@@ -606,11 +761,10 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlServerArgument)
 
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
@@ -658,8 +812,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -704,8 +856,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -751,6 +901,7 @@
   <PropertyGroup>
     <AkvProviderSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/</AkvProviderSrcRoot>
     <AkvProviderProjectPath>$(AkvProviderSrcRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj</AkvProviderProjectPath>
+    <AkvProviderTestProjectPath>$(AkvProviderSrcRoot)test/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test.csproj</AkvProviderTestProjectPath>
     <AkvProviderArtifactRoot>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/$(Configuration)/</AkvProviderArtifactRoot>
   </PropertyGroup>
 
@@ -763,18 +914,18 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AkvProviderProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!--Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAkvProviderArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -798,13 +949,11 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAkvProviderArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
@@ -827,9 +976,37 @@
       SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- TestAkvProvider: Runs Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider unit tests -->
+  <Target Name="TestAkvProvider">
+    <PropertyGroup>
+      <!--
+        Note: These tests exclusively use project references, so neither ReferenceType nor any
+        package version arguments are specified in this command.
+      -->
+      <LogFilePrefix>AkvProviderTests-$(OS)</LogFilePrefix>
+      <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
+
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" test "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+        $(TestBlameArgument)
+        $(TestCodeCoverageArgument)
+        $(TestFiltersArgument)
+        $(TestFrameworkArgument)
+        --results-directory "$(TestResultsFolderPath)"
+        --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+      </DotnetCommand>
+      <!-- Convert more than one whitespace character into one space -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+
+    <Message Importance="High" Text=">>> Running tests for AKV Provider"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
+
   <!-- ================================================================= -->
   <!-- Microsoft.Data.SqlClient.Extensions.Abstractions Targets -->
-
   <PropertyGroup>
     <AbstractionsSrcRoot>$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/</AbstractionsSrcRoot>
     <AbstractionsProjectPath>$(AbstractionsSrcRoot)src/Abstractions.csproj</AbstractionsProjectPath>
@@ -846,16 +1023,18 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AbstractionsProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -878,11 +1057,11 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAbstractionsArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -951,16 +1130,18 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AzureProjectPath)"
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAzureArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -983,11 +1164,11 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionAzureArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionLoggingArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1027,8 +1208,6 @@
 
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -1055,12 +1234,15 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(LoggingProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1083,7 +1265,8 @@
         <!-- Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
-        $(PackageVersionLoggingArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1119,12 +1302,15 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
         -p:Configuration=$(Configuration)
+        $(IsolatedBuildArgument)
+        $(EnableAnalyzersArgument)
         $(SigningKeyPathArgument)
 
         <!--Versioning arguments -->
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1148,6 +1334,7 @@
         $(BuildNumberArgument)
         $(BuildSuffixArgument)
         $(PackageVersionSqlServerArgument)
+        $(FileVersionSqlServerArgument)
       </DotnetCommand>
       <!-- Convert more than one whitespace character into one space -->
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1179,7 +1366,21 @@
   </PropertyGroup>
 
   <!-- BuildTests: Builds all test projects for all supported OS combinations. -->
-  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+
+  <!-- BuildAkvProviderTests: Builds the AKV Provider test project (OS-agnostic). -->
+  <Target Name="BuildAkvProviderTests">
+    <PropertyGroup>
+      <DotnetCommand>
+        "$(DotnetPath)dotnet" build "$(AkvProviderTestProjectPath)"
+        -p:Configuration=$(Configuration)
+      </DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+    </PropertyGroup>
+    <Message Importance="High" Text=">>> Building AKV Provider Tests"/>
+    <Message Text="    Command: $(DotnetCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
+  </Target>
 
   <!-- BuildAbstractionsTests: Builds the Abstractions test project (OS-agnostic). -->
   <Target Name="BuildAbstractionsTests">
@@ -1196,14 +1397,11 @@
   </Target>
 
   <!-- BuildSqlClientTestsUnit ================================================= -->
-  <Target Name="BuildSqlClientTestsUnit" DependsOnTargets="BuildSqlClientTestsUnitUnix;BuildSqlClientTestsUnitWindows" />
-
-  <Target Name="BuildSqlClientTestsUnitUnix">
+  <Target Name="BuildSqlClientTestsUnit">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientUnitTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1213,40 +1411,17 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Unit Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildSqlClientTestsUnitWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientUnitTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(TestSigningKeyPathArgument)
-        $(PackageVersionSqlClientArgument)
-        $(PackageVersionSqlServerArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Unit Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Unit Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- BuildSqlClientTestsFunctional =========================================== -->
-  <Target Name="BuildSqlClientTestsFunctional" DependsOnTargets="BuildSqlClientTestsFunctionalUnix;BuildSqlClientTestsFunctionalWindows" />
-
-  <Target Name="BuildSqlClientTestsFunctionalUnix">
+  <Target Name="BuildSqlClientTestsFunctional">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientFunctionalTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1256,40 +1431,17 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Functional Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildSqlClientTestsFunctionalWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientFunctionalTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Functional Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Functional Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- BuildSqlClientTestsManual =============================================== -->
-  <Target Name="BuildSqlClientTestsManual" DependsOnTargets="BuildSqlClientTestsManualUnix;BuildSqlClientTestsManualWindows" />
-
-  <Target Name="BuildSqlClientTestsManualUnix">
+  <Target Name="BuildSqlClientTestsManual">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientManualTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1300,41 +1452,17 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Manual Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildSqlClientTestsManualWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientManualTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
-        $(PackageVersionSqlServerArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Manual Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Manual Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- BuildSqlClientTestsPerformance ========================================== -->
-  <Target Name="BuildSqlClientTestsPerformance" DependsOnTargets="BuildSqlClientTestsPerformanceUnix;BuildSqlClientTestsPerformanceWindows" />
-
-  <Target Name="BuildSqlClientTestsPerformanceUnix">
+  <Target Name="BuildSqlClientTestsPerformance">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientPerformanceTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1344,40 +1472,17 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Performance Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildSqlClientTestsPerformanceWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientPerformanceTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Performance Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Performance Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- BuildSqlClientTestsStress =============================================== -->
-  <Target Name="BuildSqlClientTestsStress" DependsOnTargets="BuildSqlClientTestsStressUnix;BuildSqlClientTestsStressWindows" />
-
-  <Target Name="BuildSqlClientTestsStressUnix">
+  <Target Name="BuildSqlClientTestsStress">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(SqlClientStressTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1387,40 +1492,17 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Stress Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildSqlClientTestsStressWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(SqlClientStressTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
-        $(PackageVersionSqlClientArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building SqlClient Stress Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building SqlClient Stress Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>
 
   <!-- BuildAzureTests ========================================================= -->
-  <Target Name="BuildAzureTests" DependsOnTargets="BuildAzureTestsUnix;BuildAzureTestsWindows" />
-
-  <Target Name="BuildAzureTestsUnix">
+  <Target Name="BuildAzureTests">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" build "$(AzureTestProjectPath)"
         -p:Configuration=$(Configuration)
-        -p:TargetOs=Unix
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
@@ -1428,25 +1510,7 @@
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
     </PropertyGroup>
-    <Message Importance="High" Text=">>> Building Azure Tests for Unix"/>
-    <Message Text="    Command: $(DotnetCommand)"/>
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
-  </Target>
-
-  <Target Name="BuildAzureTestsWindows">
-    <PropertyGroup>
-      <DotnetCommand>
-        "$(DotnetPath)dotnet" build "$(AzureTestProjectPath)"
-        -p:Configuration=$(Configuration)
-        -p:TargetOs=Windows_NT
-
-        <!-- Reference Type Arguments -->
-        $(ReferenceTypeArgument)
-        $(PackageVersionSqlClientArgument)
-      </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
-    </PropertyGroup>
-    <Message Importance="High" Text=">>> Building Azure Tests for Windows"/>
+    <Message Importance="High" Text=">>> Building Azure Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
   </Target>

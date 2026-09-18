@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             _cspKeyParameters.Add(cspParameters);
 
             CspProvider = new SqlColumnEncryptionCspProvider();
-            SetupDatabase();
+            SetupOrCleanUp(SetupDatabase);
         }
 
         public SqlColumnEncryptionCspProvider CspProvider { get; }
@@ -50,28 +50,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected override void Dispose(bool disposing)
         {
-            foreach (CspParameters cspParameters in _cspKeyParameters)
+            try
             {
-                try
+                foreach (CspParameters cspParameters in _cspKeyParameters)
                 {
-                    // Create a new instance of RSACryptoServiceProvider.  
-                    // Pass the CspParameters class to use the  
-                    // key in the container.
-                    using RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(cspParameters);
+                    try
+                    {
+                        // Create a new instance of RSACryptoServiceProvider.  
+                        // Pass the CspParameters class to use the  
+                        // key in the container.
+                        using RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(cspParameters);
 
-                    // Delete the key entry in the container.
-                    rsaAlg.PersistKeyInCsp = false;
+                        // Delete the key entry in the container.
+                        rsaAlg.PersistKeyInCsp = false;
 
-                    // Call Clear to release resources and delete the key from the container.
-                    rsaAlg.Clear();
+                        // Call Clear to release resources and delete the key from the container.
+                        rsaAlg.Clear();
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
                 }
-                catch (Exception)
-                {
-                    continue;
-                }
+
+                _cspKeyParameters.Clear();
             }
-
-            base.Dispose(disposing);
+            finally
+            {
+                base.Dispose(disposing);
+            }
         }
     }
 }
