@@ -68,12 +68,12 @@ public class UnloadableAssemblyLoadContextTest
         object? instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
         Assert.NotNull(instantiated);
 
-        MethodInfo? getDateMethod = unloadableLibraryType.GetMethod("GetDate");
+        MethodInfo? getDateMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDate));
         Assert.NotNull(getDateMethod);
 
         getDateMethod.Invoke(instantiated, null);
 
-        MethodInfo? getDateAsyncMethod = unloadableLibraryType.GetMethod("GetDateAsync");
+        MethodInfo? getDateAsyncMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDateAsync));
         Assert.NotNull(getDateAsyncMethod);
 
         Task? getDateTask = getDateAsyncMethod.Invoke(instantiated, null) as Task;
