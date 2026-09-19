@@ -802,7 +802,12 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientFunctionalTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
@@ -846,7 +851,12 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientManualTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(ManualTestFiltersArgument)
@@ -875,17 +885,24 @@
 
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(SqlClientUnitTestProjectPath)"
+
+        <!-- Build arguments -->
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
+
+        <!-- Test arguments -->
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)
         $(TestFrameworkArgument)
-        $(ReferenceTypeArgument)
-        $(TestSigningKeyPathArgument)
-        $(PackageVersionSqlClientArgument)
-        $(PackageVersionSqlServerArgument)
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+        $(PackageVersionSqlClientArgument)
+        $(PackageVersionSqlServerArgument)
       </DotnetCommand>
 
       <!-- Convert more than one whitespace character into one space -->
