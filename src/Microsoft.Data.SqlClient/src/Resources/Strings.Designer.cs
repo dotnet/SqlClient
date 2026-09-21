@@ -484,6 +484,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenProperties {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenProperties", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessTokenCallback property if &apos;Authentication=Active Directory Default&apos; has been specified in the connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback {
@@ -3085,6 +3094,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not replace the connection because it is no longer in the connection pool..
+        /// </summary>
+        internal static string SQL_ConnectionPoolReplaceConnectionFailed {
+            get {
+                return ResourceManager.GetString("SQL_ConnectionPoolReplaceConnectionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection pool has been shut down..
         /// </summary>
         internal static string SQL_ConnectionPoolShutDown {
@@ -3801,6 +3819,24 @@ namespace System {
         internal static string SQL_ScaleValueOutOfRange {
             get {
                 return ResourceManager.GetString("SQL_ScaleValueOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The certificate file specified by the &apos;ServerCertificate&apos; option could not be loaded or parsed: &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_ServerCertificateFileLoadFailed {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateFileLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &apos;ServerCertificate&apos; option was specified, but the server did not present a certificate that could be compared against it..
+        /// </summary>
+        internal static string SQL_ServerCertificateNotAvailable {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateNotAvailable", resourceCulture);
             }
         }
         
@@ -6276,6 +6312,15 @@ namespace System {
         internal static string VerifyEnclaveReportFailed {
             get {
                 return ResourceManager.GetString("VerifyEnclaveReportFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string VerifyEnclaveKeyBindingFailed {
+            get {
+                return ResourceManager.GetString("VerifyEnclaveKeyBindingFailed", resourceCulture);
             }
         }
         

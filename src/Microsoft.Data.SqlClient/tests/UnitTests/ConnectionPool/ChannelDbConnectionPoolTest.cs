@@ -4,30 +4,52 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
+    /// <summary>
+    /// Unit tests for <see cref="ChannelDbConnectionPool"/> covering connection acquisition,
+    /// timeouts, reuse, pool clearing, blocking-period behavior, and timeout-budget propagation.
+    /// </summary>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class ChannelDbConnectionPoolTest
     {
         private static readonly SqlConnectionFactory SuccessfulConnectionFactory = new SuccessfulSqlConnectionFactory();
         private static readonly SqlConnectionFactory TimeoutConnectionFactory = new TimeoutSqlConnectionFactory();
 
+        /// <summary>
+        /// Creates a <see cref="ChannelDbConnectionPool"/> with configurable test dependencies so
+        /// individual tests can focus on the behavior under test without repeating setup logic.
+        /// </summary>
+        /// <param name="connectionFactory">The factory used to create physical connections.</param>
+        /// <param name="identity">Optional pool identity override.</param>
+        /// <param name="dbConnectionPoolGroup">Optional pool group override.</param>
+        /// <param name="poolGroupOptions">Optional pool options override.</param>
+        /// <param name="connectionPoolProviderInfo">Optional provider info override.</param>
+        /// <param name="connectionCreationRateLimiter">Optional concurrency limiter controlling physical connection creation.</param>
+        /// <param name="timeProvider">Optional time provider so tests can drive the blocking-period exit timer deterministically.</param>
+        /// <returns>A configured <see cref="ChannelDbConnectionPool"/> instance for testing.</returns>
         private ChannelDbConnectionPool ConstructPool(SqlConnectionFactory connectionFactory,
             DbConnectionPoolIdentity? identity = null,
             DbConnectionPoolGroup? dbConnectionPoolGroup = null,
             DbConnectionPoolGroupOptions? poolGroupOptions = null,
-            DbConnectionPoolProviderInfo? connectionPoolProviderInfo = null)
+            DbConnectionPoolProviderInfo? connectionPoolProviderInfo = null,
+            ConcurrencyLimiter? connectionCreationRateLimiter = null,
+            TimeProvider? timeProvider = null)
         {
             poolGroupOptions ??= new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
@@ -47,10 +69,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 connectionFactory,
                 dbConnectionPoolGroup,
                 identity ?? DbConnectionPoolIdentity.NoIdentity,
-                connectionPoolProviderInfo ?? new DbConnectionPoolProviderInfo()
+                connectionPoolProviderInfo ?? new DbConnectionPoolProviderInfo(),
+                connectionCreationRateLimiter,
+                timeProvider
             );
         }
 
+        /// <summary>
+        /// Verifies that requesting connections from an empty pool causes the pool to create new
+        /// physical connections until the requested count is reached.
+        /// </summary>
         [Theory]
         [InlineData(1)]
         [InlineData(5)]
@@ -75,11 +103,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(internalConnection);
             }
 
-
             // Assert
             Assert.Equal(numConnections, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that asynchronous requests against an empty pool create new physical
+        /// connections and complete through the provided task completion source.
+        /// </summary>
         [Theory]
         [InlineData(1)]
         [InlineData(5)]
@@ -106,11 +137,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.NotNull(await tcs.Task);
             }
 
-
             // Assert
             Assert.Equal(numConnections, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that a synchronous request against an exhausted pool fails with the pooled-open
+        /// timeout once the caller's timeout budget has already expired.
+        /// </summary>
         [Fact]
         public void GetConnectionMaxPoolSize_ShouldTimeoutAfterPeriod()
         {
@@ -126,6 +160,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
@@ -154,6 +189,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that an asynchronous request against an exhausted pool completes with the
+        /// pooled-open timeout once the caller's timeout budget has already expired.
+        /// </summary>
         [Fact]
         public async Task GetConnectionAsyncMaxPoolSize_ShouldTimeoutAfterPeriod()
         {
@@ -169,6 +208,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
@@ -195,6 +235,105 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(pool.PoolGroupOptions.MaxPoolSize, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that an asynchronous request satisfied by an already-idle connection is
+        /// completed inline on the caller's thread, rather than being dispatched to the thread pool.
+        /// </summary>
+        /// <remarks>
+        /// The fast path must report completion by returning true with the connection, exactly as
+        /// WaitHandleDbConnectionPool does on its inline hit. Completing the TaskCompletionSource
+        /// and returning false would look equivalent but is not: it sends
+        /// SqlConnection.InternalOpenAsync down its asynchronous branch, which allocates an
+        /// OpenAsyncRetry and schedules ContinueWith(..., TaskScheduler.Default), costing a thread
+        /// pool dispatch even though the result is already available. Asserting that the
+        /// TaskCompletionSource is left untouched is what pins that down.
+        /// </remarks>
+        [Fact]
+        public void GetConnectionAsync_WithIdleConnection_ShouldCompleteInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
+            SqlConnection secondOwner = new();
+            var completed = pool.TryGetConnection(
+                secondOwner,
+                taskCompletionSource,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert: the request is reported as completed and the connection is handed back
+            // directly, matching WaitHandleDbConnectionPool's inline hit. This is what lets
+            // SqlConnection.InternalOpenAsync take its synchronous branch and skip the
+            // OpenAsyncRetry allocation and the ContinueWith thread pool dispatch.
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+
+            // The fast path must also activate the connection and assign ownership, exactly as the
+            // full path does. Without this the pool would hand back an unowned, unactivated
+            // connection and the assertions above would still pass.
+            Assert.Same(secondOwner, internalConnection!.Owner);
+
+            // The TaskCompletionSource must be left alone; the caller abandons it on a
+            // synchronous completion.
+            Assert.False(taskCompletionSource.Task.IsCompleted);
+
+            // The idle connection was reused rather than a second one being opened.
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that a synchronous request satisfied by an already-idle connection returns that
+        /// connection inline.
+        /// </summary>
+        [Fact]
+        public void GetConnection_WithIdleConnection_ShouldReturnInline()
+        {
+            // Arrange: take a connection and return it, leaving one connection idle in the pool.
+            var pool = ConstructPool(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new();
+
+            pool.TryGetConnection(
+                owningConnection,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pooledConnection
+            );
+            Assert.NotNull(pooledConnection);
+            pool.ReturnInternalConnection(pooledConnection, owningConnection);
+
+            // Act
+            SqlConnection secondOwner = new();
+            var completed = pool.TryGetConnection(
+                secondOwner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? internalConnection
+            );
+
+            // Assert
+            Assert.True(completed);
+            Assert.Equal(pooledConnection, internalConnection);
+            Assert.Same(secondOwner, internalConnection!.Owner);
+            Assert.Equal(1, pool.Count);
+        }
+
+        /// <summary>
+        /// Verifies that a waiting synchronous caller reuses a connection that is returned to an
+        /// exhausted pool instead of creating a new physical connection.
+        /// </summary>
         [Fact]
         public async Task GetConnectionMaxPoolSize_ShouldReuseAfterConnectionReleased()
         {
@@ -209,25 +348,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool-exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
 
-            TaskCompletionSource<DbConnectionInternal> tcs = new();
-
             // Act
             var task = Task.Run(() =>
             {
-                var exceeded = pool.TryGetConnection(
+                pool.TryGetConnection(
                     new SqlConnection(""),
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
@@ -240,8 +384,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Assert
             Assert.Equal(firstConnection, extraConnection);
+
+            GC.KeepAlive(owningConnections);
         }
 
+        /// <summary>
+        /// Verifies that a waiting asynchronous caller reuses a connection that is returned to an
+        /// exhausted pool instead of creating a new physical connection.
+        /// </summary>
         [Fact]
         public async Task GetConnectionAsyncMaxPoolSize_ShouldReuseAfterConnectionReleased()
         {
@@ -265,6 +415,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
@@ -272,7 +423,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new();
 
             // Act
-            var exceeded = pool.TryGetConnection(
+            pool.TryGetConnection(
                 new SqlConnection(""),
                 taskCompletionSource,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
@@ -285,6 +436,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(firstConnection, recycledConnection);
         }
 
+        /// <summary>
+        /// Verifies that synchronous waiters are served in request order when the pool is full,
+        /// ensuring the first queued request receives the next returned connection.
+        /// </summary>
         [Fact]
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3730")]
         public async Task GetConnectionMaxPoolSize_ShouldRespectOrderOfRequest()
@@ -300,15 +455,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
@@ -352,8 +514,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+
+            GC.KeepAlive(owningConnections);
         }
 
+        /// <summary>
+        /// Verifies that asynchronous waiters are served in request order when the pool is full,
+        /// ensuring the first queued request receives the next returned connection.
+        /// </summary>
         [Fact]
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3730")]
         public async Task GetConnectionAsyncMaxPoolSize_ShouldRespectOrderOfRequest()
@@ -369,15 +537,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 out DbConnectionInternal? firstConnection
             );
 
+            // The owning connections must stay reachable for the duration of the test. If they were
+            // collected, their internal connections would become emancipated and the pool would be
+            // entitled to reclaim them, which would defeat the pool exhaustion this test relies on.
+            List<SqlConnection> owningConnections = new();
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize; i++)
             {
+                SqlConnection owningConnection = new();
+                owningConnections.Add(owningConnection);
                 var completed = pool.TryGetConnection(
-                    new SqlConnection(),
+                    owningConnection,
                     taskCompletionSource: null,
                     TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                     out DbConnectionInternal? internalConnection
                 );
 
+                // Assert
                 Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
@@ -386,7 +561,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             TaskCompletionSource<DbConnectionInternal> failedCompletionSource = new();
 
             // Act
-            var exceeded = pool.TryGetConnection(
+            pool.TryGetConnection(
                 new SqlConnection(""),
                 recycledTaskCompletionSource,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
@@ -396,7 +571,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Gives time for the recycled connection to be queued before the failed request is initiated.
             await Task.Delay(1000);
 
-            var exceeded2 = pool.TryGetConnection(
+            pool.TryGetConnection(
                 new SqlConnection("Timeout=1"),
                 failedCompletionSource,
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(1)),
@@ -409,8 +584,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Assert
             Assert.Equal(firstConnection, recycledConnection);
             await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
+
+            GC.KeepAlive(owningConnections);
         }
 
+        /// <summary>
+        /// Verifies that a connection returned to the idle channel is reused by a subsequent
+        /// request instead of allocating a new internal connection.
+        /// </summary>
         [Fact]
         public void ConnectionsAreReused()
         {
@@ -447,6 +628,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Same(internalConnection1, internalConnection2);
         }
 
+        /// <summary>
+        /// Verifies that synchronous connection creation failures propagate the pooled-open timeout
+        /// exception from the connection factory.
+        /// </summary>
         [Fact]
         public void GetConnectionTimeout_ShouldThrowTimeoutException()
         {
@@ -469,6 +654,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
+        /// <summary>
+        /// Verifies that asynchronous connection creation failures propagate the pooled-open timeout
+        /// exception through the caller's task completion source.
+        /// </summary>
         [Fact]
         public async Task GetConnectionAsyncTimeout_ShouldThrowTimeoutException()
         {
@@ -494,13 +683,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(ADP.PooledOpenTimeout().Message, ex.Message);
         }
 
+        /// <summary>
+        /// Verifies under concurrent synchronous load that the pool never grows beyond its
+        /// configured maximum size and continues to serve requests safely.
+        /// </summary>
         [Fact]
         public void StressTest()
         {
-            //Arrange
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
             ConcurrentBag<Task> tasks = new();
 
+            // Act
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize * 3; i++)
             {
                 var t = Task.Run(() =>
@@ -524,16 +718,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
 
             Task.WaitAll(tasks.ToArray());
+
+            // Assert
             Assert.True(pool.Count <= pool.PoolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
         }
 
+        /// <summary>
+        /// Verifies under concurrent asynchronous load that the pool never grows beyond its
+        /// configured maximum size and continues to serve requests safely.
+        /// </summary>
         [Fact]
         public void StressTestAsync()
         {
-            //Arrange
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
             ConcurrentBag<Task> tasks = new();
 
+            // Act
             for (int i = 1; i < pool.PoolGroupOptions.MaxPoolSize * 3; i++)
             {
                 var t = Task.Run(async () =>
@@ -546,67 +747,120 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                         TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                         out DbConnectionInternal? internalConnection
                     );
-                    internalConnection = await taskCompletionSource.Task;
-                    pool.ReturnInternalConnection(internalConnection, owningObject);
+
+                    // A request satisfied from the pool's existing connections completes inline,
+                    // returning the connection directly and leaving the TaskCompletionSource
+                    // untouched. Only fall back to awaiting it when the request was handed off.
+                    // This mirrors how the pool's callers consume TryGetConnection.
+                    if (!completed)
+                    {
+                        internalConnection = await taskCompletionSource.Task;
+                    }
 
                     Assert.NotNull(internalConnection);
+
+                    pool.ReturnInternalConnection(internalConnection, owningObject);
                 });
                 tasks.Add(t);
             }
 
             Task.WaitAll(tasks.ToArray());
+
+            // Assert
             Assert.True(pool.Count <= pool.PoolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
         }
 
 
         #region Property Tests
 
+        /// <summary>
+        /// Verifies that the pool exposes the <see cref="SqlConnectionFactory"/> instance it was
+        /// constructed with.
+        /// </summary>
         [Fact]
         public void TestConnectionFactory()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.Equal(SuccessfulConnectionFactory, pool.ConnectionFactory);
         }
 
+        /// <summary>
+        /// Verifies that a newly constructed pool starts with zero tracked connections.
+        /// </summary>
         [Fact]
         public void TestCount()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.Equal(0, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that a newly constructed pool reports no blocking-period error by default.
+        /// </summary>
         [Fact]
         public void TestErrorOccurred()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.False(pool.ErrorOccurred);
         }
 
+        /// <summary>
+        /// Verifies that the pool assigns a positive instance identifier at construction time.
+        /// </summary>
         [Fact]
         public void TestId()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.True(pool.Id >= 1);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes the identity object it was constructed with.
+        /// </summary>
         [Fact]
         public void TestIdentity()
         {
+            // Arrange
             var identity = DbConnectionPoolIdentity.GetCurrent();
             var pool = ConstructPool(SuccessfulConnectionFactory, identity);
+
+            // Act & Assert
             Assert.Equal(identity, pool.Identity);
         }
 
+        /// <summary>
+        /// Verifies that a newly constructed pool begins in the running state.
+        /// </summary>
         [Fact]
         public void TestIsRunning()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.True(pool.IsRunning);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes the configured load-balance timeout from its pool group
+        /// options.
+        /// </summary>
         [Fact]
         public void TestLoadBalanceTimeout()
         {
+            // Arrange
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                     poolByIdentity: false,
                     minPoolSize: 0,
@@ -617,12 +871,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     idleTimeout: 0
             );
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            // Act & Assert
             Assert.Equal(poolGroupOptions.LoadBalanceTimeout, pool.LoadBalanceTimeout);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes the exact <see cref="DbConnectionPoolGroup"/> instance it
+        /// was constructed with.
+        /// </summary>
         [Fact]
         public void TestPoolGroup()
         {
+            // Arrange
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
                 new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
@@ -635,12 +896,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     hasTransactionAffinity: true,
                     idleTimeout: 0));
             var pool = ConstructPool(SuccessfulConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+
+            // Act & Assert
             Assert.Equal(dbConnectionPoolGroup, pool.PoolGroup);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes the exact <see cref="DbConnectionPoolGroupOptions"/>
+        /// instance it was constructed with.
+        /// </summary>
         [Fact]
         public void TestPoolGroupOptions()
         {
+            // Arrange
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -650,34 +918,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true,
                 idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            // Act & Assert
             Assert.Equal(poolGroupOptions, pool.PoolGroupOptions);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes the provider info object it was constructed with.
+        /// </summary>
         [Fact]
         public void TestProviderInfo()
         {
+            // Arrange
             var connectionPoolProviderInfo = new DbConnectionPoolProviderInfo();
             var pool = ConstructPool(SuccessfulConnectionFactory, connectionPoolProviderInfo: connectionPoolProviderInfo);
+
+            // Act & Assert
             Assert.Equal(connectionPoolProviderInfo, pool.ProviderInfo);
         }
 
+        /// <summary>
+        /// Verifies that the pool state getter reports <see cref="DbConnectionPoolState.Running"/>
+        /// immediately after construction.
+        /// </summary>
         [Fact]
         public void TestStateGetter()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
+        /// <summary>
+        /// Verifies that the pool state remains <see cref="DbConnectionPoolState.Running"/> after
+        /// construction when no shutdown has been requested.
+        /// </summary>
         [Fact]
         public void TestStateSetter()
         {
+            // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
+
+            // Act & Assert
             Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
+        /// <summary>
+        /// Verifies that the pool exposes whether load balancing is enabled based on its configured
+        /// pool group options.
+        /// </summary>
         [Fact]
         public void TestUseLoadBalancing()
         {
+            // Arrange
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -687,48 +982,64 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 hasTransactionAffinity: true,
                 idleTimeout: 0);
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            // Act & Assert
             Assert.Equal(poolGroupOptions.UseLoadBalancing, pool.UseLoadBalancing);
         }
 
         #endregion
 
-        #region Not Implemented Method Tests
+        #region Replace Connection Tests
 
-        [Fact]
-        public void TestPutObjectFromTransactedPool()
-        {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
-        }
-
+        /// <summary>
+        /// Verifies that <see cref="ChannelDbConnectionPool.ReplaceConnection(System.Data.Common.DbConnection, Microsoft.Data.ProviderBase.DbConnectionInternal, Microsoft.Data.ProviderBase.TimeoutTimer)"/>
+        /// replaces a checked-out connection with a new, distinct connection instance.
+        /// </summary>
         [Fact]
         public void TestReplaceConnection()
         {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+            // Arrange
+            var fakeTime = new FakeTimeProvider();
+            var pool = ConstructPool(SuccessfulConnectionFactory, timeProvider: fakeTime);
+            SqlConnection owner = new();
+
+            pool.TryGetConnection(
+                owner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? oldConnection);
+
+            Assert.NotNull(oldConnection);
+
+            var newConnection = pool.ReplaceConnection(owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            Assert.NotNull(newConnection);
+            Assert.NotSame(oldConnection, newConnection);
         }
 
-        [Fact]
-        public void TestTransactionEnded()
-        {
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
-        }
         #endregion
 
         #region Pool Clear Tests
 
+        /// <summary>
+        /// Verifies that clearing an empty pool is a no-op and leaves the pool in a valid state.
+        /// </summary>
         [Fact]
         public void Clear_EmptyPool_DoesNotThrow()
         {
             // Arrange
             var pool = ConstructPool(SuccessfulConnectionFactory);
 
-            // Act & Assert - Should complete without error
+            // Act
             pool.Clear();
+
+            // Assert
             Assert.Equal(0, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that clearing a pool with only idle connections destroys them immediately and
+        /// leaves the pool empty.
+        /// </summary>
         [Fact]
         public void Clear_MultipleIdleConnections_AllAreDestroyed()
         {
@@ -763,6 +1074,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that clearing the pool does not immediately destroy a connection that is still
+        /// checked out by a caller.
+        /// </summary>
         [Fact]
         public void Clear_BusyConnection_NotDestroyedImmediately()
         {
@@ -787,6 +1102,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, busyConnection.ClearGeneration);
         }
 
+        /// <summary>
+        /// Verifies that a busy connection checked out during <see cref="ChannelDbConnectionPool.Clear"/>
+        /// is destroyed when it is later returned because its generation is stale.
+        /// </summary>
         [Fact]
         public void Clear_BusyConnectionReturned_IsDestroyed()
         {
@@ -816,6 +1135,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that clearing a pool with both busy and idle connections destroys only the idle
+        /// connections immediately and defers busy-connection cleanup until return.
+        /// </summary>
         [Fact]
         public void Clear_MixedBusyAndIdle_OnlyIdleDestroyedImmediately()
         {
@@ -856,6 +1179,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
+        /// <summary>
+        /// Verifies that connections created after a clear are stamped with the new generation and
+        /// are pooled and reused normally.
+        /// </summary>
         [Fact]
         public void Clear_NewConnectionsAfterClear_ArePooledNormally()
         {
@@ -905,6 +1232,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(1, reusedConnection!.ClearGeneration);
         }
 
+        /// <summary>
+        /// Verifies that repeated clear operations do not corrupt pool state and that each clear
+        /// increments the pool generation as expected.
+        /// </summary>
         [Fact]
         public void Clear_MultipleClearCalls_DoNotCorruptState()
         {
@@ -1157,10 +1488,36 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         #endregion
 
         #region Test classes
+
+        /// <summary>
+        /// Test connection factory that always succeeds and captures the timeout budget passed in by
+        /// the pool so timeout propagation can be asserted.
+        /// </summary>
         internal class SuccessfulSqlConnectionFactory : SqlConnectionFactory
         {
+            internal SuccessfulSqlConnectionFactory()
+            {
+            }
+
+            /// <summary>
+            /// Constructs a factory reporting to <paramref name="metrics"/> instead of the
+            /// process-wide default, so a test can assert exact counters on the same instance
+            /// used by the pool under test.
+            /// </summary>
+            internal SuccessfulSqlConnectionFactory(ISqlClientMetrics metrics)
+                : base(metrics)
+            {
+            }
+
+            /// <summary>
+            /// Gets the last timeout budget passed through by the pool to the factory.
+            /// </summary>
             internal TimeoutTimer? CapturedTimeout { get; private set; }
 
+            /// <summary>
+            /// Creates a successful stub internal connection and records the timeout budget used for
+            /// the creation attempt.
+            /// </summary>
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
                 ConnectionPoolKey poolKey,
@@ -1170,12 +1527,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
-                return new StubDbConnectionInternal();
+                return new StubDbConnectionInternal(Metrics);
             }
         }
 
+        /// <summary>
+        /// Test connection factory that always throws the pooled-open timeout to exercise failure
+        /// paths in the pool.
+        /// </summary>
         internal class TimeoutSqlConnectionFactory : SqlConnectionFactory
         {
+            /// <summary>
+            /// Throws the pooled-open timeout exception to simulate a failed physical connection
+            /// creation.
+            /// </summary>
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
                 ConnectionPoolKey poolKey,
@@ -1188,8 +1553,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
+        /// <summary>
+        /// Minimal <see cref="DbConnectionInternal"/> test double used by the pool tests to avoid
+        /// involving a real provider-specific connection implementation.
+        /// </summary>
         internal class StubDbConnectionInternal : DbConnectionInternal
         {
+            internal StubDbConnectionInternal(ISqlClientMetrics? metrics = null)
+                : base(metrics)
+            {
+            }
+
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
 
@@ -1202,12 +1576,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             public override void EnlistTransaction(Transaction transaction)
             {
-                return;
+                if (transaction != null)
+                {
+                    EnlistedTransaction = transaction;
+                }
             }
 
             protected override void Activate(Transaction transaction)
             {
-                return;
+                EnlistedTransaction = transaction;
             }
 
             protected override void Deactivate()
@@ -1223,6 +1600,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
         #endregion
 
+        /// <summary>
+        /// Verifies that constructing the pool with a zero max pool size fails with the expected
+        /// capacity validation error.
+        /// </summary>
         [Fact]
         public void Constructor_WithZeroMaxPoolSize_ThrowsArgumentOutOfRangeException()
         {
@@ -1242,23 +1623,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 poolGroupOptions
             );
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => 
+            // Act
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new ChannelDbConnectionPool(
                     SuccessfulConnectionFactory,
                     dbConnectionPoolGroup,
                     DbConnectionPoolIdentity.NoIdentity,
                     new DbConnectionPoolProviderInfo()
                 ));
-            
+
+            // Assert
             Assert.Equal("fixedCapacity", exception.ParamName);
             Assert.Contains("Capacity must be greater than zero", exception.Message);
         }
 
+        /// <summary>
+        /// Verifies that large but valid max pool sizes pass capacity validation and either succeed
+        /// or fail only due to memory pressure rather than argument validation.
+        /// </summary>
         [Fact]
         public void Constructor_WithLargeMaxPoolSize()
         {
-            // Arrange - Test that Int32.MaxValue is accepted as a valid pool size
+            // Arrange
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -1276,7 +1662,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             try
             {
-                // Act & Assert - This should not throw ArgumentOutOfRangeException, but may throw OutOfMemoryException
+                // Act
                 var pool = new ChannelDbConnectionPool(
                     SuccessfulConnectionFactory,
                     dbConnectionPoolGroup,
@@ -1284,6 +1670,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     new DbConnectionPoolProviderInfo()
                 );
 
+                // Assert
                 Assert.NotNull(pool);
                 Assert.Equal(0, pool.Count);
             }
@@ -1295,12 +1682,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
+        /// <summary>
+        /// Verifies that small valid max pool sizes construct successfully and produce usable pool
+        /// instances.
+        /// </summary>
         [Fact]
         public void Constructor_WithValidSmallPoolSizes_WorksCorrectly()
         {
-            // Arrange - Test various small pool sizes that should work correctly
-            
-            // Test with pool size of 1
+            // Arrange
             var poolGroupOptions1 = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -1316,7 +1705,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 poolGroupOptions1
             );
 
-            // Act & Assert - Pool size of 1 should work
+            // Act
             var pool1 = new ChannelDbConnectionPool(
                 SuccessfulConnectionFactory,
                 dbConnectionPoolGroup1,
@@ -1324,10 +1713,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionPoolProviderInfo()
             );
 
+            // Assert
             Assert.NotNull(pool1);
             Assert.Equal(0, pool1.Count);
 
-            // Test with pool size of 2
+            // Arrange
             var poolGroupOptions2 = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
@@ -1343,6 +1733,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 poolGroupOptions2
             );
 
+            // Act
             var pool2 = new ChannelDbConnectionPool(
                 SuccessfulConnectionFactory,
                 dbConnectionPoolGroup2,
@@ -1350,9 +1741,738 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionPoolProviderInfo()
             );
 
+            // Assert
             Assert.NotNull(pool2);
             Assert.Equal(0, pool2.Count);
         }
+
+        #region Rate Limiting And Blocking Period Tests
+
+        /// <summary>
+        /// Verifies that a connection creation failure enters the blocking-period error state when
+        /// blocking is enabled for the pool, and stays out of it when blocking is disabled. The
+        /// blocking policy is driven by the connection string's Pool Blocking Period:
+        /// Default/Auto enable blocking for a non-Azure host, AlwaysBlock forces it on,
+        /// and NeverBlock suppresses it. FR-006, FR-007.
+        /// </summary>
+        /// <remarks>
+        /// The Auto cases here assert the real Auto => "not an Azure endpoint" => blocking mapping,
+        /// so they cannot pin Pool Blocking Period to sidestep endpoint classification. They
+        /// deliberately avoid the data source "localhost": ADPHelper (used by the simulated-server
+        /// Azure routing tests) temporarily registers "localhost" as an Azure endpoint in the
+        /// process-wide ADP.s_azureSqlServerEndpoints list. Because a pool decides whether blocking
+        /// is enabled exactly once, in its constructor, a pool built inside that window would
+        /// classify localhost as Azure and never block, making these assertions flaky under
+        /// parallel collection execution.
+        /// </remarks>
+        [Theory]
+        [InlineData("", true)]                                // Default (unspecified) => Auto => blocks for non-Azure host
+        [InlineData("Pool Blocking Period=Auto;", true)]      // Auto => blocks for non-Azure host
+        [InlineData("Pool Blocking Period=NeverBlock;", false)]
+        [InlineData("Pool Blocking Period=AlwaysBlock;", true)]
+        public void ErrorOccurred_OnFailure_FollowsBlockingPeriod(string blockingPeriodClause, bool expectErrorOccurred)
+        {
+            // Arrange
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions($"Data Source=non-azure-test-host;{blockingPeriodClause}"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 4,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
+            var pool = ConstructPool(TimeoutConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+
+            // Act
+            Assert.False(pool.ErrorOccurred);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+
+            // Assert
+            Assert.Equal(expectErrorOccurred, pool.ErrorOccurred);
+        }
+
+        /// <summary>
+        /// Verifies that once the pool enters the blocking period, subsequent synchronous requests
+        /// fail fast with the cached exception without attempting another physical open.
+        /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock: this test needs blocking enabled but is not
+        /// testing endpoint classification, and leaving it on Auto would make it depend on
+        /// "localhost" not being registered as an Azure endpoint by a concurrently running test
+        /// (see ErrorOccurred_OnFailure_FollowsBlockingPeriod for the full explanation).
+        /// </remarks>
+        [Fact]
+        public void ErrorOccurred_BlockingEnabled_SubsequentRequestFastFails()
+        {
+            // Arrange
+            var factory = new CountingTimeoutConnectionFactory();
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 4,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
+            var pool = ConstructPool(factory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+
+            // Act
+            var first = Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+            Assert.Equal(1, factory.CreateCount);
+
+            // FR-006: subsequent requests inside the blocking window must fail fast with the
+            // cached exception without attempting another physical open.
+            var second = Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+
+            // Assert - the second request reused the cached exception and did not invoke
+            // CreateConnection again while the pool remained in the error state.
+            Assert.Equal(first.Message, second.Message);
+            Assert.True(pool.ErrorOccurred);
+            Assert.Equal(1, factory.CreateCount);
+        }
+
+        /// <summary>
+        /// Verifies that clearing the pool while in the blocking-period error state resets the
+        /// externally visible error indicator.
+        /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
+        [Fact]
+        public void Clear_InErrorState_ResetsErrorOccurred()
+        {
+            // Arrange
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 4,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
+            var pool = ConstructPool(TimeoutConnectionFactory, dbConnectionPoolGroup: dbConnectionPoolGroup);
+
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Act - FR-011: Clear must reset the error state.
+            pool.Clear();
+
+            // Assert
+            Assert.False(pool.ErrorOccurred);
+        }
+
+        /// <summary>
+        /// Verifies the pool's blocking-period recovery path end-to-end: a creation failure enters
+        /// the blocking period (fast-failing subsequent requests without touching the factory), and
+        /// once the backoff interval elapses the pool leaves the blocking period so a later create
+        /// succeeds and clears the error state. The blocking-period exit timer is driven with a
+        /// <see cref="FakeTimeProvider"/> so the test is deterministic and does not wait on
+        /// wall-clock time. FR-006, FR-009.
+        /// </summary>
+        /// <remarks>
+        /// Pins Pool Blocking Period to AlwaysBlock so entering the error state does not depend on
+        /// endpoint classification. See ErrorOccurred_OnFailure_FollowsBlockingPeriod.
+        /// </remarks>
+        [Fact]
+        public void Failure_ThenBlockingPeriodExpiry_AllowsSuccessfulCreate()
+        {
+            // Arrange
+            var factory = new ToggleFailureConnectionFactory();
+            var fakeTime = new FakeTimeProvider();
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=AlwaysBlock;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 4,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
+            var pool = ConstructPool(factory, dbConnectionPoolGroup: dbConnectionPoolGroup, timeProvider: fakeTime);
+
+            // The first create fails and enters the blocking period.
+            factory.FailNextCreate = true;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Even though creates would now succeed, requests issued inside the blocking window
+            // still fast-fail with the cached exception without reaching the factory. Flipping the
+            // factory to succeed and still observing a throw proves the create path never ran.
+            factory.FailNextCreate = false;
+            Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _));
+            Assert.True(pool.ErrorOccurred);
+
+            // Advancing past the initial backoff fires the exit timer, ending the blocking period.
+            // FakeTimeProvider invokes the timer callback synchronously, so the error state clears
+            // before the next line runs.
+            fakeTime.Advance(TimeSpan.FromSeconds(5));
+            Assert.False(pool.ErrorOccurred);
+
+            // Act - a create after the blocking period succeeds and leaves the pool healthy.
+            var completed = pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out var conn);
+
+            // Assert
+            Assert.True(completed);
+            Assert.NotNull(conn);
+            Assert.False(pool.ErrorOccurred);
+        }
+
+        /// <summary>
+        /// Verifies that an available rate-limiter permit allows the pool to create a physical
+        /// connection immediately and that the permit is released after the open completes.
+        /// </summary>
+        [Fact]
+        public void RateLimiter_PermitAvailable_CreatesPhysicalConnection()
+        {
+            // Arrange
+            var factory = new CountingSuccessfulConnectionFactory();
+            using var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var pool = ConstructPool(
+                factory,
+                connectionCreationRateLimiter: rateLimiter);
+
+            // Act
+            bool completed = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? connection);
+
+            // Assert
+            Assert.True(completed);
+            Assert.NotNull(connection);
+            Assert.Equal(1, factory.CreateCount);
+            // The single permit was acquired for the open and released afterwards, so it is
+            // available again once the connection has been handed back to the caller.
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
+        /// Verifies that a successful physical open releases its rate-limiter lease so that a
+        /// subsequent open can acquire the same permit. With a single-permit limiter, a leaked
+        /// lease would deny the second open and force connection reuse, leaving CreateCount at 1.
+        /// </summary>
+        [Fact]
+        public void RateLimiter_SuccessfulCreate_ReleasesLeaseForNextCreate()
+        {
+            // Arrange
+            var factory = new CountingSuccessfulConnectionFactory();
+            using var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(
+                factory,
+                poolGroupOptions: poolGroupOptions,
+                connectionCreationRateLimiter: rateLimiter);
+
+            // Act
+            // Two distinct owners so neither open can be satisfied by reusing the other's
+            // connection - each must acquire a fresh permit and create a physical connection.
+            bool firstCompleted = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? firstConnection);
+            bool secondCompleted = pool.TryGetConnection(
+                new SqlConnection(),
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? secondConnection);
+
+            // Assert
+            Assert.True(firstCompleted);
+            Assert.True(secondCompleted);
+            Assert.NotNull(firstConnection);
+            Assert.NotNull(secondConnection);
+            Assert.NotSame(firstConnection, secondConnection);
+            // The second create only succeeds if the first release returned the single permit.
+            Assert.Equal(2, factory.CreateCount);
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
+        /// Verifies the FR-004 behavior that releasing a rate-limiter lease lets a caller which
+        /// could not obtain a permit go on to create its own physical connection. Caller A holds the
+        /// single permit while it creates, so caller B cannot create until A releases its lease;
+        /// because A never returns its connection, B cannot reuse one and must open its own. When B
+        /// has already parked on the idle channel this covers the lease-release wake poke, but the
+        /// assertions hold in every interleaving. Runs both the sync and async open paths.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task RateLimiter_LeaseReleaseAllowsRateLimitedWaiterToCreatePhysicalConnection(bool async)
+        {
+            // Both open paths below dispatch physical creation onto the thread pool (via Task.Run),
+            // and caller A blocks a worker thread inside gated creation while holding the only
+            // permit. On a busy or low-core CI agent, thread-pool ramp-up can then delay caller B's
+            // dispatched permit attempt past the 5s wait below (the historical flaky failure:
+            // "Timed out waiting for the second request to be denied by the rate limiter"). Raise
+            // the worker-thread floor so both dispatched bodies are scheduled promptly. Raising the
+            // floor is benign and is intentionally not restored so it cannot be lowered underneath
+            // other tests running in parallel.
+            ThreadPool.GetMinThreads(out int minWorker, out int minIo);
+            if (minWorker < 16)
+            {
+                Assert.True(ThreadPool.SetMinThreads(16, minIo), "Failed to raise ThreadPool minimum worker threads.");
+            }
+
+            // Arrange
+            using var createGate = new ManualResetEventSlim(initialState: false);
+            var factory = new GatedSuccessfulConnectionFactory(createGate);
+            using var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                // Headroom so the lease-release poke fires deterministically. That poke is gated on
+                // ReservationCount < MaxPoolSize, and a denied waiter (B) still holds a transient
+                // slot reservation while it unwinds (ConnectionPoolSlots.Add only releases it when
+                // the createCallback returns null). When A releases, the count can momentarily be
+                // A's own in-flight reservation plus B's (2), so MaxPoolSize must exceed 2 for the
+                // poke to fire regardless of how far B has unwound. The idle channel is unbounded, so
+                // once fired the poke is buffered and never lost even if B parks just after it.
+                maxPoolSize: 3,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(
+                factory,
+                poolGroupOptions: poolGroupOptions,
+                connectionCreationRateLimiter: rateLimiter);
+
+            Task<DbConnectionInternal?> Open(SqlConnection owner)
+            {
+                if (async)
+                {
+                    // The async path dispatches the open onto the thread pool and completes the TCS,
+                    // so this returns immediately while creation proceeds on another thread.
+                    var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                    pool.TryGetConnection(owner, tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _);
+                    return tcs.Task!;
+                }
+
+                return Task.Run(() =>
+                {
+                    pool.TryGetConnection(
+                        owner,
+                        taskCompletionSource: null,
+                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                        out DbConnectionInternal? c);
+                    return c;
+                });
+            }
+
+            // Act
+            // Caller A acquires the only permit and blocks inside creation, holding the permit.
+            SqlConnection ownerA = new();
+            Task<DbConnectionInternal?> requestA = Open(ownerA);
+            Assert.True(
+                factory.FirstCreateStarted.Wait(TimeSpan.FromSeconds(5)),
+                "Timed out waiting for the first open to begin physical creation.");
+
+            // Caller B is denied a permit (A holds it) and falls back to the idle-channel wait.
+            Task<DbConnectionInternal?> requestB = Open(new SqlConnection());
+
+            // Release A's create. A finishes, disposes its lease (returning the permit) and then
+            // pokes the idle channel. Because the permit is released before the poke and the channel
+            // is unbounded, B is guaranteed to observe the wake - whether it already parked or reads
+            // the buffered poke afterward - and then acquires the now-free permit. B has no idle
+            // connection to reuse (A never returns its connection), so this deterministically forces
+            // B to create its own physical connection with no reliance on spin/sleep timing.
+            createGate.Set();
+
+            DbConnectionInternal? connectionA = await requestA;
+            DbConnectionInternal? connectionB = await requestB;
+
+            // Assert
+            Assert.NotNull(connectionA);
+            Assert.NotNull(connectionB);
+            // B was woken by the lease-release poke and created a fresh connection; A never returned
+            // its connection, so this cannot be reuse.
+            Assert.NotSame(connectionA, connectionB);
+            Assert.Equal(2, factory.CreateCount);
+            Assert.Equal(1, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
+        /// Verifies that when the rate limiter denies a new physical open, the caller reuses a
+        /// connection returned to the pool instead of forcing a second create. The single permit is
+        /// held for the whole test, so the pool can never open a second connection; the waiting
+        /// request can only complete by reusing the returned connection.
+        /// </summary>
+        [Fact]
+        public async Task RateLimiter_PermitDenied_ReusesReturnedConnection()
+        {
+            // Arrange
+            var factory = new CountingSuccessfulConnectionFactory();
+            using var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 1, QueueLimit = 0 });
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                // Room to grow: a free slot remains after the first connection is checked out, so
+                // the only thing that can stop the second request from opening a new physical
+                // connection is the rate limiter - not pool exhaustion.
+                maxPoolSize: 2,
+                creationTimeout: 15,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(
+                factory,
+                poolGroupOptions: poolGroupOptions,
+                connectionCreationRateLimiter: rateLimiter);
+            SqlConnection firstOwner = new();
+
+            // The first open acquires and releases the single permit, creating a physical
+            // connection that the second request can later reuse.
+            pool.TryGetConnection(
+                firstOwner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? firstConnection);
+            Assert.NotNull(firstConnection);
+            Assert.Equal(1, factory.CreateCount);
+
+            // Hold the single permit for the remainder of the test. This is the invariant the
+            // assertions rely on: while the permit is held, every AttemptAcquire the pool makes is
+            // denied, so the second request can never create a physical connection. Its only path
+            // to a connection is to reuse one returned to the pool. That makes the outcome
+            // independent of thread scheduling - no polling for the denial, no spin, no sleep.
+            using RateLimitLease heldLease = rateLimiter.AttemptAcquire(1);
+            Assert.True(heldLease.IsAcquired);
+
+            // Act
+            // The second request finds no idle connection and is denied a permit, so it parks on
+            // the idle channel waiting for a returned connection. It runs on a background thread
+            // because the sync pool path blocks the caller until a connection becomes available.
+            Task<DbConnectionInternal?> waitingRequest = Task.Run(() =>
+            {
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                    out DbConnectionInternal? queuedConnection);
+                return queuedConnection;
+            });
+
+            // Return the first connection. With the permit held, this is the only connection the
+            // waiting request can obtain, so it deterministically completes by reusing it -
+            // whether it grabs it from the idle channel directly or is woken from its parked wait.
+            pool.ReturnInternalConnection(firstConnection!, firstOwner);
+            DbConnectionInternal? reusedConnection = await waitingRequest;
+
+            // Assert
+            // Same instance reused, and the factory was never asked to create a second connection:
+            // proof the held permit blocked a new open despite the free pool slot, forcing reuse.
+            Assert.Same(firstConnection, reusedConnection);
+            Assert.Equal(1, factory.CreateCount);
+        }
+
+        /// <summary>
+        /// Verifies that failed connection attempts release any acquired rate-limiter lease so the
+        /// pool does not starve future callers after repeated failures.
+        /// </summary>
+        [Fact]
+        public async Task RateLimiter_LeaseDisposedOnFailure_DoesNotStarvePool()
+        {
+            // Arrange
+            // If the rate limiter lease were not disposed on failure, after N failures (where N is
+            // the limiter's permit count) every subsequent request would deadlock. Verify that we
+            // can keep getting failures back without ever blocking the thread pool.
+            using var rateLimiter = new ConcurrencyLimiter(
+                new ConcurrencyLimiterOptions { PermitLimit = 4, QueueLimit = 0 });
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions("Data Source=localhost;Pool Blocking Period=NeverBlock;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                new DbConnectionPoolGroupOptions(
+                    poolByIdentity: false,
+                    minPoolSize: 0,
+                    maxPoolSize: 4,
+                    creationTimeout: 15,
+                    loadBalanceTimeout: 0,
+                    hasTransactionAffinity: true,
+                    idleTimeout: 0));
+            var pool = ConstructPool(
+                TimeoutConnectionFactory,
+                dbConnectionPoolGroup: dbConnectionPoolGroup,
+                connectionCreationRateLimiter: rateLimiter);
+
+            // Act & Assert
+            for (int i = 0; i < 8; i++)
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                {
+                    var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                    pool.TryGetConnection(new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _);
+                    await tcs.Task;
+                });
+            }
+
+            // Every failed open disposes its rate-limiter lease in the createCallback's finally as
+            // the failure unwinds - which happens before that failure propagates to complete the
+            // awaited request. So once all opens above have thrown, all four permits are already
+            // back in the limiter; there is nothing to wait for and no need to poll.
+            Assert.Equal(4, rateLimiter.GetStatistics()!.CurrentAvailablePermits);
+        }
+
+        /// <summary>
+        /// Test connection factory that can be toggled between failure and success to exercise pool
+        /// recovery behavior after blocking-period entry.
+        /// </summary>
+        internal class ToggleFailureConnectionFactory : SqlConnectionFactory
+        {
+            /// <summary>
+            /// Gets or sets whether the next connection creation attempt should fail.
+            /// </summary>
+            public bool FailNextCreate { get; set; }
+
+            /// <summary>
+            /// Creates a stub connection or throws the pooled-open timeout based on
+            /// <see cref="FailNextCreate"/>.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                if (FailNextCreate)
+                {
+                    throw ADP.PooledOpenTimeout();
+                }
+
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        /// <summary>
+        /// Test connection factory that always throws the pooled-open timeout and records how many
+        /// physical connection creations the pool attempted, so blocking-period tests can assert
+        /// that subsequent requests fail fast without invoking another open.
+        /// </summary>
+        internal sealed class CountingTimeoutConnectionFactory : SqlConnectionFactory
+        {
+            /// <summary>
+            /// Gets the number of times the pool asked the factory to create a physical connection.
+            /// </summary>
+            internal int CreateCount { get; private set; }
+
+            /// <summary>
+            /// Increments the creation counter and throws the pooled-open timeout exception to
+            /// simulate a failed physical connection creation.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                CreateCount++;
+                throw ADP.PooledOpenTimeout();
+            }
+        }
+
+        /// <summary>
+        /// Test connection factory that returns a successful stub connection each time and records
+        /// how many physical connection creations the pool attempted, so rate-limiting tests can
+        /// assert how often the pool actually opened a connection.
+        /// </summary>
+        internal sealed class CountingSuccessfulConnectionFactory : SqlConnectionFactory
+        {
+            /// <summary>
+            /// Gets the number of times the pool asked the factory to create a physical connection.
+            /// </summary>
+            internal int CreateCount { get; private set; }
+
+            /// <summary>
+            /// Creates a successful stub internal connection and increments the creation counter.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                CreateCount++;
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        /// <summary>
+        /// Test connection factory that blocks inside its first physical creation until an external
+        /// gate is released, so a test can hold a rate-limiter permit in-flight while orchestrating
+        /// a second caller. Counts creations and signals when the first creation begins.
+        /// </summary>
+        internal sealed class GatedSuccessfulConnectionFactory : SqlConnectionFactory
+        {
+            private readonly ManualResetEventSlim _createGate;
+            private int _createCount;
+
+            internal GatedSuccessfulConnectionFactory(ManualResetEventSlim createGate)
+            {
+                _createGate = createGate;
+            }
+
+            /// <summary>
+            /// Gets the number of times the pool asked the factory to create a physical connection.
+            /// </summary>
+            internal int CreateCount => Volatile.Read(ref _createCount);
+
+            /// <summary>
+            /// Signaled when the first physical creation begins, before it blocks on the gate.
+            /// </summary>
+            internal ManualResetEventSlim FirstCreateStarted { get; } = new(initialState: false);
+
+            /// <summary>
+            /// Creates a successful stub connection. The first creation signals that it has started
+            /// and then blocks on the gate, holding whatever rate-limiter permit it acquired until
+            /// the test releases it; subsequent creations complete immediately.
+            /// </summary>
+            protected override DbConnectionInternal CreateConnection(
+                SqlConnectionOptions options,
+                ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                TimeoutTimer timeout)
+            {
+                if (Interlocked.Increment(ref _createCount) == 1)
+                {
+                    FirstCreateStarted.Set();
+                    _createGate.Wait();
+                }
+
+                return new StubDbConnectionInternal();
+            }
+        }
+
+        #endregion
+
+        #region Saturated Sync Wait Tests
+
+        /// <summary>
+        /// Verifies that the saturated synchronous checkout path makes forward progress when every
+        /// waiter is blocked in <c>ReadChannelSyncOverAsync</c> on a threadpool thread. This is the
+        /// net462 guard for that path, where the wake-up gets no cooperative-blocking notification;
+        /// it asserts liveness only, since the frameworks legitimately differ on latency.
+        /// </summary>
+        [Fact]
+        public void SyncCheckout_WhenSaturatedOnThreadPoolThreads_AllWaitersMakeProgress()
+        {
+            // Arrange
+            const int MaxPoolSize = 4;
+            ThreadPool.GetMinThreads(out int minWorker, out _);
+
+            // More blocked waiters than the pool can serve AND than the threadpool floor, so the
+            // wake path is exercised rather than every worker simply getting its own thread.
+            // Deliberately uncapped: any ceiling would silently stop saturating on a host whose
+            // floor already exceeds it, turning this into a no-op exactly where it matters most.
+            int workerCount = minWorker + MaxPoolSize + 8;
+
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: MaxPoolSize,
+                // Generous: a healthy run finishes far inside this, while a genuinely stuck wake
+                // path still fails the test rather than hanging the suite forever.
+                creationTimeout: 60,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+            var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
+
+            using var startGate = new ManualResetEventSlim(initialState: false);
+            var acquired = new ConcurrentBag<bool>();
+            var failures = new ConcurrentBag<Exception>();
+            var workers = new Task[workerCount];
+
+            // Act: release every worker at once so they pile onto the pool together.
+            for (int i = 0; i < workerCount; i++)
+            {
+                workers[i] = Task.Factory.StartNew(
+                    () =>
+                    {
+                        try
+                        {
+                            startGate.Wait();
+                            bool got = pool.TryGetConnection(
+                                new SqlConnection(),
+                                taskCompletionSource: null,
+                                TimeoutTimer.StartNew(TimeSpan.FromSeconds(60)),
+                                out DbConnectionInternal? connection);
+
+                            acquired.Add(got && connection is not null);
+
+                            // Return promptly: with MaxPoolSize connections shared by every worker,
+                            // each return is what wakes the next waiter.
+                            if (connection is not null)
+                            {
+                                pool.ReturnInternalConnection(connection, connection.Owner);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            failures.Add(ex);
+                        }
+                    },
+                    CancellationToken.None,
+                    // LongRunning would hand each worker a dedicated thread, which is precisely the
+                    // starvation this test needs to reproduce. Keep them on threadpool threads.
+                    TaskCreationOptions.None,
+                    TaskScheduler.Default);
+            }
+
+            startGate.Set();
+
+            // Assert
+            Assert.True(
+                Task.WaitAll(workers, TimeSpan.FromSeconds(120)),
+                $"Saturated sync checkout did not drain: {acquired.Count} of {workerCount} workers " +
+                "finished. The waiter wake path is not making progress on this framework.");
+            Assert.Empty(failures);
+            Assert.Equal(workerCount, acquired.Count);
+            Assert.DoesNotContain(false, acquired);
+        }
+
+        #endregion
 
         #region Connection Timeout Awareness Tests
 
@@ -1368,6 +2488,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// advancing virtual time deterministically expires only the short-timeout
         /// caller's CTS without consuming any wall-clock time.
         /// </remarks>
+        //
+        // Flaky/hang-prone under CI load: caller A runs TryGetConnection on a background
+        // task that blocks on the pool's channel wait. The test then calls
+        // fakeTime.Advance(2s) to fire A's timeout CTS. If Advance runs before A has
+        // subscribed its wait to the fake time provider, A's cancellation is missed and A
+        // blocks forever, so `await callerATask` never returns — the testhost sits idle
+        // until the 10-minute --blame-hang timeout aborts the whole run. This is a
+        // virtual-time-vs-subscription race in the test, not a pool defect; it cannot be
+        // made deterministic without a barrier guaranteeing A is parked before Advance.
+        //
+        //     The active test run was aborted. Reason: Test host process crashed
+        //     Data collector 'Blame' message: The specified inactivity time of 10 minutes has elapsed. Collecting hang dumps from testhost and its child processes.
+        //     The test running when the crash occurred:
+        //     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest.ConcurrentCallers_ShouldTimeoutIndependently
+        //     testhost_7576_20260724T235829_hangdump.dmp
+        [Trait("category", "flaky")]
         [Fact]
         public async Task ConcurrentCallers_ShouldTimeoutIndependently()
         {

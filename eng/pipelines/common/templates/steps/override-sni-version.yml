@@ -42,6 +42,19 @@ steps:
       # add the new package source
       $packageSources.AppendChild($newSource)
 
+      # Exact mappings take precedence over the governed feed's wildcard, ensuring validation SNI
+      # packages are restored from this source. Both package IDs are externally produced and are
+      # therefore intentionally not eligible for the repository's local feed.
+      $packageSourceMapping = $xml.SelectSingleNode('//ns:packageSourceMapping', $nsm)
+      $newMapping = $xml.CreateElement("packageSource")
+      $newMapping.SetAttribute("key","SNIValidation")
+      foreach ($packageId in @("Microsoft.Data.SqlClient.SNI", "Microsoft.Data.SqlClient.SNI.runtime")) {
+        $package = $xml.CreateElement("package")
+        $package.SetAttribute("pattern", $packageId)
+        $newMapping.AppendChild($package)
+      }
+      $packageSourceMapping.AppendChild($newMapping)
+
       # save the xml file
       $xml.Save($NugetCfg)
       type $NugetCfg

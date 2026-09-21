@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
     /// <summary>

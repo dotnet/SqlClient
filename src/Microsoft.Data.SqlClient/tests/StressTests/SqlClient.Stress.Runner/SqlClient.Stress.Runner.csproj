@@ -10,7 +10,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <!-- In "Package" mode the reference to MDS resolves to its NuGet package, so the stress tests -->
+    <!-- build against a fully-packaged driver. Package mode is selected by setting the build      -->
+    <!-- parameter ReferenceType to "Package". Otherwise the build defaults to a project reference. -->
+    <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'" />
 
     <ProjectReference Include="$(StressRoot)/IMonitorLoader/IMonitorLoader.csproj" />
     <ProjectReference Include="$(StressRoot)/SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />

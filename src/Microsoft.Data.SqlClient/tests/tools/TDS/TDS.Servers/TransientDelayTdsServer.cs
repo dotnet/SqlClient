@@ -15,6 +15,18 @@ namespace Microsoft.SqlServer.TDS.Servers
     {
         private int RequestCounter = 0;
 
+        /// <summary>
+        /// Cancelled on Dispose to interrupt any in-progress delay so that the
+        /// processor task can complete promptly and Dispose does not block
+        /// waiting for a sleep to elapse.
+        /// </summary>
+        private readonly CancellationTokenSource _disposeCts = new CancellationTokenSource();
+
+        /// <summary>
+        /// Guards against running Dispose logic more than once.
+        /// </summary>
+        private bool _disposed;
+
         public TransientDelayTdsServer(TransientDelayTdsServerArguments arguments) 
             : base(arguments)
         {
@@ -28,8 +40,37 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <inheritdoc/>
         public override void Dispose()
         {
-            base.Dispose();
-            RequestCounter = 0;
+            // Guard against multiple Dispose calls: cancelling/disposing the CTS twice would
+            // throw ObjectDisposedException and break test teardown paths.
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+
+            try
+            {
+                // Wake any in-progress delay before joining the processor task.
+                _disposeCts.Cancel();
+                base.Dispose();
+                RequestCounter = 0;
+            }
+            finally
+            {
+                // Always release the CTS, even if base.Dispose() throws.
+                _disposeCts.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Waits for the configured delay, returning early if the server is being
+        /// disposed.
+        /// </summary>
+        private void Delay()
+        {
+            // WaitHandle.WaitOne returns immediately once the token is cancelled;
+            // otherwise it blocks for the full delay duration.
+            _disposeCts.Token.WaitHandle.WaitOne(Arguments.DelayDuration);
         }
 
         /// <summary>
@@ -41,9 +82,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             if (Arguments.IsEnabledPermanentDelay ||
                 (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
-                Thread.Sleep(Arguments.DelayDuration);
+                Delay();
 
-                RequestCounter++;
+                Interlocked.Increment(ref RequestCounter);
             }
 
             // Return login response from the base class
@@ -56,9 +97,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             if (Arguments.IsEnabledPermanentDelay ||
                 (Arguments.IsEnabledTransientDelay && RequestCounter < Arguments.RepeatCount))
             {
-                Thread.Sleep(Arguments.DelayDuration);
+                Delay();
 
-                RequestCounter++;
+                Interlocked.Increment(ref RequestCounter);
             }
 
             return base.OnSQLBatchRequest(session, message);

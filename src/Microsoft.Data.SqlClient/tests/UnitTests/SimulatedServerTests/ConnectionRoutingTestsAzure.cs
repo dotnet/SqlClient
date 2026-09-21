@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     // TODO: Do we need this collection?  It serializes all tests within it, which we probably don't
     // need since each test uses its own TDS Server with ephemeral listen port.
-    [Collection("SimulatedServerTests")]
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionRoutingTestsAzure : IDisposable
     {
         private ADPHelper adpHelper;
@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
             using SqlConnection connection = new(builder.ConnectionString);
             Assert.Throws<SqlException>(() => connection.Open());
@@ -160,7 +161,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Fact]
-        [Trait("Category", "flaky")]
         public void NetworkTimeoutAtRoutedLocation_RetryDisabled_ShouldFail()
         {
             // Arrange

@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    Central Package Management for this standalone tool.
+
+    Import the shared SqlClient tests package versions (xunit,
+    Microsoft.NET.Test.Sdk, Microsoft.DotNet.XUnitExtensions,
+    xunit.runner.console, ...); that file transitively imports the repo-root
+    production versions. This mirrors how the sibling Extensions test apps pull
+    in the shared test dependency versions.
+
+    The legacy System.Data.SqlClient package is not part of the shared set, so it
+    is pinned here. The .NET (Core) target can still sweep older builds per-run
+    via the SqlClientLegacyVersion property (applied with VersionOverride).
+  -->
+  <Import Project="../../src/Microsoft.Data.SqlClient/tests/Directory.Packages.props" />
+
+  <ItemGroup>
+    <PackageVersion Include="System.Data.SqlClient" Version="4.9.1" />
+  </ItemGroup>
+
+</Project>

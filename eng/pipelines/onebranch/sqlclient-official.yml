@@ -4,17 +4,12 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# The human-readable name applied to each run of this pipeline.
 name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
-# No PR-based triggers.
+# No activity-based triggers.
 pr: none
-
-# We trigger runs on activity on the internal/main branch, but not on any other branches.  This
-# pipeline is intended to only run against the ADO.Net dotnet-sqlclient repo.
-trigger:
-  branches:
-    include:
-      - internal/main
+trigger: none
 
 # We run this pipeline on a daily schedule.
 schedules:
@@ -27,9 +22,24 @@ schedules:
 
 # These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
 parameters:
+
+  # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
+  # will not break the build.  TSA bug filing is always enabled in the official pipeline and is
+  # independent of this parameter (see the tsa block in globalSdl).
+  - name: breakOnSdlError
+    displayName: Break on SDL error
+    type: boolean
+    default: true
+
   # True to enable debug information and steps.
   - name: debug
     displayName: Enable debug output
+    type: boolean
+    default: false
+
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    displayName: Publish symbols
     type: boolean
     default: false
 
@@ -40,74 +50,30 @@ parameters:
     type: boolean
     default: false
 
-  # True if this is a preview build.
-  - name: isPreview
-    displayName: Is this a preview build?
-    type: boolean
-    default: false
-
-  # True to publish symbols to private and public servers.
-  - name: publishSymbols
-    displayName: Publish symbols
-    type: boolean
-    default: false
-
   # Build parameters — select which packages to build.
 
-  # Build the Microsoft.SqlServer.Server package.
-  - name: buildSqlServerServer
+  # Build the Microsoft.SqlServer.Server package.  The SqlClient family is always built; SqlServer
+  # is optional.  When built, the SqlClient family depends on the freshly-built SqlServer package;
+  # when not built, the family depends on the most recently published SqlServer package.
+  - name: buildSqlServer
     displayName: Build Microsoft.SqlServer.Server
     type: boolean
-    default: true
-
-  # Build Microsoft.Data.SqlClient and Extensions packages.
-  - name: buildSqlClient
-    displayName: Build Microsoft.Data.SqlClient and Extensions
-    type: boolean
-    default: true
-
-  # Build the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: buildAkvProvider
-    displayName: Build Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-    type: boolean
-    default: true
+    default: false
 
   # Release parameters — select which packages to publish to NuGet.
   # All default to false; toggle at queue time for on-demand selective release.
 
-  # Release the Microsoft.SqlServer.Server package.
-  - name: releaseSqlServerServer
+  # Release the Microsoft.SqlServer.Server package (versioned separately).
+  - name: releaseSqlServer
     displayName: Release Microsoft.SqlServer.Server
     type: boolean
     default: false
 
-  # Release the Microsoft.Data.SqlClient.Internal.Logging package.
-  - name: releaseLogging
-    displayName: Release Microsoft.Data.SqlClient.Internal.Logging
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.Extensions.Abstractions package.
-  - name: releaseAbstractions
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Abstractions
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient package.
+  # Release the SqlClient family (Internal.Logging, Extensions.Abstractions,
+  # Microsoft.Data.SqlClient, Extensions.Azure, and the AlwaysEncrypted AzureKeyVaultProvider).
+  # The family is always released together at the shared SqlClient version.
   - name: releaseSqlClient
-    displayName: Release Microsoft.Data.SqlClient
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.Extensions.Azure package.
-  - name: releaseAzure
-    displayName: Release Microsoft.Data.SqlClient.Extensions.Azure
-    type: boolean
-    default: false
-
-  # Release the Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider package.
-  - name: releaseAkvProvider
-    displayName: Release Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+    displayName: Release SqlClient family
     type: boolean
     default: false
 
@@ -115,8 +81,6 @@ variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/onebranch-variables.yml@self
   - template: /eng/pipelines/onebranch/variables/package-variables.yml@self
-    parameters:
-      isPreview: ${{ parameters.isPreview }}
 
   # Drives ContinuousIntegrationBuild=true in src/Directory.Build.props so the shipped
   # DLLs/PDBs embed portable /_/... source paths and the produced NuGet packages pass
@@ -138,8 +102,29 @@ extends:
 
   parameters:
     featureFlags:
+      # WindowsHostVersion selects the Windows *host VM* that our Windows build container runs on.
+      # This is a separate layer from the container image itself (WindowsContainerImage in
+      # onebranch-variables.yml): the host is the outer machine running the Docker engine, and the
+      # container is where our build steps actually execute.
+      #
+      # These two must be kept compatible.  Windows containers can only run on a host whose OS
+      # version is compatible with the container's base image.  A mismatch (e.g. a 2025 container on
+      # a 2022 host) fails to start the container unless Hyper-V isolation is forced.
+      WindowsHostVersion:
+        Version: 2025
+
+      # We do NOT set a LinuxHostVersion.  Unlike Windows, Linux containers share the host kernel,
+      # so there is no host/container OS-version compatibility requirement to satisfy -- our Linux
+      # build image (LinuxContainerImage in onebranch-variables.yml) runs on the default OneBranch
+      # Linux host regardless of its distribution.
+
+      # CDPx is OneBranch's predecessor build system.  When EnableCDPxPAT is true (the OneBranch
+      # default), the governed templates inject a legacy CDPx Personal Access Token and its
+      # associated NuGet / Azure Artifacts authentication variables (CDP_DEFAULT_CLIENT_PAT,
+      # VSS_NUGET_ACCESSTOKEN, VSS_NUGET_URI_PREFIXES, etc.) into the build and Docker jobs so
+      # package restore against Azure DevOps feeds works without explicit auth.  We don't rely on
+      # that legacy CDPx package-authentication path, so we disable it.
       EnableCDPxPAT: false
-      WindowsHostVersion: 1ESWindows2022
 
     release:
       # This indicates the pipeline category to deploy Box products.  See:
@@ -147,20 +132,86 @@ extends:
       category: NonAzure
 
     # See: https://aka.ms/obpipelines/sdl
+    #
+    # The following SDL tasks are auto-injected by the OneBranch / 1ES Pipeline Templates and run
+    # WITHOUT any explicit globalSdl configuration.  They were verified as running in recent
+    # pipeline runs, so we intentionally do not redeclare them here:
+    #
+    #   - Component Governance / Component Detection / Secure Supply Chain
+    #     Analysis (dependency vulnerability scanning)
+    #   - AntiMalware Scanner (Binary + Source)
+    #   - 1ES Secret Scanning (SPMI)
+    #   - Generate SBoM Manifest
+    #   - CodeSign Validation (runs on the signing path; nothing is signed in non-official runs)
+    #   - CodeQL 3000 (ALWAYS enabled via the 1ESPT (Official.CrossPlat) entry point, regardless of
+    #     the codeql config below.)
+    #
     globalSdl:
+
+      # BREAK SEVERITY
+      #
+      # The SDL analyzer tasks never fail on findings; they only fail if the tool itself crashes or
+      # is misconfigured.  The build break comes from the Post Analysis (Guardian Break) task, which
+      # reads the tool logs and fails when a finding meets or exceeds a minimum severity threshold.
+      # See https://aka.ms/gdn-azdo-break.
+      #
+      # Guardian normalises every finding to Error, Warning or Note.  The threshold is cumulative,
+      # so a lower name is STRICTER, not looser:
+      #
+      #   Error    break on Error                     <-- Guardian's default
+      #   Warning  break on Error + Warning
+      #   Note     break on Error + Warning + Note
+      #
+      # Two knobs control it, in increasing order of precedence:
+      #
+      #   globalSdl.severity           threshold for every tool (maps to GdnBreakPolicyMinSev)
+      #   globalSdl.<tool>.severity    per-tool override of the global threshold
+      #   ob_sdl_<tool>_severity       per-job variable; overrides both of the above
+      #
+      # We omit `severity` everywhere and keep the Error-only default.  OneBranch accepts ONLY
+      # Error, Warning or Note at this layer -- there is no explicit "Default" value to write, so
+      # inheriting the default requires omitting the key.  Consequently, spelling out
+      # `severity: Error` on a tool is NOT equivalent to omitting it: it pins that tool to Error
+      # even if globalSdl.severity is later tightened.
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds
+
+      # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
+      # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
+      # non-official run and kept under .config/ alongside the other SDL tool configs
+      # (CredScan/PoliCheck/TSA).
+      baseline:
+        baselineFile: $(Build.SourcesDirectory)/.config/guardian/.gdnbaselines
+
+      # Configure APIScan behaviour:
+      #
+      # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds#apiscan
+      #
+      # https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-mohanb/security-integration/guardian-wiki/sdl-azdo-extension/apiscan-build-task#v2
+      #
       apiscan:
-        # APIScan "software name" and version parameters are set on a per-job basis with via
-        # ob_sdl_apiscan_* variables.
+        # We want APIScan enabled by default for our jobs.  However, some jobs don't produce any
+        # artifacts, and they will disable APIScan via the OneBranch per-job ob_sdl_apiscan_enabled
+        # variable.
         enabled: true
-        # TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/42858):
-        # We have temporarily disabled breaking the build on ApiScan results until we can:
-        #   - Register our new packages with API Scan, and/or
-        #   - Publish MSDN/Learn/etc documentation for the new packages.
-        break: false
+
+        # APIScan errors break the build when breakOnSdlError is set.
+        break: ${{ parameters.breakOnSdlError }}
+
+        # Use release mode for official pipelines.
+        modeType: release
+
+        # The APIScan software name and version are NOT set here.  Each package is registered with
+        # APIScan under its own name/version pair, so every build job sets ob_sdl_apiscan_softwareName
+        # and ob_sdl_apiscan_versionNumber for the package it builds (see build-buildproj-job.yml).
+        # Jobs that produce no assemblies disable APIScan instead, via ob_sdl_apiscan_enabled.
+
+        # We want the standard level of logging.
+        verbosityLevel: standard
 
       armory:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
 
       asyncSdl:
         # Disabling this as it complicates the build process with minimal gain
@@ -168,11 +219,14 @@ extends:
 
       binskim:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
 
       codeql:
-        enabled: true
+        # CodeQL 3000 is configured under the `compiled` key; `enabled` is a sub-property of
+        # `compiled` (not of `codeql`).  CodeQL runs asynchronously on its own platform and cannot
+        # break the build by design, so it has no `break` value.
         compiled:
+          enabled: true
 
       credscan:
         enabled: true
@@ -181,57 +235,88 @@ extends:
       eslint:
         # Only useful for repos with ECMAscript - which we do not have.
         enabled: false
+        # Break value is wired preemptively so it takes effect if eslint is ever enabled.
+        break: ${{ parameters.breakOnSdlError }}
 
       policheck:
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
         exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
 
-      roslyn:
-        # Note, requires RoslynAnalyzers task to be added as a separate step
+      psscriptanalyzer:
+        # Static analysis of the repository's PowerShell scripts (e.g. under eng/).
         enabled: true
-        break: true
+        break: ${{ parameters.breakOnSdlError }}
+
+      roslyn:
+        # Enabling Roslyn SDL analysis here requires that our .NET builds _produce_ Roslyn findings.
+        # You will see this in the separate Roslyn build task.
+        #
+        # Note that the Roslyn-specific Guardian collector/sanitizer requires SARIF v1, so our
+        # analysis build deliberately emits v1. Other, generic Guardian tooling expects SARIF v2 and
+        # may log processing errors (for example, Post Analysis's SDL artifact report) even though
+        # Roslyn collection and Guardian policy ingestion succeed.
+        enabled: true
+        break: ${{ parameters.breakOnSdlError }}
 
       publishLogs:
         enabled: true
 
       sbom:
         enabled: true
-        packageName: 'Microsoft.Data.SqlClient'
-        packageVersion: '$(Build.BuildNumber)'
+        # OneBranch resolves these from globalSdl only -- there is no per-job form -- so they
+        # indirect through variables that each build job sets to the package it produces.  Jobs
+        # that publish no packages disable SBOM via ob_sdl_sbom_enabled rather than defaulting
+        # these.  See build-buildproj-job.yml.
+        packageName: '$(sbomPackageName)'
+        packageVersion: '$(sbomPackageVersion)'
 
       tsa:
-        # OneBranch publishes all sdl results to TSA. If TSA is disabled, all SDL tools will be
-        # forced into 'break' build mode.
+        # TSA (Trust Services Automation) files SDL analysis findings as Azure DevOps bug work
+        # items.  It is hardcoded enabled in the official pipeline so that every SDL finding is
+        # always tracked as a bug, regardless of how any individual run terminates.
+        #
+        # Interaction with other SDL tool defaults:
+        #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
+        #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
+        #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
+        #   coupling: every tool above sets `break: ${{ parameters.breakOnSdlError }}` explicitly,
+        #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
+        #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
+        #   set explicitly to keep the behaviour deterministic.
+        #
+        # Otherwise independent of breakOnSdlError:
+        #   Aside from that default-flipping, TSA and breakOnSdlError are orthogonal.  TSA files
+        #   bugs from the complete finding set (the TSAUpload step runs after all analyzers have
+        #   produced results), while breakOnSdlError separately controls whether those same
+        #   findings also fail the build.  Enabling TSA here does not suppress breaking, and
+        #   breaking does not prevent bug filing within a job.
         enabled: true
         configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
     stages:
+      # Compile-time guard (1ES/OneBranch ': error' idiom): releasing Microsoft.SqlServer.Server
+      # requires building it this run, otherwise there is no package to release.  The invalid item
+      # is only emitted for the bad parameter combination and fails template expansion with the
+      # message below.
+      - ${{ if and(eq(parameters.releaseSqlServer, true), eq(parameters.buildSqlServer, false)) }}:
+        - 'Invalid parameters: releaseSqlServer=true requires buildSqlServer=true. There is no freshly-built Microsoft.SqlServer.Server package to release when buildSqlServer is false.': error
+
+      - template: /eng/pipelines/onebranch/stages/compute-versions-stage.yml@self
+        parameters:
+          buildSqlServer: ${{ parameters.buildSqlServer }}
+
       - template: /eng/pipelines/onebranch/stages/build-stages.yml@self
         parameters:
           isOfficial: true # This is an official pipeline.
-          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          buildSqlServer: ${{ parameters.buildSqlServer }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsFileVersion: '${{ variables.abstractionsFileVersion }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderFileVersion: '${{ variables.akvProviderFileVersion }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azureFileVersion: '${{ variables.azureFileVersion }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingFileVersion: '${{ variables.loggingFileVersion }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientFileVersion: '${{ variables.sqlClientFileVersion }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerFileVersion: '${{ variables.sqlServerFileVersion }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
           signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
@@ -243,22 +328,14 @@ extends:
       - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
         parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
-          buildSqlServerServer: ${{ parameters.buildSqlServerServer }}
-          buildSqlClient: ${{ parameters.buildSqlClient }}
-          buildAkvProvider: ${{ parameters.buildAkvProvider }}
+          buildSqlServer: ${{ parameters.buildSqlServer }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
           symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
           symbolsPublishProjectName: '$(SymbolsPublishProjectNameSqlClient)'
@@ -283,21 +360,11 @@ extends:
           publishSymbols: ${{ parameters.publishSymbols }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
-          abstractionsPackageVersion: '${{ variables.abstractionsPackageVersion }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
-          akvProviderPackageVersion: '${{ variables.akvProviderPackageVersion }}'
           azureArtifactsName: '${{ variables.azureArtifactsName }}'
-          azurePackageVersion: '${{ variables.azurePackageVersion }}'
           loggingArtifactsName: '${{ variables.loggingArtifactsName }}'
-          loggingPackageVersion: '${{ variables.loggingPackageVersion }}'
           sqlClientArtifactsName: '${{ variables.sqlClientArtifactsName }}'
-          sqlClientPackageVersion: '${{ variables.sqlClientPackageVersion }}'
           sqlServerArtifactsName: '${{ variables.sqlServerArtifactsName }}'
-          sqlServerPackageVersion: '${{ variables.sqlServerPackageVersion }}'
 
-          releaseSqlServerServer: ${{ parameters.releaseSqlServerServer }}
-          releaseLogging: ${{ parameters.releaseLogging }}
-          releaseAbstractions: ${{ parameters.releaseAbstractions }}
+          releaseSqlServer: ${{ parameters.releaseSqlServer }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
-          releaseAzure: ${{ parameters.releaseAzure }}
-          releaseAkvProvider: ${{ parameters.releaseAkvProvider }}

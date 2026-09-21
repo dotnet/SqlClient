@@ -117,6 +117,20 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Request the listener thread to stop
             StopRequested = true;
 
+            // Stop the listener socket first so the blocking AcceptTcpClient call
+            // in the listener thread is interrupted and the thread can exit.
+            if (ListenerSocket != null)
+            {
+                ListenerSocket.Stop();
+            }
+
+            // If server failed to start there is no thread to join
+            if (ListenerThread != null)
+            {
+                // Wait for termination
+                ListenerThread.Join();
+            }
+
             // A copy of the list of connections to avoid locking
             IList<T> unlockedConnections = new List<T>();
 
@@ -137,20 +151,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 connection.Dispose();
             }
 
-            // If server failed to start there is no thread to join
-            if (ListenerThread != null)
-            {
-                // Wait for termination
-                ListenerThread.Join();
-            }
-
-            // If server failed to start there is no listener associated with it
-            if (ListenerSocket != null)
-            {
-                // Stop the server
-                ListenerSocket.Stop();
-                ListenerSocket = null;
-            }
+            // Release the listener socket reference
+            ListenerSocket = null;
         }
 
         public void Dispose()
@@ -166,45 +168,64 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             try
             {
-                // Accept connection as long as stop request is not posted
+                // Accept connections as long as a stop request is not posted
                 while (!StopRequested)
                 {
-                    // Check if we have a connection request pending
-                    if (ListenerSocket.Pending())
+                    TcpClient newConnection;
+
+                    try
                     {
-                        try
+                        // Block until a client connects.  This call is interrupted
+                        // by Stop() closing the listener socket during shutdown.
+                        newConnection = ListenerSocket.AcceptTcpClient();
+                    }
+                    catch (Exception)
+                    {
+                        // AcceptTcpClient throws when the listener is stopped during
+                        // shutdown; exit the loop in that case.
+                        if (StopRequested)
                         {
-                            // Accept the connection
-                            TcpClient newConnection = ListenerSocket.AcceptTcpClient();
-
-                            // Create a new connection
-                            T connection = CreateConnection(newConnection);
-
-                            // Assign a log
-                            connection.EventLog = EventLog;
-
-                            // Subscribe for notifications
-                            connection.OnConnectionClosed += new ConnectionClosedEventHandler(_OnConnectionClosed);
-
-                            // Start a connection
-                            connection.Start();
-
-                            // Synchronize access to connections collection
-                            lock (Connections)
-                            {
-                                // Register a new connection
-                                Connections.Add(connection);
-                            }
+                            break;
                         }
-                        catch (Exception ex)
+
+                        throw;
+                    }
+
+                    try
+                    {
+                        // Create a new connection
+                        T connection = CreateConnection(newConnection);
+
+                        // Assign a log
+                        connection.EventLog = EventLog;
+
+                        // Subscribe for notifications
+                        connection.OnConnectionClosed += new ConnectionClosedEventHandler(_OnConnectionClosed);
+
+                        // Start a connection
+                        connection.Start();
+
+                        // Synchronize access to connections collection
+                        lock (Connections)
                         {
-                            Log(ex.ToString());
+                            // Register a new connection
+                            Connections.Add(connection);
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        // Pause a bit
-                        Thread.Sleep(10);
+                        Log(ex.ToString());
+
+                        // Setup failed, so this connection was never registered and will not be
+                        // torn down by Stop(); dispose the accepted socket to avoid leaking it.
+                        try
+                        {
+                            newConnection?.Dispose();
+                        }
+                        catch (Exception disposeEx)
+                        {
+                            Log(disposeEx.ToString());
+                        }
                     }
                 }
             }

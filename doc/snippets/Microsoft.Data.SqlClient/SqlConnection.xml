@@ -262,8 +262,15 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         </para>
         <para>
           This property is mutually exclusive with the
-          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
-          property, among others.
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />,
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" />,
+          and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          properties. Setting this property when
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          is already set throws
+          <see cref="T:System.InvalidOperationException" />, because SSPI is an
+          alternative to token-based authentication.
         </para>
       </remarks>
     </AccessToken>
@@ -361,7 +368,13 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         <para>
           This property is mutually exclusive with the
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" />
-          property, among others.
+          and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          properties, among others. Setting this property when
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+          is already set throws
+          <see cref="T:System.InvalidOperationException" />, because SSPI is an
+          alternative to token-based authentication.
         </para>
       </remarks>
     </AccessTokenCallback>
@@ -1003,7 +1016,7 @@ The following table lists the valid names for keyword values within the <xref:Mi
 |Failover Partner|N/A|The name of the failover partner server where database mirroring is configured.<br /><br /> If the value of this key is "", then **Initial Catalog** must be present, and its value must not be "".<br /><br /> The server name can be 128 characters or less.<br /><br /> If you specify a failover partner but the failover partner server is not configured for database mirroring and the primary server (specified with the Server keyword) is not available, then the connection will fail.<br /><br /> If you specify a failover partner and the primary server is not configured for database mirroring, the connection to the primary server (specified with the Server keyword) will succeed if the primary server is available.|  
 |Failover Partner SPN<br /><br /> -or-<br /><br /> FailoverPartnerSPN|N/A|The SPN for the failover partner. The default value is an empty string, which causes SqlClient to use the default, driver-generated SPN.<br /><br /> (Only available in v5.0+)|  
 |Host Name In Certificate<br /><br /> -or-<br /><br />HostNameInCertificate|N/A|The host name to use when validating the server certificate. When not specified, the server name from the Data Source is used for certificate validation.<br /><br /> (Only available in v5.0+)|
-|Server Certificate<br /><br /> -or-<br /><br />ServerCertificate|N/A|The path to a certificate file to match against the SQL Server TLS/SSL certificate. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the ServerCertificate provided is an exact match.<br /><br /> (Only available in v5.1+)|
+|Server Certificate<br /><br /> -or-<br /><br />ServerCertificate|N/A|The path to a certificate file to match against the SQL Server TLS/SSL certificate. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the ServerCertificate provided is an exact match.<br /><br />When specified, this comparison is always performed, including when the certificate already passes the usual chain-and-name validation. If the presented certificate does not match, or the file cannot be loaded or parsed, the TLS handshake fails; a configured `ServerCertificate` is never silently ignored.<br /><br />Certificate validation itself can be disabled by `TrustServerCertificate=true` (except with `Encrypt=strict`, where validation is always performed). When validation is disabled, `ServerCertificate` is not consulted.<br /><br /> (Only available in v5.1+)|
 |Initial Catalog<br /><br /> -or-<br /><br /> Database|N/A|The name of the database.<br /><br /> The database name can be 128 characters or less.|  
 |Integrated Security<br /><br /> -or-<br /><br /> Trusted_Connection|'false'|When `false`, User ID and Password are specified in the connection. When `true`, the current Windows account credentials are used for authentication.<br /><br /> Recognized values are `true`, `false`, `yes`, `no`, and `sspi` (strongly recommended), which is equivalent to `true`.<br /><br /> If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.<br /><br /> <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).|  
 |IP Address Preference<br /><br /> -or-<br /><br /> IPAddressPreference|IPv4First|The IP address family preference when establishing TCP connections. If `Transparent Network IP Resolution` (in .NET Framework) or `Multi Subnet Failover` is set to true, this setting has no effect. Supported values include:<br /><br /> `IPAddressPreference=IPv4First`<br /><br />`IPAddressPreference=IPv6First`<br /><br />`IPAddressPreference=UsePlatformDefault`|  
@@ -1021,7 +1034,7 @@ The following table lists the valid names for keyword values within the <xref:Mi
 |Replication|'false'|`true` if replication is supported using the connection.|  
 |Server SPN<br /><br /> -or-<br /><br /> ServerSPN|N/A|The SPN for the data source. The default value is an empty string, which causes SqlClient to use the default, driver-generated SPN.<br /><br /> (Only available in v5.0+)|  
 |Transaction Binding|Implicit Unbind|Controls connection association with an enlisted `System.Transactions` transaction.<br /><br /> Possible values are:<br /><br /> `Transaction Binding=Implicit Unbind;`<br /><br /> `Transaction Binding=Explicit Unbind;`<br /><br /> Implicit Unbind causes the connection to detach from the transaction when it ends. After detaching, additional requests on the connection are performed in autocommit mode. The `System.Transactions.Transaction.Current` property is not checked when executing requests while the transaction is active. After the transaction has ended, additional requests are performed in autocommit mode.<br /><br /> If the system ends the transaction (in the scope of a using block) before the last command completes, it will throw <xref:System.InvalidOperationException>.<br /><br /> Explicit Unbind causes the connection to remain attached to the transaction until the connection is closed or an explicit `SqlConnection.TransactionEnlist(null)` is called. Beginning in .NET Framework 4.0, changes to Implicit Unbind make Explicit Unbind obsolete. An `InvalidOperationException` is thrown if `Transaction.Current` is not the enlisted transaction or if the enlisted transaction is not active.|  
-|Transparent Network IP Resolution<br /><br /> -or-<br /><br />TransparentNetworkIPResolution|See description.|When the value of this key is set to `true`, the application is required to retrieve all IP addresses for a particular DNS entry and attempt to connect with the first one in the list. If the connection is not established within 0.5 seconds, the application will try to connect to all others in parallel. When the first answers, the application will establish the connection with the respondent IP address.<br /><br /> If the `MultiSubnetFailover` key is set to `true`, `TransparentNetworkIPResolution` is ignored.<br /><br /> If the `Failover Partner` key is set, `TransparentNetworkIPResolution` is ignored.<br /><br /> The value of this key must be `true`, `false`, `yes`, or `no`.<br /><br /> A value of `yes` is treated the same as a value of `true`.<br /><br /> A value of `no` is treated the same as a value of `false`.<br /><br /> The default values are as follows:<br /><br /> <ul><li>`false` when:<br /><br /> <ul><li>Connecting to Azure SQL Database where the data source ends with:<br /><br /> <ul><li>.database.chinacloudapi.cn</li><li>.database.usgovcloudapi.net</li><li>.database.cloudapi.de</li><li>.database.windows.net</li><li>.database.fabric.microsoft.com</li></ul></li><li>`Authentication` is 'Active Directory Password' or 'Active Directory Integrated'</li></ul></li><li>`true` in all other cases.</li></ul>|  
+|Transparent Network IP Resolution<br /><br /> -or-<br /><br />TransparentNetworkIPResolution|See description.|**Deprecated.** Use `Multi Subnet Failover` instead.<br /><br /> On .NET Framework, when the value of this key is set to `true`, the driver runs multiple connect rounds across the DNS-resolved IP addresses, with progressively larger per-attempt timeouts and a 500 ms minimum on the sequential-mode attempt, until a connection succeeds or the overall `Connect Timeout` is reached.<br /><br /> If the `MultiSubnetFailover` key is set to `true`, `TransparentNetworkIPResolution` is ignored.<br /><br /> If the `Failover Partner` key is set, `TransparentNetworkIPResolution` is ignored.<br /><br /> On .NET Framework, if `TransparentNetworkIPResolution` isn't specified in the connection string, the driver automatically disables TNIR when the data source is an Azure SQL endpoint (`.database.windows.net`, `.database.cloudapi.de`, `.database.usgovcloudapi.net`, `.database.chinacloudapi.cn`, or `.database.fabric.microsoft.com`), when the `Authentication` key is set to any Microsoft Entra ID method (`Active Directory Password`, `Active Directory Integrated`, `Active Directory Interactive`, `Active Directory Service Principal`, `Active Directory Device Code Flow`, `Active Directory Managed Identity`, `Active Directory MSI`, `Active Directory Default`, or `Active Directory Workload Identity`), or when the <xref:Microsoft.Data.SqlClient.SqlConnection.AccessToken> or <xref:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback> property is set on the <xref:Microsoft.Data.SqlClient.SqlConnection>. For these automatic conditions, an explicit `TransparentNetworkIPResolution` value bypasses the automatic behavior: `True` enables TNIR, and `False` disables TNIR unconditionally. To restore the automatic behavior, remove the keyword from the connection string.<br /><br /> On .NET (Core, .NET 5+), `TransparentNetworkIPResolution` isn't a recognized connection-string keyword. Setting it (with any value) throws <xref:System.ArgumentException> when the driver parses the connection string.<br /><br /> On .NET Framework, the value of this key must be `true`, `false`, `yes`, or `no`.<br /><br /> A value of `yes` is treated the same as a value of `true`.<br /><br /> A value of `no` is treated the same as a value of `false`.|
 |Trust Server Certificate<br /><br /> -or-<br /><br />TrustServerCertificate|'false'|When set to `true`, TLS is used to encrypt the channel when bypassing walking the certificate chain to validate trust. If TrustServerCertificate is set to `true` and Encrypt is set to `false`, the channel is not encrypted. Recognized values are `true`, `false`, `yes`, and `no`. For more information, see [Connection String Syntax](https://learn.microsoft.com/sql/connect/ado-net/connection-string-syntax).|  
 |Type System Version|N/A|A string value that indicates the type system the application expects. The functionality available to a client application is dependent on the version of SQL Server and the compatibility level of the database. Explicitly setting the type system version that the client application was written for avoids potential problems that could cause an application to break if a different version of SQL Server is used. **Note:**  The type system version cannot be set for common language runtime (CLR) code executing in-process in SQL Server. For more information, see [SQL Server Common Language Runtime Integration](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/sql-server-common-language-runtime-integration). <br /><br /> Possible values are:<br /><br /> `Type System Version=SQL Server 2012;`<br /><br /> `Type System Version=SQL Server 2008;`<br /><br /> `Type System Version=SQL Server 2005;`<br /><br /> `Type System Version=Latest;`<br /><br /> `Type System Version=SQL Server 2012;` specifies that the application will require version 11.0.0.0 of Microsoft.SqlServer.Types.dll. The other `Type System Version` settings will require version 10.0.0.0 of Microsoft.SqlServer.Types.dll.<br /><br /> `Latest` is obsolete and should not be used. `Latest` is equivalent to `Type System Version=SQL Server 2008;`.|  
 |User ID<br /><br /> -or-<br /><br /> UID<br /><br /> -or-<br /><br /> User|N/A|The SQL Server login account. Not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keywords instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.<br /><br /> The user ID must be 128 characters or less.|  
@@ -2221,9 +2234,26 @@ The following sample tries to open a connection to an invalid database to simula
       <value>
         An <see cref="T:Microsoft.Data.SqlClient.SspiContextProvider" /> instance.
       </value>
+      <exception cref="T:System.InvalidOperationException">
+        The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.SspiContextProvider" />
+        is set while the
+        <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" /> or
+        <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+        property is already set, or the connection is open.
+      </exception>
       <remarks>
         <para>
           The SspiContextProvider is a part of the connection pool key. Care should be taken when using this property to ensure the implementation returns a stable identity per resource.
+        </para>
+        <para>
+          SSPI is an alternative to token-based authentication, so this property
+          is mutually exclusive with the
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" /> and
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+          properties. Setting this property when either of those is already set
+          throws <see cref="T:System.InvalidOperationException" />, and setting
+          either of those while this property is set throws as well. Assigning
+          <see langword="null" /> clears the property and never throws.
         </para>
       </remarks>
     </SspiContextProvider>
@@ -2265,6 +2295,56 @@ The following sample tries to open a connection to an invalid database to simula
         </para>
       </remarks>
     </System.ICloneable.Clone>
+    <RegisteredApplication>
+      <summary>
+        Gets or sets the middleware application identity reported to the server for this connection.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.RegisteredApplication" /> value. The default is
+        <see cref="F:Microsoft.Data.SqlClient.RegisteredApplication.Unknown" />.
+      </value>
+      <example>
+        <para>
+          Set the identity before opening the connection:
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+
+          using SqlConnection connection = new(connectionString)
+          {
+              RegisteredApplication = RegisteredApplication.EntityFrameworkCore
+          };
+          connection.Open();
+        </code>
+      </example>
+      <exception cref="T:System.InvalidOperationException">
+        The connection is opening or open. The identity is reported during login, so it must be set beforehand.
+      </exception>
+      <remarks>
+        <para>
+          This API is intended for registered applications that reserve an identifier in
+          <see cref="T:Microsoft.Data.SqlClient.RegisteredApplication" />. An unregistered identifier may be reported by
+          casting a value to that type.
+        </para>
+        <para>
+          This value is telemetry. It is supplied entirely by the client, which may report any identifier in range,
+          so it is not an authenticated identity and must not be used for authorization or any other security
+          decision.
+        </para>
+        <para>
+          The identity is sent once, during login, so it must be set before the connection is opened.
+        </para>
+        <para>
+          When pooling is enabled the value is reported only while establishing a new physical connection, and it is
+          not part of the pool key. A connection served from the pool therefore reports the identity of whichever
+          connection caused that physical connection to be created, and physical connections opened in the background
+          to satisfy <c>Min Pool Size</c> report
+          <see cref="F:Microsoft.Data.SqlClient.RegisteredApplication.Unknown" />. Applications that mix identities over one
+          connection string should treat this telemetry as indicative rather than exact, or disable pooling where an
+          exact attribution is required.
+        </para>
+      </remarks>
+    </RegisteredApplication>
     <WorkstationId>
       <summary>
         Gets a string that identifies the database client.

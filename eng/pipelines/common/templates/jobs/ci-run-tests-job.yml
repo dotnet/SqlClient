@@ -8,18 +8,10 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
-  # The version of the Abstractions package to depend on when referenceType is 'Package'.
-  - name: abstractionsPackageVersion
-    type: string
-
   # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
   - name: loggingArtifactsName
     type: string
     default: Logging.Artifacts
-
-  # The version of the Logging package to depend on when referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
 
   # The configuration properties to set in the config file.
   #
@@ -64,14 +56,8 @@ parameters:
     type: boolean
     default: false
 
-  # True if this job will run in a generic Azure Pipelines hosted pool; false to run in a custom 1ES
-  # pool.
-  - name: hostedPool
-    type: boolean
-    default: false
-
   # The VM image to use, which must exist in the specified pool.
-  - name: image
+  - name: poolImage
     type: string
 
   # The display name for this job.
@@ -82,8 +68,9 @@ parameters:
   - name: mdsArtifactsName
     type: string
 
-  # The version of the SqlClient package to depend on when referenceType is 'Package'.
-  - name: mdsPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging).  They
+  # all share this version.
+  - name: packageVersion
     type: string
 
   # The name of the SqlServer pipeline artifact to download when referenceType is 'Package'.
@@ -117,6 +104,10 @@ parameters:
       - Release
 
   # The name of the Azure Pipelines pool to use.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 
@@ -156,7 +147,7 @@ parameters:
     type: string
 
 jobs:
-- job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.image, 'unknown_image')) }}
+- job: ${{ format('{0}', coalesce(parameters.jobDisplayName, parameters.poolImage, 'unknown_image')) }}
 
   # Some of our tests take longer than the default 60 minutes to run on some
   # OSes and configurations.
@@ -164,11 +155,14 @@ jobs:
 
   pool:
     name: '${{ parameters.poolName }}'
-    ${{ if eq(parameters.hostedPool, true) }}:
-      vmImage: ${{ parameters.image }}
+
+    # Images provided by Azure Pipelines must be selected using 'vmImage'.
+    ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
+      vmImage: ${{ parameters.poolImage }}
+    # Images provided by 1ES must be selected using a demand.
     ${{ else }}:
       demands:
-      - imageOverride -equals ${{ parameters.image }}
+      - imageOverride -equals ${{ parameters.poolImage }}
 
   variables:
     - name: dotnetx86RootPath
@@ -363,9 +357,7 @@ jobs:
         referenceType: ${{ parameters.referenceType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
@@ -379,9 +371,7 @@ jobs:
         msbuildArchitecture: x86
         dotnetx86RootPath: $(dotnetx86RootPath)
         operatingSystem: ${{ parameters.operatingSystem }}
-        abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-        loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-        mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+        packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self

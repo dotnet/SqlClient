@@ -1,0 +1,362 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# SqlClient Performance Test pipeline.
+#
+# This pipeline runs the Microsoft.Data.SqlClient BenchmarkDotNet performance tests on the internal
+# "Perf Test Lab" (Azure Dedicated Hosts).  It does so by consuming the reusable extends template
+# published by the InternalDriverTools/PerfTest repository:
+#
+#   v1/Perf.Test.Job.yml@PerfTemplates
+#
+# See the design/usage guidance on the wiki:
+#   InternalDriverTools.wiki - "Performance Test Automation" (page 284)
+#
+# The template owns the full run lifecycle (SSH key generation, dedicated-host VM provisioning, test
+# execution over SSH, result collection, and teardown).  All this pipeline supplies is:
+#
+#   * the source directory to copy to the VM (testRootDir),
+#   * the entry-point script to execute on the VM (testScript + testScriptArgs),
+#   * the results subfolder to copy back (testResultsSubDir), and
+#   * optional post-test steps to surface the results.
+#
+# The on-VM script (eng/pipelines/perf/scripts/run-perf-tests.*) installs the .NET SDK, creates the
+# perf database, injects the VM's SQL Server connection string into the benchmark runner config,
+# pins the client to the reserved CPU set, runs the benchmarks, and collects the BenchmarkDotNet
+# artifacts into the results subfolder.
+
+# Set the pipeline run name to the day-of-year and the daily run counter.
+name: $(DayOfYear)$(Rev:rr)
+
+# This pipeline is manual/scheduled only; never trigger on PRs or commits.
+pr: none
+trigger: none
+
+# Uncomment to run nightly.  Times are UTC.
+# schedules:
+#   - cron: "0 6 * * *"
+#     displayName: Nightly performance run
+#     branches:
+#       include:
+#         - main
+#     always: true
+
+parameters:
+
+  # Target OS for the perf VM and the benchmark client.
+  - name: platform
+    displayName: Platform
+    type: string
+    default: linux
+    values:
+      - linux
+      - windows
+
+  # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
+  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  - name: dotnetFramework
+    displayName: .NET Framework (TFM)
+    type: string
+    default: net9.0
+    values:
+      - net8.0
+      - net9.0
+      - net10.0
+
+  # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
+  - name: testTimeoutMinutes
+    displayName: Test Timeout (minutes)
+    type: number
+    default: 180
+
+  # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
+  # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
+  # at queue time.  Set to an empty string to skip the baseline pass and run current-only.
+  - name: baselineVersion
+    displayName: Baseline Version
+    type: string
+    default: 7.0.2
+
+  # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
+  - name: regressionThreshold
+    displayName: Regression Threshold (%)
+    type: number
+    default: 10
+
+  # When true, a candidate-slower-than-baseline regression FAILS the run (wiki 339 §3 gate).
+  # Default false: the run still reports deltas but does not block, until the gate is trusted
+  # (best paired with the best-of-N confirmation described in eng/pipelines/perf/README.md).
+  - name: failOnRegression
+    displayName: Fail run on regression
+    type: boolean
+    default: false
+
+  # Benchmark run model (wiki 339 §2.2/§2.3/§2.6):
+  #   interleaved -> run one benchmark unit at a time, baseline and candidate back-to-back, and
+  #                  confirm any flagged regression across N passes (best-of-N).  Noise-resistant
+  #                  default; required before trusting the failOnRegression gate.
+  #   sequential  -> legacy: run the whole baseline suite, then the whole candidate suite, compare.
+  - name: benchmarkRunMode
+    displayName: Benchmark run mode
+    type: string
+    default: interleaved
+    values:
+      - interleaved
+      - sequential
+
+  # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed
+  # (1 disables confirmation).  Only used when benchmarkRunMode = interleaved.
+  - name: confirmationRuns
+    displayName: Confirmation runs (best-of-N)
+    type: number
+    default: 3
+
+  # Optional SqlClient behaviour flags. These are applied to the benchmark runner config used by
+  # BOTH the baseline and candidate passes on the VM, and are also recorded in PerfRun.Config so a
+  # run's settings are queryable/filterable on the dashboard. Defaults match the checked-in
+  # runnerconfig.jsonc, so leaving them untouched preserves today's behaviour.
+  - name: useManagedSniOnWindows
+    displayName: UseManagedSniOnWindows
+    type: boolean
+    default: false
+
+  - name: useOptimizedAsyncBehaviour
+    displayName: UseOptimizedAsyncBehaviour
+    type: boolean
+    default: true
+
+  - name: useConnectionPoolV2
+    displayName: UseConnectionPoolV2
+    type: boolean
+    default: false
+
+  # Whether to ingest the run's results into Kusto (Azure Data Explorer).  Enabled by default; set to
+  # false at queue time to run + compare only and skip ingestion (e.g. for a throwaway/experimental
+  # run you do not want recorded in the perf database).  Even when true, ingestion still requires the
+  # 'ADX Cluster Variables' group to be populated (see below); an empty coordinate skips it anyway.
+  - name: enableKustoIngestion
+    displayName: Ingest results into Kusto
+    type: boolean
+    default: true
+
+  # NOTE: The Kusto (Azure Data Explorer) ingestion coordinates - cluster URI, database, and the
+  # Azure DevOps ARM service connection - are NOT parameters.  They are sourced from the pipeline
+  # library variable group 'ADX Cluster Variables' (see the 'variables' section below), so no
+  # infrastructure identifiers are hard-coded in this file.
+
+# Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
+# library variables: they are invariant for the SqlClient perf pipeline.
+#   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
+#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
+#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
+#                                               must match the ADO repository name.
+#   * driverName          = Microsoft.Data.SqlClient - recorded on every row (DriverName / DerivedRunId).
+
+# Kusto (Azure Data Explorer) ingestion coordinates come from a pipeline library variable group so
+# that no cluster URI, database name, or service-connection name is hard-coded in this pipeline.
+# The 'ADX Cluster Variables' group must define:
+#   * KustoClusterUri        - ADX cluster URI (e.g. https://<cluster>.<region>.kusto.windows.net)
+#   * KustoDatabase          - target database name
+#   * KustoServiceConnection - Azure DevOps ARM service connection whose service principal has
+#                              'Database Ingestor' (and ideally 'Database Viewer') rights.
+# Ingestion is skipped automatically when any of KustoClusterUri, KustoDatabase or
+# KustoServiceConnection is empty, so the pipeline still runs + compares before the cluster/database/
+# service connection are provisioned.
+variables:
+  - group: ADX Cluster Variables
+
+  # Pre-computed testScriptArgs chunks (paulmedynski's review suggestion).  The Windows entry point
+  # is PowerShell and binds '-PascalCase' params, while the Linux one is bash and parses
+  # '--kebab-case' flags, so the argument STYLE differs by platform.  Assembling the final args from
+  # these per-platform chunks keeps the single testScriptArgs below readable instead of duplicating
+  # a full arg string across the whole platform x baseline x fail-gate matrix.  Config flags are
+  # always passed (their defaults match runnerconfig.jsonc), so they live in the common chunk.
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsCommon
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
+  - ${{ else }}:
+    - name: PerfArgsCommon
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
+
+  # Baseline-version flag, omitted entirely when no baseline is requested: on bash an empty value
+  # would let arg parsing consume the following flag as the baseline version and corrupt every
+  # subsequent argument, so both platforms omit it symmetrically.
+  - ${{ if and(eq(parameters.platform, 'windows'), ne(parameters.baselineVersion, '')) }}:
+    - name: PerfArgsBaseline
+      value: '-BaselineVersion ${{ parameters.baselineVersion }}'
+  - ${{ elseif ne(parameters.baselineVersion, '') }}:
+    - name: PerfArgsBaseline
+      value: '--baseline-version ${{ parameters.baselineVersion }}'
+  - ${{ else }}:
+    - name: PerfArgsBaseline
+      value: ''
+
+  # Regression gate, only when failOnRegression is requested.
+  - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failOnRegression, true)) }}:
+    - name: PerfArgsFail
+      value: '-FailOnRegression'
+  - ${{ elseif eq(parameters.failOnRegression, true) }}:
+    - name: PerfArgsFail
+      value: '--fail-on-regression'
+  - ${{ else }}:
+    - name: PerfArgsFail
+      value: ''
+
+# Reference the PerfTest repository that hosts the reusable extends template.  Driver-team projects
+# have been onboarded with the Agent Pools and Service Connections required to consume it.
+resources:
+  repositories:
+    - repository: PerfTemplates
+      type: git
+      name: InternalDriverTools/PerfTest
+      ref: refs/heads/main
+
+# Consume the Perf Test Lab template.  The template defines the whole job/stage structure; we only
+# pass parameters into it.
+extends:
+  template: v1/Perf.Test.Job.yml@PerfTemplates
+  parameters:
+    platform: ${{ parameters.platform }}
+
+    # The entire driver source tree is copied to the VM so the benchmarks (which reference
+    # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
+    # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
+    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+
+    # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
+    # uses PowerShell, per the template's .sh/.ps1 convention.
+    ${{ if eq(parameters.platform, 'windows') }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.ps1
+    ${{ else }}:
+      testScript: eng/pipelines/perf/scripts/run-perf-tests.sh
+
+    # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
+    # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).  The
+    # per-platform / baseline / fail-gate argument chunks are pre-computed in the 'variables' block
+    # above (PerfArgsCommon / PerfArgsBaseline / PerfArgsFail); assemble them here.  Empty chunks
+    # collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail)'
+
+    # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
+    # copies this VM folder back to the agent, but always lands it at a fixed location:
+    # $(Build.ArtifactStagingDirectory)/results (and publishes it as the 'perf-results' artifact).
+    testResultsSubDir: perf-results
+
+    testTimeoutMinutes: ${{ parameters.testTimeoutMinutes }}
+    jobName: SqlClientPerf
+
+    # Post-test steps run on the agent after results have been copied back.  The template already
+    # publishes the results artifact and attaches any top-level results/*.md as run summaries; this
+    # step additionally surfaces the BenchmarkDotNet markdown reports in the build log.
+    steps:
+      # Tag the build with the baseline version used for the comparison so runs are
+      # identifiable at a glance in the ADO build list.  Runs first so the tag is applied
+      # even if a later step fails; omitted entirely when no baseline pass is requested.
+      # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL
+      # path and a colon trips ADO's "potentially dangerous Request.Path" filter.
+      - ${{ if ne(parameters.baselineVersion, '') }}:
+        - bash: |
+            echo "##vso[build.addbuildtag]Baseline ${{ parameters.baselineVersion }}"
+          displayName: 'Tag build with baseline version'
+          condition: succeededOrFailed()
+
+      - task: Bash@3
+        displayName: 'Show performance results'
+        condition: succeededOrFailed()
+        inputs:
+          targetType: filePath
+          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+        env:
+          RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
+
+      # Translate the BenchmarkDotNet "full" JSON from both passes into the Kusto perf-results
+      # schema (wiki 270): one PerfRun row + N PerfBenchmarkResult rows per pass, as NDJSON.  This
+      # runs on the AGENT (which has native pipeline-context variables and the collected results)
+      # and always executes so the NDJSON is published even when ingestion is skipped.  The script
+      # is kept in its own file for readability; pipeline context is handed to it via 'env'.
+      - task: Bash@3
+        displayName: 'Translate results to Kusto schema'
+        condition: succeededOrFailed()
+        inputs:
+          targetType: filePath
+          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/translate_results_to_kusto.sh
+        env:
+          REPO_DIR: $(Build.SourcesDirectory)/dotnet-sqlclient
+          RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
+          KUSTO_OUT: $(Build.ArtifactStagingDirectory)/kusto
+          COLLECTION_URI: $(System.CollectionUri)
+          TEAM_PROJECT: $(System.TeamProject)
+          BUILD_ID: $(Build.BuildId)
+          AGENT_MACHINE_NAME: $(Agent.MachineName)
+          SOURCE_VERSION: $(Build.SourceVersion)
+          SOURCE_BRANCH: $(Build.SourceBranch)
+          PLATFORM: ${{ parameters.platform }}
+          RUN_MODE: ${{ parameters.benchmarkRunMode }}
+          BASELINE_VERSION: ${{ parameters.baselineVersion }}
+          CFG_USE_MANAGED_SNI: ${{ lower(parameters.useManagedSniOnWindows) }}
+          CFG_USE_OPTIMIZED_ASYNC: ${{ lower(parameters.useOptimizedAsyncBehaviour) }}
+          CFG_USE_CONNECTION_POOL_V2: ${{ lower(parameters.useConnectionPoolV2) }}
+
+      # Publish the translated NDJSON alongside the raw results for traceability / manual ingestion.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish Kusto payloads'
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: $(Build.ArtifactStagingDirectory)/kusto
+          artifact: perf-kusto-payloads
+
+      # Ingest both result sets into the Kusto perf-results database using the ARM service
+      # connection's service principal (az CLI auth).  Cluster/database/service-connection come from
+      # the 'ADX Cluster Variables' group.  The task is skipped when the 'Ingest results into Kusto'
+      # parameter is disabled, or (runtime) when the cluster URI, database or service connection is
+      # empty - so the pipeline still runs+compares before the cluster is provisioned or when a run is
+      # explicitly opted out of ingestion.
+      - task: AzureCLI@2
+        displayName: 'Ingest results into Kusto'
+        # Gate on the boolean parameter at compile time (a reliable boolean comparison), then only the
+        # runtime variable presence is left to the 'condition'.  Comparing the stringified parameter to
+        # 'True' inside 'condition' is fragile across template expansion, so it is avoided.
+        ${{ if eq(parameters.enableKustoIngestion, true) }}:
+          condition: and(succeededOrFailed(), ne(variables['KustoClusterUri'], ''), ne(variables['KustoDatabase'], ''), ne(variables['KustoServiceConnection'], ''))
+        ${{ else }}:
+          condition: false
+        inputs:
+          azureSubscription: $(KustoServiceConnection)
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            set -euo pipefail
+            scriptsDir="$(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts"
+            kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
+
+            # Keep the checkout clean: no __pycache__/*.pyc written into eng/.
+            export PYTHONDONTWRITEBYTECODE=1
+
+            # PEP 668: Ubuntu agents ship an "externally managed" Python and lack the
+            # python3-venv package (no ensurepip), so both a plain 'pip install' and
+            # 'python3 -m venv' fail. pip itself is available, so install the Kusto SDKs
+            # into the per-user site and bypass the PEP 668 marker.
+            python3 -m pip install --quiet --upgrade --user --break-system-packages \
+              azure-kusto-data azure-kusto-ingest
+
+            runFiles=""
+            resFiles=""
+            for f in "$kustoOut/baseline.PerfRun.ndjson" "$kustoOut/current.PerfRun.ndjson"; do
+              [ -f "$f" ] && runFiles="${runFiles:+$runFiles,}$f"
+            done
+            for f in "$kustoOut/baseline.PerfBenchmarkResult.ndjson" "$kustoOut/current.PerfBenchmarkResult.ndjson"; do
+              [ -f "$f" ] && resFiles="${resFiles:+$resFiles,}$f"
+            done
+
+            if [ -z "$runFiles" ]; then
+              echo "##vso[task.logissue type=warning]No Kusto payloads to ingest."
+              exit 0
+            fi
+
+            python3 -u "$scriptsDir/ingest_kusto.py" \
+              --cluster "$(KustoClusterUri)" \
+              --database "$(KustoDatabase)" \
+              --run-file "$runFiles" \
+              --results-file "$resFiles"

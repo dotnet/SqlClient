@@ -25,6 +25,14 @@
 
 parameters:
 
+  # The name of the 1ES pool to run in.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  - name: poolName
+    type: string
+
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -48,10 +56,6 @@ parameters:
     type: string
     default: SqlServer.Artifacts
 
-  # The version to apply to the SqlServer NuGet package and DLLs.
-  - name: sqlServerPackageVersion
-    type: string
-
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
@@ -70,14 +74,22 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: sqlServerPackageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlServerPackageVersion'] ]
 
     jobs:
       - template: /eng/pipelines/jobs/pack-sqlserver-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+          # The version is computed by this stage (see the sqlServerPackageVersion variable above).
+          sqlServerPackageVersion: $(sqlServerPackageVersion)
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}

@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -20,9 +20,7 @@ using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
-#if _WINDOWS
 using Interop.Windows.Sni;
-#endif
 using Microsoft.Data.SqlClient.LocalDb;
 #endif
 

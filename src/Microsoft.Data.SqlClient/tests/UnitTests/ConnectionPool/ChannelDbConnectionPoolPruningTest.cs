@@ -27,7 +27,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         private static ChannelDbConnectionPool ConstructPool(
             int minPoolSize = 0,
             int maxPoolSize = 50,
-            int loadBalanceTimeout = 0)
+            int loadBalanceTimeout = 0,
+            int idleTimeout = 300)
         {
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -36,7 +37,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 creationTimeout: 15,
                 loadBalanceTimeout: loadBalanceTimeout,
                 hasTransactionAffinity: true,
-                idleTimeout: 0
+                idleTimeout: idleTimeout
             );
             var dbConnectionPoolGroup = new DbConnectionPoolGroup(
                 new SqlConnectionOptions("Data Source=localhost;"),
@@ -161,6 +162,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Fact]
+        public void Constructor_IdleTimeoutZero_DoesNotCreatePruningTimer()
+        {
+            // Connection Idle Timeout = 0 disables idle reclamation, so there is nothing to prune.
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, idleTimeout: 0);
+
+            Assert.Null(pool.Pruner);
+        }
+
+        [Fact]
         public void Constructor_PruningTimerStartsDisabled()
         {
             // Timer should be created but not armed (pool starts empty, below MinPoolSize threshold).
@@ -171,19 +181,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         [Theory]
-        [InlineData(100, 10)]   // 100 / 10 = 10 samples
-        [InlineData(300, 30)]   // 300 / 10 = 30 samples
-        [InlineData(60, 6)]     // 60 / 10 = 6 samples
-        [InlineData(15, 2)]     // 15 / 10 = 2 samples (rounds up)
-        [InlineData(0, 30)]     // 0 falls back to DefaultLifetimeWindow (300) / 10 = 30 samples
-        [InlineData(10000, 300)] // 10000 / 10 = 1000, clamped to MaxPruningSampleSize (300)
-        public void Constructor_CalculatesSampleSizeFromLoadBalanceTimeout(
-            int loadBalanceTimeout, int expectedSampleSize)
+        // Short/typical idle timeouts keep the 10s floor and grow the sample count (Story 1 parity).
+        [InlineData(100, 10, 10)]      // interval 10s, ceil(100/10) = 10 samples
+        [InlineData(300, 10, 30)]      // default idle timeout: 10s, 30 samples
+        [InlineData(60, 10, 6)]        // 10s, 6 samples
+        [InlineData(15, 10, 2)]        // 10s, ceil(15/10) = 2 samples
+        [InlineData(5, 10, 1)]         // sub-interval idle timeout: floored to 10s, 1 sample
+        [InlineData(3000, 10, 300)]    // boundary: MaxSampleSize * 10s, still 10s cadence
+        // Large idle timeouts pin the sample count at MaxSampleSize and stretch the interval so the
+        // window still spans the full idle timeout.
+        [InlineData(6000, 20, 300)]    // ceil(6000/300) = 20s interval, 300 samples
+        [InlineData(10000, 34, 295)]   // ceil(10000/300) = 34s interval, ceil(10000/34) = 295 samples
+        [InlineData(86400, 288, 300)]  // 1-day idle timeout: 288s interval, 300 samples
+        // Pathological idle timeout hits the 1-day interval overflow clamp without throwing.
+        [InlineData(int.MaxValue, 86400, 300)]
+        public void Constructor_CalculatesIntervalAndSampleSizeFromIdleTimeout(
+            int idleTimeout, int expectedIntervalSeconds, int expectedSampleSize)
         {
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: loadBalanceTimeout);
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, idleTimeout: idleTimeout);
             var pruner = GetPruner(pool);
 
             Assert.Equal(expectedSampleSize, pruner.SampleSize);
+            Assert.Equal(TimeSpan.FromSeconds(expectedIntervalSeconds), pruner.SamplingInterval);
         }
 
         #endregion
@@ -262,9 +281,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void PruneIdleConnections_BufferNotFull_CollectsSampleWithoutPruning()
         {
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 30);
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, idleTimeout: 30);
             var pruner = GetPruner(pool);
-            // loadBalanceTimeout=30 → sample size = 30/10 = 3
+            // idleTimeout=30 → sample size = 30/10 = 3
 
             // Fill the pool so pruning timer is active
             FillPoolWithIdleConnections(pool, 5);
@@ -281,8 +300,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void PruneIdleConnections_RespectsMinPoolSizeFloor()
         {
-            // loadBalanceTimeout=20 → 2 samples
-            using var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 20, loadBalanceTimeout: 20);
+            // idleTimeout=20 → 2 samples
+            using var pool = ConstructPool(minPoolSize: 5, maxPoolSize: 20, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // Fill pool with 10 idle connections
@@ -305,7 +324,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void PruneIdleConnections_TimerDisabled_ReturnsEarlyWithoutPruning()
         {
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, loadBalanceTimeout: 20);
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 10, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // Pool starts empty, timer is disabled. Calling prune should be a no-op.
@@ -318,8 +337,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void PruneIdleConnections_DoesNotRemoveInUseConnections()
         {
-            // loadBalanceTimeout=20 → 2 samples
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, loadBalanceTimeout: 20);
+            // idleTimeout=20 → 2 samples
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // Get 5 connections and KEEP them checked out (in use)
@@ -428,8 +447,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // When: The pruning interval elapses (sample buffer fills).
             // Then: The pool closes excess idle connections.
 
-            // Use loadBalanceTimeout=20 for 2 samples (fast buffer fill)
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, loadBalanceTimeout: 20);
+            // Use idleTimeout=20 for 2 samples (fast buffer fill)
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // Simulate high load: open 20 connections
@@ -456,8 +475,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // When: The pruning interval elapses.
             // Then: Pruning uses sampled usage data (median) to avoid being too aggressive.
 
-            // Use 3 samples (loadBalanceTimeout=30)
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, loadBalanceTimeout: 30);
+            // Use 3 samples (idleTimeout=30)
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, idleTimeout: 30);
             var pruner = GetPruner(pool);
 
             // Simulate varied usage:
@@ -498,8 +517,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Using distinct sample values proves the lower-middle is chosen rather than the
             // upper-middle or an average.
 
-            // loadBalanceTimeout=20 → 2 samples
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, loadBalanceTimeout: 20);
+            // idleTimeout=20 → 2 samples
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // Start with 8 idle connections.
@@ -535,8 +554,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // the first: it computes its own median from newly recorded samples and prunes the
             // correct amount, confirming the collect → prune → reset → collect cycle is repeatable.
 
-            // loadBalanceTimeout=20 → 2 samples per window
-            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, loadBalanceTimeout: 20);
+            // idleTimeout=20 → 2 samples per window
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 20, idleTimeout: 20);
             var pruner = GetPruner(pool);
 
             // --- Window 1: produces a median of 4 ---
@@ -567,6 +586,119 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Window 2's median was 8 (its own samples), so all 8 idle connections are pruned.
             Assert.Equal(8, countBefore - pool.Count);
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void PruneIdleConnections_TransientDemandSpikeWithinWindow_DoesNotUnderPrune()
+        {
+            // Complements VariedSamples (which proves a brief lull doesn't over-prune):
+            // here a brief demand spike (a single low idle sample) must not drag the median down
+            // and cause the pruner to under-prune. The sustained idle level should still be reclaimed.
+
+            // idleTimeout=30 → 3 samples
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, idleTimeout: 30);
+            var pruner = GetPruner(pool);
+
+            FillPoolWithIdleConnections(pool, 10);
+
+            // Sample 1: 10 idle (steady state).
+            pruner.OnPruningCallback(null);
+            AssertPrunerState(pruner, true, 1, 10);
+            Assert.Equal(10, pool.Count);
+
+            // Demand spike: check out 8, leaving only 2 idle for the middle sample.
+            var busyConnections = CheckOutConnections(pool, 8);
+
+            // Sample 2: 2 idle (transient spike).
+            pruner.OnPruningCallback(null);
+            AssertPrunerState(pruner, true, 2, 10, 2);
+            Assert.Equal(10, pool.Count);
+
+            // Spike subsides — all connections idle again.
+            ReturnConnections(pool, busyConnections);
+
+            // Sample 3: 10 idle. Buffer full → sorted=[2,10,10], median at index 1 = 10.
+            int countBefore = pool.Count;
+            pruner.OnPruningCallback(null);
+            // Median prunes all 10 idle down to MinPoolSize (0), so the timer disables.
+            AssertPrunerState(pruner, false, 0);
+
+            // The transient spike (sample of 2) is ignored; the sustained level (10) is pruned.
+            int pruned = countBefore - pool.Count;
+            Assert.Equal(10, pruned);
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void Pruning_PruneToMinThenRegrow_ReArmsAndPrunesAgain()
+        {
+            // Exercises the full prune → disable → regrow → re-arm → prune cycle. After a window
+            // prunes the pool down to MinPoolSize the timer disables; opening new connections must
+            // re-arm it, and the next window must sample and prune independently.
+
+            // idleTimeout=20 → 2 samples
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, idleTimeout: 20);
+            var pruner = GetPruner(pool);
+
+            // --- Window 1: prune 6 idle down to min (0), disabling the timer ---
+            FillPoolWithIdleConnections(pool, 6);
+
+            pruner.OnPruningCallback(null); // sample[0] = 6
+            AssertPrunerState(pruner, true, 1, 6);
+
+            pruner.OnPruningCallback(null); // buffer full [6,6], median 6, prune 6 → Count 0
+            AssertPrunerState(pruner, false, 0);
+            Assert.Equal(0, pool.Count);
+
+            // --- Regrow: opening connections must re-arm the disabled timer ---
+            FillPoolWithIdleConnections(pool, 12);
+            AssertPrunerState(pruner, true, 0);
+            Assert.Equal(12, pool.Count);
+
+            // --- Window 2: samples freshly and prunes 12 ---
+            pruner.OnPruningCallback(null); // sample[0] = 12
+            AssertPrunerState(pruner, true, 1, 12);
+
+            int countBefore = pool.Count;
+            pruner.OnPruningCallback(null); // buffer full [12,12], median 12, prune 12 → Count 0
+            AssertPrunerState(pruner, false, 0);
+
+            Assert.Equal(12, countBefore - pool.Count);
+            Assert.Equal(0, pool.Count);
+        }
+
+        [Fact]
+        public void OnPruningCallback_AfterShutdown_IsNoOp()
+        {
+            // A pruning timer callback can race with pool shutdown. Once Shutdown() has disposed the
+            // pruner, a stray callback must be an inert no-op: it must not throw, re-enable the timer,
+            // mutate the sample index, or resurrect connections.
+
+            // idleTimeout=30 → 3 samples
+            using var pool = ConstructPool(minPoolSize: 0, maxPoolSize: 50, idleTimeout: 30);
+            var pruner = GetPruner(pool);
+
+            FillPoolWithIdleConnections(pool, 6);
+
+            // Advance one sample so SampleIndex is non-zero before shutdown.
+            pruner.OnPruningCallback(null);
+            AssertPrunerState(pruner, true, 1, 6);
+
+            pool.Shutdown();
+
+            // Shutdown disposes the pruner (timer disabled) and drains all idle connections.
+            // Dispose intentionally does NOT reset the sample index.
+            Assert.False(pruner.IsTimerEnabled);
+            Assert.Equal(0, pool.Count);
+            int sampleIndexAfterShutdown = pruner.SampleIndex;
+
+            // A stray timer callback after shutdown must be a no-op.
+            Exception recorded = Record.Exception(() => pruner.OnPruningCallback(null));
+
+            Assert.Null(recorded);
+            Assert.False(pruner.IsTimerEnabled);
+            Assert.Equal(sampleIndexAfterShutdown, pruner.SampleIndex);
             Assert.Equal(0, pool.Count);
         }
 
