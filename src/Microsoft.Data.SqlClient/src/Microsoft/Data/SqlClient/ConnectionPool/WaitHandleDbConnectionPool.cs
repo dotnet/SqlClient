@@ -827,11 +827,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         else
                         {
-                            Debug.Assert(connection != null, "connection should never be null in success case");
+                            if (connection is null)
+                            {
+                                next.Completion.TrySetException(PoolShutdownOpenRetryException.Create());
+                                continue;
+                            }
+
                             if (!next.Completion.TrySetResult(connection))
                             {
                                 // if the completion was cancelled, lets try and get this connection back for the next try
-                                ReturnInternalConnection(connection, next.Owner);
+                                if (connection is not null)
+                                {
+                                    ReturnInternalConnection(connection, next.Owner);
+                                }
                             }
                         }
                     }
@@ -1005,7 +1013,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
                             Interlocked.Decrement(ref _waitCount);
                             connection = null;
-                            return false;
+                            return true;
                         }
 
                         // From the WaitAny docs: "If more than one object became signaled during

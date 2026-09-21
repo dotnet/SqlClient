@@ -42,6 +42,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             return pool;
         }
 
+        /// <summary>
+        /// Builds a running pool through <see cref="DbConnectionPoolGroup"/> so clearing the group
+        /// swaps the old pool out exactly like ClearPool/ClearAllPools.
+        /// </summary>
+        /// <param name="maxPoolSize">Maximum number of connections the pool can reserve.</param>
+        /// <returns>The registered wait-handle pool.</returns>
+        private static WaitHandleDbConnectionPool CreateRegisteredPool(int maxPoolSize = 5)
+        {
+            var poolGroupOptions = new DbConnectionPoolGroupOptions(
+                poolByIdentity: false,
+                minPoolSize: 0,
+                maxPoolSize: maxPoolSize,
+                creationTimeout: 15000,
+                loadBalanceTimeout: 0,
+                hasTransactionAffinity: true,
+                idleTimeout: 0);
+
+            var dbConnectionPoolGroup = new DbConnectionPoolGroup(
+                new SqlConnectionOptions("Data Source=localhost;"),
+                new ConnectionPoolKey("TestDataSource", credential: null, accessToken: null, accessTokenCallback: null, sspiContextProvider: null),
+                poolGroupOptions);
+
+            IDbConnectionPool pool = dbConnectionPoolGroup.GetConnectionPool(new WaitHandleDbConnectionPoolTransactionTest.MockSqlConnectionFactory());
+            return Assert.IsType<WaitHandleDbConnectionPool>(pool);
+        }
+
         // State transitions to ShuttingDown on Shutdown.
         [Fact]
         public void Shutdown_TransitionsState_ToShuttingDown()
@@ -158,6 +184,57 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(conn);
             Assert.False(tcs.Task.IsCompleted);
             Assert.Equal(0, Volatile.Read(ref pool._waitCount));
+        }
+
+        /// <summary>
+        /// Verifies that an async pending open parked on a pool cleared by ClearPool/ClearAllPools
+        /// completes with the internal retry signal instead of faulting with a misleading pool timeout.
+        /// </summary>
+        [Fact]
+        public async Task TryGetConnection_AsyncPendingOpenDuringClear_CompletesWithRetrySignal()
+        {
+            var pool = CreateRegisteredPool(maxPoolSize: 1);
+
+            var blockingOwner = new SqlConnection();
+            Assert.True(pool.TryGetConnection(
+                blockingOwner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? blocking));
+            Assert.NotNull(blocking);
+
+            var pendingCompletion = new TaskCompletionSource<DbConnectionInternal>();
+            var pendingOwner = new SqlConnection
+            {
+                PoolGroup = pool.PoolGroup
+            };
+
+            bool completed = pool.TryGetConnection(
+                pendingOwner,
+                pendingCompletion,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? pending);
+
+            Assert.False(completed);
+            Assert.Null(pending);
+
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (DateTime.UtcNow < deadline && Volatile.Read(ref pool._waitCount) < 1)
+            {
+                await Task.Yield();
+            }
+
+            Assert.True(Volatile.Read(ref pool._waitCount) >= 1, "Pending open did not park within 5s.");
+
+            pool.PoolGroup.Clear();
+
+            Task completedTask = await Task.WhenAny(pendingCompletion.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            Assert.Same(pendingCompletion.Task, completedTask);
+            await Assert.ThrowsAsync<PoolShutdownOpenRetryException>(() => pendingCompletion.Task);
+            Assert.Equal(0, Volatile.Read(ref pool._waitCount));
+
+            pool.ReturnInternalConnection(blocking!, blockingOwner);
+            Assert.Equal(0, pool.Count);
         }
 
         // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
