@@ -2077,7 +2077,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(s_openAsyncCancel, completion);
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration, forceNewConnection, cancellationToken);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration, forceNewConnection);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2191,9 +2191,8 @@ namespace Microsoft.Data.SqlClient
             private SqlConnectionOverrides _overrides;
             private CancellationTokenRegistration _registration;
             private bool _forceNewConnection;
-            private CancellationToken _cancellationToken;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration, bool forceNewConnection, CancellationToken cancellationToken)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration, bool forceNewConnection)
             {
                 _parent = parent;
                 _retry = retry;
@@ -2201,7 +2200,6 @@ namespace Microsoft.Data.SqlClient
                 _overrides = overrides;
                 _registration = registration;
                 _forceNewConnection = forceNewConnection;
-                _cancellationToken = cancellationToken;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
 
@@ -2219,12 +2217,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (retryTask.IsFaulted)
                         {
-                            if (retryTask.Exception.InnerException is PoolShutdownOpenRetryException)
-                            {
-                                RetryAfterPoolShutdown(retryTask.AsyncState);
-                                return;
-                            }
-
+                            Exception e = retryTask.Exception.InnerException;
                             _parent.CloseInnerConnection();
                             _parent._currentCompletion = null;
                             _result.SetException(retryTask.Exception.InnerException);
@@ -2266,53 +2259,6 @@ namespace Microsoft.Data.SqlClient
                     _parent.CloseInnerConnection();
                     _parent._currentCompletion = null;
                     _result.SetException(e);
-                }
-            }
-
-            private void RetryAfterPoolShutdown(object asyncState)
-            {
-                _parent.CloseInnerConnection();
-
-                if (_cancellationToken.IsCancellationRequested)
-                {
-                    _parent._currentCompletion = null;
-                    _result.SetCanceled();
-                    return;
-                }
-
-                var retry = new TaskCompletionSource<DbConnectionInternal>(asyncState);
-                CancellationTokenRegistration registration = new CancellationTokenRegistration();
-                if (_cancellationToken.CanBeCanceled)
-                {
-                    registration = _cancellationToken.Register(s_openAsyncCancel, retry);
-                }
-
-                try
-                {
-                    bool result;
-                    lock (_parent.InnerConnection)
-                    {
-                        result = _parent.TryOpen(retry, _forceNewConnection, _overrides);
-                    }
-
-                    if (result)
-                    {
-                        registration.Dispose();
-                        _parent._currentCompletion = null;
-                        _result.SetResult(null);
-                    }
-                    else
-                    {
-                        _retry = retry;
-                        _registration = registration;
-                        _parent._currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(retry, _result.Task);
-                        retry.Task.ContinueWith(Retry, TaskScheduler.Default);
-                    }
-                }
-                catch
-                {
-                    registration.Dispose();
-                    throw;
                 }
             }
         }

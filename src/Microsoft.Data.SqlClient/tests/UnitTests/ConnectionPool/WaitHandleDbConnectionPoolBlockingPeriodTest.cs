@@ -131,6 +131,26 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     }
 
     /// <summary>
+    /// Shutdown preserves the cached error for admitted waiters and lets its timer expire.
+    /// </summary>
+    [Fact]
+    public void Shutdown_WhileBlocked_PreservesErrorUntilExpiry()
+    {
+        var clock = new FakeTimeProvider();
+        SqlException failure = SqlExceptionHelper.CreateSqlException("server unreachable");
+        var factory = new ConfigurableSqlConnectionFactory(_ => throw failure);
+        var pool = CreatePool(factory, timeProvider: clock);
+        using var owner = new SqlConnection();
+
+        Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
+        pool.Shutdown();
+        Assert.True(pool.ErrorOccurred);
+
+        clock.Advance(TimeSpan.FromSeconds(5));
+        Assert.False(pool.ErrorOccurred);
+    }
+
+    /// <summary>
     /// Verifies that once the pool is in the blocking period, a subsequent request fast-fails
     /// with the cached exception without invoking the connection factory again. The first throw
     /// rethrows the original instance; the fast-fail throw returns a clone (to avoid sharing stack

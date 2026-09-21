@@ -847,6 +847,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
 
 <xref:Microsoft.Data.SqlClient.SqlConnection.ClearAllPools> resets (or empties) all connection pools. If there are connections in use at the time of the call, they are marked appropriately and will be discarded (instead of being returned to a pool) when <xref:Microsoft.Data.SqlClient.SqlConnection.Close> is called on them.
 
+With the default connection pool, clearing does not cancel requests already waiting for a connection or logging in. These requests can complete on the retired pool, and their connections are discarded when closed. Normal timeouts and cancellation still apply.
+
 > [!CAUTION]
 > Clearing the pool is an expensive operation and should only be used if required. This operation may negatively interfere with pool warmup and generate high connection churn as the warmup operation continually opens new connections to attempt to reach min pool size. This situation is especially likely if clear is called in a tight loop.
 
@@ -864,6 +866,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         <format type="text/markdown"><![CDATA[
 
 <xref:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)> clears the connection pool that is associated with the `connection`. If additional connections associated with `connection` are in use at the time of the call, they are marked appropriately and are discarded (instead of being returned to the pool) when <xref:Microsoft.Data.SqlClient.SqlConnection.Close> is called on them.
+
+With the default connection pool, clearing does not cancel requests already waiting for a connection or logging in. These requests can complete on the retired pool, and their connections are discarded when closed. Normal timeouts and cancellation still apply.
 
 > [!CAUTION]
 > Clearing the pool is an expensive operation and should only be used if required. This operation may negatively interfere with pool warmup and generate high connection churn as the warmup operation continually opens new connections to attempt to reach min pool size. This situation is especially likely if clear is called in a tight loop.
