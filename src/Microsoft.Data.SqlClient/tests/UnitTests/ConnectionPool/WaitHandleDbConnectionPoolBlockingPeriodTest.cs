@@ -136,6 +136,7 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     [Fact]
     public void Shutdown_WhileBlocked_PreservesErrorUntilExpiry()
     {
+        // Arrange
         var clock = new FakeTimeProvider();
         SqlException failure = SqlExceptionHelper.CreateSqlException("server unreachable");
         var factory = new ConfigurableSqlConnectionFactory(_ => throw failure);
@@ -143,10 +144,17 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
         using var owner = new SqlConnection();
 
         Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
+
+        // Act
         pool.Shutdown();
+
+        // Assert
         Assert.True(pool.ErrorOccurred);
 
+        // Act: expire the preserved blocking period.
         clock.Advance(TimeSpan.FromSeconds(5));
+
+        // Assert
         Assert.False(pool.ErrorOccurred);
     }
 

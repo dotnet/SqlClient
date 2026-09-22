@@ -74,6 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [Fact]
         public void Shutdown_LeavesIdleConnectionsUntilClear()
         {
+            // Arrange
             var pool = CreatePool();
 
             // Vend a few connections then return them so they sit in _stackNew.
@@ -91,22 +92,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             try
             {
+                // Act
                 pool.Shutdown();
 
+                // Assert
                 Assert.False(pool.IsRunning);
                 Assert.Equal(2, pool.IdleCount);
                 Assert.Equal(2, pool.Count);
                 Assert.True(c1!.CanBePooled);
                 Assert.True(c2!.CanBePooled);
+
+                // Act: drain the retired pool explicitly.
+                pool.Clear();
+
+                // Assert
+                Assert.Equal(0, pool.IdleCount);
+                Assert.Equal(0, pool.Count);
             }
             finally
             {
+                // Cleanup
                 pool.Shutdown();
                 pool.Clear();
             }
-
-            Assert.Equal(0, pool.IdleCount);
-            Assert.Equal(0, pool.Count);
         }
 
         // Shutdown is idempotent.
@@ -191,6 +199,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true, true)]
         public async Task Shutdown_InFlightRequest_CompletesOnRetiredPool(bool async, bool cancel)
         {
+            // Arrange
             using var factory = new GatedConnectionFactory();
             var pool = CreatePool(maxPoolSize: 2, factory: factory);
             using var firstOwner = new SqlConnection();
@@ -207,14 +216,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.False(first.IsCompleted);
                 Assert.False(pending.IsCompleted);
 
+                // Act
                 pool.Shutdown();
-                Assert.False(pool.IsRunning);
                 if (cancel)
                 {
                     completion.SetCanceled();
                 }
                 factory.Release.Set();
 
+                // Assert
+                Assert.False(pool.IsRunning);
                 Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
                 DbConnectionInternal? firstConnection = await first;
                 Assert.NotNull(firstConnection);
@@ -236,6 +247,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
             finally
             {
+                // Cleanup
                 factory.Release.Set();
                 pool.Shutdown();
                 await ReturnWhenCompleted(pool, firstOwner, first);
@@ -244,6 +256,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     await ReturnWhenCompleted(pool, pendingOwner, pending);
                 }
             }
+
+            // Assert: returned connections were destroyed rather than pooled.
             Assert.Equal(0, pool.IdleCount);
             Assert.Equal(0, pool.Count);
         }
