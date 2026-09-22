@@ -1146,5 +1146,225 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                 }
             }
         }
+
+        #region Errors reported after the current result set has been terminated (issue #4321)
+
+        // A T-SQL error rethrown from a CATCH block arrives on the wire *after* the DONE token
+        // that terminates the (empty) result set produced inside the TRY block. The reader must
+        // still surface it instead of reporting that the query simply returned no rows.
+        private const string RethrowFromCatchBatch =
+            @"BEGIN TRY
+                  SELECT 1/0;
+              END TRY
+              BEGIN CATCH
+                  THROW;
+              END CATCH";
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ErrorRethrownFromCatchBlock_IsSurfacedByRead()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = RethrowFromCatchBatch;
+
+            SqlException ex = Assert.Throws<SqlException>(() =>
+            {
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                }
+            });
+
+            Assert.Equal(8134, ex.Number);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByReadAsync()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = RethrowFromCatchBatch;
+
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(async () =>
+            {
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                }
+            });
+
+            Assert.Equal(8134, ex.Number);
+        }
+
+        // The reporter's motivating scenario: an INSERT ... OUTPUT wrapped in TRY/CATCH must not
+        // look like "the statement succeeded and produced no output rows".
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            string tableName = DataTestUtility.GenerateObjectName();
+            try
+            {
+                using (SqlCommand create = connection.CreateCommand())
+                {
+                    create.CommandText = $"CREATE TABLE {tableName} (Id INT NOT NULL)";
+                    create.ExecuteNonQuery();
+                }
+
+                using SqlCommand command = connection.CreateCommand();
+                command.CommandText =
+                    $@"BEGIN TRY
+                           INSERT INTO {tableName} (Id) OUTPUT INSERTED.Id VALUES (1/0);
+                       END TRY
+                       BEGIN CATCH
+                           THROW;
+                       END CATCH";
+
+                SqlException ex = Assert.Throws<SqlException>(() =>
+                {
+                    using SqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                    }
+                });
+
+                Assert.Equal(8134, ex.Number);
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // An error that arrives before any DONE token (the shape produced by a bare failing
+        // statement) must keep working exactly as it did before.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ErrorWithoutTryCatch_IsStillSurfacedByRead()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1/0;";
+
+            SqlException ex = Assert.Throws<SqlException>(() =>
+            {
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                }
+            });
+
+            Assert.Equal(8134, ex.Number);
+        }
+
+        // A genuinely empty result set must still be reported as zero rows, without an exception.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task EmptyResultSetWithoutError_ReturnsNoRows()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
+                using SqlDataReader reader = command.ExecuteReader();
+                Assert.False(reader.Read());
+            }
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+                Assert.False(await reader.ReadAsync());
+            }
+        }
+
+        // Informational messages emitted after the result set must continue to be raised on
+        // InfoMessage rather than being turned into exceptions.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void TrailingInfoMessage_IsRaisedAsInfoNotError()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            List<string> messages = new();
+            connection.InfoMessage += (_, e) => messages.Add(e.Message);
+            connection.Open();
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1 AS Value; PRINT 'trailing-info';";
+
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(reader.Read());
+            }
+
+            Assert.Contains("trailing-info", messages);
+        }
+
+        // Multiple result sets must continue to be enumerated normally.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task MultipleResultSets_AreUnaffected()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
+                using SqlDataReader reader = command.ExecuteReader();
+
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(reader.Read());
+
+                Assert.True(reader.NextResult());
+                Assert.True(reader.Read());
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.False(reader.Read());
+
+                Assert.False(reader.NextResult());
+            }
+
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+                Assert.True(await reader.ReadAsync());
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync());
+
+                Assert.True(await reader.NextResultAsync());
+                Assert.True(await reader.ReadAsync());
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync());
+
+                Assert.False(await reader.NextResultAsync());
+            }
+        }
+
+        // An error raised after rows have already been delivered must deliver the rows first and
+        // then surface the error.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void RowsThenTrailingError_DeliversRowsThenThrows()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1 AS Value; RAISERROR('trailing-error', 16, 1);";
+
+            using SqlDataReader reader = command.ExecuteReader();
+            Assert.True(reader.Read());
+            Assert.Equal(1, reader.GetInt32(0));
+
+            SqlException ex = Assert.Throws<SqlException>(() => reader.Read());
+            Assert.Equal(50000, ex.Number);
+        }
+
+        #endregion
     }
 }
