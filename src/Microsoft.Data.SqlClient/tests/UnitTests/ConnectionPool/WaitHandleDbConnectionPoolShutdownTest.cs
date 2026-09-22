@@ -201,9 +201,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true, true)]
         public async Task Shutdown_InFlightRequest_CompletesOnRetiredPool(bool async, bool cancel)
         {
-            // Arrange: contention must come from an in-flight creation, not MaxPoolSize.
-            // A synchronous first request holds the creation semaphore inside the factory,
-            // letting the second request reach the wait loop even when it is asynchronous.
+            // Arrange
+            // Initiate a request to the pool. It will be blocked by the gated connection factory.
             using var factory = new GatedConnectionFactory();
             var pool = CreatePool(maxPoolSize: 2, factory: factory);
             using var firstOwner = new SqlConnection();
@@ -211,69 +210,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var completion = new TaskCompletionSource<DbConnectionInternal>();
             Task<DbConnectionInternal?> first = Acquire(pool, firstOwner, completion: null);
             Task<DbConnectionInternal?>? pending = null;
-            try
+
+            // Make sure the first request is blocked in the connection factory. Then, initiate a second request.
+            // The second request will be blocked on the create semaphore in the pool.
+            Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
+            pending = Acquire(pool, pendingOwner, async ? completion : null);
+            // Make sure the second request is also blocked.
+            Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
+            Assert.Equal(1, factory.CreateCount);
+            Assert.False(first.IsCompleted);
+            Assert.False(pending.IsCompleted);
+
+            // Act
+            // Now, shut down the pool. New requests will no longer be accepted, but in-flight requests should proceed.
+            pool.Shutdown();
+            if (cancel)
             {
-                Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
-                pending = Acquire(pool, pendingOwner, async ? completion : null);
-                // Starting a request is not enough: it must enter acquisition before shutdown,
-                // or this would test rejection of a new arrival rather than an admitted waiter.
-                // Two acquisitions but one factory call pins the second at the creation wait.
-                Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
-                Assert.Equal(1, factory.CreateCount);
-                Assert.False(first.IsCompleted);
-                Assert.False(pending.IsCompleted);
-
-                // Act: release the creation semaphore only after retirement, forcing the second
-                // request to encounter the removed post-wait shutdown guard. In the async case,
-                // that guard previously turned retirement into a misleading timeout.
-                pool.Shutdown();
-                if (cancel)
-                {
-                    // Make cancellation win before creation resumes, so cleanup is exercised
-                    // deterministically rather than racing task completion by chance.
-                    completion.SetCanceled();
-                }
-                factory.Release.Set();
-
-                // Assert
-                Assert.False(pool.IsRunning);
-                // Pool identity rules out silently moving the requests to a new pool.
-                // The bounded waits only prevent hangs; they do not establish the interleaving.
-                Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
-                DbConnectionInternal? firstConnection = await first;
-                Assert.NotNull(firstConnection);
-                Assert.Same(pool, firstConnection.Pool);
-                Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(10))));
-                if (cancel)
-                {
-                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
-                    // A canceled task alone says nothing about the connection created for it.
-                    // With the first connection still checked out, Count == 1 and no waiters
-                    // establish that the worker has finished returning the canceled result.
-                    Assert.True(SpinWait.SpinUntil(() => pool.Count == 1 && Volatile.Read(ref pool._waitCount) == 0, TimeSpan.FromSeconds(10)));
-                }
-                else
-                {
-                    DbConnectionInternal? pendingConnection = await pending;
-                    Assert.NotNull(pendingConnection);
-                    Assert.Same(pool, pendingConnection.Pool);
-                    Assert.Equal(0, Volatile.Read(ref pool._waitCount));
-                }
-                // Even the canceled case must reach the second creation. Otherwise an
-                // early shutdown failure could be hidden by the already-canceled task.
-                Assert.Equal(2, factory.CreateCount);
+                completion.SetCanceled();
             }
-            finally
+
+            // Unblock the first request, allowing both to proceed, in turn.
+            factory.Release.Set();
+
+            // Assert
+            // Wait for the first request to complete
+            Assert.False(pool.IsRunning);
+            Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
+            DbConnectionInternal? firstConnection = await first;
+            Assert.NotNull(firstConnection);
+            Assert.Same(pool, firstConnection.Pool);
+
+            // Wait for the second request to complete
+            Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(10))));
+            if (cancel)
             {
-                // Cleanup must also handle failure before the Act section. Otherwise the
-                // first creation could stay blocked or its connection return to a live pool.
-                factory.Release.Set();
-                pool.Shutdown();
-                await ReturnWhenCompleted(pool, firstOwner, first);
-                if (pending is not null)
-                {
-                    await ReturnWhenCompleted(pool, pendingOwner, pending);
-                }
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+                Assert.True(SpinWait.SpinUntil(() => pool.Count == 1 && Volatile.Read(ref pool._waitCount) == 0, TimeSpan.FromSeconds(10)));
+            }
+            else
+            {
+                DbConnectionInternal? pendingConnection = await pending;
+                Assert.NotNull(pendingConnection);
+                Assert.Same(pool, pendingConnection.Pool);
+                Assert.Equal(0, Volatile.Read(ref pool._waitCount));
+            }
+
+            // Assert that both requests created new connections
+            Assert.Equal(2, factory.CreateCount);
+
+            // Cleanup
+            factory.Release.Set();
+            pool.Shutdown();
+            await ReturnWhenCompleted(pool, firstOwner, first);
+            if (pending is not null)
+            {
+                await ReturnWhenCompleted(pool, pendingOwner, pending);
             }
 
             // Assert: returned connections were destroyed rather than pooled.
