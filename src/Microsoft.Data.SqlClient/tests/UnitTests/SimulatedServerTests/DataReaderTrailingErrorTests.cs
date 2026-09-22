@@ -441,4 +441,225 @@ public class DataReaderTrailingErrorTests : IDisposable
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 8: the COLMETADATA barrier - an error belonging to a *later* result
+    // set must not be pulled forward into the current one (sync + async)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Builds the "later result set carries its own metadata" shape:
+    ///
+    /// <code>
+    /// COLMETADATA(rs1) ROW(1) DONE(More|Count)
+    /// COLMETADATA(rs2) ROW(2) ERROR(8134) DONE(Error)
+    /// </code>
+    ///
+    /// <c>TryHasMoreRows</c> consumes DONE/ERROR/INFO tokens but deliberately stops at
+    /// COLMETADATA, so rs2's ERROR sits behind that barrier and is unreachable while the
+    /// caller is still draining rs1.
+    /// </summary>
+    private void RespondWithErrorInSecondResultSet()
+    {
+        TDSColMetadataToken first = SingleIntColumnMetadata();
+        TDSColMetadataToken second = SingleIntColumnMetadata();
+        RespondWith(
+            first,
+            IntRow(first, 1),
+            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            second,
+            IntRow(second, 2),
+            DivideByZeroError(),
+            new TDSDoneToken(TDSDoneTokenStatusType.Error, TDSDoneTokenCommandType.Done, 0));
+    }
+
+    [Fact]
+    public void Read_ErrorInSecondResultSet_DoesNotSurfaceWhileDrainingFirst()
+    {
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+        RespondWithErrorInSecondResultSet();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Draining result set 1 must yield exactly its own row and must NOT throw:
+        // result set 2's ERROR is behind the COLMETADATA barrier.
+        Assert.True(reader.Read());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.False(reader.Read());
+
+        // The error is not lost - it surfaces once the caller advances.
+        SqlException ex = Assert.ThrowsAny<SqlException>(() =>
+        {
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                }
+            }
+        });
+
+        Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
+    }
+
+    [Fact]
+    public async Task ReadAsync_ErrorInSecondResultSet_DoesNotSurfaceWhileDrainingFirst()
+    {
+        using SqlConnection connection = new(_connectionString);
+        await connection.OpenAsync();
+        RespondWithErrorInSecondResultSet();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.False(await reader.ReadAsync());
+
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(async () =>
+        {
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                }
+            }
+        });
+
+        Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Test 9: InfoMessage ordering across result sets - a message belonging to a
+    // later result set must not fire early (sync + async)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private const string DeferredInfoMessage = "belongs to the second result set";
+
+    /// <summary>
+    /// Places an INFO token behind the second result set's COLMETADATA:
+    ///
+    /// <code>
+    /// COLMETADATA(rs1) ROW(1) DONE(More|Count)
+    /// COLMETADATA(rs2) INFO("...") ROW(2) DONE(Final|Count)
+    /// </code>
+    /// </summary>
+    private void RespondWithInfoMessageInSecondResultSet()
+    {
+        TDSColMetadataToken first = SingleIntColumnMetadata();
+        TDSColMetadataToken second = SingleIntColumnMetadata();
+        RespondWith(
+            first,
+            IntRow(first, 1),
+            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            second,
+            new TDSInfoToken(50000, 1, 0, DeferredInfoMessage, "simulated", string.Empty, 1),
+            IntRow(second, 2),
+            new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+    }
+
+    /// <summary>
+    /// Records not merely <em>that</em> InfoMessage fired but <em>when</em>: the reader
+    /// phase and the number of rows the caller had consumed at the moment the handler ran.
+    /// </summary>
+    private sealed class InfoMessageFiringPoint
+    {
+        public const string NeverFired = "<never fired>";
+
+        public string Phase = "draining-first-result-set";
+        public int RowsConsumed;
+
+        public string PhaseWhenFired = NeverFired;
+        public int RowsConsumedWhenFired = -1;
+        public int FireCount;
+        public readonly List<string> Messages = new();
+
+        public void Attach(SqlConnection connection)
+        {
+            connection.InfoMessage += (_, e) =>
+            {
+                FireCount++;
+                PhaseWhenFired = Phase;
+                RowsConsumedWhenFired = RowsConsumed;
+                foreach (SqlError error in e.Errors)
+                {
+                    Messages.Add(error.Message);
+                }
+            };
+        }
+    }
+
+    [Fact]
+    public void InfoMessage_BelongingToLaterResultSet_DoesNotFireWhileReadingEarlierOne()
+    {
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        InfoMessageFiringPoint firing = new();
+        firing.Attach(connection);
+        RespondWithInfoMessageInSecondResultSet();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            firing.RowsConsumed++;
+        }
+
+        // The message lives behind result set 2's COLMETADATA, so it must not have
+        // fired while the caller was still on result set 1.
+        Assert.Equal(1, firing.RowsConsumed);
+        Assert.Equal(0, firing.FireCount);
+        Assert.Empty(firing.Messages);
+
+        firing.Phase = "advanced-to-second-result-set";
+        Assert.True(reader.NextResult());
+        while (reader.Read())
+        {
+            firing.RowsConsumed++;
+        }
+
+        // ... and it must still be delivered, as information, once the reader advances.
+        Assert.Equal(1, firing.FireCount);
+        Assert.Contains(DeferredInfoMessage, firing.Messages);
+        Assert.Equal("advanced-to-second-result-set", firing.PhaseWhenFired);
+        Assert.Equal(1, firing.RowsConsumedWhenFired);
+    }
+
+    [Fact]
+    public async Task InfoMessageAsync_BelongingToLaterResultSet_DoesNotFireWhileReadingEarlierOne()
+    {
+        using SqlConnection connection = new(_connectionString);
+        await connection.OpenAsync();
+
+        InfoMessageFiringPoint firing = new();
+        firing.Attach(connection);
+        RespondWithInfoMessageInSecondResultSet();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            firing.RowsConsumed++;
+        }
+
+        Assert.Equal(1, firing.RowsConsumed);
+        Assert.Equal(0, firing.FireCount);
+        Assert.Empty(firing.Messages);
+
+        firing.Phase = "advanced-to-second-result-set";
+        Assert.True(await reader.NextResultAsync());
+        while (await reader.ReadAsync())
+        {
+            firing.RowsConsumed++;
+        }
+
+        Assert.Equal(1, firing.FireCount);
+        Assert.Contains(DeferredInfoMessage, firing.Messages);
+        Assert.Equal("advanced-to-second-result-set", firing.PhaseWhenFired);
+        Assert.Equal(1, firing.RowsConsumedWhenFired);
+    }
 }
