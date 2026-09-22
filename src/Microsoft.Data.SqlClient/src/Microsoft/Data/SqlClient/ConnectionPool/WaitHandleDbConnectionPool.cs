@@ -1573,11 +1573,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Keep the cached error and its expiry timer available to admitted waiters.
             // Disposing the error state here leaves ErrorEvent signaled without an error.
 
-            // Reuse Clear() to doom every connection (including active checked-out ones), drain
-            // both idle stacks, and reclaim emancipated objects. Active connections destroy
-            // themselves on return either via the doom flag or via DeactivateObject's
-            // State == ShuttingDown branch.
-            Clear();
+            // Leave Clear() to the factory's explicit-clear or deferred-pruning path.
+            // Shutdown can run under the pool-group lock, where reclamation and connection
+            // disposal must not be added before the pool is queued for release.
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool

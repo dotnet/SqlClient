@@ -68,9 +68,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(pool._cleanupTimer);
         }
 
-        // Drains idle stacks.
+        /// <summary>
+        /// Leaves idle connections for the factory's explicit or deferred Clear call.
+        /// </summary>
         [Fact]
-        public void Shutdown_DrainsIdleStacks()
+        public void Shutdown_LeavesIdleConnectionsUntilClear()
         {
             var pool = CreatePool();
 
@@ -87,7 +89,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.IdleCount);
             Assert.Equal(2, pool.Count);
 
-            pool.Shutdown();
+            try
+            {
+                pool.Shutdown();
+
+                Assert.False(pool.IsRunning);
+                Assert.Equal(2, pool.IdleCount);
+                Assert.Equal(2, pool.Count);
+                Assert.True(c1!.CanBePooled);
+                Assert.True(c2!.CanBePooled);
+            }
+            finally
+            {
+                pool.Shutdown();
+                pool.Clear();
+            }
 
             Assert.Equal(0, pool.IdleCount);
             Assert.Equal(0, pool.Count);
