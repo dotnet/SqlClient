@@ -3,10 +3,10 @@ name: Driver dependency health
 description: Find dependency graph conflicts and vulnerable shipping dependencies, proposing only focused, policy-compliant fixes.
 intent: Keep shipping dependency graphs consistent and secure without unnecessary upgrades or duplicate review work.
 on:
-  schedule: daily
+  # Enable a daily schedule only after a successful hosted manual run is reviewed.
   workflow_dispatch:
 
-# Manual runs, like scheduled runs, only act on the default branch.
+# Manual runs only act on the default branch.
 if: >-
   github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
   && (github.event_name != 'workflow_dispatch' || !inputs.aw_context)
@@ -177,7 +177,7 @@ the driver's reference and unsupported-platform assemblies:
 
 Evaluate each project's `TargetFramework` and `TargetFrameworks` with
 `dotnet msbuild <project> -getProperty:TargetFramework,TargetFrameworks,ProjectAssetsFile,ReferenceType`.
-Cover every declared shipping TFM, including net46, net462, and netstandard2.0;
+Cover every declared shipping TFM, including net462 and netstandard2.0;
 do not silently restrict this Linux run to modern .NET. Inspect OS conditions:
 where `TargetOs` changes the graph, evaluate and restore both Windows_NT and
 Unix variants sequentially, retaining separate evidence. Set the `TargetOs`
