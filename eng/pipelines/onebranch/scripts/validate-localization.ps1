@@ -7,6 +7,10 @@
 
 .PARAMETER AllowlistPath
     Optional JSON file containing approved English-value matches grouped by localized filename.
+
+.PARAMETER ReportOnly
+    Report validation findings as warnings without failing. Malformed or missing inputs still fail,
+    because a run that could not examine the resources has produced no result to report.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -19,7 +23,9 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ResourcesDirectory,
 
-    [string]$AllowlistPath
+    [string]$AllowlistPath,
+
+    [switch]$ReportOnly
 )
 
 Set-StrictMode -Version Latest
@@ -169,12 +175,28 @@ foreach ($localizedFile in $localizedFiles) {
 }
 
 if ($failures.Count -gt 0) {
+    $issueType = if ($ReportOnly) { 'warning' } else { 'error' }
     foreach ($failure in $failures) {
-        Write-Host "##vso[task.logissue type=error]$failure"
+        Write-Host "##vso[task.logissue type=$issueType]$failure"
     }
+
     $errorNoun = if ($failures.Count -eq 1) { 'error' } else { 'errors' }
-    throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
+    if (-not $ReportOnly) {
+        throw "Localization validation failed with $($failures.Count) $errorNoun. Review the preceding errors."
+    }
+
+    Write-Host "##vso[task.logissue type=warning]Localization validation found $($failures.Count) $errorNoun but is running in report-only mode, so the build is not failed."
+
+    # task.logissue attaches an issue to the timeline record but leaves the task result untouched,
+    # so a step reporting only warnings would still render as a clean success.
+    Write-Host '##vso[task.complete result=SucceededWithIssues;]'
 }
 
 $fileNoun = if ($localizedFiles.Count -eq 1) { 'file' } else { 'files' }
-Write-Host "Localization validation passed for $($localizedFiles.Count) localized $fileNoun. Resource keys checked: $($englishStrings.Count); approved English-value matches allowlisted: $allowedMatchCount."
+$summary = "$($localizedFiles.Count) localized $fileNoun. Resource keys checked: $($englishStrings.Count); approved English-value matches allowlisted: $allowedMatchCount."
+if ($failures.Count -eq 0) {
+    Write-Host "Localization validation passed for $summary"
+}
+else {
+    Write-Host "Localization validation examined $summary"
+}

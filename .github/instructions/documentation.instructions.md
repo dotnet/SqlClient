@@ -140,6 +140,53 @@ public override void Open()
 | `<remarks>` | Additional details |
 | `<seealso>` | Related members |
 
+### Cross-References (`cref`)
+
+Our XML documentation is ingested into [dotnet/sqlclient-api-docs](https://github.com/dotnet/sqlclient-api-docs), where Open Publishing resolves every `cref` against the Learn xref map. A malformed documentation ID cannot resolve and produces an `xref-not-found` warning on the API Docs pull request, long after the change left this repository.
+
+A `cref` may be written unqualified (`<see cref="SqlConnection.Open"/>`), in which case the compiler binds it from the surrounding source. Once you write an explicit `T:`/`M:`/`P:`/`F:`/`E:`/`N:` prefix, the compiler passes the value through verbatim and no longer checks it, so the rules below are yours to get right.
+
+| Rule | Wrong | Right |
+|------|-------|-------|
+| Use CLR type names, not C# aliases | `M:...GetSchema(string)` | `M:...GetSchema(System.String)` |
+| Omit parentheses on a parameterless member | `M:...GetSchema()` | `M:...GetSchema` |
+| Never include whitespace | `M:...Add(System.String, System.String)` | `M:...Add(System.String,System.String)` |
+| `T:` names a type, never an array | `T:System.Byte[]` | `T:System.Byte` array |
+| Match the prefix to the member kind | `M:...SqlCommand.CommandTimeout` | `P:...SqlCommand.CommandTimeout` |
+| Generic arguments use braces | `T:...List<System.String>` | `T:...List{System.String}` |
+
+Array, pointer and by-reference markers are legal *inside* a member signature (`M:...Decrypt(System.Byte[])`); they are only invalid as the whole target of a `T:` reference.
+
+### Validating Cross-References Locally
+
+`eng/pipelines/onebranch/scripts/validate-xml-docs.ps1` enforces the rules above. It runs in the OneBranch build jobs against snippet sources, generated documentation, and the assembled packages, so run it before pushing documentation changes:
+
+```powershell
+./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
+```
+
+To also resolve references against the members the build actually emitted, which additionally catches wrong-kind prefixes and cross-references the compiler failed to bind:
+
+```powershell
+dotnet build ./src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj -c Release
+./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref
+```
+
+Validation is offline by design; it needs no network access and no xref map download.
+
+### Trimmed vs. Full Documentation
+
+The driver package ships **two** XML documentation files per target framework, and they are deliberately different:
+
+| Package folder | Content | Consumer |
+|----------------|---------|----------|
+| `lib/<tfm>/` | Full documentation, including `<remarks>` and `<example>` | IntelliSense |
+| `ref/<tfm>/` | Trimmed by `tools/intellisense/TrimDocs.ps1`, which strips `<remarks>` and `<example>` | Reference assemblies |
+
+Remarks and examples render poorly in Visual Studio tooltips, which is why `ref/` is trimmed. The two files must never be the same: if `lib/` is sourced from the trimmed artifact, IntelliSense silently loses every remark and example. That regression shipped in 7.1.0, so the packaged-documentation gate now fails the build when a package's `lib/` XML is trimmed, its `ref/` XML is not, or the two are byte-identical.
+
+When changing the `<file>` mappings in `Microsoft.Data.SqlClient.nuspec`, keep `lib/` pointed at the implementation artifact and `ref/` at the reference artifact.
+
 ### Writing Style
 - Use third person ("Opens a connection" not "Open a connection")
 - Be concise but complete

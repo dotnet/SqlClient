@@ -53,6 +53,11 @@ parameters:
     default:
       - error
 
+  # When true, gate findings fail this step.  When false, they are reported as warnings and the
+  # step succeeds.
+  - name: failOnValidationError
+    type: boolean
+
 steps:
   - task: DotNetCoreCLI@2
     displayName: 'build.proj - BuildPackageValidator'
@@ -63,18 +68,40 @@ steps:
         -t:BuildPackageValidator
         -p:Configuration=Release
 
+  # Compose the argument line first so the optional switch can be appended without repeating the
+  # whole list.  The variable is set immediately before the task that reads it.
+  #
+  # The switch is appended as a bare token because the PowerShell task dot-sources the script under
+  # -Command, where a -Switch:Value form binds the value as a string and is rejected.
+  #
+  # Report-only is enabled only by the value False (the comparison is case-insensitive).  Any value
+  # other than True or False is rejected rather than assumed, so an unrecognised value cannot
+  # silently downgrade validation to warnings.
+  - pwsh: |
+      $arguments = '-ValidatorPath "$(REPO_ROOT)/tools/PackageValidator/src/bin/Release/net10.0/PackageValidator.dll"' +
+                   ' -PackagesPath "${{ parameters.packagesPath }}"' +
+                   ' -ReportPath "${{ parameters.reportPath }}"' +
+                   ' -SqlClientPackageVersion "${{ parameters.sqlClientPackageVersion }}"' +
+                   ' -SqlClientFileVersion "${{ parameters.sqlClientFileVersion }}"' +
+                   ' -SqlServerPackageVersion "${{ parameters.sqlServerPackageVersion }}"' +
+                   ' -SqlServerFileVersion "${{ parameters.sqlServerFileVersion }}"' +
+                   ' -FailOn "${{ join(',', parameters.failOn) }}"'
+
+      $failOnValidationError = '${{ parameters.failOnValidationError }}'
+      if ($failOnValidationError -eq 'False') {
+          $arguments += ' -ReportOnly'
+      }
+      elseif ($failOnValidationError -ne 'True') {
+          throw "Unexpected failOnValidationError value '$failOnValidationError'."
+      }
+
+      Write-Host "##vso[task.setvariable variable=validatePackagesArguments]$arguments"
+    displayName: 'Compose package validation arguments'
+
   - task: PowerShell@2
     displayName: 'Validate NuGet packages'
     inputs:
       targetType: filePath
       pwsh: true
       filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-packages.ps1
-      arguments: >-
-        -ValidatorPath "$(REPO_ROOT)/tools/PackageValidator/src/bin/Release/net10.0/PackageValidator.dll"
-        -PackagesPath "${{ parameters.packagesPath }}"
-        -ReportPath "${{ parameters.reportPath }}"
-        -SqlClientPackageVersion "${{ parameters.sqlClientPackageVersion }}"
-        -SqlClientFileVersion "${{ parameters.sqlClientFileVersion }}"
-        -SqlServerPackageVersion "${{ parameters.sqlServerPackageVersion }}"
-        -SqlServerFileVersion "${{ parameters.sqlServerFileVersion }}"
-        -FailOn "${{ join(',', parameters.failOn) }}"
+      arguments: $(validatePackagesArguments)
