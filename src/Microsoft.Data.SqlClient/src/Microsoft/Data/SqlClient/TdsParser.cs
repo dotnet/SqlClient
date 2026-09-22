@@ -8279,12 +8279,6 @@ namespace Microsoft.Data.SqlClient
             {
                 bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
-
-                if (value == decimal.Zero)
-                {
-                    // AdjustScale preserves the integer digit of scale-zero zero, but decimal(p,p) needs no integer digits.
-                    num = SqlDecimal.ConvertToPrecScale(num, Math.Max(1, newScale), newScale);
-                }
             }
 
             return num;
@@ -10439,7 +10433,10 @@ namespace Microsoft.Data.SqlClient
                     // If Precision is specified, verify value precision vs param precision
                     if (precision != 0)
                     {
-                        if (precision < adjustedValue.Precision)
+                        // Precision metadata can overstate zero's required digits.
+                        // Compare magnitudes to recognize negative zero as well.
+                        if (precision < adjustedValue.Precision &&
+                            (SqlDecimal.Abs(adjustedValue) != new SqlDecimal(0)).IsTrue)
                         {
                             throw ADP.ParameterValueOutOfRange(adjustedValue);
                         }

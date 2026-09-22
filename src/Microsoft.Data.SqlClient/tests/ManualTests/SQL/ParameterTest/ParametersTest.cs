@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// Zero values with different CLR representations must round-trip into decimal(p,p) columns.
+        /// CLR and SQL zero values with different representations must round-trip into decimal(p,p) columns.
         /// One async case covers command execution parity; scale boundaries use the shared synchronous conversion.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
@@ -563,7 +563,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             parameter.Precision = scale;
             parameter.Scale = scale;
 
-            foreach (decimal value in new[] { 0m, 0.0m, 0.000m, new decimal(0, 0, 0, true, 0) })
+            foreach (object value in new object[]
+            {
+                0m, 0.0m, 0.000m, new decimal(0, 0, 0, true, 0),
+                new SqlDecimal(0m), new SqlDecimal(0.000m),
+                new SqlDecimal(new decimal(0, 0, 0, true, 0)),
+                new SqlDecimal(38, scale, true, 0, 0, 0, 0),
+                new SqlDecimal(38, scale, false, 0, 0, 0, 0)
+            })
             {
                 parameter.Value = value;
                 using SqlDataReader reader = useAsync
@@ -597,20 +604,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlCommand command = new("SELECT @Value", connection);
-            command.Parameters.Add(new SqlParameter("@Value", SqlDbType.Decimal)
+            SqlParameter parameter = command.Parameters.Add("@Value", SqlDbType.Decimal);
+            parameter.Precision = 3;
+            parameter.Scale = 3;
+            foreach (object value in new object[] { 1m, -1m, new SqlDecimal(1m), new SqlDecimal(-1m) })
             {
-                Precision = 3,
-                Scale = 3,
-                Value = 1m
-            });
-
-            if (useAsync)
-            {
-                await Assert.ThrowsAsync<ArgumentException>(() => command.ExecuteNonQueryAsync());
-            }
-            else
-            {
-                Assert.Throws<ArgumentException>(() => command.ExecuteNonQuery());
+                parameter.Value = value;
+                if (useAsync)
+                {
+                    await Assert.ThrowsAsync<ArgumentException>(() => command.ExecuteNonQueryAsync());
+                }
+                else
+                {
+                    Assert.Throws<ArgumentException>(() => command.ExecuteNonQuery());
+                }
             }
         }
 

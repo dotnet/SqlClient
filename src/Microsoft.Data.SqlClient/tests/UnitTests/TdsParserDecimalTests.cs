@@ -3,26 +3,30 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Data.SqlTypes;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Verifies decimal scale adjustment preserves values and the precision required by RPC parameters.
+    /// Verifies decimal scale adjustment and RPC precision validation preserve representable values.
     /// </summary>
     [Collection(AppContextSwitchTestCollection.Name)]
     public class TdsParserDecimalTests
     {
         /// <summary>
-        /// Zero must fit when parameter precision equals scale, regardless of its CLR scale or sign.
+        /// CLR and SQL zero must serialize when precision equals scale, regardless of input scale or sign.
         /// </summary>
         [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void AdjustDecimalScale_ZeroUsesMinimumPrecision(bool truncate)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void RpcDecimalParameter_ZeroFitsPrecisionEqualToScale(bool isSqlDecimal, bool truncate)
         {
             using LocalAppContextSwitchesHelper switches = new();
             switches.TruncateScaledDecimal = truncate;
@@ -31,16 +35,49 @@ namespace Microsoft.Data.SqlClient.UnitTests
             {
                 foreach (bool negative in new[] { false, true })
                 {
-                    decimal value = new(0, 0, 0, negative, oldScale);
-                    for (int newScale = 0; newScale <= 38; newScale++)
+                    decimal zero = new(0, 0, 0, negative, oldScale);
+                    object value = isSqlDecimal ? (object)new SqlDecimal(zero) : zero;
+                    for (byte scale = 1; scale <= 38; scale++)
                     {
-                        SqlDecimal adjusted = TdsParser.AdjustDecimalScale(value, newScale);
-
-                        Assert.Equal(newScale, adjusted.Scale);
-                        Assert.Equal(Math.Max(1, newScale), adjusted.Precision);
-                        Assert.Equal(new int[4], adjusted.Data);
+                        WriteDecimalParameter(value, scale, scale);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Excess SqlDecimal precision must not reject signed zero or a value that rounds/truncates to zero.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void RpcDecimalParameter_ZeroWithExcessPrecisionFits(bool negative)
+        {
+            using LocalAppContextSwitchesHelper switches = new();
+            foreach (bool truncate in new[] { false, true })
+            {
+                switches.TruncateScaledDecimal = truncate;
+                WriteDecimalParameter(new SqlDecimal(38, 3, !negative, 0, 0, 0, 0), 3, 3);
+                WriteDecimalParameter(SqlDecimal.ConvertToPrecScale(
+                    new SqlDecimal(new decimal(0, 0, 0, negative, 3)), 38, 3), 3, 3);
+                WriteDecimalParameter(new SqlDecimal(38, 4, !negative, 1, 0, 0, 0), 3, 3);
+            }
+        }
+
+        /// <summary>
+        /// Exempting zero must not permit nonzero CLR or SQL values with insufficient parameter precision.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void RpcDecimalParameter_NonzeroExceedingPrecisionThrows(bool isSqlDecimal)
+        {
+            foreach (decimal value in new[] { -1m, 1m })
+            {
+                object parameterValue = isSqlDecimal ? (object)new SqlDecimal(value) : value;
+                TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+                    () => WriteDecimalParameter(parameterValue, 3, 3));
+                Assert.IsType<ArgumentException>(exception.InnerException);
             }
         }
 
@@ -87,6 +124,33 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 Assert.Equal(29 + scale, adjusted.Precision);
                 Assert.Throws<OverflowException>(() => adjusted.Value);
             }
+        }
+
+        /// <summary>
+        /// Serializes one RPC parameter into a fresh parser buffer without connecting to a server.
+        /// </summary>
+        /// <param name="value">The CLR decimal or SqlDecimal parameter value.</param>
+        /// <param name="precision">The declared parameter precision.</param>
+        /// <param name="scale">The declared parameter scale.</param>
+        private static void WriteDecimalParameter(object value, byte precision, byte scale)
+        {
+            const BindingFlags Flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            TdsParser parser = new(false, false);
+            object state = typeof(TdsParser).GetField("_physicalStateObj", Flags)!.GetValue(parser)!;
+            SqlParameter parameter = new("@Value", SqlDbType.Decimal)
+            {
+                Value = value,
+                Precision = precision,
+                Scale = scale
+            };
+            parameter.Validate(0, false);
+
+            using SqlCommand command = new();
+            MethodInfo write = typeof(TdsParser).GetMethod("TDSExecuteRPCAddParameter", Flags)!;
+            Assert.Null(write.Invoke(parser, new object[]
+            {
+                state, parameter, parameter.InternalMetaType, (byte)0, command, false
+            }));
         }
     }
 }
