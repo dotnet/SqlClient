@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
@@ -57,6 +58,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlRetryLogicBase retryLogic = null;
             var exceptions = new List<Exception>();
+            bool wasInTransaction = WasInTransaction(sender);
         retry:
             try
             {
@@ -66,7 +68,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (!wasInTransaction && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic ??= GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.Execute<TResult>|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
@@ -103,6 +105,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlRetryLogicBase retryLogic = null;
             var exceptions = new List<Exception>();
+            bool wasInTransaction = WasInTransaction(sender);
         retry:
             try
             {
@@ -112,7 +115,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (!wasInTransaction && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic ??= GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ExecuteAsync<TResult>|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
@@ -149,6 +152,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlRetryLogicBase retryLogic = null;
             var exceptions = new List<Exception>();
+            bool wasInTransaction = WasInTransaction(sender);
         retry:
             try
             {
@@ -157,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (!wasInTransaction && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic ??= GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ExecuteAsync|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
@@ -185,6 +189,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region private methods
+
+        /// <summary>
+        /// Determines whether <paramref name="sender"/> is a <see cref="SqlCommand"/> that is
+        /// associated with a transaction, either an explicit <see cref="SqlTransaction"/> or an
+        /// ambient <see cref="Transaction.Current"/>.
+        /// </summary>
+        /// <remarks>
+        /// This must be evaluated <em>before</em> the operation is attempted, and the result kept
+        /// for the lifetime of the retry loop.
+        /// <see cref="SqlRetryLogicBase.RetryCondition(object)"/> performs the same check, but it
+        /// only runs after a failure has already occurred. A transient error that aborts the
+        /// transaction (a deadlock victim, error 1205, being the canonical case) zombies the
+        /// <see cref="SqlTransaction"/>, which makes <see cref="SqlCommand.Transaction"/> report
+        /// <see langword="null"/>, and likewise clears <see cref="Transaction.Current"/>. The
+        /// after-the-fact check therefore sees no transaction and lets the command be retried
+        /// outside of the transaction it was explicitly scoped to, silently re-executing work the
+        /// caller expected to be rollback-able.
+        /// </remarks>
+        private static bool WasInTransaction(object sender) =>
+            sender is SqlCommand command &&
+            (Transaction.Current is not null || command.Transaction is not null);
 
         private Exception CreateException(IList<Exception> exceptions, SqlRetryLogicBase retryLogic, bool manualCancellation = false)
         {
