@@ -1780,6 +1780,9 @@ For more information on working with events, see [Connection Events](https://lea
           Clients that want to process warnings or informational messages sent by the server should create an <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventHandler" /> delegate to listen to this event.
         </para>
         <para>
+          When using <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" />, informational messages can be received while reading rows or advancing to the next result, including messages after the last row, such as execution statistics. Read each result to completion and call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> until it returns <see langword="false" />, even when only one row-returning result is expected. Do not rely on closing or disposing the reader to deliver unread informational messages; they may be discarded. See the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> example for a loop that processes the first result before advancing.
+        </para>
+        <para>
           The <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event occurs when a message with a severity of 10 or less is returned by SQL Server. Messages that have a severity between 11 and 20 raise an error and messages that have a severity over 20 causes the connection to close. For more information on SQL Server error levels, see <see href="https://learn.microsoft.com/sql/relational-databases/errors-events/database-engine-error-severities">Database Engine Error Severities</see>.
           For more information and an example, see <see href="https://learn.microsoft.com/sql/connect/ado-net/connection-events">Connection Events</see>.
         </para>
