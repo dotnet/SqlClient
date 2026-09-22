@@ -1230,6 +1230,8 @@ namespace Microsoft.Data.SqlClient
             return _data[i].VariantInternalStorageType;
         }
 
+        internal bool IsSmallMoney(int i) => _data[i].IsSmallMoney;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*' />
         public override IEnumerator GetEnumerator()
         {

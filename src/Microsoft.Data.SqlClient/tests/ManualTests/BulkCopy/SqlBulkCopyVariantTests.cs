@@ -20,6 +20,91 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
     public class SqlBulkCopyVariantTests
     {
         /// <summary>
+        /// Reader sources retain smallmoney identity, including mixed variant rows and sequential access.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
+        public async Task ReaderRetainsSmallMoneyType(bool variant, bool sequential, bool async)
+        {
+            decimal?[] values = { -214748.3648m, -1.2345m, 0m, 0.0001m, 214748.3647m, null };
+            string[] types = variant ? new[] { "smallmoney", "money", "numeric" } : new[] { "smallmoney" };
+            int count = values.Length * types.Length;
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table destination = new Table(connection, "bulkSmallMoneyVariant", "(Id int, Val sql_variant NULL)");
+            using SqlConnection sourceConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            sourceConnection.Open();
+            using SqlCommand command = sourceConnection.CreateCommand();
+            command.CommandText = string.Join(" UNION ALL ", Enumerable.Range(0, count).Select(i =>
+            {
+                string type = types[i % types.Length];
+                string cast = $"CAST(@p{i} AS {(type == "numeric" ? "numeric(29,8)" : type)})";
+                return $"SELECT {i} AS Id, {(variant ? $"CAST({cast} AS sql_variant)" : cast)} AS Val";
+            }));
+            for (int i = 0; i < count; i++)
+            {
+                SqlParameter parameter = command.Parameters.Add($"@p{i}", SqlDbType.Decimal);
+                parameter.Precision = 29;
+                parameter.Scale = 8;
+                parameter.Value = (object)values[i / types.Length] ?? DBNull.Value;
+            }
+
+            using (SqlDataReader reader = command.ExecuteReader(sequential ? CommandBehavior.SequentialAccess : CommandBehavior.Default))
+            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+            {
+                DestinationTableName = destination.Name,
+                BatchSize = 3,
+                EnableStreaming = sequential
+            })
+            {
+                if (async)
+                {
+                    await bulkCopy.WriteToServerAsync(reader);
+                }
+                else
+                {
+                    bulkCopy.WriteToServer(reader);
+                }
+            }
+
+            using SqlCommand verify = new SqlCommand(
+                $"SELECT Id, Val, SQL_VARIANT_PROPERTY(Val, 'BaseType') FROM {destination.Name} ORDER BY Id", connection);
+            using SqlDataReader result = verify.ExecuteReader();
+            for (int i = 0; i < count; i++)
+            {
+                Assert.True(result.Read());
+                Assert.Equal(i, result.GetInt32(0));
+                decimal? expected = values[i / types.Length];
+                if (expected.HasValue)
+                {
+                    Assert.Equal(types[i % types.Length], result.GetString(2));
+                    Assert.Equal(expected.Value, result.GetDecimal(1));
+                    if (types[i % types.Length] != "numeric")
+                    {
+                        Assert.Equal(new SqlMoney(expected.Value), Assert.IsType<SqlMoney>(result.GetSqlValue(1)));
+                    }
+                    else
+                    {
+                        Assert.IsType<SqlDecimal>(result.GetSqlValue(1));
+                    }
+                }
+                else
+                {
+                    Assert.True(result.IsDBNull(1));
+                    Assert.True(result.IsDBNull(2));
+                }
+            }
+            Assert.False(result.Read());
+        }
+
+        /// <summary>
         /// Mixed variant rows preserve money, numeric, and null values for each supported source path.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]

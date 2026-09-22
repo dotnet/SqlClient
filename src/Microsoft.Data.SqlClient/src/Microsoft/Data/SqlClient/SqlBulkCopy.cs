@@ -2543,13 +2543,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     _parser.WriteSqlVariantDate(((DateTime)value), _stateObj);
                 }
+                else if (!isNull && variantInternalType == SqlBuffer.StorageType.Money)
+                {
+                    // GetValue exposes both money types as decimal; preserve the source's wire type.
+                    _parser.WriteSqlVariantMoney(new SqlMoney((decimal)value), _stateObj,
+                        _sqlDataReaderRowSource.IsSmallMoney(_sortedColumnMappings[col]._sourceColumnOrdinal));
+                }
                 else
                 {
-                    if (!isNull && variantInternalType == SqlBuffer.StorageType.Money)
-                    {
-                        // SqlDataReader.GetValue exposes money as decimal.
-                        value = new SqlMoney((decimal)value);
-                    }
                     writeTask = _parser.WriteSqlVariantDataRowValue(value, _stateObj); //returns Task/Null
                 }
             }

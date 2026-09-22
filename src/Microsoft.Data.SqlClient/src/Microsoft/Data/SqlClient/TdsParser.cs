@@ -6719,7 +6719,8 @@ namespace Microsoft.Data.SqlClient
                         lo = BinaryPrimitives.ReadUInt32LittleEndian(unencryptedBytes.AsSpan(4));
 
                         long l = (((long)mid) << 0x20) + ((long)lo);
-                        value.SetToMoney(l);
+                        value.SetToMoney(l, isSmallMoney: tdsType == TdsEnums.SQLMONEY4 ||
+                            (tdsType == TdsEnums.SQLMONEYN && denormalizedLength == 4));
                         break;
                     }
 
@@ -7287,7 +7288,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return result;
                     }
-                    value.SetToMoney(intValue);
+                    value.SetToMoney(intValue, isSmallMoney: true);
                     break;
 
                 case TdsEnums.SQLDATETIMN:
@@ -7904,8 +7905,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLMONEY:
                     {
-                        WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteSqlMoney((SqlMoney)value, 8, stateObj);
+                        WriteSqlVariantMoney((SqlMoney)value, stateObj, isSmallMoney: false);
                         break;
                     }
 
@@ -7956,6 +7956,14 @@ namespace Microsoft.Data.SqlClient
             WriteInt(length, stateObj);
             stateObj.WriteByte(tdstype);
             stateObj.WriteByte(propbytes);
+        }
+
+        internal void WriteSqlVariantMoney(SqlMoney value, TdsParserStateObject stateObj, bool isSmallMoney)
+        {
+            int length = isSmallMoney ? 4 : 8;
+            byte type = (byte)(isSmallMoney ? TdsEnums.SQLMONEY4 : TdsEnums.SQLMONEY);
+            WriteSqlVariantHeader(length + 2, type, 0, stateObj);
+            WriteSqlMoney(value, length, stateObj);
         }
 
         internal void WriteSqlVariantDateTime2(DateTime value, TdsParserStateObject stateObj)

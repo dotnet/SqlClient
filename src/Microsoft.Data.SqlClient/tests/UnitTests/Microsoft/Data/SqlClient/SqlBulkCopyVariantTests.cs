@@ -51,6 +51,76 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
+        /// Smallmoney retains its four-byte signed payload instead of widening the variant to money.
+        /// </summary>
+        [Theory]
+        [InlineData(int.MinValue)]
+        [InlineData(-12345)]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(int.MaxValue)]
+        public void SmallMoneyRetainsTypeAndPayload(int scaledValue)
+        {
+            TdsParserStateObject state = _parser._physicalStateObj;
+            int start = state._outBytesUsed;
+            _parser.WriteSqlVariantMoney(new SqlMoney(scaledValue / 10000m), state, isSmallMoney: true);
+
+            Assert.Equal(10, state._outBytesUsed - start);
+            Assert.Equal(6, BitConverter.ToInt32(state._outBuff, start));
+            Assert.Equal(TdsEnums.SQLMONEY4, state._outBuff[start + 4]);
+            Assert.Equal(0, state._outBuff[start + 5]);
+            Assert.Equal(scaledValue, BitConverter.ToInt32(state._outBuff, start + 6));
+        }
+
+        /// <summary>
+        /// Cloning preserves the money subtype while reusing a buffer does not leak it into later rows.
+        /// </summary>
+        [Fact]
+        public void MoneyBufferPreservesAndClearsSmallMoneyMetadata()
+        {
+            SqlBuffer buffer = new SqlBuffer();
+            buffer.SetToMoney(-12345, isSmallMoney: true);
+            SqlBuffer clone = SqlBuffer.CloneBufferArray(new[] { buffer })[0];
+            Assert.True(clone.IsSmallMoney);
+            Assert.Equal(SqlBuffer.StorageType.Money, clone.VariantInternalStorageType);
+            Assert.Equal(new SqlMoney(-1.2345m), clone.SqlMoney);
+
+            buffer.Clear();
+            Assert.False(buffer.IsSmallMoney);
+            buffer.SetToMoney(12300);
+            Assert.False(buffer.IsSmallMoney);
+            Assert.Equal(new SqlMoney(1.23m), buffer.SqlMoney);
+            Assert.True(clone.IsSmallMoney);
+
+            buffer.Clear();
+            buffer.SetToNullOfType(SqlBuffer.StorageType.Money);
+            Assert.True(buffer.IsNull);
+            Assert.False(buffer.IsSmallMoney);
+        }
+
+        /// <summary>
+        /// Decrypted money values use their source type, not the normalized eight-byte payload length.
+        /// </summary>
+        [Theory]
+        [InlineData(TdsEnums.SQLMONEY4, 4, true)]
+        [InlineData(TdsEnums.SQLMONEYN, 4, true)]
+        [InlineData(TdsEnums.SQLMONEY, 8, false)]
+        [InlineData(TdsEnums.SQLMONEYN, 8, false)]
+        public void DecryptedMoneyRetainsSourceType(int tdsType, int length, bool isSmallMoney)
+        {
+            SqlBuffer buffer = new SqlBuffer();
+            SqlMetaDataPriv metadata = new SqlMetaDataPriv
+            {
+                baseTI = new SqlMetaDataPriv { tdsType = (byte)tdsType, length = length }
+            };
+            byte[] normalized = { 0xff, 0xff, 0xff, 0xff, 0xc7, 0xcf, 0xff, 0xff };
+
+            Assert.True(_parser.DeserializeUnencryptedValue(buffer, normalized, metadata, _parser._physicalStateObj, 0x01));
+            Assert.Equal(isSmallMoney, buffer.IsSmallMoney);
+            Assert.Equal(new SqlMoney(-1.2345m), buffer.SqlMoney);
+        }
+
+        /// <summary>
         /// Both decimal representations remain numeric, even when the value also fits in money.
         /// </summary>
         [Theory]
