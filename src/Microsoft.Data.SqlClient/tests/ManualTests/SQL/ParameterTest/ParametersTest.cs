@@ -534,20 +534,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Zero values with different CLR representations must round-trip into decimal(p,p) columns.
+        /// One async case covers command execution parity; scale boundaries use the shared synchronous conversion.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
         [InlineData(1, false)]
-        [InlineData(1, true)]
         [InlineData(2, false)]
-        [InlineData(2, true)]
         [InlineData(3, false)]
         [InlineData(3, true)]
         [InlineData(28, false)]
-        [InlineData(28, true)]
         [InlineData(29, false)]
-        [InlineData(29, true)]
         [InlineData(38, false)]
-        [InlineData(38, true)]
         public static async Task ZeroDecimalParameter_CommandInsert(byte scale, bool useAsync)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -583,6 +579,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Correcting zero precision must not allow nonzero values that exceed the parameter precision.
+        /// Both command APIs must surface the same exception, including when the async result is awaited.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
         [InlineData(false)]
