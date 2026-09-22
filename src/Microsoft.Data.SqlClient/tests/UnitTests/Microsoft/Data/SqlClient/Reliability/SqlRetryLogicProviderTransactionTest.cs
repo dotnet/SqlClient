@@ -19,8 +19,9 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <c>SqlRetryLogic.RetryCondition</c> checks the live transaction state, but it only runs after
 /// the failure. A transient error that aborts the transaction (a deadlock victim, error 1205)
 /// zombies the <see cref="SqlTransaction"/>, so <see cref="SqlCommand.Transaction"/> reports
-/// <see langword="null"/> and <see cref="Transaction.Current"/> is likewise cleared. The guard
-/// then passed and the command was re-executed outside of any transaction.
+/// <see langword="null"/>. The guard then passed and the command was re-executed outside of
+/// its transaction. An abort does not clear <see cref="Transaction.Current"/> from an active
+/// scope; the ambient tests separately simulate operation code clearing that state.
 /// </remarks>
 public class SqlRetryLogicProviderTransactionTest
 {
@@ -39,6 +40,7 @@ public class SqlRetryLogicProviderTransactionTest
 
     #region Explicit SqlTransaction
 
+    /// <summary>Prevents retrying a command after its explicit transaction is zombied by a failure.</summary>
     [Fact]
     public void Execute_TransactionClearedByFailure_IsNotRetried()
     {
@@ -56,6 +58,7 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(0, counter.Count);
     }
 
+    /// <summary>Preserves the initial explicit transaction guard in the generic asynchronous retry loop.</summary>
     [Fact]
     public async Task ExecuteAsync_TransactionClearedByFailure_IsNotRetried()
     {
@@ -72,6 +75,7 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(0, counter.Count);
     }
 
+    /// <summary>Preserves the initial explicit transaction guard in the non-generic asynchronous retry loop.</summary>
     [Fact]
     public async Task ExecuteAsyncNonGeneric_TransactionClearedByFailure_IsNotRetried()
     {
@@ -92,8 +96,9 @@ public class SqlRetryLogicProviderTransactionTest
 
     #region Ambient TransactionScope
 
+    /// <summary>Prevents retries when operation code clears the ambient transaction before throwing.</summary>
     [Fact]
-    public void Execute_AmbientTransactionClearedByFailure_IsNotRetried()
+    public void Execute_AmbientTransactionClearedByOperation_IsNotRetried()
     {
         SqlCommand command = new SqlCommand("UPDATE [Table1] SET [Value] = 2 WHERE [Id] = 1");
         SqlRetryLogicBaseProvider provider = CreateProvider(out RetryCounter counter);
@@ -106,7 +111,7 @@ public class SqlRetryLogicProviderTransactionTest
         {
             Assert.Throws<SqlException>(() => provider.Execute<int>(command, () =>
             {
-                // The aborted transaction is no longer the ambient one.
+                // Simulate operation code clearing the ambient state, not an abort doing so.
                 Transaction.Current = null;
                 throw CreateTransientSqlException();
             }));
@@ -120,8 +125,9 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(0, counter.Count);
     }
 
+    /// <summary>Preserves the initial ambient transaction guard when asynchronous operation code clears that state.</summary>
     [Fact]
-    public async Task ExecuteAsync_AmbientTransactionClearedByFailure_IsNotRetried()
+    public async Task ExecuteAsync_AmbientTransactionClearedByOperation_IsNotRetried()
     {
         SqlCommand command = new SqlCommand("UPDATE [Table1] SET [Value] = 2 WHERE [Id] = 1");
         SqlRetryLogicBaseProvider provider = CreateProvider(out RetryCounter counter);
@@ -150,6 +156,7 @@ public class SqlRetryLogicProviderTransactionTest
 
     #region No transaction (must still retry)
 
+    /// <summary>Allows all configured attempts when a command starts without a transaction.</summary>
     [Fact]
     public void Execute_CommandWithoutTransaction_IsRetried()
     {
@@ -167,6 +174,7 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(2, counter.Count);
     }
 
+    /// <summary>Allows all configured attempts in the generic asynchronous loop without a transaction.</summary>
     [Fact]
     public async Task ExecuteAsync_CommandWithoutTransaction_IsRetried()
     {
@@ -184,10 +192,29 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(2, counter.Count);
     }
 
+    /// <summary>Allows all configured attempts in the separate non-generic asynchronous loop without a transaction.</summary>
+    [Fact]
+    public async Task ExecuteAsyncNonGeneric_CommandWithoutTransaction_IsRetried()
+    {
+        using SqlCommand command = new SqlCommand("SELECT 1");
+        SqlRetryLogicBaseProvider provider = CreateProvider(out RetryCounter counter);
+        int attempts = 0;
+
+        await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(command, () =>
+        {
+            attempts++;
+            return Task.FromException(CreateTransientSqlException());
+        }));
+
+        Assert.Equal(3, attempts);
+        Assert.Equal(2, counter.Count);
+    }
+
     #endregion
 
     #region Command reuse
 
+    /// <summary>Limits the transaction snapshot to one execution so command reuse can retry outside a transaction.</summary>
     [Fact]
     public void Execute_ReusedCommandWithoutTransaction_IsRetriedAfterEarlierTransactionalExecution()
     {
@@ -215,6 +242,7 @@ public class SqlRetryLogicProviderTransactionTest
         Assert.Equal(2, counter.Count);
     }
 
+    /// <summary>Allows asynchronous command reuse to retry after a previous transactional execution failed.</summary>
     [Fact]
     public async Task ExecuteAsync_ReusedCommandWithoutTransaction_IsRetriedAfterEarlierTransactionalExecution()
     {
@@ -250,9 +278,13 @@ public class SqlRetryLogicProviderTransactionTest
     {
         public int Count { get; private set; }
 
+        /// <summary>Records one retry notification for assertions on the number of scheduled retries.</summary>
         public void Increment() => Count++;
     }
 
+    /// <summary>Creates a three-attempt provider with no retry delay and attaches an event counter.</summary>
+    /// <param name="counter">Receives the counter updated by the provider's retry notifications.</param>
+    /// <returns>The fixed-interval provider used to exercise each retry loop.</returns>
     private static SqlRetryLogicBaseProvider CreateProvider(out RetryCounter counter)
     {
         SqlRetryLogicBaseProvider provider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(
@@ -271,6 +303,8 @@ public class SqlRetryLogicProviderTransactionTest
         return provider;
     }
 
+    /// <summary>Builds a deadlock exception recognized by the default transient-error predicate without a server.</summary>
+    /// <returns>A SQL exception containing the deadlock-victim error number.</returns>
     private static SqlException CreateTransientSqlException()
     {
         SqlErrorCollection errors = new SqlErrorCollection();
@@ -291,6 +325,8 @@ public class SqlRetryLogicProviderTransactionTest
     /// A real transaction requires a live server connection, so the object graph is assembled
     /// directly; only the state the retry guard inspects has to be faithful.
     /// </summary>
+    /// <param name="transaction">Receives the synthetic transaction so the test can zombie it during execution.</param>
+    /// <returns>A command whose transaction is visible to the initial retry guard.</returns>
     private static SqlCommand CreateCommandWithLiveTransaction(out SqlTransaction transaction)
     {
         transaction = (SqlTransaction)CreateUninitialized(typeof(SqlTransaction));
@@ -315,9 +351,13 @@ public class SqlRetryLogicProviderTransactionTest
     /// Zombies the transaction the way an aborted transaction does, which makes
     /// <see cref="SqlCommand.Transaction"/> report <see langword="null"/>.
     /// </summary>
+    /// <param name="transaction">The synthetic transaction whose internal state is cleared.</param>
     private static void Zombie(SqlTransaction transaction) =>
         s_transactionInternalField.SetValue(transaction, null);
 
+    /// <summary>Allocates synthetic transaction state without constructors that require a live connection.</summary>
+    /// <param name="type">The transaction type to allocate without initialization.</param>
+    /// <returns>An uninitialized instance used only to model the state inspected by the retry guard.</returns>
     private static object CreateUninitialized(Type type) =>
 #if NET
         System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(type);

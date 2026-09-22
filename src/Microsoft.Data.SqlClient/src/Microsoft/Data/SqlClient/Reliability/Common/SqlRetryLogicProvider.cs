@@ -199,13 +199,13 @@ namespace Microsoft.Data.SqlClient
         /// This must be evaluated <em>before</em> the operation is attempted, and the result kept
         /// for the lifetime of the retry loop.
         /// <see cref="SqlRetryLogicBase.RetryCondition(object)"/> performs the same check, but it
-        /// only runs after a failure has already occurred. A transient error that aborts the
-        /// transaction (a deadlock victim, error 1205, being the canonical case) zombies the
-        /// <see cref="SqlTransaction"/>, which makes <see cref="SqlCommand.Transaction"/> report
-        /// <see langword="null"/>, and likewise clears <see cref="Transaction.Current"/>. The
-        /// after-the-fact check therefore sees no transaction and lets the command be retried
-        /// outside of the transaction it was explicitly scoped to, silently re-executing work the
-        /// caller expected to be rollback-able.
+        /// only runs after a failure has already occurred. A transient error that aborts an
+        /// explicit transaction (for example, deadlock error 1205) zombies the
+        /// <see cref="SqlTransaction"/>, making <see cref="SqlCommand.Transaction"/> report
+        /// <see langword="null"/>. An abort does not clear <see cref="Transaction.Current"/>
+        /// from an active scope, but operation code can change the ambient transaction or
+        /// dispose its scope. Capturing the initial state prevents retries outside the
+        /// transaction in either case.
         /// </remarks>
         private static bool WasInTransaction(object sender) =>
             sender is SqlCommand command &&
