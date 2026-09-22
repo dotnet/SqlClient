@@ -8279,6 +8279,12 @@ namespace Microsoft.Data.SqlClient
             {
                 bool round = !LocalAppContextSwitches.TruncateScaledDecimal;
                 num = SqlDecimal.AdjustScale(num, newScale - oldScale, round);
+
+                if (value == decimal.Zero)
+                {
+                    // AdjustScale preserves the integer digit of scale-zero zero, but decimal(p,p) needs no integer digits.
+                    num = SqlDecimal.ConvertToPrecScale(num, Math.Max(1, newScale), newScale);
+                }
             }
 
             return num;
