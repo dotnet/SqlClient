@@ -42,7 +42,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// Disabling optimized binding after Prepare but before execution allows deferred preparation.
+        /// A new command configured with either supported alternative executes after a preparation failure.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task Prepare_OptimizedBindingFailure_NewCommandSucceeds(bool async, bool prepare)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using (SqlCommand command = new("SELECT @value", connection))
+            {
+                command.Parameters.Add("@value", SqlDbType.Int).Value = 42;
+                command.EnableOptimizedParameterBinding = true;
+                command.Prepare();
+
+                if (async)
+                {
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteScalarAsync());
+                }
+                else
+                {
+                    Assert.Throws<InvalidOperationException>(() => command.ExecuteScalar());
+                }
+            }
+
+            using SqlCommand replacement = new("SELECT @value", connection);
+            replacement.Parameters.Add("@value", SqlDbType.Int).Value = 42;
+            replacement.EnableOptimizedParameterBinding = !prepare;
+            if (prepare)
+            {
+                replacement.Prepare();
+            }
+
+            Assert.Equal(42, async ? await replacement.ExecuteScalarAsync() : replacement.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Disabling optimized binding after Prepare but before the first execution allows deferred preparation.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]

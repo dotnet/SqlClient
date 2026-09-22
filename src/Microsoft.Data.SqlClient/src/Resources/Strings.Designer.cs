@@ -3841,7 +3841,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Set EnableOptimizedParameterBinding to false before executing the prepared command, or execute the command without calling Prepare..
+        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare..
         /// </summary>
         internal static string SQL_PrepareNotSupportedForOptimizedBinding {
             get {

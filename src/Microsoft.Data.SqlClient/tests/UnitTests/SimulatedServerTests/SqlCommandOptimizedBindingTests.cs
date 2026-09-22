@@ -50,6 +50,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(Strings.SQL_PrepareNotSupportedForOptimizedBinding, exception.Message);
             Assert.Contains("Prepare", exception.Message);
             Assert.Contains("EnableOptimizedParameterBinding", exception.Message);
+            Assert.Contains("new SqlCommand", exception.Message);
+            Assert.Contains("before its first execution", exception.Message);
             Assert.DoesNotContain("Parameter ''", exception.Message);
         }
 
