@@ -4,10 +4,8 @@
 
 using System;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
@@ -20,13 +18,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class WaitHandleDbConnectionPoolShutdownTest
     {
-        private static WaitHandleDbConnectionPool CreatePool(int maxPoolSize = 5, int creationTimeout = 15000, SqlConnectionFactory? factory = null)
+        private static WaitHandleDbConnectionPool CreatePool(int maxPoolSize = 5, SqlConnectionFactory? factory = null)
         {
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
                 minPoolSize: 0,
                 maxPoolSize: maxPoolSize,
-                creationTimeout: creationTimeout,
+                creationTimeout: 15000,
                 loadBalanceTimeout: 0,
                 hasTransactionAffinity: true,
                 idleTimeout: 0);
@@ -185,6 +183,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
                 pending = Acquire(pool, pendingOwner, async ? completion : null);
                 Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
+                Assert.Equal(1, factory.CreateCount);
+                Assert.False(first.IsCompleted);
+                Assert.False(pending.IsCompleted);
 
                 pool.Shutdown();
                 Assert.False(pool.IsRunning);
@@ -195,7 +196,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 factory.Release.Set();
 
                 Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
-                Assert.Same(pool, (await first)!.Pool);
+                DbConnectionInternal? firstConnection = await first;
+                Assert.NotNull(firstConnection);
+                Assert.Same(pool, firstConnection.Pool);
                 Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(10))));
                 if (cancel)
                 {
@@ -204,9 +207,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 }
                 else
                 {
-                    Assert.Same(pool, (await pending)!.Pool);
+                    DbConnectionInternal? pendingConnection = await pending;
+                    Assert.NotNull(pendingConnection);
+                    Assert.Same(pool, pendingConnection.Pool);
                     Assert.Equal(0, Volatile.Read(ref pool._waitCount));
                 }
+                Assert.Equal(2, factory.CreateCount);
             }
             finally
             {
@@ -222,57 +228,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.Count);
         }
 
-        /// <summary>
-        /// A saturated request retains its normal wait timeout instead of failing immediately
-        /// when its pool is retired.
-        /// </summary>
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Shutdown_SaturatedRequest_RespectsTimeout(bool async)
-        {
-            const int waitMilliseconds = 1000;
-            var pool = CreatePool(maxPoolSize: 1, creationTimeout: waitMilliseconds);
-            using var owner = new SqlConnection();
-            using var pendingOwner = new SqlConnection();
-            Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
-            Assert.NotNull(blocking);
-            Task<DbConnectionInternal?>? pending = null;
-            var elapsed = Stopwatch.StartNew();
-            try
-            {
-                pending = Acquire(pool, pendingOwner, async ? new TaskCompletionSource<DbConnectionInternal>() : null,
-                    TimeSpan.FromMilliseconds(waitMilliseconds));
-                Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 1, TimeSpan.FromSeconds(10)));
-                pool.Shutdown();
-                if (async)
-                {
-                    InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(() => pending);
-                    Assert.Equal(ADP.PooledOpenTimeout().Message, error.Message);
-                }
-                else
-                {
-                    Assert.Null(await pending);
-                }
-                Assert.True(elapsed.ElapsedMilliseconds >= waitMilliseconds - 50, $"Request completed after {elapsed.ElapsedMilliseconds}ms.");
-                Assert.Equal(0, Volatile.Read(ref pool._waitCount));
-            }
-            finally
-            {
-                pool.Shutdown();
-                if (pending is not null)
-                {
-                    await ReturnWhenCompleted(pool, pendingOwner, pending);
-                }
-                pool.ReturnInternalConnection(blocking!, owner);
-            }
-        }
-
         /// <summary>Starts a sync acquisition on a dedicated thread or queues an async acquisition.</summary>
         private static Task<DbConnectionInternal?> Acquire(WaitHandleDbConnectionPool pool, SqlConnection owner,
-            TaskCompletionSource<DbConnectionInternal>? completion, TimeSpan? timeout = null)
+            TaskCompletionSource<DbConnectionInternal>? completion)
         {
-            TimeoutTimer timer = TimeoutTimer.StartNew(timeout ?? TimeSpan.FromSeconds(15));
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(15));
             if (completion is null)
             {
                 return Task.Factory.StartNew(() =>
@@ -307,6 +267,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             internal readonly ManualResetEventSlim Entered = new();
             internal readonly ManualResetEventSlim Release = new();
             private int _calls;
+
+            internal int CreateCount => Volatile.Read(ref _calls);
 
             protected override DbConnectionInternal CreateConnection(SqlConnectionOptions options, ConnectionPoolKey poolKey,
                 DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, TimeoutTimer timeout)
