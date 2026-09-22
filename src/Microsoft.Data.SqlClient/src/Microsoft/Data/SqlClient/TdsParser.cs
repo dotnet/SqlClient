@@ -10433,7 +10433,10 @@ namespace Microsoft.Data.SqlClient
                     // If Precision is specified, verify value precision vs param precision
                     if (precision != 0)
                     {
-                        if (precision < adjustedValue.Precision)
+                        // Precision metadata can overstate zero's required digits.
+                        // Compare magnitudes to recognize negative zero as well.
+                        if (precision < adjustedValue.Precision &&
+                            (SqlDecimal.Abs(adjustedValue) != new SqlDecimal(0)).IsTrue)
                         {
                             throw ADP.ParameterValueOutOfRange(adjustedValue);
                         }
