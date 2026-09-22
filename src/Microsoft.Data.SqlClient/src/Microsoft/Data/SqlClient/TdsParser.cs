@@ -7789,7 +7789,7 @@ namespace Microsoft.Data.SqlClient
         internal Task WriteSqlVariantDataRowValue(object value, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // handle null values
-            if (value == null || (DBNull.Value == value))
+            if (ADP.IsNull(value))
             {
                 WriteInt(TdsEnums.FIXEDNULL, stateObj);
                 return null;
@@ -7905,7 +7905,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLMONEY:
                     {
                         WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteCurrency((decimal)value, 8, stateObj);
+                        WriteSqlMoney((SqlMoney)value, 8, stateObj);
                         break;
                     }
 
