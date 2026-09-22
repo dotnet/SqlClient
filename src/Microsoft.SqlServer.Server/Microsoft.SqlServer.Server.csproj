@@ -5,6 +5,20 @@
     <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
+  <!-- XML Documentation =============================================== -->
+  <!--
+    The public types carry documentation comments whose text comes from doc/snippets.  Generating
+    the documentation file ships that text with the package, so consumers get IntelliSense for
+    them; without it the comments are compiled away and never reach anyone.
+
+    Deliberately unconditional.  The net46 target consists of type forwarders, so its documentation
+    file has no members in it, but keeping the setting free of a TargetFramework condition means
+    the project gives one unambiguous answer to whether it produces documentation.
+  -->
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <!-- Versioning ====================================================== -->
   <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
        in Package mode).  The guard property inside Versions.props makes this a no-op on the

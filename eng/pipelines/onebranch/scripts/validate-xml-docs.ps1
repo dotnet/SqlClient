@@ -1,0 +1,1147 @@
+<#
+.SYNOPSIS
+    Validates the XML documentation cross-references that feed dotnet/sqlclient-api-docs.
+
+.DESCRIPTION
+    Open Publishing resolves every <see>/<seealso>/<exception> cref in our XML documentation
+    against the Learn xref map. A cref whose documentation ID is malformed cannot resolve, and the
+    resulting xref-not-found warnings only surface after an API Docs pull request has already been
+    opened. This script is the local preflight for that round trip.
+
+    Validation runs in two modes, and a single invocation may use either or both:
+
+      Source mode (-SnippetsDirectory) reads the doc/snippets files that the compiler pulls into
+      the generated XML via <include>. It needs no build, so it gates in seconds and reports the
+      file and line a developer actually edits.
+
+      Documentation mode (-DocumentationPath) reads generated or packaged XML documentation. It
+      sees what actually ships, so it additionally catches crefs the compiler failed to bind (which
+      it rewrites to a "!:" prefix) and can resolve our own UIDs against the members the build
+      really emitted.
+
+    The rules are deliberately offline. Every xref-not-found warning reported against
+    dotnet/sqlclient-api-docs PR 99 is a documentation-ID syntax defect or a namespace typo, both
+    of which are detectable without consulting the Learn xref service. Avoiding that service keeps
+    the check usable where outbound network access is unavailable, and avoids downloading the
+    published Learn .NET xref map, which is roughly 338 MB. Resolution against that map is
+    optional, via -ExternalXrefMapPath.
+
+    Findings are collected rather than thrown one at a time, so a single run reports every defect.
+
+    Package mode additionally checks how documentation was mapped into the package. The driver
+    ships two XML documentation files per target framework and they are required to differ: lib/
+    carries the full text, while ref/ has <remarks> and <example> stripped, because those render
+    badly in Visual Studio IntelliSense. The two have been silently collapsed before -- in 7.1.0
+    the modern lib/ XML was byte-identical to the trimmed ref/ XML, so IntelliSense lost every
+    remark and example. The lib/ref pairs are therefore compared against each other rather than
+    against an absolute expectation, which keeps the rule meaningful for packages that legitimately
+    have no ref/ folder at all.
+
+.PARAMETER SnippetsDirectory
+    One or more directories scanned recursively for documentation snippet .xml files.
+
+.PARAMETER DocumentationPath
+    One or more generated XML documentation files, or directories scanned recursively for them.
+    Only files carrying a <doc>/<members> structure are treated as XML documentation; anything else
+    found in a scanned directory is ignored, so a build output tree may be passed wholesale.
+
+.PARAMETER PackagesPath
+    Optional directory scanned recursively for .nupkg files. Each is expanded beneath -ExtractPath
+    and the XML documentation inside it is validated, which is what a consumer actually receives.
+    Requires -ExtractPath.
+
+.PARAMETER ExtractPath
+    Directory that -PackagesPath expands into. Existing expansions are replaced so a rerun cannot
+    validate stale content.
+
+.PARAMETER AllowlistPath
+    Optional JSON file carrying approved exceptions and namespace configuration. Recognized keys:
+
+      AllowedNamespaceRoots   Leading identifiers a prefixed cref may use. Default: Microsoft,
+                              System, Interop. Interop is included because the implementation
+                              assembly documents its internal P/Invoke types, which never reach
+                              the published documentation but do appear in the lib/ XML.
+      LocalNamespacePrefixes  Namespaces owned by this repository, which must resolve against the
+                              documentation being validated. Default: Microsoft.Data, Microsoft.SqlServer.
+      IgnoredCrefs            Exact cref values to exempt from all cref rules.
+
+    Ignored crefs that no longer appear are reported as stale, so an obsolete exception cannot
+    silently weaken future validation.
+
+.PARAMETER ExternalXrefMapPath
+    Optional path to a downloaded Learn .NET xref map (.xrefmap.json). When supplied, crefs outside
+    the local namespaces are additionally resolved against it. The published map is roughly 338 MB
+    and must be downloaded separately, so this is intended for local investigation rather than
+    routine use.
+
+.PARAMETER ReportPath
+    Optional path of a JSON report to write. Parent directories are created as needed. The report
+    is always written before gating, so it exists even when validation fails.
+
+.PARAMETER FailOn
+    Finding severities and/or categories that fail the build. Severities are error, warning and
+    info; categories are listed in the table below. Defaults to error.
+
+    Accepts either an array or a single comma-separated string, because an Azure Pipelines task
+    argument line collapses to one token and PowerShell's -File mode does not split it.
+
+.PARAMETER ReportOnly
+    Report findings without failing, overriding -FailOn. Used to shake the gate out on a pipeline
+    before its findings are fixed. The official pipeline never sets this.
+
+.PARAMETER ProjectSearchRoot
+    Directory scanned recursively for project files, used with -PackagesPath to check that every
+    assembly whose project sets GenerateDocumentationFile ships its XML documentation beside it in
+    lib/ and ref/. Derived from the projects rather than a list, so it stays correct as packages
+    are added or change.
+
+.PARAMETER ProjectPath
+    Project file whose documentation expectations apply to the supplied inputs. The project is the
+    declaration, so nothing needs restating in the caller:
+
+      GenerateDocumentationFile=true   XML documentation must be produced; its absence is an error.
+      otherwise                        No XML documentation is expected. Its absence is reported as
+                                       information naming the reason, and its presence is reported
+                                       as a warning, so the project and the build cannot disagree
+                                       silently.
+
+    When the project's sources reference documentation snippets, only the snippet files they
+    reference are validated; a project referencing none is reported as information.
+
+.OUTPUTS
+    Findings are categorized as:
+
+      malformed-xml           error    File is not well-formed XML.
+      unresolved-cref         error    Compiler could not bind the cref and emitted a "!:" prefix.
+      invalid-docid           error    Documentation ID violates the documentation-ID grammar.
+      unknown-namespace-root  error    Leading identifier is not an allowed namespace root.
+      stale-allowlist-entry   error    Allowlisted cref no longer appears in any validated file.
+      lib-documentation-trimmed
+                              error    A package's lib/ XML has no remarks or examples, so
+                                       IntelliSense would show only summaries.
+      ref-documentation-untrimmed
+                              error    A package's ref/ XML still carries remarks or examples.
+      lib-ref-documentation-identical
+                              error    A package's lib/ and ref/ XML are byte-identical, so the
+                                       nuspec mapped one artifact into both targets.
+      missing-local-uid       warning  Cref names this repository but no such member was emitted.
+                                       Warning rather than error because a member may legitimately
+                                       be absent from the documentation under validation: it may be
+                                       conditional on another target framework, or defined in a
+                                       sibling assembly that this run did not include.
+      mismatched-docid-prefix warning  Cref names a real member but with the wrong kind prefix,
+                                       such as M: on a property or T: on a member.
+      missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
+      unprefixed-cref         info     Cref carries no "T:"/"M:"/... prefix. Legal; the compiler
+                                       binds it. Reported for visibility only.
+      missing-documentation   error    Documentation that should exist does not. A project sets
+                                       GenerateDocumentationFile but produced none, or a package
+                                       ships an assembly without its documentation file.
+      unexpected-documentation
+                              warning  Documentation was found for a project that does not set
+                                       GenerateDocumentationFile. The project and the build
+                                       disagree; the documentation is still validated.
+
+.EXAMPLE
+    ./validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
+
+.EXAMPLE
+    ./validate-xml-docs.ps1 `
+        -DocumentationPath ./artifacts/bin `
+        -ReportPath ./out/xml-docs-validation.json `
+        -FailOn error,missing-local-uid
+#>
+
+# Licensed to the .NET Foundation under one or more agreements.
+# The .NET Foundation licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+
+[CmdletBinding()]
+param(
+    [string[]]$SnippetsDirectory,
+
+    [string[]]$DocumentationPath,
+
+    [string]$PackagesPath,
+
+    [string]$ExtractPath,
+
+    [string]$AllowlistPath,
+
+    [string]$ExternalXrefMapPath,
+
+    [string]$ReportPath,
+
+    [string[]]$FailOn = @('error'),
+
+    [switch]$ReportOnly,
+
+    [string]$ProjectPath,
+
+    [string]$ProjectSearchRoot
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# Severity of each finding category. Only the categories named here may be produced, and -FailOn
+# gates on either a category or the severity it maps to.
+$script:CategorySeverities = [ordered]@{
+    'malformed-xml'          = 'error'
+    'unresolved-cref'        = 'error'
+    'invalid-docid'          = 'error'
+    'unknown-namespace-root' = 'error'
+    'stale-allowlist-entry'  = 'error'
+    'lib-documentation-trimmed'      = 'error'
+    'ref-documentation-untrimmed'    = 'error'
+    'lib-ref-documentation-identical' = 'error'
+    'missing-local-uid'      = 'warning'
+    'mismatched-docid-prefix' = 'warning'
+    'missing-documentation'  = 'error'
+    'unexpected-documentation' = 'warning'
+    'documentation-not-expected' = 'info'
+    'missing-external-uid'   = 'warning'
+    'unprefixed-cref'        = 'info'
+}
+
+# C# keyword aliases. A documentation ID names CLR types, so an alias in a cref is always a defect
+# even though it reads correctly in source.
+$script:CSharpAliases = [System.Collections.Generic.HashSet[string]]::new(
+    [string[]]@(
+        'bool', 'byte', 'char', 'decimal', 'double', 'float', 'int', 'long', 'nint', 'nuint',
+        'object', 'sbyte', 'short', 'string', 'uint', 'ulong', 'ushort', 'void'
+    ),
+    [System.StringComparer]::Ordinal)
+
+# Documentation ID prefixes defined by the C# specification, plus "!" which the compiler emits for
+# a cref it could not bind.
+$script:KnownDocIdPrefixes = [System.Collections.Generic.HashSet[string]]::new(
+    [string[]]@('N', 'T', 'F', 'P', 'M', 'E', '!'),
+    [System.StringComparer]::Ordinal)
+
+$script:Findings = [System.Collections.Generic.List[object]]::new()
+
+function Add-Finding {
+    param(
+        [Parameter(Mandatory)][string]$Category,
+        [Parameter(Mandatory)][string]$Message,
+        [string]$Path,
+        [int]$LineNumber,
+        [string]$Cref,
+        [string]$Member
+    )
+
+    if (-not $script:CategorySeverities.Contains($Category)) {
+        throw "Internal error: unknown finding category '$Category'."
+    }
+
+    $script:Findings.Add([pscustomobject]@{
+            Category   = $Category
+            Severity   = $script:CategorySeverities[$Category]
+            Message    = $Message
+            Path       = $Path
+            LineNumber = $LineNumber
+            Cref       = $Cref
+            Member     = $Member
+        })
+}
+
+<#
+    Splits a documentation ID argument list on commas that sit outside any nesting. Generic
+    arguments use braces in a documentation ID (List{System.String}), so a naive split on comma
+    would tear nested generics apart and report phantom parameters.
+#>
+function Split-DocIdArguments {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$Arguments)
+
+    $parts = [System.Collections.Generic.List[string]]::new()
+    $depth = 0
+    $start = 0
+    for ($index = 0; $index -lt $Arguments.Length; $index++) {
+        switch ($Arguments[$index]) {
+            '{' { $depth++ }
+            '(' { $depth++ }
+            '[' { $depth++ }
+            '}' { $depth-- }
+            ')' { $depth-- }
+            ']' { $depth-- }
+            ',' {
+                if ($depth -eq 0) {
+                    $parts.Add($Arguments.Substring($start, $index - $start))
+                    $start = $index + 1
+                }
+            }
+        }
+    }
+    $parts.Add($Arguments.Substring($start))
+
+    return $parts
+}
+
+<#
+    Reduces a documentation ID parameter to the bare type identifier so it can be compared against
+    the C# alias set: array, pointer and by-reference markers are stripped, as are generic
+    arguments, which are validated separately as parameters in their own right.
+#>
+function Get-DocIdCoreTypeName {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$TypeName)
+
+    $core = $TypeName.Trim()
+    $braceIndex = $core.IndexOf('{')
+    if ($braceIndex -ge 0) {
+        $core = $core.Substring(0, $braceIndex)
+    }
+
+    return $core.TrimEnd('[', ']', '@', '*', '&')
+}
+
+<#
+    Applies the documentation-ID grammar to one cref and records every violation it carries.
+
+    Ordering matters: a cref is reported against the most specific rule that explains it, and
+    reporting stops there. A cref such as "T:string" is an alias defect, not an unknown namespace
+    root, and emitting both would send a reader chasing the wrong fix.
+#>
+function Test-Cref {
+    param(
+        [Parameter(Mandatory)][string]$Cref,
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+
+    $trimmed = $Cref.Trim()
+    if ([string]::IsNullOrEmpty($trimmed)) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message 'Cref is empty.'
+        return
+    }
+
+    # An unprefixed cref is bound by the compiler from the surrounding source context, so its
+    # documentation ID is generated rather than authored and none of the grammar rules below apply.
+    if ($trimmed.Length -lt 2 -or $trimmed[1] -ne ':') {
+        Add-Finding @Context -Category 'unprefixed-cref' -Cref $Cref -Message (
+            "Cref '$trimmed' has no documentation-ID prefix. The compiler binds it from source " +
+            'context, so it is not validated here.')
+        return
+    }
+
+    $prefix = [string]$trimmed[0]
+    $body = $trimmed.Substring(2)
+
+    if (-not $script:KnownDocIdPrefixes.Contains($prefix)) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' uses unknown documentation-ID prefix '${prefix}:'. Expected one of " +
+            'N:, T:, F:, P:, M: or E:.')
+        return
+    }
+
+    if ($prefix -eq '!') {
+        Add-Finding @Context -Category 'unresolved-cref' -Cref $Cref -Message (
+            "Cref '$body' could not be bound by the compiler, which emitted it as '!:'. It will " +
+            'never resolve in the published documentation.')
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace($body)) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has a '${prefix}:' prefix but no member identifier.")
+        return
+    }
+
+    # A documentation ID is a single token. Whitespace anywhere inside it, most commonly a space
+    # after a comma in a signature copied from C# source, prevents the xref from resolving.
+    # Validation continues against the whitespace-stripped form, because such a cref is usually
+    # pasted from source and carries alias defects too, and reporting only the whitespace would
+    # send the author back for a second round.
+    if ($body -match '\s') {
+        $body = ($body -replace '\s', '')
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' contains whitespace. Documentation IDs contain no whitespace; use " +
+            "'${prefix}:$body'.")
+    }
+
+    $signatureStart = $body.IndexOf('(')
+    $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
+
+    if ($signatureStart -ge 0) {
+        if (-not $body.Contains(')')) {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' has an unterminated parameter list.")
+            return
+        }
+
+        # The conversion-operator return marker (~) trails the parameter list, so the argument text
+        # ends at the last ')' rather than at the end of the body.
+        $signatureEnd = $body.LastIndexOf(')')
+        $arguments = $body.Substring($signatureStart + 1, $signatureEnd - $signatureStart - 1)
+
+        # A parameterless method's documentation ID is written without parentheses. Emitting "()"
+        # produces a UID that matches nothing.
+        if ([string]::IsNullOrWhiteSpace($arguments)) {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' declares an empty parameter list. A parameterless member omits " +
+                "the parentheses entirely; use '${prefix}:$namePart'.")
+            return
+        }
+
+        # A signature may repeat the same alias (string and string[] both reduce to string), so
+        # report the distinct offenders once rather than once per parameter.
+        $aliases = [System.Collections.Generic.List[string]]::new()
+        foreach ($argument in (Split-DocIdArguments -Arguments $arguments)) {
+            $core = Get-DocIdCoreTypeName -TypeName $argument
+            if ($script:CSharpAliases.Contains($core) -and -not $aliases.Contains($core)) {
+                $aliases.Add($core)
+            }
+        }
+        if ($aliases.Count -gt 0) {
+            $quoted = ($aliases | ForEach-Object { "'$_'" }) -join ', '
+            $noun = if ($aliases.Count -eq 1) { 'the C# alias' } else { 'the C# aliases' }
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' uses $noun $quoted in its parameter list. Documentation IDs name " +
+                'CLR types, so use the full type name instead.')
+            return
+        }
+    }
+
+    # An array, pointer or by-reference construction is not a named type, so it has no type page
+    # and no UID in the Learn xref map. Only a T: cref can make this mistake; the same suffixes are
+    # legal inside a member signature.
+    if ($prefix -eq 'T' -and $body -match '(\[\]|\*|@|&)$') {
+        $element = $body -replace '(\[\]|\*|@|&)+$', ''
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' names a constructed type, which has no documentation page. " +
+            "Reference the element type instead, for example <see cref=`"T:$element`" /> array.")
+        return
+    }
+
+    if ($script:CSharpAliases.Contains((Get-DocIdCoreTypeName -TypeName $namePart))) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' uses the C# alias '$namePart'. Documentation IDs name CLR types, so " +
+            'use the full type name instead.')
+        return
+    }
+
+    # The leading identifier catches misspelled namespaces, which are otherwise indistinguishable
+    # from a valid reference to a type this build does not contain.
+    $root = ($namePart -split '[.`{]', 2)[0]
+    if (-not $script:AllowedNamespaceRoots.Contains($root)) {
+        $allowed = ($script:AllowedNamespaceRoots | Sort-Object) -join ', '
+        Add-Finding @Context -Category 'unknown-namespace-root' -Cref $Cref -Message (
+            "Cref '$trimmed' starts with unknown namespace root '$root'. Allowed roots: $allowed. " +
+            'Check for a misspelled namespace.')
+        return
+    }
+
+    # Anything this repository owns must be present in the documentation under validation. This can
+    # only be judged when generated documentation was supplied; source mode has no member list.
+    #
+    # Namespaces are excluded because the compiler never emits a <member> entry for one, so every
+    # N: cref would otherwise be reported as missing.
+    if ($null -ne $script:LocalUids -and $prefix -ne 'N') {
+        $isLocal = $false
+        foreach ($localPrefix in $script:LocalNamespacePrefixes) {
+            if ($namePart -eq $localPrefix -or $namePart.StartsWith("$localPrefix.", [System.StringComparison]::Ordinal)) {
+                $isLocal = $true
+                break
+            }
+        }
+
+        if ($isLocal) {
+            if (-not $script:LocalUids.Contains($trimmed)) {
+                # The same member under a different prefix is the common case here: a cref written
+                # as M: for a property, or T: for a member, names something real but produces a UID
+                # that matches nothing. Say which prefix was expected rather than reporting a bare
+                # lookup failure.
+                if ($script:LocalUidsByBody.ContainsKey($namePart) -or $script:LocalUidsByBody.ContainsKey($body)) {
+                    $key = if ($script:LocalUidsByBody.ContainsKey($body)) { $body } else { $namePart }
+                    $actual = ($script:LocalUidsByBody[$key] | Sort-Object) -join ', '
+                    Add-Finding @Context -Category 'mismatched-docid-prefix' -Cref $Cref -Message (
+                        "Cref '$trimmed' uses prefix '${prefix}:', but '$key' was emitted as " +
+                        "'$actual'. Use the prefix matching the member kind.")
+                }
+                else {
+                    Add-Finding @Context -Category 'missing-local-uid' -Cref $Cref -Message (
+                        "Cref '$trimmed' names this repository but no matching documented member " +
+                        'was emitted by the build. The reference will not resolve.')
+                }
+            }
+            return
+        }
+    }
+
+    if ($null -ne $script:ExternalUids -and -not $script:ExternalUids.Contains($body)) {
+        Add-Finding @Context -Category 'missing-external-uid' -Cref $Cref -Message (
+            "Cref '$trimmed' was not found in the supplied Learn xref map.")
+    }
+}
+
+<#
+    Reads GenerateDocumentationFile from a project file.
+
+    The project is parsed as XML rather than searched as text, because a comment mentioning the
+    property would otherwise be read as setting it. Only the last assignment is honoured, matching
+    MSBuild's last-one-wins evaluation within a file.
+#>
+function Test-ProjectGeneratesDocumentation {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $document = [System.Xml.Linq.XDocument]::Load($Path)
+    $value = $null
+    foreach ($element in $document.Descendants()) {
+        if ($element.Name.LocalName -eq 'GenerateDocumentationFile') {
+            $value = $element.Value.Trim()
+        }
+    }
+
+    return $value -eq 'true'
+}
+
+<#
+    Returns the documentation files referenced by a project's sources.
+
+    Snippets reach the compiler through <include file='...'/> in a doc comment, so the references
+    live in the source files rather than in the project file. Paths are relative to the file that
+    declares them. Every include is returned; the caller narrows them to the snippet directory it
+    was given, so no assumption is made about where snippets live.
+#>
+function Get-ReferencedSnippetFile {
+    param([Parameter(Mandatory)][string]$ProjectDirectory)
+
+    $pattern = [regex]"include\s+file\s*=\s*'([^']+)'"
+    $referenced = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($source in Get-ChildItem -LiteralPath $ProjectDirectory -Filter '*.cs' -File -Recurse -ErrorAction SilentlyContinue) {
+        foreach ($match in $pattern.Matches([System.IO.File]::ReadAllText($source.FullName))) {
+            $candidate = Join-Path $source.DirectoryName $match.Groups[1].Value
+            try {
+                $resolved = [System.IO.Path]::GetFullPath($candidate)
+            }
+            catch {
+                continue
+            }
+            [void]$referenced.Add($resolved)
+        }
+    }
+
+    # Comma prevents PowerShell from unrolling the set on return, which would yield $null for an
+    # empty set and a bare string for a single entry.
+    return , $referenced
+}
+
+<#
+    Returns the assembly names whose projects generate XML documentation.
+
+    AssemblyName falls back to the project file name, matching MSBuild. Two projects may share an
+    assembly name, such as an implementation and its reference assembly, so the result is a set.
+#>
+function Get-DocumentedAssemblyName {
+    param([Parameter(Mandatory)][string]$SearchRoot)
+
+    $names = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($project in Get-ChildItem -LiteralPath $SearchRoot -Filter '*.csproj' -File -Recurse -ErrorAction SilentlyContinue) {
+        if (-not (Test-ProjectGeneratesDocumentation -Path $project.FullName)) {
+            continue
+        }
+
+        $document = [System.Xml.Linq.XDocument]::Load($project.FullName)
+        $assemblyName = $null
+        foreach ($element in $document.Descendants()) {
+            if ($element.Name.LocalName -eq 'AssemblyName') {
+                $assemblyName = $element.Value.Trim()
+            }
+        }
+
+        if ([string]::IsNullOrWhiteSpace($assemblyName)) {
+            $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($project.FullName)
+        }
+
+        [void]$names.Add($assemblyName)
+    }
+
+    return , $names
+}
+
+function Resolve-InputPaths {
+    param(
+        [string[]]$Paths,
+        [Parameter(Mandatory)][string]$Description
+    )
+
+    $resolved = [System.Collections.Generic.List[string]]::new()
+    foreach ($path in @($Paths)) {
+        if ([string]::IsNullOrWhiteSpace($path)) {
+            continue
+        }
+        if (-not (Test-Path -LiteralPath $path)) {
+            throw "$Description path '$path' was not found."
+        }
+
+        $item = Get-Item -LiteralPath $path
+        if ($item.PSIsContainer) {
+            foreach ($file in Get-ChildItem -LiteralPath $item.FullName -Filter '*.xml' -File -Recurse) {
+                $resolved.Add($file.FullName)
+            }
+        }
+        else {
+            $resolved.Add($item.FullName)
+        }
+    }
+
+    return ($resolved | Sort-Object -Unique)
+}
+
+# Load configuration -------------------------------------------------------------------------
+
+$script:AllowedNamespaceRoots = [System.Collections.Generic.HashSet[string]]::new(
+    [string[]]@('Microsoft', 'System', 'Interop'), [System.StringComparer]::Ordinal)
+$script:LocalNamespacePrefixes = @('Microsoft.Data', 'Microsoft.SqlServer')
+$ignoredCrefs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+$observedIgnoredCrefs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+
+if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
+    if (-not (Test-Path -LiteralPath $AllowlistPath -PathType Leaf)) {
+        throw "XML documentation allowlist file '$AllowlistPath' was not found."
+    }
+
+    $configuration = Get-Content -LiteralPath $AllowlistPath -Raw | ConvertFrom-Json
+
+    $rootsProperty = $configuration.PSObject.Properties['AllowedNamespaceRoots']
+    if ($null -ne $rootsProperty) {
+        $script:AllowedNamespaceRoots = [System.Collections.Generic.HashSet[string]]::new(
+            [string[]]@($rootsProperty.Value), [System.StringComparer]::Ordinal)
+    }
+
+    $localProperty = $configuration.PSObject.Properties['LocalNamespacePrefixes']
+    if ($null -ne $localProperty) {
+        $script:LocalNamespacePrefixes = @($localProperty.Value)
+    }
+
+    $ignoredProperty = $configuration.PSObject.Properties['IgnoredCrefs']
+    if ($null -ne $ignoredProperty) {
+        foreach ($cref in @($ignoredProperty.Value)) {
+            if ([string]::IsNullOrWhiteSpace($cref)) {
+                throw "XML documentation allowlist file '$AllowlistPath' contains an empty ignored cref."
+            }
+            if (-not $ignoredCrefs.Add($cref)) {
+                throw "XML documentation allowlist file '$AllowlistPath' contains duplicate ignored cref '$cref'."
+            }
+        }
+    }
+}
+
+# Gather inputs ------------------------------------------------------------------------------
+
+$snippetFiles = @(Resolve-InputPaths -Paths $SnippetsDirectory -Description 'Snippets')
+
+# The project file is the declaration for what documentation should exist, so nothing needs
+# restating by the caller.
+$documentationExpected = $false
+$projectDescription = ''
+$referencedSnippets = $null
+$documentedAssemblies = $null
+
+if (-not [string]::IsNullOrWhiteSpace($ProjectSearchRoot)) {
+    if (-not (Test-Path -LiteralPath $ProjectSearchRoot)) {
+        throw "Project search root '$ProjectSearchRoot' was not found."
+    }
+
+    $documentedAssemblies = Get-DocumentedAssemblyName -SearchRoot $ProjectSearchRoot
+    Write-Host ("Assemblies whose projects generate XML documentation: " +
+        "$(($documentedAssemblies | Sort-Object) -join ', ').")
+}
+
+if (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
+    if (-not (Test-Path -LiteralPath $ProjectPath -PathType Leaf)) {
+        throw "Project file '$ProjectPath' was not found."
+    }
+
+    $projectFile = (Resolve-Path -LiteralPath $ProjectPath).Path
+    $projectDescription = [System.IO.Path]::GetFileName($projectFile)
+    $documentationExpected = Test-ProjectGeneratesDocumentation -Path $projectFile
+    $referencedSnippets = Get-ReferencedSnippetFile -ProjectDirectory ([System.IO.Path]::GetDirectoryName($projectFile))
+
+    Write-Host ("Project '$projectDescription': GenerateDocumentationFile=$documentationExpected; " +
+        "documentation snippets referenced: $($referencedSnippets.Count).")
+
+    # Validate only the snippets this project pulls in, rather than every snippet in the tree, so a
+    # finding is attributed to a build that actually consumes it.
+    if ($snippetFiles.Count -gt 0) {
+        $snippetFiles = @($snippetFiles | Where-Object { $referencedSnippets.Contains($_) })
+    }
+}
+$documentationRoots = [System.Collections.Generic.List[string]]::new()
+
+# Expanded package directory -> package file name, used by the lib/ref layout checks below.
+$script:ExpandedPackageRoots = [ordered]@{}
+foreach ($path in @($DocumentationPath)) {
+    if (-not [string]::IsNullOrWhiteSpace($path)) {
+        $documentationRoots.Add($path)
+    }
+}
+
+# Expand any packages so the XML a consumer actually receives is validated, not only the build
+# output it was assembled from.
+if (-not [string]::IsNullOrWhiteSpace($PackagesPath)) {
+    if ([string]::IsNullOrWhiteSpace($ExtractPath)) {
+        throw '-PackagesPath requires -ExtractPath.'
+    }
+    if (-not (Test-Path -LiteralPath $PackagesPath)) {
+        throw "Packages path '$PackagesPath' was not found."
+    }
+
+    $packages = @(Get-ChildItem -Path $PackagesPath -Recurse -File -Filter *.nupkg -ErrorAction SilentlyContinue)
+    if ($packages.Count -eq 0) {
+        throw "No .nupkg files were found under '$PackagesPath'."
+    }
+
+    New-Item -ItemType Directory -Force -Path $ExtractPath | Out-Null
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    foreach ($package in $packages) {
+        $destination = Join-Path $ExtractPath $package.BaseName
+        if (Test-Path -LiteralPath $destination) {
+            Remove-Item -LiteralPath $destination -Recurse -Force
+        }
+
+        Write-Host "Expanding $($package.Name)"
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($package.FullName, $destination)
+        $script:ExpandedPackageRoots[$destination] = $package.Name
+    }
+
+    $documentationRoots.Add((Resolve-Path -LiteralPath $ExtractPath).Path)
+}
+
+$documentationCandidates = @(Resolve-InputPaths -Paths $documentationRoots -Description 'Documentation')
+
+# Distinguish "nothing was asked for", which is a caller error, from "what was asked for held no
+# documentation", which is reported below as a finding.
+$snippetsRequested = @(@($SnippetsDirectory) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -gt 0
+$documentationRequested = $documentationRoots.Count -gt 0
+
+if (-not $snippetsRequested -and -not $documentationRequested) {
+    throw 'No input was supplied. Supply -SnippetsDirectory, -DocumentationPath, -PackagesPath, or a combination.'
+}
+
+# Parse every file up front so that a malformed file is reported as a finding rather than aborting
+# the run, and so the local UID index is complete before any cref is resolved.
+$documents = [System.Collections.Generic.List[object]]::new()
+$malformedByKind = @{ snippet = 0; documentation = 0 }
+foreach ($entry in @(
+        @{ Files = $snippetFiles; Kind = 'snippet' },
+        @{ Files = $documentationCandidates; Kind = 'documentation' })) {
+
+    foreach ($file in $entry.Files) {
+        try {
+            $document = [System.Xml.Linq.XDocument]::Load($file, [System.Xml.Linq.LoadOptions]::SetLineInfo)
+        }
+        catch {
+            Add-Finding -Category 'malformed-xml' -Path $file -Message (
+                "File is not well-formed XML: $($_.Exception.Message)")
+            $malformedByKind[$entry.Kind]++
+            continue
+        }
+
+        # A scanned directory may hold far more .xml files than documentation. Recognize
+        # documentation by its <doc><members> shape and silently skip everything else, so a whole
+        # output directory can be supplied without pre-filtering it.
+        if ($entry.Kind -eq 'documentation') {
+            if ($null -eq $document.Root -or
+                $document.Root.Name.LocalName -ne 'doc' -or
+                $null -eq $document.Root.Element('members')) {
+                continue
+            }
+        }
+
+        $documents.Add([pscustomobject]@{
+                Path         = $file
+                Kind         = $entry.Kind
+                Document     = $document
+                RemarksCount = @($document.Descendants('remarks')).Count
+                ExampleCount = @($document.Descendants('example')).Count
+            })
+    }
+}
+
+$documentationDocuments = @($documents | Where-Object { $_.Kind -eq 'documentation' })
+
+# Whether documentation must exist is the caller's declaration, not an inference. Asserting it both
+# ways is what keeps the declaration honest: documentation vanishing from a package that should
+# have it is an error, and documentation appearing in one that should not have it means the
+# declaration is stale. Without that, a package emitting nothing and a package that silently
+# stopped emitting look identical.
+#
+# Files that were found but failed to parse are excluded: malformed-xml already names the problem,
+# and adding a "nothing was found" finding on top of it would point at the wrong cause.
+$snippetDocumentCount = @($documents | Where-Object { $_.Kind -eq 'snippet' }).Count
+
+if ($snippetsRequested -and $snippetDocumentCount -eq 0 -and $malformedByKind['snippet'] -eq 0) {
+    if ($null -ne $referencedSnippets) {
+        Add-Finding -Category 'documentation-not-expected' -Message (
+            "$projectDescription references no documentation snippets, so none were validated.")
+    }
+    elseif ($documentationExpected) {
+        Add-Finding -Category 'missing-documentation' -Message (
+            'No documentation snippet files were found under the supplied -SnippetsDirectory.')
+    }
+}
+
+if ($documentationRequested -and $malformedByKind['documentation'] -eq 0) {
+    $hasProject = -not [string]::IsNullOrEmpty($projectDescription)
+
+    if ($documentationExpected -and $documentationDocuments.Count -eq 0) {
+        $reason = if ($hasProject) {
+            "$projectDescription sets GenerateDocumentationFile"
+        }
+        else {
+            'documentation was required'
+        }
+        Add-Finding -Category 'missing-documentation' -Message (
+            "No XML documentation was found under the supplied -DocumentationPath or " +
+            "-PackagesPath, but $reason. Documentation that should exist is missing.")
+    }
+    # The remaining cases contradict a project's declaration, so they are only meaningful when a
+    # project was supplied. Without one there is nothing for the result to disagree with.
+    elseif ($hasProject -and -not $documentationExpected -and $documentationDocuments.Count -eq 0) {
+        # Stated rather than passed over in silence, so a run shows why nothing was checked.
+        Add-Finding -Category 'documentation-not-expected' -Message (
+            "No XML documentation was found, and none is expected: $projectDescription does not " +
+            'set GenerateDocumentationFile.')
+    }
+    elseif ($hasProject -and -not $documentationExpected -and $documentationDocuments.Count -gt 0) {
+        # The project and the build disagree; the documentation is still validated.
+        Add-Finding -Category 'unexpected-documentation' -Message (
+            "$($documentationDocuments.Count) XML documentation file(s) were found although " +
+            "$projectDescription does not set GenerateDocumentationFile.")
+    }
+}
+
+# Build the local UID index from the documented members the build emitted. Source mode alone leaves
+# this null, which disables local resolution rather than reporting every cref as unresolvable.
+$script:LocalUids = $null
+$script:LocalUidsByBody = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new(
+    [System.StringComparer]::Ordinal)
+if ($documentationDocuments.Count -gt 0) {
+    $script:LocalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($entry in $documentationDocuments) {
+        foreach ($member in $entry.Document.Root.Element('members').Elements('member')) {
+            $name = $member.Attribute('name')
+            if ($null -eq $name -or [string]::IsNullOrWhiteSpace($name.Value)) {
+                continue
+            }
+
+            $uid = $name.Value.Trim()
+            [void]$script:LocalUids.Add($uid)
+
+            # Index the identifier without its prefix so a cref carrying the wrong prefix can be
+            # told apart from one naming a member that was never emitted at all.
+            if ($uid.Length -gt 2 -and $uid[1] -eq ':') {
+                $body = $uid.Substring(2)
+                if (-not $script:LocalUidsByBody.ContainsKey($body)) {
+                    $script:LocalUidsByBody[$body] = [System.Collections.Generic.HashSet[string]]::new(
+                        [System.StringComparer]::Ordinal)
+                }
+                [void]$script:LocalUidsByBody[$body].Add("$($uid[0]):")
+            }
+        }
+    }
+}
+
+# Load the external Learn xref map when one was supplied. It is large, so only the UID column is
+# retained.
+$script:ExternalUids = $null
+if (-not [string]::IsNullOrWhiteSpace($ExternalXrefMapPath)) {
+    if (-not (Test-Path -LiteralPath $ExternalXrefMapPath -PathType Leaf)) {
+        throw "External xref map '$ExternalXrefMapPath' was not found."
+    }
+
+    Write-Host "Loading external xref map '$ExternalXrefMapPath'. This may take several minutes."
+    $map = Get-Content -LiteralPath $ExternalXrefMapPath -Raw | ConvertFrom-Json
+    $script:ExternalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($reference in @($map.references)) {
+        if ($null -ne $reference.uid) {
+            [void]$script:ExternalUids.Add([string]$reference.uid)
+        }
+    }
+    Write-Host "Loaded $($script:ExternalUids.Count) external UIDs."
+}
+
+# Validate -----------------------------------------------------------------------------------
+
+$crefCount = 0
+foreach ($entry in $documents) {
+    foreach ($element in $entry.Document.Descendants()) {
+        $crefAttribute = $element.Attribute('cref')
+        if ($null -eq $crefAttribute) {
+            continue
+        }
+
+        $crefCount++
+
+        if ($ignoredCrefs.Contains($crefAttribute.Value)) {
+            [void]$observedIgnoredCrefs.Add($crefAttribute.Value)
+            continue
+        }
+
+        # Name the nearest enclosing documented member so a finding in a large generated file can
+        # be traced back to the API it documents.
+        $member = ''
+        $ancestor = $element
+        while ($null -ne $ancestor) {
+            if ($ancestor.Name.LocalName -eq 'member') {
+                $nameAttribute = $ancestor.Attribute('name')
+                if ($null -ne $nameAttribute) {
+                    $member = $nameAttribute.Value
+                }
+                break
+            }
+            if ($ancestor.Name.LocalName -eq 'members') {
+                $nameAttribute = $ancestor.Attribute('name')
+                if ($null -ne $nameAttribute) {
+                    $member = $nameAttribute.Value
+                }
+                break
+            }
+            $ancestor = $ancestor.Parent
+        }
+
+        $lineInfo = [System.Xml.IXmlLineInfo]$crefAttribute
+        $context = @{
+            Path       = $entry.Path
+            LineNumber = if ($lineInfo.HasLineInfo()) { $lineInfo.LineNumber } else { 0 }
+            Member     = $member
+        }
+
+        Test-Cref -Cref $crefAttribute.Value -Context $context
+    }
+}
+
+# Package layout ------------------------------------------------------------------------------
+
+# The driver ships a full XML documentation file under lib/ and a trimmed one under ref/. Compare
+# the two per target framework rather than testing either against an absolute expectation, so the
+# rule stays correct for packages that have no ref/ folder and needs no list of which packages do.
+if ($script:ExpandedPackageRoots.Count -gt 0) {
+    $documentationByPath = @{}
+    foreach ($entry in $documentationDocuments) {
+        $documentationByPath[$entry.Path] = $entry
+    }
+
+    # An assembly whose project generates documentation must carry it into the package. Checked
+    # here rather than from the build output because only the package shows what a consumer
+    # receives, and a package can drop a file the build produced.
+    if ($null -ne $documentedAssemblies) {
+        foreach ($packageRoot in $script:ExpandedPackageRoots.Keys) {
+            $packageName = $script:ExpandedPackageRoots[$packageRoot]
+
+            foreach ($folder in @('lib', 'ref')) {
+                $folderPath = Join-Path $packageRoot $folder
+                if (-not (Test-Path -LiteralPath $folderPath -PathType Container)) {
+                    continue
+                }
+
+                foreach ($frameworkDirectory in Get-ChildItem -LiteralPath $folderPath -Directory) {
+                    # Not recursive: satellite resource assemblies sit in culture subdirectories
+                    # and carry no documentation of their own.
+                    foreach ($assembly in Get-ChildItem -LiteralPath $frameworkDirectory.FullName -Filter '*.dll' -File) {
+                        $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($assembly.Name)
+                        if (-not $documentedAssemblies.Contains($assemblyName)) {
+                            continue
+                        }
+
+                        $expectedXml = [System.IO.Path]::ChangeExtension($assembly.FullName, '.xml')
+                        if (-not (Test-Path -LiteralPath $expectedXml -PathType Leaf)) {
+                            Add-Finding -Category 'missing-documentation' -Path $assembly.FullName -Message (
+                                "$packageName ships $folder/$($frameworkDirectory.Name)/$($assembly.Name) " +
+                                "without $assemblyName.xml, although its project generates XML " +
+                                'documentation. Consumers of this package get no IntelliSense text.')
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    foreach ($packageRoot in $script:ExpandedPackageRoots.Keys) {
+        $packageName = $script:ExpandedPackageRoots[$packageRoot]
+        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path
+
+        # Index the documentation this package contains by folder kind, target framework and file
+        # name, so lib/net8.0/X.xml can be matched with ref/net8.0/X.xml.
+        $byKind = @{ 'lib' = @{}; 'ref' = @{} }
+        foreach ($path in $documentationByPath.Keys) {
+            if (-not $path.StartsWith($rootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+                continue
+            }
+
+            $relative = $path.Substring($rootFull.Length).TrimStart([char]'/', [char]'\')
+            $segments = $relative -split '[/\\]'
+            if ($segments.Count -lt 3) {
+                continue
+            }
+
+            $kind = $segments[0].ToLowerInvariant()
+            if (-not $byKind.ContainsKey($kind)) {
+                continue
+            }
+
+            $byKind[$kind]["$($segments[1])/$($segments[-1])"] = $path
+        }
+
+        foreach ($key in ($byKind['lib'].Keys | Sort-Object)) {
+            if (-not $byKind['ref'].ContainsKey($key)) {
+                continue
+            }
+
+            $libPath = $byKind['lib'][$key]
+            $refPath = $byKind['ref'][$key]
+            $lib = $documentationByPath[$libPath]
+            $ref = $documentationByPath[$refPath]
+
+            $libHasNarrative = ($lib.RemarksCount + $lib.ExampleCount) -gt 0
+            $refHasNarrative = ($ref.RemarksCount + $ref.ExampleCount) -gt 0
+
+            if (-not $libHasNarrative) {
+                Add-Finding -Category 'lib-documentation-trimmed' -Path $libPath -Message (
+                    "$packageName lib/$key contains no <remarks> or <example> elements, so " +
+                    'IntelliSense would show summaries only. The lib/ documentation must be the ' +
+                    'full implementation XML; only ref/ is trimmed.')
+            }
+
+            if ($refHasNarrative) {
+                Add-Finding -Category 'ref-documentation-untrimmed' -Path $refPath -Message (
+                    "$packageName ref/$key still contains $($ref.RemarksCount) <remarks> and " +
+                    "$($ref.ExampleCount) <example> elements. It must be trimmed by " +
+                    'tools/intellisense/TrimDocs.ps1.')
+            }
+
+            # Identical content means a single artifact was used for both targets, which defeats the
+            # purpose of shipping two files. Reported separately so the finding names the cause
+            # rather than only its symptom.
+            $libHash = (Get-FileHash -LiteralPath $libPath -Algorithm SHA256).Hash
+            $refHash = (Get-FileHash -LiteralPath $refPath -Algorithm SHA256).Hash
+            if ($libHash -eq $refHash) {
+                Add-Finding -Category 'lib-ref-documentation-identical' -Path $libPath -Message (
+                    "$packageName lib/$key and ref/$key are byte-identical. The nuspec must map " +
+                    'the implementation XML to lib/ and the trimmed reference XML to ref/.')
+            }
+        }
+    }
+}
+
+# An exception that no longer matches anything must be removed, otherwise a reintroduced defect
+# would be silently suppressed by an obsolete entry.
+foreach ($cref in ($ignoredCrefs | Sort-Object)) {
+    if (-not $observedIgnoredCrefs.Contains($cref)) {
+        Add-Finding -Category 'stale-allowlist-entry' -Path $AllowlistPath -Cref $cref -Message (
+            "Allowlisted cref '$cref' no longer appears in any validated file. Remove the stale " +
+            'entry from the allowlist.')
+    }
+}
+
+# Report -------------------------------------------------------------------------------------
+
+$findings = @($script:Findings | Sort-Object Path, LineNumber, Category, Cref)
+
+$countsByCategory = [ordered]@{}
+foreach ($category in $script:CategorySeverities.Keys) {
+    $countsByCategory[$category] = @($findings | Where-Object { $_.Category -eq $category }).Count
+}
+
+# The report is written before gating so it survives a failing run.
+if (-not [string]::IsNullOrWhiteSpace($ReportPath)) {
+    $reportDirectory = Split-Path -Parent $ReportPath
+    if (-not [string]::IsNullOrWhiteSpace($reportDirectory) -and -not (Test-Path -LiteralPath $reportDirectory)) {
+        New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+    }
+
+    [pscustomobject]@{
+        FilesValidated   = $documents.Count
+        SnippetFiles     = @($documents | Where-Object { $_.Kind -eq 'snippet' }).Count
+        DocumentationFiles = $documentationDocuments.Count
+        CrefsValidated   = $crefCount
+        LocalUids        = if ($null -ne $script:LocalUids) { $script:LocalUids.Count } else { 0 }
+        CountsByCategory = $countsByCategory
+        Findings         = $findings
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ReportPath -Encoding utf8
+
+    Write-Host "XML documentation validation report written to '$ReportPath'."
+}
+
+# Gate ---------------------------------------------------------------------------------------
+
+$gateTokens = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($token in @($FailOn)) {
+    foreach ($part in ([string]$token).Split(',')) {
+        $trimmed = $part.Trim()
+        if (-not [string]::IsNullOrEmpty($trimmed)) {
+            [void]$gateTokens.Add($trimmed)
+        }
+    }
+}
+
+foreach ($token in $gateTokens) {
+    if (-not $script:CategorySeverities.Contains($token) -and
+        $token -notin @('error', 'warning', 'info')) {
+        $categories = ($script:CategorySeverities.Keys | Sort-Object) -join ', '
+        throw "Unknown -FailOn token '$token'. Expected a severity (error, warning, info) or a category ($categories)."
+    }
+}
+
+$gatingFindings = @($findings | Where-Object {
+        $gateTokens.Contains($_.Category) -or $gateTokens.Contains($_.Severity)
+    })
+
+foreach ($finding in $findings) {
+    $isGating = (-not $ReportOnly) -and
+        ($gateTokens.Contains($finding.Category) -or $gateTokens.Contains($finding.Severity))
+    $issueType = if ($isGating) { 'error' } else { 'warning' }
+
+    $location = if ([string]::IsNullOrWhiteSpace($finding.Path)) {
+        ''
+    }
+    else {
+        ";sourcepath=$($finding.Path);linenumber=$($finding.LineNumber);columnnumber=1"
+    }
+
+    $detail = if ([string]::IsNullOrWhiteSpace($finding.Member)) {
+        $finding.Message
+    }
+    else {
+        "$($finding.Message) (in $($finding.Member))"
+    }
+
+    Write-Host "##vso[task.logissue type=$issueType$location]$($finding.Category): $detail"
+}
+
+$summary = "XML documentation validation examined $crefCount cref(s) across $($documents.Count) file(s)."
+foreach ($category in $countsByCategory.Keys) {
+    if ($countsByCategory[$category] -gt 0) {
+        $summary += " $category=$($countsByCategory[$category]);"
+    }
+}
+Write-Host $summary
+
+# task.logissue attaches an issue to the timeline record but leaves the task result untouched, so
+# a step reporting only warnings would still render as a clean success. Setting the result marks it
+# as succeeded-with-issues, which is what makes the warnings visible without failing the build.
+function Set-SucceededWithIssues {
+    Write-Host '##vso[task.complete result=SucceededWithIssues;]'
+}
+
+if ($ReportOnly) {
+    if ($findings.Count -gt 0) {
+        Write-Host "##vso[task.logissue type=warning]XML documentation validation found $($findings.Count) issue(s) but is running in report-only mode, so the build is not failed. $($gatingFindings.Count) of them would fail a gating run."
+        Set-SucceededWithIssues
+    }
+    return
+}
+
+if ($gatingFindings.Count -gt 0) {
+    $noun = if ($gatingFindings.Count -eq 1) { 'issue' } else { 'issues' }
+    throw "XML documentation validation failed with $($gatingFindings.Count) $noun. Review the preceding errors."
+}
+
+if ($findings.Count -gt 0) {
+    # Nothing here fails the build, but non-gating findings were still reported.
+    Set-SucceededWithIssues
+}
+
+Write-Host 'XML documentation validation passed.'

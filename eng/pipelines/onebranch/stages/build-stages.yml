@@ -22,6 +22,17 @@ parameters:
   - name: isOfficial
     type: boolean
 
+  # When true, validation findings fail the build.  When false, they are reported as warnings and
+  # the build continues.
+  #
+  # The stages defined here depend on one another, so a hard failure in an early validation gate
+  # skips every later stage along with its own gates.  Setting this false lets one run reach every
+  # gate and surface all findings at once.
+  #
+  # No default: the invoking pipeline states its intent.
+  - name: failOnValidationError
+    type: boolean
+
   # ── Build parameters ───────────────────────────────────────────────────
 
   # Whether to build Microsoft.SqlServer.Server.  The SqlClient family is always built; SqlServer
@@ -101,6 +112,8 @@ stages:
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Internal.Logging/pdbs'
           apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -124,6 +137,8 @@ stages:
             apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.SqlServer.Server/pdbs'
             apiScanSoftwareVersion: '$(sqlServerApiScanVersion)'
             shouldSignPackage: ${{ parameters.isOfficial }}
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+            projectPath: '$(REPO_ROOT)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
             signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
             signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -165,6 +180,8 @@ stages:
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Abstractions/pdbs'
           apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -211,6 +228,8 @@ stages:
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient/pdbs'
           apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -249,6 +268,8 @@ stages:
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.Extensions.Azure/pdbs'
           apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -296,6 +317,8 @@ stages:
           apiScanPdbPath: '$(REPO_ROOT)/apiScan/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/pdbs'
           apiScanSoftwareVersion: '$(sqlClientApiScanVersion)'
           shouldSignPackage: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -372,3 +395,4 @@ stages:
 
           buildSqlServer: ${{ parameters.buildSqlServer }}
           isOfficial: ${{ parameters.isOfficial }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}

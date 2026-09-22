@@ -29,6 +29,16 @@ parameters:
   - name: shouldSignPackage
     type: boolean
 
+  # When true, validation findings fail this job.  When false, they are reported as warnings and
+  # the job continues.
+  - name: failOnValidationError
+    type: boolean
+
+  # Project file for this package.  Documentation expectations are read from it rather than
+  # restated here, so the project and the build cannot disagree.
+  - name: projectPath
+    type: string
+
   # Signing Parameters -----------------------------------------------------
   # @TODO: Signing Parameters Object
 
@@ -141,6 +151,28 @@ jobs:
       # building so missing or untranslated strings fail every SqlClient build.
       - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
+          parameters:
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+
+      # Validate the documentation snippet sources.  This requires no build, so a malformed
+      # cross-reference is reported in seconds against the file and line a developer edits, rather
+      # than surfacing much later as an xref-not-found warning during API docs ingestion.
+      #
+      # Restricted to the packages whose sources incorporate doc/snippets content.
+      - ${{ if or(eq(parameters.packageShortName, 'SqlClient'), eq(parameters.packageShortName, 'SqlServer')) }}:
+        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+          parameters:
+            displayName: 'Validate XML documentation sources'
+            snippetsDirectory: '$(Build.SourcesDirectory)/doc/snippets'
+            documentationPath: ''
+            packagesPath: ''
+            extractPath: ''
+            reportPath: '$(JOB_OUTPUT)/validation/xml-docs-sources.json'
+            failOn:
+              - error
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+            projectPath: '${{ parameters.projectPath }}'
+            projectSearchRoot: ''
 
       - ${{ each package in parameters.dependencies }}:
           # Build the dependency version arguments passed to the build/pack/analysis steps.  The
@@ -192,6 +224,25 @@ jobs:
           fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
+
+      # Validate the XML documentation the compiler emitted.  Compared with the snippet sources,
+      # this artifact additionally reveals cross-references the compiler could not bind (it rewrites
+      # those with a "!:" prefix) and whether a reference to our own API matches a member that was
+      # actually emitted.  It runs for every package: documentation is shared through <include>, so
+      # a defect can surface in an assembly whose own sources contain no cross-references at all.
+      - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+        parameters:
+          displayName: 'Validate generated XML documentation'
+          snippetsDirectory: ''
+          documentationPath: '$(BUILD_OUTPUT)/${{ parameters.packageFullName }}'
+          packagesPath: ''
+          extractPath: ''
+          reportPath: '$(JOB_OUTPUT)/validation/xml-docs-generated.json'
+          failOn:
+            - error
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '${{ parameters.projectPath }}'
+          projectSearchRoot: ''
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
           # ESRP sign the DLLs.
