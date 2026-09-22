@@ -10208,6 +10208,12 @@ namespace Microsoft.Data.SqlClient
 
                             if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
                             {
+                                if (rpcext.ProcID == TdsEnums.RPC_PROCID_PREPEXEC && i == 0)
+                                {
+                                    // The output plan handle is internal, not a user-supplied parameter.
+                                    throw SQL.PrepareNotSupportedForOptimizedBinding();
+                                }
+
                                 throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 

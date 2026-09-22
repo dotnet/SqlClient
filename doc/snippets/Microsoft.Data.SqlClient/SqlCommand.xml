@@ -2399,6 +2399,8 @@ The fewest number of parameters where this will take effect depends on the indiv
 > [!NOTE]
 If the option is enabled and a parameter with Direction Output or InputOutput is present in the Parameters collection an InvalidOperationException will be thrown when the command is executed.
 
+Preparing a parameterized text command with <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> is not supported while this option is enabled. Preparation requires an internal InputOutput parameter to return the prepared statement handle, even when all parameters in the Parameters collection have Direction Input. Preparation is deferred until execution, so the InvalidOperationException is thrown by the execution method when server-side preparation is required, rather than by Prepare. Set EnableOptimizedParameterBinding to false before executing the prepared command, or execute the command without calling Prepare.
+
 ]]>
 </format>
       </remarks>
@@ -3501,6 +3503,8 @@ The following example demonstrates how to create a <xref:Microsoft.Data.SqlClien
 If <xref:Microsoft.Data.SqlClient.SqlCommand.CommandType%2A> is set to `StoredProcedure`, the call to <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> should succeed, although it may cause a no-op.
 
 Before you call <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A>, specify the data type of each parameter in the statement to be prepared. For each parameter that has a variable length data type, you must set the <xref:Microsoft.Data.SqlClient.SqlParameter.Size%2A> property to the maximum size needed. <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> returns an error if these conditions are not met.
+
+Preparing a parameterized text command is not supported when <xref:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding%2A> is enabled. Set that property to false before executing the prepared command. Preparation is deferred until execution and requires an internal InputOutput parameter for the prepared statement handle. When server-side preparation is required, execution throws InvalidOperationException if optimized parameter binding is enabled, even if all user-supplied parameters have Direction Input. This restriction does not apply when Prepare is a no-op, such as for a stored procedure or a text command without parameters.
 
 > [!NOTE]
 > If the database context is changed by executing the Transact-SQL `USE <database>` statement, or by calling the <xref:Microsoft.Data.SqlClient.SqlConnection.ChangeDatabase%2A> method, then <xref:Microsoft.Data.SqlClient.SqlCommand.Prepare%2A> must be called a second time.
