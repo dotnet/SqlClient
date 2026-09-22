@@ -2748,8 +2748,14 @@ namespace Microsoft.Data.SqlClient.Connection
                     isDelegateControlRequest);
 
                 // TdsExecuteTransactionManagerRequest throws if Begin fails, so reaching this point
-                // means a non-default isolation level was applied successfully. Dedicated Synapse
-                // pools cannot apply one and should never mark the connection dirty.
+                // means a non-default isolation level was applied successfully.
+                //
+                // Dedicated Synapse pools are excluded. Note that the TM request itself does
+                // succeed there even for levels the equivalent T-SQL statement rejects with 104409,
+                // so the absence of an exception is not evidence that the session level actually
+                // changed: those pools operate exclusively at READ UNCOMMITTED and coerce the
+                // request. Marking the connection dirty would therefore schedule a reset that can
+                // only fail, for a session level that never diverged in the first place.
                 if (requestType == TdsEnums.TransactionManagerRequestType.Begin &&
                     isoLevel != TdsEnums.TransactionManagerIsolationLevel.Unspecified &&
                     isoLevel != TdsEnums.TransactionManagerIsolationLevel.ReadCommitted &&
@@ -4011,6 +4017,11 @@ namespace Microsoft.Data.SqlClient.Connection
             // READ UNCOMMITTED with error 104409, so the session can never have been elevated away
             // from that level and there is nothing to scrub. Skipping up front avoids spending a
             // round trip on a statement that can only fail there.
+            //
+            // This is also the one endpoint where the defect cannot be repaired if it ever did
+            // occur: READ COMMITTED - the statement this method issues - is itself rejected with
+            // 104409, so there is no legal statement that could restore the default. Skipping is
+            // the only correct behavior rather than a best-effort compromise.
             if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
             {
                 Debug.Fail("A dedicated Synapse connection should never require an isolation level reset.");
