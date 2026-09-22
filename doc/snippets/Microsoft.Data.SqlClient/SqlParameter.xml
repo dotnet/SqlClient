@@ -597,10 +597,6 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlParameter> and
 
 [!code-csharp[SqlParameter_Precision Example#1](~/../sqlclient/doc/samples/SqlParameter_Precision.cs#1)]
 
-Zero is a valid value when precision equals scale. For example, the following parameter represents zero for a `decimal(3,3)` column.
-
-[!code-csharp[SqlParameter_Precision Example#2](~/../sqlclient/doc/samples/SqlParameter_Precision.cs#2)]
-
 ]]></format>
       </remarks>
     </Precision>

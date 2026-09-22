@@ -18,20 +18,3 @@ class Program
     }
 }
 // </Snippet1>
-
-// <Snippet2>
-class ZeroParameterExample
-{
-    private static void AddZeroSqlParameter(SqlCommand command)
-    {
-        SqlParameter parameter = new SqlParameter("@Factor", SqlDbType.Decimal)
-        {
-            Value = 0m,
-            Precision = 3,
-            Scale = 3
-        };
-
-        command.Parameters.Add(parameter);
-    }
-}
-// </Snippet2>
