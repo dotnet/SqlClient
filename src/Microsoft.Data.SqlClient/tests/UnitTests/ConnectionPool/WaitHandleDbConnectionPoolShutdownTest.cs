@@ -178,8 +178,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Keeps a pending request on its original pool across shutdown and disposes its
-        /// connection on return, including when cancellation wins the completion race.
+        /// Starts with no idle connections. Pauses the first physical connection creation
+        /// while it holds the creation semaphore, then admits a second request that waits
+        /// for that semaphore. Shuts down the pool before releasing the first creation.
+        /// Both requests create their own connections on the retired pool, and both
+        /// connections are destroyed when returned. In the cancellation case, the worker
+        /// returns and destroys the second connection instead of delivering it to the caller.
         /// </summary>
         [Theory]
         [InlineData(false, false)]
