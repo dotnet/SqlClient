@@ -77,8 +77,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var pool = CreatePool();
 
-            // Hold two distinct connections before returning either, then make both idle.
-            // This gives Clear real inventory to drain rather than testing an empty pool.
+            // An empty pool would pass even if Shutdown still called Clear internally.
+            // Keep idle inventory so the two lifecycle operations have distinguishable effects.
             var owner1 = new SqlConnection();
             var owner2 = new SqlConnection();
             pool.TryGetConnection(owner1, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c1);
@@ -96,8 +96,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 // Act
                 pool.Shutdown();
 
-                // Assert: shutdown stops admissions without draining or marking idle objects.
-                // CanBePooled describes the objects, not whether this retired pool accepts opens.
+                // Assert: unchanged inventory and poolability detect both effects of an
+                // unintended Clear: draining idle objects and marking them non-poolable.
                 Assert.False(pool.IsRunning);
                 Assert.Equal(2, pool.IdleCount);
                 Assert.Equal(2, pool.Count);
@@ -201,9 +201,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true, true)]
         public async Task Shutdown_InFlightRequest_CompletesOnRetiredPool(bool async, bool cancel)
         {
-            // Arrange: use an empty pool with capacity for both connections. The first
-            // acquisition always runs synchronously on its own thread, holding the creation
-            // semaphore inside the mocked factory. Only the second acquisition varies.
+            // Arrange: contention must come from an in-flight creation, not MaxPoolSize.
+            // A synchronous first request holds the creation semaphore inside the factory,
+            // letting the second request reach the wait loop even when it is asynchronous.
             using var factory = new GatedConnectionFactory();
             var pool = CreatePool(maxPoolSize: 2, factory: factory);
             using var firstOwner = new SqlConnection();
@@ -215,26 +215,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
                 pending = Acquire(pool, pendingOwner, async ? completion : null);
-                // Both acquisitions have entered the pool, but only the first reached the
-                // factory. The gate keeps this interleaving stable until after shutdown.
+                // Starting a request is not enough: it must enter acquisition before shutdown,
+                // or this would test rejection of a new arrival rather than an admitted waiter.
+                // Two acquisitions but one factory call pins the second at the creation wait.
                 Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
                 Assert.Equal(1, factory.CreateCount);
                 Assert.False(first.IsCompleted);
                 Assert.False(pending.IsCompleted);
 
-                // Act: shut down before either creation can finish. Cancellation, when
-                // requested, must win before the worker can deliver its connection.
+                // Act: release the creation semaphore only after retirement, forcing the second
+                // request to encounter the removed post-wait shutdown guard. In the async case,
+                // that guard previously turned retirement into a misleading timeout.
                 pool.Shutdown();
                 if (cancel)
                 {
+                    // Make cancellation win before creation resumes, so cleanup is exercised
+                    // deterministically rather than racing task completion by chance.
                     completion.SetCanceled();
                 }
                 factory.Release.Set();
 
                 // Assert
                 Assert.False(pool.IsRunning);
-                // These delays are hang guards, not race triggers. WhenAny identifies the
-                // completed task; the following awaits read its result or cancellation.
+                // Pool identity rules out silently moving the requests to a new pool.
+                // The bounded waits only prevent hangs; they do not establish the interleaving.
                 Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
                 DbConnectionInternal? firstConnection = await first;
                 Assert.NotNull(firstConnection);
@@ -243,8 +247,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 if (cancel)
                 {
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
-                    // Cancellation completes the caller's task before worker cleanup.
-                    // Wait until the worker destroys its connection, leaving only the first.
+                    // A canceled task alone says nothing about the connection created for it.
+                    // With the first connection still checked out, Count == 1 and no waiters
+                    // establish that the worker has finished returning the canceled result.
                     Assert.True(SpinWait.SpinUntil(() => pool.Count == 1 && Volatile.Read(ref pool._waitCount) == 0, TimeSpan.FromSeconds(10)));
                 }
                 else
@@ -260,8 +265,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
             finally
             {
-                // Cleanup: release a blocked factory even if a precondition failed.
-                // Shutdown is safe to repeat and makes returned connections get destroyed.
+                // Cleanup must also handle failure before the Act section. Otherwise the
+                // first creation could stay blocked or its connection return to a live pool.
                 factory.Release.Set();
                 pool.Shutdown();
                 await ReturnWhenCompleted(pool, firstOwner, first);
