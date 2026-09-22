@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
@@ -1160,6 +1161,12 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                   THROW;
               END CATCH";
 
+        /// <summary>
+        /// Regression guard for issue #4321: an error rethrown by THROW inside a CATCH block
+        /// reaches the client after the DONE token that closed the TRY block's result set, and
+        /// must still be raised as a <see cref="SqlException"/> from <see cref="SqlDataReader.Read"/>
+        /// rather than being silently dropped so the batch looks like it returned no rows.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ErrorRethrownFromCatchBlock_IsSurfacedByRead()
         {
@@ -1179,6 +1186,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             Assert.Equal(8134, ex.Number);
         }
 
+        /// <summary>
+        /// Asynchronous counterpart of <see cref="ErrorRethrownFromCatchBlock_IsSurfacedByRead"/>.
+        /// Sync and async reads drain the token stream through different internal paths, so the
+        /// fix for issue #4321 is asserted separately on each to guarantee parity.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByReadAsync()
         {
@@ -1198,49 +1210,46 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             Assert.Equal(8134, ex.Number);
         }
 
-        // The reporter's motivating scenario: an INSERT ... OUTPUT wrapped in TRY/CATCH must not
-        // look like "the statement succeeded and produced no output rows".
+        /// <summary>
+        /// Covers the motivating scenario from issue #4321: a failing INSERT ... OUTPUT wrapped in
+        /// TRY/CATCH. Because the OUTPUT clause makes the statement return a result set, swallowing
+        /// the rethrown error would leave the caller unable to distinguish "the insert failed" from
+        /// "the insert succeeded and output no rows", so the error must be raised.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead()
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
-            string tableName = DataTestUtility.GenerateObjectName();
-            try
+
+            using Table table = new(connection, "DataReaderTest_Issue4321_Output", "([Id] INT NOT NULL)");
+
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText =
+                $@"BEGIN TRY
+                       INSERT INTO {table.Name} (Id) OUTPUT INSERTED.Id VALUES (1/0);
+                   END TRY
+                   BEGIN CATCH
+                       THROW;
+                   END CATCH";
+
+            SqlException ex = Assert.Throws<SqlException>(() =>
             {
-                using (SqlCommand create = connection.CreateCommand())
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    create.CommandText = $"CREATE TABLE {tableName} (Id INT NOT NULL)";
-                    create.ExecuteNonQuery();
                 }
+            });
 
-                using SqlCommand command = connection.CreateCommand();
-                command.CommandText =
-                    $@"BEGIN TRY
-                           INSERT INTO {tableName} (Id) OUTPUT INSERTED.Id VALUES (1/0);
-                       END TRY
-                       BEGIN CATCH
-                           THROW;
-                       END CATCH";
-
-                SqlException ex = Assert.Throws<SqlException>(() =>
-                {
-                    using SqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                    }
-                });
-
-                Assert.Equal(8134, ex.Number);
-            }
-            finally
-            {
-                DataTestUtility.DropTable(connection, tableName);
-            }
+            Assert.Equal(8134, ex.Number);
         }
 
-        // An error that arrives before any DONE token (the shape produced by a bare failing
-        // statement) must keep working exactly as it did before.
+        /// <summary>
+        /// Guards the pre-existing behavior that the fix for issue #4321 must not disturb: a bare
+        /// failing statement puts its error token ahead of any DONE token, and that shape was
+        /// always surfaced correctly. Ensures the change did not shift error handling onto the
+        /// trailing-token path only.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ErrorWithoutTryCatch_IsStillSurfacedByRead()
         {
@@ -1260,7 +1269,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             Assert.Equal(8134, ex.Number);
         }
 
-        // A genuinely empty result set must still be reported as zero rows, without an exception.
+        /// <summary>
+        /// Ensures the fix for issue #4321 does not over-report: a query that legitimately matches
+        /// no rows must still complete with zero rows and no exception, on both the sync and async
+        /// read paths.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task EmptyResultSetWithoutError_ReturnsNoRows()
         {
@@ -1282,8 +1295,12 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
-        // Informational messages emitted after the result set must continue to be raised on
-        // InfoMessage rather than being turned into exceptions.
+        /// <summary>
+        /// Ensures the fix for issue #4321 does not promote severity to exceptions: a PRINT emitted
+        /// after the result set travels as an INFO token on the same trailing-token path the fix
+        /// now consumes, and must continue to be delivered through
+        /// <see cref="SqlConnection.InfoMessage"/> instead of being thrown.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TrailingInfoMessage_IsRaisedAsInfoNotError()
         {
@@ -1305,7 +1322,12 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             Assert.Contains("trailing-info", messages);
         }
 
-        // Multiple result sets must continue to be enumerated normally.
+        /// <summary>
+        /// Ensures multi-result-set iteration is unchanged by the fix for issue #4321. Each result
+        /// set is delimited by its own COLMETADATA token, which bounds how far the trailing-token
+        /// loop may scan, so rows must not bleed between sets and NextResult must still report the
+        /// end of the batch. Verified on both the sync and async paths.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task MultipleResultSets_AreUnaffected()
         {
@@ -1347,8 +1369,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
-        // An error raised after rows have already been delivered must deliver the rows first and
-        // then surface the error.
+        /// <summary>
+        /// Ensures rows already produced before a failure are not lost by the fix for issue #4321:
+        /// when an error token follows a completed set of rows, the reader must hand those rows to
+        /// the caller first and only then raise the <see cref="SqlException"/>.
+        /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RowsThenTrailingError_DeliversRowsThenThrows()
         {
