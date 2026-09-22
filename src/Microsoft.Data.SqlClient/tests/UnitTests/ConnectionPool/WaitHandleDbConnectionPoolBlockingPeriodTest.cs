@@ -143,18 +143,21 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
         var pool = CreatePool(factory, timeProvider: clock);
         using var owner = new SqlConnection();
 
+        // A failed creation installs the cached exception and starts the blocking-period timer.
         Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
 
         // Act
         pool.Shutdown();
 
-        // Assert
+        // Assert: shutdown must not discard the error that admitted waiters can still observe.
         Assert.True(pool.ErrorOccurred);
 
         // Act: expire the preserved blocking period.
+        // Advance the injected clock by the initial five-second blocking period. This fires
+        // its expiry callback without sleeping or waiting five seconds of wall-clock time.
         clock.Advance(TimeSpan.FromSeconds(5));
 
-        // Assert
+        // Assert: shutdown left the expiry mechanism working, rather than freezing the error.
         Assert.False(pool.ErrorOccurred);
     }
 

@@ -77,7 +77,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Arrange
             var pool = CreatePool();
 
-            // Vend a few connections then return them so they sit in _stackNew.
+            // Hold two distinct connections before returning either, then make both idle.
+            // This gives Clear real inventory to drain rather than testing an empty pool.
             var owner1 = new SqlConnection();
             var owner2 = new SqlConnection();
             pool.TryGetConnection(owner1, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c1);
@@ -95,14 +96,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 // Act
                 pool.Shutdown();
 
-                // Assert
+                // Assert: shutdown stops admissions without draining or marking idle objects.
+                // CanBePooled describes the objects, not whether this retired pool accepts opens.
                 Assert.False(pool.IsRunning);
                 Assert.Equal(2, pool.IdleCount);
                 Assert.Equal(2, pool.Count);
                 Assert.True(c1!.CanBePooled);
                 Assert.True(c2!.CanBePooled);
 
-                // Act: drain the retired pool explicitly.
+                // Act: perform the Clear that the factory owns, separately from shutdown.
                 pool.Clear();
 
                 // Assert
@@ -199,7 +201,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true, true)]
         public async Task Shutdown_InFlightRequest_CompletesOnRetiredPool(bool async, bool cancel)
         {
-            // Arrange
+            // Arrange: use an empty pool with capacity for both connections. The first
+            // acquisition always runs synchronously on its own thread, holding the creation
+            // semaphore inside the mocked factory. Only the second acquisition varies.
             using var factory = new GatedConnectionFactory();
             var pool = CreatePool(maxPoolSize: 2, factory: factory);
             using var firstOwner = new SqlConnection();
@@ -211,12 +215,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
                 Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
                 pending = Acquire(pool, pendingOwner, async ? completion : null);
+                // Both acquisitions have entered the pool, but only the first reached the
+                // factory. The gate keeps this interleaving stable until after shutdown.
                 Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
                 Assert.Equal(1, factory.CreateCount);
                 Assert.False(first.IsCompleted);
                 Assert.False(pending.IsCompleted);
 
-                // Act
+                // Act: shut down before either creation can finish. Cancellation, when
+                // requested, must win before the worker can deliver its connection.
                 pool.Shutdown();
                 if (cancel)
                 {
@@ -226,6 +233,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
                 // Assert
                 Assert.False(pool.IsRunning);
+                // These delays are hang guards, not race triggers. WhenAny identifies the
+                // completed task; the following awaits read its result or cancellation.
                 Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
                 DbConnectionInternal? firstConnection = await first;
                 Assert.NotNull(firstConnection);
@@ -234,6 +243,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 if (cancel)
                 {
                     await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+                    // Cancellation completes the caller's task before worker cleanup.
+                    // Wait until the worker destroys its connection, leaving only the first.
                     Assert.True(SpinWait.SpinUntil(() => pool.Count == 1 && Volatile.Read(ref pool._waitCount) == 0, TimeSpan.FromSeconds(10)));
                 }
                 else
@@ -243,11 +254,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     Assert.Same(pool, pendingConnection.Pool);
                     Assert.Equal(0, Volatile.Read(ref pool._waitCount));
                 }
+                // Even the canceled case must reach the second creation. Otherwise an
+                // early shutdown failure could be hidden by the already-canceled task.
                 Assert.Equal(2, factory.CreateCount);
             }
             finally
             {
-                // Cleanup
+                // Cleanup: release a blocked factory even if a precondition failed.
+                // Shutdown is safe to repeat and makes returned connections get destroyed.
                 factory.Release.Set();
                 pool.Shutdown();
                 await ReturnWhenCompleted(pool, firstOwner, first);
@@ -275,6 +289,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                     return (DbConnectionInternal?)connection;
                 }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             }
+            // A false return here means async acquisition was queued, not that it failed.
+            // Its eventual result is delivered through completion.Task.
             Assert.False(pool.TryGetConnection(owner, completion, timer, out DbConnectionInternal pending));
             Assert.Null(pending);
             return completion.Task!;
