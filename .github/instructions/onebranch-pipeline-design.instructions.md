@@ -84,6 +84,10 @@ When adding a new package to the OneBranch flow:
 - Build jobs copy PDBs into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published artifact
 - The `publish-symbols-step.yml` accepts a `symbolsFolder` parameter to point at the downloaded PDB location
 - The publish step calls an extracted `publish-symbols.ps1` script with structured error handling and diagnostic logging
+- Every command the script runs (the `az` token acquisition and each `Invoke-RestMethod` call) is echoed to the log with its secrets redacted; the pipeline's `debug` parameter flows down to the script's `-LogUnredactedCommands` switch and logs those same commands unredacted for troubleshooting, at the cost of exposing the bearer token in the build log
+- `debug` also runs `test-endpoint-reachability.ps1` before the publish request, which probes both symbol servers from inside the build container so a failure can be attributed to the network path rather than to the service
+- Every run also logs the token's SHA-256 fingerprint and its header/payload claims (`aud`, `appid`, `oid`, `tid`, `roles`, `exp`, ...) so the principal and audience presented to the service are visible without exposing the credential; the signature segment is never decoded
+- Failed calls report the HTTP status code and any service correlation identifiers (such as `mise-correlation-id`) along with the response body, which is what the symbol service owners need to trace a rejection
 - Symbols publishing credentials come from the `Symbols Publishing` variable group
 - In the official pipeline, symbol server destination follows `releaseToProduction`: Production when true, PPE when false
 - Non-official pipeline always targets the PPE symbol server

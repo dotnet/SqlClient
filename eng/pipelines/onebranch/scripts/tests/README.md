@@ -41,10 +41,15 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling |
 | Package signatures    | Every package and symbol package verified, all failures reported before throwing |
 | Assembly signatures   | Package expansion, native binaries under `runtimes/` included, stale expansions replaced, all unsigned assemblies reported |
+| Token diagnostics     | SHA-256 fingerprint, allow-listed JWT claims, signature segment never logged |
+| HTTP failure detail   | Status code and correlation ids captured, exception and inner-exception types reported, explicit when no response was received |
+| Endpoint reachability | Comma-separated and array host lists, DNS failure distinguished from connection failure, socket error code and errno reported, never throws |
 
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
+- The endpoint-reachability tests are the one exception: they exercise real sockets, but only
+  against loopback and the RFC 2606 reserved `.invalid` TLD, so they need no external network.
 - Script-level version tests mock `dotnet`; package-composition tests invoke the real MSBuild
   `GetVersionsSqlClient` and `GetVersionsSqlServer` targets.
 - `Get-AuthenticodeSignature` is Windows-only, so the assembly-signature tests declare a stub when
