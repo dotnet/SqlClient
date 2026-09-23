@@ -44,6 +44,11 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  # 'actions: write' is needed by sync-hotfix-label-from-issue.sh to dispatch
+  # cherry-pick-hotfix.yml (workflow_dispatch) for already-merged PRs, since
+  # adding a label via this workflow's own GITHUB_TOKEN doesn't fire a new
+  # 'labeled' webhook event for that workflow to react to on its own.
+  actions: write
 
 jobs:
   sync-hotfix-label-from-pr:

@@ -33,7 +33,8 @@ teardown() {
 # sync-hotfix-label-to-pr.sh, makes for each PR it's re-run against.
 #
 #   $1: newline-separated "pr_number:STATE" pairs returned by the
-#       closedByPullRequestsReferences GraphQL query (STATE is OPEN or CLOSED)
+#       closedByPullRequestsReferences GraphQL query (STATE is OPEN, MERGED,
+#       or CLOSED)
 #   $2: newline-separated "pr_number:closing_issue_numbers,..." describing
 #       each PR's own closing issue references (delegate's Step 1)
 #   $3: newline-separated "issue_number:label1,label2" pairs describing each
@@ -51,6 +52,7 @@ stub_gh() {
   printf '%s' "${issue_label_map}" > "${STUB_DIR}/issue_labels.txt"
   printf '%s' "${pr_label_map}" > "${STUB_DIR}/pr_labels.txt"
   : > "${STUB_DIR}/add_label_calls.log"
+  : > "${STUB_DIR}/workflow_run_calls.log"
 
   cat > "${STUB_DIR}/gh" <<STUB
 #!/usr/bin/env bash
@@ -58,7 +60,7 @@ set -euo pipefail
 
 # gh api graphql (closedByPullRequestsReferences lookup)
 if [[ "\$1" == "api" && "\$2" == "graphql" ]]; then
-  awk -F':' '\$2 == "OPEN" { print \$1 }' "${STUB_DIR}/closing_prs.txt"
+  awk -F':' '\$2 == "OPEN" || \$2 == "MERGED" { print \$1, \$2 }' "${STUB_DIR}/closing_prs.txt"
   exit 0
 fi
 
@@ -95,6 +97,17 @@ if [[ "\$1" == "pr" && "\$2" == "edit" ]]; then
   exit 0
 fi
 
+# gh workflow run cherry-pick-hotfix.yml --repo <repo> -f pr_number=<n>
+if [[ "\$1" == "workflow" && "\$2" == "run" ]]; then
+  for ((i = 1; i <= \$#; i++)); do
+    if [[ "\${!i}" == -f ]]; then
+      j=\$((i + 1))
+      echo "\${!j}" >> "${STUB_DIR}/workflow_run_calls.log"
+    fi
+  done
+  exit 0
+fi
+
 echo "unhandled gh invocation: \$*" >&2
 exit 1
 STUB
@@ -107,6 +120,10 @@ added_labels() {
 
 added_prs() {
   cat "${STUB_DIR}/add_label_calls.log" 2>/dev/null
+}
+
+dispatched_prs() {
+  cat "${STUB_DIR}/workflow_run_calls.log" 2>/dev/null
 }
 
 # ── --help flag ──────────────────────────────────────────────────────────────
@@ -180,4 +197,41 @@ added_prs() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"already has label 'Hotfix 7.1.1'"* ]]
   [ -z "$(added_labels)" ]
+}
+
+# ── Merged PR handling (retroactive labeling; see PR #4737/#4738) ───────────
+
+@test "syncs the label onto an already-merged PR and dispatches the reconcile workflow" {
+  stub_gh \
+    "$(printf '4721:MERGED')" \
+    "$(printf '4721:4715')" \
+    "$(printf '4715:Hotfix 7.1.1')" \
+    "$(printf '4721:')"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"already merged"* ]]
+  [ "$(added_labels)" = "Hotfix 7.1.1" ]
+  [ "$(dispatched_prs)" = "pr_number=4721" ]
+}
+
+@test "does not dispatch the reconcile workflow for an open PR" {
+  stub_gh \
+    "$(printf '4721:OPEN')" \
+    "$(printf '4721:4715')" \
+    "$(printf '4715:Hotfix 7.1.1')" \
+    "$(printf '4721:')"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ -z "$(dispatched_prs)" ]
+}
+
+@test "dispatches the reconcile workflow only for the merged PR when both open and merged PRs reference the issue" {
+  stub_gh \
+    "$(printf '4721:OPEN\n4722:MERGED')" \
+    "$(printf '4721:4715\n4722:4715')" \
+    "$(printf '4715:Hotfix 7.1.1')" \
+    "$(printf '4721:\n4722:')"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ "$(dispatched_prs)" = "pr_number=4722" ]
 }

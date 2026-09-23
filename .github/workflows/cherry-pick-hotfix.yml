@@ -34,9 +34,23 @@ name: Cherry-pick Hotfix to release branch
 #     the cherry-pick runs immediately.
 #   - 'labeled': fires when a label is added after merge — allows retroactive cherry-picks
 #     by adding the label to an already-merged PR.
+#   - 'workflow_dispatch': fires when sync-hotfix-label-from-issue.sh adds a
+#     "Hotfix <version>" label to an already-merged PR. That label-add uses the
+#     workflow's own GITHUB_TOKEN, and GitHub does not trigger further workflow
+#     runs (including this workflow's own 'labeled' trigger) for events caused
+#     by the repository's own GITHUB_TOKEN, so the script explicitly dispatches
+#     this workflow instead. Runs in "reconcile" mode (see extract-hotfix-versions.sh):
+#     re-derives all current Hotfix labels on the PR, skipping any that already
+#     have a cherry-pick branch or PR from an earlier event.
 on:
   pull_request_target:
     types: [closed, labeled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Number of the already-merged PR to reconcile Hotfix labels for."
+        required: true
+        type: number
 
 # 'contents: write' is needed to push the cherry-pick branch.
 # 'pull-requests: write' is needed to create the new PR via the GitHub CLI.
@@ -48,18 +62,96 @@ permissions:
   issues: read
 
 jobs:
-  # First job: extract all hotfix versions from the PR labels and emit them as
+  # First job: resolve PR context (merged status, base ref, labels, merge
+  # commit SHA, title) from whichever trigger fired, since 'workflow_dispatch'
+  # has no 'pull_request_target' event payload to read it from.
+  resolve-pr:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      event_action: ${{ steps.resolve.outputs.event_action }}
+      event_label: ${{ steps.resolve.outputs.event_label }}
+      merged: ${{ steps.resolve.outputs.merged }}
+      base_ref: ${{ steps.resolve.outputs.base_ref }}
+      labels: ${{ steps.resolve.outputs.labels }}
+      merge_commit_sha: ${{ steps.resolve.outputs.merge_commit_sha }}
+      pr_title: ${{ steps.resolve.outputs.pr_title }}
+    steps:
+      - name: Resolve PR context (pull_request_target)
+        if: github.event_name == 'pull_request_target'
+        id: resolve_event
+        run: |
+          {
+            echo "pr_number=${{ github.event.pull_request.number }}"
+            echo "event_action=${{ github.event.action }}"
+            echo "event_label=${{ github.event.label.name || '' }}"
+            echo "merged=${{ github.event.pull_request.merged }}"
+            echo "base_ref=${{ github.event.pull_request.base.ref }}"
+            echo "labels=${{ join(github.event.pull_request.labels.*.name, ',') }}"
+            echo "merge_commit_sha=${{ github.event.pull_request.merge_commit_sha }}"
+          } >> "${GITHUB_OUTPUT}"
+          # PR title may contain characters unsafe for direct expression
+          # interpolation above; write it separately via env to avoid injection.
+          echo "pr_title=${PR_TITLE}" >> "${GITHUB_OUTPUT}"
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+
+      - name: Resolve PR context (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        id: resolve_dispatch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
+            --json number,merged,baseRefName,labels,mergeCommit,title \
+            --jq '
+              "pr_number=\(.number)",
+              "event_action=reconcile",
+              "event_label=",
+              "merged=\(.merged)",
+              "base_ref=\(.baseRefName)",
+              "labels=\([.labels[].name] | join(","))",
+              "merge_commit_sha=\(.mergeCommit.oid // "")",
+              "pr_title=\(.title)"
+            ' >> "${GITHUB_OUTPUT}"
+
+      - name: Merge resolved outputs
+        id: resolve
+        run: |
+          # Whichever of the two prior steps ran populated its outputs; the
+          # other was skipped and contributes empty strings. Pick whichever
+          # one actually ran.
+          if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+            SRC="event"
+          else
+            SRC="dispatch"
+          fi
+          {
+            echo "pr_number=${{ steps.resolve_event.outputs.pr_number || steps.resolve_dispatch.outputs.pr_number }}"
+            echo "event_action=${{ steps.resolve_event.outputs.event_action || steps.resolve_dispatch.outputs.event_action }}"
+            echo "event_label=${{ steps.resolve_event.outputs.event_label || steps.resolve_dispatch.outputs.event_label }}"
+            echo "merged=${{ steps.resolve_event.outputs.merged || steps.resolve_dispatch.outputs.merged }}"
+            echo "base_ref=${{ steps.resolve_event.outputs.base_ref || steps.resolve_dispatch.outputs.base_ref }}"
+            echo "labels=${{ steps.resolve_event.outputs.labels || steps.resolve_dispatch.outputs.labels }}"
+            echo "merge_commit_sha=${{ steps.resolve_event.outputs.merge_commit_sha || steps.resolve_dispatch.outputs.merge_commit_sha }}"
+            echo "pr_title=${{ steps.resolve_event.outputs.pr_title || steps.resolve_dispatch.outputs.pr_title }}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Resolved PR context from: ${SRC}"
+
+  # Second job: extract all hotfix versions from the PR labels and emit them as
   # a JSON array so the matrix strategy can fan out one job per version.
   detect-versions:
+    needs: resolve-pr
     runs-on: ubuntu-latest
     # Only fire for merged PRs targeting the default branch that have at least
     # one "Hotfix *" label.  The default-branch guard prevents recursive
     # cherry-picks when a cherry-pick PR is merged into a release branch.
     if: >-
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch &&
-      join(github.event.pull_request.labels.*.name, ' ') != '' &&
-      contains(join(github.event.pull_request.labels.*.name, ','), 'Hotfix ')
+      needs.resolve-pr.outputs.merged == 'true' &&
+      needs.resolve-pr.outputs.base_ref == github.event.repository.default_branch &&
+      needs.resolve-pr.outputs.labels != '' &&
+      contains(needs.resolve-pr.outputs.labels, 'Hotfix ')
     outputs:
       versions: ${{ steps.extract.outputs.versions }}
     steps:
@@ -74,19 +166,20 @@ jobs:
         id: extract
         env:
           # Pass label names via env to avoid script injection from label text.
-          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          LABELS: ${{ needs.resolve-pr.outputs.labels }}
           # For the 'labeled' event, this is the single label that was just added.
-          # For the 'closed' event this is empty, meaning all labels are processed.
-          EVENT_LABEL: ${{ github.event.label.name || '' }}
-          EVENT_ACTION: ${{ github.event.action }}
+          # For the 'closed'/'reconcile' events this is empty, meaning all
+          # labels are processed (see extract-hotfix-versions.sh OVERVIEW).
+          EVENT_LABEL: ${{ needs.resolve-pr.outputs.event_label }}
+          EVENT_ACTION: ${{ needs.resolve-pr.outputs.event_action }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ needs.resolve-pr.outputs.pr_number }}
         run: bash "${GITHUB_WORKSPACE}/.github/scripts/extract-hotfix-versions.sh"
 
-  # Second job: runs once per detected version, cherry-picking the merge commit
+  # Third job: runs once per detected version, cherry-picking the merge commit
   # into each target release branch.
   cherry-pick:
-    needs: detect-versions
+    needs: [resolve-pr, detect-versions]
     if: needs.detect-versions.outputs.versions != '[]'
     runs-on: ubuntu-latest
     strategy:
@@ -113,8 +206,8 @@ jobs:
       - name: Cherry-pick and create PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          MERGE_COMMIT_SHA: ${{ needs.resolve-pr.outputs.merge_commit_sha }}
+          PR_NUMBER: ${{ needs.resolve-pr.outputs.pr_number }}
+          PR_TITLE: ${{ needs.resolve-pr.outputs.pr_title }}
           VERSION: ${{ matrix.version }}
         run: bash "${GITHUB_WORKSPACE}/.github/scripts/cherry-pick-to-release.sh"
