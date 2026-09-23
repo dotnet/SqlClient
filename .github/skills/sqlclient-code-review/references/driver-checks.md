@@ -1,8 +1,10 @@
 # Driver checks
 
 Use this as a risk index, not a checklist to paste into reviews. Load the relevant
-repository instruction guide for each touched area. Paths below are repository-relative;
-confirm them on the reviewed revision before searching or claiming a missing update.
+trusted repository instruction guide for each touched area. The table mixes
+repository-relative paths with filenames and search patterns under the driver
+directory; confirm their locations on the reviewed revision before searching or
+claiming a missing update.
 
 ## Repository map
 
