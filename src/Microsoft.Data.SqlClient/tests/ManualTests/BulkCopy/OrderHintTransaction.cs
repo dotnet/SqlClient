@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
-                SqlTransaction txn = dstConn.BeginTransaction();
+                using SqlTransaction txn = dstConn.BeginTransaction();
                 dstCmd.Transaction = txn;
                 Helpers.TryExecute(dstCmd, initialQuery);
 

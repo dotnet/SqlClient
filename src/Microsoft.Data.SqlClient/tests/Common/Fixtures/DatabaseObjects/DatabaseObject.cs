@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Text;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
@@ -16,7 +17,7 @@ namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 /// </typeparam>
 public abstract class DatabaseObject<TState> : IDisposable
 {
-    private readonly bool _shouldDrop;
+    private bool _disposed;
 
     protected SqlConnection Connection { get; }
 
@@ -26,20 +27,51 @@ public abstract class DatabaseObject<TState> : IDisposable
 
     public string UnescapedName => Name.Substring(1, Name.Length - 2).Replace("]]", "]");
 
-    protected DatabaseObject(SqlConnection connection, string name, string definition, TState state, bool shouldCreate, bool shouldDrop)
+    protected DatabaseObject(SqlConnection connection, string name, string definition, TState state)
     {
-        _shouldDrop = shouldDrop;
-
         Connection = connection;
         State = state;
         Name = name;
 
-        if (shouldCreate)
+        EnsureConnectionOpen();
+
+        // Remove any object left behind by an earlier run before creating this one. Best-effort:
+        // if it cannot be removed, CREATE will report the collision far more clearly than a drop
+        // failure would.
+        TryDrop();
+
+        try
         {
-            EnsureConnectionOpen();
-            DropObject();
             CreateObject(definition);
         }
+        catch
+        {
+            // CREATE can fail *after* the server has created the object: a command timeout or a
+            // dropped connection reports failure for a statement that may already have committed.
+            // Every generated name embeds a GUID, so anything left behind is orphaned forever in
+            // the (shared) test database. Unwind through Dispose so that cleanup lives in exactly
+            // one place, then let the original failure surface.
+            Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Adopts an object that already exists, so that it is dropped when this instance is disposed.
+    /// Nothing is created.
+    /// </summary>
+    /// <remarks>
+    /// Necessary for objects the server creates as a side effect of creating something else, which
+    /// therefore have no CREATE statement of their own but still have to be dropped. The temporal
+    /// history table behind <see cref="TemporalTable"/> is the motivating case.
+    /// </remarks>
+    protected DatabaseObject(SqlConnection connection, string name, TState state, ExistingObject _)
+    {
+        Connection = connection;
+        State = state;
+        Name = name;
+
+        EnsureConnectionOpen();
     }
 
     private void EnsureConnectionOpen()
@@ -251,21 +283,126 @@ public abstract class DatabaseObject<TState> : IDisposable
     /// </summary>
     /// <remarks>
     /// By the time this is called, <see cref="Connection"/> will be open.
-    /// Must not throw an exception if the object does not exist.
+    ///
+    /// Implementations must be safe to call more than once and must not throw when the object does
+    /// not exist. They are not required to be exception-free beyond that: the guard against a
+    /// leftover object is inherently racy (the existence check and the DROP are separate
+    /// statements), and the connection itself can fail at any moment. <see cref="TryDrop"/> owns
+    /// that problem — it retries on a fresh connection and reports anything it cannot remove — so
+    /// no failure from here ever escapes to a caller.
     /// </remarks>
     protected abstract void DropObject();
 
+    /// <remarks>
+    /// Idempotent, and never throws. These objects are overwhelmingly consumed via <c>using</c>, so
+    /// a throwing <c>Dispose</c> would surface in place of an exception already in flight and
+    /// replace a real test failure with a cleanup error — the very "cleanup masks the real failure"
+    /// problem these types exist to remove. A drop that cannot be completed is reported by
+    /// <see cref="TryDropAfterReconnect"/> instead, which identifies the object and where it lives
+    /// so the leak stays actionable without destroying the diagnosis of the failure that caused it.
+    /// </remarks>
     public void Dispose()
     {
-        if (_shouldDrop)
+        if (_disposed)
         {
-            EnsureConnectionOpen();
-            DropObject();
+            return;
         }
+
+        _disposed = true;
+
+        TryDrop();
+
         // This explicitly does not drop the wrapped SqlConnection; this is sometimes
         // used in a loop to create multiple UDTs.
 
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Drops the object, swallowing any failure.
+    /// </summary>
+    /// <remarks>
+    /// The drop is all that stands between a failed run and an object orphaned forever in the
+    /// shared test database, so it gets one retry on a healthy connection before giving up. A
+    /// failure is never propagated: this runs either during <see cref="Dispose"/> or on a path
+    /// already unwinding because of a more interesting failure, and in both cases a cleanup error
+    /// must not replace the exception in flight.
+    /// </remarks>
+    private void TryDrop()
+    {
+        try
+        {
+            EnsureConnectionOpen();
+            DropObject();
+        }
+        catch
+        {
+            try
+            {
+                TryDropAfterReconnect();
+            }
+            catch
+            {
+                // Nothing left to try, and nowhere to report it: even the reporting path failed.
+                // Swallowing is the whole point — see the remarks above.
+            }
+        }
+    }
+
+    /// <summary>
+    /// Re-attempts the drop on a healthy connection.
+    /// </summary>
+    /// <returns><c>true</c> if the object was dropped; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// A drop usually fails because <see cref="Connection"/> itself has gone bad: a command timeout
+    /// can leave it unusable, and a transport failure kills it outright. Closing and reopening
+    /// returns the broken connection to the pool and acquires a healthy one, which is the difference
+    /// between a transient blip and an object orphaned forever in the shared test database.
+    ///
+    /// This deliberately reuses the existing <see cref="SqlConnection"/> rather than constructing a
+    /// new one from its connection string: `Persist Security Info` defaults to false, so the password
+    /// is no longer readable from <see cref="SqlConnection.ConnectionString"/> once it has been
+    /// opened, and a copy would fail to authenticate.
+    /// </remarks>
+    private bool TryDropAfterReconnect()
+    {
+        // Captured before the reconnect attempt: once the connection has been closed or disposed
+        // these can throw, and this is the only record the leak will leave.
+        string location = DescribeLocation();
+
+        try
+        {
+            Connection.Close();
+            Connection.Open();
+            DropObject();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // This is the last chance to remove the object, and no caller propagates the failure,
+            // so this report is the only trace the leak will leave. It names the object *and*
+            // where it lives, so a human or agent can drop it manually without having to work out
+            // which server and database the run was pointed at.
+            Console.WriteLine($"Failed to drop {GetType().Name} '{Name}' {location}; it may be orphaned there. {ex}");
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Describes where the object lives, for the leak report.
+    /// </summary>
+    private string DescribeLocation()
+    {
+        try
+        {
+            return $"on data source '{Connection.DataSource}', database '{Connection.Database}'";
+        }
+        catch (Exception ex)
+        {
+            return $"on an unknown data source ({ex.GetType().Name} reading the connection)";
+        }
     }
 }
 
@@ -275,8 +412,13 @@ public abstract class DatabaseObject<TState> : IDisposable
 /// </summary>
 public abstract class DatabaseObject : DatabaseObject<object?>
 {
-    protected DatabaseObject(SqlConnection connection, string name, string definition, bool shouldCreate, bool shouldDrop)
-        : base(connection, name, definition, state: null, shouldCreate, shouldDrop)
+    protected DatabaseObject(SqlConnection connection, string name, string definition)
+        : base(connection, name, definition, state: null)
+    {
+    }
+
+    protected DatabaseObject(SqlConnection connection, string name, ExistingObject adopt)
+        : base(connection, name, state: null, adopt)
     {
     }
 }

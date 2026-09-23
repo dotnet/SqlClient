@@ -122,6 +122,9 @@ namespace Microsoft.Data.SqlClient
                         // Perform Attestation per VSM protocol
                         VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
 
+                        // Verify the enclave public key is bound to the signed report, before it is used for key exchange
+                        VerifyEnclavePublicKeyBinding(info.EnclaveReportPackage, info.Identity);
+
                         // Set up shared secret and validate signature
                         byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
 
@@ -149,6 +152,68 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Private helpers
+
+        /// <summary>
+        /// Verifies that the enclave's Diffie-Hellman public key is the one committed to by the signed
+        /// attestation report. A genuine VBS enclave writes SHA-256(public key) into the first 32 bytes of the
+        /// report's EnclaveData, and that EnclaveData is covered by the report signature that
+        /// <see cref="VerifyAttestationInfo"/> has already validated. Confirming this binding ensures the key used
+        /// to derive the session secret is the exact key the attested enclave committed to. This mirrors the
+        /// aas-ehd key binding performed on the AAS attestation path.
+        /// </summary>
+        /// <param name="enclaveReportPackage">
+        /// The signature-verified enclave report package. Its <c>Report.EnclaveData</c> supplies the committed
+        /// key hash.
+        /// </param>
+        /// <param name="enclavePublicKey">
+        /// The enclave public key that will be used to derive the session secret.
+        /// </param>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the report's EnclaveData does not match SHA-256 of <paramref name="enclavePublicKey"/>, or
+        /// when the required report or key data is missing. In either case attestation is rejected.
+        /// </exception>
+        /// <remarks>
+        /// This is internal to allow for targeted unit testing without resorting to reflection.
+        /// </remarks>
+        internal static void VerifyEnclavePublicKeyBinding(EnclaveReportPackage enclaveReportPackage, EnclavePublicKey enclavePublicKey)
+        {
+            const int ReportDataLength = 32; // SHA-256 digest length
+
+            // The first 32 bytes of EnclaveData must equal SHA-256 of the key we will use to derive the session
+            // secret. Read both inputs defensively so missing data results in a clean rejection rather than a
+            // NullReferenceException (SHA256 hashing also throws on a null input).
+            byte[] reportData = enclaveReportPackage?.Report?.EnclaveData;
+            byte[] publicKey = enclavePublicKey?.PublicKey;
+
+            if (reportData == null || reportData.Length < ReportDataLength || publicKey == null || publicKey.Length == 0)
+            {
+                throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
+            }
+
+#if NET
+            // Hash directly into a stack buffer to avoid a heap allocation for the digest.
+            Span<byte> expectedBinding = stackalloc byte[ReportDataLength];
+            SHA256.HashData(publicKey, expectedBinding);
+
+            // Use a fixed-time comparison in this security-sensitive path so the check does not leak a timing
+            // signal about how many leading bytes matched.
+            bool bound = CryptographicOperations.FixedTimeEquals(
+                reportData.AsSpan(0, ReportDataLength), expectedBinding);
+#else
+            byte[] expectedBinding;
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                expectedBinding = sha256.ComputeHash(publicKey);
+            }
+
+            bool bound = FixedTimeEquals(reportData, expectedBinding, ReportDataLength);
+#endif
+
+            if (!bound)
+            {
+                throw new ArgumentException(Strings.VerifyEnclaveKeyBindingFailed);
+            }
+        }
 
         // Performs Attestation per the protocol used by Virtual Secure Modules.
         private void VerifyAttestationInfo(string attestationUrl, HealthReport healthReport, EnclaveReportPackage enclaveReportPackage)
@@ -241,7 +306,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verifies that a chain of trust can be built from the health report provided
         /// by SQL Server and the attestation service's root signing certificate(s).
-        /// 
+        ///
         /// If the method returns false, the value of chainStatus doesn't matter. The chain could not be validated.
         /// </summary>
         /// <param name="signingCerts"></param>
@@ -339,6 +404,26 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+#if !NET
+        // CryptographicOperations.FixedTimeEquals is unavailable on .NET Framework, so hand-roll an equivalent
+        // constant-time comparison of the first <paramref name="length"/> bytes for the key-binding check above.
+        private static bool FixedTimeEquals(byte[] left, byte[] right, int length)
+        {
+            if (left == null || right == null || left.Length < length || right.Length < length)
+            {
+                return false;
+            }
+
+            int accumulator = 0;
+            for (int index = 0; index < length; index++)
+            {
+                accumulator |= left[index] ^ right[index];
+            }
+
+            return accumulator == 0;
+        }
+#endif
 
         // Verifies the enclave policy matches expected policy.
         private void VerifyEnclavePolicy(EnclaveReportPackage enclaveReportPackage)

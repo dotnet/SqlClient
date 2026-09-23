@@ -46,16 +46,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 _columnMasterKey,
                 _certStoreProvider);
 
-            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
+            // NOTE: If creation fails part way through (for example on the second connection string),
+            //   this constructor never returns, so xUnit never disposes the fixture and the keys
+            //   created so far would be leaked into the shared test database forever. Dispose
+            //   explicitly before rethrowing; the drops are guarded, so dropping a key that was
+            //   never created is a no-op.
+            try
             {
-                SqlConnectionStringBuilder connectionString = new SqlConnectionStringBuilder(connectionStr);
-                // The AE setup often fails with a connect timeout here; ensure a reasonable minimum.
-                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30);
+                foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
+                {
+                    SqlConnectionStringBuilder connectionString = new SqlConnectionStringBuilder(connectionStr);
+                    // The AE setup often fails with a connect timeout here; ensure a reasonable minimum.
+                    connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30);
 
-                using SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString);
-                sqlConnection.Open();
-                _columnMasterKey.Create(sqlConnection);
-                ColumnEncryptionKey.Create(sqlConnection);
+                    using SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString);
+                    sqlConnection.Open();
+                    _columnMasterKey.Create(sqlConnection);
+                    ColumnEncryptionKey.Create(sqlConnection);
+                }
+            }
+            catch
+            {
+                try
+                {
+                    Dispose();
+                }
+                catch (Exception disposeException)
+                {
+                    Console.WriteLine(
+                        $"ConversionTestFixture: cleanup after failed setup did not complete: {disposeException.Message}");
+                }
+
+                throw;
             }
         }
 

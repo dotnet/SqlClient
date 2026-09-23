@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -24,6 +25,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
         [Fact]
@@ -91,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -110,7 +112,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false
+                #pragma warning restore 618
 #endif
             };
 
@@ -230,7 +234,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -251,7 +255,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+                #pragma warning restore 618
 #endif
             };
 
@@ -289,7 +295,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -337,7 +345,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -764,6 +774,249 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        private static Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> CreateStubCallback() =>
+            (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+        private static async Task OpenConnection(SqlConnection connection, bool openAsync)
+        {
+            if (openAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+        }
+
+        /// <summary>
+        /// When the server signals FEDAUTHREQUIRED in its pre-login response, a caller-supplied
+        /// token must cause the client to honour that response and echo it back in the Login7
+        /// federated authentication feature extension. The simulated server rejects a mismatched
+        /// echo, so this fails if <c>SqlConnectionInternal.IsAccessTokenProvided</c> stops
+        /// accounting for <see cref="SqlConnection.AccessTokenCallback"/>.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task AccessTokenCallbackHonorsPreLoginFedAuthRequired(bool openAsync)
+        {
+            using TdsServer server = new(new TdsServerArguments()
+            {
+                FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthRequired,
+            });
+            server.Start();
+
+            string connectionString = new SqlConnectionStringBuilder()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connectionString)
+            {
+                AccessTokenCallback = CreateStubCallback(),
+            };
+
+            await OpenConnection(connection, openAsync);
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+
+#if NETFRAMEWORK
+            // Transparent Network IP Resolution is disabled by default whenever the caller supplies
+            // a token. Asserting on the decision LoginNoFailover actually applied covers the wiring
+            // that a direct test of ShouldDisableTnir cannot.
+            Assert.True(GetTnirDisabledDuringLogin(connection));
+
+            using SqlConnection baseline = new(connectionString);
+            await OpenConnection(baseline, openAsync);
+            Assert.False(GetTnirDisabledDuringLogin(baseline));
+
+            static bool? GetTnirDisabledDuringLogin(SqlConnection connection) =>
+                ((global::Microsoft.Data.SqlClient.Connection.SqlConnectionInternal)connection.InnerConnection)
+                    .TnirDisabledDuringLogin;
+#endif
+        }
+
+        /// <summary>
+        /// Minimal concrete <see cref="SspiContextProvider"/> so tests can assign a non-null value.
+        /// Never used to authenticate, so <see cref="GenerateContext"/> is not exercised.
+        /// </summary>
+        private sealed class TestSspiContextProvider : SspiContextProvider
+        {
+            protected override bool GenerateContext(
+                ReadOnlySpan<byte> incomingBlob,
+                IBufferWriter<byte> outgoingBlobWriter,
+                SspiAuthenticationParameters authParams)
+                => throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// <see cref="ICloneable.Clone"/> retains the source connection's pool group, and therefore
+        /// its pool key. It must copy <see cref="SqlConnection.SspiContextProvider"/> too, otherwise
+        /// the clone reports no provider while its pool key still carries one, and accepts an access
+        /// token that the mutual-exclusivity validation would have rejected.
+        /// </summary>
+        [Fact]
+        public void CloneCopiesSspiContextProvider()
+        {
+            using SqlConnection source = new("Data Source=localhost");
+            SspiContextProvider provider = new TestSspiContextProvider();
+            source.SspiContextProvider = provider;
+
+            using SqlConnection clone = (SqlConnection)((ICloneable)source).Clone();
+
+            Assert.Same(provider, clone.SspiContextProvider);
+            Assert.Same(provider, clone.PoolGroup.PoolKey.SspiContextProvider);
+            Assert.Throws<InvalidOperationException>(() => clone.AccessToken = "token");
+        }
+
+        /// <summary>
+        /// The <see cref="SqlConnection.Credential"/> setter also rebuilds the pool key, so it must
+        /// preserve <see cref="SqlConnection.SspiContextProvider"/> rather than dropping it and
+        /// leaving the property and the pool key disagreeing.
+        /// </summary>
+        [Fact]
+        public void CredentialSetterPreservesSspiContextProviderInPoolKey()
+        {
+            SecureString password = new();
+            password.MakeReadOnly();
+
+            using SqlConnection conn = new("Data Source=localhost");
+            SspiContextProvider provider = new TestSspiContextProvider();
+            conn.SspiContextProvider = provider;
+
+            conn.Credential = new SqlCredential("user", password);
+
+            Assert.Same(provider, conn.SspiContextProvider);
+            Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
+        }
+
+        /// <summary>
+        /// SSPI is an alternative to token-based authentication, so <see cref="SqlConnection.SspiContextProvider"/>
+        /// is mutually exclusive with both <see cref="SqlConnection.AccessToken"/> and
+        /// <see cref="SqlConnection.AccessTokenCallback"/>, in either assignment order.
+        /// </summary>
+        [Fact]
+        public void SspiContextProviderAndAccessTokenStateAreMutuallyExclusive()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+            string expectedMessage = global::Microsoft.Data.StringsHelper.GetString(
+                global::System.Strings.ADP_InvalidMixedUsageOfAccessTokenProperties);
+
+            // Token first, then provider.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
+            }
+
+            // Provider first, then token.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.SspiContextProvider = new TestSspiContextProvider();
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessToken = "token");
+                Assert.Equal(expectedMessage, exception.Message);
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.SspiContextProvider = new TestSspiContextProvider();
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessTokenCallback = callback);
+                Assert.Equal(expectedMessage, exception.Message);
+            }
+        }
+
+        /// <summary>
+        /// Clearing one authentication property must not drop the others from the connection pool key.
+        /// The setters rebuild the key on every assignment, and previously hard-coded the sibling
+        /// values to null, so clearing one property silently discarded another that was still set.
+        /// </summary>
+        [Fact]
+        public void ClearingOneAuthPropertyPreservesTheOthersInPoolKey()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            // Clearing the provider must not discard an access token.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                conn.SspiContextProvider = null;
+
+                Assert.Equal("token", conn.AccessToken);
+                Assert.Equal("token", conn.PoolGroup.PoolKey.AccessToken);
+            }
+
+            // Clearing the provider must not discard an access token callback.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                conn.SspiContextProvider = null;
+
+                Assert.Same(callback, conn.AccessTokenCallback);
+                Assert.Same(callback, conn.PoolGroup.PoolKey.AccessTokenCallback);
+            }
+
+            // Clearing token state must not discard a context provider.
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                SspiContextProvider provider = new TestSspiContextProvider();
+                conn.SspiContextProvider = provider;
+                conn.AccessToken = null;
+
+                Assert.Same(provider, conn.SspiContextProvider);
+                Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                SspiContextProvider provider = new TestSspiContextProvider();
+                conn.SspiContextProvider = provider;
+                conn.AccessTokenCallback = null;
+
+                Assert.Same(provider, conn.SspiContextProvider);
+                Assert.Same(provider, conn.PoolGroup.PoolKey.SspiContextProvider);
+            }
+        }
+
+        /// <summary>
+        /// <see cref="SqlConnection.AccessToken"/> and <see cref="SqlConnection.AccessTokenCallback"/>
+        /// are mutually exclusive, so neither setter can ever clobber a live value of the other.
+        /// </summary>
+        [Fact]
+        public void AccessTokenAndAccessTokenCallbackAreMutuallyExclusive()
+        {
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
+                (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessTokenCallback = callback;
+                Assert.Throws<InvalidOperationException>(() => conn.AccessToken = "token");
+            }
+
+            using (SqlConnection conn = new("Data Source=localhost"))
+            {
+                conn.AccessToken = "token";
+                Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = callback);
+            }
+        }
+
         [Theory]
         [InlineData(9, 0, 2047)] // SQL Server 2005
         [InlineData(10, 0, 2531)] // SQL Server 2008
@@ -926,15 +1179,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        // Test that the driver sends the UserAgent feature extension when
-        // the context switch is enabled, and that the presence or absence of
-        // an ack from the server has no effect.
+        /// <summary>
+        /// Verifies that LOGIN7 sends the USERAGENT payload carrying the connection's application
+        /// identity, regardless of whether the server acknowledges the extension.
+        /// </summary>
+        /// <param name="sendAck">Whether the server acknowledges the USERAGENT extension.</param>
+        /// <param name="useAsync">Whether the connection opens asynchronously.</param>
         [Theory]
         // Allow the server to ack.
-        [InlineData(true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
         // Don't allow the server to send an ack.
-        [InlineData(false)]
-        public void TestConnWithUserAgentFeatureExtension(bool sendAck)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TestConnWithUserAgentFeatureExtension(bool sendAck, bool useAsync)
         {
             // Start the test server.
             using TdsServer server = new();
@@ -983,7 +1241,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.Open();
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -993,9 +1259,38 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
-            Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), observedPayload);
+            Assert.Equal(UserAgent.GetUcs2Bytes(RegisteredApplication.EntityFrameworkCore).ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
+        }
+
+        /// <summary>
+        /// Verifies the application identity cannot be changed once the connection is open, since
+        /// it is only reported during login and the getter would otherwise report a value that was
+        /// never sent.
+        /// </summary>
+        [Fact]
+        public void RegisteredApplication_CannotBeSet_WhenConnectionIsOpen()
+        {
+            using TdsServer server = new();
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using var connection = new SqlConnection(connStr);
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
+            connection.Open();
+
+            Assert.Throws<InvalidOperationException>(
+                () => connection.RegisteredApplication = RegisteredApplication.SemanticKernel);
+
+            // The connection still reports the identity it logged in with.
+            Assert.Equal(RegisteredApplication.EntityFrameworkCore, connection.RegisteredApplication);
         }
     }
 }

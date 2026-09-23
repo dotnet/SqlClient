@@ -138,6 +138,7 @@
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/">
     <Project Path="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <Project Path="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/test/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test.csproj" />
   </Folder>
   <Folder Name="/src/Microsoft.Data.SqlClient.Extensions.Abstractions/">
     <Project Path="Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj" />

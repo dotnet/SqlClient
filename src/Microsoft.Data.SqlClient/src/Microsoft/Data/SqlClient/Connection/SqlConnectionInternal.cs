@@ -15,6 +15,7 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -145,6 +146,42 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Probably a good idea to introduce a delegate type
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
+        /// <summary>
+        /// True when the caller supplied a federated authentication access token directly, either
+        /// as a literal token via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessToken"/> or as a token provider
+        /// via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Use this property wherever the only question is whether the caller supplied a token at
+        /// all, and the two paths are equivalent: the prelogin FEDAUTHREQUIRED handshake, server
+        /// certificate validation, and Transparent Network IP Resolution. Those all key off the
+        /// authentication <em>mode</em>, so treating the two paths differently would be a bug.
+        /// </para>
+        /// <para>
+        /// Do <b>not</b> use this property where the two paths diverge. Login feature-extension
+        /// negotiation must keep testing the fields individually because they select different
+        /// federated authentication library types: <c>_accessTokenCallback</c> requests
+        /// <see cref="TdsEnums.FedAuthLibrary.MSAL"/>, while <c>_accessTokenInBytes</c> requests
+        /// <see cref="TdsEnums.FedAuthLibrary.SecurityToken"/> and carries the token bytes.
+        /// </para>
+        /// </remarks>
+        internal bool IsAccessTokenProvided =>
+            _accessTokenInBytes != null || _accessTokenCallback != null;
+
+        #if NETFRAMEWORK
+        /// <summary>
+        /// The Transparent Network IP Resolution decision applied by the most recent
+        /// <see cref="LoginNoFailover"/> call, or <see langword="null"/> if login has not run.
+        /// </summary>
+        /// <remarks>
+        /// Exposed for tests. <see cref="ShouldDisableTnir"/> is pure and can be tested directly,
+        /// but that leaves the wiring, in particular that <see cref="IsAccessTokenProvided"/> is
+        /// the value fed into it, unverified. This records the decision that was actually used.
+        /// </remarks>
+        internal bool? TnirDisabledDuringLogin { get; private set; }
+        #endif
+
         // @TODO: Should be private and accessed via internal property
         // @TODO: Rename to match naming conventions
         internal bool _cleanSQLDNSCaching = false;
@@ -269,6 +306,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private bool _sessionRecoveryRequested;
 
+        /// <summary>
+        /// The middleware application identity of the <see cref="SqlConnection"/> that caused
+        /// this physical connection to be created. Reported once, at login.
+        /// </summary>
+        private readonly RegisteredApplication _registeredApplication;
+
         private int _threadIdOwningParserLock = -1;
 
         // @TODO: Rename to indicate this has to do with routing
@@ -306,11 +349,15 @@ namespace Microsoft.Data.SqlClient.Connection
             string accessToken = null,
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            SspiContextProvider sspiContextProvider = null)
+            SspiContextProvider sspiContextProvider = null,
+            ISqlClientMetrics metrics = null,
+            RegisteredApplication registeredApplication = RegisteredApplication.Unknown)
+            : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
+            _registeredApplication = registeredApplication;
 
             #if DEBUG
             if (reconnectSessionData != null)
@@ -3118,6 +3165,7 @@ namespace Microsoft.Data.SqlClient.Connection
             login.password = ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
             login.language = _currentLanguage;
+            login.appId = _registeredApplication;
 
             if (!login.userInstance)
             {
@@ -3280,7 +3328,10 @@ namespace Microsoft.Data.SqlClient.Connection
             #if NET
             bool isParallel = connectionOptions.MultiSubnetFailover;
             #else
-            bool disableTnir = ShouldDisableTnir(connectionOptions);
+            bool disableTnir = ShouldDisableTnir(
+                connectionOptions,
+                isAccessTokenProvided: IsAccessTokenProvided);
+            TnirDisabledDuringLogin = disableTnir;
             bool isParallel = connectionOptions.MultiSubnetFailover ||
                               (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
             #endif
@@ -4025,16 +4076,84 @@ namespace Microsoft.Data.SqlClient.Connection
 
             if (_fResetConnection)
             {
-                // Pooled connections that are enlisted in a transaction must have their transaction
-                // preserved when resetting the connection state. Otherwise, future uses of the connection
-                // from the pool will execute outside the transaction, in auto-commit mode.
-                // https://github.com/dotnet/SqlClient/issues/2970
-                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
+                // Pooled connections that are tied to a transaction must have that transaction
+                // preserved when resetting the connection state. Otherwise, future uses of the
+                // connection from the pool will execute outside the transaction, in auto-commit
+                // mode. See ShouldPreserveTransactionOnReset for the full rationale.
+                _parser.PrepareResetConnection(ShouldPreserveTransactionOnReset(
+                    isPooled: Pool is not null,
+                    isTransactionRoot: IsTransactionRoot,
+                    hasEnlistedTransaction: EnlistedTransaction is not null));
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
                 _currentLanguage = _originalLanguage;
             }
+        }
+
+        /// <summary>
+        /// Decides whether a connection reset must preserve the server-side transaction, i.e.
+        /// whether <c>ST_RESET_CONNECTION_PRESERVE_TRANSACTION</c> should be sent instead of a
+        /// plain <c>ST_RESET_CONNECTION</c>.
+        /// </summary>
+        /// <param name="isPooled">Whether this connection belongs to a pool.</param>
+        /// <param name="isTransactionRoot">
+        /// Whether this connection is the root of a delegated transaction, i.e.
+        /// <see cref="IsTransactionRoot"/>.
+        /// </param>
+        /// <param name="hasEnlistedTransaction">
+        /// Whether this connection has a non-null <see cref="DbConnectionInternal.EnlistedTransaction"/>.
+        /// </param>
+        /// <remarks>
+        /// <para>
+        /// A pooled connection can be tied to a transaction in two independent ways, and both
+        /// must be preserved across a reset:
+        /// </para>
+        /// <list type="bullet">
+        /// <item>
+        /// It is the <b>root of a delegated transaction</b>: the transaction was delegated to
+        /// this connection, so it lives on the server session this connection owns. Missing this
+        /// case resets the server-side transaction out from under System.Transactions, which
+        /// later breaks the connection while it is being recycled through the pool.
+        /// See https://github.com/dotnet/SqlClient/issues/4001.
+        /// </item>
+        /// <item>
+        /// It has <b>enlisted in a transaction</b>, so <c>EnlistedTransaction</c> is set. Missing
+        /// this case causes subsequent uses of the connection to run outside the transaction, in
+        /// auto-commit mode. See https://github.com/dotnet/SqlClient/issues/2970.
+        /// </item>
+        /// </list>
+        /// <para>
+        /// These two conditions overlap but neither implies the other. A freshly delegated root
+        /// has both flags set, because enlistment sets <c>EnlistedTransaction</c> unconditionally.
+        /// However, once the transaction is no longer <c>Active</c>,
+        /// <c>DetachCurrentTransactionIfEnded</c> clears <c>EnlistedTransaction</c> while the
+        /// delegated transaction can still report itself as active. That transient half-state is
+        /// root-only, and it is exactly the state issue #4001 reproduces in.
+        /// </para>
+        /// <para>
+        /// There is deliberately no server-version guard here. Before
+        /// https://github.com/dotnet/SqlClient/pull/3019, a delegated root on a pre-2008 server
+        /// was excluded via <c>IsNonPoolableTransactionRoot</c>, but that property also routed
+        /// such connections into stasis rather than back into the pool, which is what made
+        /// suppressing the preserve bit safe. #3019 removed the property, and neither pool puts a
+        /// poolable root into stasis today, so a version guard would now return the connection to
+        /// the general pool with its transaction silently reset. That is issue #4001 again.
+        /// SQL Server 2005 is also outside the supported matrix.
+        /// </para>
+        /// </remarks>
+        internal static bool ShouldPreserveTransactionOnReset(
+            bool isPooled,
+            bool isTransactionRoot,
+            bool hasEnlistedTransaction)
+        {
+            // A connection with no pool is not recycled, so there is nothing to preserve for.
+            if (!isPooled)
+            {
+                return false;
+            }
+
+            return isTransactionRoot || hasEnlistedTransaction;
         }
 
         private void ResolveExtendedServerName(ServerInfo serverInfo, bool aliasLookup, SqlConnectionOptions options)
@@ -4090,12 +4209,29 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         #if NETFRAMEWORK
-        private bool ShouldDisableTnir(SqlConnectionOptions connectionOptions)
+        /// <summary>
+        /// Determines whether Transparent Network IP Resolution (TNIR) should be disabled for this
+        /// connection attempt.
+        /// </summary>
+        /// <param name="connectionOptions">The parsed connection options.</param>
+        /// <param name="isAccessTokenProvided">
+        /// True when the caller supplied a federated authentication access token directly, either
+        /// via <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessToken"/> or
+        /// <see cref="global::Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback"/>.
+        /// </param>
+        /// <returns>
+        /// True when TNIR should be disabled. TNIR is disabled by default for Azure SQL endpoints
+        /// and for federated authentication, but an explicit
+        /// <c>TransparentNetworkIPResolution</c> keyword always takes precedence.
+        /// </returns>
+        internal static bool ShouldDisableTnir(
+            SqlConnectionOptions connectionOptions,
+            bool isAccessTokenProvided)
         {
             bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
             // @TODO: Turn into a HashSet and just check the list instead of this MESS.
-            bool isFedAuthEnabled = _accessTokenInBytes != null ||
+            bool isFedAuthEnabled = isAccessTokenProvided ||
                                     #pragma warning disable 0618 // Type or member is obsolete
                                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                     #pragma warning restore 0618 // Type or member is obsolete

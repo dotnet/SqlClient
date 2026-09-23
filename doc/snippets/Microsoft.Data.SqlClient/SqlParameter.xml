@@ -505,7 +505,7 @@ The following example creates multiple instances of <xref:Microsoft.Data.SqlClie
           {
               SqlParameter parameter = new SqlParameter("pName", SqlDbType.VarChar);
               parameter.LocaleId = 1033;
-              // English - United States
+              // English (United States)
           }
         </code>
       </remarks>
