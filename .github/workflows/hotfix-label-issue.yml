@@ -39,6 +39,13 @@ jobs:
     # unrelated label (bug, enhancement, etc.).
     if: startsWith(github.event.label.name, 'Hotfix ')
     runs-on: ubuntu-latest
+    # Duplicate detection (Step 2 of create-backport-issue.sh) is a
+    # check-then-create sequence with no atomic guard of its own. Serialize
+    # runs per issue+label so a second delivery/re-run for the same pair
+    # always re-checks after the first has finished creating and linking its
+    # child, instead of racing past the still-empty duplicate check.
+    concurrency:
+      group: hotfix-label-issue-${{ github.event.issue.number }}-${{ github.event.label.name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
