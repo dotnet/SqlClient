@@ -9,10 +9,10 @@ flowchart TD
     A["Maintainer labels an issue<br/><b>Hotfix 7.1.1</b>"]
     A --> B["Create '[7.1.1] &lt;title&gt;' issue<br/>milestoned 7.1.1<br/>and linked as a sub-issue"]
     A --> C["Contributor opens a PR with<br/>'Fixes', 'Closes', or 'Resolves #issue'"]
-    C --> D["Copy <b>Hotfix 7.1.1</b><br/>from the issue to the PR"]
+    C --> D["Copy <b>Hotfix 7.1.1</b><br/>label from the issue<br/>to the PR"]
     D --> E["Merge the labeled PR<br/>to main"]
     E --> F["Cherry-pick to release/7.1<br/>and open a cherry-pick PR"]
-    B --> G["Append 'Fixes #backport-issue'<br/>to the cherry-pick PR"]
+    B --> G["Link the cherry-pick PR<br/>to the backport issue<br/>('Fixes #N')"]
     F --> G
     G --> H["Merge the cherry-pick PR<br/>and close the backport issue"]
 ```
