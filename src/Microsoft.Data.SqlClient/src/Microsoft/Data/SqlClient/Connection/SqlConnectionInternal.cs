@@ -320,6 +320,12 @@ namespace Microsoft.Data.SqlClient.Connection
         private readonly SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
 
         /// <summary>
+        /// Transient failures that caused this physical connection open to retry. The list exists
+        /// only while the constructor's open operation is in progress and is cleared on success.
+        /// </summary>
+        private List<SqlException> _connectionOpenRetryFailures;
+
+        /// <summary>
         /// Cache the whereabouts (DTC Address) for exporting.
         /// </summary>
         // @TODO: This name ... doesn't make a whole lot of sense.
@@ -460,9 +466,17 @@ namespace Microsoft.Data.SqlClient.Connection
                             && _timeout.MillisecondsRemaining >= transientRetryIntervalInMilliSeconds
                             && IsTransientError(sqlex))
                     {
+                        RecordConnectionOpenRetryFailure(sqlex);
                         Thread.Sleep(transientRetryIntervalInMilliSeconds);
                     }
+                    catch (SqlException sqlex)
+                    {
+                        AttachConnectionOpenRetryFailures(sqlex);
+                        throw;
+                    }
                 }
+
+                _connectionOpenRetryFailures = null;
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
             finally
@@ -3416,6 +3430,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 {
                     if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
+                        RecordConnectionOpenRetryFailure(sqlex);
                         continue;
                     }
 
@@ -3438,6 +3453,8 @@ namespace Microsoft.Data.SqlClient.Connection
                     {
                         throw;
                     }
+
+                    RecordConnectionOpenRetryFailure(sqlex);
                 }
 
                 // We only get here when we failed to connect, but are going to re-try
@@ -3740,6 +3757,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 {
                     if (AttemptRetryADAuthWithTimeoutError(sqlex, timeout))
                     {
+                        RecordConnectionOpenRetryFailure(sqlex);
                         continue;
                     }
 
@@ -3777,6 +3795,8 @@ namespace Microsoft.Data.SqlClient.Connection
                             throw;
                         }
                     }
+
+                    RecordConnectionOpenRetryFailure(sqlex);
                 }
 
                 // We only get here when we failed to connect, but are going to re-try
@@ -3845,6 +3865,26 @@ namespace Microsoft.Data.SqlClient.Connection
                                                or TdsEnums.PASSWORD_EXPIRED      // Actual login failed, ie expired password
                                                or TdsEnums.IMPERSONATION_FAILED; // Insufficient privilege for named pipe, etc
             return errorNumberMatch || exc._doNotReconnect;
+        }
+
+        /// <summary>
+        /// Records a transient failure immediately before the same connection open is retried.
+        /// </summary>
+        private void RecordConnectionOpenRetryFailure(SqlException exception) =>
+            (_connectionOpenRetryFailures ??= new List<SqlException>()).Add(exception);
+
+        /// <summary>
+        /// Attaches the retry ledger to the terminal failure without changing its errors or inner
+        /// exception.
+        /// </summary>
+        private void AttachConnectionOpenRetryFailures(
+            SqlException terminalException)
+        {
+            if (_connectionOpenRetryFailures is { Count: > 0 })
+            {
+                terminalException.SetConnectionOpenRetryFailures(
+                    _connectionOpenRetryFailures);
+            }
         }
 
         /// <summary>

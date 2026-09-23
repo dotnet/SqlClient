@@ -860,6 +860,15 @@ namespace System {
                 return ResourceManager.GetString("ADP_PooledOpenTimeout", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pool diagnostics: wait reason={0}; max pool size={1}; total connections={2}; idle connections={3}; pending opens={4}; waiting requests={5}; checked-out connections={6}; transaction-held connections={7}; abandoned connections={8}; unclassified connections={9}; longest checkout={10}; abandoned connections reclaimed during this wait={11}..
+        /// </summary>
+        internal static string ADP_PooledOpenTimeoutDetails {
+            get {
+                return ResourceManager.GetString("ADP_PooledOpenTimeoutDetails", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to {0}.Prepare method requires parameters of type &apos;{1}&apos; have an explicitly set Precision and Scale..
@@ -3171,6 +3180,24 @@ namespace System {
         internal static string SQL_ConnectionPoolShutDown {
             get {
                 return ResourceManager.GetString("SQL_ConnectionPoolShutDown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Retry {0}: {1}: {2}.
+        /// </summary>
+        internal static string SQL_ConnectionOpenRetryFailure {
+            get {
+                return ResourceManager.GetString("SQL_ConnectionOpenRetryFailure", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connection open retry failures ({0}):.
+        /// </summary>
+        internal static string SQL_ConnectionOpenRetryFailures {
+            get {
+                return ResourceManager.GetString("SQL_ConnectionOpenRetryFailures", resourceCulture);
             }
         }
         
