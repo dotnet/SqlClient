@@ -37,12 +37,23 @@ Read `.github/instructions/api-design.instructions.md`.
   timing, events, connection-string parsing/aliases, defaults, and post-failure
   state. Adding an optional parameter to an existing signature can still break
   binary compatibility; adding an overload can affect source binding.
+- For a parity claim, identify the intended SqlClient baseline and relevant source
+  path. When measured, record driver package/build, framework, OS/SNI, switches,
+  and server configuration. Source inspection alone is not a measured comparison.
+  Other drivers can suggest cases, but their API contracts do not override ADO.NET
+  or SqlClient compatibility. Trace wrapper/ORM behavior separately from the driver.
+- When adding a setting, check its setter/getter, builder/parser aliases, serialized
+  connection string, and effective runtime behavior as applicable. Follow entry-point
+  normalization before claiming a validator branch is reachable. Respect intentional
+  canonicalization and hidden-secret behavior rather than requiring literal symmetry.
 - Separate an intentional documented change from an accidental regression.
   For non-security breaking changes, check the repository's compatibility opt-out
   policy. Inspect existing switches and their initialization/caching before
   suggesting a new one; verify default and compatibility paths.
 - Check directly affected XML docs and `doc/` examples. Do not propose unrelated
   API redesign, blanket obsoletion, or new APIs to tidy an internal implementation.
+  Verify worked examples' byte counts, encoding expansion, units, and boundary
+  arithmetic; an incorrect example can conceal the very case the change must handle.
 
 ## Async, cancellation, timeouts, and retries
 
@@ -87,6 +98,10 @@ Read `.github/instructions/connection-pooling.instructions.md`.
   and semaphore lease through exceptional paths. An asynchronous consumer must
   finish before its memory/handle is released; returning memory once is not enough
   if it is returned too early.
+- For native SNI/interop changes, check allocator/free pairing, pinning and callback
+  lifetime, pointer widths, struct layout, and alignment against the actual native
+  contract. Use existing safe-handle/marshalling helpers; a Rust or ODBC ownership
+  convention is not evidence of this ABI's requirements.
 
 ## TDS, transport, and data fidelity
 
@@ -99,6 +114,12 @@ specific token, negotiated feature, and protocol revision.
 - Check remaining-byte accounting, buffer boundaries, large/PLP values, and
   sequential access. Rejecting malformed input must not leave a connection
   incorrectly available for the next operation.
+- For serialization failures, distinguish bytes buffered locally from bytes already
+  sent. Follow the actual flush boundary and cancellation/drain/discard path to
+  determine the effect on the command, transaction, and connection. A short payload
+  may cover only pre-send failure; exercise relevant boundaries after partial sends.
+  Do not use payload size alone to infer PLP routing: inspect type metadata and
+  the selected serializer.
 - Preserve metadata/value agreement: null versus empty, `DBNull`/SQL null types,
   precision/scale, rounding/truncation, collation/encoding, and type-specific
   representations. Review reader, parameter, bulk-copy, and TVP paths as affected.
@@ -131,6 +152,10 @@ specific token, negotiated feature, and protocol revision.
   blocking I/O, round trips, and cache growth/eviction. Use measurements or a
   demonstrated workload-dependent regression, not aesthetic claims that one
   abstraction is faster. Preserve ownership correctness in pooling optimizations.
+  A latency/throughput claim needs timing under a representative workload;
+  allocation or state-machine size alone is not a timing result. Read helper/API
+  implementations before alleging allocations: a borrowed view, scan, copy, and
+  allocation are different costs.
 - Verify the actual OS/framework constants and file inclusion conditions; do not
   derive compiled coverage from filename suffixes alone. For packaging changes,
   examine `ReferenceType=Project` versus `Package`, reference/runtime assets,
@@ -143,6 +168,12 @@ specific token, negotiated feature, and protocol revision.
   instrumentation; the same pool key does not establish that the same connection
   was reused. Test discard instead when the affected path must reject a broken
   connection.
+- Check that test setup reaches the intended branch and cannot pass on an unrelated
+  exception or cleanup performed by setup. Expected values should not reuse the
+  faulty conversion/units being tested. Exercise the public entry point when
+  normalization or routing matters. A successful SQL round trip alone does not
+  prove a specific RPC/token sequence; use existing simulated-TDS infrastructure
+  for wire assertions where supported, and name any remaining observation gap.
 - Inspect actual fixtures and skip conditions. Unit/functional tests can use
   simulated servers or local infrastructure; directory names do not establish
   that a test is offline. Use manual SQL Server tests for server-dependent behavior,

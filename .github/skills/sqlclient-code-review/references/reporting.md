@@ -92,14 +92,17 @@ generic praise, a full risk checklist, or an unsupported merge verdict.
    findings and anchors; do not post the stale batch. A truncated or partial review
    must be labeled as partial. Bind submission to the reviewed head SHA where supported.
 4. **Deduplicate.** Read existing comments/reviews, including earlier bot runs and
-   human replies. Compare root cause, affected symbol/path, and scenario, not only
-   line numbers. Re-runs must not repost an unchanged concern. A resolved concern
+   human replies across inline threads, review bodies, and top-level PR comments.
+   Search that discussion for the affected symbol before drafting a finding.
+   Compare root cause, affected symbol/path, and scenario, not only line numbers.
+   Re-runs must not repost an unchanged concern. A resolved concern
    needs new evidence before it is raised again. Deduplication suppresses duplicate
    comments, not outstanding defects: link still-applicable concerns in the summary,
    and do not treat a thread's resolved status as proof that the code was fixed.
 5. **Publish one coherent review.** Default to a non-approving `COMMENT` review
    through the permitted channel, with substantive inline findings on valid diff
-   lines and a compact summary. A request-changes event requires explicit configured
+   lines and a compact summary identifying an unattended run when applicable.
+   A request-changes event requires explicit configured
    authority; do not submit approvals. If no valid inline anchor exists, put the
    supported finding in the summary rather than inventing one.
 6. **Handle empty and uncertain results.** Use the automation's configured summary
@@ -109,9 +112,12 @@ generic praise, a full risk checklist, or an unsupported merge verdict.
    requests or verification gaps can appear in the summary without asserting that
    the driver is broken.
 7. **Verify delivery.** Confirm returned review/comment identifiers and the submitted
-   revision. If a write times out or only partially succeeds, inspect remote state
-   before retrying; do not duplicate the batch. If permissions or tools prevent
-   publication, retain the draft and report that it was not posted.
+   revision, and check that the expected inline comments actually landed; a top-level
+   review body alone does not prove inline delivery. Paginate remote comments and
+   match the review identifier when verifying. If a write times out or only partially
+   succeeds, inspect remote state before retrying; do not duplicate the batch.
+   If permissions or tools prevent publication, retain the draft and report that
+   it was not posted.
 8. **Leave decisions to reviewers.** Publication does not authorize merging, label
    changes, review dismissal, code edits, or resolution of human review threads.
    User-requested fixes are a separate implementation phase, not a publishing

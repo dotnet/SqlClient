@@ -1,8 +1,9 @@
 # Sources and adaptation notes
 
-Reviewed on 2026-09-22. Upstream links are pinned to the revisions examined so the
-origin of the guidance stays auditable. They are examples of review practice,
-not authority over SqlClient's policy or its current implementation.
+.NET sources reviewed on 2026-09-22; `microsoft/mssql-rs` sources on 2026-09-23.
+Upstream links are pinned to the revisions examined so the origin of the guidance
+stays auditable. They are examples of review practice, not authority over
+SqlClient's policy or its current implementation.
 
 ## Lessons from other .NET repositories
 
@@ -28,6 +29,30 @@ Do not copy runtime's multi-model orchestration, API approval machinery, current
 TFMs, or temporary validation workarounds. Do not copy EF's public-by-default
 type policy, query baselines, specification-test hierarchy, or test-runner commands.
 Do not turn application-level ADO.NET advice into an invariant of driver internals.
+
+## Lessons from microsoft/mssql-rs
+
+The Rust TDS driver's guidance is useful because it records both false-positive
+review patterns and overlooked wire-state failures. These adaptations are integrated
+into the workflow, driver checks, and reporting guide rather than a separate review.
+
+| Verified source | SqlClient adaptation |
+| --- | --- |
+| [Review skill: process and verification][mssql-review] | Read inline threads, review bodies, and top-level replies. Use current-head CI evidence, equivalent baseline runs, and optional isolated mutations to investigate whether tests really guard the change. Recheck dated facts rather than copying budgets or failure lists. |
+| [Review skill: overlooked failures][mssql-review] | Trace serialization errors across actual flush boundaries, including command/transaction/connection consequences. Check worked examples and tests whose setup, expected-value calculation, or unrelated error makes them pass vacuously. |
+| [Review skill: performance and reviewer adjudication][mssql-review] | Require timing for timing claims; distinguish scans/copies/allocations. Verify another reviewer's diagnosis, proposed fix, and cited locations independently. |
+| [ODBC engineering instructions: parity and entry points][mssql-odbc] | Record the intended SqlClient baseline and measurement configuration. Trace caller normalization, settings round trips, public entry points, native ownership, and what a test can actually observe on the wire. |
+| [Repository Copilot instructions][mssql-instructions] | Check existing cross-platform implementations and CI before proposing rejection guards. Verify affected components are actually in the selected build/test scope, and reuse existing fixtures and simulated servers. |
+| [Review posting guide][mssql-posting] | Distinguish a top-level review from inline delivery; verify posted comments with pagination and the review ID, using the host's authorized channel. |
+
+Do not import Cargo/Tokio commands, Rust future-size budgets, ODBC SQLSTATE or
+Driver Manager rules, binding-specific FFI macros, coverage percentages, mandatory
+issue-link rules, or unpublished/pre-1.0 compatibility exceptions. SqlClient is a
+shipped ADO.NET provider: its supported contracts and MS-TDS remain authoritative,
+not another driver's behavior. Native SNI ownership must follow its own ABI.
+Do not copy mutation commands into read-only workflows, auto-start SQL Server, or
+require a mutation experiment for every coverage request. Unavailable private
+reference sources do not invalidate a defect independently established in SqlClient.
 
 ## Official documentation for deeper questions
 
@@ -61,6 +86,10 @@ the reviewed provider/framework before using them as evidence.
 [ef-contributing]: https://github.com/dotnet/efcore/blob/ce3905a358af0b60d24e0b15fa9da9b2e809cc11/.github/CONTRIBUTING.md
 [ef-copilot]: https://github.com/dotnet/efcore/blob/ce3905a358af0b60d24e0b15fa9da9b2e809cc11/.github/copilot-instructions.md
 [ef-tests]: https://github.com/dotnet/efcore/blob/ce3905a358af0b60d24e0b15fa9da9b2e809cc11/docs/getting-and-building-the-code.md
+[mssql-review]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/skills/code-review/SKILL.md
+[mssql-odbc]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/instructions/mssql-odbc.instructions.md
+[mssql-instructions]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/copilot-instructions.md
+[mssql-posting]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/skills/code-review/posting.md
 [pooling]: https://learn.microsoft.com/sql/connect/ado-net/sql-server-connection-pooling
 [async]: https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming
 [timeout]: https://learn.microsoft.com/dotnet/api/microsoft.data.sqlclient.sqlcommand.commandtimeout
