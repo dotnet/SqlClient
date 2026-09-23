@@ -181,13 +181,19 @@ lookup_backport_issue() {
     return
   fi
 
+  # 'gh api --jq' takes a single query string and does not support jq's
+  # '--arg' for safe variable injection, so the version is escaped and
+  # interpolated directly into the filter expression.
+  local version_escaped
+  version_escaped=$(printf '%s' "${version}" | sed 's/["\\]/\\&/g')
+
   local issue_number backport_number
   while IFS= read -r issue_number; do
     [[ -z "${issue_number}" ]] && continue
 
     backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
-      --paginate --jq --arg v "${version}" \
-      '.[] | select(.milestone.title == $v) | .number' 2>/dev/null | head -n1 || true)
+      --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\") | .number" \
+      2>/dev/null | head -n1 || true)
 
     if [[ -n "${backport_number}" ]]; then
       echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
