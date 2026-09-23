@@ -7,7 +7,7 @@
 # Sync Hotfix Label from Issue to PR
 #
 # Companion to hotfix-label-issue.yml and cherry-pick-hotfix.yml.
-# See hotfix-label-automation.md for a diagram of how the three workflows
+# See ../hotfix-label-automation.md for a diagram of how the three workflows
 # fit together.
 #
 # When a pull request's closing keywords (Fixes/Closes/Resolves #N) reference

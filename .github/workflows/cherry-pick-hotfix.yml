@@ -12,7 +12,7 @@
 # the corresponding release/<version> branch.
 #
 # Companion to hotfix-label-issue.yml and sync-hotfix-label-to-pr.yml. See
-# hotfix-label-automation.md for a diagram of how the three workflows fit
+# ../hotfix-label-automation.md for a diagram of how the three workflows fit
 # together.
 #
 # Usage:
