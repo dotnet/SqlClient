@@ -278,6 +278,20 @@ internal static class UdtAssemblyPolicy
         internal Assembly? Loaded { get; init; }
 
         /// <summary>
+        /// The simple name the loaded assembly must carry.
+        /// </summary>
+        /// <remarks>
+        /// Every basis for permitting a load rests on the simple name: it is
+        /// what the allow list was matched on and what the built-in exemption
+        /// recognizes.  A custom <c>AssemblyResolve</c> handler or
+        /// <c>AssemblyLoadContext</c> resolver can return an assembly with an
+        /// entirely different name, which would inherit a permission that was
+        /// never granted to it, so the name is confirmed after the load like
+        /// every other component the decision relied on.
+        /// </remarks>
+        internal string? RequiredSimpleName { get; init; }
+
+        /// <summary>
         /// The public key token the loaded assembly must carry, or null when
         /// the basis for permitting it placed no constraint on the token.
         /// </summary>
@@ -385,6 +399,19 @@ internal static class UdtAssemblyPolicy
             return false;
         }
 
+        // Snapshot what the process already holds before any tier below can
+        // trigger a load.  The already-loaded tier is meant to reflect only
+        // what the application brought in of its own accord, so if the very
+        // first request were permitted by the allow list, the dependencies
+        // that arrived with it would otherwise be captured by a later, lazier
+        // snapshot and silently inherit that permission.  Taking the snapshot
+        // here also attaches the load handler, so every subsequent load is
+        // attributed rather than absorbed.
+        lock (s_lock)
+        {
+            GetLoadedAssemblies();
+        }
+
         // The built-in types assembly is always permitted, but only once its
         // identity has been pinned, so the exemption cannot be satisfied by an
         // arbitrary assembly that borrows the name.
@@ -394,6 +421,7 @@ internal static class UdtAssemblyPolicy
 
             decision = new Decision
             {
+                RequiredSimpleName = asmRef.Name,
                 RequiredPublicKeyToken = s_sqlServerTypesPublicKeyToken,
                 // The culture was just pinned to neutral, so require that back.
                 RequiredCultureName = string.Empty,
@@ -415,6 +443,9 @@ internal static class UdtAssemblyPolicy
 
             decision = new Decision
             {
+                // The entry was matched on this name, so this is the name the
+                // permission was granted to.
+                RequiredSimpleName = simpleName,
                 // A null token means the entry did not mention one, an empty
                 // token means it explicitly required an unsigned assembly.
                 RequiredPublicKeyToken = allowedToken is { Length: > 0 } ? allowedToken : null,
@@ -448,14 +479,6 @@ internal static class UdtAssemblyPolicy
     /// </summary>
     private static bool SatisfiesRequiredIdentity(Assembly loaded, Decision decision)
     {
-        if (decision.RequiredPublicKeyToken is null &&
-            !decision.RequireUnsigned &&
-            decision.RequiredVersion is null &&
-            decision.RequiredCultureName is null)
-        {
-            return true;
-        }
-
         AssemblyName actual;
 
         try
@@ -466,6 +489,18 @@ internal static class UdtAssemblyPolicy
         {
             // If the identity cannot be read it cannot be confirmed, so the
             // assembly is refused.
+            return false;
+        }
+
+        // The simple name is the one component every basis constrains, so it is
+        // always confirmed.  Without this a resolver could answer the request
+        // with an unrelated assembly and have it inherit the permission.
+        if (decision.RequiredSimpleName is not null &&
+            !string.Equals(
+                decision.RequiredSimpleName,
+                actual.Name,
+                StringComparison.OrdinalIgnoreCase))
+        {
             return false;
         }
 

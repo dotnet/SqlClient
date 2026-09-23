@@ -433,6 +433,159 @@ public class UdtAssemblyPolicyTest
     #region Identity enforcement
 
     /// <summary>
+    /// Verifies that an assembly whose simple name differs from the one the
+    /// policy permitted is refused, even when the allow list entry constrained
+    /// nothing else.
+    /// </summary>
+    /// <remarks>
+    /// Every basis for permitting a load rests on the simple name, so a
+    /// resolver that answers the request with an unrelated assembly would
+    /// otherwise have it inherit a permission that was never granted to it.
+    /// A simple-name entry is the weakest case: it constrains no version,
+    /// culture or token, so the name is the only thing left to verify.
+    /// </remarks>
+    [Fact]
+    public void TryLoad_ResolverReturnsDifferentAssembly_IsRefused()
+    {
+        using PolicyScope scope = new(UnknownAssemblyName);
+
+        Assembly substitute = typeof(string).Assembly;
+
+        Assert.NotEqual(
+            UnknownAssemblyName,
+            substitute.GetName().Name,
+            StringComparer.OrdinalIgnoreCase);
+
+        ResolveEventHandler handler = (_, args) =>
+            new AssemblyName(args.Name).Name == UnknownAssemblyName ? substitute : null;
+
+        AppDomain.CurrentDomain.AssemblyResolve += handler;
+
+        try
+        {
+            bool loaded = UdtAssemblyPolicy.TryLoad(
+                new AssemblyName(UnknownAssemblyName),
+                null,
+                out Assembly? assembly);
+
+            Assert.False(loaded);
+            Assert.Null(assembly);
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.AssemblyResolve -= handler;
+        }
+    }
+
+    /// <summary>
+    /// Verifies that an assembly which first arrives in the process during a
+    /// policy-triggered load is not subsequently permitted on the strength of
+    /// being "already loaded".
+    /// </summary>
+    /// <remarks>
+    /// The already-loaded tier is meant to reflect only what the application
+    /// brought in of its own accord.  The loaded-assembly map is built lazily,
+    /// so if the first policy call is permitted by the allow list, the load it
+    /// performs happens before the map exists and its dependencies would be
+    /// captured by the later snapshot, silently inheriting that permission.
+    /// This is the transitive trust the policy documents as denied.
+    /// </remarks>
+    [Fact]
+    public void AlreadyLoaded_AssemblyArrivingDuringPolicyLoad_IsNotPermitted()
+    {
+        // An assembly that ships with the framework but is not loaded in this
+        // process, standing in for a dependency pulled in by a permitted load.
+        string? dependencyPath = FindUnloadedFrameworkAssembly(out string? dependencyName);
+
+        Assert.NotNull(dependencyPath);
+        Assert.NotNull(dependencyName);
+
+        using PolicyScope scope = new(UnknownAssemblyName);
+
+        // Drop the map so this is the first policy call, which is the ordering
+        // the bug depended on.
+        UdtAssemblyPolicy.ResetCache();
+
+        ResolveEventHandler handler = (_, args) =>
+        {
+            if (new AssemblyName(args.Name).Name == UnknownAssemblyName)
+            {
+                // Bring the stand-in dependency into the process during the
+                // policy's own load, then decline to satisfy the request.
+                Assembly.LoadFrom(dependencyPath!);
+            }
+
+            return null;
+        };
+
+        AppDomain.CurrentDomain.AssemblyResolve += handler;
+
+        try
+        {
+            UdtAssemblyPolicy.TryLoad(new AssemblyName(UnknownAssemblyName), null, out _);
+        }
+        catch (FileNotFoundException)
+        {
+            // Expected: the handler declines to satisfy the request, so the
+            // load fails.  Production callers catch this the same way.  What
+            // matters is the side effect it had on the loaded-assembly map.
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.AssemblyResolve -= handler;
+        }
+
+        // The dependency is now loaded, but the application never asked for it,
+        // so a server naming it must still be refused.
+        Assert.False(IsAllowed(new AssemblyName(dependencyName!), null));
+    }
+
+    /// <summary>
+    /// Locates a framework assembly that is present on disk but not loaded in
+    /// this process, to stand in for a dependency arriving during a load.
+    /// </summary>
+    private static string? FindUnloadedFrameworkAssembly(out string? simpleName)
+    {
+        HashSet<string> loaded = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                string? name = assembly.GetName().Name;
+
+                if (name is not null)
+                {
+                    loaded.Add(name);
+                }
+            }
+            catch
+            {
+                // An assembly whose name cannot be read cannot collide with the
+                // candidate either, so it is simply skipped.
+            }
+        }
+
+        string directory = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+
+        foreach (string path in Directory.GetFiles(directory, "System.*.dll"))
+        {
+            string candidate = Path.GetFileNameWithoutExtension(path);
+
+            if (!loaded.Contains(candidate))
+            {
+                simpleName = candidate;
+
+                return path;
+            }
+        }
+
+        simpleName = null;
+
+        return null;
+    }
+
+    /// <summary>
     /// Verifies that an allow list entry which explicitly requires an unsigned
     /// assembly (<c>PublicKeyToken=null</c>) is not satisfied by a signed one.
     /// </summary>

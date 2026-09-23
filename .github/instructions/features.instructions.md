@@ -279,10 +279,13 @@ control rather than the server's.
 Normalizing the reference is necessary but not sufficient. On .NET the loader
 **ignores** the public key token in an `AssemblyName`, and can satisfy a request
 with a different version than the one asked for, so pinning the reference does
-not by itself determine what arrives. The driver therefore verifies the identity
-of the assembly the loader actually hands back against every component the
-decision relied on, and refuses it on any mismatch. This mirrors what the driver
-already does for the Azure authentication extension assembly.
+not by itself determine what arrives. A custom `AssemblyResolve` handler or
+`AssemblyLoadContext` resolver can go further still and answer with an assembly
+of an entirely different name. The driver therefore verifies the identity of the
+assembly the loader actually hands back against every component the decision
+relied on, including the simple name that the permission was granted to, and
+refuses it on any mismatch. This mirrors what the driver already does for the
+Azure authentication extension assembly.
 
 On .NET, the already-loaded tier is scoped to the `AssemblyLoadContext` that
 loaded the driver, since that is the context its `Assembly.Load` calls resolve
@@ -343,13 +346,14 @@ resolved type must still carry `SqlUserDefinedTypeAttribute`, so this is
 confined to types that were written to be deserialized from SQL Server, but it
 is a genuine widening and is called out here deliberately.
 
-Relatedly, the map of loaded assemblies is built once and then maintained
-incrementally, and loads that the policy itself triggers are excluded from it.
-Neither is merely a performance choice. Rebuilding the map on demand, or
-recording the dependencies that arrive alongside a permitted assembly, would let
-an assembly that was pulled in as a *dependency* of a permitted assembly
-silently inherit that permission. Both keep the tier anchored to what the
-application loaded of its own accord.
+Relatedly, the map of loaded assemblies is snapshotted before the policy can
+trigger any load of its own, and loads the policy performs are excluded from it
+thereafter. Neither is merely a performance choice. Rebuilding the map on
+demand, snapshotting it lazily after a permitted load had already run, or
+recording the dependencies that arrive alongside a permitted assembly, would all
+let an assembly that was pulled in as a *dependency* of a permitted assembly
+silently inherit that permission. Together they keep the tier anchored to what
+the application loaded of its own accord.
 
 #### Compatibility impact
 
