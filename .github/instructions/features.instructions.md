@@ -369,6 +369,15 @@ The symptom depends on the API:
 | `reader[i]`, `GetValue`, UDT output parameters | `TypeLoadException` naming the assembly and the allow list |
 | `GetFieldType`, `GetSchemaTable`, `GetColumnSchema` | Returns `null` for the UDT column's type rather than throwing |
 
+Two less obvious paths also materialize the type and are therefore affected:
+
+- `SqlBulkCopy` **from a `SqlDataReader`** between UDT columns. The copy reads
+  each value so it can test it for `INullable`, which materializes the UDT.
+  Copying *to* a UDT column from a `DataTable`, or to `varbinary(max)`, does not
+  resolve the type and is unaffected.
+- Table-valued parameters sourced from a `SqlDataReader`, which build SMI
+  metadata and resolve the UDT type with throwing enabled.
+
 The exception is a `TypeLoadException` and is not wrapped in a `SqlException`,
 which matches how the driver already reports a UDT type it cannot resolve.
 
