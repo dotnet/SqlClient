@@ -879,14 +879,27 @@ Describe 'validate-xml-docs.ps1' {
         }
 
         It 'marks the task succeeded-with-issues for non-gating findings in a gating run' {
-            # missing-local-uid is informational, so the run passes, but it must still be visible.
+            # mismatched-docid-prefix is a warning, so the run passes, but it must still be visible.
             $docs = New-DocumentationDirectory `
-                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
-                -Crefs @('T:Microsoft.Data.SqlClient.DoesNotExist')
+                -Members @('P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout') `
+                -Crefs @('M:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout')
 
             $output = & $scriptPath -DocumentationPath $docs *>&1 | Out-String
 
+            $output | Should -Match 'mismatched-docid-prefix'
             $output | Should -Match '##vso\[task\.complete result=SucceededWithIssues;\]'
+        }
+
+        It 'does not mark the task succeeded-with-issues for informational findings alone' {
+            # Informational findings describe things that are correct as they stand, so marking on
+            # them would leave every run permanently flagged.
+            $snippets = New-SnippetDirectory -Crefs @('SqlJson', 'string')
+
+            $output = & $scriptPath -SnippetsDirectory $snippets *>&1 | Out-String
+
+            $output | Should -Match 'unprefixed-cref'
+            $output | Should -Not -Match 'task\.complete'
+            $output | Should -Not -Match '##vso\[task\.logissue'
         }
 
         It 'does not mark the task succeeded-with-issues when there are no findings' {

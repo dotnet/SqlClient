@@ -1157,10 +1157,14 @@ $gatingFindings = @($findings | Where-Object {
         $gateTokens.Contains($_.Category) -or $gateTokens.Contains($_.Severity)
     })
 
+# Findings that warrant drawing attention to the step. Informational findings are reported in the
+# log and the JSON report but do not mark the step, because they describe things that are correct
+# as they stand and would otherwise leave every run permanently marked.
+$notableFindings = @($findings | Where-Object { $_.Severity -ne 'info' })
+
 foreach ($finding in $findings) {
     $isGating = (-not $ReportOnly) -and
         ($gateTokens.Contains($finding.Category) -or $gateTokens.Contains($finding.Severity))
-    $issueType = if ($isGating) { 'error' } else { 'warning' }
 
     $location = if ([string]::IsNullOrWhiteSpace($finding.Path)) {
         ''
@@ -1176,6 +1180,14 @@ foreach ($finding in $findings) {
         "$($finding.Message) (in $($finding.Member))"
     }
 
+    # task.logissue has no informational level, so an info finding is written as plain output
+    # rather than being promoted to a warning it does not deserve.
+    if ($finding.Severity -eq 'info' -and -not $isGating) {
+        Write-Host "$($finding.Category): $detail"
+        continue
+    }
+
+    $issueType = if ($isGating) { 'error' } else { 'warning' }
     Write-Host "##vso[task.logissue type=$issueType$location]$($finding.Category): $detail"
 }
 
@@ -1195,8 +1207,8 @@ function Set-SucceededWithIssues {
 }
 
 if ($ReportOnly) {
-    if ($findings.Count -gt 0) {
-        Write-Host "##vso[task.logissue type=warning]XML documentation validation found $($findings.Count) issue(s) but is running in report-only mode, so the build is not failed. $($gatingFindings.Count) of them would fail a gating run."
+    if ($notableFindings.Count -gt 0) {
+        Write-Host "##vso[task.logissue type=warning]XML documentation validation found $($notableFindings.Count) issue(s) but is running in report-only mode, so the build is not failed. $($gatingFindings.Count) of them would fail a gating run."
         Set-SucceededWithIssues
     }
     return
@@ -1207,8 +1219,8 @@ if ($gatingFindings.Count -gt 0) {
     throw "XML documentation validation failed with $($gatingFindings.Count) $noun. Review the preceding errors."
 }
 
-if ($findings.Count -gt 0) {
-    # Nothing here fails the build, but non-gating findings were still reported.
+if ($notableFindings.Count -gt 0) {
+    # Nothing here fails the build, but findings above informational level were reported.
     Set-SucceededWithIssues
 }
 
