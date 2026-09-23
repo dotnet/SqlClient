@@ -7,8 +7,9 @@
 # Create Backport Issue for Hotfix Label
 #
 # Companion to cherry-pick-hotfix.yml, but for issues instead of PRs. Works
-# together with sync-hotfix-label-to-pr.yml and cherry-pick-hotfix.yml to
-# automate backporting a fix from an issue through to a merged cherry-pick PR.
+# together with sync-hotfix-label-to-pr.yml, cherry-pick-hotfix.yml, and
+# close-backport-issue.yml to automate backporting a fix from an issue
+# through to a merged cherry-pick PR.
 #
 # When an issue is labeled "Hotfix <version>", this workflow creates a child
 # issue targeting the <version> milestone and links it as a native GitHub
@@ -21,6 +22,9 @@
 #      that closes the original issue.
 #   4. cherry-pick-hotfix.yml auto-cherry-picks that merged PR to release/7.1
 #      and links the resulting PR to the backport issue created here.
+#   5. close-backport-issue.yml explicitly closes the backport issue once
+#      that cherry-pick PR merges into release/7.1, since GitHub's closing
+#      keywords only auto-close issues for merges into the default branch.
 #
 #################################################################################
 

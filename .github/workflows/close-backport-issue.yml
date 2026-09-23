@@ -1,0 +1,57 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Close Backport Issue on Release-Branch Merge
+#
+# Companion to hotfix-label-issue.yml, sync-hotfix-label-to-pr.yml, and
+# cherry-pick-hotfix.yml. Works together to automate backporting a fix from
+# an issue through to a merged cherry-pick PR.
+#
+# GitHub only auto-closes an issue referenced by a PR's closing keywords
+# (Fixes/Closes/Resolves #N) when that PR merges into the repository's
+# default branch. The cherry-pick PRs opened by cherry-pick-hotfix.yml always
+# target a release/X.Y branch, so their "Fixes #<backport issue>" line links
+# the backport issue but never auto-closes it. This workflow closes that gap
+# by explicitly closing the referenced issue(s) once a PR merges into a
+# release branch.
+#
+#################################################################################
+
+name: Close Backport Issue on Release-Branch Merge
+
+# 'pull_request_target' (rather than 'pull_request') is required so the
+# workflow has write access to close issues, including for PRs from forks.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  close-backport-issue:
+    # Only fire for merged PRs targeting a release branch. Merges into the
+    # default branch are excluded because GitHub already auto-closes
+    # referenced issues in that case.
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.base.ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Close referenced issue(s)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/close-backport-issue.sh"

@@ -37,7 +37,10 @@
 #      milestoned VERSION (the backport issue created by
 #      create-backport-issue.sh when the issue was labeled
 #      "Hotfix <version>"), "Fixes #<backport-issue>" is appended to the
-#      cherry-pick PR body so merging it auto-closes that issue.
+#      cherry-pick PR body. This links the backport issue, but since the
+#      cherry-pick PR targets a release branch (not the default branch),
+#      GitHub won't auto-close it on merge — close-backport-issue.yml does
+#      that explicitly once the cherry-pick PR merges.
 #
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
@@ -166,7 +169,9 @@ lookup_milestone() {
 # keywords reference an issue, and that issue has a sub-issue milestoned
 # VERSION (the backport issue created by create-backport-issue.sh when the
 # issue was labeled "Hotfix <version>"), a "Fixes #<backport-issue>" line is
-# appended to the cherry-pick PR body so merging it auto-closes that issue.
+# appended to the cherry-pick PR body, linking it. Because this PR targets a
+# release branch rather than the default branch, GitHub will not auto-close
+# it on merge — close-backport-issue.yml handles that explicitly.
 # If nothing matches, this is silently skipped — it's a convenience, not a
 # requirement.
 lookup_backport_issue() {
