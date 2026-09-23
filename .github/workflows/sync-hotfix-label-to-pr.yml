@@ -1,0 +1,47 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Sync Hotfix Label from Issue to PR
+#
+# Companion to hotfix-label-issue.yml and cherry-pick-hotfix.yml.
+#
+# When a pull request's closing keywords (Fixes/Closes/Resolves #N) reference
+# an issue that carries a "Hotfix X.Y.Z" label, this workflow copies that
+# label onto the PR. That's the label cherry-pick-hotfix.yml watches for, so
+# a PR fixing a hotfix-tagged issue is automatically cherry-picked once merged
+# without anyone having to remember to label the PR by hand.
+#
+#################################################################################
+
+name: Sync Hotfix Label from Issue to PR
+
+# 'pull_request_target' (rather than 'pull_request') is required so the
+# workflow has write access to add labels, including for PRs from forks.
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+
+permissions:
+  pull-requests: write
+  issues: read
+
+jobs:
+  sync-hotfix-label:
+    if: github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Sync Hotfix label from referenced issue(s)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/sync-hotfix-label-to-pr.sh"

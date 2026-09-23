@@ -32,6 +32,13 @@
 #   5. Milestone lookup is best-effort. If the milestone doesn't exist yet
 #      the PR is created without one and a warning note is added to the body.
 #
+#   6. Backport issue lookup is also best-effort: if the original PR's
+#      closing keywords reference an issue, and that issue has a sub-issue
+#      milestoned VERSION (the backport issue created by
+#      create-backport-issue.sh when the issue was labeled
+#      "Hotfix <version>"), "Fixes #<backport-issue>" is appended to the
+#      cherry-pick PR body so merging it auto-closes that issue.
+#
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
 #   VERSION            Full hotfix version, e.g. "7.0.1".
@@ -154,6 +161,42 @@ lookup_milestone() {
   fi
 }
 
+# -- Helper: look up the backport issue ---------------------------------------
+# Best-effort, mirroring lookup_milestone. If the original PR's closing
+# keywords reference an issue, and that issue has a sub-issue milestoned
+# VERSION (the backport issue created by create-backport-issue.sh when the
+# issue was labeled "Hotfix <version>"), a "Fixes #<backport-issue>" line is
+# appended to the cherry-pick PR body so merging it auto-closes that issue.
+# If nothing matches, this is silently skipped — it's a convenience, not a
+# requirement.
+lookup_backport_issue() {
+  local version="$1"
+  BACKPORT_ISSUE_NOTE=""
+
+  local closing_issues
+  closing_issues=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
+    --json closingIssuesReferences --jq '.closingIssuesReferences[].number' 2>/dev/null || true)
+
+  if [[ -z "${closing_issues}" ]]; then
+    return
+  fi
+
+  local issue_number backport_number
+  while IFS= read -r issue_number; do
+    [[ -z "${issue_number}" ]] && continue
+
+    backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
+      --paginate --jq --arg v "${version}" \
+      '.[] | select(.milestone.title == $v) | .number' 2>/dev/null | head -n1 || true)
+
+    if [[ -n "${backport_number}" ]]; then
+      echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
+      BACKPORT_ISSUE_NOTE=$'\n\nFixes #'"${backport_number}"
+      return
+    fi
+  done <<< "${closing_issues}"
+}
+
 # -- Step 4: Attempt the cherry-pick ------------------------------------------
 # Options (--mainline) must precede the commit operand.
 if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
@@ -162,12 +205,13 @@ if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
   git push origin "${CHERRY_PICK_BRANCH}"
 
   lookup_milestone "${VERSION}"
+  lookup_backport_issue "${VERSION}"
 
   gh pr create \
     --base "${TARGET_BRANCH}" \
     --head "${CHERRY_PICK_BRANCH}" \
     --title "[${VERSION} Cherry-pick] ${PR_TITLE}" \
-    --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`.${MILESTONE_NOTE}" \
+    --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`.${MILESTONE_NOTE}${BACKPORT_ISSUE_NOTE}" \
     ${MILESTONE_ARG}
 else
   # --- Conflict path ---
@@ -192,6 +236,7 @@ else
   git push origin "${CHERRY_PICK_BRANCH}"
 
   lookup_milestone "${VERSION}"
+  lookup_backport_issue "${VERSION}"
 
   # Build the PR body using printf to avoid quoting pitfalls with embedded
   # newlines (mixed $'...' and '...' quoting can leave literal \n in output).
@@ -199,6 +244,7 @@ else
     "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into " \
     "\`${TARGET_BRANCH}\` **failed due to merge conflicts**." \
     "${MILESTONE_NOTE}" \
+    "${BACKPORT_ISSUE_NOTE}" \
     $'\n\nPlease resolve manually:\n```bash\n' \
     "git fetch origin" \
     $'\n' \

@@ -36,9 +36,12 @@ on:
 
 # 'contents: write' is needed to push the cherry-pick branch.
 # 'pull-requests: write' is needed to create the new PR via the GitHub CLI.
+# 'issues: read' is needed to look up the backport issue (a sub-issue of the
+# original PR's closing-issue reference) via the sub-issues API.
 permissions:
   contents: write
   pull-requests: write
+  issues: read
 
 jobs:
   # First job: extract all hotfix versions from the PR labels and emit them as
