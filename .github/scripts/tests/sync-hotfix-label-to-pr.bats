@@ -126,6 +126,33 @@ added_labels() {
   [ -z "$(added_labels)" ]
 }
 
+@test "aborts instead of proceeding when an issue label lookup fails" {
+  # A failed 'gh issue view' must not be swallowed by the grep '|| true'
+  # tolerance and treated the same as "issue has no Hotfix labels" — that
+  # would silently skip labeling the PR after a transient API/permission
+  # error instead of surfacing a retryable failure.
+  printf '4714' > "${STUB_DIR}/closing_issues.txt"
+  cat > "${STUB_DIR}/gh" <<STUB
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "\$1" == "pr" && "\$2" == "view" && "\${*}" == *"closingIssuesReferences"* ]]; then
+  cat "${STUB_DIR}/closing_issues.txt"
+  exit 0
+fi
+if [[ "\$1" == "issue" && "\$2" == "view" ]]; then
+  echo "gh: permission denied" >&2
+  exit 1
+fi
+echo "unhandled gh invocation: \$*" >&2
+exit 1
+STUB
+  chmod +x "${STUB_DIR}/gh"
+
+  run bash "${SCRIPT}"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Failed to look up labels for issue #4714"* ]]
+}
+
 # ── Happy path ────────────────────────────────────────────────────────────────
 
 @test "adds a Hotfix label from a single referenced issue" {

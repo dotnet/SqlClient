@@ -90,9 +90,17 @@ HOTFIX_LABELS=""
 while IFS= read -r issue_number; do
   [[ -z "${issue_number}" ]] && continue
 
-  issue_labels=$(gh issue view "${issue_number}" --repo "${GITHUB_REPOSITORY}" \
-    --json labels --jq '.labels[].name' \
-    | grep -E '^Hotfix [0-9]+\.[0-9]+\.[0-9]+$' || true)
+  # Capture 'gh issue view' separately from the 'grep' filter below: a real
+  # API/permission failure here must not be swallowed and mistaken for "no
+  # Hotfix labels on this issue" (which would silently skip labeling the PR).
+  # Only grep's no-match exit status (when an issue has no Hotfix label at
+  # all) should be tolerated via '|| true'.
+  if ! all_labels=$(gh issue view "${issue_number}" --repo "${GITHUB_REPOSITORY}" \
+    --json labels --jq '.labels[].name'); then
+    echo "::error::Failed to look up labels for issue #${issue_number}." >&2
+    exit 1
+  fi
+  issue_labels=$(grep -E '^Hotfix [0-9]+\.[0-9]+\.[0-9]+$' <<< "${all_labels}" || true)
 
   while IFS= read -r label; do
     [[ -z "${label}" ]] && continue
