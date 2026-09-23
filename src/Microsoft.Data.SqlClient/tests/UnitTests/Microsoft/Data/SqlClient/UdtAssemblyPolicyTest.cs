@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -500,39 +501,58 @@ public class UdtAssemblyPolicyTest
     /// not match what the policy required is refused.
     /// </summary>
     /// <remarks>
+    /// The two supported runtimes refuse at different points, and this test
+    /// accepts either, because both are the same outcome: the assembly is not
+    /// used.
+    ///
     /// On .NET the loader ignores the public key token in an AssemblyName, so
-    /// pinning the reference is not an enforcement boundary on its own.  This
-    /// drives the real load path to confirm that the returned assembly's actual
-    /// identity is what gates the result.  The test assembly is unsigned, so
-    /// allow-listing it under an explicit strong name token must fail even
-    /// though the assembly itself resolves.
+    /// it returns the real assembly and the policy's own post-load check is what
+    /// rejects it. On .NET Framework the loader enforces the strong name during
+    /// binding and throws instead, which is the same distinction
+    /// SqlAuthenticationProviderManager documents. Asserting only the .NET shape
+    /// would fail on net462, and asserting only the net462 shape would let the
+    /// post-load check regress unnoticed on .NET.
+    ///
+    /// The subject is a framework assembly rather than the test assembly so the
+    /// test does not depend on whether the build is strong-name signed.
     /// </remarks>
     [Fact]
-    public void TryLoad_LoadedAssemblyWithWrongToken_IsRefused()
+    public void TryLoad_AssemblyWithWrongToken_IsRefused()
     {
-        AssemblyName self = typeof(UdtAssemblyPolicyTest).Assembly.GetName();
+        // A framework assembly is certain to exist and to carry a strong name
+        // token that is not the fabricated one below.
+        AssemblyName subject = typeof(object).Assembly.GetName();
 
-        // Guard: the reasoning below only holds for an unsigned test assembly.
-        byte[]? actualToken = self.GetPublicKeyToken();
-        if (actualToken is { Length: > 0 })
+        byte[] wrongToken = { 0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xbe, 0xef };
+
+        Assert.False(
+            wrongToken.AsSpan().SequenceEqual((subject.GetPublicKeyToken() ?? Array.Empty<byte>()).AsSpan()),
+            "The fabricated token must differ from the real one for this test to mean anything.");
+
+        using PolicyScope scope = new($"{subject.Name}, PublicKeyToken={ToHex(wrongToken)}");
+
+        // The server names the assembly with the very token the allow list
+        // requires, so the entry matches and the load proceeds. Without a
+        // post-load check the assembly would then be accepted on the strength of
+        // a token it does not actually carry.
+        AssemblyName serverSupplied = new(subject.Name!);
+        serverSupplied.SetPublicKeyToken((byte[])wrongToken.Clone());
+
+        bool permitted;
+        Assembly? loaded = null;
+
+        try
         {
+            permitted = UdtAssemblyPolicy.TryLoad(serverSupplied, null, out loaded);
+        }
+        catch (Exception e) when (e is FileLoadException or FileNotFoundException or BadImageFormatException)
+        {
+            // .NET Framework: the loader refused the bind outright.
             return;
         }
 
-        const string StrongToken = "b03f5f7f11d50a3a";
-
-        using PolicyScope scope = new($"{self.Name}, PublicKeyToken={StrongToken}");
-
-        // The server names the assembly with the very token the allow list
-        // requires, so the entry matches and the load proceeds. This is the
-        // case that matters: on .NET the loader ignores the requested token and
-        // hands back the real, unsigned assembly of that simple name, so
-        // without a post-load check the wrong assembly would be accepted on the
-        // strength of a token it does not actually carry.
-        AssemblyName serverSupplied = new(self.Name!);
-        serverSupplied.SetPublicKeyToken(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a });
-
-        Assert.False(UdtAssemblyPolicy.TryLoad(serverSupplied, null, out Assembly? loaded));
+        // .NET: the loader returned the real assembly and the policy rejected it.
+        Assert.False(permitted);
         Assert.Null(loaded);
     }
 
@@ -551,6 +571,45 @@ public class UdtAssemblyPolicyTest
         Assert.True(UdtAssemblyPolicy.TryLoad(new AssemblyName(self.Name!), null, out Assembly? loaded));
         Assert.NotNull(loaded);
         Assert.Equal(self.Name, loaded!.GetName().Name);
+    }
+
+    /// <summary>
+    /// Verifies that a version constraint the policy relied on is confirmed
+    /// against the assembly that was actually loaded.
+    /// </summary>
+    /// <remarks>
+    /// A binding redirect on .NET Framework, or a custom resolver on .NET, can
+    /// satisfy a request with a different version than the one asked for. An
+    /// allow list entry that pinned a version must therefore not be satisfied by
+    /// whatever the loader chose to substitute.
+    /// </remarks>
+    [Fact]
+    public void TryLoad_AssemblyWithWrongVersion_IsRefused()
+    {
+        AssemblyName subject = typeof(object).Assembly.GetName();
+
+        Version wrongVersion = new(subject.Version!.Major + 100, 0, 0, 0);
+
+        using PolicyScope scope = new(
+            $"{subject.Name}, Version={wrongVersion}, PublicKeyToken={ToHex(subject.GetPublicKeyToken())}");
+
+        AssemblyName serverSupplied = new(subject.Name!) { Version = wrongVersion };
+        serverSupplied.SetPublicKeyToken(subject.GetPublicKeyToken());
+
+        bool permitted;
+        Assembly? loaded = null;
+
+        try
+        {
+            permitted = UdtAssemblyPolicy.TryLoad(serverSupplied, null, out loaded);
+        }
+        catch (Exception e) when (e is FileLoadException or FileNotFoundException or BadImageFormatException)
+        {
+            return;
+        }
+
+        Assert.False(permitted);
+        Assert.Null(loaded);
     }
 
     #endregion

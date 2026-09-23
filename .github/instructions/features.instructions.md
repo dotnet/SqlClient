@@ -277,12 +277,12 @@ genuinely new load — precisely what this policy keeps under the application's
 control rather than the server's.
 
 Normalizing the reference is necessary but not sufficient. On .NET the loader
-**ignores** the public key token in an `AssemblyName`, so pinning it does not by
-itself prevent a same-named assembly with a different identity from being
-returned. The driver therefore verifies the identity of the assembly the loader
-actually hands back, and refuses it if it does not carry the required token.
-This mirrors what the driver already does for the Azure authentication extension
-assembly.
+**ignores** the public key token in an `AssemblyName`, and can satisfy a request
+with a different version than the one asked for, so pinning the reference does
+not by itself determine what arrives. The driver therefore verifies the identity
+of the assembly the loader actually hands back against every component the
+decision relied on, and refuses it on any mismatch. This mirrors what the driver
+already does for the Azure authentication extension assembly.
 
 On .NET, the already-loaded tier is scoped to the `AssemblyLoadContext` that
 loaded the driver, since that is the context its `Assembly.Load` calls resolve
@@ -344,10 +344,12 @@ confined to types that were written to be deserialized from SQL Server, but it
 is a genuine widening and is called out here deliberately.
 
 Relatedly, the map of loaded assemblies is built once and then maintained
-incrementally. That is not only a performance choice: rebuilding it on demand
-would let an assembly that was pulled in as a *dependency* of a permitted
-assembly silently inherit that permission. Building it once keeps the tier
-anchored to what the application had already loaded.
+incrementally, and loads that the policy itself triggers are excluded from it.
+Neither is merely a performance choice. Rebuilding the map on demand, or
+recording the dependencies that arrive alongside a permitted assembly, would let
+an assembly that was pulled in as a *dependency* of a permitted assembly
+silently inherit that permission. Both keep the tier anchored to what the
+application loaded of its own accord.
 
 #### Compatibility impact
 

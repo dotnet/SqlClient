@@ -147,6 +147,23 @@ internal static class UdtAssemblyPolicy
     /// </summary>
     private static List<AssemblyName>? s_allowList;
 
+    /// <summary>
+    /// Non-zero on a thread that is inside the policy's own call to
+    /// <see cref="Assembly.Load(AssemblyName)"/>.
+    ///
+    /// Loading a permitted assembly also loads whatever that assembly needs, and
+    /// those dependency loads raise <see cref="AppDomain.AssemblyLoad"/> just as
+    /// an application-initiated load does.  Recording them would let a server
+    /// name a dependency afterwards and have it permitted as "already loaded",
+    /// which is precisely the transitive trust this policy refuses: an assembly
+    /// that is merely reachable from a permitted one is documented as denied.
+    ///
+    /// Marking the window lets the handler tell the two apart, so permission
+    /// cannot spread from an allow-listed assembly to its closure.
+    /// </summary>
+    [ThreadStatic]
+    private static int t_insidePolicyLoad;
+
     #endregion
 
     #region Properties
@@ -226,7 +243,7 @@ internal static class UdtAssemblyPolicy
             return true;
         }
 
-        Assembly loaded = Assembly.Load(asmRef);
+        Assembly loaded = LoadWithoutTrustingDependencies(asmRef);
 
         if (loaded is null)
         {
@@ -271,6 +288,51 @@ internal static class UdtAssemblyPolicy
         /// because the allow list entry explicitly said <c>PublicKeyToken=null</c>.
         /// </summary>
         internal bool RequireUnsigned { get; init; }
+
+        /// <summary>
+        /// The version the loaded assembly must carry, or null when the basis
+        /// for permitting it placed no constraint on the version.
+        /// </summary>
+        /// <remarks>
+        /// A binding redirect on .NET Framework, or a custom resolver on .NET,
+        /// can return a different version than the one requested, so a version
+        /// the policy relied on has to be confirmed after the load rather than
+        /// assumed from the reference.
+        /// </remarks>
+        internal Version? RequiredVersion { get; init; }
+
+        /// <summary>
+        /// The culture name the loaded assembly must carry, or null when the
+        /// basis for permitting it placed no constraint on the culture.  The
+        /// empty string means the neutral culture.
+        /// </summary>
+        internal string? RequiredCultureName { get; init; }
+    }
+
+    /// <summary>
+    /// Loads an assembly the policy has permitted, without letting the
+    /// dependencies that load alongside it inherit that permission.
+    /// </summary>
+    /// <remarks>
+    /// The <see cref="AppDomain.AssemblyLoad"/> handler cannot otherwise tell a
+    /// dependency pulled in by this call from an assembly the application
+    /// loaded itself, and recording the former would quietly grant the
+    /// already-loaded permission to the whole reference closure.  The guard is
+    /// per thread and counted, so a nested load (a resolver that loads
+    /// something in order to satisfy this one) stays covered.
+    /// </remarks>
+    private static Assembly LoadWithoutTrustingDependencies(AssemblyName asmRef)
+    {
+        t_insidePolicyLoad++;
+
+        try
+        {
+            return Assembly.Load(asmRef);
+        }
+        finally
+        {
+            t_insidePolicyLoad--;
+        }
     }
 
     /// <summary>
@@ -330,7 +392,15 @@ internal static class UdtAssemblyPolicy
         {
             PinSqlServerTypesIdentity(asmRef, typeSystemAssemblyVersion);
 
-            decision = new Decision { RequiredPublicKeyToken = s_sqlServerTypesPublicKeyToken };
+            decision = new Decision
+            {
+                RequiredPublicKeyToken = s_sqlServerTypesPublicKeyToken,
+                // The culture was just pinned to neutral, so require that back.
+                RequiredCultureName = string.Empty,
+                // The version is only constrained when the connection supplied
+                // one; otherwise the loader is free to pick.
+                RequiredVersion = typeSystemAssemblyVersion,
+            };
 
             return true;
         }
@@ -349,6 +419,11 @@ internal static class UdtAssemblyPolicy
                 // token means it explicitly required an unsigned assembly.
                 RequiredPublicKeyToken = allowedToken is { Length: > 0 } ? allowedToken : null,
                 RequireUnsigned = allowedToken is { Length: 0 },
+                // Only components the entry actually specified are enforced, so
+                // that a simple-name entry stays as permissive after the load as
+                // it was during matching.
+                RequiredVersion = matched.Version,
+                RequiredCultureName = matched.CultureName,
             };
 
             return true;
@@ -373,16 +448,19 @@ internal static class UdtAssemblyPolicy
     /// </summary>
     private static bool SatisfiesRequiredIdentity(Assembly loaded, Decision decision)
     {
-        if (decision.RequiredPublicKeyToken is null && !decision.RequireUnsigned)
+        if (decision.RequiredPublicKeyToken is null &&
+            !decision.RequireUnsigned &&
+            decision.RequiredVersion is null &&
+            decision.RequiredCultureName is null)
         {
             return true;
         }
 
-        byte[]? actualToken;
+        AssemblyName actual;
 
         try
         {
-            actualToken = loaded.GetName().GetPublicKeyToken();
+            actual = loaded.GetName();
         }
         catch (Exception e) when (ADP.IsCatchableExceptionType(e))
         {
@@ -391,13 +469,41 @@ internal static class UdtAssemblyPolicy
             return false;
         }
 
+        byte[]? actualToken = actual.GetPublicKeyToken();
+
         if (decision.RequireUnsigned)
         {
-            return actualToken is null || actualToken.Length == 0;
+            if (actualToken is { Length: > 0 })
+            {
+                return false;
+            }
+        }
+        else if (decision.RequiredPublicKeyToken is not null &&
+                 (actualToken is null ||
+                  !actualToken.AsSpan().SequenceEqual(decision.RequiredPublicKeyToken.AsSpan())))
+        {
+            return false;
         }
 
-        return actualToken is not null &&
-               actualToken.AsSpan().SequenceEqual(decision.RequiredPublicKeyToken.AsSpan());
+        // A binding redirect or a custom resolver can satisfy the request with a
+        // different version or culture than the one asked for, so any component
+        // the decision relied on is confirmed against what actually arrived.
+        if (decision.RequiredVersion is not null &&
+            !decision.RequiredVersion.Equals(actual.Version))
+        {
+            return false;
+        }
+
+        if (decision.RequiredCultureName is not null &&
+            !string.Equals(
+                decision.RequiredCultureName,
+                actual.CultureName ?? string.Empty,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -726,6 +832,14 @@ internal static class UdtAssemblyPolicy
 
         AppDomain.CurrentDomain.AssemblyLoad += static (_, args) =>
         {
+            // A load the policy itself triggered brings in the permitted
+            // assembly's dependencies. Those must not enter the already-loaded
+            // tier, or permission would spread along the reference closure.
+            if (t_insidePolicyLoad > 0)
+            {
+                return;
+            }
+
             lock (s_lock)
             {
                 // Nothing to update if the map has not been built yet; it will
