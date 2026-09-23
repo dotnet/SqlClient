@@ -6,9 +6,9 @@
 #
 # Create Backport Issue for Hotfix Label
 #
-# Companion to cherry-pick-hotfix.yml, but for issues instead of PRs.
-# See ../hotfix-label-automation.md for a diagram of how the three workflows
-# (this one, sync-hotfix-label-to-pr.yml, cherry-pick-hotfix.yml) fit together.
+# Companion to cherry-pick-hotfix.yml, but for issues instead of PRs. Works
+# together with sync-hotfix-label-to-pr.yml and cherry-pick-hotfix.yml to
+# automate backporting a fix from an issue through to a merged cherry-pick PR.
 #
 # When an issue is labeled "Hotfix <version>", this workflow creates a child
 # issue targeting the <version> milestone and links it as a native GitHub

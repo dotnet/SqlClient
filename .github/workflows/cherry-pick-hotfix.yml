@@ -11,9 +11,9 @@
 # a single PR — each one produces an independent cherry-pick PR targeting
 # the corresponding release/<version> branch.
 #
-# Companion to hotfix-label-issue.yml and sync-hotfix-label-to-pr.yml. See
-# ../hotfix-label-automation.md for a diagram of how the three workflows fit
-# together.
+# Companion to hotfix-label-issue.yml and sync-hotfix-label-to-pr.yml. Works
+# together to automate backporting a fix from an issue through to a merged
+# cherry-pick PR.
 #
 # Usage:
 #   1. Merge a PR to the default branch.
