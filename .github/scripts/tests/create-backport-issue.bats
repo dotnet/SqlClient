@@ -145,6 +145,26 @@ STUB
   [[ "$output" == *"already exists"* ]]
 }
 
+@test "aborts instead of proceeding when the sub-issues lookup fails" {
+  # A failed lookup must not be treated the same as "no sub-issues exist" —
+  # that would defeat the duplicate guard and create a second backport issue
+  # on a rerun after a transient API/permission error.
+  cat > "${STUB_DIR}/gh" <<'STUB'
+#!/usr/bin/env bash
+if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues && "${*}" != *"--method POST"* ]]; then
+  echo "gh: permission denied" >&2
+  exit 1
+fi
+echo "unhandled gh invocation: $*" >&2
+exit 1
+STUB
+  chmod +x "${STUB_DIR}/gh"
+
+  run bash "${SCRIPT}"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Failed to look up existing sub-issues"* ]]
+}
+
 @test "does not skip when existing sub-issues are for a different version" {
   stub_gh "$(printf '7.0.5\t[7.0.5] other\t4800')" \
     "$(printf '7.1.1')" \

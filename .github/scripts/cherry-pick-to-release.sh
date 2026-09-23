@@ -173,9 +173,20 @@ lookup_backport_issue() {
   local version="$1"
   BACKPORT_ISSUE_NOTE=""
 
+  # closingIssuesReferences can include issues from other repositories (e.g.
+  # "Fixes owner/other#123"). Only consider references in this repository —
+  # a bare '.number' would otherwise let a cross-repo reference collide with
+  # an unrelated local issue of the same number. 'gh ... --jq' takes a single
+  # query string (no jq '--arg' passthrough — see note above), so the repo
+  # is escaped and interpolated directly.
+  local repo_escaped
+  repo_escaped=$(printf '%s' "${GITHUB_REPOSITORY}" | sed 's/["\\]/\\&/g')
+
   local closing_issues
   closing_issues=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
-    --json closingIssuesReferences --jq '.closingIssuesReferences[].number' 2>/dev/null || true)
+    --json closingIssuesReferences \
+    --jq ".closingIssuesReferences[] | select((.repository.owner.login + \"/\" + .repository.name) == \"${repo_escaped}\") | .number" \
+    2>/dev/null || true)
 
   if [[ -z "${closing_issues}" ]]; then
     return

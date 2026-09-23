@@ -96,8 +96,18 @@ echo "Version:       ${VERSION}"
 # NOTE: the milestone column uses "NONE" rather than "" for issues without a
 # milestone. Tab is IFS whitespace, so 'read' silently collapses/skips a
 # leading empty field, which would otherwise shift every column left.
-EXISTING_SUB_ISSUES=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PARENT_ISSUE_NUMBER}/sub_issues" \
-  --paginate --jq '.[] | [(.milestone.title // "NONE"), .title, (.number|tostring)] | @tsv' 2>/dev/null || true)
+#
+# A failed lookup (network/permission error) must NOT be treated the same as
+# "no sub-issues exist" — that would defeat the duplicate guard and create a
+# second backport issue on a rerun. Do not suppress stderr here so a real
+# failure is both visible in the log and distinguishable (via exit code) from
+# a legitimately empty (but successful) call.
+if ! EXISTING_SUB_ISSUES=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PARENT_ISSUE_NUMBER}/sub_issues" \
+  --paginate --jq '.[] | [(.milestone.title // "NONE"), .title, (.number|tostring)] | @tsv'); then
+  echo "::error::Failed to look up existing sub-issues for #${PARENT_ISSUE_NUMBER};" \
+       "cannot verify a backport issue doesn't already exist. Aborting to avoid creating a duplicate." >&2
+  exit 1
+fi
 
 if [[ -n "${EXISTING_SUB_ISSUES}" ]]; then
   while IFS=$'\t' read -r sub_milestone sub_title sub_number; do
@@ -107,6 +117,8 @@ if [[ -n "${EXISTING_SUB_ISSUES}" ]]; then
     fi
   done <<< "${EXISTING_SUB_ISSUES}"
 fi
+
+
 
 # -- Step 3: Look up the parent issue's title/labels --------------------------
 PARENT_JSON=$(gh issue view "${PARENT_ISSUE_NUMBER}" --repo "${GITHUB_REPOSITORY}" \

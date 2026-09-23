@@ -62,8 +62,17 @@ fi
 echo "Pull request: #${PR_NUMBER}"
 
 # -- Step 1: Find issues this PR will close -----------------------------------
+# closingIssuesReferences can include issues from other repositories (e.g.
+# "Fixes owner/other#123"). Only consider references in this repository — a
+# bare '.number' would otherwise let a cross-repo reference collide with an
+# unrelated local issue of the same number and copy its label. 'gh ... --jq'
+# takes a single query string (no jq '--arg' passthrough), so the repo is
+# escaped and interpolated directly.
+REPO_ESCAPED=$(printf '%s' "${GITHUB_REPOSITORY}" | sed 's/["\\]/\\&/g')
+
 CLOSING_ISSUES=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
-  --json closingIssuesReferences --jq '.closingIssuesReferences[].number')
+  --json closingIssuesReferences \
+  --jq ".closingIssuesReferences[] | select((.repository.owner.login + \"/\" + .repository.name) == \"${REPO_ESCAPED}\") | .number")
 
 if [[ -z "${CLOSING_ISSUES}" ]]; then
   echo "No closing issue references found on #${PR_NUMBER}. Nothing to sync."
@@ -73,12 +82,17 @@ fi
 echo "Closing issue references: ${CLOSING_ISSUES}"
 
 # -- Step 2: Collect "Hotfix X.Y.Z" labels from each referenced issue ---------
+# Match the exact "Hotfix X.Y.Z" grammar (same regex used by
+# create-backport-issue.sh / cherry-pick-to-release.sh's version extraction),
+# not merely a "Hotfix " prefix — otherwise a label like "Hotfix Candidate"
+# would be copied to the PR even though it's rejected everywhere downstream.
 HOTFIX_LABELS=""
 while IFS= read -r issue_number; do
   [[ -z "${issue_number}" ]] && continue
 
   issue_labels=$(gh issue view "${issue_number}" --repo "${GITHUB_REPOSITORY}" \
-    --json labels --jq '.labels[].name | select(startswith("Hotfix "))')
+    --json labels --jq '.labels[].name' \
+    | grep -E '^Hotfix [0-9]+\.[0-9]+\.[0-9]+$' || true)
 
   while IFS= read -r label; do
     [[ -z "${label}" ]] && continue

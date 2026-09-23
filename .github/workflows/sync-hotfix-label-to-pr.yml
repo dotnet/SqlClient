@@ -25,6 +25,7 @@ on:
     types: [opened, reopened, edited, synchronize]
 
 permissions:
+  contents: read
   pull-requests: write
   issues: read
 
