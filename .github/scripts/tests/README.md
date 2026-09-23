@@ -1,7 +1,9 @@
-# Cherry-Pick Workflow Tests
+# GitHub Actions Script Tests
 
 This directory contains tests for the shell scripts used by the
-[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml) GitHub Actions workflow.
+[cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
+[check-milestone](./../../../.github/workflows/check-milestone.yml) and
+[recheck-milestones](./../../../.github/workflows/recheck-milestones.yml) GitHub Actions workflows.
 These tests are intended to be run manually by developers when they are changing the associated
 scripts, and not as part of any CI runs.
 
@@ -85,6 +87,8 @@ bats .github/scripts/tests/
 ```bash
 bats .github/scripts/tests/extract-hotfix-versions.bats
 bats .github/scripts/tests/cherry-pick-to-release.bats
+bats .github/scripts/tests/check-milestone-branch.bats
+bats .github/scripts/tests/recheck-milestones-for-release-branch.bats
 ```
 
 ### Run a specific test by name
@@ -112,10 +116,12 @@ bats --formatter pretty .github/scripts/tests/
 | ---- | ----- | ------ |
 | `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
 | `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
+| `check-milestone-branch.bats` | 26 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
+| `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
 
 ## How the Tests Work
 
-Both test files use the same general approach:
+All test files use the same general approach:
 
 1. **`setup()`** creates a temporary directory and populates it with mock `git` and `gh` executables
    — simple shell scripts that echo predetermined responses. Environment variables (`VERSION`,

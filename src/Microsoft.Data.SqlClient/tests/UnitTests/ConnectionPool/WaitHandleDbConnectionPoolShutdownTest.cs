@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         //     Failed Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolShutdownTest.Shutdown_UnblocksSyncWaiter [5 s]
         // ##[error]EXEC(0,0): Error Message:
         // EXEC : error Message:  [D:\a\_work\1\s\build.proj]

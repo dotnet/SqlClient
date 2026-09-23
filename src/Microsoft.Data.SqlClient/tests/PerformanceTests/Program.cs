@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -42,9 +42,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("SqlConnection", b => b.SqlConnectionRunnerConfig, typeof(SqlConnectionRunner)),
             new BenchmarkUnit("SqlCommand", b => b.SqlCommandRunnerConfig, typeof(SqlCommandRunner)),
             new BenchmarkUnit("SqlBulkCopy", b => b.SqlBulkCopyRunnerConfig, typeof(SqlBulkCopyRunner)),
-            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(DataTypeReaderRunner)),
-            new BenchmarkUnit("DataTypeReaderAsync", b => b.DataTypeReaderAsyncRunnerConfig, typeof(DataTypeReaderAsyncRunner)),
-            new BenchmarkUnit("AsyncLargeDataRead", b => b.AsyncLargeDataReadRunnerConfig, typeof(AsyncLargeDataReadRunner)),
+            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.Plaintext)),
+            new BenchmarkUnit("AlwaysEncryptedDataTypeReader", b => b.AlwaysEncryptedDataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.AlwaysEncrypted)),
+            new BenchmarkUnit("LargeDataRead", b => b.LargeDataReadRunnerConfig, typeof(BenchmarkRunners.LargeDataReadRunner.Plaintext)),
+            new BenchmarkUnit("AlwaysEncryptedLargeDataRead", b => b.AlwaysEncryptedLargeDataReadRunnerConfig, typeof(BenchmarkRunners.LargeDataReadRunner.AlwaysEncrypted)),
             new BenchmarkUnit("MarsOverhead", b => b.MarsOverheadRunnerConfig, typeof(MarsOverheadRunner)),
             new BenchmarkUnit("ParallelAsyncConnection", b => b.ParallelAsyncConnectionRunnerConfig, typeof(ParallelAsyncConnectionRunner)),
             new BenchmarkUnit("CancellationTokenReadAsync", b => b.CancellationTokenReadAsyncRunnerConfig, typeof(CancellationTokenReadAsyncRunner)),
@@ -54,6 +55,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
             new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
+            new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
+            new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
         };
 
         /// <summary>
@@ -130,7 +133,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private void SetupConfigurations()
         {
-            // If the config file specifies to use managed SNI on Windows, 
+            // If the config file specifies to use managed SNI on Windows,
             // enable the appropriate AppContext switch to use the managed SNI implementation.
             if (_config.UseManagedSniOnWindows)
             {
@@ -145,8 +148,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
                 _config.UseConnectionPoolV2);
 
-            // If the config file specifies to use optimized async behavior, 
-            // enable packet multiplexing feature and other optimizations in SqlClient 
+            // If the config file specifies to use optimized async behavior,
+            // enable packet multiplexing feature and other optimizations in SqlClient
             // by setting the appropriate AppContext switches.
             if(_config.UseOptimizedAsyncBehaviour)
             {
@@ -159,7 +162,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // diagnosers when building each benchmark's ManualConfig.
             BenchmarkConfig.UseNativeMemoryAndEtwProfiler = _config.UseNativeMemoryAndETWProfiler;
 
-            // If the config file specifies to wait for a profiler, 
+            // If the config file specifies to wait for a profiler,
             // display the process ID and wait for user input before starting the benchmarks.
             // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
             // those modes run unattended, so blocking on Console.ReadKey() would hang automation.

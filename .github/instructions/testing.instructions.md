@@ -69,7 +69,7 @@ Copy `config.default.jsonc` to `config.jsonc` and configure:
 ## Test Categories and Attributes
 
 ### Category Exclusions
-Use `[Trait("Category", "...")]` (xUnit, used in both ManualTests and UnitTests) to mark test categories and exclusions:
+Use `[Trait("category", "...")]` (xUnit, used in both ManualTests and UnitTests) to mark test categories and exclusions:
 
 | Category | Excluded On | Description |
 |----------|-------------|-------------|
@@ -82,7 +82,7 @@ Use `[Trait("Category", "...")]` (xUnit, used in both ManualTests and UnitTests)
 | `flaky` | All platforms (quarantine) | Intermittently failing tests (see Quarantine Zone below) |
 
 ### Flaky Test Quarantine Zone
-Tests that intermittently fail are quarantined with `[Trait("Category", "flaky")]`. Quarantined tests:
+Tests that intermittently fail are quarantined with `[Trait("category", "flaky")]`. Quarantined tests:
 - Are **excluded** from regular test runs by the default filter: `category!=failing&category!=flaky`
 - Run in **separate quarantine pipeline steps** to track their status without blocking CI
 - Do **not** collect code coverage
@@ -96,16 +96,16 @@ Tests that intermittently fail are quarantined with `[Trait("Category", "flaky")
 **How to quarantine:**
 ```csharp
 // For unit tests (xUnit Trait)
-[Trait("Category", "flaky")]
+[Trait("category", "flaky")]
 public class FlakyConnectionTests { ... }
 
 // For individual test methods
-[Trait("Category", "flaky")]
+[Trait("category", "flaky")]
 [ConditionalFact(...)]
 public async Task OpenAsync_TimingDependent_MayFail() { ... }
 ```
 
-**How to un-quarantine:** Remove the `[Trait("Category", "flaky")]` attribute once the root cause is fixed and the test passes consistently.
+**How to un-quarantine:** Remove the `[Trait("category", "flaky")]` attribute once the root cause is fixed and the test passes consistently.
 
 ### Test Timeout Enforcement
 All test runs use `--blame-hang-timeout 10m` to kill tests that hang for more than 10 minutes. This is configured in `build.proj` and applied to all test targets. If a test is expected to run longer than 10 minutes, it must be restructured or split.
@@ -120,11 +120,11 @@ This can be overridden via build property: `dotnet build build.proj -t:TestSqlCl
 ### Test Attributes
 ```csharp
 // Platform-specific exclusion
-[Trait("Category", "nonlinuxtests")]
+[Trait("category", "nonlinuxtests")]
 public void TestWindowsSpecificFeature() { ... }
 
 // Skip on .NET Framework
-[Trait("Category", "nonnetfxtests")]
+[Trait("category", "nonnetfxtests")]
 public void TestNetCoreOnlyFeature() { ... }
 
 // Conditional skip based on test configuration
@@ -132,7 +132,7 @@ public void TestNetCoreOnlyFeature() { ... }
 public void TestRequiresDatabase() { ... }
 
 // Quarantined flaky test
-[Trait("Category", "flaky")]
+[Trait("category", "flaky")]
 [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
 public void TestIntermittentlyFails() { ... }
 ```

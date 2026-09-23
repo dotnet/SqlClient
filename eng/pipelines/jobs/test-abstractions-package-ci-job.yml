@@ -58,11 +58,15 @@ parameters:
     default: []
 
   # The name of the Azure Pipelines pool to use.
+  #
+  # NOTE: This value is compared at template-expansion (compile) time to choose between 'vmImage'
+  # and an imageOverride demand, so the Microsoft-hosted 'Azure Pipelines' pool must be named by
+  # that exact literal, not by a $(...) macro or $[...] runtime expression.
   - name: poolName
     type: string
 
   # The pool VM image to use.
-  - name: vmImage
+  - name: poolImage
     type: string
 
 jobs:
@@ -74,11 +78,11 @@ jobs:
 
       # Images provided by Azure Pipelines must be selected using 'vmImage'.
       ${{ if eq(parameters.poolName, 'Azure Pipelines') }}:
-        vmImage: ${{ parameters.vmImage }}
+        vmImage: ${{ parameters.poolImage }}
       # Images provided by 1ES must be selected using a demand.
       ${{ else }}:
         demands:
-          - imageOverride -equals ${{ parameters.vmImage }}
+          - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
 

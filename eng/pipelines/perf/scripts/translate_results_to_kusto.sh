@@ -27,6 +27,9 @@
 ####################################################################################################
 set -euo pipefail
 
+# Keep the checkout clean: never let the helper scripts drop __pycache__/*.pyc into eng/.
+export PYTHONDONTWRITEBYTECODE=1
+
 repoDir="${REPO_DIR:?REPO_DIR must be set}"
 resultsDir="${RESULTS_DIR:?RESULTS_DIR must be set}"
 kustoOut="${KUSTO_OUT:?KUSTO_OUT must be set}"

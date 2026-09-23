@@ -43,25 +43,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlTransaction trans2 = connection.BeginTransaction();
                 SqlTransaction trans3 = connection.BeginTransaction();
 
-                SqlCommand com1 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com1 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com1.Transaction = trans1;
                 com1.ExecuteNonQuery();
 
-                SqlCommand com2 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com2 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com2.Transaction = trans2;
                 com2.ExecuteNonQuery();
 
-                SqlCommand com3 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com3 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com3.Transaction = trans3;
                 com3.ExecuteNonQuery();
 
                 trans1.Rollback();
                 trans2.Rollback();
                 trans3.Rollback();
-
-                com1.Dispose();
-                com2.Dispose();
-                com3.Dispose();
             }
         }
 
@@ -100,15 +96,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlTransaction trans2 = connection.BeginTransaction();
                 SqlTransaction trans3 = connection.BeginTransaction();
 
-                SqlCommand com1 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com1 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com1.Transaction = trans1;
                 com1.ExecuteNonQuery();
 
-                SqlCommand com2 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com2 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com2.Transaction = trans2;
                 com2.ExecuteNonQuery();
 
-                SqlCommand com3 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com3 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com3.Transaction = trans3;
                 com3.ExecuteNonQuery();
 
@@ -116,15 +112,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 trans2.Rollback();
                 trans3.Rollback();
 
-                com1.Dispose();
-                com2.Dispose();
-                com3.Dispose();
-
-                SqlCommand com4 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
+                using SqlCommand com4 = new SqlCommand("select top 1 EmployeeID from " + tempTableName, connection);
                 com4.Transaction = trans1;
-                SqlDataReader reader4 = com4.ExecuteReader();
-                reader4.Dispose();
-                com4.Dispose();
+                using (SqlDataReader reader4 = com4.ExecuteReader())
+                {
+                    // Scoped deliberately: MARS is off here, so the reader must be closed before
+                    // the rollback below, which would otherwise fail on a connection that still
+                    // has an open reader.
+                }
 
                 trans1.Rollback();
             }
@@ -138,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                SqlCommand cmd = new SqlCommand(string.Format("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country into {0} from Employees", tempTableName), conn);
+                using SqlCommand cmd = new SqlCommand(string.Format("SELECT EmployeeID, LastName, FirstName, Title, Address, City, Region, PostalCode, Country into {0} from Employees", tempTableName), conn);
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = string.Format("alter table {0} add constraint EmployeeID_{1} primary key (EmployeeID)", tempTableName, uniqueKey);
                 cmd.ExecuteNonQuery();
@@ -147,13 +142,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return tempTableName;
         }
 
+        /// <remarks>
+        /// Best-effort: both callers invoke this from a <c>finally</c>, so a throw here would surface
+        /// in place of the failure that is already propagating and hide the real test result. The
+        /// table is named on failure so the leak stays attributable.
+        /// </remarks>
         private static void DropTempTable(string connectionString, string tempTableName)
         {
-            using (SqlConnection con1 = new SqlConnection(connectionString))
+            try
             {
-                con1.Open();
-                SqlCommand cmd = new SqlCommand("Drop table " + tempTableName, con1);
-                cmd.ExecuteNonQuery();
+                using (SqlConnection con1 = new SqlConnection(connectionString))
+                {
+                    con1.Open();
+                    using SqlCommand cmd = new SqlCommand(
+                        string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) DROP TABLE {0}", tempTableName), con1);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to drop temp table '{tempTableName}'; it may be orphaned in the test database. {ex}");
             }
         }
     }
