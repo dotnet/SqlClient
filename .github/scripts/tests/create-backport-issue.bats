@@ -131,18 +131,33 @@ STUB
 
 # ── Duplicate detection ──────────────────────────────────────────────────────
 
-@test "skips when a sub-issue is already milestoned for this version" {
+@test "skips when a sub-issue is already milestoned and has the child title prefix" {
   stub_gh "$(printf '7.1.1\t[7.1.1] something\t4900')" "" "" "" ""
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"already exists"* ]]
 }
 
-@test "skips when a sub-issue already has the child title prefix" {
+@test "skips when a sub-issue already has the child title prefix but no milestone yet" {
   stub_gh "$(printf 'NONE\t[7.1.1] something\t4900')" "" "" "" ""
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"already exists"* ]]
+}
+
+@test "does not skip on a milestone match alone when the title lacks the prefix" {
+  # An unrelated sub-issue can be milestoned to the same release (e.g. a
+  # separate follow-up task) without being the real backport issue. Matching
+  # on milestone alone would wrongly skip creating the actual backport issue.
+  stub_gh "$(printf '7.1.1\tUnrelated follow-up task\t4899')" \
+    "$(printf '7.1.1')" \
+    '{"title":"Parent title","labels":[{"name":"bug"},{"name":"Hotfix 7.1.1"}]}' \
+    "https://github.com/dotnet/SqlClient/issues/4901" \
+    '{"id":123456789}'
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"already exists"* ]]
+  [[ "$output" == *"Created backport issue #4901"* ]]
 }
 
 @test "aborts instead of proceeding when the sub-issues lookup fails" {

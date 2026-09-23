@@ -111,8 +111,17 @@ fi
 
 if [[ -n "${EXISTING_SUB_ISSUES}" ]]; then
   while IFS=$'\t' read -r sub_milestone sub_title sub_number; do
-    if [[ "${sub_milestone}" == "${VERSION}" || "${sub_title}" == "${CHILD_TITLE_PREFIX}"* ]]; then
-      echo "::notice::Backport issue #${sub_number} for '${VERSION}' already exists under parent #${PARENT_ISSUE_NUMBER}. Skipping."
+    # Match on the deterministic "[VERSION] " title prefix only — matching on
+    # milestone alone would also catch an unrelated sub-issue that just
+    # happens to be milestoned to the same release (e.g. a separate follow-up
+    # task), causing this guard to wrongly skip creating the real backport
+    # issue. The title prefix alone is sufficient: it's set unconditionally
+    # in Step 5 below regardless of whether the milestone was found yet, so
+    # it still detects a previously-created (possibly milestone-less)
+    # backport issue on a rerun.
+    if [[ "${sub_title}" == "${CHILD_TITLE_PREFIX}"* ]]; then
+      echo "::notice::Backport issue #${sub_number} for '${VERSION}' already exists under parent #${PARENT_ISSUE_NUMBER}" \
+           "(milestone: ${sub_milestone}). Skipping."
       exit 0
     fi
   done <<< "${EXISTING_SUB_ISSUES}"
