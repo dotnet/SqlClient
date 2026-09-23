@@ -100,6 +100,7 @@ parameters:
 
 variables:
   - template: /eng/pipelines/common/variables/common-variables.yml@self
+  - template: /eng/pipelines/common/variables/azure-sql-test-filters.yml@self
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
 
 stages:
