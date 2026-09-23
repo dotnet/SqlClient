@@ -6,19 +6,15 @@ label.
 
 ```mermaid
 flowchart TD
-    A["Maintainer labels an issue<br/><b>Hotfix 7.1.1</b>"] --> B["Create backport issue<br/>'[7.1.1] &lt;title&gt;'<br/>milestoned 7.1.1<br/>linked as sub-issue"]
-
-    C["Contributor opens a PR<br/>that fixes the issue"] --> D["Copy 'Hotfix 7.1.1' label<br/>from issue onto the PR"]
-
-    E["PR merges to main"] --> F["Cherry-pick to release/7.1<br/>+ open a cherry-pick PR"]
-    F --> G["Link cherry-pick PR to the<br/>backport issue ('Fixes #...')"]
-
-    B -.->|"backport issue is the<br/>link target"| G
-    D -.->|"label makes the merged PR<br/>eligible for cherry-pick"| E
-
-    style B fill:#e6f3ff
-    style D fill:#e6f3ff
-    style G fill:#e6f3ff
+    A["Maintainer labels an issue<br/><b>Hotfix 7.1.1</b>"]
+    A --> B["Create '[7.1.1] &lt;title&gt;' issue<br/>milestoned 7.1.1<br/>and linked as a sub-issue"]
+    A --> C["Contributor opens a PR with<br/>'Fixes', 'Closes', or 'Resolves #issue'"]
+    C --> D["Copy <b>Hotfix 7.1.1</b><br/>from the issue to the PR"]
+    D --> E["Merge the labeled PR<br/>to main"]
+    E --> F["Cherry-pick to release/7.1<br/>and open a cherry-pick PR"]
+    B --> G["Append 'Fixes #backport-issue'<br/>to the cherry-pick PR"]
+    F --> G
+    G --> H["Merge the cherry-pick PR<br/>and close the backport issue"]
 ```
 
 ## Steps
@@ -35,7 +31,9 @@ flowchart TD
 3. **Merging that labeled PR** cherry-picks it onto `release/X.Y` and opens
    a `[X.Y.Z Cherry-pick] <title>` PR. That cherry-pick PR is automatically
    linked to the backport issue from step 1 (`Fixes #<backport issue>`), so
-   merging it closes out the release tracking issue too.
+   merging it closes out the release tracking issue too. If the original PR
+   closes multiple issues with Hotfix labels, the cherry-pick PR receives one
+   `Fixes #<backport issue>` line for each matching backport issue.
 
 ## Why sub-issues (not just linking)
 
