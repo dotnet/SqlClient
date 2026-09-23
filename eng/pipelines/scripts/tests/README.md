@@ -31,12 +31,15 @@ Add `-Output Detailed` to see per-test results.
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
-| `Build-Orchestration.Tests.ps1` | MSBuild test filters, dependency-pack ordering, and generated command-line argument quoting. |
+| `Build-Orchestration.Tests.ps1` | MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated command-line argument quoting. |
 
 The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
 and `Invoke-WebRequest`, so they do not access the network or modify a real
 repository. The build-orchestration tests run real MSBuild evaluation and targets
 with a recording child CLI stub; they do not restore, build, or pack the driver.
+One restore test creates a synthetic package and consumer inside Pester's temporary `TestDrive`,
+using a private local feed and package cache. It reproduces same-version package reuse and verifies
+that changing the version restores the updated contents without clearing caches.
 
 The pipeline-argument checks only read the checked-in YAML templates and require
 neither a .NET SDK nor a YAML parsing module. Run them alone without a test

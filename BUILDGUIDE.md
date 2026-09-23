@@ -389,30 +389,53 @@ If these parameters are not specified, versions are calculated from `Versions.pr
 
 The [NuGet.config](NuGet.config) defines a local feed at `packages/` and a governed feed for external
 dependencies and published packages. In package mode, product build and pack targets prepare required sibling
-packages automatically, and pack targets copy their output to the local feed. Manual copying is not needed.
+packages automatically, and pack targets copy their output to the local feed. This orders dependency
+packing; it does not invalidate previously restored packages. Manual copying is not needed.
 Before running tests in package mode, pack the packages they reference; test targets do not prepare that feed.
 Set `-p:SkipDependencyPack=true` when supplying prebuilt dependencies, as CI does. For pack targets,
 `-p:PackBuild=false` also skips dependency packing so previously built or signed binaries are not rebuilt.
 
+### Repeated local builds
+
+NuGet treats each package ID/version as immutable. Repacking changed source under an existing
+version, including the default `-dev` version, can leave downstream projects using old binaries from
+the global-packages cache or an up-to-date assets file. This also applies to the automatic dependency
+packs for `PackAbstractions`, `PackAzure`, and `PackAkvProvider`.
+
+Use new versions for each changed build, and reuse those exact versions for subsequent test and
+no-build pack commands. When rebuilding SqlServer too, give it a new version as well. Prefer the
+default project-reference mode for routine source iteration. The orchestrator does not clear shared
+NuGet caches or silently change version overrides.
+
 ### Examples
 
-Build and package Microsoft.Data.SqlClient version 7.1.1 and its required sibling dependencies.
-The family version applies to SqlClient, Abstractions, and Logging; SqlServer uses its own calculated version.
+From a PowerShell shell, create a unique local version pair and pack SqlClient with its dependencies.
+The base versions below are examples; choose the bases appropriate for the branch:
 
-```bash
-dotnet build -t:PackSqlClient \
-  -p:ReferenceType=Package \
-  -p:PackageVersionSqlClient=7.1.1
+```powershell
+$buildId = [guid]::NewGuid().ToString('N')
+$sqlClientVersion = "8.0.0-preview1-local-$buildId"
+$sqlServerVersion = "1.1.0-preview1-local-$buildId"
+
+dotnet build -t:PackSqlClient `
+  -p:ReferenceType=Package `
+  -p:PackageVersionSqlClient=$sqlClientVersion `
+  -p:PackageVersionSqlServer=$sqlServerVersion
 ```
 
-Run Microsoft.Data.SqlClient functional tests against the versions built above:
+In the same shell, run functional tests against the versions built above:
 
-```bash
-dotnet build -t:TestSqlClientFunctional \
-  -p:ReferenceType=Package \
-  -p:PackageVersionSqlClient=7.1.1 \
+```powershell
+dotnet build -t:TestSqlClientFunctional `
+  -p:ReferenceType=Package `
+  -p:PackageVersionSqlClient=$sqlClientVersion `
+  -p:PackageVersionSqlServer=$sqlServerVersion `
   -p:TestFramework=net8.0
 ```
+
+The same version arguments apply to `PackAbstractions`, `PackAzure`, and `PackAkvProvider`.
+Generate a new `$buildId` and recompute both versions after editing source; do not overwrite the
+previously restored versions.
 
 Manual test prerequisites and configuration are covered in [TESTGUIDE.md](TESTGUIDE.md#manual-test-prerequisites).
 

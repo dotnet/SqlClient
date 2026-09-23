@@ -138,6 +138,46 @@ Describe 'build.proj command-line filters' {
 }
 
 Describe 'build.proj dependency packing' {
+    It 'forwards each local version pair to the dependency chain for <Target>' -ForEach @(
+        @{ Target = 'PackAbstractions' }
+        @{ Target = 'PackAzure' }
+        @{ Target = 'PackAkvProvider' }
+    ) {
+        foreach ($run in @('first', 'second')) {
+            $familyVersion = "8.0.0-preview1-local-$run"
+            $serverVersion = "1.1.0-preview1-local-$run"
+            $arguments = Get-ChildArguments $Target @(
+                '-p:ReferenceType=Package',
+                "-p:PackageVersionSqlClient=$familyVersion",
+                "-p:PackageVersionSqlServer=$serverVersion"
+            )
+            $commandStarts = @(
+                for ($i = 0; $i -lt $arguments.Count; $i++) {
+                    if ($arguments[$i] -in @('build', 'pack')) { $i }
+                }
+            )
+            $commandStarts.Count | Should -BeGreaterThan 1
+            for ($i = 0; $i -lt $commandStarts.Count; $i++) {
+                $start = $commandStarts[$i]
+                $end = if ($i + 1 -lt $commandStarts.Count) { $commandStarts[$i + 1] } else { $arguments.Count }
+                $command = $arguments[$start..($end - 1)]
+                $project = Split-Path $command[1] -Leaf
+                if ($project -in @(
+                    'Logging.csproj', 'Abstractions.csproj', 'Azure.csproj', 'Microsoft.Data.SqlClient.csproj',
+                    'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
+                )) {
+                    $command | Should -Contain "-p:SqlClientPackageVersion=$familyVersion"
+                }
+                if ($project -in @(
+                    'Microsoft.SqlServer.Server.csproj', 'Microsoft.Data.SqlClient.csproj',
+                    'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
+                )) {
+                    $command | Should -Contain "-p:SqlServerPackageVersion=$serverVersion"
+                }
+            }
+        }
+    }
+
     It 'packs dependencies before <Target> in Package mode' -ForEach @(
         @{ Target = 'PackAbstractions'; Projects = @('Logging.csproj', 'Abstractions.csproj') }
         @{ Target = 'PackAzure'; Projects = @('Logging.csproj', 'Abstractions.csproj', 'Azure.csproj') }
@@ -178,6 +218,65 @@ Describe 'build.proj dependency packing' {
         $arguments | Should -Not -Contain 'build'
         if ($Property -eq '-p:PackBuild=false') {
             $arguments | Should -Contain '--no-build'
+        }
+    }
+}
+
+Describe 'local package version freshness' {
+    It 'restores changed sibling contents with a new version after a same-version repack' {
+        $fixture = Join-Path $TestDrive 'nuget freshness'
+        $feed = Join-Path $fixture 'feed'
+        $package = Join-Path $fixture 'package'
+        New-Item -ItemType Directory -Path $feed, "$package/build" -Force | Out-Null
+        @'
+<configuration>
+  <packageSources><clear /><add key="fixture" value="feed" /></packageSources>
+  <auditSources><clear /><add key="fixture" value="feed" /></auditSources>
+</configuration>
+'@ | Set-Content (Join-Path $fixture 'NuGet.config')
+        @'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RestorePackagesPath>$(MSBuildThisFileDirectory)cache</RestorePackagesPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BuildReview.Sibling" Version="[$(SiblingVersion)]" />
+  </ItemGroup>
+</Project>
+'@ | Set-Content (Join-Path $fixture 'Consumer.csproj')
+
+        foreach ($step in @(
+            @{ Version = '1.0.0-local-first'; Content = 'original'; Restored = 'original' }
+            @{ Version = '1.0.0-local-first'; Content = 'changed'; Restored = 'original' }
+            @{ Version = '1.0.0-local-second'; Content = 'changed'; Restored = 'changed' }
+        )) {
+            @"
+<package>
+  <metadata>
+    <id>BuildReview.Sibling</id>
+    <version>$($step.Version)</version>
+    <authors>SqlClient tests</authors>
+    <description>Local restore regression fixture.</description>
+  </metadata>
+</package>
+"@ | Set-Content (Join-Path $package 'BuildReview.Sibling.nuspec')
+            "<Project><PropertyGroup><BuildReviewMarker>$($step.Content)</BuildReviewMarker></PropertyGroup></Project>" |
+                Set-Content (Join-Path $package 'build/BuildReview.Sibling.props')
+            $archive = Join-Path $feed "BuildReview.Sibling.$($step.Version).nupkg"
+            if (Test-Path $archive) { Remove-Item $archive }
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($package, $archive)
+
+            $output = & $dotnet restore (Join-Path $fixture 'Consumer.csproj') `
+                --configfile (Join-Path $fixture 'NuGet.config') `
+                "-p:SiblingVersion=$($step.Version)" --verbosity quiet 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                throw "Fixture restore failed:`n$($output -join [Environment]::NewLine)"
+            }
+            [xml]$restored = Get-Content (Join-Path $fixture "cache/buildreview.sibling/$($step.Version)/build/BuildReview.Sibling.props") -Raw
+            $restored.Project.PropertyGroup.BuildReviewMarker | Should -Be $step.Restored
+            $assets = Get-Content (Join-Path $fixture 'obj/project.assets.json') -Raw | ConvertFrom-Json
+            $assets.libraries.PSObject.Properties.Name | Should -Contain "BuildReview.Sibling/$($step.Version)"
         }
     }
 }
