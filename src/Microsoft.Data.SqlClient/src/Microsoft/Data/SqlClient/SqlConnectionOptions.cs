@@ -27,17 +27,13 @@ namespace Microsoft.Data.SqlClient
         // when not worried about the class being modified during execution
 
         #region DbConnectionOptions fields
-
-        private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
-        private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
-        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
-        private const string ConnectionStringQuoteOdbcValuePattern = "^\\{([^\\}\u0000]|\\}\\})*\\}$"; // do not quote odbc value if it matches this pattern
         internal const string DataDirectory = "|datadirectory|";
 
-        private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
+        #if NETFRAMEWORK
+        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
+
         private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+        #endif
 
         internal readonly bool _hasPasswordKeyword;
         internal readonly bool _hasUserIdKeyword;
@@ -251,7 +247,7 @@ namespace Microsoft.Data.SqlClient
             _usersConnectionString = connectionString ?? "";
             if (_usersConnectionString.Length > 0)
             {
-                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap, false);
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, s_keywordMap);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) ||
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
@@ -439,7 +435,7 @@ namespace Microsoft.Data.SqlClient
                     string protocol = _networkLibrary;
                     TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
 #endif
-                    VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
+                    VerifyLocalHostAndFixup(ref host, fixup: false);
                 }
             }
             else if (0 <= _attachDBFileName.IndexOf('|'))
@@ -769,7 +765,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void VerifyLocalHostAndFixup(ref string host, bool enforceLocalHost, bool fixup)
+        internal static void VerifyLocalHostAndFixup(ref string host, bool fixup)
         {
             if (string.IsNullOrEmpty(host))
             {
@@ -788,10 +784,7 @@ namespace Microsoft.Data.SqlClient
                     int separatorPos = name.IndexOf('.'); // to compare just 'machine' part
                     if ((separatorPos <= 0) || !CompareHostName(ref host, name.Substring(0, separatorPos), fixup))
                     {
-                        if (enforceLocalHost)
-                        {
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
-                        }
+                        throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
                     }
                 }
             }
@@ -1231,14 +1224,12 @@ namespace Microsoft.Data.SqlClient
             DoubleQuoteValueQuote,
             SingleQuoteValue,
             SingleQuoteValueQuote,
-            BraceQuoteValue,
-            BraceQuoteValueQuote,
             QuotedValueEnd,
             NullTermination,
         };
 
         // @TODO: This should probably be extracted into its own parser class
-        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
 
@@ -1287,7 +1278,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case ParserState.KeyEqual: // \\s*=(?!=)\\s*
-                        if (!useOdbcRules && '=' == currentChar)
+                        if ('=' == currentChar)
                         { parserState = ParserState.Key; break; }
                         keyname = GetKeyName(buffer);
                         if (string.IsNullOrEmpty(keyname))
@@ -1299,18 +1290,10 @@ namespace Microsoft.Data.SqlClient
                     case ParserState.KeyEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
-                        if (useOdbcRules)
-                        {
-                            if ('{' == currentChar)
-                            { parserState = ParserState.BraceQuoteValue; break; }
-                        }
-                        else
-                        {
-                            if ('\'' == currentChar)
-                            { parserState = ParserState.SingleQuoteValue; continue; }
-                            if ('"' == currentChar)
-                            { parserState = ParserState.DoubleQuoteValue; continue; }
-                        }
+                        if ('\'' == currentChar)
+                        { parserState = ParserState.SingleQuoteValue; continue; }
+                        if ('"' == currentChar)
+                        { parserState = ParserState.DoubleQuoteValue; continue; }
                         if (';' == currentChar)
                         { goto ParserExit; }
                         if ('\0' == currentChar)
@@ -1355,20 +1338,6 @@ namespace Microsoft.Data.SqlClient
                         parserState = ParserState.QuotedValueEnd;
                         goto case ParserState.QuotedValueEnd;
 
-                    case ParserState.BraceQuoteValue: // "(\\{([^\\}\\u0000]|\\}\\})*\\})"
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValueQuote; break; }
-                        if ('\0' == currentChar)
-                        { throw ADP.ConnectionStringSyntax(startposition); }
-                        break;
-
-                    case ParserState.BraceQuoteValueQuote:
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValue; break; }
-                        keyvalue = GetKeyValue(buffer, false);
-                        parserState = ParserState.QuotedValueEnd;
-                        goto case ParserState.QuotedValueEnd;
-
                     case ParserState.QuotedValueEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
@@ -1396,7 +1365,6 @@ namespace Microsoft.Data.SqlClient
                 case ParserState.Key:
                 case ParserState.DoubleQuoteValue:
                 case ParserState.SingleQuoteValue:
-                case ParserState.BraceQuoteValue:
                     // keyword not found/unbalanced double/single quote
                     throw ADP.ConnectionStringSyntax(startposition);
 
@@ -1412,7 +1380,7 @@ namespace Microsoft.Data.SqlClient
                     keyvalue = GetKeyValue(buffer, true);
 
                     char tmpChar = keyvalue[keyvalue.Length - 1];
-                    if (!useOdbcRules && (('\'' == tmpChar) || ('"' == tmpChar)))
+                    if (('\'' == tmpChar) || ('"' == tmpChar))
                     {
                         throw ADP.ConnectionStringSyntax(startposition);    // unquoted value must not end in quote, except for odbc
                     }
@@ -1420,7 +1388,6 @@ namespace Microsoft.Data.SqlClient
 
                 case ParserState.DoubleQuoteValueQuote:
                 case ParserState.SingleQuoteValueQuote:
-                case ParserState.BraceQuoteValueQuote:
                 case ParserState.QuotedValueEnd:
                     // quoted value at end of line
                     keyvalue = GetKeyValue(buffer, false);
@@ -1461,7 +1428,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
-                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsKeyNameValid mismatch with regex");
 #endif
                 return ((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000')));
             }
@@ -1471,9 +1438,7 @@ namespace Microsoft.Data.SqlClient
         private static NameValuePair ParseInternal(
             Dictionary<string, string> parsetable,
             string connectionString,
-            bool buildChain,
-            IReadOnlyDictionary<string, string> synonyms,
-            bool firstKey)
+            IReadOnlyDictionary<string, string> synonyms)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -1490,7 +1455,7 @@ namespace Microsoft.Data.SqlClient
                     int startPosition = nextStartPosition;
 
                     string keyname, keyvalue;
-                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
+                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, out keyname, out keyvalue);
                     if (string.IsNullOrEmpty(keyname))
                     {
                         // if (nextStartPosition != endPosition) { throw; }
@@ -1509,17 +1474,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.KeywordNotSupported(keyname);
                     }
-                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
-                    {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                    }
+                    // Last key-value pair wins
+                    parsetable[realkeyname] = keyvalue;
 
                     if (localKeychain != null)
                     {
                         localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
-                    else if (buildChain)
-                    { // first time only - don't contain modified chain from UDL file
+                    else
+                    {
+                        // first time only - don't contain modified chain from UDL file
                         keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
                 }
@@ -1527,10 +1491,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException e)
             {
-                ParseComparison(parsetable, connectionString, synonyms, firstKey, e);
+                ParseComparison(parsetable, connectionString, synonyms, e);
                 throw;
             }
-            ParseComparison(parsetable, connectionString, synonyms, firstKey, null);
+            ParseComparison(parsetable, connectionString, synonyms, null);
             #endif
 
             return keychain;
@@ -1728,7 +1692,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
 
-            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            if (keyName == null || !IsKeyNameValid(keyName))
             {
                 throw ADP.InvalidKeyname(keyName);
             }
