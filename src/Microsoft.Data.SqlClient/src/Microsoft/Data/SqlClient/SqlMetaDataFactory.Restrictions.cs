@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient
                         int i = 1;
                         foreach (Restriction restriction in sqlCollection.RestrictionParams)
                         {
-                            table.Rows.Add([mdc.CollectionName, restriction.RestrictionName, restriction.ParameterName, null, i++]);
+                            table.Rows.Add([mdc.CollectionName, restriction.RestrictionName, restriction.ParameterName, restriction.RestrictionDefault, i++]);
                         }
                     }
                 }

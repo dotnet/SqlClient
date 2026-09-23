@@ -442,7 +442,7 @@ internal sealed partial class SqlMetaDataFactory
                 // String types are searchable with LIKE; binary types are not. SQL Server considers XML and JSON a binary type for this purpose.
                 IsSearchableWithLike = metaType.IsCharType && sqlDbType is not SqlDbType.Xml and not SqlDbTypeExtensions.Json,
                 // If no literal prefix or suffix is specified, then literal support is not available.
-                IsLiteralSupported = literalPrefix is not null || literalSuffix is not null,
+                IsLiteralSupported = (literalPrefix is not null || literalSuffix is not null) ? null : false,
                 LiteralPrefix = literalPrefix,
                 LiteralSuffix = literalSuffix,
                 IsSupported = isSupported,
