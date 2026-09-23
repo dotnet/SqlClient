@@ -1000,8 +1000,8 @@ if ($script:ExpandedPackageRoots.Count -gt 0) {
 
             if (-not $libHasNarrative) {
                 Add-Finding -Category 'lib-documentation-trimmed' -Path $libPath -Message (
-                    "$packageName lib/$key contains no <remarks> or <example> elements, so " +
-                    'IntelliSense would show summaries only. The lib/ documentation must be the ' +
+                    "$packageName lib/$key contains no <remarks> or <example> elements. The lib/ " +
+                    'documentation is the source the API docs pipeline consumes, so it must be the ' +
                     'full implementation XML; only ref/ is trimmed.')
             }
 
