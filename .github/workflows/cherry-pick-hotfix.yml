@@ -118,6 +118,10 @@ jobs:
 
       - name: Merge resolved outputs
         id: resolve
+        env:
+          # PR title may contain characters unsafe for direct expression
+          # interpolation into the script below; pass it via env instead.
+          RESOLVED_PR_TITLE: ${{ steps.resolve_event.outputs.pr_title || steps.resolve_dispatch.outputs.pr_title }}
         run: |
           # Whichever of the two prior steps ran populated its outputs; the
           # other was skipped and contributes empty strings. Pick whichever
@@ -135,7 +139,7 @@ jobs:
             echo "base_ref=${{ steps.resolve_event.outputs.base_ref || steps.resolve_dispatch.outputs.base_ref }}"
             echo "labels=${{ steps.resolve_event.outputs.labels || steps.resolve_dispatch.outputs.labels }}"
             echo "merge_commit_sha=${{ steps.resolve_event.outputs.merge_commit_sha || steps.resolve_dispatch.outputs.merge_commit_sha }}"
-            echo "pr_title=${{ steps.resolve_event.outputs.pr_title || steps.resolve_dispatch.outputs.pr_title }}"
+            echo "pr_title=${RESOLVED_PR_TITLE}"
           } >> "${GITHUB_OUTPUT}"
           echo "Resolved PR context from: ${SRC}"
 

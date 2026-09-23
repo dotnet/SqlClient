@@ -26,6 +26,14 @@ setup() {
   STUB_DIR="$(mktemp -d)"
   export PATH="${STUB_DIR}:${PATH}"
 
+  # Stub 'sleep' as a no-op so the backport-issue retry loop's delay (see
+  # lookup_backport_issue) doesn't slow down tests that exercise it.
+  cat > "${STUB_DIR}/sleep" <<'STUB'
+#!/usr/bin/env bash
+exit 0
+STUB
+  chmod +x "${STUB_DIR}/sleep"
+
   # Defaults — individual tests override as needed.
   export VERSION="7.0.1"
   export MERGE_COMMIT_SHA="abc123def456"
@@ -471,6 +479,93 @@ STUB
     if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
     if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
     if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
+}
+
+@test "retries sub-issue lookup when the parent issue still carries the Hotfix label" {
+  # Simulates the race between create-backport-issue.sh (creating the
+  # backport sub-issue) and this script (looking it up), both triggered by
+  # the same "Hotfix <version>" label event: the sub-issue doesn't exist on
+  # the first lookup, but does by the second.
+  local call_count_file="${STUB_DIR}/sub_issues_calls"
+  echo 0 > "${call_count_file}"
+
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then
+      n=$(< "'"${call_count_file}"'")
+      n=$((n + 1))
+      echo "$n" > "'"${call_count_file}"'"
+      if [[ "$n" -ge 2 ]]; then echo "4900"; fi
+      exit 0
+    fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714 ]]; then echo "Hotfix 7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"retrying"* ]]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
+}
+
+@test "gives up after exhausting retries when the backport issue never appears" {
+  # The Hotfix label is present (so retries are attempted) but the backport
+  # sub-issue never shows up — e.g. create-backport-issue.sh failed. The
+  # script must still finish cleanly without a Fixes line, not hang or fail.
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714 ]]; then echo "Hotfix 7.0.1"; exit 0; fi
     if [[ "$1" == "pr" && "$2" == "create" ]]; then
       while [[ $# -gt 0 ]]; do
         if [[ "$1" == "--body" ]]; then

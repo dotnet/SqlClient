@@ -185,6 +185,14 @@ lookup_milestone() {
 # record of which issue(s) to close once this PR merges.
 # If nothing matches, this is silently skipped — it's a convenience, not a
 # requirement.
+# create-backport-issue.sh (creates that sub-issue) and this cherry-pick can
+# run concurrently, both triggered by the same "Hotfix <version>" label event
+# — most directly when sync-hotfix-label-from-issue.sh dispatches
+# cherry-pick-hotfix.yml in "reconcile" mode for an already-merged PR at the
+# same time hotfix-label-issue.yml is creating the backport issue. To avoid
+# a false "nothing to find" from that race, a missing sub-issue is retried a
+# few times (with a short delay) as long as the parent issue still carries
+# the label that would have triggered its creation.
 lookup_backport_issue() {
   local version="$1"
   BACKPORT_ISSUE_NOTE=""
@@ -225,15 +233,49 @@ lookup_backport_issue() {
   # milestone alone can pick the wrong one. create-backport-issue.sh always
   # titles the backport issue "[VERSION] <parent title>", so also require
   # that deterministic prefix to identify the right sub-issue.
-  local issue_number backport_number match_count
+  # create-backport-issue.sh (triggered by the same "Hotfix <version>" label
+  # on the parent issue) runs concurrently with this cherry-pick, not before
+  # it — there's no ordering guarantee between the two. If the parent issue
+  # currently carries the label but its backport sub-issue hasn't shown up
+  # yet, retry briefly rather than silently missing it on the first look.
+  # A handful of short retries comfortably covers that workflow's runtime
+  # without meaningfully delaying the (far more common) case where no
+  # backport issue is expected at all.
+  local -r backport_lookup_max_attempts=6
+  local -r backport_lookup_retry_delay_seconds=10
+
+  local issue_number backport_number match_count attempt issue_labels
   while IFS= read -r issue_number; do
     [[ -z "${issue_number}" ]] && continue
 
-    backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
-      --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\" and (.title | startswith(\"[${version_escaped}] \"))) | .number" \
-      2>/dev/null || true)
-    match_count=$(grep -c . <<< "${backport_number}" || true)
-    backport_number=$(head -n1 <<< "${backport_number}")
+    for (( attempt = 1; attempt <= backport_lookup_max_attempts; attempt++ )); do
+      backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
+        --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\" and (.title | startswith(\"[${version_escaped}] \"))) | .number" \
+        2>/dev/null || true)
+      match_count=$(grep -c . <<< "${backport_number}" || true)
+      backport_number=$(head -n1 <<< "${backport_number}")
+
+      if [[ -n "${backport_number}" ]]; then
+        break
+      fi
+
+      # Nothing found yet. Only worth retrying if the parent issue still
+      # carries the label that would have triggered create-backport-issue.sh
+      # in the first place — otherwise no backport issue is expected and
+      # retrying would just waste time.
+      issue_labels=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}" \
+        --jq '.labels[].name' 2>/dev/null || true)
+      if ! grep -qx "Hotfix ${version}" <<< "${issue_labels}"; then
+        break
+      fi
+
+      if [[ "${attempt}" -lt "${backport_lookup_max_attempts}" ]]; then
+        echo "No backport issue found yet for #${issue_number} (milestone '${version}')," \
+             "but the 'Hotfix ${version}' label is present; retrying" \
+             "(attempt ${attempt}/${backport_lookup_max_attempts})..."
+        sleep "${backport_lookup_retry_delay_seconds}"
+      fi
+    done
 
     if [[ "${match_count}" -gt 1 ]]; then
       echo "::warning::Issue #${issue_number} has multiple sub-issues titled" \
