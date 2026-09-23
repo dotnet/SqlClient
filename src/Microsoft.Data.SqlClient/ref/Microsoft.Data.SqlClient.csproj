@@ -54,7 +54,7 @@
   -->
   <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
   <Target Name="_CheckPwshToolRestored">
-    <Exec Command="dotnet tool run pwsh -- -Version"
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -Version"
           WorkingDirectory="$(RepoRoot)"
           ConsoleToMsBuild="true"
           IgnoreExitCode="true">
@@ -64,27 +64,30 @@
            Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
   </Target>
 
-  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <!-- Trim compiler-generated XML before the SDK copies it to the output directory. -->
   <Target Name="TrimDocsForIntelliSense"
-          AfterTargets="Build"
+          BeforeTargets="CopyFilesToOutputDirectory"
           DependsOnTargets="_CheckPwshToolRestored"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
     <PropertyGroup>
+      <_DocumentationFileFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(DocumentationFile)'))</_DocumentationFileFullPath>
       <PowerShellCommand>
-        dotnet tool run pwsh --
+        "$(DotnetPath)dotnet" tool run pwsh --
           -NonInteractive
           -NoProfile
           -ExecutionPolicy Unrestricted
-          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
+          -File "$(RepoRoot)tools/intellisense/TrimDocs.ps1"
+          -inputFile "$(_DocumentationFileFullPath)"
+          -outputFile "$(_DocumentationFileFullPath)"
       </PowerShellCommand>
 
-      <!-- Convert more than one whitespace character into one space -->
-      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s+", " "))</PowerShellCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s*[\r\n]+\s*", " "))</PowerShellCommand>
     </PropertyGroup>
 
     <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
-    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" WorkingDirectory="$(RepoRoot)" />
   </Target>
 
   <!-- References ====================================================== -->
