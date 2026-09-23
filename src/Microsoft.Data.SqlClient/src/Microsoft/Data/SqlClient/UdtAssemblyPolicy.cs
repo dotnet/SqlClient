@@ -644,7 +644,12 @@ internal static class UdtAssemblyPolicy
     /// </summary>
     private static List<AssemblyName> GetAllowList()
     {
-        string source = AppContext.GetData(AllowListAppContextDataName) as string ?? string.Empty;
+        // AppDomain.GetData rather than AppContext.GetData: the latter does not
+        // exist on .NET Framework, while the former is implemented over the same
+        // AppContext data on .NET, so it reads both AppContext.SetData values and
+        // runtimeconfig.json configProperties on every target framework.
+        string source =
+            AppDomain.CurrentDomain.GetData(AllowListAppContextDataName) as string ?? string.Empty;
 
         lock (s_lock)
         {

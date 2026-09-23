@@ -396,7 +396,7 @@ public class UdtAssemblyLoadHardeningTest
         {
             _switches = new LocalAppContextSwitchesHelper();
             _originalAllowList =
-                AppContext.GetData(UdtAssemblyPolicy.AllowListAppContextDataName);
+                AppDomain.CurrentDomain.GetData(UdtAssemblyPolicy.AllowListAppContextDataName);
 
             _switches.UseLegacyUdtAssemblyLoad = legacy;
 
