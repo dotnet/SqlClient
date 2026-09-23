@@ -2426,7 +2426,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
         // Re-issues SET TRANSACTION ISOLATION LEVEL on the physical state object so
         // the next batch in this pooled connection observes the System.Transactions
-        // ambient isolation level even after sp_reset_connection resets the session.
+        // ambient isolation level even after sp_reset_connection_keep_transaction
+        // resets the session.
         private void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso, int timeout)
         {
             string isoSql;
@@ -2436,12 +2437,12 @@ namespace Microsoft.Data.SqlClient.Connection
                     isoSql = "READ UNCOMMITTED";
                     break;
                 case System.Transactions.IsolationLevel.ReadCommitted:
-                    // sp_reset_connection returns the session to READ COMMITTED, and SQL Server
-                    // has no database setting that changes that named level (READ_COMMITTED_SNAPSHOT
-                    // changes the behavior of READ COMMITTED, not its name). Re-asserting it would
-                    // therefore be a no-op, so skip the batch and save the round trip. This is the
-                    // common case for applications that opt out of the TransactionScope default of
-                    // Serializable.
+                    // sp_reset_connection_keep_transaction returns the session to READ COMMITTED,
+                    // and SQL Server has no database setting that changes that named level
+                    // (READ_COMMITTED_SNAPSHOT changes the behavior of READ COMMITTED, not its
+                    // name). Re-asserting it would therefore be a no-op, so skip the batch and
+                    // save the round trip. This is the common case for applications that opt out
+                    // of the TransactionScope default of Serializable.
                     return;
                 case System.Transactions.IsolationLevel.RepeatableRead:
                     isoSql = "REPEATABLE READ";
@@ -2454,7 +2455,8 @@ namespace Microsoft.Data.SqlClient.Connection
                     // different level aborts that transaction, but the preserved transaction on
                     // this path was itself begun under snapshot isolation by the transaction
                     // manager request. Returning to SNAPSHOT is therefore legal, and it is
-                    // required, because sp_reset_connection may have cleared the session level.
+                    // required, because sp_reset_connection_keep_transaction may have cleared
+                    // the session level.
                     isoSql = "SNAPSHOT";
                     break;
                 default:
