@@ -253,4 +253,17 @@
   <PropertyGroup>
     <LangVersion>14</LangVersion>
   </PropertyGroup>
+
+  <!--
+    Documentation comments pull their text from doc/snippets via <include file='...'/>, which the
+    compiler reads but MSBuild does not otherwise know about.  Declaring the snippets as compile
+    inputs makes editing one invalidate the compilation, so the generated XML documentation is
+    rebuilt instead of an earlier copy being left in place.
+
+    CustomAdditionalCompileInputs is the documented extension point for this: CoreCompile lists it
+    among its Inputs.
+  -->
+  <ItemGroup>
+    <CustomAdditionalCompileInputs Include="$(RepoRoot)doc\snippets\**\*.xml" />
+  </ItemGroup>
 </Project>

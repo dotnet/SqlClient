@@ -136,6 +136,29 @@
 
     <!-- Lib Binaries ================================================== -->
     <!-- lib/net462 - These contain the implementation -->
+    <!--
+      Unlike the modern target frameworks, whose lib folder holds a PlatformNotSupportedException
+      placeholder, net462 puts the real implementation here.  Two reasons:
+
+        * .NET Framework has no runtime RID resolution.  A .NET Core host reads runtimes/<rid>
+          assets from deps.json and picks one for the current platform, but .NET Framework produces
+          no deps.json.  RID assets are selected at restore time only, and only when the consuming
+          project sets a RuntimeIdentifier, which a .NET Framework project does not do by default.
+          A packages.config project ignores runtimes/ entirely.  So for most consumers lib/ is the
+          only folder that is ever read, and a placeholder there would compile against ref/net462
+          and then throw at runtime.
+
+        * There is nothing to disambiguate.  .NET Framework runs on Windows only, so the single
+          OS-specific build is correct for every consumer, and the OS-agnostic lib folder can hold
+          it without being wrong for anyone.
+
+      The localized resources below are also here and nowhere else, so lib/net462 is the only
+      location that yields translated error messages.
+
+      This asymmetry between net462 and the modern target frameworks is expected to go away:
+      https://github.com/dotnet/SqlClient/pull/4673 drops the RID-specific DLLs and packs the real
+      implementation into lib/ for every target framework.
+    -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
@@ -158,7 +181,7 @@
     <!-- lib/net8.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
 
     <!-- lib/net8.0 Localized Resources -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
@@ -178,7 +201,7 @@
     <!-- lib/net9.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
 
     <!-- lib/net9.0 Localized Resources -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\cs\" exclude="" />
@@ -198,7 +221,10 @@
     <!-- lib/netstandard2.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
+    <!-- Sourced from the reference project, unlike the other lib targets, because the
+         implementation project does not build netstandard2.0.  The untrimmed copy is used so that
+         this target carries the same full documentation as every other lib target. -->
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\untrimmed\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
 
     <!-- Ref Binaries ================================================== -->
     <!-- ref/net462 -->
@@ -221,7 +247,17 @@
     <!-- @TODO: This is a temporary measure - removing the not support DLLs will come next -->
 
     <!-- runtimes/win/lib/net462 -->
-    <!-- @TODO: We include the impl version in the lib folder - is the runtimes version necessary? -->
+    <!--
+      Byte-for-byte the same assembly that is packed into lib/net462, from the same source path.
+      .NET Framework runs on Windows only, so there is no second RID this copy distinguishes the
+      implementation from, and a consumer that resolves no RID asset falls back to lib/net462
+      anyway.  Note also that the localized resources are packed into lib/net462 alone, so a
+      consumer bound to this copy gets untranslated error messages.
+
+      @TODO: We include the impl version in the lib folder - is the runtimes version necessary?
+      https://github.com/dotnet/SqlClient/pull/4673 answers no, and removes every runtimes/ entry
+      from this file.
+    -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
 

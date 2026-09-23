@@ -64,11 +64,30 @@
            Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
   </Target>
 
-  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <!--
+    Trims the documentation file the compiler generated, before it is copied to the output
+    directory, and preserves the untrimmed text alongside it.
+
+    CoreCompile produces $(DocumentationFile) in the intermediate directory, and
+    CopyFilesToOutputDirectory publishes it.  Running between the two trims the file while it is
+    still the copy source, so a single build publishes trimmed documentation.
+
+    The untrimmed copy is what the API docs pipeline consumes.  It is kept because the trim
+    rewrites its own input, so the full text would otherwise only exist mid-build.  Every target
+    framework produces one; the package uses it for the frameworks that have no implementation
+    build of their own to take full documentation from.
+  -->
   <Target Name="TrimDocsForIntelliSense"
-          AfterTargets="Build"
+          AfterTargets="CoreCompile"
+          BeforeTargets="CopyFilesToOutputDirectory"
           DependsOnTargets="_CheckPwshToolRestored"
+          Inputs="$(DocumentationFile)"
+          Outputs="$(IntermediateOutputPath)TrimDocs.stamp"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+
+    <Copy SourceFiles="$(DocumentationFile)"
+          DestinationFolder="$(OutputPath)untrimmed"
+          SkipUnchangedFiles="false" />
 
     <PropertyGroup>
       <PowerShellCommand>
@@ -84,6 +103,11 @@
 
     <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
     <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+
+    <!-- The trim rewrites its own input, so a stamp file records that it ran.  Without it the
+         Inputs/Outputs check would see a newer input every time and re-trim an already-trimmed
+         file on each incremental build. -->
+    <Touch Files="$(IntermediateOutputPath)TrimDocs.stamp" AlwaysCreate="true" />
   </Target>
 
   <!-- References ====================================================== -->
