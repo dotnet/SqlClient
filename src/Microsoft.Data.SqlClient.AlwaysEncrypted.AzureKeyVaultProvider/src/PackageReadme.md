@@ -30,6 +30,18 @@ Or via the Package Manager Console:
 Install-Package Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 ```
 
+### Azure.Core migration
+
+This package uses Azure.Core 1.62.0 or later, which supplies credential types in the
+unchanged `Azure.Identity` namespace. Remove direct Azure.Identity references or upgrade
+them to 1.21.0 or later to avoid duplicate-type errors (CS0433). If another dependency
+brings in an older Azure.Identity transitively, add a direct reference to Azure.Identity
+1.21.0 or later to use its type-forwarding facade. Azure.Identity.Broker users must
+upgrade to 1.6.0 or later.
+
+See the [Azure SDK migration guide](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/MigrationGuide.md)
+for details.
+
 ## Getting Started
 
 ### Register the Provider

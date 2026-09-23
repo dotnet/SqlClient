@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Text.Json;
 using Azure.Core;
 using Azure.Identity;
 
@@ -35,5 +36,30 @@ public class AzureDependencyTests
         Assert.DoesNotContain(
             typeof(ActiveDirectoryAuthenticationProvider).Assembly.GetReferencedAssemblies(),
             assembly => assembly.Name == "Azure.Identity");
+    }
+
+    /// <summary>
+    /// Guards the extension's restored NuGet dependencies even when a referenced package
+    /// contributes no assembly references.
+    /// </summary>
+    [Fact]
+    public void AzureExtension_RestoreGraphDoesNotDependOnAzureIdentity()
+    {
+        using JsonDocument graph = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Azure.Test.project.assets.json")));
+        JsonProperty[] targets = graph.RootElement.GetProperty("targets").EnumerateObject().ToArray();
+        Assert.NotEmpty(targets);
+
+        foreach (JsonProperty target in targets)
+        {
+            JsonProperty extension = Assert.Single(
+                target.Value.EnumerateObject(),
+                library => library.Name.StartsWith("Microsoft.Data.SqlClient.Extensions.Azure/", StringComparison.OrdinalIgnoreCase));
+            string[] dependencies = extension.Value.GetProperty("dependencies").EnumerateObject()
+                .Select(dependency => dependency.Name).ToArray();
+
+            Assert.Contains(dependencies, dependency => string.Equals(dependency, "Azure.Core", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(dependencies, dependency => string.Equals(dependency, "Azure.Identity", StringComparison.OrdinalIgnoreCase));
+        }
     }
 }
