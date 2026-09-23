@@ -124,11 +124,17 @@
       lib-ref-documentation-identical
                               error    A package's lib/ and ref/ XML are byte-identical, so the
                                        nuspec mapped one artifact into both targets.
-      missing-local-uid       warning  Cref names this repository but no such member was emitted.
-                                       Warning rather than error because a member may legitimately
-                                       be absent from the documentation under validation: it may be
-                                       conditional on another target framework, or defined in a
-                                       sibling assembly that this run did not include.
+      missing-public-uid      error    Cref names this repository but no such member was emitted,
+                                       and it is referenced from a public API member, so the
+                                       published page carries an unresolved reference. Reported
+                                       only when reference documentation identifies which members
+                                       are public.
+      missing-local-uid       info     As above, but referenced from a member that is not public,
+                                       or from any member when the public API surface is unknown.
+                                       Not an error because such a member is never published, and
+                                       because a reference may legitimately resolve elsewhere: to
+                                       another target framework, or to a sibling assembly that this
+                                       run did not include.
       mismatched-docid-prefix warning  Cref names a real member but with the wrong kind prefix,
                                        such as M: on a property or T: on a member.
       missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
@@ -195,7 +201,8 @@ $script:CategorySeverities = [ordered]@{
     'lib-documentation-trimmed'      = 'error'
     'ref-documentation-untrimmed'    = 'error'
     'lib-ref-documentation-identical' = 'error'
-    'missing-local-uid'      = 'warning'
+    'missing-public-uid'     = 'error'
+    'missing-local-uid'      = 'info'
     'mismatched-docid-prefix' = 'warning'
     'missing-documentation'  = 'error'
     'unexpected-documentation' = 'warning'
@@ -458,9 +465,25 @@ function Test-Cref {
                         "'$actual'. Use the prefix matching the member kind.")
                 }
                 else {
-                    Add-Finding @Context -Category 'missing-local-uid' -Cref $Cref -Message (
-                        "Cref '$trimmed' names this repository but no matching documented member " +
-                        'was emitted by the build. The reference will not resolve.')
+                    # Severity follows the member that holds the reference, not the reference
+                    # itself: a public member's page is published, so a reference it cannot resolve
+                    # becomes a visible xref-not-found. An internal member is never published, so
+                    # the same reference reaches no reader.
+                    $containingMemberIsPublic = $null -ne $script:PublicUids -and
+                        -not [string]::IsNullOrEmpty($Context.Member) -and
+                        $script:PublicUids.Contains($Context.Member)
+
+                    if ($containingMemberIsPublic) {
+                        Add-Finding @Context -Category 'missing-public-uid' -Cref $Cref -Message (
+                            "Cref '$trimmed' names this repository but no matching documented " +
+                            'member was emitted by the build. It is referenced from a public API ' +
+                            'member, so the published page will carry an unresolved reference.')
+                    }
+                    else {
+                        Add-Finding @Context -Category 'missing-local-uid' -Cref $Cref -Message (
+                            "Cref '$trimmed' names this repository but no matching documented " +
+                            'member was emitted by the build.')
+                    }
                 }
             }
             return
@@ -557,6 +580,33 @@ function Get-DocumentedAssemblyName {
     }
 
     return , $names
+}
+
+<#
+    Reports whether a documentation file sits in the ref/ folder of an expanded package.
+
+    Only a package has this structure, so this is how reference documentation is recognized without
+    the caller naming it. The path is compared against the expanded package roots rather than
+    searched for a "ref" segment anywhere, so an unrelated directory called ref cannot be mistaken
+    for one.
+#>
+function Test-IsReferenceDocumentationPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    foreach ($packageRoot in $script:ExpandedPackageRoots.Keys) {
+        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path
+        if (-not $Path.StartsWith($rootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+
+        $relative = $Path.Substring($rootFull.Length).TrimStart([char]'/', [char]'\')
+        $segments = $relative -split '[/\\]'
+        if ($segments.Count -ge 2 -and $segments[0] -eq 'ref') {
+            return $true
+        }
+    }
+
+    return $false
 }
 
 function Resolve-InputPaths {
@@ -754,6 +804,10 @@ foreach ($entry in @(
                 Path         = $file
                 Kind         = $entry.Kind
                 Document     = $document
+                # Documentation shipped in a package's ref/ folder describes the reference
+                # assembly, whose members are exactly the public API surface.
+                IsReferenceDocumentation = ($entry.Kind -eq 'documentation') -and
+                    (Test-IsReferenceDocumentationPath -Path $file)
                 RemarksCount = @($document.Descendants('remarks')).Count
                 ExampleCount = @($document.Descendants('example')).Count
             })
@@ -818,6 +872,12 @@ if ($documentationRequested -and $malformedByKind['documentation'] -eq 0) {
 $script:LocalUids = $null
 $script:LocalUidsByBody = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new(
     [System.StringComparer]::Ordinal)
+
+# Members that form the published API surface. A reference assembly contains the public API and
+# nothing else, so its documentation is exactly that set. Left null when no reference documentation
+# was supplied, which disables the public/internal distinction rather than guessing at it.
+$script:PublicUids = $null
+
 if ($documentationDocuments.Count -gt 0) {
     $script:LocalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($entry in $documentationDocuments) {
@@ -829,6 +889,14 @@ if ($documentationDocuments.Count -gt 0) {
 
             $uid = $name.Value.Trim()
             [void]$script:LocalUids.Add($uid)
+
+            if ($entry.IsReferenceDocumentation) {
+                if ($null -eq $script:PublicUids) {
+                    $script:PublicUids = [System.Collections.Generic.HashSet[string]]::new(
+                        [System.StringComparer]::Ordinal)
+                }
+                [void]$script:PublicUids.Add($uid)
+            }
 
             # Index the identifier without its prefix so a cref carrying the wrong prefix can be
             # told apart from one naming a member that was never emitted at all.
