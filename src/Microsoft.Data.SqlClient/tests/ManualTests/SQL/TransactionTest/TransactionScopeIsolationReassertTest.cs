@@ -57,7 +57,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
 
             for (int i = 0; i < 3; i++)
             {
-                Assert.Equal(expected, GetSessionIsolationLevel(BuildConnectionString()));
+                Assert.Equal(expected, GetSessionIsolationLevel(BuildConnectionString(tag: $"SyncBase{scopeLevel}")));
             }
 
             scope.Complete();
@@ -77,7 +77,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
 
             for (int i = 0; i < 3; i++)
             {
-                Assert.Equal(expected, await GetSessionIsolationLevelAsync(BuildConnectionString()));
+                Assert.Equal(expected, await GetSessionIsolationLevelAsync(BuildConnectionString(tag: $"AsyncBase{scopeLevel}")));
             }
 
             scope.Complete();
@@ -98,7 +98,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         public static void TransactionScope_ReassertsLevelAfterSessionOverride_Sync(bool mars, bool usePoolV2)
         {
             using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
-            string connectionString = BuildConnectionString(mars, usePoolV2);
+            string connectionString = BuildConnectionString(mars, usePoolV2, "OverrideSync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Serializable);
 
@@ -113,10 +113,41 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             scope.Complete();
         }
 
-        // Snapshot is called out separately because it is the one level the server refuses to
-        // move into part-way through a transaction that began under a different level. The
-        // re-assert is legal here only because the preserved transaction was itself begun under
-        // snapshot isolation, so this guards that reasoning.
+        [ConditionalTheory(
+            typeof(TransactionScopeIsolationReassertTest),
+            nameof(IsSessionOverrideScenarioSupported))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public static async Task TransactionScope_ReassertsLevelAfterSessionOverride_Async(bool mars, bool usePoolV2)
+        {
+            using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
+            string connectionString = BuildConnectionString(mars, usePoolV2, "OverrideAsync");
+
+            using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Serializable);
+
+            Assert.Equal("Serializable", await GetSessionIsolationLevelAsync(connectionString));
+
+            // Override the level on the pooled session, then return it to the transacted pool.
+            Assert.Equal("ReadCommitted", await GetSessionIsolationLevelAsync(connectionString, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;"));
+
+            // Re-checkout of the same physical connection must restore the scope's level.
+            Assert.Equal("Serializable", await GetSessionIsolationLevelAsync(connectionString));
+
+            scope.Complete();
+        }
+
+        // Snapshot is called out separately from the other levels because it is the one the
+        // server refuses to move into part-way through a transaction begun under a different
+        // level. The re-assert is legal here only because the preserved transaction was itself
+        // begun under snapshot isolation, so this guards that reasoning and proves the re-issued
+        // SET does not raise error 3951 on re-checkout.
+        //
+        // The hostile session-override variant used for the other levels is deliberately absent:
+        // SQL Server defers a SET TRANSACTION ISOLATION LEVEL issued inside an open snapshot
+        // transaction until that transaction ends, so the session cannot actually be moved off
+        // snapshot mid-scope.
         [ConditionalTheory(
             typeof(TransactionScopeIsolationReassertTest),
             nameof(IsSnapshotScenarioSupported))]
@@ -124,16 +155,17 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(false, true)]
         [InlineData(true, false)]
         [InlineData(true, true)]
-        public static void TransactionScope_ReassertsSnapshotAfterSessionOverride_Sync(bool mars, bool usePoolV2)
+        public static void TransactionScope_SnapshotHonoredAcrossPoolReuse_Sync(bool mars, bool usePoolV2)
         {
             using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
-            string connectionString = BuildConnectionString(mars, usePoolV2);
+            string connectionString = BuildConnectionString(mars, usePoolV2, "SnapSync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Snapshot);
 
-            Assert.Equal("Snapshot", GetSessionIsolationLevel(connectionString));
-            Assert.Equal("ReadCommitted", GetSessionIsolationLevel(connectionString, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;"));
-            Assert.Equal("Snapshot", GetSessionIsolationLevel(connectionString));
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.Equal("Snapshot", GetSessionIsolationLevel(connectionString));
+            }
 
             scope.Complete();
         }
@@ -145,16 +177,17 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(false, true)]
         [InlineData(true, false)]
         [InlineData(true, true)]
-        public static async Task TransactionScope_ReassertsSnapshotAfterSessionOverride_Async(bool mars, bool usePoolV2)
+        public static async Task TransactionScope_SnapshotHonoredAcrossPoolReuse_Async(bool mars, bool usePoolV2)
         {
             using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
-            string connectionString = BuildConnectionString(mars, usePoolV2);
+            string connectionString = BuildConnectionString(mars, usePoolV2, "SnapAsync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Snapshot);
 
-            Assert.Equal("Snapshot", await GetSessionIsolationLevelAsync(connectionString));
-            Assert.Equal("ReadCommitted", await GetSessionIsolationLevelAsync(connectionString, "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;"));
-            Assert.Equal("Snapshot", await GetSessionIsolationLevelAsync(connectionString));
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.Equal("Snapshot", await GetSessionIsolationLevelAsync(connectionString));
+            }
 
             scope.Complete();
         }
@@ -204,13 +237,13 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         // connection, which is what exercises the transacted-pool re-checkout path. The
         // application name carries the test dimensions so each combination gets its own pool
         // and cannot inherit a connection created under the other pool implementation.
-        private static string BuildConnectionString(bool mars = false, bool usePoolV2 = false) =>
+        private static string BuildConnectionString(bool mars = false, bool usePoolV2 = false, string tag = "") =>
             new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 Pooling = true,
                 MaxPoolSize = 1,
                 MultipleActiveResultSets = mars,
-                ApplicationName = $"{nameof(TransactionScopeIsolationReassertTest)}-{mars}-{usePoolV2}"
+                ApplicationName = $"IsoReassert-{tag}-{mars}-{usePoolV2}"
             }.ConnectionString;
 
         private static string GetSessionIsolationLevel(string connectionString, string preamble = null)
@@ -218,8 +251,18 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             using SqlConnection conn = new(connectionString);
             conn.Open();
 
+            // The preamble runs as its own command rather than as part of the SELECT batch:
+            // under MARS a SET issued inside a multi-statement batch applies only to that
+            // batch's execution environment.
+            if (preamble is not null)
+            {
+                using SqlCommand setCmd = conn.CreateCommand();
+                setCmd.CommandText = preamble;
+                setCmd.ExecuteNonQuery();
+            }
+
             using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = preamble is null ? GetIsoSql : preamble + GetIsoSql;
+            cmd.CommandText = GetIsoSql;
 
             return cmd.ExecuteScalar()?.ToString() ?? string.Empty;
         }
@@ -229,8 +272,15 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             using SqlConnection conn = new(connectionString);
             await conn.OpenAsync();
 
+            if (preamble is not null)
+            {
+                using SqlCommand setCmd = conn.CreateCommand();
+                setCmd.CommandText = preamble;
+                await setCmd.ExecuteNonQueryAsync();
+            }
+
             using SqlCommand cmd = conn.CreateCommand();
-            cmd.CommandText = preamble is null ? GetIsoSql : preamble + GetIsoSql;
+            cmd.CommandText = GetIsoSql;
 
             object result = await cmd.ExecuteScalarAsync();
             return result?.ToString() ?? string.Empty;
