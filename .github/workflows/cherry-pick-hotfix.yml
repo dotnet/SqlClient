@@ -52,6 +52,21 @@ on:
         required: true
         type: number
 
+# Serialize all runs of this workflow for the same PR. A PR can carry several
+# "Hotfix <version>" labels, and each labeling event -- plus the 'closed'
+# event and any 'workflow_dispatch' reconcile run from
+# sync-hotfix-label-from-issue.sh -- triggers an independent run. Without
+# this, concurrent runs for the same PR can race on the shared
+# branch/PR-existence check in cherry-pick-to-release.sh: one run's push or
+# 'gh pr create' can fail because another run created the branch/PR first,
+# or a run that checks existence just before the first run creates it can
+# skip a version permanently. Queuing (not cancelling) runs per PR number
+# ensures each run's existence check always sees the outcome of every
+# earlier run for that PR.
+concurrency:
+  group: cherry-pick-hotfix-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: false
+
 # 'contents: write' is needed to push the cherry-pick branch.
 # 'pull-requests: write' is needed to create the new PR via the GitHub CLI.
 # 'issues: read' is needed to look up the backport issue (a sub-issue of the
