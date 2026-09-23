@@ -41,7 +41,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Azure.Identity;
 
-// Create the AKV provider using Azure.Identity (recommended)
+// Create the AKV provider using credential types supplied by Azure.Core
 var azureCredential = new DefaultAzureCredential();
 var akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(azureCredential);
 
@@ -72,7 +72,7 @@ var ssn = await command.ExecuteScalarAsync();
 ## Key Features
 
 - **Azure Key Vault Integration**: Store and manage column master keys (CMKs) in Azure Key Vault
-- **Entra ID Authentication**: Supports Azure.Identity credentials for seamless Entra ID authentication
+- **Entra ID Authentication**: Supports Azure.Identity credential types supplied by Azure.Core
 - **Key Caching**: Built-in caching of column encryption keys (CEKs) for improved performance
 - **Multiple Authentication Methods**: Supports DefaultAzureCredential, ClientSecretCredential, ManagedIdentityCredential, and more
 
@@ -94,5 +94,5 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 ## Related Packages
 
 - [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) - The main SqlClient driver
-- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Entra ID authentication library
+- [Azure.Core](https://www.nuget.org/packages/Azure.Core) - Azure SDK primitives and Entra ID credentials
 - [Azure.Security.KeyVault.Keys](https://www.nuget.org/packages/Azure.Security.KeyVault.Keys) - Azure Key Vault Keys client library
