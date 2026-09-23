@@ -202,13 +202,26 @@ lookup_backport_issue() {
   # release (e.g. two related bugs fixed together); accumulate a "Fixes" line
   # for every parent that has a matching backport issue instead of stopping
   # at the first match, so the cherry-pick PR closes all of them.
-  local issue_number backport_number
+  #
+  # A parent issue's sub-issues can include unrelated children milestoned to
+  # the same release (e.g. a separate follow-up task), so matching on
+  # milestone alone can pick the wrong one. create-backport-issue.sh always
+  # titles the backport issue "[VERSION] <parent title>", so also require
+  # that deterministic prefix to identify the right sub-issue.
+  local issue_number backport_number match_count
   while IFS= read -r issue_number; do
     [[ -z "${issue_number}" ]] && continue
 
     backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
-      --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\") | .number" \
-      2>/dev/null | head -n1 || true)
+      --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\" and (.title | startswith(\"[${version_escaped}] \"))) | .number" \
+      2>/dev/null || true)
+    match_count=$(grep -c . <<< "${backport_number}" || true)
+    backport_number=$(head -n1 <<< "${backport_number}")
+
+    if [[ "${match_count}" -gt 1 ]]; then
+      echo "::warning::Issue #${issue_number} has multiple sub-issues titled" \
+           "'[${version}] ...' milestoned '${version}'; using the first (#${backport_number})."
+    fi
 
     if [[ -n "${backport_number}" ]]; then
       echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
