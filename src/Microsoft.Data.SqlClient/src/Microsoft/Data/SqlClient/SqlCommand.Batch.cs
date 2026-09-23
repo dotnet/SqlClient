@@ -60,6 +60,9 @@ namespace Microsoft.Data.SqlClient
         internal int GetCurrentBatchIndex() =>
             _batchRPCMode ? _currentlyExecutingBatch : -1;
 
+        internal int BatchSize =>
+            _batchRPCMode ? _RPCList.Capacity : 1;
+
         // @TODO: Indicate this is for batch RPC usage
         internal SqlException GetErrors(int commandIndex)
         {

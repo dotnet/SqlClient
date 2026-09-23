@@ -268,8 +268,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         private readonly DbConnectionPoolIdentity _identity;
 
-        private string _instanceName = string.Empty;
-
         /// <summary>
         /// This is used to preserve the authentication context object if we decide to cache it for
         /// subsequent connections in the same pool. This will finally end up in
@@ -585,11 +583,9 @@ namespace Microsoft.Data.SqlClient.Connection
             get => RoutingInfo != null;
         }
 
-        // @TODO: Make auto-property
-        internal string InstanceName
-        {
-            get => _instanceName;
-        }
+        internal string UserInstanceName { get; private set; } = string.Empty;
+
+        internal string InstanceName { get; set; }
 
         internal bool Is2008OrNewer
         {
@@ -1227,7 +1223,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_USERINSTANCE:
-                    _instanceName = rec._newValue;
+                    UserInstanceName = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_ROUTING:
@@ -3399,7 +3395,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        UserInstanceName = string.Empty;
 
                         routingAttempts++;
 
@@ -3723,7 +3719,7 @@ namespace Microsoft.Data.SqlClient.Connection
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         ServerProvidedFailoverPartner = null;
-                        _instanceName = string.Empty;
+                        UserInstanceName = string.Empty;
 
                         AttemptOneLogin(
                             currentServerInfo,

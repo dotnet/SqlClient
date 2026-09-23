@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal static SniHandle CreateConnectionHandle(
             string fullServerName,
             TimeoutTimer timeout,
-            out byte[] instanceName,
+            out string instanceName,
             out ResolvedServerSpn resolvedSpn,
             string serverSPN,
             bool flushCache,
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            instanceName = new byte[1];
+            instanceName = null;
             resolvedSpn = default;
 
             bool errorWithLocalDBProcessing;
@@ -99,6 +99,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     Debug.Fail($"Unexpected connection protocol: {details.ResolvedProtocol}");
                     break;
             }
+
+            instanceName = details.InstanceName;
 
             if (isIntegratedSecurity)
             {
