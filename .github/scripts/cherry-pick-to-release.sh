@@ -36,11 +36,17 @@
 #      closing keywords reference an issue, and that issue has a sub-issue
 #      milestoned VERSION (the backport issue created by
 #      create-backport-issue.sh when the issue was labeled
-#      "Hotfix <version>"), "Fixes #<backport-issue>" is appended to the
-#      cherry-pick PR body. This links the backport issue, but since the
+#      "Hotfix <version>"), a human-readable "Fixes #<backport-issue>" line
+#      is appended to the cherry-pick PR body for visibility. Because the
 #      cherry-pick PR targets a release branch (not the default branch),
-#      GitHub won't auto-close it on merge — close-backport-issue.yml does
-#      that explicitly once the cherry-pick PR merges.
+#      GitHub does not parse closing keywords into 'closingIssuesReferences'
+#      for it at all (that's populated only for keywords on default-branch
+#      PRs, or issues manually linked via the PR's "Development" sidebar), so
+#      the "Fixes #N" text alone would never let close-backport-issue.yml
+#      find the issue to close. A machine-readable
+#      "<!-- backport-issue-numbers: N N ... -->" marker is also embedded in
+#      the body; close-backport-issue.sh reads that marker directly instead
+#      of relying on 'closingIssuesReferences'.
 #
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
@@ -169,14 +175,20 @@ lookup_milestone() {
 # keywords reference an issue, and that issue has a sub-issue milestoned
 # VERSION (the backport issue created by create-backport-issue.sh when the
 # issue was labeled "Hotfix <version>"), a "Fixes #<backport-issue>" line is
-# appended to the cherry-pick PR body, linking it. Because this PR targets a
-# release branch rather than the default branch, GitHub will not auto-close
-# it on merge — close-backport-issue.yml handles that explicitly.
+# appended to the cherry-pick PR body for human visibility, and the issue
+# number is also recorded in a "<!-- backport-issue-numbers: ... -->" marker.
+# Because this PR targets a release branch rather than the default branch,
+# GitHub does not populate 'closingIssuesReferences' for closing keywords in
+# its body at all (only default-branch keyword references and manually
+# sidebar-linked issues appear there), so the "Fixes #N" text by itself gives
+# close-backport-issue.yml nothing to find. The marker is the only reliable
+# record of which issue(s) to close once this PR merges.
 # If nothing matches, this is silently skipped — it's a convenience, not a
 # requirement.
 lookup_backport_issue() {
   local version="$1"
   BACKPORT_ISSUE_NOTE=""
+  local backport_issue_numbers=""
 
   # closingIssuesReferences can include issues from other repositories (e.g.
   # "Fixes owner/other#123"). Only consider references in this repository —
@@ -231,8 +243,17 @@ lookup_backport_issue() {
     if [[ -n "${backport_number}" ]]; then
       echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
       BACKPORT_ISSUE_NOTE+=$'\n\nFixes #'"${backport_number}"
+      backport_issue_numbers+="${backport_number} "
     fi
   done <<< "${closing_issues}"
+
+  # Prepend the machine-readable marker (if any backport issues were found)
+  # so close-backport-issue.sh can recover the issue numbers without relying
+  # on GitHub's closing-keyword parsing, which doesn't run for non-default-
+  # branch PRs. Kept on its own HTML-comment line so it never renders.
+  if [[ -n "${backport_issue_numbers}" ]]; then
+    BACKPORT_ISSUE_NOTE=$'\n\n<!-- backport-issue-numbers: '"${backport_issue_numbers}"'-->'"${BACKPORT_ISSUE_NOTE}"
+  fi
 }
 
 # -- Step 4: Attempt the cherry-pick ------------------------------------------

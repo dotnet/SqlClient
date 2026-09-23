@@ -331,6 +331,7 @@ STUB
   [[ "$output" == *"Found backport issue #4900"* ]]
   [ -f "${STUB_DIR}/pr-body.txt" ]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
 }
 
 @test "appends Fixes lines for every closing issue with a matching backport issue" {
@@ -368,6 +369,7 @@ STUB
   [ -f "${STUB_DIR}/pr-body.txt" ]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4901"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 4901 -->"* ]]
 }
 
 @test "picks the sub-issue with the [VERSION] title prefix, not just any milestone match" {
@@ -418,6 +420,8 @@ STUB
   [ -f "${STUB_DIR}/pr-body.txt" ]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #4899"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"4899 -->"* ]]
 }
 
 @test "omits Fixes line when the PR has no closing issue references" {
@@ -450,6 +454,7 @@ STUB
   [ "$status" -eq 0 ]
   [ -f "${STUB_DIR}/pr-body.txt" ]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
 }
 
 @test "omits Fixes line when no sub-issue matches the version" {
@@ -483,6 +488,7 @@ STUB
   [ "$status" -eq 0 ]
   [ -f "${STUB_DIR}/pr-body.txt" ]
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
 }
 
 @test "conflict PR body contains real newlines, not literal backslash-n" {

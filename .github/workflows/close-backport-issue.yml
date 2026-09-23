@@ -12,11 +12,11 @@
 #
 # GitHub only auto-closes an issue referenced by a PR's closing keywords
 # (Fixes/Closes/Resolves #N) when that PR merges into the repository's
-# default branch. The cherry-pick PRs opened by cherry-pick-hotfix.yml always
-# target a release/X.Y branch, so their "Fixes #<backport issue>" line links
-# the backport issue but never auto-closes it. This workflow closes that gap
-# by explicitly closing the referenced issue(s) once a PR merges into a
-# release branch.
+# default branch, and doesn't even populate the issue's cross-reference for
+# non-default-branch PRs. The cherry-pick PRs opened by cherry-pick-hotfix.yml
+# always target a release/X.Y branch, so this workflow closes that gap by
+# reading the backport issue number(s) that cherry-pick-to-release.sh records
+# in the PR body and closing each one explicitly once the PR merges.
 #
 #################################################################################
 

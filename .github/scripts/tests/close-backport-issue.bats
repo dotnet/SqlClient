@@ -30,13 +30,14 @@ teardown() {
 
 # Writes a 'gh' stub that dispatches based on argv.
 #
-#   $1: closing issue numbers, one per line (from 'pr view --json closingIssuesReferences')
+#   $1: the merged PR's body (from 'pr view --json body'), possibly
+#       containing a "<!-- backport-issue-numbers: N N ... -->" marker
 #   $2: newline-separated "issue_number:STATE" pairs (STATE is OPEN or CLOSED)
 stub_gh() {
-  local closing_issues="$1"
+  local pr_body="$1"
   local issue_state_map="$2"
 
-  printf '%s' "${closing_issues}" > "${STUB_DIR}/closing_issues.txt"
+  printf '%s' "${pr_body}" > "${STUB_DIR}/pr_body.txt"
   printf '%s' "${issue_state_map}" > "${STUB_DIR}/issue_states.txt"
   : > "${STUB_DIR}/close_calls.log"
 
@@ -44,9 +45,9 @@ stub_gh() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-# gh pr view <n> --json closingIssuesReferences ...
-if [[ "\$1" == "pr" && "\$2" == "view" && "\${*}" == *"closingIssuesReferences"* ]]; then
-  cat "${STUB_DIR}/closing_issues.txt"
+# gh pr view <n> --json body --jq '.body'
+if [[ "\$1" == "pr" && "\$2" == "view" && "\${*}" == *"--json body"* ]]; then
+  cat "${STUB_DIR}/pr_body.txt"
   exit 0
 fi
 
@@ -92,16 +93,17 @@ closed_issues() {
 
 # ── No-op cases ───────────────────────────────────────────────────────────────
 
-@test "no-ops when the PR has no closing issue references" {
-  stub_gh "" ""
+@test "no-ops when the PR body has no backport-issue-numbers marker" {
+  stub_gh "Cherry-pick of #123 (abc123) into \`release/7.0\`." ""
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"Nothing to close"* ]]
   [ -z "$(closed_issues)" ]
 }
 
-@test "no-ops when the referenced issue is already closed" {
-  stub_gh "$(printf '4714')" "$(printf '4714:CLOSED')"
+@test "no-ops when the marker's referenced issue is already closed" {
+  stub_gh "$(printf 'Cherry-pick.\n\n<!-- backport-issue-numbers: 4714 -->\n\nFixes #4714')" \
+    "$(printf '4714:CLOSED')"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"already closed"* ]]
@@ -111,12 +113,13 @@ closed_issues() {
 @test "aborts instead of proceeding when an issue state lookup fails" {
   # A failed 'gh issue view' must not be swallowed and mistaken for "issue
   # doesn't need closing" — surface it loudly instead of silently skipping.
-  printf '4714' > "${STUB_DIR}/closing_issues.txt"
+  printf 'Cherry-pick.\n\n<!-- backport-issue-numbers: 4714 -->\n\nFixes #4714' \
+    > "${STUB_DIR}/pr_body.txt"
   cat > "${STUB_DIR}/gh" <<STUB
 #!/usr/bin/env bash
 set -euo pipefail
-if [[ "\$1" == "pr" && "\$2" == "view" && "\${*}" == *"closingIssuesReferences"* ]]; then
-  cat "${STUB_DIR}/closing_issues.txt"
+if [[ "\$1" == "pr" && "\$2" == "view" && "\${*}" == *"--json body"* ]]; then
+  cat "${STUB_DIR}/pr_body.txt"
   exit 0
 fi
 if [[ "\$1" == "issue" && "\$2" == "view" ]]; then
@@ -133,24 +136,38 @@ STUB
   [[ "$output" == *"Failed to look up state for issue #4714"* ]]
 }
 
+@test "ignores a 'Fixes #N' line in the body that has no marker (manual release PR)" {
+  # A manually-authored release-branch PR containing "Fixes #<parent issue>"
+  # must not have that issue closed: only issues named in our own
+  # backport-issue-numbers marker are ever closed.
+  stub_gh "Manual backport. Fixes #4715." ""
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Nothing to close"* ]]
+  [ -z "$(closed_issues)" ]
+}
+
 # ── Happy path ────────────────────────────────────────────────────────────────
 
-@test "closes a single open referenced issue" {
-  stub_gh "$(printf '4714')" "$(printf '4714:OPEN')"
+@test "closes a single open backport issue named in the marker" {
+  stub_gh "$(printf 'Cherry-pick.\n\n<!-- backport-issue-numbers: 4714 -->\n\nFixes #4714')" \
+    "$(printf '4714:OPEN')"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [ "$(closed_issues)" = "4714" ]
 }
 
-@test "closes multiple open referenced issues" {
-  stub_gh "$(printf '4714\n4715')" "$(printf '4714:OPEN\n4715:OPEN')"
+@test "closes multiple open backport issues named in the marker" {
+  stub_gh "$(printf 'Cherry-pick.\n\n<!-- backport-issue-numbers: 4714 4715 -->\n\nFixes #4714\n\nFixes #4715')" \
+    "$(printf '4714:OPEN\n4715:OPEN')"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [ "$(closed_issues | sort)" = "$(printf '4714\n4715' | sort)" ]
 }
 
-@test "closes only the open issue among a mix of open and closed references" {
-  stub_gh "$(printf '4714\n4715')" "$(printf '4714:OPEN\n4715:CLOSED')"
+@test "closes only the open issue among a mix of open and closed marker entries" {
+  stub_gh "$(printf 'Cherry-pick.\n\n<!-- backport-issue-numbers: 4714 4715 -->\n\nFixes #4714\n\nFixes #4715')" \
+    "$(printf '4714:OPEN\n4715:CLOSED')"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [ "$(closed_issues)" = "4714" ]

@@ -7,32 +7,38 @@
 #
 # close-backport-issue.sh
 #
-# Explicitly closes the issue(s) referenced by a pull request's closing
-# keywords (Fixes/Closes/Resolves #N) after that pull request merges into a
+# Explicitly closes the backport issue(s) that a cherry-pick PR (created by
+# cherry-pick-to-release.sh) is meant to close, after that PR merges into a
 # non-default branch (e.g. a release/X.Y branch).
 #
 # WHY THIS EXISTS
 # ----------------
-# GitHub only auto-closes an issue referenced by closing keywords when the
-# referencing PR is merged into the repository's *default* branch. The
+# GitHub only auto-closes an issue referenced by closing keywords (Fixes,
+# Closes, Resolves) when the referencing PR merges into the repository's
+# *default* branch — and for PRs targeting any other branch, it doesn't even
+# populate 'closingIssuesReferences' for keyword references (only issues
+# manually linked via the PR's "Development" sidebar show up there). The
 # cherry-pick PRs created by cherry-pick-to-release.sh always target a
-# release/X.Y branch, never the default branch, so their "Fixes #<backport
-# issue>" line (added by lookup_backport_issue() in that script) creates the
-# cross-reference link but never actually closes the backport issue on
-# merge. This script closes the gap: it re-derives the same closing
-# references GitHub computed for the PR and closes each one explicitly.
+# release/X.Y branch, so their "Fixes #<backport issue>" text is purely
+# cosmetic and gives the GitHub API nothing to report. This script closes the
+# gap by reading the "<!-- backport-issue-numbers: ... -->" marker that
+# lookup_backport_issue() (in cherry-pick-to-release.sh) embeds in the PR
+# body, and closing each issue named there explicitly. Using an explicit
+# marker (rather than any closing keyword found in the PR body) also means
+# this only ever closes issues our own automation created and recorded, never
+# an issue a human happens to reference with "Fixes #N" in an unrelated,
+# manually-authored release-branch PR.
 #
 # OVERVIEW
 # --------
-#   1. Ask the GitHub API which issues this PR's closing keywords reference.
-#      (This list is populated regardless of the PR's base branch — only the
-#      *automatic* close behavior is restricted to the default branch.)
+#   1. Read the merged PR's body and extract the issue numbers recorded in
+#      its "<!-- backport-issue-numbers: ... -->" marker, if any.
 #
 #   2. For each such issue that is still open, close it with a comment
 #      linking back to the merged PR.
 #
-# This is a no-op (and not an error) when the PR has no closing references,
-# or when every referenced issue is already closed.
+# This is a no-op (and not an error) when the PR has no marker, or when every
+# referenced issue is already closed.
 #
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
@@ -70,25 +76,21 @@ fi
 
 echo "Pull request: #${PR_NUMBER}"
 
-# -- Step 1: Find issues this PR's closing keywords reference -----------------
-# closingIssuesReferences can include issues from other repositories (e.g.
-# "Fixes owner/other#123"). Only consider references in this repository — a
-# bare '.number' would otherwise let a cross-repo reference collide with an
-# unrelated local issue of the same number and close it by mistake. 'gh
-# ... --jq' takes a single query string (no jq '--arg' passthrough), so the
-# repo is escaped and interpolated directly.
-REPO_ESCAPED=$(printf '%s' "${GITHUB_REPOSITORY}" | sed 's/["\\]/\\&/g')
+# -- Step 1: Extract backport issue numbers from the PR body's marker --------
+PR_BODY=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
+  --json body --jq '.body')
 
-CLOSING_ISSUES=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
-  --json closingIssuesReferences \
-  --jq ".closingIssuesReferences[] | select((.repository.owner.login + \"/\" + .repository.name) == \"${REPO_ESCAPED}\") | .number")
+# The marker line looks like: <!-- backport-issue-numbers: 123 456 -->
+MARKER_LINE=$(grep -o '<!-- *backport-issue-numbers:[0-9 ]*-->' <<< "${PR_BODY}" || true)
 
-if [[ -z "${CLOSING_ISSUES}" ]]; then
-  echo "No closing issue references found on #${PR_NUMBER}. Nothing to close."
+if [[ -z "${MARKER_LINE}" ]]; then
+  echo "No backport-issue-numbers marker found on #${PR_NUMBER}. Nothing to close."
   exit 0
 fi
 
-echo "Closing issue references: ${CLOSING_ISSUES}"
+CLOSING_ISSUES=$(grep -o '[0-9]\+' <<< "${MARKER_LINE}")
+
+echo "Backport issue numbers: ${CLOSING_ISSUES}"
 
 # -- Step 2: Close each referenced issue that is still open -------------------
 CLOSED_ANY=0
