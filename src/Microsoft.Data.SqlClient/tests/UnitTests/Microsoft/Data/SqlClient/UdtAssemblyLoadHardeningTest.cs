@@ -18,11 +18,21 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// </summary>
 /// <remarks>
 /// Before the fix, <see cref="SqlConnection"/> handed any server-supplied
-/// assembly name straight to <see cref="Assembly.Load(AssemblyName)"/>, which
-/// runs the target assembly's module initializer, and then invoked a static
-/// member on the resolved type without checking that it was a user-defined type
-/// at all, which runs the type's static constructor.  These tests assert that
-/// neither happens.
+/// assembly name straight to <see cref="Assembly.Load(AssemblyName)"/>, and then
+/// invoked a static member on the resolved type without checking that it was a
+/// user-defined type at all.
+///
+/// The two steps are not equally dangerous, and the tests below are written to
+/// reflect that.  On CoreCLR the load itself runs nothing from the target
+/// assembly: neither <see cref="Assembly.Load(AssemblyName)"/>, nor resolving a
+/// type from it, nor reading that type's custom attributes executes any of its
+/// code.  What the load grants is the ability to bring a server-chosen file into
+/// the process.  Code runs at the later static member invocation, which is what
+/// pulls in the module initializer and the type's static constructor.
+///
+/// So these tests assert two distinct things: that a denied assembly is never
+/// loaded at all, and that a type which is not annotated as a user-defined type
+/// never reaches the invocation that would run its code.
 /// </remarks>
 [Collection(AppContextSwitchTestCollection.Name)]
 public class UdtAssemblyLoadHardeningTest
@@ -48,6 +58,15 @@ public class UdtAssemblyLoadHardeningTest
     /// reaches the assembly loader, and reports a policy failure rather than
     /// silently succeeding.
     /// </summary>
+    /// <remarks>
+    /// The assertion on the exception matters as much as the one on the
+    /// recorder.  Because the hostile assembly does not exist on disk, a driver
+    /// with no policy at all would also fail to load it and would also raise no
+    /// AssemblyLoad event, so "nothing was loaded" alone would pass against the
+    /// vulnerable implementation too.  Requiring the specific policy denial
+    /// distinguishes "the policy refused to ask" from "the loader looked and did
+    /// not find it".
+    /// </remarks>
     [Fact]
     public void CheckGetExtendedUDTInfo_UnknownAssembly_IsNeverLoaded()
     {
@@ -63,6 +82,36 @@ public class UdtAssemblyLoadHardeningTest
         Assert.NotNull(exception);
         Assert.Null(metaData.udt.Type);
         Assert.DoesNotContain("Contoso.Evil", recorder.LoadedNames);
+
+        // The failure must be the policy's denial, not a loader miss.
+        Assert.IsType<TypeLoadException>(exception);
+        Assert.Contains("Contoso.Evil", exception!.Message);
+        Assert.Contains(UdtAssemblyPolicy.AllowListAppContextDataName, exception.Message);
+    }
+
+    /// <summary>
+    /// Verifies that a permitted UDT still resolves, so that the denial tests
+    /// above are not passing simply because resolution never works.
+    /// </summary>
+    /// <remarks>
+    /// This is the positive control for the test above.  Without it, a change
+    /// that broke UDT resolution outright would leave every "was refused"
+    /// assertion passing for the wrong reason.
+    /// </remarks>
+    [Fact]
+    public void CheckGetExtendedUDTInfo_LoadedUserDefinedType_Resolves()
+    {
+        AssemblyName self = typeof(UdtAssemblyLoadHardeningTest).Assembly.GetName();
+        string qualifiedName = $"{typeof(AUserDefinedType).FullName}, {self.Name}";
+
+        using PolicyScope scope = new();
+
+        SqlConnection connection = new(ConnectionString);
+        SqlMetaDataPriv metaData = CreateUdtMetaData(qualifiedName);
+
+        connection.CheckGetExtendedUDTInfo(metaData, fThrow: true);
+
+        Assert.Equal(typeof(AUserDefinedType), metaData.udt.Type);
     }
 
     /// <summary>

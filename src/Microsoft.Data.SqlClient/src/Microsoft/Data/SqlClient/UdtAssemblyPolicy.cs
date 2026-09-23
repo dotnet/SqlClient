@@ -4,7 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
+#if NET
+using System.Runtime.Loader;
+#endif
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -83,6 +87,15 @@ internal static class UdtAssemblyPolicy
     private static readonly byte[] s_sqlServerTypesPublicKeyToken =
         { 0x89, 0x84, 0x5d, 0xcd, 0x80, 0x80, 0xcc, 0x91 };
 
+    #if NET
+    /// <summary>
+    /// The load context that the driver's own <see cref="Assembly.Load(AssemblyName)"/>
+    /// calls resolve into, which is the one that loaded the driver itself.
+    /// </summary>
+    private static readonly AssemblyLoadContext? s_driverLoadContext =
+        AssemblyLoadContext.GetLoadContext(typeof(UdtAssemblyPolicy).Assembly);
+    #endif
+
     #endregion
 
     #region Fields
@@ -110,11 +123,18 @@ internal static class UdtAssemblyPolicy
     /// a server name a loaded simple name with a different identity and thereby
     /// still trigger a new load, which is exactly what this tier must not do.
     ///
+    /// The reference is weak.  A strong one would keep every assembly in the
+    /// map alive for the life of the process, which would prevent a collectible
+    /// <c>AssemblyLoadContext</c> from ever unloading: a server could force the
+    /// map to be built with a single denied UDT and thereby pin unrelated
+    /// plugin assemblies.  A dead entry simply drops out and the reference is
+    /// re-evaluated as if the assembly had never been loaded.
+    ///
     /// When several assemblies share a simple name, the first one seen wins.
     /// All of them are already in the process, so the choice cannot widen the
     /// policy; at worst the subsequent type lookup fails.
     /// </summary>
-    private static Dictionary<string, Assembly>? s_loadedAssemblies;
+    private static Dictionary<string, WeakReference<Assembly>>? s_loadedAssemblies;
 
     /// <summary>
     /// The raw allow list string that <see cref="s_allowList"/> was parsed
@@ -152,14 +172,18 @@ internal static class UdtAssemblyPolicy
 
     /// <summary>
     /// Decides whether the driver may load the assembly named by
-    /// <paramref name="asmRef"/>, pinning the identity of the built-in SQL
-    /// Server CLR types assembly as a side effect when that is what it names.
+    /// <paramref name="asmRef"/> and, when it may, produces the assembly.
     ///
-    /// Pinning and the decision are deliberately performed by a single call so
-    /// that it is not possible to consult the policy without also pinning: the
-    /// built-in exemption is granted on the simple name alone, so an unpinned
-    /// reference would let an unsigned assembly that merely borrows the name
-    /// satisfy it.
+    /// The decision and the load are deliberately performed by a single call.
+    /// Deciding separately from loading was unsafe: on .NET the loader ignores
+    /// the public key token in an <see cref="AssemblyName"/>, so a caller that
+    /// consulted the policy and then called <see cref="Assembly.Load(AssemblyName)"/>
+    /// itself could still be handed a same-named assembly with the wrong
+    /// identity.  Pinning the reference is therefore not an enforcement
+    /// boundary; verifying what actually came back is, and doing both here
+    /// means no caller can forget.  This mirrors what
+    /// <c>SqlAuthenticationProviderManager</c> does for the Azure extension
+    /// assembly.
     /// </summary>
     /// <param name="asmRef">
     /// The server-supplied assembly reference.  It is normalized in place when
@@ -168,18 +192,14 @@ internal static class UdtAssemblyPolicy
     /// <param name="typeSystemAssemblyVersion">
     /// The type system assembly version negotiated for the connection, used to
     /// pin the version of the built-in SQL Server CLR types assembly.  Null
-    /// when no connection context is available, in which case only the public
-    /// key token is pinned and the loader picks the version.
+    /// when no connection context is available, in which case the version is
+    /// left to the loader and only the culture and public key token are pinned.
     /// </param>
     /// <param name="assembly">
-    /// On a permitted result, the assembly the caller must use, or null when
-    /// the caller is to load <paramref name="asmRef"/> itself.  A non-null value
-    /// means the process had already loaded an assembly with this simple name
-    /// and the caller must use that instance rather than binding the
-    /// server-supplied identity.
+    /// The assembly the caller must use, or null when the policy refused.
     /// </param>
     /// <returns>True when the assembly may be used.</returns>
-    internal static bool TryResolve(
+    internal static bool TryLoad(
         AssemblyName asmRef,
         Version? typeSystemAssemblyVersion,
         out Assembly? assembly)
@@ -188,8 +208,114 @@ internal static class UdtAssemblyPolicy
 
         if (LegacyBehaviorEnabled)
         {
+            assembly = Assembly.Load(asmRef);
             return true;
         }
+
+        if (!TryDecide(asmRef, typeSystemAssemblyVersion, out Decision decision))
+        {
+            return false;
+        }
+
+        // The process already holds this assembly, so there is nothing to load
+        // and nothing to verify: the instance is the one the application itself
+        // brought in, whatever identity the server claimed for it.
+        if (decision.Loaded is not null)
+        {
+            assembly = decision.Loaded;
+            return true;
+        }
+
+        Assembly loaded = Assembly.Load(asmRef);
+
+        if (loaded is null)
+        {
+            return false;
+        }
+
+        if (!SatisfiesRequiredIdentity(loaded, decision))
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "UdtAssemblyPolicy.TryLoad | ERR | Assembly '{0}' was loaded but has an unexpected identity '{1}' and will not be used.",
+                asmRef.Name,
+                loaded.FullName);
+
+            return false;
+        }
+
+        assembly = loaded;
+
+        return true;
+    }
+
+    /// <summary>
+    /// The outcome of evaluating the policy: whether the reference is permitted
+    /// and, if so, what must be true of the assembly that the loader returns.
+    /// </summary>
+    private readonly struct Decision
+    {
+        /// <summary>
+        /// The assembly the process already holds, when the reference was
+        /// permitted on that basis.  Null when the caller must load it.
+        /// </summary>
+        internal Assembly? Loaded { get; init; }
+
+        /// <summary>
+        /// The public key token the loaded assembly must carry, or null when
+        /// the basis for permitting it placed no constraint on the token.
+        /// </summary>
+        internal byte[]? RequiredPublicKeyToken { get; init; }
+
+        /// <summary>
+        /// True when the loaded assembly must carry no public key token at all,
+        /// because the allow list entry explicitly said <c>PublicKeyToken=null</c>.
+        /// </summary>
+        internal bool RequireUnsigned { get; init; }
+    }
+
+    /// <summary>
+    /// Evaluates the policy without loading anything.  This is the decision
+    /// half of <see cref="TryLoad"/>, exposed so that tests can observe the
+    /// decision for assembly names that do not exist on disk.  Production code
+    /// must use <see cref="TryLoad"/>, because a decision alone does not
+    /// enforce the identity of what the loader returns.
+    /// </summary>
+    /// <param name="alreadyLoaded">
+    /// The instance the process already holds, when that was the basis for
+    /// permitting the reference; otherwise null.
+    /// </param>
+    /// <param name="asmRef">The server-supplied assembly reference.</param>
+    /// <param name="typeSystemAssemblyVersion">
+    /// The type system assembly version negotiated for the connection, or null.
+    /// </param>
+    internal static bool IsPermitted(
+        AssemblyName asmRef,
+        Version? typeSystemAssemblyVersion,
+        out Assembly? alreadyLoaded)
+    {
+        if (LegacyBehaviorEnabled)
+        {
+            alreadyLoaded = null;
+
+            return true;
+        }
+
+        bool permitted = TryDecide(asmRef, typeSystemAssemblyVersion, out Decision decision);
+
+        alreadyLoaded = decision.Loaded;
+
+        return permitted;
+    }
+
+    /// <summary>
+    /// Evaluates the policy without loading anything.
+    /// </summary>
+    private static bool TryDecide(
+        AssemblyName asmRef,
+        Version? typeSystemAssemblyVersion,
+        out Decision decision)
+    {
+        decision = default;
 
         string? simpleName = asmRef.Name;
         if (string.IsNullOrEmpty(simpleName))
@@ -203,21 +329,75 @@ internal static class UdtAssemblyPolicy
         if (IsSqlServerTypesAssembly(asmRef))
         {
             PinSqlServerTypesIdentity(asmRef, typeSystemAssemblyVersion);
+
+            decision = new Decision { RequiredPublicKeyToken = s_sqlServerTypesPublicKeyToken };
+
             return true;
         }
 
         // The allow list is the application stating which assemblies it is
         // willing to have loaded on a server's say-so, so the reference is
-        // handed to the loader as given.
-        if (MatchesAllowList(asmRef))
+        // handed to the loader as given.  Whatever identity the matched entry
+        // specified is carried forward and enforced against the result.
+        if (TryMatchAllowList(asmRef, out AssemblyName? matched))
         {
+            byte[]? allowedToken = matched!.GetPublicKeyToken();
+
+            decision = new Decision
+            {
+                // A null token means the entry did not mention one, an empty
+                // token means it explicitly required an unsigned assembly.
+                RequiredPublicKeyToken = allowedToken is { Length: > 0 } ? allowedToken : null,
+                RequireUnsigned = allowedToken is { Length: 0 },
+            };
+
             return true;
         }
 
         // Otherwise the only remaining basis is that the process already holds
         // an assembly by this simple name, in which case that instance is used
         // and the server-supplied identity is discarded.
-        return TryGetLoadedAssembly(simpleName!, out assembly);
+        if (TryGetLoadedAssembly(simpleName!, out Assembly? loaded))
+        {
+            decision = new Decision { Loaded = loaded };
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Verifies that an assembly the loader returned actually carries the
+    /// identity that the policy required of it.
+    /// </summary>
+    private static bool SatisfiesRequiredIdentity(Assembly loaded, Decision decision)
+    {
+        if (decision.RequiredPublicKeyToken is null && !decision.RequireUnsigned)
+        {
+            return true;
+        }
+
+        byte[]? actualToken;
+
+        try
+        {
+            actualToken = loaded.GetName().GetPublicKeyToken();
+        }
+        catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+        {
+            // If the identity cannot be read it cannot be confirmed, so the
+            // assembly is refused.
+            return false;
+        }
+
+        if (decision.RequireUnsigned)
+        {
+            return actualToken is null || actualToken.Length == 0;
+        }
+
+        return actualToken is not null &&
+               actualToken.AsSpan().SequenceEqual(decision.RequiredPublicKeyToken.AsSpan());
     }
 
     /// <summary>
@@ -231,6 +411,15 @@ internal static class UdtAssemblyPolicy
     /// assembly with.  Without this, a server that omits the token (or supplies
     /// a different one) would cause a partial-name bind that an unsigned
     /// same-named assembly on the probing path could satisfy.
+    ///
+    /// The culture is normalized to neutral.  The shipped assembly is culture
+    /// neutral, so leaving the culture server-controlled would let a reference
+    /// carrying <c>Culture=xx-YY</c> steer the bind towards a satellite-shaped
+    /// name that the real assembly never uses.
+    ///
+    /// Normalizing the reference is necessary but not sufficient, because on
+    /// .NET the loader ignores the requested token.  <see cref="TryLoad"/>
+    /// verifies the identity of whatever the loader actually returns.
     /// </summary>
     /// <param name="asmRef">The assembly reference to normalize, in place.</param>
     /// <param name="typeSystemAssemblyVersion">
@@ -244,6 +433,7 @@ internal static class UdtAssemblyPolicy
             asmRef.Version = typeSystemAssemblyVersion;
         }
 
+        asmRef.CultureInfo = CultureInfo.InvariantCulture;
         asmRef.SetPublicKeyToken((byte[])s_sqlServerTypesPublicKeyToken.Clone());
     }
 
@@ -266,10 +456,11 @@ internal static class UdtAssemblyPolicy
     #region Helpers
 
     /// <summary>
-    /// Determines whether <paramref name="asmRef"/> matches an entry on the
-    /// application-supplied allow list.
+    /// Finds the allow list entry that <paramref name="asmRef"/> satisfies, if
+    /// any.  The matched entry is returned so that the identity it specified
+    /// can be enforced against the assembly the loader returns.
     /// </summary>
-    private static bool MatchesAllowList(AssemblyName asmRef)
+    private static bool TryMatchAllowList(AssemblyName asmRef, out AssemblyName? matched)
     {
         List<AssemblyName> allowList = GetAllowList();
 
@@ -277,9 +468,13 @@ internal static class UdtAssemblyPolicy
         {
             if (Matches(allowList[i], asmRef))
             {
+                matched = allowList[i];
+
                 return true;
             }
         }
+
+        matched = null;
 
         return false;
     }
@@ -310,21 +505,27 @@ internal static class UdtAssemblyPolicy
             return false;
         }
 
+        // AssemblyName distinguishes an omitted public key token (null) from an
+        // explicitly unsigned one (PublicKeyToken=null, which parses to an empty
+        // array).  Treating the latter as "unconstrained" would let an entry
+        // that deliberately named an unsigned assembly be satisfied by a signed
+        // one, so the two cases are kept apart.
         byte[]? allowedToken = allowed.GetPublicKeyToken();
-        if (allowedToken is { Length: > 0 })
+
+        if (allowedToken is not null)
         {
             byte[]? candidateToken = candidate.GetPublicKeyToken();
-            if (candidateToken is null || candidateToken.Length != allowedToken.Length)
+
+            if (allowedToken.Length == 0)
             {
-                return false;
+                // The entry requires an unsigned assembly.
+                return candidateToken is null || candidateToken.Length == 0;
             }
 
-            for (int i = 0; i < allowedToken.Length; i++)
+            if (candidateToken is null ||
+                !candidateToken.AsSpan().SequenceEqual(allowedToken.AsSpan()))
             {
-                if (allowedToken[i] != candidateToken[i])
-                {
-                    return false;
-                }
+                return false;
             }
         }
 
@@ -390,7 +591,27 @@ internal static class UdtAssemblyPolicy
     {
         lock (s_lock)
         {
-            return GetLoadedAssemblies().TryGetValue(simpleName, out assembly);
+            Dictionary<string, WeakReference<Assembly>> loaded = GetLoadedAssemblies();
+
+            if (loaded.TryGetValue(simpleName, out WeakReference<Assembly>? reference) &&
+                reference.TryGetTarget(out Assembly? target))
+            {
+                assembly = target;
+
+                return true;
+            }
+
+            // The assembly has been collected, which means its load context was
+            // unloaded.  Drop the entry so the name is no longer permitted on
+            // the strength of a load that no longer exists.
+            if (reference is not null)
+            {
+                loaded.Remove(simpleName);
+            }
+
+            assembly = null;
+
+            return false;
         }
     }
 
@@ -402,7 +623,7 @@ internal static class UdtAssemblyPolicy
     /// <remarks>
     /// Callers must hold <see cref="s_lock"/>.
     /// </remarks>
-    private static Dictionary<string, Assembly> GetLoadedAssemblies()
+    private static Dictionary<string, WeakReference<Assembly>> GetLoadedAssemblies()
     {
         EnsureAssemblyLoadHandlerAttached();
 
@@ -411,7 +632,7 @@ internal static class UdtAssemblyPolicy
             return s_loadedAssemblies;
         }
 
-        Dictionary<string, Assembly> loaded = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, WeakReference<Assembly>> loaded = new(StringComparer.OrdinalIgnoreCase);
 
         foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -427,7 +648,7 @@ internal static class UdtAssemblyPolicy
     /// Records <paramref name="assembly"/> under its simple name, keeping the
     /// first assembly seen for a given name.
     /// </summary>
-    private static void Remember(Dictionary<string, Assembly> loaded, Assembly assembly)
+    private static void Remember(Dictionary<string, WeakReference<Assembly>> loaded, Assembly assembly)
     {
         if (assembly.IsDynamic)
         {
@@ -436,13 +657,24 @@ internal static class UdtAssemblyPolicy
             return;
         }
 
+        if (!IsInDriverLoadContext(assembly))
+        {
+            // Only assemblies in the load context that Assembly.Load would
+            // resolve into can satisfy this tier.  Recording one from another
+            // context would permit a reference that the loader would then
+            // resolve to a different assembly, or to none at all.
+            return;
+        }
+
         try
         {
             string? name = assembly.GetName().Name;
 
-            if (!string.IsNullOrEmpty(name) && !loaded.ContainsKey(name!))
+            if (!string.IsNullOrEmpty(name) &&
+                (!loaded.TryGetValue(name!, out WeakReference<Assembly>? existing) ||
+                 !existing.TryGetTarget(out _)))
             {
-                loaded.Add(name!, assembly);
+                loaded[name!] = new WeakReference<Assembly>(assembly);
             }
         }
         catch (Exception e) when (ADP.IsCatchableExceptionType(e))
@@ -453,6 +685,29 @@ internal static class UdtAssemblyPolicy
             SqlClientEventSource.Log.TryTraceEvent(
                 "UdtAssemblyPolicy.Remember | INFO | Unable to read the name of a loaded assembly.");
         }
+    }
+
+    /// <summary>
+    /// Determines whether an assembly lives in the load context that the
+    /// driver's own <see cref="Assembly.Load(AssemblyName)"/> calls resolve
+    /// into.
+    /// </summary>
+    /// <remarks>
+    /// On .NET, <see cref="Assembly.Load(AssemblyName)"/> resolves against the
+    /// load context of the calling assembly, which is the driver's.  Assemblies
+    /// held by other contexts are therefore not reachable by name from here,
+    /// and an application that loads its UDT assembly into a separate
+    /// collectible context must name it on the allow list.
+    /// </remarks>
+    private static bool IsInDriverLoadContext(Assembly assembly)
+    {
+        #if NET
+        return AssemblyLoadContext.GetLoadContext(assembly) == s_driverLoadContext;
+        #else
+        // .NET Framework has a single load context per AppDomain for this
+        // purpose, so every loaded assembly qualifies.
+        return true;
+        #endif
     }
 
     /// <summary>

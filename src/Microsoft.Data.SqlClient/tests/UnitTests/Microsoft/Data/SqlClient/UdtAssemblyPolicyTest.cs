@@ -35,7 +35,7 @@ public class UdtAssemblyPolicyTest
     /// tests care only whether the reference was permitted.
     /// </summary>
     private static bool IsAllowed(AssemblyName asmRef, Version? typeSystemAssemblyVersion) =>
-        UdtAssemblyPolicy.TryResolve(asmRef, typeSystemAssemblyVersion, out _);
+        UdtAssemblyPolicy.IsPermitted(asmRef, typeSystemAssemblyVersion, out _);
 
     #region Scope
 
@@ -59,6 +59,15 @@ public class UdtAssemblyPolicyTest
             _switches.UseLegacyUdtAssemblyLoad = legacy;
 
             SetAllowList(null);
+        }
+
+        /// <summary>
+        /// Enters an enforcing scope with the given allow list already applied.
+        /// </summary>
+        public PolicyScope(string? allowList)
+            : this(legacy: false)
+        {
+            SetAllowList(allowList);
         }
 
         public static void SetAllowList(string? value)
@@ -238,7 +247,7 @@ public class UdtAssemblyPolicyTest
 
         using PolicyScope scope = new();
 
-        Assert.True(UdtAssemblyPolicy.TryResolve(
+        Assert.True(UdtAssemblyPolicy.IsPermitted(
             new AssemblyName(self.GetName().Name!), null, out Assembly? resolved));
         Assert.Same(self, resolved);
     }
@@ -265,7 +274,7 @@ public class UdtAssemblyPolicyTest
         AssemblyName hostile = new(
             $"{simpleName}, Version=9.9.9.9, Culture=neutral, PublicKeyToken=0123456789abcdef");
 
-        Assert.True(UdtAssemblyPolicy.TryResolve(hostile, null, out Assembly? resolved));
+        Assert.True(UdtAssemblyPolicy.IsPermitted(hostile, null, out Assembly? resolved));
         Assert.Same(self, resolved);
         Assert.NotEqual(new Version(9, 9, 9, 9), resolved!.GetName().Version);
     }
@@ -289,21 +298,26 @@ public class UdtAssemblyPolicyTest
                 .Select(a => a.GetName().Name!),
             StringComparer.OrdinalIgnoreCase);
 
-        AssemblyName? referencedNotLoaded = typeof(UdtAssemblyPolicyTest).Assembly
+        // The driver references a number of assemblies that a unit test run
+        // never causes to be loaded (the identity and Azure stacks, for
+        // example), which makes this a far more reliable source of a
+        // referenced-but-unloaded assembly than the test assembly's own
+        // references.
+        AssemblyName? referencedNotLoaded = typeof(SqlConnection).Assembly
             .GetReferencedAssemblies()
             .FirstOrDefault(r => !loaded.Contains(r.Name!));
 
-        if (referencedNotLoaded is null)
-        {
-            // Every referenced assembly happens to be loaded in this run, so
-            // there is nothing here to distinguish. The companion test
-            // Resolve_UnknownAssembly_IsDenied covers the general deny path.
-            return;
-        }
+        // Assert the precondition rather than returning quietly. If every
+        // referenced assembly is loaded then this test proves nothing, and that
+        // should be visible rather than counted as a pass.
+        Assert.True(
+            referencedNotLoaded is not null,
+            "Expected the driver to reference at least one assembly that is not loaded, " +
+            "so that the referenced-is-not-trusted rule can be exercised.");
 
         using PolicyScope scope = new();
 
-        Assert.False(IsAllowed(new AssemblyName(referencedNotLoaded.Name!), null));
+        Assert.False(IsAllowed(new AssemblyName(referencedNotLoaded!.Name!), null));
     }
 
     #endregion
@@ -411,6 +425,132 @@ public class UdtAssemblyPolicyTest
         using PolicyScope scope = new();
 
         Assert.False(IsAllowed(new AssemblyName(), null));
+    }
+
+    #endregion
+
+    #region Identity enforcement
+
+    /// <summary>
+    /// Verifies that an allow list entry which explicitly requires an unsigned
+    /// assembly (<c>PublicKeyToken=null</c>) is not satisfied by a signed one.
+    /// </summary>
+    /// <remarks>
+    /// AssemblyName represents an omitted public key token as null and an
+    /// explicit <c>PublicKeyToken=null</c> as a zero-length array.  Treating the
+    /// two alike would silently widen an entry that was written to pin an
+    /// unsigned assembly into one that accepts any identity.
+    /// </remarks>
+    [Fact]
+    public void AllowList_ExplicitNullToken_DoesNotPermitSignedAssembly()
+    {
+        using PolicyScope scope = new($"{UnknownAssemblyName}, PublicKeyToken=null");
+
+        // The entry is satisfied by an unsigned candidate.
+        Assert.True(IsAllowed(new AssemblyName(UnknownAssemblyName), null));
+
+        // ... but not by one that carries a strong name token.
+        AssemblyName signed = new(UnknownAssemblyName);
+        signed.SetPublicKeyToken(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a });
+
+        Assert.False(IsAllowed(signed, null));
+    }
+
+    /// <summary>
+    /// Verifies that an allow list entry which omits the public key token still
+    /// permits any identity, which is the documented simple-name behavior.
+    /// </summary>
+    [Fact]
+    public void AllowList_OmittedToken_PermitsAnyIdentity()
+    {
+        using PolicyScope scope = new(UnknownAssemblyName);
+
+        AssemblyName signed = new(UnknownAssemblyName);
+        signed.SetPublicKeyToken(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a });
+
+        Assert.True(IsAllowed(signed, null));
+        Assert.True(IsAllowed(new AssemblyName(UnknownAssemblyName), null));
+    }
+
+    /// <summary>
+    /// Verifies that the culture of the built-in SQL CLR types assembly is
+    /// pinned to neutral rather than left under the server's control.
+    /// </summary>
+    /// <remarks>
+    /// The shipped assembly is culture neutral.  Leaving a server-supplied
+    /// <c>Culture=</c> in place would let the reference steer the bind towards a
+    /// name the real assembly never uses.
+    /// </remarks>
+    [Fact]
+    public void SqlServerTypes_PinsCultureToNeutral()
+    {
+        using PolicyScope scope = new();
+
+        AssemblyName asmRef = new(
+            $"{UdtAssemblyPolicy.SqlServerTypesAssemblyName}, Version=14.0.0.0, Culture=en-US");
+
+        Assert.True(IsAllowed(asmRef, new Version(14, 0, 0, 0)));
+
+        // AssemblyName represents the neutral culture as the empty string.
+        Assert.Equal(string.Empty, asmRef.CultureName);
+    }
+
+    /// <summary>
+    /// Verifies that an assembly the loader returns with an identity that does
+    /// not match what the policy required is refused.
+    /// </summary>
+    /// <remarks>
+    /// On .NET the loader ignores the public key token in an AssemblyName, so
+    /// pinning the reference is not an enforcement boundary on its own.  This
+    /// drives the real load path to confirm that the returned assembly's actual
+    /// identity is what gates the result.  The test assembly is unsigned, so
+    /// allow-listing it under an explicit strong name token must fail even
+    /// though the assembly itself resolves.
+    /// </remarks>
+    [Fact]
+    public void TryLoad_LoadedAssemblyWithWrongToken_IsRefused()
+    {
+        AssemblyName self = typeof(UdtAssemblyPolicyTest).Assembly.GetName();
+
+        // Guard: the reasoning below only holds for an unsigned test assembly.
+        byte[]? actualToken = self.GetPublicKeyToken();
+        if (actualToken is { Length: > 0 })
+        {
+            return;
+        }
+
+        const string StrongToken = "b03f5f7f11d50a3a";
+
+        using PolicyScope scope = new($"{self.Name}, PublicKeyToken={StrongToken}");
+
+        // The server names the assembly with the very token the allow list
+        // requires, so the entry matches and the load proceeds. This is the
+        // case that matters: on .NET the loader ignores the requested token and
+        // hands back the real, unsigned assembly of that simple name, so
+        // without a post-load check the wrong assembly would be accepted on the
+        // strength of a token it does not actually carry.
+        AssemblyName serverSupplied = new(self.Name!);
+        serverSupplied.SetPublicKeyToken(new byte[] { 0xb0, 0x3f, 0x5f, 0x7f, 0x11, 0xd5, 0x0a, 0x3a });
+
+        Assert.False(UdtAssemblyPolicy.TryLoad(serverSupplied, null, out Assembly? loaded));
+        Assert.Null(loaded);
+    }
+
+    /// <summary>
+    /// Verifies that a permitted, genuinely loadable assembly is returned by the
+    /// load path, so that the identity checks above are not simply refusing
+    /// everything.
+    /// </summary>
+    [Fact]
+    public void TryLoad_AllowListedAssembly_IsLoaded()
+    {
+        AssemblyName self = typeof(UdtAssemblyPolicyTest).Assembly.GetName();
+
+        using PolicyScope scope = new(self.Name!);
+
+        Assert.True(UdtAssemblyPolicy.TryLoad(new AssemblyName(self.Name!), null, out Assembly? loaded));
+        Assert.NotNull(loaded);
+        Assert.Equal(self.Name, loaded!.GetName().Name);
     }
 
     #endregion

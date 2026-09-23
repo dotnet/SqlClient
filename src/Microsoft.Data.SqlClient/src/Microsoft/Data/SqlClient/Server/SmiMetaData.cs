@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -383,17 +385,67 @@ namespace Microsoft.Data.SqlClient.Server
                     // SqlConnection.ResolveTypeAssembly applies. There is no
                     // connection context here, so no type system version is
                     // available to pin the built-in SQL CLR types assembly to;
-                    // its public key token is still pinned.
-                    _clrType = Type.GetType(
+                    // its culture and public key token are still pinned, and the
+                    // policy verifies the identity of whatever the loader
+                    // returns.
+                    Type resolved = Type.GetType(
                         typeName: _udtAssemblyQualifiedName,
                         assemblyResolver: static asmRef =>
-                            UdtAssemblyPolicy.TryResolve(asmRef, typeSystemAssemblyVersion: null, out Assembly loaded)
-                                ? loaded ?? Assembly.Load(asmRef)
-                                : throw SQL.UdtAssemblyNotAllowed(asmRef.Name),
+                            UdtAssemblyPolicy.TryLoad(asmRef, typeSystemAssemblyVersion: null, out Assembly loaded)
+                                ? loaded
+                                : throw UdtAssemblyDenied(asmRef),
                         typeResolver: null,
                         throwOnError: true);
+
+                    // A name that carries no assembly part never reaches the
+                    // assembly resolver above, so the attribute gate is the only
+                    // thing standing between a server-chosen type name and
+                    // ValueUtilsSmi.NullUdtInstance invoking its static Null
+                    // member. Apply it here as SqlConnection does on the main
+                    // path, so this route cannot be used to run the code of a
+                    // type that is not actually a user-defined type.
+                    if (resolved != null && !UdtAssemblyPolicy.LegacyBehaviorEnabled && !IsUserDefinedType(resolved))
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "SmiMetaData.Type | ERR | Type '{0}' is not annotated with SqlUserDefinedTypeAttribute and will not be used.",
+                            _udtAssemblyQualifiedName);
+
+                        throw SQL.UdtTypeNotUserDefined(_udtAssemblyQualifiedName);
+                    }
+
+                    _clrType = resolved;
                 }
                 return _clrType;
+            }
+        }
+
+        /// <summary>
+        /// Traces and builds the exception for an assembly the UDT policy
+        /// refused, so that a denial on this path is observable through event
+        /// source tracing exactly as it is on the SqlConnection path.
+        /// </summary>
+        private static Exception UdtAssemblyDenied(AssemblyName asmRef)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SmiMetaData.Type | ERR | UDT assembly '{0}' was not loaded because the UDT assembly load policy does not permit it.",
+                asmRef.Name);
+
+            return SQL.UdtAssemblyNotAllowed(asmRef.Name);
+        }
+
+        /// <summary>
+        /// Determines whether a resolved type is annotated as a user-defined
+        /// type, tolerating an attribute that cannot be read.
+        /// </summary>
+        private static bool IsUserDefinedType(Type type)
+        {
+            try
+            {
+                return SqlUdtInfo.TryGetFromType(type) != null;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                return false;
             }
         }
 

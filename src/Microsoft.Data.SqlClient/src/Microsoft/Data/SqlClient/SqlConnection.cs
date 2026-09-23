@@ -3047,32 +3047,25 @@ namespace Microsoft.Data.SqlClient
             // pins the identity (version and public key token) of the built-in
             // SQL CLR types assembly, so that the built-in exemption cannot be
             // satisfied by a same-named assembly that happens to sit on the
-            // probing path.
-            if (!UdtAssemblyPolicy.TryResolve(asmRef, TypeSystemAssemblyVersion, out Assembly alreadyLoaded))
-            {
-                SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | ERR | UDT assembly '{0}' was not loaded because the UDT assembly load policy does not permit it.", asmRef.Name);
-
-                if (throwOnError)
-                {
-                    throw SQL.UdtAssemblyNotAllowed(asmRef.Name);
-                }
-
-                return null;
-            }
-
-            // The policy permitted the reference because the process had already
-            // loaded an assembly of that simple name. Use that instance rather
-            // than binding the server-supplied version and public key token,
-            // which could otherwise resolve to a different assembly and cause
-            // the new load this policy exists to prevent.
-            if (alreadyLoaded != null)
-            {
-                return alreadyLoaded;
-            }
-
+            // probing path.  The policy performs the load itself so that the
+            // identity of whatever the loader returns is verified; on .NET the
+            // loader ignores the public key token in the reference, so pinning
+            // it above is not by itself an enforcement boundary.
             try
             {
-                return Assembly.Load(asmRef);
+                if (!UdtAssemblyPolicy.TryLoad(asmRef, TypeSystemAssemblyVersion, out Assembly resolved))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ResolveTypeAssembly | ERR | UDT assembly '{0}' was not loaded because the UDT assembly load policy does not permit it.", asmRef.Name);
+
+                    if (throwOnError)
+                    {
+                        throw SQL.UdtAssemblyNotAllowed(asmRef.Name);
+                    }
+
+                    return null;
+                }
+
+                return resolved;
             }
             catch (Exception e)
             {

@@ -267,14 +267,29 @@ There is a single enforcing behavior, which permits:
 
 | Permitted | Notes |
 |-----------|-------|
-| `Microsoft.SqlServer.Types` | Identity pinned: the version is normalized to the connection's negotiated type system version, and the public key token to the one Microsoft signs with |
+| `Microsoft.SqlServer.Types` | Identity pinned: the version is normalized to the connection's negotiated type system version, the culture to neutral, and the public key token to the one Microsoft signs with |
 | Assemblies on the allow list | The application explicitly naming what it is willing to have loaded |
-| Assemblies already loaded into the process | Resolved to the instance the process already holds; the server-supplied version and public key token are discarded |
+| Assemblies already loaded into the process | Resolved to the instance the process already holds; the server-supplied version, culture and public key token are discarded |
 
 Everything else is refused. In particular, an assembly that is only *statically
 referenced* by a loaded assembly is **not** permitted, because loading it is a
 genuinely new load — precisely what this policy keeps under the application's
 control rather than the server's.
+
+Normalizing the reference is necessary but not sufficient. On .NET the loader
+**ignores** the public key token in an `AssemblyName`, so pinning it does not by
+itself prevent a same-named assembly with a different identity from being
+returned. The driver therefore verifies the identity of the assembly the loader
+actually hands back, and refuses it if it does not carry the required token.
+This mirrors what the driver already does for the Azure authentication extension
+assembly.
+
+On .NET, the already-loaded tier is scoped to the `AssemblyLoadContext` that
+loaded the driver, since that is the context its `Assembly.Load` calls resolve
+into. An application that loads its UDT assembly into a separate (for example
+collectible) context must name it on the allow list. The driver holds only weak
+references to the assemblies it has observed, so this policy never prevents a
+collectible context from unloading.
 
 Setting `UseLegacyUdtAssemblyLoad` disables the policy entirely and restores the
 pre-policy behavior. It is a temporary compatibility escape hatch, not a
@@ -292,15 +307,47 @@ AppDomain.CurrentDomain.SetData(
 
 Each entry is matched only on the components it specifies, so a simple name
 permits any version, culture, and public key token, while a fully-qualified name
-must match exactly.
+must match exactly. An entry that explicitly specifies `PublicKeyToken=null`
+requires an unsigned assembly and is not satisfied by a signed one; this is
+distinct from omitting the token, which places no constraint on it.
 
 Independently of the assembly policy, a resolved type that is not annotated with
-`SqlUserDefinedTypeAttribute` is rejected before any of its code runs (except
-under `UseLegacyUdtAssemblyLoad`). This is the gate that actually prevents
-foreign code execution: on CoreCLR, neither `Assembly.Load`, nor resolving a type
-from the assembly, nor reading that type's custom attributes runs anything from
-it — a module initializer or static constructor runs on first real member access,
-which is what `GetUdtValue` would otherwise perform.
+`SqlUserDefinedTypeAttribute` is rejected before any member of it is accessed
+(except under `UseLegacyUdtAssemblyLoad`). This is the gate that actually
+prevents foreign code execution.
+
+On CoreCLR this has been measured directly: neither `Assembly.Load`, nor
+resolving a type from the assembly, nor reading that type's custom attributes
+runs anything from it. A module initializer or static constructor runs on first
+real member access, which is what `GetUdtValue` would otherwise perform. The
+attribute check therefore sits in front of the only step that executes code.
+
+Module initializer timing on .NET Framework has not been measured, and ECMA-335
+permits a runtime to run one earlier than CoreCLR does. The portable guarantee
+is the one stated above — no member of the type is accessed before the attribute
+check — rather than a claim about exactly when the runtime chooses to run
+initializers.
+
+Note that the attribute check itself does not execute foreign code.
+`SqlUserDefinedTypeAttribute` is `sealed`, so it cannot be subclassed by a
+hostile assembly, and the lookup is filtered to that single attribute type, so
+the constructors of any other attributes on the type are never invoked.
+
+#### Trust is per process, not per server
+
+The already-loaded tier makes the permitted set a property of the process rather
+than of the connection. Once an assembly is loaded by any means, a UDT type
+within it can be instantiated on the say-so of any server the process connects
+to, whether or not that assembly was loaded for that server's benefit. The
+resolved type must still carry `SqlUserDefinedTypeAttribute`, so this is
+confined to types that were written to be deserialized from SQL Server, but it
+is a genuine widening and is called out here deliberately.
+
+Relatedly, the map of loaded assemblies is built once and then maintained
+incrementally. That is not only a performance choice: rebuilding it on demand
+would let an assembly that was pulled in as a *dependency* of a permitted
+assembly silently inherit that permission. Building it once keeps the tier
+anchored to what the application had already loaded.
 
 #### Compatibility impact
 
@@ -319,8 +366,11 @@ The symptom depends on the API:
 
 | API | Symptom |
 |-----|---------|
-| `reader[i]`, `GetValue`, UDT output parameters | `SqlException` naming the assembly and the allow list |
+| `reader[i]`, `GetValue`, UDT output parameters | `TypeLoadException` naming the assembly and the allow list |
 | `GetFieldType`, `GetSchemaTable`, `GetColumnSchema` | Returns `null` for the UDT column's type rather than throwing |
+
+The exception is a `TypeLoadException` and is not wrapped in a `SqlException`,
+which matches how the driver already reports a UDT type it cannot resolve.
 
 The second row is the harder one to diagnose, because `GetFieldType` does not
 normally return `null`; a caller that dereferences the result sees an unrelated
