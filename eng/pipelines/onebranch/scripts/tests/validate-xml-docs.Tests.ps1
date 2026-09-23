@@ -297,7 +297,9 @@ Describe 'validate-xml-docs.ps1' {
             @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
-        It 'reports a local cref with no matching emitted member as a warning, not an error' {
+        It 'reports a local cref with no matching emitted member as information, not an error' {
+            # Without reference documentation the public API surface is unknown, and such a
+            # reference may resolve in another target framework or a sibling assembly.
             $docs = New-DocumentationDirectory `
                 -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
                 -Crefs @('T:Microsoft.Data.SqlClient.DoesNotExist')
@@ -307,7 +309,7 @@ Describe 'validate-xml-docs.ps1' {
 
             $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
             $finding.Category | Should -Be 'missing-local-uid'
-            $finding.Severity | Should -Be 'warning'
+            $finding.Severity | Should -Be 'info'
         }
 
         It 'fails on a missing local UID when that category is named in -FailOn' {
@@ -729,6 +731,74 @@ Describe 'validate-xml-docs.ps1' {
             $categories | Should -Not -Contain 'missing-documentation'
         }
 
+        It 'reports an unresolved cref from a public member as an error' {
+            # Severity follows the member holding the reference: a public member's page is
+            # published, so the unresolved reference becomes visible.
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+
+            # The public member appears in ref/; the reference it makes resolves nowhere.
+            '<doc><members><member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary>' +
+            '<see cref="T:Microsoft.Data.SqlClient.Missing" /></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+            '<doc><members><member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.Data.SqlClient.Missing' })[0]
+            $finding.Category | Should -Be 'missing-public-uid'
+            $finding.Severity | Should -Be 'error'
+        }
+
+        It 'reports the same cref from a non-public member as information' {
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+
+            # The holder is absent from ref/, so it is not part of the public API surface.
+            '<doc><members><member name="T:Microsoft.Data.SqlClient.Internals"><summary>I.</summary>' +
+            '<see cref="T:Microsoft.Data.SqlClient.Missing" /></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+            '<doc><members><member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.Data.SqlClient.Missing' })[0]
+            $finding.Category | Should -Be 'missing-local-uid'
+            $finding.Severity | Should -Be 'info'
+        }
+
+        It 'does not classify as public when no reference documentation identifies the surface' {
+            # Without a ref/ folder the public API surface is unknown, so nothing is escalated.
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('T:Microsoft.Data.SqlClient.DoesNotExist')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report
+
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'missing-local-uid'
+            $finding.Severity | Should -Be 'info'
+        }
+
         It 'does not apply layout rules outside package mode' {
             $docs = New-TestDirectory
             $libPath = Join-Path $docs 'lib/net8.0'
@@ -809,7 +879,7 @@ Describe 'validate-xml-docs.ps1' {
         }
 
         It 'marks the task succeeded-with-issues for non-gating findings in a gating run' {
-            # missing-local-uid is a warning, so the run passes, but it must still be visible.
+            # missing-local-uid is informational, so the run passes, but it must still be visible.
             $docs = New-DocumentationDirectory `
                 -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
                 -Crefs @('T:Microsoft.Data.SqlClient.DoesNotExist')
