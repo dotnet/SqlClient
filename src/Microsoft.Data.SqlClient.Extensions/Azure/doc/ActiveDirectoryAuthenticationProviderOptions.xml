@@ -7,7 +7,7 @@
             <remarks>
                 Prefer this options-bag constructor over the positional-argument overloads in new code. Additional options can be added here in future versions without introducing new constructor overloads.
                 <para>
-                    <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.UseWamBroker" /> is a Windows-only setting: it has no effect on non-Windows platforms, where interactive Entra ID flows always use the system browser.
+                    <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.UseWamBroker" /> enables the native authentication broker on Windows, Linux and macOS. Each platform expects a different redirect URI and requires an operating system component that may not be installed.
                 </para>
             </remarks>
         </ActiveDirectoryAuthenticationProviderOptions>
@@ -20,15 +20,36 @@
         </DeviceCodeFlowCallback>
         <ApplicationClientId>
             <summary>
-                Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient first-party application id is used and WAM broker mode is forced on (regardless of <see cref="UseWamBroker"/>) when running on Windows.
+                Optional Entra ID application (client) id. When <see langword="null"/>, the SqlClient first-party application id is used and broker mode is forced on (regardless of <see cref="UseWamBroker"/>).
             </summary>
         </ApplicationClientId>
         <UseWamBroker>
             <summary>
-                Windows-only setting to control whether the provider uses the WAM broker for interactive authentication. 
+                Controls whether the provider uses the native authentication broker for interactive authentication: the Windows Account Manager (WAM) on Windows, and the msalruntime broker on Linux and macOS. 
                 Defaults to <see langword="false"/> when you provide a custom <see cref="ApplicationClientId"/>.
-                Otherwise, WAM broker mode is used automatically on Windows.
+                Otherwise, broker mode is used automatically.
             </summary>
+            <remarks>
+                Broker mode requires the Entra ID app registration for <see cref="ApplicationClientId"/> to list a redirect URI under "Mobile and desktop applications". Each broker uses a different one:
+                <list type="bullet">
+                    <item><description>Windows: <c>ms-appx-web://microsoft.aad.brokerplugin/{clientId}</c>.</description></item>
+                    <item><description>Linux: <c>https://login.microsoftonline.com/common/oauth2/nativeclient</c>. This URI must be explicitly enabled on the app registration.</description></item>
+                    <item><description>macOS, bundled application: <c>msauth.{bundleIdentifier}://auth</c>, where <c>bundleIdentifier</c> is the host application's <c>CFBundleIdentifier</c>.</description></item>
+                    <item><description>macOS, executable or script that is not a bundled application: <c>msauth.com.msauth.unsignedapp://auth</c>.</description></item>
+                </list>
+                <para>
+                    The broker also requires an operating system component: the Windows Account Manager on Windows 10 or later, the <c>microsoft-identity-broker</c> package on Linux, or the Microsoft Company Portal on macOS.
+                </para>
+                <para>
+                    On Linux the broker is only used on x64 glibc runtimes where the native msalruntime library can be loaded. That library is not published for other Linux runtime identifiers, and it links against <c>libwebkit2gtk</c>, <c>libsecret</c> and <c>libx11</c>, which are absent from most server and container images. Linux hosts that cannot load it use the system browser instead.
+                </para>
+                <para>
+                    On macOS, a bundled application cannot use the built-in SqlClient application id, because its redirect URI is derived from the application's own bundle identifier. Set <see cref="ApplicationClientId"/> to an Entra ID application you control and register <c>msauth.{bundleIdentifier}://auth</c> on it. Connecting with the built-in application id from a bundled application throws, except for <c>SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow</c>, which does not use the broker.
+                </para>
+                <para>
+                    On macOS, MSAL requires interactive token acquisition to run on the process main thread when the host is not running an AppKit message loop. A console application must therefore drive its work through <c>MacMainThreadScheduler</c> so that <c>SqlConnection.Open</c> resolves on the main thread. Applications that do not do so fail with <c>MsalClientException</c> ("Interactive requests with mac broker enabled must be executed on the main thread on macOS") when interactive sign-in is needed. This does not affect <c>SqlAuthenticationMethod.ActiveDirectoryIntegrated</c> or any flow satisfied from the token cache.
+                </para>
+            </remarks>
         </UseWamBroker>
     </members>
 </docs>
