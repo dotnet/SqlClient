@@ -6,59 +6,36 @@ label.
 
 ```mermaid
 flowchart TD
-    A["Maintainer labels an issue<br/><b>Hotfix 7.1.1</b>"] --> B["<b>hotfix-label-issue.yml</b><br/>(on: issues.labeled)"]
-    B --> B1["create-backport-issue.sh"]
-    B1 --> B2["Creates child issue<br/>'[7.1.1] &lt;title&gt;'<br/>milestoned 7.1.1<br/>+ linked as sub-issue"]
+    A["Maintainer labels an issue<br/><b>Hotfix 7.1.1</b>"] --> B["Create backport issue<br/>'[7.1.1] &lt;title&gt;'<br/>milestoned 7.1.1<br/>linked as sub-issue"]
 
-    C["Contributor opens a PR<br/>with 'Fixes #&lt;parent issue&gt;'"] --> D["<b>sync-hotfix-label-to-pr.yml</b><br/>(on: pull_request_target)"]
-    D --> D1["sync-hotfix-label-to-pr.sh"]
-    D1 --> D2{"Does the closed issue<br/>carry a Hotfix X.Y.Z label?"}
-    D2 -- yes --> D3["Copies 'Hotfix 7.1.1'<br/>label onto the PR"]
-    D2 -- no --> D4["No-op"]
+    C["Contributor opens a PR<br/>that fixes the issue"] --> D["Copy 'Hotfix 7.1.1' label<br/>from issue onto the PR"]
 
-    E["PR merges to main<br/>(with Hotfix label present)"] --> F["<b>cherry-pick-hotfix.yml</b><br/>(on: pull_request_target<br/>closed / labeled)"]
-    F --> F1["cherry-pick-to-release.sh"]
-    F1 --> F2["Cherry-picks the merge commit<br/>onto release/7.1"]
-    F1 --> F3["lookup_backport_issue():<br/>finds the sub-issue (B2)<br/>milestoned 7.1.1"]
-    F2 --> F4["Opens '[7.1.1 Cherry-pick] &lt;title&gt;' PR<br/>targeting release/7.1<br/>body: 'Fixes #&lt;backport issue&gt;'"]
-    F3 --> F4
+    E["PR merges to main"] --> F["Cherry-pick to release/7.1<br/>+ open a cherry-pick PR"]
+    F --> G["Link cherry-pick PR to the<br/>backport issue ('Fixes #...')"]
 
-    B2 -.->|"sub-issue provides<br/>the link target"| F3
-    D3 -.->|"label makes the merged PR<br/>eligible for cherry-pick"| F
+    B -.->|"backport issue is the<br/>link target"| G
+    D -.->|"label makes the merged PR<br/>eligible for cherry-pick"| E
 
-    style B2 fill:#e6f3ff
-    style D3 fill:#e6f3ff
-    style F4 fill:#e6f3ff
+    style B fill:#e6f3ff
+    style D fill:#e6f3ff
+    style G fill:#e6f3ff
 ```
 
 ## Steps
 
-1. **[`hotfix-label-issue.yml`](hotfix-label-issue.yml)** fires when an issue
-   receives a `Hotfix X.Y.Z` label. It runs
-   [`create-backport-issue.sh`](../scripts/create-backport-issue.sh), which
-   creates a child "backport issue" titled `[X.Y.Z] <original title>`,
-   milestones it to `X.Y.Z`, and links it as a native GitHub sub-issue of the
-   parent. If the label is later removed and re-added (or the workflow
-   re-runs), a duplicate-guard skips creating a second backport issue for the
-   same milestone.
+1. **Labeling an issue `Hotfix X.Y.Z`** creates a child "backport issue"
+   titled `[X.Y.Z] <original title>`, milestoned to `X.Y.Z`, and linked as a
+   native GitHub sub-issue of the parent. Re-adding the label (or re-running)
+   is a no-op if a backport issue for that milestone already exists.
 
-2. **[`sync-hotfix-label-to-pr.yml`](sync-hotfix-label-to-pr.yml)** fires when
-   a pull request is opened, reopened, edited, or synchronized. It runs
-   [`sync-hotfix-label-to-pr.sh`](../scripts/sync-hotfix-label-to-pr.sh),
-   which inspects the PR's closing keywords (`Fixes`/`Closes`/`Resolves #N`)
-   and, for any referenced issue in this repository that carries a
-   `Hotfix X.Y.Z` label, copies that label onto the PR itself. This means a
-   contributor never has to remember to label the PR by hand: the parent
-   issue's label is enough.
+2. **Opening a PR that closes the labeled issue** (via `Fixes`/`Closes`/
+   `Resolves #N`) automatically copies the issue's `Hotfix X.Y.Z` label onto
+   the PR. Contributors never have to remember to label the PR by hand.
 
-3. **[`cherry-pick-hotfix.yml`](cherry-pick-hotfix.yml)** fires when a labeled
-   PR is merged (or a `Hotfix X.Y.Z` label is added after merge). It runs
-   [`cherry-pick-to-release.sh`](../scripts/cherry-pick-to-release.sh), which
-   cherry-picks the merge commit onto `release/X.Y` and opens a
-   `[X.Y.Z Cherry-pick] <title>` PR. `lookup_backport_issue()` looks up the
-   sub-issue created in step 1 and appends a `Fixes #<backport issue>` line
-   to the cherry-pick PR body, so merging the cherry-pick automatically
-   closes the backport issue tracking that release.
+3. **Merging that labeled PR** cherry-picks it onto `release/X.Y` and opens
+   a `[X.Y.Z Cherry-pick] <title>` PR. That cherry-pick PR is automatically
+   linked to the backport issue from step 1 (`Fixes #<backport issue>`), so
+   merging it closes out the release tracking issue too.
 
 ## Why sub-issues (not just linking)
 

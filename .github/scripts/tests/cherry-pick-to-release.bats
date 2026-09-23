@@ -333,6 +333,43 @@ STUB
   [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
 }
 
+@test "appends Fixes lines for every closing issue with a matching backport issue" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then printf "4714\n4715\n"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714/sub_issues ]]; then echo "4900"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4715/sub_issues ]]; then echo "4901"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [[ "$output" == *"Found backport issue #4901"* ]]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4901"* ]]
+}
+
 @test "omits Fixes line when the PR has no closing issue references" {
   write_git_mock '
     if [[ "$1" == "fetch" ]]; then exit 0; fi

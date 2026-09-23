@@ -198,6 +198,10 @@ lookup_backport_issue() {
   local version_escaped
   version_escaped=$(printf '%s' "${version}" | sed 's/["\\]/\\&/g')
 
+  # A single PR can close multiple Hotfix-labeled parent issues for the same
+  # release (e.g. two related bugs fixed together); accumulate a "Fixes" line
+  # for every parent that has a matching backport issue instead of stopping
+  # at the first match, so the cherry-pick PR closes all of them.
   local issue_number backport_number
   while IFS= read -r issue_number; do
     [[ -z "${issue_number}" ]] && continue
@@ -208,8 +212,7 @@ lookup_backport_issue() {
 
     if [[ -n "${backport_number}" ]]; then
       echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
-      BACKPORT_ISSUE_NOTE=$'\n\nFixes #'"${backport_number}"
-      return
+      BACKPORT_ISSUE_NOTE+=$'\n\nFixes #'"${backport_number}"
     fi
   done <<< "${closing_issues}"
 }
