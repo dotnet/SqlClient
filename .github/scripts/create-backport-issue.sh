@@ -20,8 +20,9 @@
 #      label is ignored.
 #
 #   2. Guard against duplicates: if the parent issue already has a sub-issue
-#      milestoned X.Y.Z, do nothing (handles labels being removed/re-added,
-#      or the workflow re-running).
+#      titled with the "[X.Y.Z] " prefix, do nothing (handles labels being
+#      removed/re-added, or the workflow re-running). Milestone is
+#      deliberately not part of this match; see Step 2 below for why.
 #
 #   3. Look up the X.Y.Z milestone (best-effort, like cherry-pick-to-release.sh's
 #      milestone lookup — if it doesn't exist yet, the child issue is created
@@ -89,9 +90,10 @@ echo "Hotfix label:  ${EVENT_LABEL}"
 echo "Version:       ${VERSION}"
 
 # -- Step 2: Guard against duplicates -----------------------------------------
-# Look at the parent's existing sub-issues. If one is already milestoned
-# VERSION, or already carries the child title prefix, a backport issue for
-# this version already exists — nothing to do.
+# Look at the parent's existing sub-issues. If one already carries the child
+# title prefix for VERSION, a backport issue for this version already
+# exists — nothing to do. Matching is on title prefix only, never milestone
+# alone (see the loop below for why).
 #
 # NOTE: the milestone column uses "NONE" rather than "" for issues without a
 # milestone. Tab is IFS whitespace, so 'read' silently collapses/skips a
