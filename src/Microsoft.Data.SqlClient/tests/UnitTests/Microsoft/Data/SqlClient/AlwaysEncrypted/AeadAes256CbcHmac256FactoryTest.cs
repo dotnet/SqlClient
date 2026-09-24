@@ -61,8 +61,8 @@ public class AeadAes256CbcHmac256FactoryTest
         SqlClientEncryptionAlgorithm initialSecondAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(secondRootKey, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         // Assert
-        Assert.Equal(initialFirstAlgorithm, cachedFirstAlgorithm);
-        Assert.NotEqual(initialFirstAlgorithm, initialSecondAlgorithm);
+        Assert.Same(initialFirstAlgorithm, cachedFirstAlgorithm);
+        Assert.NotSame(initialFirstAlgorithm, initialSecondAlgorithm);
 
         Assert.IsType<SqlAeadAes256CbcHmac256Algorithm>(initialFirstAlgorithm);
         Assert.IsType<SqlAeadAes256CbcHmac256Algorithm>(initialSecondAlgorithm);
