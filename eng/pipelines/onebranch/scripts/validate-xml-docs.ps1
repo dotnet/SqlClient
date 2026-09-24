@@ -485,10 +485,7 @@ function Test-Cref {
 
     # Anything this repository owns must be present in the documentation under validation. This can
     # only be judged when generated documentation was supplied; source mode has no member list.
-    #
-    # Namespaces are excluded because the compiler never emits a <member> entry for one, so every
-    # N: cref would otherwise be reported as missing.
-    if ($null -ne $script:LocalUids -and $prefix -ne 'N') {
+    if ($null -ne $script:LocalUids) {
         $isLocal = $false
         foreach ($localPrefix in $script:LocalNamespacePrefixes) {
             if ($namePart -eq $localPrefix -or $namePart.StartsWith("$localPrefix.", [System.StringComparison]::Ordinal)) {
@@ -523,17 +520,34 @@ function Test-Cref {
                         Add-Finding @Context -Category 'mismatched-docid-prefix' -Cref $Cref -Message $message
                     }
                 }
+                elseif ($prefix -eq 'N' -and $script:LocalNamespaces.Contains($body)) {
+                    # A namespace has no <member> entry of its own, so it resolves against the
+                    # namespaces derived from the members that were emitted. Reached only after
+                    # the member index above has ruled out the body naming a type, so an N: cref
+                    # written for a type is still reported as a prefix mismatch.
+                    return
+                }
                 else {
+                    # A namespace is described by the members occupying it rather than by an entry
+                    # of its own, so it needs its own wording: naming a member that was not emitted
+                    # says nothing about a cref that never named a member.
+                    $subject = if ($prefix -eq 'N') {
+                        "names a namespace this repository does not contain, as no documented " +
+                        'member occupies it'
+                    }
+                    else {
+                        'names this repository but no matching documented member was emitted by ' +
+                        'the build'
+                    }
+
                     if (Test-ContainingMemberIsPublic -Context $Context) {
                         Add-Finding @Context -Category 'missing-public-uid' -Cref $Cref -Message (
-                            "Cref '$trimmed' names this repository but no matching documented " +
-                            'member was emitted by the build. It is referenced from a public API ' +
+                            "Cref '$trimmed' $subject. It is referenced from a public API " +
                             'member, so the published page will carry an unresolved reference.')
                     }
                     else {
                         Add-Finding @Context -Category 'missing-local-uid' -Cref $Cref -Message (
-                            "Cref '$trimmed' names this repository but no matching documented " +
-                            'member was emitted by the build.')
+                            "Cref '$trimmed' $subject.")
                     }
                 }
             }
@@ -988,8 +1002,14 @@ $script:LocalUidsByBody = [System.Collections.Generic.Dictionary[string, System.
 # was supplied, which disables the public/internal distinction rather than guessing at it.
 $script:PublicUids = $null
 
+# Namespaces that the documented members occupy. The compiler emits no <member> entry for a
+# namespace, so an N: cref has nothing to resolve against unless the set is derived from the
+# members that were emitted. Left null alongside LocalUids when no documentation was supplied.
+$script:LocalNamespaces = $null
+
 if ($documentationDocuments.Count -gt 0) {
     $script:LocalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $script:LocalNamespaces = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($entry in $documentationDocuments) {
         foreach ($member in $entry.Document.Root.Element('members').Elements('member')) {
             $name = $member.Attribute('name')
@@ -1017,6 +1037,21 @@ if ($documentationDocuments.Count -gt 0) {
                         [System.StringComparer]::Ordinal)
                 }
                 [void]$script:LocalUidsByBody[$body].Add("$($uid[0]):")
+
+                # Every leading portion of an identifier names somewhere this repository really
+                # has: a namespace, or a type containing a nested one. Both are recorded, because
+                # a cref naming a type is recognized by the index above before the namespace set
+                # is consulted, so admitting a type name here cannot hide a wrong prefix.
+                $identifier = $body
+                $parenthesis = $identifier.IndexOf('(')
+                if ($parenthesis -ge 0) {
+                    $identifier = $identifier.Substring(0, $parenthesis)
+                }
+
+                $segments = $identifier.Split('.')
+                for ($index = 1; $index -lt $segments.Length; $index++) {
+                    [void]$script:LocalNamespaces.Add(($segments[0..($index - 1)] -join '.'))
+                }
             }
         }
     }
