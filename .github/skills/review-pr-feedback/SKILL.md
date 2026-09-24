@@ -100,7 +100,7 @@ often served by different paths:
 | Identify repo and PR | All steps | Resolve the repo and confirm the PR exists and is readable. When the PR was inferred from the branch, confirm the match before anything else. |
 | Look up PRs by branch | Step 1 | Only when no PR was supplied. Confirm the path can search PRs by head branch. |
 | Read review threads with resolved state | Steps 2, 7 | Fetch one page of review threads and confirm an `isResolved` (or equivalent) field is present, along with the paging information needed to reach the rest. A path that returns review comments but not their resolved state cannot drive this skill on its own. |
-| Read full review bodies | Step 3 | Fetch the body text, state and author of every review on the PR, and confirm the author carries a type (`Bot` or `User`) and not just a login. Step 3b needs that type to identify the Copilot reviewer, so a path returning bodies without it passes this check and then finds no suppressed findings at all — a silent zero that looks identical to a PR having none. This is also a different field from review threads, and both human review-body feedback and Copilot's suppressed feedback exist only here. |
+| Read full review bodies | Step 3 | Fetch the body text, state and author of every review on the PR, and confirm the author carries a type (`Bot` or `User`) and not just a login. A path that cannot return that type fails this capability: step 3b needs it to identify the Copilot reviewer, and accepting such a path would report zero suppressed findings — a silent zero that looks identical to a PR having none. This is also a different field from review threads, and both human review-body feedback and Copilot's suppressed feedback exist only here. |
 | Read discussion comments | Step 4 | Fetch one page of PR issue comments, and confirm you can page through the rest. Always required. |
 | Read and edit local files | Step 6 | Confirm the workspace is the right repository and is writable. |
 | Workspace is clean enough to edit | Steps 6, 9 | Inspect the index and the working tree. Record every path already staged or modified before this run started, including untracked files. Anything already there belongs to the user, not to this run. |
@@ -247,7 +247,9 @@ Skipping an approval gate:
     local branch can be stale or diverged while still being named correctly, and then step
     5 judges "Already Addressed" against a tree the PR does not have, step 6 edits code
     that is not under review, and a later push either fails or carries unrelated local
-    commits into the PR.
+    commits into the PR. This is a check on the state before this run edits anything; the
+    commit step 9 creates is expected to move local HEAD ahead of the PR until it is
+    pushed.
   - If they do not match, say so and stop. Offer either to switch the workspace to the
     PR's branch, or to continue in analysis-only mode with steps 6 and 9 skipped.
   - Treat a diverged or stale HEAD the same way: stop, report how it differs, and let the
@@ -507,6 +509,12 @@ Who gets a reply, stated once:
 - Do not post anything until approval is given. If the user approves some replies and not others, post only the approved ones and record the rest as withheld.
 - If you change any reply text after approval, ask again for the changed ones.
 - Reply to each review thread in that thread, linking to the relevant commit or code location where useful.
+- End every thread reply with the exact marker line `<!-- review-pr-feedback:reply -->`.
+  Later runs need it to tell this skill's own replies apart from a comment the user wrote
+  by hand from the same account: step 8 uses it to recognise an item as already answered,
+  and step 11 to keep a prior reply from counting as human participation. As with the
+  summary marker, it is a convenience and not a credential, so confirm authorship before
+  trusting it.
 - Cover all non-thread feedback in exactly one new PR comment, not one comment per item.
   This single comment covers the review-body feedback and Copilot suppressed findings from
   step 3 and the discussion comments from step 4, because none of them has a thread to
@@ -522,13 +530,14 @@ Who gets a reply, stated once:
 
 11. Resolve threads, non-human feedback only
 - Resolving is a gated action, separate from the reply gate. See Approvals.
-- Work out which threads qualify. Judge authorship from the snapshot step 2 recorded, before this run posted anything. A thread qualifies only when every comment in that snapshot was authored by a bot, its reply from step 10 was posted successfully, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
+- Work out which threads qualify. Judge authorship from the snapshot step 2 recorded, before this run posted anything. A thread qualifies only when every comment in that snapshot was authored by a bot or by this skill, a reply covering the current request and outcome exists on it from this run or an earlier one, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
 - Re-fetch each candidate thread immediately before resolving it, and compare against the snapshot. A run takes time, and a human can comment while it is in progress. If anyone other than you has commented since the snapshot, drop that thread from the list, say so, and leave it open: they have now engaged, and the reply they are owed is theirs to judge.
 - For a thread classified Fixed, confirm the change is actually on the PR's head before resolving it. A fix that exists only in the local workspace is not visible to anyone reading the PR, and push can be declined or unavailable, so Fixed on its own does not mean fixed here. If the commit was never pushed, leave the thread open, say the fix is local only, and tell the user what to push.
-- Disregard the specific replies this run posted when deciding whether a thread is bot-only, identified by their comment ids, not by their author. They are this run's output, and counting them would make every replied-to thread look human-involved, so replying would permanently disqualify the very threads it was meant to conclude. Exempting the whole account instead would be wider than intended: a comment the user writes by hand during the run comes from the same account and is genuine human participation.
+- Disregard this skill's own replies when deciding whether a thread is bot-only, whether they were posted by this run or by an earlier one. Identify them by comment id, not by author: this run knows the ids it posted, and an earlier run's reply is recognisable by the marker it carries. Counting them would make every replied-to thread look human-involved, so replying would permanently disqualify the very threads it was meant to conclude. Exempting the whole account instead would be wider than intended: a comment the user writes by hand comes from the same account and is genuine human participation.
+- A reply posted by an earlier run satisfies the reply requirement below, provided it still covers the current request and outcome. Resolution is often declined or unavailable on the run that replies, and step 8 will not repeat an unchanged answer, so requiring a reply from this run specifically would leave those threads unresolvable for ever.
 - Never resolve a thread whose outcome is Needs Clarification or Blocked, even when it is bot-only and has been replied to. Those statuses mean the request is still open, and resolving one hides an unanswered question behind a reply that did not answer it.
 - Show the user that list, each entry with its author and the reason it qualifies, and ask for approval to resolve. Approval of the replies in step 10 does not authorise this.
-- Never resolve a thread that any human participated in, counting every comment except the replies this run posted. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
+- Never resolve a thread that any human participated in, counting every comment except this skill's own replies from any run. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
 - A bot-opened thread that a human later commented in counts as human, including when that human is you writing by hand rather than this run replying. Treat it as human.
 - Decide from the author type recorded in step 2, never from the login alone. If the type is missing or ambiguous for any comment in a thread, treat that thread as human and leave it unresolved.
 - Never resolve anything that came from step 3 or step 4; review-body feedback, suppressed findings and discussion comments have no thread and no resolved state.
@@ -551,7 +560,7 @@ Who gets a reply, stated once:
 - Repo
 - PR number, title and state, and whether it was given or inferred from the branch
 - Run mode: full, or analysis-only with the reason
-- Whether the authenticated user is the PR's author
+- Each write principal — commit, push, reply, resolve — with the account it runs as and whether that account is the PR's author, named separately so a mismatch is visible rather than averaged away
 - Access paths used, one line per capability (read, edit, test, commit/push, reply/resolve)
 - Capabilities pre-flight found unavailable, and the resulting limits on this run
 - Feedback found per source, each stated explicitly including zero counts:
@@ -668,13 +677,13 @@ Replying and resolving
 - Reply to every item this run engaged with, on the terms step 8 sets out; rejections need a reason and are recorded as Rejected.
 - Do not answer the same item twice across runs unless the request or the outcome changed; an unresolved thread is not the same thing as an unanswered one.
 - Do not post generic batch replies; each reply must address that specific item and its outcome. The single summary comment is the one exception, and it must still address each item it covers individually.
-- Never resolve a review thread that a human participated in, counting everything except the replies this run posted, regardless of how complete the fix is.
+- Never resolve a review thread that a human participated in, counting everything except this skill's own replies from any run, regardless of how complete the fix is.
 - Never resolve a thread whose request is still open, whatever its authorship.
 - Treat unknown or ambiguous authorship as human.
 
 Workspace and git
 
-- Never edit, commit or push while the workspace is on a branch, or at a commit, other than the PR's head.
+- Never edit or commit while the workspace is on a branch, or at a commit, other than the PR's head as it stood before this run began. Pushing commits this run created is how that head moves forward, so it is permitted and expected; pushing anything else is not.
 - Stage only files this run changed; leave the user's pre-existing and untracked work uncommitted.
 - Use the discovered git remote name consistently anywhere a remote is required.
 - Keep behavior-compatible edits unless feedback explicitly requires change.
