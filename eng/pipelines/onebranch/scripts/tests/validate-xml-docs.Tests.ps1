@@ -1479,6 +1479,7 @@ Describe 'validate-xml-docs.ps1' {
                 'lib-ref-documentation-identical' = 'error'
                 'missing-public-uid'              = 'error'
                 'mismatched-public-docid-prefix'  = 'error'
+                'enum-field-remarks'              = 'error'
                 'missing-documentation'           = 'error'
                 'missing-local-uid'               = 'info'
                 'mismatched-docid-prefix'         = 'warning'
@@ -1493,6 +1494,225 @@ Describe 'validate-xml-docs.ps1' {
             foreach ($category in $expected.Keys) {
                 $actual[$category] | Should -Be $expected[$category] -Because "$category is documented as $($expected[$category])"
             }
+        }
+    }
+
+    Context 'enum field remarks' {
+
+        BeforeAll {
+            <#
+                Writes a source tree declaring an enum, which is the only thing that says which
+                documented members are enum fields.
+            #>
+            function New-EnumSource {
+                param(
+                    [string]$TypeName = 'Widget',
+                    [string[]]$Members = @('First', 'Second'),
+                    [string]$Extra = ''
+                )
+
+                $path = New-TestDirectory
+                $body = ($Members | ForEach-Object { "        $_," }) -join "`n"
+                @"
+namespace Contoso
+{
+    public enum $TypeName
+    {
+$body
+    }
+$Extra
+}
+"@ | Set-Content -LiteralPath (Join-Path $path 'Widget.cs') -Encoding utf8
+
+                # A project file, because the enum search root follows the project the caller names.
+                '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>' +
+                '<GenerateDocumentationFile>true</GenerateDocumentationFile>' +
+                '</PropertyGroup></Project>' |
+                    Set-Content -LiteralPath (Join-Path $path 'Sample.csproj') -Encoding utf8
+
+                return $path
+            }
+
+            <#
+                Writes a snippet in the shape the repository uses: one block per member, nested
+                under a <members> element naming the type.
+            #>
+            function New-EnumSnippet {
+                param(
+                    [Parameter(Mandatory)][string]$Body,
+                    [string]$TypeName = 'Widget'
+                )
+
+                $path = New-TestDirectory
+                "<docs><members name=`"$TypeName`">$Body</members></docs>" |
+                    Set-Content -LiteralPath (Join-Path $path "$TypeName.xml") -Encoding utf8
+                return $path
+            }
+        }
+
+        It 'reports remarks on an enum field' {
+            $source = New-EnumSource
+            $snippets = New-EnumSnippet -Body (
+                '<Widget><summary>W.</summary></Widget>' +
+                '<First><summary>F.</summary><remarks>Discarded.</remarks></First>')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source -ReportPath $report } |
+                Should -Throw
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -eq 'enum-field-remarks' })[0]
+            $finding.Severity | Should -Be 'error'
+            $finding.Member | Should -Be 'Widget.First'
+        }
+
+        It 'accepts remarks on the block documenting the type itself' {
+            # A type's remarks are rendered; only a field's are discarded.
+            $source = New-EnumSource
+            $snippets = New-EnumSnippet -Body '<Widget><summary>W.</summary><remarks>Kept.</remarks></Widget>'
+
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'accepts remarks on a platform-variant block documenting the type' {
+            # WidgetNetfx documents the type for another platform, and is not a declared member, so
+            # it must not be mistaken for a field merely because its name differs from the type's.
+            $source = New-EnumSource
+            $snippets = New-EnumSnippet -Body (
+                '<Widget><summary>W.</summary></Widget>' +
+                '<WidgetNetfx><summary>W.</summary><remarks>Kept.</remarks></WidgetNetfx>')
+
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'accepts remarks on a member of a type that is not an enum' {
+            $source = New-EnumSource
+            $snippets = New-EnumSnippet -TypeName 'Gadget' -Body (
+                '<Gadget><summary>G.</summary></Gadget>' +
+                '<First><summary>F.</summary><remarks>Kept.</remarks></First>')
+
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'reports remarks on a public enum field in generated documentation' {
+            # A documentation ID states the member kind, so the field is recognized there too.
+            $source = New-EnumSource
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+            '<doc><members><member name="F:Contoso.Widget.First"><summary>F.</summary>' +
+            '<remarks>Discarded.</remarks></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Contoso.xml') -Encoding utf8
+            '<doc><members><member name="F:Contoso.Widget.First"><summary>F.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Contoso.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ProjectSearchRoot $source -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -eq 'enum-field-remarks' })[0]
+            $finding.Member | Should -Be 'F:Contoso.Widget.First'
+        }
+
+        It 'ignores an internal enum field in generated documentation' {
+            # The implementation assembly documents its own P/Invoke enums. They reach no published
+            # page, so nothing is lost by remarks the build discards.
+            $source = New-EnumSource
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+            '<doc><members><member name="F:Contoso.Widget.First"><summary>F.</summary>' +
+            '<remarks>Internal.</remarks></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Contoso.xml') -Encoding utf8
+            # The field is absent from ref/, so it is not part of the public API surface.
+            '<doc><members><member name="T:Contoso.Widget"><summary>W.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Contoso.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ProjectSearchRoot $source -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings.Category) | Should -Not -Contain 'enum-field-remarks'
+        }
+
+        It 'does not report a generated field when the public API surface is unknown' {
+            # Without reference documentation nothing says which members publish, and the rule is
+            # not escalated on a guess.
+            $source = New-EnumSource
+            $docs = New-TestDirectory
+            '<doc><members><member name="F:Contoso.Widget.First"><summary>F.</summary>' +
+            '<remarks>Unknown.</remarks></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Contoso.xml') -Encoding utf8
+
+            { & $scriptPath -DocumentationPath $docs -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'accepts remarks on a property of a class in generated documentation' {
+            $source = New-EnumSource
+            $docs = New-TestDirectory
+            '<doc><members><member name="P:Contoso.Widget.First"><summary>F.</summary>' +
+            '<remarks>Kept.</remarks></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Contoso.xml') -Encoding utf8
+
+            { & $scriptPath -DocumentationPath $docs -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'does not apply the rule when no source tree identifies the enums' {
+            # Without declarations there is nothing to distinguish a field from a type, and
+            # guessing would report the very blocks that are legitimate.
+            $snippets = New-EnumSnippet -Body (
+                '<Widget><summary>W.</summary></Widget>' +
+                '<First><summary>F.</summary><remarks>Unknown.</remarks></First>')
+
+            { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
+        }
+
+        It 'ignores an enum member that is only mentioned in a comment' {
+            $source = New-EnumSource -Members @('First') -Extra @'
+    // Second, is commented out and is not a member.
+'@
+            $snippets = New-EnumSnippet -Body (
+                '<Widget><summary>W.</summary></Widget>' +
+                '<Second><summary>S.</summary><remarks>Kept.</remarks></Second>')
+
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source } | Should -Not -Throw
+        }
+
+        It 'reads every member of an enum whose entries carry attributes and values' {
+            $source = New-TestDirectory
+            @'
+namespace Contoso
+{
+    public enum Widget
+    {
+        [System.ComponentModel.Description("a, b")]
+        First = 1,
+        Second = (2 + 3),
+        Third,
+    }
+}
+'@ | Set-Content -LiteralPath (Join-Path $source 'Widget.cs') -Encoding utf8
+
+            $snippets = New-EnumSnippet -Body (
+                '<Widget><summary>W.</summary></Widget>' +
+                '<Third><summary>T.</summary><remarks>Discarded.</remarks></Third>')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            # Third is the last entry and follows one carrying a comma inside an attribute, so it is
+            # only found when entries are split on the commas that actually separate members.
+            { & $scriptPath -SnippetsDirectory $snippets -ProjectSearchRoot $source -ReportPath $report } |
+                Should -Throw
+
+            @((Get-Report -Path $report).Findings.Category) | Should -Contain 'enum-field-remarks'
         }
     }
 
