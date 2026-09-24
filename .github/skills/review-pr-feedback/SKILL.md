@@ -1,33 +1,38 @@
 ---
 name: review-pr-feedback
-description: Uses gh CLI to collect unresolved PR review feedback, optionally includes discussion comments, applies fixes, and reports status.
+description: Uses gh CLI to collect unresolved PR review feedback, optionally includes discussion comments, applies fixes, and reports status. Invoke explicitly with /review-pr-feedback and a PR number or URL.
 disable-model-invocation: true
-argument-hint: pr=<number-or-url> repo=<owner/repo-optional> includeDiscussionComments=<true|false> authorFilter=<optional regex or csv> testScope=<optional test hint>
+argument-hint: <pr-number-or-url> [repo owner/name] [include discussion comments] [author filter] [test scope]
 ---
 You are an expert software maintenance agent focused on resolving pull request feedback quickly, safely, and with clear traceability.
 
-## Context
-- Workspace root: ${workspaceFolder}
-- Target PR: ${input:pr}
-- Optional repository override: ${input:repo}
-- Include non-review discussion comments: ${input:includeDiscussionComments}
-- Optional author filter: ${input:authorFilter}
-- Optional focused testing hint: ${input:testScope}
-- Optional selected context: ${selection}
+## Inputs
+
+Read the following from the text the user supplies after the slash command, for example
+`/review-pr-feedback 3412 include discussion comments from dnfadmin`. Only the PR is
+required.
+
+| Input | How to resolve it |
+| --- | --- |
+| **PR** (required) | A PR number or URL in the request. If absent, ask for it and stop. |
+| **Repository** | An explicit `owner/name` in the request; otherwise infer from the git remote of the current workspace. |
+| **Include discussion comments** | Default no. Treat as yes only if the request asks for discussion, issue, or non-review comments. |
+| **Author filter** | A name, regex, or comma-separated list in the request. Default no filtering. |
+| **Test scope** | A hint about which tests to run. Default is to choose targeted tests yourself. |
+
+Work in the current workspace folder. If the user has selected text or attached files,
+treat that as additional context about which feedback matters most.
 
 ## Skills
-#skill:generate-mstest-filter
 
-Use this skill when building a dotnet test filter:
-- [generate-mstest-filter](.github/skills/generate-mstest-filter/SKILL.md)
-
-Follow the referenced skill instructions before producing any custom filter.
+When you need a `dotnet test` filter expression, use the `generate-mstest-filter` skill
+and follow its instructions rather than hand-writing a filter.
 
 ## Task
 1. Validate prerequisites
 - Confirm gh CLI is installed and authenticated.
-- Resolve repository from ${input:repo}, or infer from git remote.
-- Resolve PR number from ${input:pr} (accept number or URL).
+- Resolve the repository from the request, or infer it from the git remote.
+- Resolve the PR number from the request (accept a number or a URL).
 - Discover the correct git remote name from the current repository and store it for later commands.
 - Use that discovered remote name for push and any other git operations that require a remote; do not assume `origin`.
 
@@ -35,12 +40,12 @@ Follow the referenced skill instructions before producing any custom filter.
 - Query PR review threads with gh api GraphQL.
 - Keep only unresolved threads where isResolved is false.
 - Extract thread id, file path, line/startLine, comment url, author login, and body.
-- If ${input:authorFilter} is provided, apply it case-insensitively.
+- If an author filter was given, apply it case-insensitively.
 
 3. Optionally gather non-review discussion comments
-- If ${input:includeDiscussionComments} is true, fetch PR issue comments.
+- Only if the user asked for discussion comments, fetch PR issue comments.
 - Mark these as Informational because they do not have open/resolved state.
-- Apply ${input:authorFilter} if provided.
+- Apply the author filter if one was given.
 
 4. Build an implementation plan
 - Group unresolved review feedback by file and risk.
@@ -51,7 +56,7 @@ Follow the referenced skill instructions before producing any custom filter.
 5. Implement and verify
 - Apply required code or test updates with smallest safe change set.
 - Run targeted checks first.
-- If ${input:testScope} is provided, generate and use a focused MSTest filter via the skill.
+- If a test scope was given, use the `generate-mstest-filter` skill to build a focused filter for it.
 - Collect diagnostics when tests cannot run.
 
 6. Classify each item
