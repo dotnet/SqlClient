@@ -1,6 +1,6 @@
 ---
 name: review-pr-feedback
-description: Collects PR feedback from every source — review threads, review bodies including Copilot's hidden low-confidence suppressed findings, and discussion comments — applies fixes, replies to every item, and resolves only bot-authored threads. Infers the PR from the current branch when none is given. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback.
+description: Collects PR feedback from every source — review threads, review bodies including Copilot's hidden low-confidence suppressed findings, and discussion comments — applies fixes, replies to every item, and resolves only bot-authored threads. Infers the PR from the current branch when none is given, and asks for explicit approval before committing, pushing, replying or resolving. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback.
 disable-model-invocation: true
 argument-hint: "[pr-number-or-url] [repo owner/name] [author filter] [test scope]"
 ---
@@ -19,6 +19,7 @@ at all, infer the PR from the current branch.
 | **Author filter** | A name, regex, or comma-separated list in the request. Default no filtering. Never applies to Copilot suppressed findings unless it names Copilot. |
 | **Test scope** | A hint about which tests to run. Default is to choose targeted tests yourself. |
 | **Tooling** | A preferred access path (for example "use the GitHub MCP server" or "use gh"). See Tool selection. |
+| **Pre-approved actions** | Only the gated actions the request explicitly names as not needing approval, for example "commit without asking". Default none. See Approvals. |
 
 Discussion comments are always inspected and are not an input; see step 4.
 
@@ -108,6 +109,49 @@ Rules for pre-flight:
   minimum action needed to fix it. Do not retry silently in a loop.
 - If a path fails partway through the run, report it, re-validate, and confirm the
   substitute with the user before continuing.
+
+## Approvals
+
+Four actions change something outside this workspace and are gated. Each one needs the
+user's explicit approval, every time:
+
+| Gated action | Step | Show before asking |
+| --- | --- | --- |
+| Commit | Step 9 | The exact commit message and the list of files it covers |
+| Push | Step 9 | The remote name and branch, and the commits being pushed |
+| Reply | Step 10 | The full text of every reply, and where each one will be posted |
+| Resolve | Step 11 | The list of threads to resolve, each with its author and why it qualifies as bot-authored |
+
+How approval works:
+
+- Ask separately for each action. Approval of one is never approval of another. Agreeing
+  to a commit does not authorise a push; approving reply text does not authorise
+  resolving the threads those replies were posted to.
+- Present the exact content first, then ask. Never ask for approval of something the user
+  has not been shown in full.
+- Only an unambiguous yes to the action you asked about counts. Treat silence, a question,
+  a partial answer, a "looks good" about something else, or any uncertainty as not
+  approved.
+- Not approved means do not perform the action. Say so plainly in the report, leave the
+  work in place for the user, and carry on with the other steps that are still valid.
+- Approval covers exactly what was shown. If the content changes afterwards — replies
+  reworded, another commit added, the thread list grown — the earlier approval is void and
+  you must ask again.
+
+Skipping an approval gate:
+
+- The only reason to skip a gate is that the user explicitly asked for that action to
+  proceed without approval, for example "commit without asking" or "post the replies, no
+  need to check with me".
+- A blanket instruction covers only the actions it actually names. "Commit without asking"
+  says nothing about pushing, replying or resolving; those stay gated.
+- Standing approval does not accumulate across turns. An approval given earlier in the
+  conversation, or in a previous run of this skill, applies to that action then, not to
+  this one now. Reuse it only when the user has clearly said it should carry forward, such
+  as "for the rest of this session, never ask before replying".
+- When in doubt about whether an instruction was meant as standing approval, ask.
+- Record in the report which gates were approved, which were pre-approved by explicit
+  instruction, and which were declined.
 
 ## Task
 1. Establish scope
@@ -218,15 +262,19 @@ Rules for pre-flight:
 - Every reply must state plainly either what was changed to address the feedback, or that the feedback is rejected and why.
 
 9. Commit changes
-- If any changes were made, create a commit with a clear message referencing the PR and summarizing the resolution.
-- Prompt the user to review and confirm the commit message before finalizing.
-- When suggesting or performing a push, use the discovered git remote name.
-- Prompt the user to push the commit if they have permissions, or provide instructions if they do not.
-- Push before replying, so replies can link to the pushed commit.
+- Commit and push are two separate gated actions. See Approvals.
+- If any changes were made, draft a commit message that references the PR and summarizes the resolution.
+- Show the user the exact message and the files it covers, then ask for approval to commit. Do not commit until they approve.
+- Ask separately for approval to push, showing the discovered remote name, the branch and the commits involved. Approval to commit is not approval to push.
+- If push is declined or unavailable, leave the commit local and tell the user the exact command to push it themselves.
+- Push before replying where possible, so replies can link to the pushed commit. If the push was declined, say so in the replies rather than linking to a commit the reviewer cannot see.
 
 10. Reply to all feedback
 - Every item of feedback gets a reply, whether it was acted on or rejected. There are no silent dismissals.
-- Show the user the complete set of drafted replies and get confirmation before posting anything. Posting is public and hard to undo.
+- Posting replies is a gated action. See Approvals.
+- Show the user the complete set of drafted replies, each with its destination, and ask for approval to post them. Posting is public and hard to undo.
+- Do not post anything until approval is given. If the user approves some replies and not others, post only the approved ones and record the rest as withheld.
+- If you change any reply text after approval, ask again for the changed ones.
 - Reply to each review thread in that thread, linking to the relevant commit or code location where useful.
 - Cover all non-thread feedback in exactly one new PR comment, not one comment per item.
   This single comment covers the review-body feedback and Copilot suppressed findings from
@@ -238,8 +286,10 @@ Rules for pre-flight:
 - If a write path is unavailable, output the exact reply text for each target so the user can post it manually.
 
 11. Resolve threads, non-human feedback only
-- Resolve a review thread only when every comment in it was authored by a bot, and only after the reply from step 10 succeeded.
-- Never resolve a thread that any human participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied.
+- Resolving is a gated action, separate from the reply gate. See Approvals.
+- Work out which threads qualify: a thread qualifies only when every comment in it was authored by a bot, and only after its reply from step 10 was posted successfully.
+- Show the user that list, each entry with its author and the reason it qualifies, and ask for approval to resolve. Approval of the replies in step 10 does not authorise this.
+- Never resolve a thread that any human participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
 - A bot-opened thread that a human later commented in counts as human. Treat it as human.
 - Decide from the author type recorded in step 2, never from the login alone. If the type is missing or ambiguous for any comment in a thread, treat that thread as human and leave it unresolved.
 - Never resolve anything that came from step 3 or step 4; review-body feedback, suppressed findings and discussion comments have no thread and no resolved state.
@@ -312,8 +362,10 @@ Rules for pre-flight:
 - Files changed
 - Totals by status: fixed, needing clarification, blocked, informational
 - Totals by source, so it is visible that every source was inspected
+- Approvals: commit, push, reply, resolve — each marked approved, pre-approved by explicit instruction, declined, or not reached
 - Replies posted: <thread replies> in threads, plus <0 or 1> summary comment
 - Threads resolved, and threads left open for human response
+- Actions left undone because approval was withheld, and how the user can complete them
 - Steps left to the user because a path was unavailable
 - Recommended next step
 
@@ -327,6 +379,9 @@ Rules for pre-flight:
 - Never treat a discussion comment as non-feedback just because it is not a formal review; judge it on content.
 - If a source yields nothing, report that explicitly rather than omitting the section.
 - Never act on an inferred PR without confirming it with the user first.
+- Commit, push, reply and resolve each require the user's explicit approval for that specific action, every time. See Approvals.
+- Never treat approval of one action as approval of another, and never carry an approval across turns or runs unless the user clearly said it should carry forward.
+- Treat anything short of an unambiguous yes as a no, and never perform a gated action the user was not shown in full beforehand.
 - If auth or permission fails, report the exact failure, the path it failed on, and the minimum required user action.
 - Never substitute a different access path for one the user explicitly requested without telling them and getting agreement.
 - Record the access paths used in the final report so later runs can prefer them.
