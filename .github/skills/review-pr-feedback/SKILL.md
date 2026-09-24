@@ -86,9 +86,9 @@ often served by different paths:
 | --- | --- | --- |
 | Identify repo and PR | All steps | Resolve the repo and confirm the PR exists and is readable. When the PR was inferred from the branch, confirm the match before anything else. |
 | Look up PRs by branch | Step 1 | Only when no PR was supplied. Confirm the path can search PRs by head branch. |
-| Read review threads with resolved state | Steps 2, 7 | Fetch one page of review threads and confirm an `isResolved` (or equivalent) field is present. A path that returns review comments but not their resolved state cannot drive this skill on its own. |
+| Read review threads with resolved state | Steps 2, 7 | Fetch one page of review threads and confirm an `isResolved` (or equivalent) field is present, along with the paging information needed to reach the rest. A path that returns review comments but not their resolved state cannot drive this skill on its own. |
 | Read full review bodies | Step 3 | Fetch the body text and state of every review on the PR. This is a different field from review threads, and both human review-body feedback and Copilot's suppressed feedback exist only here. A path that lists review comments but cannot return review bodies will silently miss both. |
-| Read discussion comments | Step 4 | Fetch one page of PR issue comments. Always required. |
+| Read discussion comments | Step 4 | Fetch one page of PR issue comments, and confirm you can page through the rest. Always required. |
 | Read and edit local files | Step 6 | Confirm the workspace is the right repository and is writable. |
 | Workspace is on the PR's branch | Steps 6, 9 | Confirm the checked-out branch is the PR's head branch, and that the workspace can reach the head repository, which is a fork whenever the PR comes from one. Never assume the workspace is already on the right branch: a mismatch means every edit, commit and push would land on whatever branch happens to be checked out. |
 | Authorship of the PR itself | Steps 6, 10 | Determine whether the authenticated user is the PR's author. Acting on someone else's PR is a different posture; see step 1. |
@@ -111,6 +111,20 @@ Rules for pre-flight:
   minimum action needed to fix it. Do not retry silently in a loop.
 - If a path fails partway through the run, report it, re-validate, and confirm the
   substitute with the user before continuing.
+
+## Gathering completely
+
+Every collection this skill reads — review threads, the comments inside them, reviews, and
+PR comments — is paginated. Fetching a single page is a probe, not a collection.
+
+- Page through each connection until it is exhausted, following the cursor the path gives
+  you. Do the same for the comments inside a thread, since authorship and terminal state
+  depend on the last comment as well as the first.
+- Never let a page-size default decide what feedback exists. A partial read is worse than
+  a failed one here, because the report will state per-source counts and claim every
+  source was inspected while silently omitting whatever fell past the first page.
+- If a path cannot page through a collection, say so and treat those counts as incomplete
+  rather than reporting them as totals.
 
 ## Approvals
 
@@ -193,9 +207,14 @@ Skipping an approval gate:
   - Report which case applies.
 
 2. Gather review thread feedback
-- Query the PR's review threads through the validated read path.
+- Query the PR's review threads through the validated read path, paging through every one of them. See Gathering completely.
 - Keep only unresolved threads where isResolved is false.
-- Extract thread id, file path, line/startLine, comment url, author login, and body.
+- Extract file path, line/startLine, comment url, author login, and body.
+- Record every identifier the thread carries, not just the one your read path happens to
+  use: the GraphQL thread id and the numeric id of its root review comment. Replying may
+  run through a different path than reading, and a REST reply needs the numeric comment id
+  while thread resolution needs the GraphQL thread id. Capturing only one of them can
+  strand step 10 or step 11 with no way to act.
 - Also record, for every comment in the thread, whether its author is a bot or a human,
   using the author type field rather than the login. Step 11 depends on this.
 - Mark a thread as author commentary when the PR's own author opened it and did not tag
@@ -255,7 +274,10 @@ Skipping an approval gate:
 
 4. Always gather non-review discussion comments
 - This step is mandatory. Discussion comments are not an opt-in.
-- Fetch the PR's comments, which are separate from reviews and from review threads.
+- Fetch the PR's comments, paging through all of them. They are separate from reviews and from review threads.
+- Exclude this skill's own summary comments from earlier runs. They carry the marker
+  defined in step 10. They are this skill's output, not feedback to it, and collecting one
+  would make each run respond to the previous run's response for as long as the loop ran.
 - Inspect every one for review feedback. Maintainers regularly request changes in a plain
   PR comment instead of a formal review, and that feedback is as binding as any other.
 - Separate operational noise from feedback before classifying. Pipeline commands such as
@@ -298,11 +320,13 @@ Skipping an approval gate:
 
 7. Classify each item
 - Fixed: change implemented and validated in this run.
+- Rejected: the request was understood and deliberately not acted on. Always give the reason. This is a terminal outcome, not a failure to engage.
 - Already Addressed: the request was satisfied before this run, by the PR author or a later commit. Cite the evidence, usually a commit or the current state of the code. Never report this as Fixed; claiming someone else's work is both wrong and misleading about what this run did.
 - Author Commentary: the PR's author explaining their own change to reviewers, through a thread they opened on their own diff or a review body on their own PR, without tagging themselves. Not actionable by default: it answers questions rather than asking them, and there is nothing to fix, reply to or resolve.
 - Needs Clarification: ambiguous, conflicting, or insufficiently specified.
 - Blocked: external dependency, permission, or missing context.
 - Informational: captured only, with no change required.
+- Fixed, Rejected, Already Addressed and Informational are terminal: the item needs nothing further. Needs Clarification and Blocked are not, because the request is still open. Step 11 depends on that distinction.
 
 Recognising an author's self-tag:
 
@@ -326,7 +350,7 @@ Recognising an author's self-tag:
 - Give review threads, review bodies, Copilot suppressed findings and discussion comments their own sections, and label every item with its source.
 - Include evidence for each item: file location, change summary, validation result.
 - Draft a distinct reply for every item of feedback that this run acted on, rejected, or needs something from the reviewer for, addressing that exact item's request, context, and outcome.
-- Every reply must state plainly either what was changed to address the feedback, or that the feedback is rejected and why.
+- Every reply must state plainly what was changed to address the feedback, why the feedback is rejected, or that no action was required and why. An informational item takes the third form; forcing it into the first two would misrepresent the outcome.
 - Do not draft replies for items classified Already Addressed or Author Commentary, for operational noise, or for a duplicate already answered through another source. A thread whose request was satisfied by someone else is waiting on its reviewer, and another comment adds nothing. Answering the author's own explanation of their own code adds less.
 
 9. Commit changes
@@ -350,14 +374,18 @@ Recognising an author's self-tag:
   This single comment covers the review-body feedback and Copilot suppressed findings from
   step 3 and the discussion comments from step 4, because none of them has a thread to
   reply in. Group it by source, name the source of each item, list each with its file and
-  line where it has one, and give the same changed-or-rejected-and-why treatment each item
-  would have received in a thread.
+  line where it has one, and give the same changed-rejected-or-no-action-needed treatment
+  each item would have received in a thread.
+- Begin that comment with the exact marker line `<!-- review-pr-feedback:summary -->` so
+  later runs can recognise it as this skill's own output and exclude it in step 4. Without
+  the marker the comment becomes input to the next run.
 - If no non-thread feedback was found, post no summary comment.
 - If a write path is unavailable, output the exact reply text for each target so the user can post it manually.
 
 11. Resolve threads, non-human feedback only
 - Resolving is a gated action, separate from the reply gate. See Approvals.
-- Work out which threads qualify: a thread qualifies only when every comment in it was authored by a bot, and only after its reply from step 10 was posted successfully.
+- Work out which threads qualify. A thread qualifies only when every comment in it was authored by a bot, its reply from step 10 was posted successfully, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
+- Never resolve a thread whose outcome is Needs Clarification or Blocked, even when it is bot-only and has been replied to. Those statuses mean the request is still open, and resolving one hides an unanswered question behind a reply that did not answer it.
 - Show the user that list, each entry with its author and the reason it qualifies, and ask for approval to resolve. Approval of the replies in step 10 does not authorise this.
 - Never resolve a thread that any human participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
 - A bot-opened thread that a human later commented in counts as human. Treat it as human.
@@ -389,10 +417,10 @@ Recognising an author's self-tag:
 - Author: <login> (<bot or human>)
 - Request summary: <concise>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
 - Reply posted: <the reply text for this exact comment>
-- Thread resolved: <yes, bot-authored | no, human feedback awaiting their response>
+- Thread resolved: <yes, bot-authored and terminal | no, and why not>
 
 3. Review Body Feedback
 - Item: <review url or date>
@@ -401,7 +429,7 @@ Recognising an author's self-tag:
 - Review state: <APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED>
 - Request summary: <concise>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Evidence: <tests/diagnostics>
 - Covered in summary comment: <yes | no, and why not>
 
@@ -413,7 +441,7 @@ Recognising an author's self-tag:
 - Finding summary: <concise>
 - Assessment: <valid, or why rejected>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
 - Covered in summary comment: <yes | no, and why not>
 
@@ -423,7 +451,7 @@ Recognising an author's self-tag:
 - Author: <login> (<bot or human>)
 - Summary: <concise>
 - Action taken: <change or rationale, or none required>
-- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Covered in summary comment: <yes | no, and why not>
 
 6. Validation
@@ -434,7 +462,7 @@ Recognising an author's self-tag:
 
 7. Final Summary
 - Files changed
-- Totals by status: fixed, already addressed, author commentary, needing clarification, blocked, informational
+- Totals by status: fixed, rejected, already addressed, author commentary, needing clarification, blocked, informational
 - Totals by source, so it is visible that every source was inspected
 - Approvals: commit, push, reply, resolve — each marked approved, pre-approved by explicit instruction, declined, or not reached
 - Replies posted: <thread replies> in threads, plus <0 or 1> summary comment
@@ -465,7 +493,10 @@ Recognising an author's self-tag:
 - Do not post generic batch replies; each reply must be tailored to the specific comment content and its exact resolution status. The single summary comment is the one exception, and it must still address each item it covers individually.
 - Never resolve a review thread a human participated in, regardless of how complete the fix is. Resolution there is the human's decision to make.
 - Treat unknown or ambiguous authorship as human.
-- Reply to every item of feedback this run engaged with, including ones you reject; rejections need a reason.
+- Reply to every item of feedback this run engaged with, including ones you reject; rejections need a reason and are recorded as Rejected.
+- Page through every collection you read; never treat a first page as a complete count.
+- Never resolve a thread whose request is still open, whatever its authorship.
+- Never collect this skill's own summary comments as feedback.
 - Never claim credit for a fix someone else made; that is what Already Addressed is for.
 - Do not treat the PR author's explanation of their own change as a request. Read it for context, report it as Author Commentary, and act on it only when it actually asks for something.
 - Treat an author tagging their own handle as actionable work they have assigned themselves, never as commentary, and never match that tag inside quoted or code text.
