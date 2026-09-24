@@ -4,10 +4,19 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 
 ## Prerequisites
 
-- PowerShell 5.1+ or PowerShell 7+
+- PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
+  PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
+  PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`, and the
+  pipeline invokes them exclusively through `pwsh`.
 - [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
 
 ## Running the Tests
+
+Restore the pinned PowerShell first, so the tests run on the same version the pipeline uses:
+
+```console
+dotnet tool restore
+```
 
 From this directory:
 
