@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics;
 using System.Text;
 
 #nullable enable
@@ -56,6 +57,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             field ??= Encoding.Unicode.GetBytes(MacKeySaltString);
         private static byte[] IvKeySalt =>
             field ??= Encoding.Unicode.GetBytes(IvKeySaltString);
+
+#if DEBUG
+        static AeadAes256CbcHmac256EncryptionKey()
+        {
+            Debug.Assert(KeySizeInBitsString == KeySizeInBits.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+#endif
 
         /// <summary>
         /// Derives all the required keys from the given root key
