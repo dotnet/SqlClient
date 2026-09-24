@@ -403,6 +403,71 @@ Describe 'validate-xml-docs.ps1' {
             { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
         }
 
+        <#
+            A conversion operator's return type sits after the parameter list, which is where the
+            alias scan stops and where the name taken from before the '(' has already ended. These
+            cover that the return type is scanned like any other part of the signature.
+        #>
+        It 'rejects a C# alias in a conversion operator return type' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlTypes.SqlJson.op_Implicit(System.Int32)~string' }
+            @{ Cref = 'M:Microsoft.Data.SqlTypes.SqlJson.op_Explicit(System.Int32)~System.Collections.Generic.List{int}' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*in its signature*'
+        }
+
+        It 'reports the parameter and return aliases of one signature together' {
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlTypes.SqlJson.op_Implicit(int)~string')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Message | Should -BeLike "*C# aliases 'int', 'string'*"
+        }
+
+        It 'accepts a fully qualified generic conversion operator return type' {
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlTypes.SqlJson.op_Explicit(System.Int32)~System.Collections.Generic.List{System.Int32}')
+
+            { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
+        }
+
+        It 'rejects text after a parameter list that is not a return marker' {
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlTypes.SqlJson.Parse(System.String)garbage')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*unexpected text after its parameter list*'
+        }
+
+        It 'rejects a return marker that names no type' {
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlTypes.SqlJson.op_Implicit(System.String)~')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*names no return type*'
+        }
+
         It 'does not fail on an unprefixed cref, which the compiler binds from source' {
             $snippets = New-SnippetDirectory -Crefs @('SqlJson', 'string', 'System.Text.Json.JsonDocument')
             $report = Join-Path (New-TestDirectory) 'report.json'

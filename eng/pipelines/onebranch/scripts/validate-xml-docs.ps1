@@ -447,10 +447,43 @@ function Test-Cref {
             return
         }
 
+        # Only a conversion operator may carry anything after its parameter list, written as the
+        # return marker ~ followed by a type. Anything else there is outside the grammar, and would
+        # otherwise go unexamined: the checks below read the name before the '(' and the arguments
+        # within it, so text beyond the ')' belongs to neither.
+        $returnType = $null
+        $trailing = $body.Substring($signatureEnd + 1)
+        if ($trailing.Length -gt 0) {
+            if ($trailing[0] -ne '~') {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' has unexpected text after its parameter list. Only a " +
+                    "conversion operator's return marker, written as '~' followed by a type, may " +
+                    'follow it.')
+                return
+            }
+
+            $returnType = $trailing.Substring(1)
+            if ($returnType.Length -eq 0) {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' ends with a conversion operator return marker but names no " +
+                    'return type.')
+                return
+            }
+        }
+
         # A signature may repeat the same alias (string and string[] both reduce to string), so
-        # report the distinct offenders once rather than once per parameter.
-        $aliases = [System.Collections.Generic.List[string]]::new()
+        # report the distinct offenders once rather than once per parameter. A conversion
+        # operator's return type is part of its signature, so it is scanned with the parameters.
+        $signatureTypes = [System.Collections.Generic.List[string]]::new()
         foreach ($argument in (Split-DocIdArguments -Arguments $arguments)) {
+            $signatureTypes.Add($argument)
+        }
+        if ($null -ne $returnType) {
+            $signatureTypes.Add($returnType)
+        }
+
+        $aliases = [System.Collections.Generic.List[string]]::new()
+        foreach ($argument in $signatureTypes) {
             foreach ($alias in (Get-DocIdAlias -TypeName $argument)) {
                 if (-not $aliases.Contains($alias)) {
                     $aliases.Add($alias)
@@ -461,7 +494,7 @@ function Test-Cref {
             $quoted = ($aliases | ForEach-Object { "'$_'" }) -join ', '
             $noun = if ($aliases.Count -eq 1) { 'the C# alias' } else { 'the C# aliases' }
             Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
-                "Cref '$trimmed' uses $noun $quoted in its parameter list. Documentation IDs name " +
+                "Cref '$trimmed' uses $noun $quoted in its signature. Documentation IDs name " +
                 'CLR types, so use the full type name instead.')
             return
         }
