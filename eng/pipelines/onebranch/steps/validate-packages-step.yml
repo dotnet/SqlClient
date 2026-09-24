@@ -105,3 +105,8 @@ steps:
       pwsh: true
       filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-packages.ps1
       arguments: $(validatePackagesArguments)
+      # The script inspects PackageValidator's exit codes itself and decides what they mean: a
+      # tripped gate is a warning in report-only mode and a throw otherwise.  $LASTEXITCODE still
+      # holds the tool's code afterwards, which the task would otherwise re-propagate and fail a
+      # report-only run.
+      ignoreLASTEXITCODE: true

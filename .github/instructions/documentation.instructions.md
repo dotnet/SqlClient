@@ -180,10 +180,10 @@ The driver package ships **two** XML documentation files per target framework, a
 
 | Package folder | Content | Consumer |
 |----------------|---------|----------|
-| `lib/<tfm>/` | Full documentation, including `<remarks>` and `<example>` | IntelliSense |
-| `ref/<tfm>/` | Trimmed by `tools/intellisense/TrimDocs.ps1`, which strips `<remarks>` and `<example>` | Reference assemblies |
+| `lib/<tfm>/` | Full documentation, including `<remarks>` and `<example>` | The .NET API docs pipeline, which builds the Learn pages |
+| `ref/<tfm>/` | Trimmed by `tools/intellisense/TrimDocs.ps1`, which strips `<remarks>` and `<example>` | Visual Studio IntelliSense |
 
-Remarks and examples render poorly in Visual Studio tooltips, which is why `ref/` is trimmed. The two files must never be the same: if `lib/` is sourced from the trimmed artifact, IntelliSense silently loses every remark and example. That regression shipped in 7.1.0, so the packaged-documentation gate now fails the build when a package's `lib/` XML is trimmed, its `ref/` XML is not, or the two are byte-identical.
+Remarks and examples render poorly in Visual Studio tooltips, which is why the `ref/` copy is trimmed. The two files must never be the same: if `lib/` is sourced from the trimmed artifact, the published Learn pages silently lose every remark and example. That regression shipped in 7.1.0, so the packaged-documentation gate now fails the build when a package's `lib/` XML is trimmed, its `ref/` XML is not, or the two are byte-identical.
 
 When changing the `<file>` mappings in `Microsoft.Data.SqlClient.nuspec`, keep `lib/` pointed at the implementation artifact and `ref/` at the reference artifact.
 
