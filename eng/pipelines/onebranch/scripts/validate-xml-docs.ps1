@@ -365,6 +365,17 @@ function Test-Cref {
             "'${prefix}:$body'.")
     }
 
+    # A documentation ID writes generic arguments in braces, as List{System.String}. Angle brackets
+    # are C# source syntax and never appear in a documentation ID, so they are rejected wherever
+    # they occur rather than only in a signature.
+    if ($body -match '[<>]') {
+        $suggestion = ($body -replace '<', '{') -replace '>', '}'
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' uses angle brackets for its generic arguments. Documentation IDs use " +
+            "braces; use '${prefix}:$suggestion'.")
+        return
+    }
+
     $signatureStart = $body.IndexOf('(')
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
@@ -412,8 +423,11 @@ function Test-Cref {
     # An array, pointer or by-reference construction is not a named type, so it has no type page
     # and no UID in the Learn xref map. Only a T: cref can make this mistake; the same suffixes are
     # legal inside a member signature.
-    if ($prefix -eq 'T' -and $body -match '(\[\]|\*|@|&)$') {
-        $element = $body -replace '(\[\]|\*|@|&)+$', ''
+    #
+    # The array suffix is matched in any of its forms: [] for one dimension, [,] for more, and the
+    # documentation-ID spelling [0:,0:] that records lower bounds.
+    if ($prefix -eq 'T' -and $body -match '(\[[\d:,]*\]|\*|@|&)$') {
+        $element = $body -replace '(\[[\d:,]*\]|\*|@|&)+$', ''
         Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
             "Cref '$trimmed' names a constructed type, which has no documentation page. " +
             "Reference the element type instead, for example <see cref=`"T:$element`" /> array.")

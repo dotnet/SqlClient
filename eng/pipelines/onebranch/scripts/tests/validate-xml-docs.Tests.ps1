@@ -241,7 +241,54 @@ Describe 'validate-xml-docs.ps1' {
             { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
         }
 
-        It 'accepts generic types whose arguments contain commas' {
+        It 'rejects angle brackets in a generic type reference' {
+            # Angle brackets are C# source syntax; a documentation ID writes generic arguments in
+            # braces. Without this the cref has an allowed namespace root and passes the source
+            # gate, then fails to resolve once published.
+            $snippets = New-SnippetDirectory -Crefs @('T:System.Collections.Generic.List&lt;System.String&gt;')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'invalid-docid'
+            $finding.Message | Should -BeLike '*braces*List{System.String}*'
+        }
+
+        It 'rejects angle brackets inside a member signature' {
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List&lt;System.String&gt;)')
+
+            { & $scriptPath -SnippetsDirectory $snippets } |
+                Should -Throw '*failed with 1 issue*'
+        }
+
+        It 'rejects a multidimensional array type reference' -ForEach @(
+            @{ Cref = 'T:System.Int32[,]' }
+            @{ Cref = 'T:System.Int32[,,]' }
+            @{ Cref = 'T:System.Int32[0:,0:]' }
+        ) {
+            # [] was recognized but the multidimensional forms were not, so an invalid T: array
+            # cref passed.
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'invalid-docid'
+            $finding.Message | Should -BeLike '*constructed type*'
+        }
+
+        It 'accepts a multidimensional array inside a member signature' {
+            # The same suffix is legal as a parameter type; only a T: reference to it is wrong.
+            $snippets = New-SnippetDirectory -Crefs @(
+                'M:Microsoft.Data.SqlClient.Sample.Grid(System.Int32[0:,0:])')
+
+            { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
+        }
+
+        It 'accepts generic arguments written in braces' {
             $snippets = New-SnippetDirectory -Crefs @(
                 'M:Microsoft.Data.SqlClient.Sample.Map(System.Collections.Generic.Dictionary{System.String,System.Int32})',
                 'T:System.Collections.Generic.IReadOnlyList`1')
