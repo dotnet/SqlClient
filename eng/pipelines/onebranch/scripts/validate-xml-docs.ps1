@@ -51,6 +51,19 @@
     and the XML documentation inside it is validated, which is what a consumer actually receives.
     Requires -ExtractPath.
 
+.PARAMETER DependencyDocumentationPath
+    Optional XML documentation files, or directories scanned recursively for them, supplied only so
+    that references resolve against them. Their own contents are never validated.
+
+    A package carries only its own documentation, so a cref from one package into a sibling package
+    resolves against nothing whenever that sibling was not built in the same run -- the state a
+    pipeline is in when it depends on the published version of a package instead of building it.
+    Build output does not have this problem, because a dependency's documentation file is copied
+    next to the assembly that consumed it.
+
+    Supply the documentation from the dependency version the packages under validation actually
+    declare, so that what resolves here is what a consumer will resolve against.
+
 .PARAMETER ExtractPath
     Directory that -PackagesPath expands into. Existing expansions are replaced so a rerun cannot
     validate stale content.
@@ -180,6 +193,8 @@ param(
     [string[]]$SnippetsDirectory,
 
     [string[]]$DocumentationPath,
+
+    [string[]]$DependencyDocumentationPath,
 
     [string]$PackagesPath,
 
@@ -961,6 +976,16 @@ if (-not [string]::IsNullOrWhiteSpace($PackagesPath)) {
 
 $documentationCandidates = @(Resolve-InputPaths -Paths $documentationRoots -Description 'Documentation')
 
+# Documentation supplied purely to resolve references against, never itself validated. A package
+# carries only its own documentation, so a cref from one package into a sibling package resolves
+# against nothing when that sibling was not built this run. Build output does not have the problem,
+# because a dependency's documentation file is copied next to the assembly that consumed it.
+#
+# Resolution only, because these members belong to an already-published package: a defect found in
+# them could not be fixed by the run that reports it, and the crefs they contain point back into
+# the version of this repository they shipped against rather than the one being built.
+$dependencyCandidates = @(Resolve-InputPaths -Paths $DependencyDocumentationPath -Description 'Dependency documentation')
+
 # Distinguish "nothing was asked for", which is a caller error, from "what was asked for held no
 # documentation", which is reported below as a finding.
 $snippetsRequested = @(@($SnippetsDirectory) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -gt 0
@@ -973,10 +998,12 @@ if (-not $snippetsRequested -and -not $documentationRequested) {
 # Parse every file up front so that a malformed file is reported as a finding rather than aborting
 # the run, and so the local UID index is complete before any cref is resolved.
 $documents = [System.Collections.Generic.List[object]]::new()
-$malformedByKind = @{ snippet = 0; documentation = 0 }
+$dependencyDocuments = [System.Collections.Generic.List[object]]::new()
+$malformedByKind = @{ snippet = 0; documentation = 0; dependency = 0 }
 foreach ($entry in @(
         @{ Files = $snippetFiles; Kind = 'snippet' },
-        @{ Files = $documentationCandidates; Kind = 'documentation' })) {
+        @{ Files = $documentationCandidates; Kind = 'documentation' },
+        @{ Files = $dependencyCandidates; Kind = 'dependency' })) {
 
     foreach ($file in $entry.Files) {
         try {
@@ -992,7 +1019,7 @@ foreach ($entry in @(
         # A scanned directory may hold far more .xml files than documentation. Recognize
         # documentation by its <doc><members> shape and silently skip everything else, so a whole
         # output directory can be supplied without pre-filtering it.
-        if ($entry.Kind -eq 'documentation') {
+        if ($entry.Kind -ne 'snippet') {
             if ($null -eq $document.Root -or
                 $document.Root.Name.LocalName -ne 'doc' -or
                 $null -eq $document.Root.Element('members')) {
@@ -1000,21 +1027,37 @@ foreach ($entry in @(
             }
         }
 
-        $documents.Add([pscustomobject]@{
-                Path         = $file
-                Kind         = $entry.Kind
-                Document     = $document
-                # Documentation shipped in a package's ref/ folder describes the reference
-                # assembly, whose members are exactly the public API surface.
-                IsReferenceDocumentation = ($entry.Kind -eq 'documentation') -and
-                    (Test-IsReferenceDocumentationPath -Path $file)
-                RemarksCount = @($document.Descendants('remarks')).Count
-                ExampleCount = @($document.Descendants('example')).Count
-            })
+        $record = [pscustomobject]@{
+            Path         = $file
+            Kind         = $entry.Kind
+            Document     = $document
+            # Documentation shipped in a package's ref/ folder describes the reference
+            # assembly, whose members are exactly the public API surface.
+            #
+            # Never set for a dependency: the public API surface being judged is this build's, and
+            # admitting another package's would let a member count as public here on the strength
+            # of where it sits in a package this run did not produce.
+            IsReferenceDocumentation = ($entry.Kind -eq 'documentation') -and
+                (Test-IsReferenceDocumentationPath -Path $file)
+            RemarksCount = @($document.Descendants('remarks')).Count
+            ExampleCount = @($document.Descendants('example')).Count
+        }
+
+        if ($entry.Kind -eq 'dependency') {
+            $dependencyDocuments.Add($record)
+        }
+        else {
+            $documents.Add($record)
+        }
     }
 }
 
 $documentationDocuments = @($documents | Where-Object { $_.Kind -eq 'documentation' })
+
+if ($dependencyDocuments.Count -gt 0) {
+    Write-Host ("Resolving against $($dependencyDocuments.Count) dependency documentation file(s), " +
+        'which are not themselves validated.')
+}
 
 # Whether documentation must exist is the caller's declaration, not an inference. Asserting it both
 # ways is what keeps the declaration honest: documentation vanishing from a package that should
@@ -1086,7 +1129,11 @@ $script:LocalNamespaces = $null
 if ($documentationDocuments.Count -gt 0) {
     $script:LocalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $script:LocalNamespaces = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-    foreach ($entry in $documentationDocuments) {
+    # Dependency documentation is indexed alongside, so a cref into a package this run did not
+    # build resolves. Gated on documentation being present rather than on the dependencies: with
+    # nothing under validation there is no cref to resolve, and an index built from dependencies
+    # alone would describe members this build never emitted.
+    foreach ($entry in @($documentationDocuments) + @($dependencyDocuments)) {
         foreach ($member in $entry.Document.Root.Element('members').Elements('member')) {
             $name = $member.Attribute('name')
             if ($null -eq $name -or [string]::IsNullOrWhiteSpace($name.Value)) {
@@ -1346,6 +1393,7 @@ if (-not [string]::IsNullOrWhiteSpace($ReportPath)) {
         FilesValidated   = $documents.Count
         SnippetFiles     = @($documents | Where-Object { $_.Kind -eq 'snippet' }).Count
         DocumentationFiles = $documentationDocuments.Count
+        DependencyDocumentationFiles = $dependencyDocuments.Count
         CrefsValidated   = $crefCount
         LocalUids        = if ($null -ne $script:LocalUids) { $script:LocalUids.Count } else { 0 }
         CountsByCategory = $countsByCategory
