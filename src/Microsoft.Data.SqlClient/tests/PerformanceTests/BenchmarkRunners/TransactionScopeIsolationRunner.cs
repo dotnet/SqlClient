@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// every back end (notably Azure SQL DB), which silently downgraded the scope's level from
     /// the second open onwards (issue #146).
     ///
-    /// The reset itself is free — it rides as a bit in the next packet's TDS header — but the
+    /// The reset itself is free (it rides as a bit in the next packet's TDS header), but the
     /// SET is an additional round trip. These benchmarks isolate that round trip:
     ///
     /// <list type="bullet">
@@ -27,8 +27,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     ///     pays (OpensPerScope - 1) extra round trips.
     ///   </description></item>
     ///   <item><description>
-    ///     <see cref="OpensInsideScope_ReadCommitted"/> takes the skip path — READ COMMITTED is
-    ///     what the session reverts to after the reset anyway — so it pays none, and shows the
+    ///     <see cref="OpensInsideScope_ReadCommitted"/> takes the skip path (READ COMMITTED is
+    ///     what the session reverts to after the reset anyway), so it pays none, and shows the
     ///     floor cost of the scope itself.
     ///   </description></item>
     ///   <item><description>
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     ///
     /// The delta between the Serializable and ReadCommitted variants is the cost this fix adds.
     /// Note that it is a network round trip, so a localhost run will understate it substantially
-    /// compared to a cloud back end — measure against the deployment you care about.
+    /// compared to a cloud back end; measure against the deployment you care about.
     ///
     /// Related issue: #146
     /// </summary>

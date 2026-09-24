@@ -125,7 +125,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true, true)]
         public static void TransactionScope_ReassertsLevelAfterSessionOverride_Sync(bool mars, bool usePoolV2)
         {
-            using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
             string connectionString = BuildConnectionString(mars, usePoolV2, "OverrideSync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Serializable);
@@ -157,7 +157,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true, true)]
         public static async Task TransactionScope_ReassertsLevelAfterSessionOverride_Async(bool mars, bool usePoolV2)
         {
-            using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
             string connectionString = BuildConnectionString(mars, usePoolV2, "OverrideAsync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Serializable);
@@ -197,7 +197,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true, true)]
         public static void TransactionScope_SnapshotHonoredAcrossPoolReuse_Sync(bool mars, bool usePoolV2)
         {
-            using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
             string connectionString = BuildConnectionString(mars, usePoolV2, "SnapSync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Snapshot);
@@ -226,7 +226,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(true, true)]
         public static async Task TransactionScope_SnapshotHonoredAcrossPoolReuse_Async(bool mars, bool usePoolV2)
         {
-            using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = usePoolV2 };
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
             string connectionString = BuildConnectionString(mars, usePoolV2, "SnapAsync");
 
             using TransactionScope scope = CreateScope(System.Transactions.IsolationLevel.Snapshot);
@@ -307,9 +307,9 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// <param name="mars">Whether to enable MultipleActiveResultSets.</param>
         /// <param name="usePoolV2">Which pool implementation the caller is exercising.</param>
         /// <param name="tag">
-        /// Per-test discriminator. It is folded into the application name so each theory case gets
-        /// its own pool and cannot inherit a connection created under the other pool
-        /// implementation.
+        /// Per-test discriminator folded into the application name, so each theory case gets its
+        /// own pool and cannot reuse a connection left behind by a sibling case. Pool
+        /// implementation selection is handled separately by <see cref="ConnectionPoolVersionScope"/>.
         /// </param>
         /// <returns>The connection string for the scenario.</returns>
         private static string BuildConnectionString(bool mars = false, bool usePoolV2 = false, string tag = "") =>
