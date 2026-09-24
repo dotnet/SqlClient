@@ -334,6 +334,35 @@ Describe 'validate-xml-docs.ps1' {
                 Should -Throw '*failed with 1 issue*'
         }
 
+        It 'rejects unbalanced generic argument braces' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{System.String' }
+            @{ Cref = 'T:System.Collections.Generic.List}System.String{' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*unbalanced braces*'
+        }
+
+        It 'accepts balanced generic argument braces' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{System.String}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Int32}}' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
         It 'rejects a multidimensional array type reference' -ForEach @(
             @{ Cref = 'T:System.Int32[,]' }
             @{ Cref = 'T:System.Int32[,,]' }
