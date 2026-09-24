@@ -65,6 +65,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     {
                         Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
+                        // Verify key path trust before adding the key to the cache.
                         SqlSecurityUtility.ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.keyPath);
 
                         // Key Not found, attempt to look up the provider and decrypt CEK
