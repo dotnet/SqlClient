@@ -195,6 +195,49 @@ Describe 'validate-xml-docs.ps1' {
             $findings.Count | Should -Be 1
         }
 
+        It 'rejects a C# alias nested in a generic type cref' {
+            $snippets = New-SnippetDirectory -Crefs @('T:System.Collections.Generic.List{string}')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike "*C# alias 'string'*"
+        }
+
+        It 'reports each distinct alias nested in a generic type cref' {
+            $snippets = New-SnippetDirectory -Crefs @('T:System.Collections.Generic.Dictionary{string,int}')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Message | Should -BeLike "*C# aliases 'string', 'int'*"
+        }
+
+        It 'accepts a generic type cref whose arguments are fully qualified' {
+            $snippets = New-SnippetDirectory -Crefs @('T:System.Collections.Generic.List{System.String}')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings).Count | Should -Be 0
+        }
+
+        It 'rejects a C# alias nested in the declaring type of a member cref' {
+            $snippets = New-SnippetDirectory -Crefs @('M:System.Collections.Generic.List{string}.Add(System.String)')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Message | Should -BeLike "*C# alias 'string'*"
+        }
+
         It 'rejects whitespace in an otherwise correct signature' {
             $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlParameterCollection.Add(System.String, System.String)')
             $report = Join-Path (New-TestDirectory) 'report.json'
@@ -1051,6 +1094,56 @@ Describe 'validate-xml-docs.ps1' {
 
             { & $scriptPath -SnippetsDirectory $snippets } |
                 Should -Throw '*failed with 3 issues*'
+        }
+    }
+
+    <#
+        Pins the severity of every category.
+
+        The step template documents which categories the default 'error' gate covers, and nothing
+        else ties that prose to this table, so a severity changed here would silently leave the
+        documented contract wrong. Failing this test is the prompt to update
+        eng/pipelines/onebranch/steps/validate-xml-docs-step.yml alongside the change.
+    #>
+    Context 'severity contract' {
+
+        It 'assigns the documented severity to every category' {
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+                $scriptPath, [ref]$null, [ref]$null)
+            $assignment = $ast.Find({
+                param($node)
+                $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+                $node.Left.Extent.Text -eq '$script:CategorySeverities'
+            }, $true)
+            $assignment | Should -Not -BeNullOrEmpty
+
+            $actual = [scriptblock]::Create($assignment.Right.Extent.Text).Invoke()[0]
+
+            $expected = [ordered]@{
+                'malformed-xml'                   = 'error'
+                'unresolved-cref'                 = 'error'
+                'invalid-docid'                   = 'error'
+                'unknown-namespace-root'          = 'error'
+                'stale-allowlist-entry'           = 'error'
+                'lib-documentation-trimmed'       = 'error'
+                'ref-documentation-untrimmed'     = 'error'
+                'lib-ref-documentation-identical' = 'error'
+                'missing-public-uid'              = 'error'
+                'mismatched-public-docid-prefix'  = 'error'
+                'missing-documentation'           = 'error'
+                'missing-local-uid'               = 'info'
+                'mismatched-docid-prefix'         = 'warning'
+                'unexpected-documentation'        = 'warning'
+                'documentation-not-expected'      = 'info'
+                'missing-external-uid'            = 'warning'
+                'unprefixed-cref'                 = 'info'
+            }
+
+            ($actual.Keys | Sort-Object) -join ',' |
+                Should -Be (($expected.Keys | Sort-Object) -join ',')
+            foreach ($category in $expected.Keys) {
+                $actual[$category] | Should -Be $expected[$category] -Because "$category is documented as $($expected[$category])"
+            }
         }
     }
 

@@ -54,6 +54,14 @@
     them in the xml files, though, because those are the source for the docs site, which needs to
     have the full documentation.
   -->
+  <!--
+    Forward slashes because this path is also passed through to pwsh, where a backslash is an
+    escape character rather than a separator on non-Windows hosts.  Windows accepts either.
+  -->
+  <PropertyGroup>
+    <TrimDocsScript>$(RepoRoot)tools/intellisense/TrimDocs.ps1</TrimDocsScript>
+  </PropertyGroup>
+
   <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
   <Target Name="_CheckPwshToolRestored">
     <Exec Command="dotnet tool run pwsh -- -Version"
@@ -79,7 +87,7 @@
           AfterTargets="CoreCompile"
           BeforeTargets="CopyFilesToOutputDirectory"
           DependsOnTargets="_CheckPwshToolRestored"
-          Inputs="$(DocumentationFile)"
+          Inputs="$(DocumentationFile);$(TrimDocsScript)"
           Outputs="$(IntermediateOutputPath)trimmed/$(TargetName).xml"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
 
@@ -90,7 +98,7 @@
         dotnet tool run pwsh --
           -NonInteractive
           -ExecutionPolicy Unrestricted
-          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(IntermediateOutputPath)trimmed/$(TargetName).xml'"
+          -Command "$(TrimDocsScript) -inputFile '$(DocumentationFile)' -outputFile '$(IntermediateOutputPath)trimmed/$(TargetName).xml'"
       </PowerShellCommand>
 
       <!-- Convert more than one whitespace character into one space -->
