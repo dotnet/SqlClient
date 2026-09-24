@@ -104,7 +104,7 @@ often served by different paths:
 | Read discussion comments | Step 4 | Fetch one page of PR issue comments, and confirm you can page through the rest. Always required. |
 | Read and edit local files | Step 6 | Confirm the workspace is the right repository and is writable. |
 | Workspace is clean enough to edit | Steps 6, 9 | Inspect the index and the working tree. Record every path already staged or modified before this run started, including untracked files. Anything already there belongs to the user, not to this run. |
-| Workspace is on the PR's branch | Steps 6, 9 | Confirm the checked-out branch is the PR's head branch, and that the workspace can reach the head repository, which is a fork whenever the PR comes from one. Never assume the workspace is already on the right branch: a mismatch means every edit, commit and push would land on whatever branch happens to be checked out. |
+| Workspace is on the PR's branch | Steps 6, 9 | Confirm the checked-out branch is the PR's head branch, that local HEAD matches the PR's head commit, and that the workspace can reach the head repository, which is a fork whenever the PR comes from one. Never assume the workspace is already on the right branch or at the right commit: a mismatch means every edit, commit and push would land on whatever happens to be checked out. |
 | Authorship of the PR itself | Steps 6, 10 | Determine whether the authenticated user is the PR's author. Acting on someone else's PR is a different posture; see step 1. |
 | Run tests/builds | Step 6 | Confirm the needed runner exists, for example that `dotnet` is on PATH. |
 | Identify comment authorship | Steps 10, 11 | Confirm the path reports author type, not just login: `__typename` of `Bot` or `User` in GraphQL, `user.type` in REST. Resolution decisions depend on this, so a path that cannot distinguish bots from humans must not be used to drive step 11. |
@@ -234,8 +234,15 @@ Skipping an approval gate:
 - Check the workspace against the PR before planning any edit:
   - Compare the checked-out branch with the PR's head branch, and the workspace's remotes
     with the PR's head repository. A PR from a fork needs that fork reachable.
+  - Compare local HEAD with the PR's head commit. Matching branch names are not enough: a
+    local branch can be stale or diverged while still being named correctly, and then step
+    5 judges "Already Addressed" against a tree the PR does not have, step 6 edits code
+    that is not under review, and a later push either fails or carries unrelated local
+    commits into the PR.
   - If they do not match, say so and stop. Offer either to switch the workspace to the
     PR's branch, or to continue in analysis-only mode with steps 6 and 9 skipped.
+  - Treat a diverged or stale HEAD the same way: stop, report how it differs, and let the
+    user reconcile it before full mode continues.
   - Never switch branches without the user agreeing. Changing their checked-out branch,
     or applying edits to the wrong one, is exactly the kind of damage the approval gates
     exist to prevent.
@@ -410,7 +417,8 @@ Recognising an author's self-tag:
 - Include evidence for each item: file location, change summary, validation result.
 - Draft a distinct reply for every item of feedback that this run acted on, rejected, or needs something from the reviewer for, addressing that exact item's request, context, and outcome.
 - Every reply must state plainly what was changed to address the feedback, why the feedback is rejected, or that no action was required and why. An informational item takes the third form; forcing it into the first two would misrepresent the outcome.
-- Do not draft replies for items classified Already Addressed or Author Commentary, for operational noise, or for a duplicate already answered through another source. A thread whose request was satisfied by someone else is waiting on its reviewer, and another comment adds nothing. Answering the author's own explanation of their own code adds less.
+- Do not draft replies for items classified Author Commentary, for operational noise, or for a duplicate already answered through another source. Answering the author's own explanation of their own code adds nothing.
+- Already Addressed items need a reply only when they are bot-authored threads that could be resolved. Give those a short no-action reply saying the request was already satisfied and by what, so step 11 has the posted reply it requires. Everywhere else, an Already Addressed item is reported but not replied to: a human's thread whose request someone else satisfied is waiting on that human, and another comment adds nothing.
 
 9. Commit changes
 - Skip this step entirely in analysis-only mode; there is nothing committable and the branch is not the PR's.
@@ -428,7 +436,7 @@ Recognising an author's self-tag:
 - Push before replying where possible, so replies can link to the pushed commit. If the push was declined, say so in the replies rather than linking to a commit the reviewer cannot see.
 
 10. Reply to all feedback
-- Every item of feedback this run engaged with gets a reply, whether it was acted on or rejected. There are no silent dismissals. Items classified Already Addressed or Author Commentary, operational noise, and duplicates answered elsewhere are excluded by step 8.
+- Every item of feedback this run engaged with gets a reply, whether it was acted on or rejected. There are no silent dismissals. Items classified Author Commentary, operational noise, and duplicates answered elsewhere are excluded by step 8, as are Already Addressed items outside the bot-thread case described there.
 - When the authenticated user is not the PR's author, draft the replies but do not post them unless the user explicitly asks. See step 1.
 - Posting replies is a gated action. See Approvals.
 - Show the user the complete set of drafted replies, each with its destination, and ask for approval to post them. Posting is public and hard to undo.
@@ -452,6 +460,7 @@ Recognising an author's self-tag:
 - Resolving is a gated action, separate from the reply gate. See Approvals.
 - Work out which threads qualify. Judge authorship from the snapshot step 2 recorded, before this run posted anything. A thread qualifies only when every comment in that snapshot was authored by a bot, its reply from step 10 was posted successfully, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
 - Re-fetch each candidate thread immediately before resolving it, and compare against the snapshot. A run takes time, and a human can comment while it is in progress. If anyone other than you has commented since the snapshot, drop that thread from the list, say so, and leave it open: they have now engaged, and the reply they are owed is theirs to judge.
+- For a thread classified Fixed, confirm the change is actually on the PR's head before resolving it. A fix that exists only in the local workspace is not visible to anyone reading the PR, and push can be declined or unavailable, so Fixed on its own does not mean fixed here. If the commit was never pushed, leave the thread open, say the fix is local only, and tell the user what to push.
 - Disregard your own replies from step 10 when deciding whether a thread is bot-only. They are this run's output, and counting them would make every replied-to thread look human-involved, so replying would permanently disqualify the very threads it was meant to conclude. Any other human participant still disqualifies the thread.
 - Never resolve a thread whose outcome is Needs Clarification or Blocked, even when it is bot-only and has been replied to. Those statuses mean the request is still open, and resolving one hides an unanswered question behind a reply that did not answer it.
 - Show the user that list, each entry with its author and the reason it qualifies, and ask for approval to resolve. Approval of the replies in step 10 does not authorise this.
@@ -488,7 +497,7 @@ Recognising an author's self-tag:
 - Author: <login> (<bot or human>)
 - Request summary: <concise>
 - Action taken: <change or rationale>
-- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Evidence: <tests/diagnostics>
 - Reply posted: <the reply text for this exact comment>
 - Thread resolved: <yes, bot-authored and terminal | no, and why not>
@@ -512,7 +521,7 @@ Recognising an author's self-tag:
 - Finding summary: <concise>
 - Assessment: <valid, or why rejected>
 - Action taken: <change or rationale>
-- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked
+- Status: Fixed | Rejected | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Evidence: <tests/diagnostics>
 - Covered in summary comment: <yes | no, and why not>
 
