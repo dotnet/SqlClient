@@ -32,12 +32,8 @@ parameters:
     default: true
 
   # True to enable debug information and steps.
-  #
-  # WARNING: Debug output may expose secrets in the build log.  The symbols publishing script
-  # logs the full, unredacted commands it executes -- including the bearer token and the
-  # Authorization header it sends to the symbol publishing service -- when this is enabled.
   - name: debug
-    displayName: Enable debug output (may expose secrets)
+    displayName: Enable debug output
     type: boolean
     default: false
 
@@ -333,7 +329,6 @@ extends:
         parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServer: ${{ parameters.buildSqlServer }}
-          debug: ${{ parameters.debug }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'

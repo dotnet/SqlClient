@@ -31,14 +31,7 @@ parameters:
     - name: azureSubscription
       type: string
 
-    # When true, publish-symbols.ps1 logs the full, unredacted commands it executes, including
-    # the bearer token and Authorization header. Agent-side scrubbing of the token is
-    # best-effort, so treat the resulting log as containing secrets.
-    - name: debug
-      type: boolean
-      default: false
-
-    # Hosts probed for reachability when debug is enabled.  Both symbol servers are probed from
+    # Hosts probed for reachability.  Both symbol servers are probed from
     # the same agent, so a difference between them isolates the destination rather than the
     # caller -- which is what distinguishes an egress block from a service rejection.
     - name: reachabilityProbeHosts
@@ -152,17 +145,16 @@ steps:
     # Probe reachability before attempting the publish request, so that a failure can be
     # attributed to the network path rather than to the service.  This runs inside the same
     # container as the publish request, which is the environment that matters.
-    - ${{ if eq(parameters.debug, true) }}:
-      - task: PowerShell@2
-        displayName: 'Probe symbol server reachability'
-        # An unreachable endpoint is a finding to report, not a reason to skip the publish
-        # attempt -- the two results are read together.
-        continueOnError: true
-        inputs:
-          targetType: filePath
-          filePath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/test-endpoint-reachability.ps1'
-          arguments: '-HostName "${{ parameters.reachabilityProbeHosts }}"'
-          pwsh: true
+    - task: PowerShell@2
+      displayName: 'Probe symbol server reachability'
+      # An unreachable endpoint is a finding to report, not a reason to skip the publish
+      # attempt -- the two results are read together.
+      continueOnError: true
+      inputs:
+        targetType: filePath
+        filePath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/test-endpoint-reachability.ps1'
+        arguments: '-HostName "${{ parameters.reachabilityProbeHosts }}"'
+        pwsh: true
 
     # Step 2 - Publish: Request the Symbols Publishing Pipeline to publish the uploaded
     # symbols to SymWeb and/or MSDL. The -ArtifactName argument must match the
@@ -181,4 +173,3 @@ steps:
           -ArtifactName "${{ parameters.artifactName }}"
           -PublishToInternal $${{ parameters.publishToInternal }}
           -PublishToPublic $${{ parameters.publishToPublic }}
-          -LogUnredactedCommands:$${{ parameters.debug }}

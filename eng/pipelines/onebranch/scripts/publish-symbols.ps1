@@ -28,7 +28,7 @@
       4. Queries the publishing status for confirmation.
 
     Diagnostics emitted on every run:
-      - The commands executed, with secrets redacted unless -LogUnredactedCommands is used.
+      - The commands executed. Secrets are always redacted; no switch relaxes this.
       - The token's SHA-256 fingerprint and its header/payload claims (aud, appid, oid,
         tid, roles, exp, ...), which identify the principal and audience the service sees.
         The signature segment is never decoded or logged.
@@ -59,22 +59,6 @@
 .PARAMETER PublishToPublic
     Whether to publish symbols to the public symbol server. Defaults to $true.
 
-.PARAMETER LogUnredactedCommands
-    Logs the full, actual, unredacted commands this script executes, including the
-    bearer token and the Authorization header value.
-
-    The commands are always logged; this switch only controls redaction. When it is
-    omitted (the default) every secret is replaced with '<redacted>'. When it is
-    supplied the real values are written to the log.
-
-    WARNING: Enable this only for ad-hoc troubleshooting runs. Azure Pipelines has
-    been observed to scrub the acquired token from the log (it appears as '***'),
-    but that scrubbing is best-effort and must not be relied on: assume anything
-    logged by this switch is readable by anyone with access to the build log.
-
-    In the OneBranch pipelines this switch is driven by the pipeline's 'debug'
-    parameter (publish-symbols-step.yml passes -LogUnredactedCommands:$(debug)).
-
 .EXAMPLE
     .\publish-symbols.ps1 `
         -PublishServer "mysymbolserver" `
@@ -93,17 +77,6 @@
         -PublishToPublic $false
 
     Publishes symbols to the internal server only (retry attempt 2).
-
-.EXAMPLE
-    .\publish-symbols.ps1 `
-        -PublishServer "mysymbolserver" `
-        -PublishTokenUri "https://login.microsoftonline.com/..." `
-        -PublishProjectName "Microsoft.Data.SqlClient.SNI" `
-        -ArtifactName "mds_symbols_MyProject_dotnet-sqlclient_main_7.0.0_abc123_1" `
-        -LogUnredactedCommands
-
-    Publishes symbols and logs the executed commands with their secrets unredacted,
-    so the exact token and Authorization header sent to the service can be inspected.
 
 .NOTES
     File Name : publish-symbols.ps1
@@ -147,10 +120,7 @@ param(
     [bool]$PublishToInternal = $true,
 
     [Parameter(Mandatory = $false, HelpMessage = "Publish symbols to the public symbol server.")]
-    [bool]$PublishToPublic = $true,
-
-    [Parameter(Mandatory = $false, HelpMessage = "Log the full, actual, unredacted commands this script executes, including the bearer token and Authorization header. Troubleshooting only - the log will contain secrets.")]
-    [switch]$LogUnredactedCommands
+    [bool]$PublishToPublic = $true
 )
 
 Set-StrictMode -Version Latest
@@ -158,23 +128,16 @@ $ErrorActionPreference = "Stop"
 
 # --- Command logging helpers ---
 # Every command this script runs is echoed to the log. Secrets within those commands are
-# replaced with $redactedPlaceholder unless -LogUnredactedCommands was supplied.
+# always replaced with $redactedPlaceholder: no switch, parameter or pipeline setting can
+# cause a credential to be written to the log. Identity is reported instead through the
+# token's fingerprint and claims, which are not secrets.
 $redactedPlaceholder = '<redacted>'
-
-function Format-Secret {
-    param([AllowNull()][string]$Value)
-
-    if ($LogUnredactedCommands) {
-        return $Value
-    }
-    return $redactedPlaceholder
-}
 
 function Format-HeaderTable {
     param([hashtable]$Headers)
 
     $parts = foreach ($key in ($Headers.Keys | Sort-Object)) {
-        $value = if ($key -eq 'Authorization') { Format-Secret $Headers[$key] } else { $Headers[$key] }
+        $value = if ($key -eq 'Authorization') { $redactedPlaceholder } else { $Headers[$key] }
         "${key} = '${value}'"
     }
     return '@{ ' + ($parts -join '; ') + ' }'
@@ -202,8 +165,8 @@ function Write-CommandLog {
 }
 
 # --- Token diagnostics ---
-# The access token itself is a credential and is only logged under -LogUnredactedCommands (and
-# even then the agent may scrub it). Its SHA-256 fingerprint and its header/payload claims are
+# The access token itself is a credential and is never logged. Its SHA-256 fingerprint and
+# its header/payload claims are
 # not credentials: they identify which principal and audience the service sees, which is what
 # an authorization failure turns on. The signature segment is never decoded or logged.
 
@@ -376,12 +339,9 @@ Write-Host "PublishProjectName: ${PublishProjectName}"
 Write-Host "ArtifactName:       ${ArtifactName}"
 Write-Host "PublishToInternal:  ${PublishToInternal}"
 Write-Host "PublishToPublic:    ${PublishToPublic}"
-Write-Host "LogUnredacted:      ${LogUnredactedCommands}"
 Write-Host "=================================="
 
-if ($LogUnredactedCommands) {
-    Write-Host "##vso[task.logissue type=warning]-LogUnredactedCommands is enabled: this log contains unredacted secrets, including the symbol publishing bearer token. Treat the log as a secret and prefer re-running without the switch once troubleshooting is complete."
-}
+
 
 # --- Build request name and URLs ---
 $requestName = ${ArtifactName}
@@ -411,7 +371,6 @@ if ([string]::IsNullOrWhiteSpace($symbolPublishingToken)) {
 }
 Write-Host ">  1. Symbol publishing token acquired."
 Write-TokenDiagnostics -Token $symbolPublishingToken
-Write-CommandLog "Access token: $(Format-Secret $symbolPublishingToken)"
 
 $authHeaders = @{ Authorization = "Bearer ${symbolPublishingToken}" }
 

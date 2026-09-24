@@ -13,10 +13,12 @@
 
     A socket error code is reported verbatim (for example AccessDenied, which is the
     EACCES errno an egress block produces) so the failure cannot be confused with an
-    application-level authorization error of the same wording.
+    application-level authorization error of the same wording. The error identifies what
+    happened; it does not by itself identify who owns it.
 
-    The probe never throws and always exits 0: it is diagnostic output, and a blocked
-    endpoint is the expected finding rather than a script failure.
+    An unreachable endpoint is a finding, not a script failure: probing continues through
+    the remaining hosts and the script exits 0. Invalid invocation is different and does
+    throw, for example when no usable hostname survives parsing.
 
 .PARAMETER HostName
     One or more hostnames to probe.
@@ -47,7 +49,9 @@ param(
 )
 
 Set-StrictMode -Version Latest
-# Diagnostic output only: a failing endpoint must be reported, not thrown.
+# A failing endpoint is diagnostic output and must be reported rather than thrown, so that
+# the remaining hosts are still probed. Invalid invocation, such as a host list that parses
+# to nothing, still throws.
 $ErrorActionPreference = 'Continue'
 
 # When invoked through 'pwsh -File' (which is how pipeline tasks run a script path) every
@@ -138,9 +142,10 @@ function Test-Endpoint {
     if ($byName.Success) {
         Write-Host "Verdict  : reachable at the TCP layer."
     } else {
-        Write-Host "Verdict  : DNS resolves but the TCP connection did not succeed, so the request never"
-        Write-Host "           reached the service. This is a network path or egress policy problem"
-        Write-Host "           rather than anything the destination service decided."
+        Write-Host "Verdict  : DNS resolved but the TCP connection did not succeed, so no HTTP exchange"
+        Write-Host "           took place and the service never received a request. The socket error"
+        Write-Host "           reported above identifies the failure; different errors have different"
+        Write-Host "           owners, so diagnose from that error rather than assuming a cause."
     }
 
     return [pscustomobject]@{ HostName = $Target; Dns = $true; Tcp = $byName.Success; Detail = $byName.Detail }

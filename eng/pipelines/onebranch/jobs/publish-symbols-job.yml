@@ -17,15 +17,6 @@ parameters:
   - name: artifactName
     type: string
 
-  # True to enable debug information and steps.  When enabled, publish-symbols.ps1 logs the
-  # full, unredacted commands it executes, including the bearer token and Authorization header.
-  # Agent-side scrubbing of the token is best-effort, so treat the resulting log as containing
-  # secrets.
-  - name: debug
-    type: boolean
-    default: false
-
-  # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
   - name: packageFullName
     type: string
 
@@ -106,7 +97,6 @@ jobs:
         parameters:
           artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)_$(System.JobAttempt)'
           azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
-          debug: ${{ parameters.debug }}
           packageName: '${{ parameters.packageFullName }}'
           publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
           publishServer: '${{ parameters.symbolsPublishServer }}'

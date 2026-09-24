@@ -363,84 +363,45 @@ Describe 'publish-symbols.ps1 Command Logging' {
             return @{ publishToInternalServerResult = 1; publishToPublicServerResult = 1 }
         }
 
-        # Runs the script and returns everything it wrote to the information (Write-Host) stream.
-        function Invoke-ScriptCapturingOutput {
-            param([switch]$Unredacted)
-
-            $arguments = @{
-                PublishServer      = 'srv'
-                PublishTokenUri    = 'https://token-uri'
-                PublishProjectName = 'proj'
-                ArtifactName       = 'art'
-            }
-            if ($Unredacted) { $arguments['LogUnredactedCommands'] = $true }
-
-            return (& $scriptPath @arguments 6>&1 | Out-String)
-        }
+        $script:output = (& $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' 6>&1 | Out-String)
     }
 
-    Context 'Default (redacted)' {
-
-        BeforeAll {
-            $script:output = Invoke-ScriptCapturingOutput
-        }
-
-        It 'Should log the token acquisition command' {
-            $script:output | Should -BeLike "*az account get-access-token --resource https://token-uri --query accessToken -o tsv*"
-        }
-
-        It 'Should log each REST command that is executed' {
-            $script:output | Should -BeLike "*Invoke-RestMethod -Method POST -Uri 'https://srv.trafficmanager.net/projects/proj/requests'*"
-            $script:output | Should -BeLike "*Invoke-RestMethod -Method POST -Uri 'https://srv.trafficmanager.net/projects/proj/requests/art'*"
-            $script:output | Should -BeLike "*Invoke-RestMethod -Method GET -Uri 'https://srv.trafficmanager.net/projects/proj/requests/art'*"
-        }
-
-        It 'Should log the registration body' {
-            $script:output | Should -BeLike '*-Body ''{"requestName":"art"}''*'
-        }
-
-        It 'Should redact the access token' {
-            $script:output | Should -BeLike '*Access token: <redacted>*'
-            $script:output | Should -Not -BeLike '*super-secret-token*'
-        }
-
-        It 'Should redact the Authorization header' {
-            $script:output | Should -BeLike "*Authorization = '<redacted>'*"
-        }
-
-        It 'Should not warn about unredacted logging' {
-            $script:output | Should -Not -BeLike '*LogUnredactedCommands is enabled*'
-        }
+    It 'Should log the token acquisition command' {
+        $script:output | Should -BeLike "*az account get-access-token --resource https://token-uri --query accessToken -o tsv*"
     }
 
-    Context 'LogUnredactedCommands' {
+    It 'Should log each REST command that is executed' {
+        $script:output | Should -BeLike "*Invoke-RestMethod -Method POST -Uri 'https://srv.trafficmanager.net/projects/proj/requests'*"
+        $script:output | Should -BeLike "*Invoke-RestMethod -Method POST -Uri 'https://srv.trafficmanager.net/projects/proj/requests/art'*"
+        $script:output | Should -BeLike "*Invoke-RestMethod -Method GET -Uri 'https://srv.trafficmanager.net/projects/proj/requests/art'*"
+    }
 
-        BeforeAll {
-            $script:output = Invoke-ScriptCapturingOutput -Unredacted
-        }
+    It 'Should log the registration body' {
+        $script:output | Should -BeLike '*-Body ''{"requestName":"art"}''*'
+    }
 
-        It 'Should log the actual access token' {
-            $script:output | Should -BeLike '*Access token: super-secret-token*'
-        }
+    It 'Should never emit the access token anywhere in the log' {
+        # The whole point of the redaction: no switch, parameter or setting may put a
+        # credential in a retained build log.
+        $script:output | Should -Not -BeLike '*super-secret-token*'
+    }
 
-        It 'Should log the actual Authorization header value' {
-            $script:output | Should -BeLike "*Authorization = '******'*"
-            $script:output | Should -Not -BeLike '*<redacted>*'
-        }
+    It 'Should redact the Authorization header exactly' {
+        # Asserted with a regex rather than -BeLike: under -BeLike every '*' is a wildcard,
+        # so a pattern of asterisks matches arbitrary text and proves nothing.
+        $script:output | Should -Match "Authorization = '<redacted>'"
+        $script:output | Should -Not -Match "Authorization = 'Bearer"
+    }
 
-        It 'Should warn that the log contains secrets' {
-            # Note: -BeLike treats [...] as a character class, so the ##vso[...] prefix is matched
-            # by its inner text rather than literally.
-            $script:output | Should -BeLike '*task.logissue type=warning*LogUnredactedCommands is enabled*'
-        }
-
-        It 'Should still log the same commands as the redacted run' {
-            $script:output | Should -BeLike "*az account get-access-token --resource https://token-uri --query accessToken -o tsv*"
-            $script:output | Should -BeLike "*Invoke-RestMethod -Method GET -Uri 'https://srv.trafficmanager.net/projects/proj/requests/art'*"
-        }
+    It 'Should not offer a switch that disables redaction' {
+        # Guards against the unredacted-logging path being reintroduced.
+        Get-Content -Path $scriptPath -Raw | Should -Not -Match 'LogUnredactedCommands'
     }
 }
-
 Describe 'publish-symbols.ps1 Token Diagnostics' {
 
     BeforeAll {
@@ -581,6 +542,28 @@ Describe 'publish-symbols.ps1 HTTP Error Diagnostics' {
             -PublishProjectName 'proj' `
             -ArtifactName 'art' } |
             Should -Throw '*HTTP status: <none - no HTTP response was received>*'
+    }
+
+    It 'Should report the response body from ErrorDetails' {
+        # The response body is carried on the ErrorRecord rather than the exception, and the
+        # shape varies by PowerShell version, so it needs its own coverage.
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::Forbidden)
+            $errorRecord = [System.Management.Automation.ErrorRecord]::new(
+                [Microsoft.PowerShell.Commands.HttpResponseException]::new('Response status code does not indicate success: 403 (Forbidden).', $response),
+                'WebCmdletWebResponseException',
+                [System.Management.Automation.ErrorCategory]::InvalidOperation,
+                $null)
+            $errorRecord.ErrorDetails = [System.Management.Automation.ErrorDetails]::new('Permission denied')
+            throw $errorRecord
+        }
+
+        { & $scriptPath `
+            -PublishServer 'srv' `
+            -PublishTokenUri 'https://token-uri' `
+            -PublishProjectName 'proj' `
+            -ArtifactName 'art' } |
+            Should -Throw '*Response body: Permission denied*'
     }
 
     It 'Should report the inner exception when one is present' {

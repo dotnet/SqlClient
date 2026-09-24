@@ -11,8 +11,13 @@
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '..' 'test-endpoint-reachability.ps1'
 
-    # A port on loopback that nothing is listening on.
-    $script:closedPort = 9
+    # Bind an ephemeral loopback port, record it, then release it. Port 9 (discard) is not
+    # guaranteed to be closed, so a host running that service would defeat every
+    # connection-refused assertion below.
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+    $listener.Start()
+    $script:closedPort = $listener.LocalEndpoint.Port
+    $listener.Stop()
     $script:unresolvableHost = 'this-host-should-never-resolve.invalid'
 }
 
@@ -66,11 +71,20 @@ Describe 'test-endpoint-reachability.ps1 Failure Reporting' {
         $output | Should -BeLike '*name resolution failed; nothing was attempted at the TCP layer*'
     }
 
-    It 'Should state that a TCP failure means the service was never reached' {
+    It 'Should state that a TCP failure means no HTTP exchange occurred' {
         $output = & $scriptPath -HostName '127.0.0.1' -Port $script:closedPort -TimeoutSeconds 3 6>&1 | Out-String
 
-        $output | Should -BeLike '*the request never*'
-        $output | Should -BeLike '*reached the service*'
+        $output | Should -BeLike '*no HTTP exchange*'
+        $output | Should -BeLike '*never received a request*'
+    }
+
+    It 'Should not attribute a connection failure to a particular owner' {
+        # A refused connection comes from the destination, not from an egress policy, so the
+        # verdict must report the socket error rather than assign blame.
+        $output = & $scriptPath -HostName '127.0.0.1' -Port $script:closedPort -TimeoutSeconds 3 6>&1 | Out-String
+
+        $output | Should -Not -BeLike '*egress policy problem*'
+        $output | Should -Not -BeLike '*network path or egress*'
     }
 
     It 'Should list every probed host in the summary' {
