@@ -34,19 +34,17 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(hash.Length != 0 && hash.Length <= HMACSHA256.HashSizeInBytes);
 
             // We can't guarantee that the destination buffer will be large enough to hold the entire hash.
-            // If it is large enough though, we can write directly into it to avoid an extra copy.
+            // If it is large enough though, we can write directly into it to avoid an extra copy. In both
+            // circumstances, we've guaranteed that the destination buffer is large enough to hold the hash.
             if (hash.Length == HMACSHA256.HashSizeInBytes)
             {
-                bool writtenHash = HMACSHA256.TryHashData(key, plainText, hash, out _);
-
-                Debug.Assert(writtenHash);
+                _ = HMACSHA256.TryHashData(key, plainText, hash, out _);
             }
             else
             {
                 Span<byte> hashBuffer = stackalloc byte[HMACSHA256.HashSizeInBytes];
-                bool writtenHash = HMACSHA256.TryHashData(key, plainText, hashBuffer, out _);
 
-                Debug.Assert(writtenHash);
+                _ = HMACSHA256.TryHashData(key, plainText, hashBuffer, out _);
                 hashBuffer.Slice(0, hash.Length).CopyTo(hash);
             }
         }
