@@ -307,11 +307,17 @@ Skipping an approval gate:
 Recognising an author's self-tag:
 
 - A self-tag makes author feedback actionable. When the PR's author writes `@` followed by their own handle, they are marking work they intend to do, which is how authors separate "something I have identified and want fixed" from "context for reviewers". Never classify a self-tagged item as Author Commentary; classify it like any other actionable feedback.
+- The tag usually opens the comment, sometimes followed by a dash, and the request follows
+  it directly: "@handle - Undo these leftover changes", "@handle Stale comment",
+  "@handle Why does this parameter have a default?". Do not require a separator or any
+  fixed punctuation, and do not require the tag to be the first thing in the comment.
+- One comment can hold both kinds of content, opening with explanation and then adding a
+  self-tagged request further down. When that happens the item is actionable, and the
+  request is the tagged part; the rest is context for it.
 - Detect the self-tag only in text the author actually wrote. Ignore any mention inside a
   quoted line beginning with `>`, inside a fenced code block, or inside inline code.
   Authors routinely quote a reviewer who tagged them and then answer underneath, so a
-  naive match on the handle finds the reviewer's words rather than the author's and
-  produces a false positive nearly every time.
+  naive match on the handle finds the reviewer's words rather than the author's.
 - Tagging someone else is not a self-tag. An author asking a named reviewer a question is judged on content by the promotion rule below.
 - Promote author commentary out of that category when it genuinely asks for something even without a self-tag: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
 - Tag every item with its source or sources from the Feedback sources table, and for review threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
