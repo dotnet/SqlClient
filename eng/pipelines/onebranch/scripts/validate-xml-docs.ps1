@@ -30,10 +30,11 @@
 
     Package mode additionally checks how documentation was mapped into the package. The driver
     ships two XML documentation files per target framework and they are required to differ: lib/
-    carries the full text, while ref/ has <remarks> and <example> stripped, because those render
-    badly in Visual Studio IntelliSense. The two have been silently collapsed before -- in 7.1.0
-    the modern lib/ XML was byte-identical to the trimmed ref/ XML, so IntelliSense lost every
-    remark and example. The lib/ref pairs are therefore compared against each other rather than
+    carries the full text for the .NET API docs pipeline that builds the Learn pages, while ref/
+    has <remarks> and <example> stripped, because those render badly in Visual Studio IntelliSense,
+    which reads the ref/ copy. The two have been silently collapsed before -- in 7.1.0 the modern
+    lib/ XML was byte-identical to the trimmed ref/ XML, so the Learn pages lost every remark and
+    example. The lib/ref pairs are therefore compared against each other rather than
     against an absolute expectation, which keeps the rule meaningful for packages that legitimately
     have no ref/ folder at all.
 
@@ -123,8 +124,8 @@
       unknown-namespace-root  error    Leading identifier is not an allowed namespace root.
       stale-allowlist-entry   error    Allowlisted cref no longer appears in any validated file.
       lib-documentation-trimmed
-                              error    A package's lib/ XML has no remarks or examples, so
-                                       IntelliSense would show only summaries.
+                              error    A package's lib/ XML has no remarks or examples, so the
+                                       Learn API pages built from it would show only summaries.
       ref-documentation-untrimmed
                               error    A package's ref/ XML still carries remarks or examples.
       lib-ref-documentation-identical
@@ -504,8 +505,23 @@ function Test-Cref {
                 # as M: for a property, or T: for a member, names something real but produces a UID
                 # that matches nothing. Say which prefix was expected rather than reporting a bare
                 # lookup failure.
-                if ($script:LocalUidsByBody.ContainsKey($namePart) -or $script:LocalUidsByBody.ContainsKey($body)) {
-                    $key = if ($script:LocalUidsByBody.ContainsKey($body)) { $body } else { $namePart }
+                #
+                # The identifier is looked up with its signature first and without it second. The
+                # second form explains a prefix mismatch only when the prefixes actually emitted
+                # differ from the one written, because a cref naming an overload that does not
+                # exist shares its prefix with the overload that does. Reporting that as a
+                # mismatch would advise replacing a prefix with itself and would hide a member
+                # this build never emitted.
+                $key = $null
+                if ($script:LocalUidsByBody.ContainsKey($body)) {
+                    $key = $body
+                }
+                elseif ($script:LocalUidsByBody.ContainsKey($namePart) -and
+                        -not $script:LocalUidsByBody[$namePart].Contains("${prefix}:")) {
+                    $key = $namePart
+                }
+
+                if ($null -ne $key) {
                     $actual = ($script:LocalUidsByBody[$key] | Sort-Object) -join ', '
                     $message = "Cref '$trimmed' uses prefix '${prefix}:', but '$key' was emitted " +
                         "as '$actual'. Use the prefix matching the member kind."
@@ -1164,7 +1180,8 @@ if ($script:ExpandedPackageRoots.Count -gt 0) {
                             Add-Finding -Category 'missing-documentation' -Path $assembly.FullName -Message (
                                 "$packageName ships $folder/$($frameworkDirectory.Name)/$($assembly.Name) " +
                                 "without $assemblyName.xml, although its project generates XML " +
-                                'documentation. Consumers of this package get no IntelliSense text.')
+                                'documentation. Consumers of this package get no documentation ' +
+                                'text for it.')
                         }
                     }
                 }
