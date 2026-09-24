@@ -844,9 +844,10 @@ namespace Microsoft.Data.SqlClient.Connection
             // another one, the connection simply switches enlistments. This behavior matches
             // OLEDB and ODBC.
 
-            // This is a user-initiated enlistment rather than a connection-open, so any batch we
-            // have to emit here is bounded by the command timeout rather than the connect timeout.
-            Enlist(transaction, ConnectionOptions.CommandTimeout);
+            // This is a user-initiated enlistment rather than a connection-open. Every batch this
+            // path can emit is bounded by the connect timeout, matching the other enlistment I/O
+            // in this file (EnlistNonNull, GetDTCAddress, PropagateTransactionCookie).
+            Enlist(transaction, ConnectionOptions.ConnectTimeout);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
@@ -2398,9 +2399,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
         /// <param name="transaction">Ambient transaction to attach to, or null to un-enlist.</param>
         /// <param name="timeout">
-        /// Timeout, in seconds, for any T-SQL batch this method has to emit. Callers on the
-        /// connection-open path pass the connect timeout; a caller reaching here from
-        /// <see cref="EnlistTransaction"/> passes the command timeout.
+        /// Timeout, in seconds, for any T-SQL batch this method has to emit. All current callers
+        /// pass the connect timeout, matching the other enlistment I/O in this file.
         /// </param>
         private void Enlist(Transaction transaction, int timeout)
         {
