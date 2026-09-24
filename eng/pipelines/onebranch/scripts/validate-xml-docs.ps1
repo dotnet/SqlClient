@@ -89,6 +89,9 @@
     Report findings without failing, overriding -FailOn. Used to shake the gate out on a pipeline
     before its findings are fixed. The official pipeline never sets this.
 
+    Does not cover a file that could not be parsed. Such a file was never examined, so suppressing
+    it would report an all-clear for content nobody read.
+
 .PARAMETER ProjectSearchRoot
     Directory scanned recursively for project files, used with -PackagesPath to check that every
     assembly whose project sets GenerateDocumentationFile ships its XML documentation beside it in
@@ -111,7 +114,10 @@
 .OUTPUTS
     Findings are categorized as:
 
-      malformed-xml           error    File is not well-formed XML.
+      malformed-xml           error    File is not well-formed XML. Fails the step even in
+                                       report-only mode: the file was never examined, so none of
+                                       its cross-references were checked and there is no result
+                                       to downgrade.
       unresolved-cref         error    Compiler could not bind the cref and emitted a "!:" prefix.
       invalid-docid           error    Documentation ID violates the documentation-ID grammar.
       unknown-namespace-root  error    Leading identifier is not an allowed namespace root.
@@ -1262,6 +1268,16 @@ Write-Host $summary
 # as succeeded-with-issues, which is what makes the warnings visible without failing the build.
 function Set-SucceededWithIssues {
     Write-Host '##vso[task.complete result=SucceededWithIssues;]'
+}
+
+# A file that could not be parsed was never examined, so none of its cross-references were checked.
+# Reporting that as a suppressible finding would let a report-only run give an all-clear for
+# content nobody read, so it fails regardless of mode. This mirrors a missing input path, and the
+# sibling validation scripts, which also fail outright rather than reporting.
+$unreadableFindings = @($findings | Where-Object { $_.Category -eq 'malformed-xml' })
+if ($unreadableFindings.Count -gt 0) {
+    $noun = if ($unreadableFindings.Count -eq 1) { 'file' } else { 'files' }
+    throw "XML documentation validation could not read $($unreadableFindings.Count) $noun. Review the preceding errors."
 }
 
 if ($ReportOnly) {
