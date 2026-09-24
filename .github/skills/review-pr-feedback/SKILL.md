@@ -192,12 +192,16 @@ Skipping an approval gate:
     wanted.
   - Report which case applies.
 
-2. Gather actionable review feedback
+2. Gather review thread feedback
 - Query the PR's review threads through the validated read path.
 - Keep only unresolved threads where isResolved is false.
 - Extract thread id, file path, line/startLine, comment url, author login, and body.
 - Also record, for every comment in the thread, whether its author is a bot or a human,
   using the author type field rather than the login. Step 11 depends on this.
+- Mark a thread as author commentary when the PR's own author opened it. Authors routinely
+  annotate their own diff to walk reviewers through a change, and those threads are
+  explanation, not requests. A reply from the author inside someone else's thread is not
+  commentary; that is a response to feedback.
 - If an author filter was given, apply it case-insensitively.
 
 3. Always gather review body feedback
@@ -218,6 +222,9 @@ Skipping an approval gate:
   request too. Bare approvals such as "LGTM" with no request are informational.
 - Skip the boilerplate a bot wraps around its findings, such as Copilot's overview,
   file tables and marketing footer. Keep only its substantive assessment.
+- Mark a body written by the PR's own author as author commentary. A review the author
+  submits on their own PR is a walkthrough for reviewers, often a short framing note such
+  as "Comments to aid review" attached to a set of explanatory inline comments.
 - Apply the author filter if one was given.
 
 3b. Copilot suppressed findings
@@ -273,6 +280,9 @@ Skipping an approval gate:
   fixed by the PR author, or by a later commit, while the thread stays open. Compare the
   request against the current state of the code on the PR's head. If it is already
   handled, record it as Already Addressed with that evidence and plan no change.
+- Leave author commentary out of the planned work. Read it first, though: it usually
+  explains why the code looks the way it does, and that context often changes how other
+  feedback should be addressed.
 - Ask the user to confirm the plan before proceeding, showing a concise summary of proposed changes and rationale, with each item's source shown.
 
 6. Implement and verify
@@ -285,9 +295,11 @@ Skipping an approval gate:
 7. Classify each item
 - Fixed: change implemented and validated in this run.
 - Already Addressed: the request was satisfied before this run, by the PR author or a later commit. Cite the evidence, usually a commit or the current state of the code. Never report this as Fixed; claiming someone else's work is both wrong and misleading about what this run did.
+- Author Commentary: the PR's author explaining their own change to reviewers, through a thread they opened on their own diff or a review body on their own PR. Not actionable by default: it answers questions rather than asking them, and there is nothing to fix, reply to or resolve.
 - Needs Clarification: ambiguous, conflicting, or insufficiently specified.
 - Blocked: external dependency, permission, or missing context.
 - Informational: captured only, with no change required.
+- Promote author commentary out of that category only when it genuinely asks for something: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
 - Tag every item with its source or sources from the Feedback sources table, and for review threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
 
 8. Produce a final report
@@ -295,7 +307,7 @@ Skipping an approval gate:
 - Include evidence for each item: file location, change summary, validation result.
 - Draft a distinct reply for every item of feedback that this run acted on, rejected, or needs something from the reviewer for, addressing that exact item's request, context, and outcome.
 - Every reply must state plainly either what was changed to address the feedback, or that the feedback is rejected and why.
-- Do not draft replies for items classified Already Addressed, for operational noise, or for a duplicate already answered through another source. A thread whose request was satisfied by someone else is waiting on its reviewer, and another comment adds nothing.
+- Do not draft replies for items classified Already Addressed or Author Commentary, for operational noise, or for a duplicate already answered through another source. A thread whose request was satisfied by someone else is waiting on its reviewer, and another comment adds nothing. Answering the author's own explanation of their own code adds less.
 
 9. Commit changes
 - Skip this step entirely in analysis-only mode; there is nothing committable and the branch is not the PR's.
@@ -307,7 +319,7 @@ Skipping an approval gate:
 - Push before replying where possible, so replies can link to the pushed commit. If the push was declined, say so in the replies rather than linking to a commit the reviewer cannot see.
 
 10. Reply to all feedback
-- Every item of feedback this run engaged with gets a reply, whether it was acted on or rejected. There are no silent dismissals. Items classified Already Addressed, operational noise, and duplicates answered elsewhere are excluded by step 8.
+- Every item of feedback this run engaged with gets a reply, whether it was acted on or rejected. There are no silent dismissals. Items classified Already Addressed or Author Commentary, operational noise, and duplicates answered elsewhere are excluded by step 8.
 - When the authenticated user is not the PR's author, draft the replies but do not post them unless the user explicitly asks. See step 1.
 - Posting replies is a gated action. See Approvals.
 - Show the user the complete set of drafted replies, each with its destination, and ask for approval to post them. Posting is public and hard to undo.
@@ -331,6 +343,7 @@ Skipping an approval gate:
 - A bot-opened thread that a human later commented in counts as human. Treat it as human.
 - Decide from the author type recorded in step 2, never from the login alone. If the type is missing or ambiguous for any comment in a thread, treat that thread as human and leave it unresolved.
 - Never resolve anything that came from step 3 or step 4; review-body feedback, suppressed findings and discussion comments have no thread and no resolved state.
+- Author commentary threads are human-authored and so are never resolvable here, including when the user is the PR's author. Closing your own explanatory note is the author's own call to make outside this skill.
 - Report which threads were resolved and which were deliberately left open, with the reason.
 - If resolution is unavailable, list the bot threads that would have been resolved and let the user do it.
 
@@ -343,8 +356,8 @@ Skipping an approval gate:
 - Access paths used, one line per capability (read, edit, test, commit/push, reply/resolve)
 - Capabilities pre-flight found unavailable, and the resulting limits on this run
 - Feedback found per source, each stated explicitly including zero counts:
-  - Review threads (unresolved)
-  - Review bodies (actionable / informational)
+  - Review threads (unresolved), and how many of those are author commentary
+  - Review bodies (actionable / informational / author commentary)
   - Copilot suppressed findings
   - Discussion comments (actionable / informational / operational noise set aside)
 - Items merged as duplicates across sources
@@ -356,7 +369,7 @@ Skipping an approval gate:
 - Author: <login> (<bot or human>)
 - Request summary: <concise>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Needs Clarification | Blocked
+- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
 - Reply posted: <the reply text for this exact comment>
 - Thread resolved: <yes, bot-authored | no, human feedback awaiting their response>
@@ -368,7 +381,7 @@ Skipping an approval gate:
 - Review state: <APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED>
 - Request summary: <concise>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Needs Clarification | Blocked | Informational
+- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Evidence: <tests/diagnostics>
 - Covered in summary comment: <yes | no, and why not>
 
@@ -380,7 +393,7 @@ Skipping an approval gate:
 - Finding summary: <concise>
 - Assessment: <valid, or why rejected>
 - Action taken: <change or rationale>
-- Status: Fixed | Already Addressed | Needs Clarification | Blocked
+- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
 - Covered in summary comment: <yes | no, and why not>
 
@@ -390,7 +403,7 @@ Skipping an approval gate:
 - Author: <login> (<bot or human>)
 - Summary: <concise>
 - Action taken: <change or rationale, or none required>
-- Status: Fixed | Already Addressed | Needs Clarification | Blocked | Informational
+- Status: Fixed | Already Addressed | Author Commentary | Needs Clarification | Blocked | Informational
 - Covered in summary comment: <yes | no, and why not>
 
 6. Validation
@@ -401,7 +414,7 @@ Skipping an approval gate:
 
 7. Final Summary
 - Files changed
-- Totals by status: fixed, already addressed, needing clarification, blocked, informational
+- Totals by status: fixed, already addressed, author commentary, needing clarification, blocked, informational
 - Totals by source, so it is visible that every source was inspected
 - Approvals: commit, push, reply, resolve — each marked approved, pre-approved by explicit instruction, declined, or not reached
 - Replies posted: <thread replies> in threads, plus <0 or 1> summary comment
@@ -434,6 +447,7 @@ Skipping an approval gate:
 - Treat unknown or ambiguous authorship as human.
 - Reply to every item of feedback this run engaged with, including ones you reject; rejections need a reason.
 - Never claim credit for a fix someone else made; that is what Already Addressed is for.
+- Do not treat the PR author's explanation of their own change as a request. Read it for context, report it as Author Commentary, and act on it only when it actually asks for something.
 - Never edit, commit or push while the workspace is on a branch other than the PR's.
 - Do not treat pipeline commands, CI status, coverage reports or stale-bot notices as feedback.
 - Count an item once when it arrives through several sources, listing every source it came from.
