@@ -222,6 +222,48 @@ Describe 'build.proj dependency packing' {
     }
 }
 
+Describe 'test project family versions' {
+    It 'uses the forwarded family version for central dependencies in <Target>' -ForEach @(
+        @{ Target = 'BuildSqlClientTestsFunctional' }
+        @{ Target = 'BuildSqlClientTestsManual' }
+        @{ Target = 'BuildSqlClientTestsPerformance' }
+        @{ Target = 'BuildSqlClientTestsStress' }
+    ) {
+        $familyVersion = '8.1.2-review'
+        $arguments = Get-ChildArguments $Target @(
+            '-p:ReferenceType=Package', "-p:PackageVersionSqlClient=$familyVersion"
+        )
+        $arguments | Should -Contain '-p:ReferenceType=Package'
+        $arguments | Should -Contain "-p:SqlClientPackageVersion=$familyVersion"
+
+        # Evaluate the actual consumer with the properties emitted by the orchestrator.
+        $properties = @($arguments | Where-Object { $_ -like '-p:*' })
+        $output = & $dotnet msbuild $arguments[1] -nologo @properties `
+            -p:TargetFramework=net8.0 -getItem:PackageVersion 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Test project evaluation failed:`n$($output -join [Environment]::NewLine)"
+        }
+        $versions = ($output -join "`n" | ConvertFrom-Json).Items.PackageVersion
+        $packageIds = @(
+            'Microsoft.Data.SqlClient', 'Microsoft.Data.SqlClient.Extensions.Abstractions',
+            'Microsoft.Data.SqlClient.Internal.Logging'
+        )
+        $expectedVersion = "[$familyVersion, 9.0.0)"
+        if ($Target -eq 'BuildSqlClientTestsStress') {
+            # Stress has its own central file; Logging and Abstractions are transitive dependencies.
+            $packageIds = @('Microsoft.Data.SqlClient')
+            $expectedVersion = $familyVersion
+            $versions.Identity | Should -Not -Contain 'Microsoft.Data.SqlClient.Extensions.Abstractions'
+            $versions.Identity | Should -Not -Contain 'Microsoft.Data.SqlClient.Internal.Logging'
+        }
+        foreach ($id in $packageIds) {
+            $version = @($versions | Where-Object { $_.Identity -eq $id })
+            $version.Count | Should -Be 1
+            $version[0].Version | Should -Be $expectedVersion
+        }
+    }
+}
+
 Describe 'local package version freshness' {
     It 'restores changed sibling contents with a new version after a same-version repack' {
         $fixture = Join-Path $TestDrive 'nuget freshness'

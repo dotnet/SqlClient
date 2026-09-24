@@ -37,6 +37,9 @@ The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
 and `Invoke-WebRequest`, so they do not access the network or modify a real
 repository. The build-orchestration tests run real MSBuild evaluation and targets
 with a recording child CLI stub; they do not restore, build, or pack the driver.
+They also evaluate the actual test projects to verify that the forwarded family version sets the
+central SqlClient, Abstractions, and Logging package ranges. Stress uses its own central file with
+the supplied SqlClient version; Abstractions and Logging are transitive dependencies there.
 One restore test creates a synthetic package and consumer inside Pester's temporary `TestDrive`,
 using a private local feed and package cache. It reproduces same-version package reuse and verifies
 that changing the version restores the updated contents without clearing caches.
