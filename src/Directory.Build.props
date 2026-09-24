@@ -255,15 +255,20 @@
   </PropertyGroup>
 
   <!--
-    Documentation comments pull their text from doc/snippets via <include file='...'/>, which the
-    compiler reads but MSBuild does not otherwise know about.  Declaring the snippets as compile
-    inputs makes editing one invalidate the compilation, so the generated XML documentation is
-    rebuilt instead of an earlier copy being left in place.
+    Documentation comments pull their text from XML files via <include file='...'/>, which the
+    compiler reads but MSBuild does not otherwise know about.  Declaring them as compile inputs
+    makes editing one invalidate the compilation, so the generated XML documentation is rebuilt
+    instead of an earlier copy being left in place.
+
+    Two locations, matching how the sources reference them: the repository-level doc/snippets tree,
+    and a doc directory beside a project's own src directory, which the extension packages use.
+    A project without the latter simply matches nothing.
 
     CustomAdditionalCompileInputs is the documented extension point for this: CoreCompile lists it
     among its Inputs.
   -->
   <ItemGroup>
     <CustomAdditionalCompileInputs Include="$(RepoRoot)doc\snippets\**\*.xml" />
+    <CustomAdditionalCompileInputs Include="$(MSBuildProjectDirectory)\..\doc\**\*.xml" />
   </ItemGroup>
 </Project>
