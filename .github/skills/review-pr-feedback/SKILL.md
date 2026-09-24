@@ -250,11 +250,14 @@ Skipping an approval gate:
     steps can deliver.
 - Establish whether the authenticated user is the PR's author:
   - When they are, this is the normal case: fix the feedback and reply as the author.
-  - When they are not, this is someone else's PR. Default to analysis and advice: draft
-    everything, but do not post replies unless the user explicitly asks, because comments
-    arrive under their name on another person's work. Never assume a drive-by reply is
-    wanted.
-  - Report which case applies.
+  - When they are not, this is someone else's PR. Select analysis-only mode, so steps 6
+    and 9 are skipped and nothing is edited or committed, and draft everything without
+    posting replies, because comments arrive under their name on another person's work.
+    Withholding replies is not enough on its own: without the mode the run would still
+    edit and commit on a contributor's branch, which is the more invasive half.
+  - Leave that mode only if the user explicitly asks you to change this PR, and say so
+    when you do. Never assume a drive-by fix or reply is wanted.
+  - Report which case applies and which mode it selected.
 
 2. Gather review thread feedback
 - Query the PR's review threads through the validated read path, paging through every one of them. See Gathering completely.
@@ -298,9 +301,16 @@ Skipping an approval gate:
   real findings in `<details>` blocks, sometimes two deep, under headings such as
   "Previously missed" or "Resolved since last review", each carrying a file, a line and a
   full description. Read them all.
+- Treat a "Previously missed" entry as feedback that has already been raised and not yet
+  acted on, and act on it now. It is a re-report, not a new finding: the same item can
+  appear in review after review while it stays unaddressed, so seeing one usually means
+  earlier runs skipped it. Say how many reviews have carried it when you report it.
 - Do not trust a bot's own summary of how much it found. A Copilot body can report
   "Findings: None" in its header while a collapsed section below carries a finding that
   was never posted as a review comment. The body is the evidence; the header is not.
+- Compare the current body against earlier ones on the same PR. An item raised in a past
+  review and absent now is not resolved by its absence; bots stop repeating themselves.
+  Check whether it was actually addressed before letting it drop.
 - Mark a body written by the PR's own author as author commentary, unless it tags the
   author's own handle, which makes it actionable instead. A review the author submits on
   their own PR is usually a walkthrough for reviewers, often a short framing note such as
@@ -437,7 +447,7 @@ Recognising an author's self-tag:
 
 10. Reply to all feedback
 - Every item of feedback this run engaged with gets a reply, whether it was acted on or rejected. There are no silent dismissals. Items classified Author Commentary, operational noise, and duplicates answered elsewhere are excluded by step 8, as are Already Addressed items outside the bot-thread case described there.
-- When the authenticated user is not the PR's author, draft the replies but do not post them unless the user explicitly asks. See step 1.
+- When the authenticated user is not the PR's author, step 1 has already selected analysis-only mode; draft the replies but do not post them unless the user explicitly asks.
 - Posting replies is a gated action. See Approvals.
 - Show the user the complete set of drafted replies, each with its destination, and ask for approval to post them. Posting is public and hard to undo.
 - Do not post anything until approval is given. If the user approves some replies and not others, post only the approved ones and record the rest as withheld.
