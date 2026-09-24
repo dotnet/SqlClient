@@ -134,6 +134,11 @@ specific token, negotiated feature, and protocol revision.
 
 ## Authentication, encryption, and diagnostics
 
+- Inspect added code, configuration, samples, and comments for embedded credentials;
+  follow `.github/instructions/secrets.instructions.md` without reproducing suspected
+  secrets in findings. Inspect available current-head secret-scanning results.
+  Running a scanner requires a separately authorized workflow; manual inspection
+  or unavailable scan results must not be described as a passed secret scan.
 - Check that identity/token caches preserve their intended scope and refresh
   semantics. Confirm TLS negotiation and certificate/hostname validation across
   affected encryption modes; do not weaken defaults to make a test pass.

@@ -13,6 +13,12 @@ the review first, then make focused fixes and validate them under the repository
 implementation instructions. That request does not authorize publication,
 approval, merging, or thread resolution.
 
+The calling workflow's tool allowlist and execution/network restrictions are binding.
+This skill describes options for different hosts; none grants extra capabilities.
+For the draft-only `code-review` prompt, skip shell commands, test/scanner execution,
+and external documentation lookups. Use authorized read tools and supplied evidence;
+report missing evidence rather than bypassing a restriction through another tool.
+
 ## Core review principles
 
 - **Behavior is a contract.** Compatibility includes results, exceptions, defaults,
@@ -60,8 +66,10 @@ approval, merging, or thread resolution.
    loaded policy from an untrusted checkout.
    Never expose secrets or send private source/logs to external documentation searches.
 
-Use the host's supported repository tools; prefer `gh` for GitHub reads when
-available. Do not change checkouts or discard local work to obtain the diff.
+Use the host's authorized repository tools. Prefer `gh` for GitHub reads only when
+the calling workflow explicitly permits shell execution, not merely when `gh` is
+installed. Otherwise use permitted read tools or report missing context.
+Do not change checkouts or discard local work to obtain the diff.
 
 ## Review workflow
 
@@ -110,9 +118,10 @@ suggested fix safe; an answered concern is not new merely at a higher priority.
 
 Use [BUILDGUIDE.md](../../../BUILDGUIDE.md) and [TESTGUIDE.md](../../../TESTGUIDE.md),
 not commands copied from other repositories. Inspect current-head CI results and
-available coverage reports first. Run locally to answer a specific unresolved
-question, not merely to repeat a known CI verdict. Select the smallest relevant
-test target/filter and verify that tests actually ran, including skip conditions.
+available coverage reports first. Only when execution is authorized, run locally
+to answer a specific unresolved question, not merely to repeat a known CI verdict.
+Select the smallest relevant test target/filter and verify that tests actually ran,
+including skip conditions.
 When execution is authorized and safe, compare equivalent baseline/head runs with
 the same configuration. A targeted mutation can test whether an assertion detects
 the defect, but only in a disposable isolated copy; never mutate user work or push
@@ -152,13 +161,15 @@ the skill itself grants no write permission and creates no automation.
 
 ## Dynamic documentation lookup
 
-Keep review mechanics local; look up version-specific contracts or protocol details
-only when they decide a candidate finding. Use the search queries and primary
+Keep review mechanics local. Only when the calling workflow permits external
+documentation access, look up version-specific contracts or protocol details
+that decide a candidate finding. Use the search queries and primary
 sources in [sources](references/sources.md). Check the documented provider/version:
 `System.Data.SqlClient` examples are not automatically valid for this driver.
 Source disagreements are something to resolve, not grounds to invent a contract.
 
-If Learn MCP is unavailable, use the `mslearn` CLI:
+If Learn MCP is unavailable and the workflow explicitly permits both shell execution
+and external documentation access, use an existing `mslearn` CLI installation:
 
 | MCP tool | CLI equivalent |
 | --- | --- |
@@ -166,6 +177,8 @@ If Learn MCP is unavailable, use the `mslearn` CLI:
 | `microsoft_code_sample_search(query: "...", language: "...")` | `mslearn code-search "..." --language ...` |
 | `microsoft_docs_fetch(url: "...")` | `mslearn fetch "..."` |
 
-Run through `npx @microsoft/learn-cli <command>` when permitted, or use an existing
-CLI installation. If lookup tools are unavailable, use the linked official pages
-and state any unresolved contract; do not substitute model memory for evidence.
+Running `npx @microsoft/learn-cli <command>` additionally requires permission to
+download and execute the package. A CLI fallback is never a way around disabled
+MCP or web access. If lookups are prohibited or unavailable, use already-supplied
+documentation and state any unresolved contract; do not fetch linked pages through
+another channel or substitute model memory for evidence.

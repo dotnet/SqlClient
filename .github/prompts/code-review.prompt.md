@@ -3,14 +3,19 @@ name: code-review
 description: AI-assisted code review for a pull request or branch in Microsoft.Data.SqlClient.
 argument-hint: <PR number, PR URL, branch name, or local changes>
 agent: agent
-tools: ['github/search_issues', 'github/issue_read', 'github/pull_request_read', 'github/get_file_contents', 'read/readFile', 'search/changes', 'search/codebase', 'search/fileSearch', 'search/listDirectory', 'search/textSearch', 'search/usages', 'web/fetch', 'vscode/askQuestions']
+tools: ['github/search_issues', 'github/issue_read', 'github/pull_request_read', 'github/get_file_contents', 'read/readFile', 'search/changes', 'search/codebase', 'search/fileSearch', 'search/listDirectory', 'search/textSearch', 'search/usages', 'vscode/askQuestions']
 ---
 
 Review the changes in "${input:target}" for `dotnet/SqlClient`.
 
 This prompt produces draft findings using only the read-only tools listed above.
-Publishing, running tests, or applying requested fixes requires a separate workflow
-with explicitly authorized tools; do not expand this prompt's permissions.
+Publishing, running tests or secret scanners, or applying requested fixes requires
+a separate workflow with explicitly authorized tools; do not expand this prompt's
+permissions. The shared skill's shell and documentation-lookup options are not
+enabled here: do not use `gh`, `mslearn`, `npx`, or general web fetching, including
+through another tool. Use supplied documentation or report missing contract evidence.
+Inspect available secret-scanning results without claiming that this prompt ran a
+scan; unavailable results are a verification gap, not a clean scan.
 If the available tools cannot retrieve the requested branch comparison or pinned
 revision, request that context or report the review as partial rather than using
 a terminal fallback.
