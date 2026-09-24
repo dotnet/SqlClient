@@ -143,8 +143,9 @@ steps:
           SymbolsVersion: '${{ parameters.version }}'
 
     # Probe reachability before attempting the publish request, so that a failure can be
-    # attributed to the network path rather than to the service.  This runs inside the same
-    # container as the publish request, which is the environment that matters.
+    # diagnosed from evidence: the probe distinguishes a transport failure from an HTTP
+    # response, and reports the socket error, without assigning ownership.  This runs inside
+    # the same container as the publish request, which is the environment that matters.
     - task: PowerShell@2
       displayName: 'Probe symbol server reachability'
       # An unreachable endpoint is a finding to report, not a reason to skip the publish

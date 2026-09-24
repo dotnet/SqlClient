@@ -3,18 +3,21 @@
     Reports whether TCP endpoints are reachable, and why they are not.
 
 .DESCRIPTION
-    For each host the probe separates the layers at which a connection can fail, because
-    each implies a different owner:
+    For each host the probe reports the layer at which the attempt stopped, so that a
+    diagnosis starts from evidence rather than assumption:
 
-      - DNS resolution failing   -> name resolution or split-horizon DNS.
-      - DNS resolving but TCP connect being refused or denied -> an egress policy or
-        firewall between the agent and the destination.
-      - TCP succeeding but TLS or HTTP failing -> an interception proxy or the service.
+      - DNS resolution failed, so nothing was attempted below it.
+      - DNS resolved but the TCP connection did not complete, so no HTTP exchange took
+        place. The socket error says what happened: a refused connection commonly means
+        the destination had no listener, a denied one commonly means a local policy
+        intervened, and a timeout may mean either.
+      - TCP completed, so any later failure is a TLS or HTTP concern rather than a
+        connectivity one.
 
-    A socket error code is reported verbatim (for example AccessDenied, which is the
-    EACCES errno an egress block produces) so the failure cannot be confused with an
-    application-level authorization error of the same wording. The error identifies what
-    happened; it does not by itself identify who owns it.
+    Ownership is deliberately not inferred. A socket error code is reported verbatim (for
+    example AccessDenied, the EACCES errno) so the failure cannot be confused with an
+    application-level authorization error of the same wording, but the error identifies
+    what happened, not who is responsible for it.
 
     An unreachable endpoint is a finding, not a script failure: probing continues through
     the remaining hosts and the script exits 0. Invalid invocation is different and does
@@ -165,18 +168,18 @@ $results = foreach ($target in $HostName) {
 Write-Host ""
 Write-Host "=== Summary ==="
 foreach ($result in $results) {
-    $status = if ($result.Tcp) { 'REACHABLE  ' } elseif (-not $result.Dns) { 'DNS FAILURE' } else { 'BLOCKED    ' }
+    $status = if ($result.Tcp) { 'REACHABLE  ' } elseif (-not $result.Dns) { 'DNS FAILURE' } else { 'NO CONNECT ' }
     Write-Host ("  {0} {1} - {2}" -f $status, $result.HostName, $result.Detail)
 }
 
 $reachable = @($results | Where-Object { $_.Tcp })
-$blocked = @($results | Where-Object { -not $_.Tcp })
+$unreachable = @($results | Where-Object { -not $_.Tcp })
 
-if ($blocked.Count -gt 0 -and $reachable.Count -gt 0) {
+if ($unreachable.Count -gt 0 -and $reachable.Count -gt 0) {
     Write-Host ""
-    Write-Host "Some hosts are reachable from this agent and others are not. Because the agent,"
-    Write-Host "identity and network path are otherwise identical, the difference is attributable"
-    Write-Host "to the destination host rather than to the caller."
+    Write-Host "Some hosts are reachable from this agent and others are not. The agent, identity"
+    Write-Host "and network path are common to both, so the difference lies somewhere specific to"
+    Write-Host "the hosts that failed. Use the socket errors above to narrow it further."
 }
 
 Write-Host "==============="

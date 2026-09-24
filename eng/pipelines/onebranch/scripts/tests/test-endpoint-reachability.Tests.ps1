@@ -85,13 +85,24 @@ Describe 'test-endpoint-reachability.ps1 Failure Reporting' {
 
         $output | Should -Not -BeLike '*egress policy problem*'
         $output | Should -Not -BeLike '*network path or egress*'
+        $output | Should -Not -BeLike '*BLOCKED*'
+    }
+
+    It 'Should not attribute ownership anywhere in the script, including its documentation' {
+        # The first attempt at this fixed only the verdict text and left the same claim in
+        # the comment-based help and the summary label, so the guard covers the whole file.
+        $source = Get-Content -Path $scriptPath -Raw
+
+        $source | Should -Not -Match 'egress policy or'
+        $source | Should -Not -Match 'is attributable'
+        $source | Should -Not -Match "'BLOCKED"
     }
 
     It 'Should list every probed host in the summary' {
         $output = & $scriptPath -HostName "127.0.0.1,$($script:unresolvableHost)" -Port $script:closedPort -TimeoutSeconds 3 6>&1 | Out-String
 
         $output | Should -BeLike '*=== Summary ===*'
-        $output | Should -BeLike '*BLOCKED     127.0.0.1*'
+        $output | Should -BeLike '*NO CONNECT  127.0.0.1*'
         $output | Should -BeLike "*DNS FAILURE $($script:unresolvableHost)*"
     }
 
