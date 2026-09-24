@@ -447,10 +447,22 @@ function Test-Cref {
         return
     }
 
-    if ($script:CSharpAliases.Contains((Get-DocIdCoreTypeName -TypeName $namePart))) {
+    # Aliases are gathered recursively rather than from the outer name alone, because a generic
+    # argument is itself a type reference: T:List{string} is as wrong as T:string, and the outer
+    # name of the former is a perfectly ordinary type. One cref can carry several distinct
+    # aliases, so they are reported together instead of one finding per argument.
+    $typeAliases = [System.Collections.Generic.List[string]]::new()
+    foreach ($alias in (Get-DocIdAlias -TypeName $namePart)) {
+        if (-not $typeAliases.Contains($alias)) {
+            $typeAliases.Add($alias)
+        }
+    }
+    if ($typeAliases.Count -gt 0) {
+        $quotedTypeAliases = ($typeAliases | ForEach-Object { "'$_'" }) -join ', '
+        $aliasNoun = if ($typeAliases.Count -eq 1) { 'the C# alias' } else { 'the C# aliases' }
         Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
-            "Cref '$trimmed' uses the C# alias '$namePart'. Documentation IDs name CLR types, so " +
-            'use the full type name instead.')
+            "Cref '$trimmed' uses $aliasNoun $quotedTypeAliases. Documentation IDs name CLR " +
+            'types, so use the full type name instead.')
         return
     }
 

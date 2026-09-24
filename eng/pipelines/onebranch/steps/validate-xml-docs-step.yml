@@ -53,15 +53,22 @@ parameters:
 
   # Finding severities and/or categories that fail the build.
   #
-  # The error severity covers malformed-xml, unresolved-cref, invalid-docid, unknown-namespace-root,
-  # stale-allowlist-entry, and the three package layout categories (lib-documentation-trimmed,
-  # ref-documentation-untrimmed, lib-ref-documentation-identical).
+  # Severity follows the visibility of the member that holds a finding, because only a public
+  # member's page is published, where an unresolvable reference renders as xref-not-found.  Each
+  # resolution rule therefore has a public form that is an error and a non-public form that is not:
+  # missing-public-uid against missing-local-uid, and mismatched-public-docid-prefix against
+  # mismatched-docid-prefix.  A finding takes the lower form when no reference documentation
+  # identified the surface, so an unknown surface is never escalated on a guess.
   #
-  # It deliberately does not cover the two resolution categories, which are warnings:
-  # missing-local-uid fires when a cref names this repository but no matching member was emitted,
-  # which a target-framework-conditional or cross-assembly member can trigger legitimately; and
-  # mismatched-docid-prefix depends on the same index.  Name either explicitly once a run has
-  # shown it to be clean.
+  # The error severity covers malformed-xml, unresolved-cref, invalid-docid, unknown-namespace-root,
+  # stale-allowlist-entry, missing-documentation, the two public resolution categories above, and
+  # the three package layout categories (lib-documentation-trimmed, ref-documentation-untrimmed,
+  # lib-ref-documentation-identical).
+  #
+  # The warning severity covers mismatched-docid-prefix, unexpected-documentation and
+  # missing-external-uid.  missing-local-uid, documentation-not-expected and unprefixed-cref are
+  # informational and never mark the step.  Name any category explicitly to gate on it regardless
+  # of its severity.
   - name: failOn
     type: object
 
