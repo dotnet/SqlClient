@@ -415,6 +415,51 @@ Describe 'validate-xml-docs.ps1' {
             @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
+        <#
+            A namespace has no <member> entry of its own, so these three cover the set derived
+            from the members that do: a namespace they occupy resolves, a misspelling of it does
+            not, and a type named with N: is still reported for its prefix rather than being
+            admitted by that set.
+        #>
+        It 'resolves a namespace that the emitted members occupy' {
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('N:Microsoft.Data.SqlClient')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
+        It 'reports a misspelled local namespace' {
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('N:Microsoft.Data.SqlClinet')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'missing-local-uid'
+            $findings[0].Message | Should -BeLike '*namespace this repository does not contain*'
+        }
+
+        It 'reports a type named with the namespace prefix as a prefix mismatch' {
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('N:Microsoft.Data.SqlClient.SqlConnection')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'mismatched-docid-prefix'
+            $findings[0].Message | Should -BeLike "*was emitted as 'T:'*"
+        }
+
         It 'reports a local cref with no matching emitted member as information, not an error' {
             # Without reference documentation the public API surface is unknown, and such a
             # reference may resolve in another target framework or a sibling assembly.
