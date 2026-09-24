@@ -1,6 +1,6 @@
 ---
 name: review-pr-feedback
-description: Collects unresolved PR review feedback, always including Copilot's hidden low-confidence suppressed findings, optionally includes discussion comments, applies fixes, and reports status. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback and a PR number or URL.
+description: Collects unresolved PR review feedback, always including Copilot's hidden low-confidence suppressed findings, optionally includes discussion comments, applies fixes, replies to every item, and resolves only bot-authored threads. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback and a PR number or URL.
 disable-model-invocation: true
 argument-hint: <pr-number-or-url> [repo owner/name] [include discussion comments] [author filter] [test scope]
 ---
@@ -72,8 +72,11 @@ often served by different paths:
 | Read discussion comments | Step 4 | Only if the user asked for them. Fetch one page of PR issue comments. |
 | Read and edit local files | Step 6 | Confirm the workspace is the right repository and is writable. |
 | Run tests/builds | Step 6 | Confirm the needed runner exists, for example that `dotnet` is on PATH. |
+| Identify comment authorship | Steps 10, 11 | Confirm the path reports author type, not just login: `__typename` of `Bot` or `User` in GraphQL, `user.type` in REST. Resolution decisions depend on this, so a path that cannot distinguish bots from humans must not be used to drive step 11. |
 | Commit and push | Step 9 | Confirm the git remote name (do not assume `origin`) and check push permission without pushing. |
-| Post replies and resolve threads | Step 9 | Confirm the path exposes these operations and the credential carries write scope. Resolving a review thread needs a GraphQL mutation that some paths, including some MCP servers, do not expose. |
+| Post thread replies | Step 10 | Confirm the path can reply to an existing review thread and the credential carries write scope. |
+| Post a PR comment | Step 10 | Needed for the single summary comment covering non-thread feedback. |
+| Resolve review threads | Step 11 | Confirm the path exposes thread resolution and the credential carries write scope. Resolving needs a GraphQL mutation that some paths, including some MCP servers, do not expose. |
 
 Rules for pre-flight:
 
@@ -100,6 +103,8 @@ Rules for pre-flight:
 - Query the PR's review threads through the validated read path.
 - Keep only unresolved threads where isResolved is false.
 - Extract thread id, file path, line/startLine, comment url, author login, and body.
+- Also record, for every comment in the thread, whether its author is a bot or a human,
+  using the author type field rather than the login. Step 11 depends on this.
 - If an author filter was given, apply it case-insensitively.
 
 3. Always gather Copilot suppressed feedback
@@ -108,8 +113,9 @@ Rules for pre-flight:
   comments. They exist only inside the body of the Copilot review itself, so a query that
   returns review threads or review comments will not contain them. They are frequently
   the majority of Copilot's findings on a PR.
-- Fetch the body of every review on the PR authored by the Copilot reviewer bot (its
-  login contains `copilot`, for example `copilot-pull-request-reviewer`).
+- Fetch the body of every review on the PR authored by the Copilot reviewer bot. Identify
+  it by author type plus a login containing `copilot`; the exact login is path-dependent
+  and is reported as `copilot-pull-request-reviewer` by GraphQL but `Copilot` by REST.
 - In each body, find the suppressed-feedback block. The wording varies by Copilot version,
   so match case-insensitively on a heading or `<details><summary>` containing
   "suppressed comments" or "comments suppressed due to low confidence", including when it
@@ -151,22 +157,41 @@ Rules for pre-flight:
 - Needs Clarification: ambiguous, conflicting, or insufficiently specified.
 - Blocked: external dependency, permission, or missing context.
 - Informational: non-review discussion comment captured only.
-- Record for every item whether it came from a review thread or from Copilot suppressed feedback, since only the former can be replied to or resolved.
+- Record for every item whether it came from a review thread or from non-thread feedback, and for threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
 
 8. Produce a final report
 - Keep review-thread outcomes, Copilot suppressed-feedback outcomes, and discussion outcomes in separate sections.
 - Include evidence for each item: file location, change summary, validation result.
-- Draft a distinct reply for each comment item that addresses that exact comment's request, context, and outcome.
-- Do not draft replies for suppressed findings, which have nowhere to be posted; if fixing one changed code, note it in the commit message and the summary instead.
+- Draft a distinct reply for every item of feedback, from any source, that addresses that exact item's request, context, and outcome.
+- Every reply must state plainly either what was changed to address the feedback, or that the feedback is rejected and why.
 
 9. Commit changes
 - If any changes were made, create a commit with a clear message referencing the PR and summarizing the resolution.
 - Prompt the user to review and confirm the commit message before finalizing.
 - When suggesting or performing a push, use the discovered git remote name.
 - Prompt the user to push the commit if they have permissions, or provide instructions if they do not.
-- Prompt the user to reply to each original PR comment with a comment-specific response and link to the relevant commit or code location, if appropriate.
-- Prompt the user to mark review threads as resolved in GitHub if they have permissions, or provide instructions if they do not.
-- For any write pre-flight showed is unavailable, give the user a ready-to-run command or a step-by-step alternative instead of attempting it.
+- Push before replying, so replies can link to the pushed commit.
+
+10. Reply to all feedback
+- Every item of feedback gets a reply, whether it was acted on or rejected. There are no silent dismissals.
+- Show the user the complete set of drafted replies and get confirmation before posting anything. Posting is public and hard to undo.
+- Reply to each review thread in that thread, linking to the relevant commit or code location where useful.
+- Cover all non-thread feedback in exactly one new PR comment, not one comment per item.
+  This single comment covers the Copilot suppressed findings from step 3 and any
+  discussion comments from step 4, because neither has a thread to reply in. Group it by
+  source, list each item with its file and line, and give the same
+  changed-or-rejected-and-why treatment each item would have received in a thread.
+- If no non-thread feedback was found, post no summary comment.
+- If a write path is unavailable, output the exact reply text for each target so the user can post it manually.
+
+11. Resolve threads, non-human feedback only
+- Resolve a review thread only when every comment in it was authored by a bot, and only after the reply from step 10 succeeded.
+- Never resolve a thread that any human participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied.
+- A bot-opened thread that a human later commented in counts as human. Treat it as human.
+- Decide from the author type recorded in step 2, never from the login alone. If the type is missing or ambiguous for any comment in a thread, treat that thread as human and leave it unresolved.
+- Never resolve anything that came from step 3 or step 4; suppressed findings and discussion comments have no thread and no resolved state.
+- Report which threads were resolved and which were deliberately left open, with the reason.
+- If resolution is unavailable, list the bot threads that would have been resolved and let the user do it.
 
 ## Output Format
 1. PR Scope
@@ -181,12 +206,13 @@ Rules for pre-flight:
 2. Unresolved Review Feedback (Actionable)
 - Item: <comment url>
 - Location: <file>:<line>
-- Author: <login>
+- Author: <login> (<bot or human>)
 - Request summary: <concise>
 - Action taken: <change or rationale>
 - Status: Fixed | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
-- Suggested reply: <specific response for this exact comment>
+- Reply posted: <the reply text for this exact comment>
+- Thread resolved: <yes, bot-authored | no, human feedback awaiting their response>
 
 3. Copilot Suppressed Feedback (Actionable, always present)
 - Item: suppressed finding <n> of <total>
@@ -197,13 +223,14 @@ Rules for pre-flight:
 - Action taken: <change or rationale>
 - Status: Fixed | Needs Clarification | Blocked
 - Evidence: <tests/diagnostics>
+- Covered in summary comment: <yes>
 
 4. Discussion Comments (Informational, optional)
 - Item: <comment url>
 - Author: <login>
 - Summary: <concise>
 - Notes: <if converted to actionable task, explain>
-- Suggested reply: <specific response for this exact comment>
+- Covered in summary comment: <yes>
 
 5. Validation
 - Commands run
@@ -218,6 +245,8 @@ Rules for pre-flight:
 - Number blocked
 - Number informational
 - Number of suppressed findings reviewed, and how many were acted on
+- Replies posted: <thread replies> in threads, plus <0 or 1> summary comment
+- Threads resolved, and threads left open for human response
 - Steps left to the user because a path was unavailable
 - Recommended next step
 
@@ -234,4 +263,7 @@ Rules for pre-flight:
 - Do not use `set -e` in bash commands or scripts.
 - After each terminal step, verify the bash session is still alive; if it died, report it immediately, start a new session, and continue from the last confirmed checkpoint.
 - Use the discovered git remote name consistently anywhere a remote is required.
-- Do not post generic batch replies; each reply must be tailored to the specific comment content and its exact resolution status.
+- Do not post generic batch replies; each reply must be tailored to the specific comment content and its exact resolution status. The single summary comment is the one exception, and it must still address each item it covers individually.
+- Never resolve a review thread a human participated in, regardless of how complete the fix is. Resolution there is the human's decision to make.
+- Treat unknown or ambiguous authorship as human.
+- Reply to every item of feedback, including ones you reject; rejections need a reason.
