@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
             return columnOrderHint;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndSortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) => Add(new SqlBulkCopyColumnOrderHint(column, sortOrder));
 
         /// <summary>

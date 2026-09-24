@@ -172,6 +172,13 @@
                                        In generated documentation only public fields are reported,
                                        since the implementation assembly documents internal
                                        P/Invoke enums that reach no published page.
+      unresolved-include      error    An <include> survived into generated documentation, which
+                                       means the compiler matched nothing at that path and the
+                                       member has no documentation at all. The compiler does not
+                                       fail on this; it leaves the element in place with a comment
+                                       beside it, so the loss is otherwise silent. Usually the
+                                       name attribute in the path differs in case from the one the
+                                       snippet declares.
       missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
       unprefixed-cref         info     Cref carries no "T:"/"M:"/... prefix. Legal; the compiler
                                        binds it. Reported for visibility only.
@@ -241,6 +248,7 @@ $script:CategorySeverities = [ordered]@{
     'missing-public-uid'     = 'error'
     'mismatched-public-docid-prefix' = 'error'
     'enum-field-remarks'     = 'error'
+    'unresolved-include'     = 'error'
     'missing-local-uid'      = 'info'
     'mismatched-docid-prefix' = 'warning'
     'missing-documentation'  = 'error'
@@ -1383,6 +1391,47 @@ foreach ($entry in $documents) {
         }
 
         Test-Cref -Cref $crefAttribute.Value -Context $context
+    }
+}
+
+# A documentation comment pulls its text in with <include>, and the compiler resolves it at compile
+# time. When the path matches nothing the compiler does not fail: it copies the unresolved
+# <include> element into the output and moves on, so the member ships with no documentation at all
+# and the only trace is a comment in a generated file nobody reads. A surviving <include> is
+# therefore proof that a member has lost its entire documentation.
+foreach ($entry in $documents) {
+    if ($entry.Kind -ne 'documentation') {
+        continue
+    }
+
+    foreach ($element in $entry.Document.Descendants()) {
+        if ($element.Name.LocalName -ne 'include') {
+            continue
+        }
+
+        $member = ''
+        $ancestor = $element.Parent
+        while ($null -ne $ancestor) {
+            if ($ancestor.Name.LocalName -eq 'member') {
+                $nameAttribute = $ancestor.Attribute('name')
+                if ($null -ne $nameAttribute) {
+                    $member = $nameAttribute.Value
+                }
+                break
+            }
+            $ancestor = $ancestor.Parent
+        }
+
+        $pathAttribute = $element.Attribute('path')
+        $requested = if ($null -ne $pathAttribute) { $pathAttribute.Value } else { '(no path)' }
+
+        $lineInfo = [System.Xml.IXmlLineInfo]$element
+        $lineNumber = if ($lineInfo.HasLineInfo()) { $lineInfo.LineNumber } else { 0 }
+        Add-Finding -Category 'unresolved-include' -Path $entry.Path `
+            -LineNumber $lineNumber -Member $member -Message (
+            "Documentation for '$member' was not included: the compiler found nothing at " +
+            "'$requested', so the member has no documentation. Check the path against the " +
+            'snippet, including the case of any name attribute.')
     }
 }
 

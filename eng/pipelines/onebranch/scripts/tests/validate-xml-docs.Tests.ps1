@@ -1480,6 +1480,7 @@ Describe 'validate-xml-docs.ps1' {
                 'missing-public-uid'              = 'error'
                 'mismatched-public-docid-prefix'  = 'error'
                 'enum-field-remarks'              = 'error'
+                'unresolved-include'              = 'error'
                 'missing-documentation'           = 'error'
                 'missing-local-uid'               = 'info'
                 'mismatched-docid-prefix'         = 'warning'
@@ -1713,6 +1714,63 @@ namespace Contoso
                 Should -Throw
 
             @((Get-Report -Path $report).Findings.Category) | Should -Contain 'enum-field-remarks'
+        }
+    }
+
+    Context 'unresolved include' {
+
+        It 'reports an include the compiler could not resolve' {
+            # The compiler copies an unmatched include into its output rather than failing, so the
+            # member ships with no documentation and nothing else says so.
+            $docs = New-TestDirectory
+            '<doc><members><member name="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader(System.AsyncCallback,System.Object)">' +
+            '<!-- No matching elements were found for the following include tag -->' +
+            '<include file="SqlCommand.xml" path="docs/members[@name=&quot;SqlCommand&quot;]/BeginExecuteXmlReader[@name=&quot;AsyncCallbackAndstateObject&quot;]/*" />' +
+            '</member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Microsoft.Data.SqlClient.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -DocumentationPath $docs -ReportPath $report } | Should -Throw
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -eq 'unresolved-include' })[0]
+            $finding.Severity | Should -Be 'error'
+            $finding.Member | Should -Be 'M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader(System.AsyncCallback,System.Object)'
+            # The path is quoted back, because the mismatch is usually a letter's case within it.
+            $finding.Message | Should -BeLike '*AsyncCallbackAndstateObject*'
+        }
+
+        It 'accepts documentation whose includes all resolved' {
+            $docs = New-DocumentationDirectory -Members @('T:Microsoft.Data.SqlClient.SqlConnection')
+
+            { & $scriptPath -DocumentationPath $docs } | Should -Not -Throw
+        }
+
+        It 'does not report an include inside a snippet' {
+            # A snippet is the include's target, not its consumer; the compiler never reads one
+            # looking for includes, so an element there says nothing about a member losing its
+            # documentation.
+            $snippets = New-TestDirectory
+            '<docs><members name="SqlCommand"><ExecuteReader><summary>S.</summary>' +
+            '<include file="Other.xml" path="docs/members/Thing/*" /></ExecuteReader></members></docs>' |
+                Set-Content -LiteralPath (Join-Path $snippets 'SqlCommand.xml') -Encoding utf8
+
+            { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
+        }
+
+        It 'reports every unresolved include rather than only the first' {
+            $docs = New-TestDirectory
+            '<doc><members>' +
+            '<member name="P:Microsoft.Data.SqlClient.A"><include file="S.xml" path="docs/members/A/*" /></member>' +
+            '<member name="P:Microsoft.Data.SqlClient.B"><include file="S.xml" path="docs/members/B/*" /></member>' +
+            '</members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Microsoft.Data.SqlClient.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings |
+                Where-Object { $_.Category -eq 'unresolved-include' }).Count | Should -Be 2
         }
     }
 
