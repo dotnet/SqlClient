@@ -51,12 +51,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <see href="https://learn.microsoft.com/en-us/sql/relational-databases/security/encryption/always-encrypted-cryptography?view=sql-server-ver17#step-1-generating-the-initialization-vector-iv"/>
         private const string IvKeySaltString = $"Microsoft SQL Server cell IV key with encryption algorithm:{SqlAeadAes256CbcHmac256Algorithm.AlgorithmName} and key length:{KeySizeInBitsString}";
 
-        private static byte[] EncryptionKeySalt =>
-            field ??= Encoding.Unicode.GetBytes(EncryptionKeySaltString);
-        private static byte[] MacKeySalt =>
-            field ??= Encoding.Unicode.GetBytes(MacKeySaltString);
-        private static byte[] IvKeySalt =>
-            field ??= Encoding.Unicode.GetBytes(IvKeySaltString);
+        private static readonly byte[] s_encryptionKeySalt = Encoding.Unicode.GetBytes(EncryptionKeySaltString);
+        private static readonly byte[] s_macKeySalt = Encoding.Unicode.GetBytes(MacKeySaltString);
+        private static readonly byte[] s_ivKeySalt = Encoding.Unicode.GetBytes(IvKeySaltString);
 
 #if DEBUG
         static AeadAes256CbcHmac256EncryptionKey()
@@ -83,17 +80,17 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             //
             // Derive encryption key
             byte[] buff1 = new byte[KeySizeInBytes];
-            SqlSecurityUtility.GetHMACWithSHA256(EncryptionKeySalt, RootKey, buff1);
+            SqlSecurityUtility.GetHMACWithSHA256(s_encryptionKeySalt, RootKey, buff1);
             EncryptionKey = buff1;
 
             // Derive MAC key
             byte[] buff2 = new byte[KeySizeInBytes];
-            SqlSecurityUtility.GetHMACWithSHA256(MacKeySalt, RootKey, buff2);
+            SqlSecurityUtility.GetHMACWithSHA256(s_macKeySalt, RootKey, buff2);
             MacKey = buff2;
 
             // Derive IV key
             byte[] buff3 = new byte[KeySizeInBytes];
-            SqlSecurityUtility.GetHMACWithSHA256(IvKeySalt, RootKey, buff3);
+            SqlSecurityUtility.GetHMACWithSHA256(s_ivKeySalt, RootKey, buff3);
             IvKey = buff3;
         }
 
