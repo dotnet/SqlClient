@@ -393,15 +393,21 @@ function Test-Cref {
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
     if ($signatureStart -ge 0) {
-        if (-not $body.Contains(')')) {
+        # The conversion-operator return marker (~) trails the parameter list, so the argument text
+        # ends at the last ')' rather than at the end of the body.
+        $signatureEnd = $body.LastIndexOf(')')
+
+        # Catches a missing ')' and one that precedes the '(', which is not a parameter list at
+        # all. LastIndexOf answers -1 when the character is absent, which is below every valid
+        # opening position, so both forms fail this comparison. Reaching the arithmetic below with
+        # either would ask Substring for a negative length, and the resulting exception would
+        # abandon the run without writing the report that report-only mode exists to produce.
+        if ($signatureEnd -lt $signatureStart) {
             Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
                 "Cref '$trimmed' has an unterminated parameter list.")
             return
         }
 
-        # The conversion-operator return marker (~) trails the parameter list, so the argument text
-        # ends at the last ')' rather than at the end of the body.
-        $signatureEnd = $body.LastIndexOf(')')
         $arguments = $body.Substring($signatureStart + 1, $signatureEnd - $signatureStart - 1)
 
         # A parameterless method's documentation ID is written without parentheses. Emitting "()"

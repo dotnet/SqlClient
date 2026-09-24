@@ -162,6 +162,34 @@ Describe 'validate-xml-docs.ps1' {
             $finding.Message | Should -BeLike "*use 'M:Microsoft.Data.SqlClient.SqlConnection.GetSchema'*"
         }
 
+        It 'rejects a signature whose parameter list is never closed' {
+            $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'invalid-docid'
+            $finding.Message | Should -BeLike '*unterminated parameter list*'
+        }
+
+        <#
+            The closing parenthesis precedes the opening one, so the argument arithmetic would ask
+            Substring for a negative length. An exception there ends the run before the report is
+            written, so this asserts the report exists rather than only the finding.
+        #>
+        It 'rejects a signature whose closing parenthesis precedes the opening one' {
+            $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlConnection.GetSchema)(')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $report | Should -Exist
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'invalid-docid'
+            $finding.Message | Should -BeLike '*unterminated parameter list*'
+        }
+
         It 'rejects a C# alias in a method signature' {
             $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)')
             $report = Join-Path (New-TestDirectory) 'report.json'
